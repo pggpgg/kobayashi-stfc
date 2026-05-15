@@ -5,8 +5,8 @@ use kobayashi::combat::{
     simulate_combat_with_defender_faction, simulate_combat_with_defender_faction_and_defender_crew,
     Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyType, EnemyTypes,
-    EventSource, OpponentFactionTag, ShipType, SimulationConfig, StackContribution, StatStacking,
-    TimingWindow, TraceCollector, TraceMode, WeaponStats, EPSILON,
+    EventSource, HostileMitigationParams, OpponentFactionTag, ShipType, SimulationConfig,
+    StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode, WeaponStats, EPSILON,
     EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS, HOSTILE_TAG_MASK_CONQUEROR_BORG,
     NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
 };
@@ -3550,7 +3550,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.events, second.events);
     assert_eq!(first.total_damage, second.total_damage);
 
-    assert_eq!(first.events.len(), 21);
+    assert_eq!(first.events.len(), 23);
     let expected_event_types = [
         "round_start",
         "attack_roll",
@@ -3560,14 +3560,15 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         "proc_triggers",
         "stack_resolution",
         "damage_application",
+        "mitigation_calc",
         "crit_resolution",
         "end_of_round_effects",
     ];
     for (index, expected) in expected_event_types.iter().enumerate() {
         assert_eq!(first.events[index].event_type, *expected);
-        assert_eq!(first.events[index + 10].event_type, *expected);
+        assert_eq!(first.events[index + 11].event_type, *expected);
     }
-    assert_eq!(first.events[20].event_type, "combat_end_effects");
+    assert_eq!(first.events[22].event_type, "combat_end_effects");
     assert_eq!(first.events[4].phase, "attack");
     assert_eq!(first.events[8].phase, "counter");
 
@@ -3591,8 +3592,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         Value::Bool(round_one_proc_roll < 0.4)
     );
 
-    let round_two_crit = &first.events[14];
-    let round_two_proc = &first.events[15];
+    let round_two_crit = &first.events[15];
+    let round_two_proc = &first.events[16];
     let round_two_crit_roll = round_two_crit.values["roll"]
         .as_f64()
         .expect("crit roll as f64");
@@ -3615,6 +3616,175 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         first.total_damage >= 200.0 && first.total_damage <= 600.0,
         "total_damage {}",
         first.total_damage
+    );
+}
+
+#[test]
+fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths() {
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 120.0,
+        mitigation: 0.25,
+        pierce: 0.15,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 120.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+        hostile_mitigation_params: None,
+    };
+    let params = HostileMitigationParams {
+        defender_stats: DefenderStats {
+            armor: 200.0,
+            shield_deflection: 140.0,
+            dodge: 110.0,
+        },
+        base_attacker_stats: AttackerStats {
+            armor_piercing: 80.0,
+            shield_piercing: 60.0,
+            accuracy: 50.0,
+        },
+        ship_type: ShipType::Battleship,
+        mystery_mitigation_factor: 0.05,
+        floor: 0.16,
+        ceiling: 0.72,
+    };
+    let defender = Combatant {
+        id: "hostile".to_string(),
+        attack: 80.0,
+        mitigation: 0.35,
+        pierce: 0.1,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.8,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 80.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+        hostile_mitigation_params: Some(params),
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
+    };
+    let crew = CrewConfiguration::default();
+    let result = simulate_combat(&attacker, &defender, &config, &crew);
+
+    let outbound = result
+        .events
+        .iter()
+        .find(|e| e.event_type == "mitigation_calc" && e.phase == "defense")
+        .expect("outbound mitigation_calc event");
+    for key in [
+        "mitigation_raw",
+        "mitigation_floor",
+        "mitigation_ceiling",
+        "c_armor",
+        "c_shield",
+        "c_dodge",
+        "armor_ratio",
+        "shield_ratio",
+        "dodge_ratio",
+        "f_armor",
+        "f_shield",
+        "f_dodge",
+        "weighted_armor",
+        "weighted_shield",
+        "weighted_dodge",
+        "mystery_mitigation_factor",
+        "one_minus_mystery",
+    ] {
+        assert!(
+            outbound.values.contains_key(key),
+            "expected outbound mitigation trace key: {key}"
+        );
+    }
+    let mitigation = outbound.values["mitigation"]
+        .as_f64()
+        .expect("mitigation as f64");
+    let multiplier = outbound.values["multiplier"]
+        .as_f64()
+        .expect("multiplier as f64");
+    let raw = outbound.values["mitigation_raw"]
+        .as_f64()
+        .expect("mitigation_raw as f64");
+    let floor = outbound.values["mitigation_floor"]
+        .as_f64()
+        .expect("mitigation_floor as f64");
+    let ceiling = outbound.values["mitigation_ceiling"]
+        .as_f64()
+        .expect("mitigation_ceiling as f64");
+    assert!(
+        raw >= 0.0,
+        "raw mitigation should be non-negative, got {raw}"
+    );
+    assert!(
+        mitigation >= floor && mitigation <= ceiling,
+        "clamped mitigation {mitigation} must be within [{floor}, {ceiling}]"
+    );
+    approx_eq(multiplier, (1.0 - mitigation).max(0.0), 1e-6);
+
+    let counter = result
+        .events
+        .iter()
+        .find(|e| e.event_type == "mitigation_calc" && e.phase == "counter")
+        .expect("counter mitigation_calc event");
+    for key in [
+        "base_mitigation",
+        "mitigation_additive_bonus",
+        "dodge_bonus",
+        "dodge_coefficient",
+        "dodge_mitigation_bonus",
+    ] {
+        assert!(
+            counter.values.contains_key(key),
+            "expected counter mitigation trace key: {key}"
+        );
+    }
+    let counter_mitigation = counter.values["mitigation"]
+        .as_f64()
+        .expect("counter mitigation as f64");
+    let counter_multiplier = counter.values["multiplier"]
+        .as_f64()
+        .expect("counter multiplier as f64");
+    approx_eq(
+        counter_multiplier,
+        (1.0 - counter_mitigation).max(0.0),
+        1e-6,
     );
 }
 

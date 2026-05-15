@@ -3,7 +3,7 @@
 pub use crate::combat::events::serialize_events_json;
 pub use crate::combat::mitigation::{
     apply_morale_primary_piercing, component_mitigation, isolytic_damage, mitigation,
-    mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
+    mitigation_breakdown, mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
     pierce_damage_through_bonus, MITIGATION_CEILING, MITIGATION_FLOOR, PIERCE_CAP,
 };
 pub use crate::combat::types::{
@@ -999,18 +999,20 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         ]),
                     });
 
+                    let mut mitigation_trace_breakdown = None;
                     let effective_mitigation =
                         if let Some(params) = &defender.hostile_mitigation_params {
                             let mut adjusted_attacker = params.base_attacker_stats;
                             adjusted_attacker.accuracy += attacker_accuracy_bonus;
-                            mitigation_for_hostile(
+                            let breakdown = mitigation_breakdown(
                                 params.defender_stats,
                                 adjusted_attacker,
                                 params.ship_type,
                                 params.mystery_mitigation_factor,
-                                params.floor,
-                                params.ceiling,
-                            )
+                            );
+                            mitigation_trace_breakdown =
+                                Some((breakdown, params.floor, params.ceiling));
+                            breakdown.raw_mitigation.clamp(params.floor, params.ceiling)
                         } else {
                             defender.mitigation
                         };
@@ -1024,20 +1026,92 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             ..EventSource::default()
                         },
                         weapon_index: Some(weapon_index_u),
-                        values: Map::from_iter([
-                            (
-                                "mitigation".to_string(),
-                                Value::from(round_f64(effective_mitigation)),
-                            ),
-                            (
-                                "multiplier".to_string(),
-                                Value::from(round_f64(mitigation_multiplier)),
-                            ),
-                        ]),
+                        values: {
+                            let mut values = Map::from_iter([
+                                (
+                                    "mitigation".to_string(),
+                                    Value::from(round_f64(effective_mitigation)),
+                                ),
+                                (
+                                    "multiplier".to_string(),
+                                    Value::from(round_f64(mitigation_multiplier)),
+                                ),
+                            ]);
+                            if let Some((breakdown, floor, ceiling)) = mitigation_trace_breakdown {
+                                values.insert(
+                                    "mitigation_raw".to_string(),
+                                    Value::from(round_f64(breakdown.raw_mitigation)),
+                                );
+                                values.insert(
+                                    "mitigation_floor".to_string(),
+                                    Value::from(round_f64(floor)),
+                                );
+                                values.insert(
+                                    "mitigation_ceiling".to_string(),
+                                    Value::from(round_f64(ceiling)),
+                                );
+                                values.insert(
+                                    "c_armor".to_string(),
+                                    Value::from(round_f64(breakdown.c_armor)),
+                                );
+                                values.insert(
+                                    "c_shield".to_string(),
+                                    Value::from(round_f64(breakdown.c_shield)),
+                                );
+                                values.insert(
+                                    "c_dodge".to_string(),
+                                    Value::from(round_f64(breakdown.c_dodge)),
+                                );
+                                values.insert(
+                                    "armor_ratio".to_string(),
+                                    Value::from(round_f64(breakdown.armor_ratio)),
+                                );
+                                values.insert(
+                                    "shield_ratio".to_string(),
+                                    Value::from(round_f64(breakdown.shield_ratio)),
+                                );
+                                values.insert(
+                                    "dodge_ratio".to_string(),
+                                    Value::from(round_f64(breakdown.dodge_ratio)),
+                                );
+                                values.insert(
+                                    "f_armor".to_string(),
+                                    Value::from(round_f64(breakdown.f_armor)),
+                                );
+                                values.insert(
+                                    "f_shield".to_string(),
+                                    Value::from(round_f64(breakdown.f_shield)),
+                                );
+                                values.insert(
+                                    "f_dodge".to_string(),
+                                    Value::from(round_f64(breakdown.f_dodge)),
+                                );
+                                values.insert(
+                                    "weighted_armor".to_string(),
+                                    Value::from(round_f64(breakdown.weighted_armor)),
+                                );
+                                values.insert(
+                                    "weighted_shield".to_string(),
+                                    Value::from(round_f64(breakdown.weighted_shield)),
+                                );
+                                values.insert(
+                                    "weighted_dodge".to_string(),
+                                    Value::from(round_f64(breakdown.weighted_dodge)),
+                                );
+                                values.insert(
+                                    "mystery_mitigation_factor".to_string(),
+                                    Value::from(round_f64(breakdown.mystery_mitigation_factor)),
+                                );
+                                values.insert(
+                                    "one_minus_mystery".to_string(),
+                                    Value::from(round_f64(breakdown.one_minus_mystery)),
+                                );
+                            }
+                            values
+                        },
                     });
 
-                    let defender_inbound_assimilated =
-                        defender_assimilated_rounds_remaining > 0;
+                    let defender_inbound_assimilated = defender_assimilated_rounds_remaining > 0;
                     let mut inbound_defender_effects = EffectAccumulator::default();
                     inbound_defender_effects.set_trace_contributions(false);
                     inbound_defender_effects.add_effects(
@@ -1047,7 +1121,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         defender_inbound_assimilated,
                         round_index,
                     );
-                    let combined_defense_mitigation_bonus = phase_effects.defense_mitigation_bonus()
+                    let combined_defense_mitigation_bonus = phase_effects
+                        .defense_mitigation_bonus()
                         + inbound_defender_effects.defense_mitigation_bonus();
 
                     // Damage-through factor: fraction of attack that gets through (can exceed 1.0 with pierce).
@@ -1663,6 +1738,53 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     };
 
                 for hit_index in 0..def_effective_shots {
+                    trace.record_if(|| {
+                        let (_c_armor, _c_shield, c_dodge) = attacker_ship_type.coefficients();
+                        let dodge_mitigation = attacker_dodge_bonus * c_dodge;
+                        CombatEvent {
+                            event_type: "mitigation_calc".to_string(),
+                            round_index,
+                            phase: "counter".to_string(),
+                            source: EventSource {
+                                hostile_ability_id: Some(format!(
+                                    "{}_counter_mitigation",
+                                    defender.id
+                                )),
+                                ..EventSource::default()
+                            },
+                            weapon_index: Some(weapon_index as u32),
+                            values: Map::from_iter([
+                                (
+                                    "mitigation".to_string(),
+                                    Value::from(round_f64(eff_player_mitigation)),
+                                ),
+                                (
+                                    "multiplier".to_string(),
+                                    Value::from(round_f64(counter_mitigation_mult)),
+                                ),
+                                (
+                                    "base_mitigation".to_string(),
+                                    Value::from(round_f64(attacker.mitigation)),
+                                ),
+                                (
+                                    "mitigation_additive_bonus".to_string(),
+                                    Value::from(round_f64(attacker_mitigation_additive)),
+                                ),
+                                (
+                                    "dodge_bonus".to_string(),
+                                    Value::from(round_f64(attacker_dodge_bonus)),
+                                ),
+                                (
+                                    "dodge_coefficient".to_string(),
+                                    Value::from(round_f64(c_dodge)),
+                                ),
+                                (
+                                    "dodge_mitigation_bonus".to_string(),
+                                    Value::from(round_f64(dodge_mitigation)),
+                                ),
+                            ]),
+                        }
+                    });
                     let defender_attack_phase_assimilated =
                         defender_assimilated_rounds_remaining > 0;
                     roll_assimilated_extensions_from_effects(

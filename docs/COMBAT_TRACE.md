@@ -7,8 +7,20 @@ This document ties Kobayashi’s JSON trace events to **why** a shot dealt a giv
 For each weapon sub-round, the engine records:
 
 1. **`mitigation_calc`** (phase `defense`)  
-   - **`mitigation`**: defender’s scalar mitigation for this combatant (already includes hostile floor/ceiling and pre-combat math when the scenario built the defender).  
+   - **`mitigation`**: defender’s scalar mitigation for this combatant (clamped when hostile floor/ceiling apply).
    - **`multiplier`**: `max(0, 1 - mitigation)`. This is the fraction of *pre-pierce* damage that would remain if only that scalar applied.
+   - When hostile mitigation params are present (`hostile_mitigation_params`), trace also includes decomposition fields:
+     - **ratios**: `armor_ratio`, `shield_ratio`, `dodge_ratio`
+     - **component terms**: `f_armor`, `f_shield`, `f_dodge`
+     - **weights and weighted terms**: `c_armor`, `c_shield`, `c_dodge`, `weighted_armor`, `weighted_shield`, `weighted_dodge`
+     - **mystery + clamp context**: `mystery_mitigation_factor`, `one_minus_mystery`, `mitigation_raw`, `mitigation_floor`, `mitigation_ceiling`
+
+1b. **`mitigation_calc`** (phase `counter`)
+   - Defender counter-fire emits player-side mitigation composition for that sub-round:
+     - `base_mitigation`
+     - `mitigation_additive_bonus`
+     - `dodge_bonus`, `dodge_coefficient`, `dodge_mitigation_bonus`
+   - Includes the same scalar `mitigation` and `multiplier` fields used by outbound shots.
 
 2. **`pierce_calc`** (phase `attack`)  
    - **`pierce`**: effective additive pierce for this round (ship base + pre-attack pierce bonuses + morale primary-piercing when it fired).  
@@ -19,7 +31,7 @@ For each weapon sub-round, the engine records:
 
 **Reading “why did this much damage get through?”**
 
-- Start from `mitigation_calc.multiplier` (how much would be kept after raw mitigation).  
+- Start from `mitigation_calc.multiplier` (how much would be kept after raw mitigation).
 - Then add `pierce_calc.pierce` and any defense-phase mitigation bonus (not always emitted as its own event; when zero, trace only shows the combined `damage_through_factor`).  
 - Compare `pierce_calc.damage_through_factor` before/after a round or between runs to see sensitivity to pierce or mitigation changes.
 

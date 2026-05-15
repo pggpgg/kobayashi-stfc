@@ -52,12 +52,13 @@ Source pages reviewed:
   - [x] Fixture suite under `tests/fixtures/recorded_fights/` and calibration tests using recorded fights.
   - [ ] Broader corpus from representative **raw** client/toolbox logs with snapshot tests for mitigation%, per-round damage, and effect-stack outcomes as described here.
 
-- [ ] **Engine explainability output (mitigation decomposition)**
-  - Extend optional debug trace for mitigation with per-step calculations beyond today’s scalar `mitigation_calc` events (`mitigation` + `multiplier` only in `src/combat/engine.rs`):
+- [x] **Engine explainability output (mitigation decomposition)** (partial)
+  - `mitigation_calc` now emits per-step decomposition fields in `src/combat/engine.rs` for hostile-param fights:
     - defense/piercing ratios per component
     - each `f(x)` value
     - weighted component contributions (`cA`, `cS`, `cD`)
     - final multiplicative combination
+  - Counter-fire now emits a `mitigation_calc` event in `phase: "counter"` with explicit player-side mitigation composition (`base_mitigation`, additive, dodge-derived term).
 
 ## Future / optional (sub-round and weapons)
 
@@ -79,5 +80,5 @@ Track the same ordering as above; status mirrors sections above.
 - [x] 2. Monte Carlo snapshot mode + damage/survival distributions — **shipped** (core MC + CIs + compare histograms).
 - [ ] 3. Ability boost rules + temporary combat-only state
 - [ ] 4. Compatibility toggles + regression suite — **partial** (fixtures exist; duplicate-officer toggle and full corpus still open).
-- [x] 5. Mitigation analyzer endpoint + trace decomposition for mitigation — **partial** (CLI/library sensitivity done; HTTP endpoint and full trace decomposition still open).
+- [x] 5. Mitigation analyzer endpoint + trace decomposition for mitigation — **partial** (CLI/library sensitivity and mitigation trace decomposition done; HTTP endpoint still open).
 - [x] 6. Per-weapon upstream fields + scenario/hostile wiring — **shipped** (normalizers + `ship_weapons_with_resolved_pierce_through` + hostile weapon ordering/parsing; see **Future / optional** above for mitigation/counter-fire caveats).

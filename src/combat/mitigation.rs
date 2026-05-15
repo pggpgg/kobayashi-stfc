@@ -2,11 +2,36 @@
 
 use crate::combat::types::{self, AttackerStats, DefenderStats, ShipType, EPSILON};
 
-/// Compute component mitigation f(x) = 1 / (1 + 4^(1.1 - x)).
-pub fn component_mitigation(defense: f64, piercing: f64) -> f64 {
+/// Detailed mitigation decomposition for one attacker/defender/ship-type tuple.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MitigationBreakdown {
+    pub c_armor: f64,
+    pub c_shield: f64,
+    pub c_dodge: f64,
+    pub armor_ratio: f64,
+    pub shield_ratio: f64,
+    pub dodge_ratio: f64,
+    pub f_armor: f64,
+    pub f_shield: f64,
+    pub f_dodge: f64,
+    pub weighted_armor: f64,
+    pub weighted_shield: f64,
+    pub weighted_dodge: f64,
+    pub mystery_mitigation_factor: f64,
+    pub one_minus_mystery: f64,
+    pub raw_mitigation: f64,
+}
+
+#[inline]
+fn component_ratio(defense: f64, piercing: f64) -> f64 {
     let safe_defense = defense.max(0.0);
     let safe_piercing = piercing.max(EPSILON);
-    let x = safe_defense / safe_piercing;
+    safe_defense / safe_piercing
+}
+
+/// Compute component mitigation f(x) = 1 / (1 + 4^(1.1 - x)).
+pub fn component_mitigation(defense: f64, piercing: f64) -> f64 {
+    let x = component_ratio(defense, piercing);
     1.0 / (1.0 + 4.0_f64.powf(1.1 - x))
 }
 
@@ -36,6 +61,48 @@ pub fn mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: S
     mitigation_with_mystery(defender, attacker, ship_type, 0.0).clamp(0.0, 1.0)
 }
 
+/// Return the full mitigation decomposition before hostile floor/ceiling clamping.
+pub fn mitigation_breakdown(
+    defender: DefenderStats,
+    attacker: AttackerStats,
+    ship_type: ShipType,
+    mystery_mitigation_factor: f64,
+) -> MitigationBreakdown {
+    let (c_armor, c_shield, c_dodge) = ship_type.coefficients();
+    let armor_ratio = component_ratio(defender.armor, attacker.armor_piercing);
+    let shield_ratio = component_ratio(defender.shield_deflection, attacker.shield_piercing);
+    let dodge_ratio = component_ratio(defender.dodge, attacker.accuracy);
+    let f_armor = 1.0 / (1.0 + 4.0_f64.powf(1.1 - armor_ratio));
+    let f_shield = 1.0 / (1.0 + 4.0_f64.powf(1.1 - shield_ratio));
+    let f_dodge = 1.0 / (1.0 + 4.0_f64.powf(1.1 - dodge_ratio));
+    let weighted_armor = c_armor * f_armor;
+    let weighted_shield = c_shield * f_shield;
+    let weighted_dodge = c_dodge * f_dodge;
+    let one_minus_mystery = (1.0 - mystery_mitigation_factor).max(0.0);
+    let raw_mitigation = 1.0
+        - one_minus_mystery
+            * (1.0 - weighted_armor)
+            * (1.0 - weighted_shield)
+            * (1.0 - weighted_dodge);
+    MitigationBreakdown {
+        c_armor,
+        c_shield,
+        c_dodge,
+        armor_ratio,
+        shield_ratio,
+        dodge_ratio,
+        f_armor,
+        f_shield,
+        f_dodge,
+        weighted_armor,
+        weighted_shield,
+        weighted_dodge,
+        mystery_mitigation_factor,
+        one_minus_mystery,
+        raw_mitigation,
+    }
+}
+
 /// Raw mitigation with optional "mystery" factor X. Formula:
 /// `1 - (1 - X) * (1 - cA*fA) * (1 - cS*fS) * (1 - cD*fD)`.
 pub fn mitigation_with_mystery(
@@ -44,18 +111,7 @@ pub fn mitigation_with_mystery(
     ship_type: ShipType,
     mystery_mitigation_factor: f64,
 ) -> f64 {
-    let (c_armor, c_shield, c_dodge) = ship_type.coefficients();
-
-    let f_armor = component_mitigation(defender.armor, attacker.armor_piercing);
-    let f_shield = component_mitigation(defender.shield_deflection, attacker.shield_piercing);
-    let f_dodge = component_mitigation(defender.dodge, attacker.accuracy);
-
-    let one_minus_x = (1.0 - mystery_mitigation_factor).max(0.0);
-
-    1.0 - one_minus_x
-        * (1.0 - c_armor * f_armor)
-        * (1.0 - c_shield * f_shield)
-        * (1.0 - c_dodge * f_dodge)
+    mitigation_breakdown(defender, attacker, ship_type, mystery_mitigation_factor).raw_mitigation
 }
 
 /// Mitigation for hostile defenders: applies mystery factor X then clamps to [floor, ceiling].
