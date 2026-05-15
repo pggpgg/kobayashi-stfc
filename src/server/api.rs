@@ -565,20 +565,14 @@ fn resolve_player_defender_officer_crew_from_officer_fields(
 ) -> Result<Option<PlayerDefenderOfficerCrewOverride>, String> {
     let has_other = bridge
         .map(|b| {
-            b.iter().any(|s| {
-                s.as_ref()
-                    .map(|x| !x.trim().is_empty())
-                    .unwrap_or(false)
-            })
+            b.iter()
+                .any(|s| s.as_ref().map(|x| !x.trim().is_empty()).unwrap_or(false))
         })
         .unwrap_or(false)
         || below_deck
             .map(|v| {
-                v.iter().any(|s| {
-                    s.as_ref()
-                        .map(|x| !x.trim().is_empty())
-                        .unwrap_or(false)
-                })
+                v.iter()
+                    .any(|s| s.as_ref().map(|x| !x.trim().is_empty()).unwrap_or(false))
             })
             .unwrap_or(false);
 

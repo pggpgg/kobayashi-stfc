@@ -2,6 +2,9 @@
 //! [`kobayashi::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec`]
 //! (order-independent seat signatures). The public API delegates to the adapter; these tests lock behavior.
 
+use kobayashi::combat::abilities::{AbilityCondition, AbilityEffect};
+use kobayashi::combat::types::OpponentFactionTag;
+use kobayashi::combat::TimingWindow;
 use kobayashi::data::import::ResearchEntry;
 use kobayashi::data::profile::{
     research_derived_attack_phase_seats, SupportBuffResearchGateState, CERRITOS_SUPPORT_BUFF_ID,
@@ -11,9 +14,6 @@ use kobayashi::data::profile::{
 use kobayashi::data::research::{
     ResearchBonusConditionKey, ResearchBonusEntry, ResearchCatalog, ResearchLevel, ResearchRecord,
 };
-use kobayashi::combat::abilities::{AbilityCondition, AbilityEffect};
-use kobayashi::combat::types::OpponentFactionTag;
-use kobayashi::combat::TimingWindow;
 use kobayashi::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec;
 use std::collections::HashMap;
 
@@ -376,9 +376,9 @@ fn parity_dual_support_buff_gate_requires_cerritos_and_fortify_before_spec_compi
 fn condition_mentions_defender_faction(cond: &AbilityCondition, tag: OpponentFactionTag) -> bool {
     match cond {
         AbilityCondition::DefenderFactionIs(t) => *t == tag,
-        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
-            parts.iter().any(|c| condition_mentions_defender_faction(c, tag))
-        }
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => parts
+            .iter()
+            .any(|c| condition_mentions_defender_faction(c, tag)),
         _ => false,
     }
 }
@@ -386,9 +386,9 @@ fn condition_mentions_defender_faction(cond: &AbilityCondition, tag: OpponentFac
 fn condition_mentions_owner_faction(cond: &AbilityCondition, tag: OpponentFactionTag) -> bool {
     match cond {
         AbilityCondition::AttackerOwnerFactionIs(t) => *t == tag,
-        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
-            parts.iter().any(|c| condition_mentions_owner_faction(c, tag))
-        }
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => parts
+            .iter()
+            .any(|c| condition_mentions_owner_faction(c, tag)),
         _ => false,
     }
 }
@@ -431,16 +431,21 @@ fn dual_owner_and_defender_faction_gates_weapon_damage_research_seat() {
         }],
     };
     let imported = vec![ResearchEntry { rid: RID, level: 1 }];
-    let seats =
-        research_derived_attack_phase_seats_from_spec(&imported, &catalog, &HashMap::new());
+    let seats = research_derived_attack_phase_seats_from_spec(&imported, &catalog, &HashMap::new());
     let seat = seats
         .iter()
         .find(|s| matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_)))
         .expect("weapon_damage seat");
     assert_eq!(seat.ability.timing, TimingWindow::AttackPhase);
     let cond = seat.ability.condition.as_ref().expect("gated seat");
-    assert!(condition_mentions_defender_faction(cond, OpponentFactionTag::Klingon));
-    assert!(condition_mentions_owner_faction(cond, OpponentFactionTag::Federation));
+    assert!(condition_mentions_defender_faction(
+        cond,
+        OpponentFactionTag::Klingon
+    ));
+    assert!(condition_mentions_owner_faction(
+        cond,
+        OpponentFactionTag::Federation
+    ));
     assert_public_matches_adapter(&imported, &catalog);
 }
 
@@ -473,8 +478,7 @@ fn dual_owner_and_defender_faction_gates_morale_isolytic_damage_research_seat() 
         }],
     };
     let imported = vec![ResearchEntry { rid: RID, level: 1 }];
-    let seats =
-        research_derived_attack_phase_seats_from_spec(&imported, &catalog, &HashMap::new());
+    let seats = research_derived_attack_phase_seats_from_spec(&imported, &catalog, &HashMap::new());
     let seat = seats
         .iter()
         .find(|s| matches!(s.ability.effect, AbilityEffect::IsolyticDamageBonus(_)))
@@ -485,7 +489,13 @@ fn dual_owner_and_defender_faction_gates_morale_isolytic_damage_research_seat() 
         condition_mentions_morale_active(cond),
         "morale arm must remain for morale-gated isolytic_damage"
     );
-    assert!(condition_mentions_defender_faction(cond, OpponentFactionTag::Romulan));
-    assert!(condition_mentions_owner_faction(cond, OpponentFactionTag::Federation));
+    assert!(condition_mentions_defender_faction(
+        cond,
+        OpponentFactionTag::Romulan
+    ));
+    assert!(condition_mentions_owner_faction(
+        cond,
+        OpponentFactionTag::Federation
+    ));
     assert_public_matches_adapter(&imported, &catalog);
 }

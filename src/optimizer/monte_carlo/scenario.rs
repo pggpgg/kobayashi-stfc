@@ -4,10 +4,10 @@ use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
-    pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect,
-    AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
-    EnemyTypes, HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow,
-    MITIGATION_CEILING, MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyTypes,
+    HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow, MITIGATION_CEILING,
+    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
@@ -1143,12 +1143,8 @@ fn resolve_player_defender_officer_bundle(
         bridge,
         below_decks,
     };
-    let (seats, static_buffs, _proc_c, _proc_m) = build_crew_and_buffs(
-        &candidate,
-        officers_by_name,
-        lcars_data,
-        resolve_options,
-    );
+    let (seats, static_buffs, _proc_c, _proc_m) =
+        build_crew_and_buffs(&candidate, officers_by_name, lcars_data, resolve_options);
     (seats, static_buffs)
 }
 

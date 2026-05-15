@@ -820,16 +820,14 @@ fn gather_optimize_simulation_results(
         ) {
             Ok(v) => v,
             Err(msg) => {
-                return Err(OptimizeGatherError::Validation(
-                    ValidationErrorResponse {
-                        status: "error",
-                        message: "Validation failed",
-                        errors: vec![ValidationIssue {
-                            field: "defender_crew",
-                            messages: vec![msg],
-                        }],
-                    },
-                ));
+                return Err(OptimizeGatherError::Validation(ValidationErrorResponse {
+                    status: "error",
+                    message: "Validation failed",
+                    errors: vec![ValidationIssue {
+                        field: "defender_crew",
+                        messages: vec![msg],
+                    }],
+                }));
             }
         };
 
@@ -1378,18 +1376,16 @@ pub fn run_optimize(
     let _span_guard = span.enter();
     let start = Instant::now();
     let mut sink = OptimizeProgressSink::None;
-    let (all_results, meta) = match gather_optimize_simulation_results(
-        registry,
-        request,
-        profile_id,
-        &mut sink,
-    ) {
-        Ok(x) => x,
-        Err(OptimizeGatherError::Cancelled) => {
-            panic!("sync optimize does not cancel");
-        }
-        Err(OptimizeGatherError::Validation(e)) => return Err(OptimizePayloadError::Validation(e)),
-    };
+    let (all_results, meta) =
+        match gather_optimize_simulation_results(registry, request, profile_id, &mut sink) {
+            Ok(x) => x,
+            Err(OptimizeGatherError::Cancelled) => {
+                panic!("sync optimize does not cancel");
+            }
+            Err(OptimizeGatherError::Validation(e)) => {
+                return Err(OptimizePayloadError::Validation(e))
+            }
+        };
     let duration_ms = start.elapsed().as_millis() as u64;
     let response = build_optimize_response(request, all_results, duration_ms, &meta, profile_id);
     info!(
