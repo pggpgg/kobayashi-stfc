@@ -65,13 +65,11 @@ fn validate_condition_tree(
     c: &AbilityConditionSpec,
 ) -> Result<(), CombatEffectSpecValidationError> {
     match c {
-        AbilityConditionSpec::RoundRange { min, max } => {
-            if min > max {
-                return Err(CombatEffectSpecValidationError::RoundRangeInverted {
-                    min: *min,
-                    max: *max,
-                });
-            }
+        AbilityConditionSpec::RoundRange { min, max } if min > max => {
+            return Err(CombatEffectSpecValidationError::RoundRangeInverted {
+                min: *min,
+                max: *max,
+            });
         }
         AbilityConditionSpec::And { all } => {
             if all.is_empty() {
@@ -90,10 +88,8 @@ fn validate_condition_tree(
             }
         }
         AbilityConditionSpec::Not { inner } => validate_condition_tree(inner)?,
-        AbilityConditionSpec::CombatBattleTypeAny { battle_types } => {
-            if battle_types.is_empty() {
-                return Err(CombatEffectSpecValidationError::EmptyCombatBattleTypeList);
-            }
+        AbilityConditionSpec::CombatBattleTypeAny { battle_types } if battle_types.is_empty() => {
+            return Err(CombatEffectSpecValidationError::EmptyCombatBattleTypeList);
         }
         _ => {}
     }
