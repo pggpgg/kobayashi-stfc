@@ -79,6 +79,10 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | `cap_I/P/I` | Implemented / Partial / Ignored counts (captain ability block, combat-intent only) |
 | `br_I/P/I` | Same for bridge block |
 | `bd_I/P/I` | Same for below decks |
+| `drop_trig` | Combat-intent effects the LCARS→IR adapter dropped because their `trigger` is unknown |
+| `drop_tag` | Same, dropped because the `tag` has no engine-stat mapping (parallels `unmapped_tags`) |
+| `drop_stat` | Same, dropped because `stat_modify.stat` has no engine-modifier mapping |
+| `drop_cond` | Same, dropped because the `condition` block can't be represented in the canonical IR |
 
 ---
 "#,
@@ -90,12 +94,12 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 }
 
 fn table_header() -> &'static str {
-    "| id | name | combat_n | cap_I/P/I | br_I/P/I | bd_I/P/I | unmapped_tags | cap_score | br_score | bd_score | combat_avg | combat_wtd | unmap_pen | combat_auto | grade | nc_ack | nc_label | fidelity |\n|---:|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|---:|---|---|\n"
+    "| id | name | combat_n | cap_I/P/I | br_I/P/I | bd_I/P/I | unmapped_tags | drop_trig | drop_tag | drop_stat | drop_cond | cap_score | br_score | bd_score | combat_avg | combat_wtd | unmap_pen | combat_auto | grade | nc_ack | nc_label | fidelity |\n|---:|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|---|---|\n"
 }
 
 fn row_line(r: &OfficerScorecardRow) -> String {
     format!(
-        "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+        "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
         md_cell(&r.id),
         md_cell(&r.name),
         r.combat_n,
@@ -103,6 +107,10 @@ fn row_line(r: &OfficerScorecardRow) -> String {
         fmt_ipc(&r.br_ipc),
         fmt_ipc(&r.bd_ipc),
         r.unmapped_combat_tags,
+        r.dropped_unknown_trigger,
+        r.dropped_unmapped_tag,
+        r.dropped_unmapped_stat,
+        r.dropped_unmapped_condition,
         opt_i(r.cap_score),
         opt_i(r.br_score),
         opt_i(r.bd_score),

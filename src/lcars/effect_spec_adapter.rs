@@ -14,9 +14,176 @@ use crate::data::combat_effect_spec::{
     AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource,
     OfficerStatScaling, ValueSpec,
 };
-use crate::lcars::parser::{LcarsCondition, LcarsDuration, LcarsEffect, LcarsLevelStats};
+use crate::lcars::parser::{
+    LcarsCondition, LcarsDuration, LcarsEffect, LcarsLevelStats, LcarsOfficer,
+};
 use crate::lcars::resolver::effect_trigger_timing;
+use serde::Serialize;
 use serde_json::json;
+
+/// A single LCARS effect that was silently dropped during YAML→IR conversion.
+///
+/// Populated by [`lcars_effect_to_combat_effect_spec_with_report`] at each adapter early-return
+/// site. See [`LcarsDropReport`] for the aggregator. The `reason` field uses short discriminators
+/// like `unknown_trigger:<raw>`, `unmapped_tag:<base>`, `unmapped_stat:<name>`,
+/// `unmapped_condition:<type>`, `extra_attack_unsupported`, or `unknown_effect_type:<type>`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct DroppedLcarsEffect {
+    pub officer_id: String,
+    pub ability_name: String,
+    pub effect_index: usize,
+    pub reason: String,
+}
+
+/// Aggregator that collects effects silently dropped by the LCARS→IR adapter.
+///
+/// Records are only pushed at the load/resolve boundary
+/// ([`lcars_effect_to_combat_effect_spec_with_report`]). Nothing inside `src/combat/` may
+/// write to this — enforced by an architectural test.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct LcarsDropReport {
+    pub drops: Vec<DroppedLcarsEffect>,
+}
+
+impl LcarsDropReport {
+    /// Number of drops collected so far.
+    pub fn len(&self) -> usize {
+        self.drops.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.drops.is_empty()
+    }
+
+    fn record(
+        &mut self,
+        officer_id: &str,
+        ability_name: &str,
+        effect_index: usize,
+        reason: impl Into<String>,
+    ) {
+        self.drops.push(DroppedLcarsEffect {
+            officer_id: officer_id.to_string(),
+            ability_name: ability_name.to_string(),
+            effect_index,
+            reason: reason.into(),
+        });
+    }
+
+    /// Drop reason prefix (before the first `:`). E.g. `"unmapped_tag:allreloadspeed"` →
+    /// `"unmapped_tag"`. Reasons without a colon (e.g. `"extra_attack_unsupported"`) return
+    /// themselves.
+    pub fn reason_category(reason: &str) -> &str {
+        reason.split_once(':').map(|(c, _)| c).unwrap_or(reason)
+    }
+
+    /// `(category, count, distinct_officer_count)` triples sorted by count descending.
+    pub fn category_counts(&self) -> Vec<(String, usize, usize)> {
+        use std::collections::HashMap;
+        let mut counts: HashMap<&str, (usize, std::collections::HashSet<&str>)> = HashMap::new();
+        for d in &self.drops {
+            let cat = Self::reason_category(&d.reason);
+            let entry = counts.entry(cat).or_default();
+            entry.0 += 1;
+            entry.1.insert(d.officer_id.as_str());
+        }
+        let mut out: Vec<(String, usize, usize)> = counts
+            .into_iter()
+            .map(|(k, (c, set))| (k.to_string(), c, set.len()))
+            .collect();
+        out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        out
+    }
+
+    /// `(reason, count)` pairs sorted by count descending.
+    pub fn reasons_by_count(&self) -> Vec<(String, usize)> {
+        use std::collections::HashMap;
+        let mut counts: HashMap<&str, usize> = HashMap::new();
+        for d in &self.drops {
+            *counts.entry(d.reason.as_str()).or_default() += 1;
+        }
+        let mut out: Vec<(String, usize)> = counts
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        out
+    }
+
+    /// `(officer_id, count, top_reason)` triples sorted by count descending.
+    pub fn officers_by_count(&self) -> Vec<(String, usize, String)> {
+        use std::collections::HashMap;
+        let mut counts: HashMap<&str, (usize, HashMap<&str, usize>)> = HashMap::new();
+        for d in &self.drops {
+            let entry = counts.entry(d.officer_id.as_str()).or_default();
+            entry.0 += 1;
+            *entry.1.entry(d.reason.as_str()).or_default() += 1;
+        }
+        let mut out: Vec<(String, usize, String)> = counts
+            .into_iter()
+            .map(|(officer, (total, reasons))| {
+                let top = reasons
+                    .into_iter()
+                    .max_by_key(|(_, c)| *c)
+                    .map(|(r, _)| r.to_string())
+                    .unwrap_or_default();
+                (officer.to_string(), total, top)
+            })
+            .collect();
+        out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        out
+    }
+}
+
+/// Walk an iterator of officers and feed every effect through
+/// [`lcars_effect_to_combat_effect_spec_with_report`] to populate a fresh [`LcarsDropReport`].
+///
+/// Officer tier / stats are passed as `None` because none of the drop categories depend on
+/// scaling resolution; this keeps the helper free of [`crate::lcars::resolver::ResolveOptions`].
+pub fn collect_lcars_drops<'a, I>(officers: I) -> LcarsDropReport
+where
+    I: IntoIterator<Item = &'a LcarsOfficer>,
+{
+    let mut report = LcarsDropReport::default();
+    for officer in officers {
+        for ability in [
+            officer.captain_ability.as_ref(),
+            officer.bridge_ability.as_ref(),
+            officer.below_decks_ability.as_ref(),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            for (idx, effect) in ability.effects.iter().enumerate() {
+                let stable_id = format!("{}::{}::{}", officer.id, ability.name, idx);
+                let _ = lcars_effect_to_combat_effect_spec_with_report(
+                    effect,
+                    &stable_id,
+                    &officer.id,
+                    &ability.name,
+                    None,
+                    None,
+                    idx,
+                    Some(&mut report),
+                );
+            }
+        }
+    }
+    report
+}
+
+/// Push a drop record when the caller asked for one; no-op otherwise.
+fn maybe_record_drop(
+    drop_report: &mut Option<&mut LcarsDropReport>,
+    officer_id: &str,
+    ability_name: &str,
+    effect_index: usize,
+    reason: impl Into<String>,
+) {
+    if let Some(r) = drop_report.as_deref_mut() {
+        r.record(officer_id, ability_name, effect_index, reason);
+    }
+}
 
 fn normalize_operator(op: Option<&str>) -> String {
     op.unwrap_or("add")
@@ -419,7 +586,44 @@ pub fn lcars_effect_to_combat_effect_spec(
     officer_tier: Option<u8>,
     officer_stats: Option<&LcarsLevelStats>,
 ) -> Option<CombatEffectSpec> {
+    lcars_effect_to_combat_effect_spec_with_report(
+        effect,
+        stable_id,
+        officer_id,
+        ability_name,
+        officer_tier,
+        officer_stats,
+        0,
+        None,
+    )
+}
+
+/// Same as [`lcars_effect_to_combat_effect_spec`] but pushes a [`DroppedLcarsEffect`] record
+/// into `drop_report` at every silent early-return. Designed for offline tooling
+/// (`validate_data --coverage`, the officer scorecard) — must never be invoked from the
+/// combat hot loop.
+///
+/// `effect_index` is the position of `effect` within its parent ability's `effects` array;
+/// callers (e.g. a scorecard walker) supply it for diagnostic provenance.
+#[allow(clippy::too_many_arguments)]
+pub fn lcars_effect_to_combat_effect_spec_with_report(
+    effect: &LcarsEffect,
+    stable_id: &str,
+    officer_id: &str,
+    ability_name: &str,
+    officer_tier: Option<u8>,
+    officer_stats: Option<&LcarsLevelStats>,
+    effect_index: usize,
+    mut drop_report: Option<&mut LcarsDropReport>,
+) -> Option<CombatEffectSpec> {
     if effect.effect_type == "extra_attack" {
+        maybe_record_drop(
+            &mut drop_report,
+            officer_id,
+            ability_name,
+            effect_index,
+            "extra_attack_unsupported",
+        );
         return None;
     }
 
@@ -432,6 +636,19 @@ pub fn lcars_effect_to_combat_effect_spec(
         None
     };
     if effect.effect_type == "tag" && tag_mapped_stat.is_none() {
+        let tag_str = effect.tag.as_deref().unwrap_or("");
+        // `:non_combat` tags are explicitly documented as non-combat in the YAML —
+        // returning None is intentional, so we don't record them as drops.
+        if !tag_str.to_ascii_lowercase().contains(":non_combat") {
+            let tag_base = tag_str.split(':').next().unwrap_or("").trim();
+            maybe_record_drop(
+                &mut drop_report,
+                officer_id,
+                ability_name,
+                effect_index,
+                format!("unmapped_tag:{tag_base}"),
+            );
+        }
         return None;
     }
 
@@ -446,17 +663,48 @@ pub fn lcars_effect_to_combat_effect_spec(
     // Passive + permanent stat_modify and mapped tag effects now emit CombatBegin-timed specs
     // (routed through the canonical CombatEffectSpec IR in resolve_crew_to_buff_set).
 
-    let timing = effect_trigger_timing(effect)?;
+    let timing = match effect_trigger_timing(effect) {
+        Some(t) => t,
+        None => {
+            let raw = effect.trigger.as_deref().unwrap_or("").trim();
+            maybe_record_drop(
+                &mut drop_report,
+                officer_id,
+                ability_name,
+                effect_index,
+                format!("unknown_trigger:{raw}"),
+            );
+            return None;
+        }
+    };
 
     // Accuracy at combat-begin is folded into static buffs; skip dynamic spec.
     // Non-combat-begin accuracy (e.g. round-start) should produce a dynamic spec.
+    // Not recorded as a drop: handled via static_buffs in resolve_crew_to_buff_set.
     if effective_stat.eq_ignore_ascii_case("accuracy") && timing == TimingWindow::CombatBegin {
         return None;
     }
 
     let trigger = timing_window_to_trigger_spec(timing);
     let target = officer_target_from_effect(effect);
-    let conditions = try_officer_conditions_from_effect(effect)?;
+    let conditions = match try_officer_conditions_from_effect(effect) {
+        Some(c) => c,
+        None => {
+            let cond_type = effect
+                .condition
+                .as_ref()
+                .map(|c| c.condition_type.trim())
+                .unwrap_or("");
+            maybe_record_drop(
+                &mut drop_report,
+                officer_id,
+                ability_name,
+                effect_index,
+                format!("unmapped_condition:{cond_type}"),
+            );
+            return None;
+        }
+    };
     let duration = effect.duration.as_ref().and_then(lcars_duration_to_spec);
 
     let op_norm = normalize_operator(effect.operator.as_deref());
@@ -549,7 +797,19 @@ pub fn lcars_effect_to_combat_effect_spec(
             }
         }
 
-        let modifier = stat_to_officer_modifier(stat)?;
+        let modifier = match stat_to_officer_modifier(stat) {
+            Some(m) => m,
+            None => {
+                maybe_record_drop(
+                    &mut drop_report,
+                    officer_id,
+                    ability_name,
+                    effect_index,
+                    format!("unmapped_stat:{stat}"),
+                );
+                return None;
+            }
+        };
         return Some(CombatEffectSpec {
             id: stable_id.to_string(),
             source: EffectSource::LcarsOfficer,
@@ -692,7 +952,16 @@ pub fn lcars_effect_to_combat_effect_spec(
                 confidence: None,
             })
         }
-        _ => None,
+        other => {
+            maybe_record_drop(
+                &mut drop_report,
+                officer_id,
+                ability_name,
+                effect_index,
+                format!("unknown_effect_type:{}", other.trim()),
+            );
+            None
+        }
     }
 }
 
