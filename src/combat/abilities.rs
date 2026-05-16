@@ -106,6 +106,11 @@ pub enum AbilityEffect {
     IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
     ShieldMitigationBonus(f64),
+    /// **Multiplicative** shield-mitigation bypass on the defender. Engine applies as
+    /// `defender_mitigation × (1 - bypass)` (e.g. Harrison "Sabotage" at canonical
+    /// `op: MultiplySub` with value 0.7 → defender mitigates 30% of normal). Multiple sources
+    /// stack additively; the total is clamped to `[0, 1]` so bypass cannot exceed 100%.
+    ShieldMitigationBypassFraction(f64),
     /// Officer-granted accuracy bonus; additive fraction (e.g. 0.05 = +5% accuracy). Applied to attacker accuracy for mitigation calculations.
     AccuracyBonus(f64),
     /// Additive fraction merged into the **player** ship’s mitigation when the hostile returns fire

@@ -5,8 +5,8 @@ use std::fs;
 use std::path::Path;
 
 use crate::lcars::{
-    lcars_effect_coverage, load_lcars_dir, LcarsAbility, LcarsEffect, LcarsOfficer,
-    MechanicCoverageTier, ResolveOptions,
+    lcars_effect_coverage, lcars_effect_to_combat_effect_spec_with_report, load_lcars_dir,
+    LcarsAbility, LcarsDropReport, LcarsEffect, LcarsOfficer, MechanicCoverageTier, ResolveOptions,
 };
 
 use super::coverage::TierCounts;
@@ -45,6 +45,28 @@ pub struct OfficerScorecardRow {
     pub br_score: Option<i32>,
     pub bd_score: Option<i32>,
     pub fidelity: String,
+    /// Combat-intent effects dropped by the LCARS→IR adapter at load time due to an unknown
+    /// `trigger` (see `effect_trigger_timing`). Populated from [`LcarsDropReport`].
+    pub dropped_unknown_trigger: u32,
+    /// Combat-intent effects dropped due to an unmapped tag (parallels [`Self::unmapped_combat_tags`]
+    /// but sourced from the adapter's drop report — divergence indicates a wiring bug).
+    pub dropped_unmapped_tag: u32,
+    /// Combat-intent `stat_modify` effects dropped because `stat_to_officer_modifier` couldn't
+    /// map the stat name.
+    pub dropped_unmapped_stat: u32,
+    /// Combat-intent effects dropped because their `condition` block couldn't be represented in
+    /// [`crate::data::combat_effect_spec::AbilityConditionSpec`].
+    pub dropped_unmapped_condition: u32,
+}
+
+/// Internal: rolling drop counters used while building a row.
+#[derive(Debug, Default)]
+struct DropTallies {
+    unmapped_combat_tags: u32,
+    unknown_trigger: u32,
+    unmapped_tag: u32,
+    unmapped_stat: u32,
+    unmapped_condition: u32,
 }
 
 fn tag_is_non_combat(tag: Option<&str>) -> bool {
@@ -174,10 +196,10 @@ fn process_ability_effects(
     ipc: &mut TierCounts,
     raw_scores: &mut Vec<i32>,
     weighted_pairs: &mut Vec<(i32, f64)>,
-    unmapped_combat_tags: &mut u32,
+    tallies: &mut DropTallies,
 ) {
     let w = slot_weight(is_captain, is_bridge, is_below);
-    for eff in &ability.effects {
+    for (idx, eff) in ability.effects.iter().enumerate() {
         if !effect_is_combat_intent(eff) {
             continue;
         }
@@ -193,11 +215,37 @@ fn process_ability_effects(
                 // Keep the raw score from cov.tier and IPC counts as-is.
             } else {
                 raw = 0;
-                *unmapped_combat_tags += 1;
+                tallies.unmapped_combat_tags += 1;
             }
         }
         raw_scores.push(raw);
         weighted_pairs.push((raw, w));
+
+        // Cross-check via the LCARS→IR adapter's drop report so the scorecard reflects every
+        // category the adapter recognizes (unknown_trigger / unmapped_stat / unmapped_condition
+        // in addition to unmapped_tag). Officer stats are unused here — drop categorization
+        // doesn't depend on scaling.
+        let mut report = LcarsDropReport::default();
+        let stable_id = format!("{}::{}::{}", officer.id, ability.name, idx);
+        let _ = lcars_effect_to_combat_effect_spec_with_report(
+            eff,
+            &stable_id,
+            &officer.id,
+            &ability.name,
+            opts.tier_for(&officer.id),
+            None,
+            idx,
+            Some(&mut report),
+        );
+        for drop in &report.drops {
+            match LcarsDropReport::reason_category(&drop.reason) {
+                "unknown_trigger" => tallies.unknown_trigger += 1,
+                "unmapped_tag" => tallies.unmapped_tag += 1,
+                "unmapped_stat" => tallies.unmapped_stat += 1,
+                "unmapped_condition" => tallies.unmapped_condition += 1,
+                _ => {} // extra_attack_unsupported / unknown_effect_type — not surfaced here
+            }
+        }
     }
 }
 
@@ -212,7 +260,7 @@ pub fn scorecard_row_for_officer(
     let mut bd_ipc = TierCounts::default();
     let mut raw_scores: Vec<i32> = Vec::new();
     let mut weighted_pairs: Vec<(i32, f64)> = Vec::new();
-    let mut unmapped_combat_tags = 0u32;
+    let mut tallies = DropTallies::default();
 
     if let Some(ref a) = officer.captain_ability {
         process_ability_effects(
@@ -225,7 +273,7 @@ pub fn scorecard_row_for_officer(
             &mut cap_ipc,
             &mut raw_scores,
             &mut weighted_pairs,
-            &mut unmapped_combat_tags,
+            &mut tallies,
         );
     }
     if let Some(ref a) = officer.bridge_ability {
@@ -239,7 +287,7 @@ pub fn scorecard_row_for_officer(
             &mut br_ipc,
             &mut raw_scores,
             &mut weighted_pairs,
-            &mut unmapped_combat_tags,
+            &mut tallies,
         );
     }
     if let Some(ref a) = officer.below_decks_ability {
@@ -253,14 +301,15 @@ pub fn scorecard_row_for_officer(
             &mut bd_ipc,
             &mut raw_scores,
             &mut weighted_pairs,
-            &mut unmapped_combat_tags,
+            &mut tallies,
         );
     }
 
     let combat_n = raw_scores.len() as u32;
     let combat_avg = mean_round(&raw_scores);
     let combat_weighted = weighted_mean(&weighted_pairs);
-    let unmapped_penalty = (unmapped_combat_tags as i32 * UNMAPPED_TAG_PENALTY_PER_LINE).min(100);
+    let unmapped_penalty =
+        (tallies.unmapped_combat_tags as i32 * UNMAPPED_TAG_PENALTY_PER_LINE).min(100);
 
     let combat_auto = if combat_n == 0 {
         None
@@ -286,7 +335,7 @@ pub fn scorecard_row_for_officer(
         cap_ipc,
         br_ipc,
         bd_ipc,
-        unmapped_combat_tags,
+        unmapped_combat_tags: tallies.unmapped_combat_tags,
         combat_avg,
         combat_weighted,
         unmapped_penalty,
@@ -298,6 +347,10 @@ pub fn scorecard_row_for_officer(
         br_score,
         bd_score,
         fidelity: fidelity.to_string(),
+        dropped_unknown_trigger: tallies.unknown_trigger,
+        dropped_unmapped_tag: tallies.unmapped_tag,
+        dropped_unmapped_stat: tallies.unmapped_stat,
+        dropped_unmapped_condition: tallies.unmapped_condition,
     }
 }
 

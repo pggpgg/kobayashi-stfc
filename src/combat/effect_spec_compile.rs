@@ -561,6 +561,21 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
+            // target=DefenderOpponent → **multiplicative** bypass on defender (Harrison-style
+            // "ignores X% of opponent shield" — canonical `op: MultiplySub`). Engine applies as
+            // `mitigation × (1 - bypass)` (see `engine.rs` shield_mitigation_bypass clamp).
+            // The generator drops `MultiplySub` when ShieldMitigation falls through the
+            // `:unmapped` tag path (YAML lands with `operator: null, value: 0.7`), so the
+            // target field is what flags the multiplicative semantic. A single source may
+            // exceed 100% (clamped at consume); we clamp to [0, 1] here as a guard.
+            if matches!(spec.target, AbilityTargetSpec::DefenderOpponent) {
+                let bypass = v.clamp(0.0, 1.0);
+                return Ok((
+                    timing,
+                    AbilityEffect::ShieldMitigationBypassFraction(bypass),
+                    compiled_condition.clone(),
+                ));
+            }
             let add = match op {
                 "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
                 "sub" | "mul_sub" | "multiplysub" => -v,
@@ -927,6 +942,69 @@ mod tests {
         assert_eq!(
             compile_trigger(AbilityTriggerSpec::ShipLaunched).unwrap(),
             TimingWindow::CombatBegin
+        );
+    }
+
+    fn shield_mitigation_spec(target: AbilityTargetSpec, value: f64) -> CombatEffectSpec {
+        CombatEffectSpec {
+            id: "lcars:test:shield_mitigation".into(),
+            source: EffectSource::LcarsOfficer,
+            source_ref: None,
+            text: None,
+            trigger: AbilityTriggerSpec::CombatBegin,
+            target,
+            modifier: AbilityModifierSpec::ShieldMitigation,
+            operation: AbilityOperationSpec::Add,
+            value: Some(ValueSpec {
+                scalar: Some(value),
+                by_rank: None,
+                unit: None,
+                officer_stat_scaling: None,
+            }),
+            chance: None,
+            duration: None,
+            conditions: vec![],
+            attributes: serde_json::Map::new(),
+            stacking: None,
+            category: Some(EffectCategory::Combat),
+            confidence: Some(EffectConfidence::Authoritative),
+        }
+    }
+
+    #[test]
+    fn shield_mitigation_compile_self_target_keeps_positive_value() {
+        let spec = shield_mitigation_spec(AbilityTargetSpec::AttackerSelf, 0.18);
+        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("self shield mitigation");
+        assert!(
+            matches!(effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.18).abs() < 1e-12),
+            "AttackerSelf with op=Add should keep value sign as-is, got {effect:?}"
+        );
+    }
+
+    #[test]
+    fn shield_mitigation_compile_defender_opponent_emits_bypass_fraction() {
+        // Harrison's "Sabotage": canonical `op: MultiplySub, value 0.7 (rank 2), target EnemyShip`
+        // → multiplicative bypass of defender's shield_mitigation. Engine math:
+        // `mitigation × (1 - 0.7)`. Regression test for the `harrison-56cc6c` fidelity gap.
+        let spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        let (_, effect, _) =
+            compile_officer_combat_spec(&spec).expect("defender shield mitigation");
+        assert!(
+            matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 0.7).abs() < 1e-12),
+            "DefenderOpponent target should emit ShieldMitigationBypassFraction(0.7), got {effect:?}"
+        );
+    }
+
+    #[test]
+    fn shield_mitigation_compile_defender_opponent_clamps_bypass_at_100pct() {
+        // Belt-and-suspenders clamp: a single source with value > 1.0 must not bypass more than
+        // 100% of the defender's mitigation. (The engine also clamps the *total* across sources.)
+        let spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 1.4);
+        let (_, effect, _) =
+            compile_officer_combat_spec(&spec).expect("defender shield mitigation > 100%");
+        assert!(
+            matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 1.0).abs() < 1e-12),
+            "Bypass > 100% must clamp to 1.0; got {effect:?}"
         );
     }
 
