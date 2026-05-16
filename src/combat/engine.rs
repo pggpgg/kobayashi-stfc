@@ -367,7 +367,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
         let RoundStartOutput {
             combat_ctx,
-            phase_effects,
+            phase_effects: mut phase_effects_round,
             b_shots,
             def_b_shots,
         } = run_round_start_phase(
@@ -399,7 +399,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
         // must not feed the same-round weapon sub-rounds. Apply RoundEnd only after all weapons
         // for this round (see merge into `phase_effects_round` below).
-        let mut phase_effects_round = phase_effects.clone();
+        // `phase_effects_round` is moved out of `RoundStartOutput` (rebound above); no clone needed.
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
 
         run_attack_phase(
