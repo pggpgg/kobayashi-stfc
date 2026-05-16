@@ -1446,10 +1446,19 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     let damage_after_apex = damage_before_apex * apex_damage_factor;
 
                     // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
-                    let effective_shield_mitigation = (defender.shield_mitigation
+                    // Additive bonuses (e.g. Quantum Slipstream cumulative debuff) compose first,
+                    // then any multiplicative bypass (e.g. Harrison "Sabotage") scales the result
+                    // by (1 - bypass). Bypass total is clamped to [0, 1] so it cannot exceed 100%.
+                    let pre_bypass_shield_mitigation = (defender.shield_mitigation
                         + phase_effects.composed_shield_mitigation_bonus()
                         + inbound_defender_effects.composed_shield_mitigation_bonus())
                     .clamp(0.0, 1.0);
+                    let total_bypass_fraction = (phase_effects.composed_shield_mitigation_bypass()
+                        + inbound_defender_effects.composed_shield_mitigation_bypass())
+                    .clamp(0.0, 1.0);
+                    let effective_shield_mitigation = (pre_bypass_shield_mitigation
+                        * (1.0 - total_bypass_fraction))
+                        .clamp(0.0, 1.0);
                     let shield_mitigation = if defender_shield_remaining > 0.0 {
                         effective_shield_mitigation
                     } else {
