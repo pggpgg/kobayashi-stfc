@@ -272,12 +272,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let config = &setup.config;
     let attacker = &setup.attacker;
     let defender = &setup.defender;
-    let defender_faction = setup.defender_faction;
-    let defender_ship_type = setup.defender_ship_type;
-    let attacker_ship_type = setup.attacker_ship_type;
     let defender_is_npc_hostile = setup.defender_is_npc_hostile;
-    let defender_is_player_ship = setup.defender_is_player_ship;
-    let attacker_tal_assigned_captain_or_bridge = setup.attacker_tal_assigned_captain_or_bridge;
 
     let mut rng = Rng::new(seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
@@ -308,12 +303,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let attacker_mitigation_additive = setup.attacker_mitigation_additive;
     let attacker_accuracy_bonus = setup.attacker_accuracy_bonus;
     let attacker_dodge_bonus = setup.attacker_dodge_bonus;
-    let kill_effects = &setup.kill_effects;
-    let combat_end_effects = &setup.combat_end_effects;
 
     let round_end_effects = &setup.round_end_effects;
-
-    let defender_round_end_effects = &setup.defender_round_end_effects;
 
     // Per-trial conqueror borg beam hyperthermic check (depends on seed)
     if setup.quantum_beam_instant_loss
@@ -443,425 +434,52 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             emit_snapshots,
         );
 
-        phase_effects_round.add_effects(
-            TimingWindow::RoundEnd,
-            &round_end_filtered,
-            attacker.attack,
-            round_end_assimilated_early,
-            round_index,
-        );
-
-        record_ability_activations(
-            &mut trace,
-            round_index,
-            "round_end",
-            attacker,
-            &round_end_filtered,
-            round_end_assimilated_early,
-        );
-
-        // RoundEnd burning: roll after outbound/counter damage so conditions use end-of-round hull/shield;
-        // procs apply before the burn tick for this same round.
-        let ctx_after_weapons = CombatContext {
-            round_index,
-            defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
-            defender_shield_pct: if defender.shield_health > 0.0 {
-                defender_shield_remaining / defender.shield_health
-            } else {
-                1.0
-            },
-            attacker_hull_pct: 1.0
-                - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
-            attacker_shield_pct: if attacker.shield_health > 0.0 {
-                attacker_shield_remaining / attacker.shield_health
-            } else {
-                1.0
-            },
-            attacker_morale_active: combat_ctx.attacker_morale_active,
-            defender_burning_active: combat_ctx.defender_burning_active,
-            defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
-            attacker_burning_active: combat_ctx.attacker_burning_active,
-            attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: combat_ctx.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: attacker.id.clone(),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge: combat_ctx
-                .attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
-            combat_battle_type_id: combat_ctx.combat_battle_type_id,
-            defender_level: combat_ctx.defender_level,
-        };
-        let round_end_burn_filtered =
-            filter_effects_by_condition(round_end_effects, &ctx_after_weapons);
-        roll_burning_triggers(
+        let RoundEndOutcome { continue_loop } = run_round_end_phase(
             &mut RoundPhaseCtx {
                 trace: &mut trace,
                 rng: &mut rng,
                 round_index,
             },
-            &round_end_burn_filtered,
+            setup,
+            &combat_ctx,
+            &mut phase_effects_round,
+            &round_end_filtered,
             round_end_assimilated_early,
-            "round_end",
-            &attacker.id,
-            None,
+            &mut total_hull_damage,
+            &mut total_attacker_hull_damage,
+            &mut defender_shield_remaining,
+            &mut attacker_shield_remaining,
+            &mut assimilated_rounds_remaining,
+            &mut defender_assimilated_rounds_remaining,
+            &mut defender_hull_breach_rounds,
+            &mut attacker_hull_breach_rounds,
             &mut defender_burning_rounds,
+            &mut attacker_burning_rounds,
+            &mut attacker_hull_gross_damage_this_round,
+            &mut attacker_hull_gross_damage_last_round,
+            &mut attacker_shield_gross_damage_this_round,
+            &mut attacker_shield_gross_damage_last_round,
+            emit_snapshots,
         );
-
-        let round_end_apex_shred =
-            (attacker.apex_shred + phase_effects_round.composed_apex_shred_bonus()).max(0.0);
-        let round_end_apex_barrier =
-            (defender.apex_barrier + phase_effects_round.composed_apex_barrier_bonus()).max(0.0);
-        let round_end_apex_factor = 10000.0
-            / (10000.0 + round_end_apex_barrier / (1.0 + round_end_apex_shred).max(EPSILON));
-        let bonus_damage =
-            phase_effects_round.compose_round_end_damage(attacker.end_of_round_damage);
-        // Burning: binary per-round tick — 1% of defender max hull while state active (Δ HHP_burn = 0.01 × HHP_max); no officer/research scaling of that rate.
-        let burning_damage = if defender_burning_rounds > 0 {
-            defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
-        } else {
-            0.0
-        };
-        let attacker_burning_damage = if attacker_burning_rounds > 0 {
-            attacker.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
-        } else {
-            0.0
-        };
-        // Round-end and burning apply to hull only (shields do not absorb these).
-        total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
-        total_attacker_hull_damage += defender.end_of_round_damage;
-        attacker_hull_gross_damage_this_round += defender.end_of_round_damage;
-        total_attacker_hull_damage += attacker_burning_damage * round_end_apex_factor;
-        attacker_hull_gross_damage_this_round += attacker_burning_damage * round_end_apex_factor;
-
-        // Regen: shield and hull restoration at round end from attacker's crew (officer/data regen effects apply to the ship with the crew).
-        let shield_regen = phase_effects_round.composed_shield_regen();
-        let hull_regen = phase_effects_round.composed_hull_regen();
-        let shield_regen_frac = phase_effects_round.composed_shield_regen_max_fraction();
-        let hull_regen_frac = phase_effects_round.composed_hull_regen_max_fraction();
-        let shield_heal = shield_regen + shield_regen_frac * attacker.shield_health.max(0.0);
-        let hull_heal = hull_regen + hull_regen_frac * attacker.hull_health.max(0.0);
-        attacker_shield_remaining =
-            (attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
-        total_attacker_hull_damage = (total_attacker_hull_damage - hull_heal).max(0.0);
-
-        let defender_round_end_filtered =
-            filter_effects_by_condition(defender_round_end_effects, &ctx_after_weapons);
-        let defender_re_assimilated = defender_assimilated_rounds_remaining > 0;
-        record_ability_activations(
-            &mut trace,
-            round_index,
-            "round_end",
-            defender,
-            &defender_round_end_filtered,
-            defender_re_assimilated,
-        );
-        let mut defender_round_end_acc = EffectAccumulator::default();
-        defender_round_end_acc.add_effects(
-            TimingWindow::RoundEnd,
-            &defender_round_end_filtered,
-            defender.attack,
-            defender_re_assimilated,
-            round_index,
-        );
-        let def_re_shield = defender_round_end_acc.composed_shield_regen();
-        let def_re_hull = defender_round_end_acc.composed_hull_regen();
-        let def_re_shield_frac = defender_round_end_acc.composed_shield_regen_max_fraction();
-        let def_re_hull_frac = defender_round_end_acc.composed_hull_regen_max_fraction();
-        let def_re_shield_heal =
-            def_re_shield + def_re_shield_frac * defender.shield_health.max(0.0);
-        let def_re_hull_heal = def_re_hull + def_re_hull_frac * defender.hull_health.max(0.0);
-        defender_shield_remaining =
-            (defender_shield_remaining + def_re_shield_heal).min(defender.shield_health.max(0.0));
-        total_hull_damage = (total_hull_damage - def_re_hull_heal).max(0.0);
-
-        defender_burning_rounds = defender_burning_rounds.saturating_sub(1);
-        defender_hull_breach_rounds = defender_hull_breach_rounds.saturating_sub(1);
-        attacker_burning_rounds = attacker_burning_rounds.saturating_sub(1);
-        attacker_hull_breach_rounds = attacker_hull_breach_rounds.saturating_sub(1);
-        assimilated_rounds_remaining = assimilated_rounds_remaining.saturating_sub(1);
-        defender_assimilated_rounds_remaining =
-            defender_assimilated_rounds_remaining.saturating_sub(1);
-
-        trace.record_if(|| CombatEvent {
-            event_type: "end_of_round_effects".to_string(),
-            round_index,
-            phase: "end".to_string(),
-            source: EventSource {
-                player_bonus_source: Some("round_end_bonus".to_string()),
-                ..EventSource::default()
-            },
-            weapon_index: None,
-            values: Map::from_iter([
-                (
-                    "bonus_damage".to_string(),
-                    Value::from(round_f64(bonus_damage)),
-                ),
-                (
-                    "burning_damage".to_string(),
-                    Value::from(round_f64(burning_damage)),
-                ),
-                (
-                    "attacker_burning_damage".to_string(),
-                    Value::from(round_f64(attacker_burning_damage)),
-                ),
-                (
-                    "running_hull_damage".to_string(),
-                    Value::from(round_f64(total_hull_damage)),
-                ),
-            ]),
-        });
-
-        if emit_snapshots {
-            let ctx_end = CombatContext {
-                round_index,
-                defender_hull_pct: 1.0
-                    - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
-                defender_shield_pct: if defender.shield_health > 0.0 {
-                    defender_shield_remaining / defender.shield_health
-                } else {
-                    1.0
-                },
-                attacker_hull_pct: 1.0
-                    - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
-                attacker_shield_pct: if attacker.shield_health > 0.0 {
-                    attacker_shield_remaining / attacker.shield_health
-                } else {
-                    1.0
-                },
-                attacker_morale_active: combat_ctx.attacker_morale_active,
-                defender_burning_active: defender_burning_rounds > 0,
-                defender_hull_breach_active: defender_hull_breach_rounds > 0,
-                attacker_burning_active: attacker_burning_rounds > 0,
-                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-                defender_faction,
-                attacker_owner_faction: config.attacker_owner_faction,
-                defender_hull_faction_id: config.defender_hull_faction_id,
-                defender_ship_type,
-                attacker_ship_type,
-                attacker_ship_id: attacker.id.clone(),
-                defender_is_npc_hostile,
-                defender_is_player_ship,
-                attacker_tal_assigned_captain_or_bridge,
-                defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-                engagement_enemy_types: config.engagement_enemy_types.clone(),
-                combat_battle_type_id: None,
-                defender_level: config.defender_level,
-            };
-            let snap = build_combat_state_snapshot(
-                SnapshotAnchor::EndOfRoundPostEffects,
-                round_index,
-                None,
-                None,
-                attacker,
-                defender,
-                total_hull_damage,
-                total_attacker_hull_damage,
-                defender_shield_remaining,
-                attacker_shield_remaining,
-                &ctx_end,
-                assimilated_rounds_remaining,
-                defender_assimilated_rounds_remaining,
-                Some(&phase_effects_round),
-            );
-            trace.record(state_snapshot_as_combat_event(&snap));
-        }
-
-        // Fight ends when defender or attacker runs out of hull (HHP).
-        let defender_hull_now = (defender.hull_health - total_hull_damage).max(0.0);
-        let mut attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
-        if defender_hull_now <= 0.0 {
-            let kill_ctx = CombatContext {
-                round_index,
-                defender_hull_pct: 0.0,
-                defender_shield_pct: if defender.shield_health > 0.0 {
-                    defender_shield_remaining / defender.shield_health
-                } else {
-                    0.0
-                },
-                attacker_hull_pct: 1.0
-                    - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
-                attacker_shield_pct: if attacker.shield_health > 0.0 {
-                    attacker_shield_remaining / attacker.shield_health
-                } else {
-                    1.0
-                },
-                attacker_morale_active: combat_ctx.attacker_morale_active,
-                defender_burning_active: combat_ctx.defender_burning_active,
-                defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
-                attacker_burning_active: combat_ctx.attacker_burning_active,
-                attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
-                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-                defender_faction,
-                attacker_owner_faction: combat_ctx.attacker_owner_faction,
-                defender_hull_faction_id: config.defender_hull_faction_id,
-                defender_ship_type,
-                attacker_ship_type,
-                attacker_ship_id: attacker.id.clone(),
-                defender_is_npc_hostile,
-                defender_is_player_ship,
-                attacker_tal_assigned_captain_or_bridge: combat_ctx
-                    .attacker_tal_assigned_captain_or_bridge,
-                defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-                engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
-                combat_battle_type_id: combat_ctx.combat_battle_type_id,
-                defender_level: combat_ctx.defender_level,
-            };
-            let kill_filtered = filter_effects_by_condition(kill_effects, &kill_ctx);
-            let kill_assimilated = assimilated_rounds_remaining > 0;
-            record_ability_activations(
-                &mut trace,
-                round_index,
-                "kill",
-                attacker,
-                &kill_filtered,
-                kill_assimilated,
-            );
-            roll_burning_triggers(
-                &mut RoundPhaseCtx {
-                    trace: &mut trace,
-                    rng: &mut rng,
-                    round_index,
-                },
-                &kill_filtered,
-                kill_assimilated,
-                "kill",
-                &attacker.id,
-                None,
-                &mut defender_burning_rounds,
-            );
-            let on_kill_regen = sum_on_kill_hull_regen(&kill_filtered, kill_assimilated);
-            total_attacker_hull_damage = (total_attacker_hull_damage
-                - on_kill_regen * attacker.hull_health.max(0.0))
-            .max(0.0);
-            attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
-        }
-        attacker_hull_gross_damage_last_round = attacker_hull_gross_damage_this_round;
-        attacker_hull_gross_damage_this_round = 0.0;
-        attacker_shield_gross_damage_last_round = attacker_shield_gross_damage_this_round;
-        attacker_shield_gross_damage_this_round = 0.0;
-
-        if defender_hull_now <= 0.0 || attacker_hull_now <= 0.0 {
+        if !continue_loop {
             break;
         }
     }
 
-    let combat_end_ctx = CombatContext {
-        round_index: rounds_completed,
-        defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
-        defender_shield_pct: if defender.shield_health > 0.0 {
-            defender_shield_remaining / defender.shield_health
-        } else {
-            1.0
-        },
-        attacker_hull_pct: 1.0
-            - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
-        attacker_shield_pct: if attacker.shield_health > 0.0 {
-            attacker_shield_remaining / attacker.shield_health
-        } else {
-            1.0
-        },
-        attacker_morale_active: false,
-        defender_burning_active: false,
-        defender_hull_breach_active: false,
-        attacker_burning_active: false,
-        attacker_hull_breach_active: false,
-        defender_assimilated_active: false,
-        defender_faction,
-        attacker_owner_faction: config.attacker_owner_faction,
-        defender_hull_faction_id: config.defender_hull_faction_id,
-        defender_ship_type,
-        attacker_ship_type,
-        attacker_ship_id: attacker.id.clone(),
-        defender_is_npc_hostile,
-        defender_is_player_ship,
-        attacker_tal_assigned_captain_or_bridge,
-        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-        engagement_enemy_types: config.engagement_enemy_types.clone(),
-        combat_battle_type_id: None,
-        defender_level: config.defender_level,
-    };
-    let combat_end_filtered = filter_effects_by_condition(combat_end_effects, &combat_end_ctx);
-    record_ability_activations(
-        &mut trace,
-        rounds_completed,
-        "combat_end",
-        attacker,
-        &combat_end_filtered,
-        false,
-    );
-
-    // Apply CombatEnd timing window effects: hull/shield damage, healing, and regen from
-    // attacker crew abilities that trigger at combat end (e.g. final-blow damage, deathrattle,
-    // combat-summary bonuses). Mirrors the RoundEnd pattern: build an EffectAccumulator,
-    // add CombatEnd-tagged effects, then apply regen and damage to the appropriate sides.
-    {
-        let mut combat_end_acc = EffectAccumulator::default();
-        combat_end_acc.add_effects(
-            TimingWindow::CombatEnd,
-            &combat_end_filtered,
-            attacker.attack,
-            false,
-            rounds_completed,
-        );
-
-        // Regen from attacker crew CombatEnd effects (applies to attacker's ship).
-        let ce_shield_regen = combat_end_acc.composed_shield_regen();
-        let ce_hull_regen = combat_end_acc.composed_hull_regen();
-        let ce_shield_regen_frac = combat_end_acc.composed_shield_regen_max_fraction();
-        let ce_hull_regen_frac = combat_end_acc.composed_hull_regen_max_fraction();
-        let ce_shield_heal =
-            ce_shield_regen + ce_shield_regen_frac * attacker.shield_health.max(0.0);
-        let ce_hull_heal = ce_hull_regen + ce_hull_regen_frac * attacker.hull_health.max(0.0);
-        attacker_shield_remaining =
-            (attacker_shield_remaining + ce_shield_heal).min(attacker.shield_health.max(0.0));
-        total_attacker_hull_damage = (total_attacker_hull_damage - ce_hull_heal).max(0.0);
-
-        // Apply CombatEnd damage from attacker crew effects to the defender.
-        let ce_defender_damage = combat_end_acc.compose_round_end_damage(0.0);
-        if ce_defender_damage > 0.0 {
-            let (dmg_to_shield, dmg_to_hull) = apply_shield_hull_split(
-                ce_defender_damage,
-                defender.shield_mitigation,
-                defender_shield_remaining,
-            );
-            defender_shield_remaining = (defender_shield_remaining - dmg_to_shield).max(0.0);
-            total_shield_damage += dmg_to_shield;
-            total_hull_damage += dmg_to_hull;
-        }
-
-        trace.record_if(|| CombatEvent {
-            event_type: "combat_end_effects".to_string(),
+    run_combat_end_phase(
+        &mut RoundPhaseCtx {
+            trace: &mut trace,
+            rng: &mut rng,
             round_index: rounds_completed,
-            phase: "combat_end".to_string(),
-            source: EventSource {
-                player_bonus_source: Some("combat_end".to_string()),
-                ..EventSource::default()
-            },
-            weapon_index: None,
-            values: Map::from_iter([
-                (
-                    "attacker_shield_heal".to_string(),
-                    Value::from(round_f64(ce_shield_heal)),
-                ),
-                (
-                    "attacker_hull_heal".to_string(),
-                    Value::from(round_f64(ce_hull_heal)),
-                ),
-                (
-                    "defender_damage".to_string(),
-                    Value::from(round_f64(ce_defender_damage)),
-                ),
-            ]),
-        });
-    }
+        },
+        setup,
+        rounds_completed,
+        &mut total_hull_damage,
+        &mut total_shield_damage,
+        &mut total_attacker_hull_damage,
+        &mut defender_shield_remaining,
+        &mut attacker_shield_remaining,
+    );
 
     let total_damage = total_hull_damage + total_shield_damage;
     let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
@@ -2761,6 +2379,500 @@ fn run_attack_phase(
             attack_phase_assimilated,
             round_index,
         );
+    }
+}
+
+/// Per-round outcome of [`run_round_end_phase`]. `continue_loop = false` tells the caller to
+/// `break` out of the round loop (defender or attacker hit zero hull this round).
+pub(crate) struct RoundEndOutcome {
+    pub continue_loop: bool,
+}
+
+/// Runs the round-end phase: RoundEnd accumulation onto `phase_effects_round`; activation logging;
+/// RoundEnd burning rolls; apex factor + bonus/burning damage + defender end-of-round counter;
+/// attacker- and defender-side regen; status-duration tick-down; end-of-round trace + optional
+/// snapshot; kill-trigger (kill_ctx, kill_filtered, on-kill burning + hull regen) when the
+/// defender's hull hits zero; gross-damage rollover; and the fight-end check.
+///
+/// Returns `RoundEndOutcome { continue_loop: false }` when either side is at zero hull, so the
+/// caller exits the round loop (a helper cannot `break` its caller's loop).
+#[allow(clippy::too_many_arguments)] // round-phase helper; explicit borrows over state struct
+fn run_round_end_phase(
+    pc: &mut RoundPhaseCtx<'_>,
+    setup: &PreCombatSetup,
+    combat_ctx: &CombatContext,
+    phase_effects_round: &mut EffectAccumulator,
+    round_end_filtered: &[ActiveAbilityEffect],
+    round_end_assimilated_early: bool,
+    total_hull_damage: &mut f64,
+    total_attacker_hull_damage: &mut f64,
+    defender_shield_remaining: &mut f64,
+    attacker_shield_remaining: &mut f64,
+    assimilated_rounds_remaining: &mut u32,
+    defender_assimilated_rounds_remaining: &mut u32,
+    defender_hull_breach_rounds: &mut u32,
+    attacker_hull_breach_rounds: &mut u32,
+    defender_burning_rounds: &mut u32,
+    attacker_burning_rounds: &mut u32,
+    attacker_hull_gross_damage_this_round: &mut f64,
+    attacker_hull_gross_damage_last_round: &mut f64,
+    attacker_shield_gross_damage_this_round: &mut f64,
+    attacker_shield_gross_damage_last_round: &mut f64,
+    emit_snapshots: bool,
+) -> RoundEndOutcome {
+    // shadow setup fields so the body reads like the original
+    let round_index = pc.round_index;
+    let attacker = &setup.attacker;
+    let defender = &setup.defender;
+    let config = &setup.config;
+    let defender_faction = setup.defender_faction;
+    let defender_ship_type = setup.defender_ship_type;
+    let attacker_ship_type = setup.attacker_ship_type;
+    let defender_is_npc_hostile = setup.defender_is_npc_hostile;
+    let defender_is_player_ship = setup.defender_is_player_ship;
+    let attacker_tal_assigned_captain_or_bridge = setup.attacker_tal_assigned_captain_or_bridge;
+    let round_end_effects = &setup.round_end_effects;
+    let defender_round_end_effects = &setup.defender_round_end_effects;
+    let kill_effects = &setup.kill_effects;
+
+    phase_effects_round.add_effects(
+        TimingWindow::RoundEnd,
+        round_end_filtered,
+        attacker.attack,
+        round_end_assimilated_early,
+        round_index,
+    );
+
+    record_ability_activations(
+        pc.trace,
+        round_index,
+        "round_end",
+        attacker,
+        round_end_filtered,
+        round_end_assimilated_early,
+    );
+
+    // RoundEnd burning: roll after outbound/counter damage so conditions use end-of-round hull/shield;
+    // procs apply before the burn tick for this same round.
+    let ctx_after_weapons = CombatContext {
+        round_index,
+        defender_hull_pct: 1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+        defender_shield_pct: if defender.shield_health > 0.0 {
+            *defender_shield_remaining / defender.shield_health
+        } else {
+            1.0
+        },
+        attacker_hull_pct: 1.0
+            - (*total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+        attacker_shield_pct: if attacker.shield_health > 0.0 {
+            *attacker_shield_remaining / attacker.shield_health
+        } else {
+            1.0
+        },
+        attacker_morale_active: combat_ctx.attacker_morale_active,
+        defender_burning_active: combat_ctx.defender_burning_active,
+        defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
+        attacker_burning_active: combat_ctx.attacker_burning_active,
+        attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
+        defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+        defender_faction,
+        attacker_owner_faction: combat_ctx.attacker_owner_faction,
+        defender_hull_faction_id: config.defender_hull_faction_id,
+        defender_ship_type,
+        attacker_ship_type,
+        attacker_ship_id: attacker.id.clone(),
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge: combat_ctx
+            .attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+        combat_battle_type_id: combat_ctx.combat_battle_type_id,
+        defender_level: combat_ctx.defender_level,
+    };
+    let round_end_burn_filtered =
+        filter_effects_by_condition(round_end_effects, &ctx_after_weapons);
+    roll_burning_triggers(
+        pc,
+        &round_end_burn_filtered,
+        round_end_assimilated_early,
+        "round_end",
+        &attacker.id,
+        None,
+        defender_burning_rounds,
+    );
+
+    let round_end_apex_shred =
+        (attacker.apex_shred + phase_effects_round.composed_apex_shred_bonus()).max(0.0);
+    let round_end_apex_barrier =
+        (defender.apex_barrier + phase_effects_round.composed_apex_barrier_bonus()).max(0.0);
+    let round_end_apex_factor = 10000.0
+        / (10000.0 + round_end_apex_barrier / (1.0 + round_end_apex_shred).max(EPSILON));
+    let bonus_damage =
+        phase_effects_round.compose_round_end_damage(attacker.end_of_round_damage);
+    // Burning: binary per-round tick — 1% of defender max hull while state active (Δ HHP_burn = 0.01 × HHP_max); no officer/research scaling of that rate.
+    let burning_damage = if *defender_burning_rounds > 0 {
+        defender.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
+    } else {
+        0.0
+    };
+    let attacker_burning_damage = if *attacker_burning_rounds > 0 {
+        attacker.hull_health.max(0.0) * BURNING_HULL_DAMAGE_PER_ROUND
+    } else {
+        0.0
+    };
+    // Round-end and burning apply to hull only (shields do not absorb these).
+    *total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
+    *total_attacker_hull_damage += defender.end_of_round_damage;
+    *attacker_hull_gross_damage_this_round += defender.end_of_round_damage;
+    *total_attacker_hull_damage += attacker_burning_damage * round_end_apex_factor;
+    *attacker_hull_gross_damage_this_round += attacker_burning_damage * round_end_apex_factor;
+
+    // Regen: shield and hull restoration at round end from attacker's crew (officer/data regen effects apply to the ship with the crew).
+    let shield_regen = phase_effects_round.composed_shield_regen();
+    let hull_regen = phase_effects_round.composed_hull_regen();
+    let shield_regen_frac = phase_effects_round.composed_shield_regen_max_fraction();
+    let hull_regen_frac = phase_effects_round.composed_hull_regen_max_fraction();
+    let shield_heal = shield_regen + shield_regen_frac * attacker.shield_health.max(0.0);
+    let hull_heal = hull_regen + hull_regen_frac * attacker.hull_health.max(0.0);
+    *attacker_shield_remaining =
+        (*attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
+    *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+
+    let defender_round_end_filtered =
+        filter_effects_by_condition(defender_round_end_effects, &ctx_after_weapons);
+    let defender_re_assimilated = *defender_assimilated_rounds_remaining > 0;
+    record_ability_activations(
+        pc.trace,
+        round_index,
+        "round_end",
+        defender,
+        &defender_round_end_filtered,
+        defender_re_assimilated,
+    );
+    let mut defender_round_end_acc = EffectAccumulator::default();
+    defender_round_end_acc.add_effects(
+        TimingWindow::RoundEnd,
+        &defender_round_end_filtered,
+        defender.attack,
+        defender_re_assimilated,
+        round_index,
+    );
+    let def_re_shield = defender_round_end_acc.composed_shield_regen();
+    let def_re_hull = defender_round_end_acc.composed_hull_regen();
+    let def_re_shield_frac = defender_round_end_acc.composed_shield_regen_max_fraction();
+    let def_re_hull_frac = defender_round_end_acc.composed_hull_regen_max_fraction();
+    let def_re_shield_heal =
+        def_re_shield + def_re_shield_frac * defender.shield_health.max(0.0);
+    let def_re_hull_heal = def_re_hull + def_re_hull_frac * defender.hull_health.max(0.0);
+    *defender_shield_remaining =
+        (*defender_shield_remaining + def_re_shield_heal).min(defender.shield_health.max(0.0));
+    *total_hull_damage = (*total_hull_damage - def_re_hull_heal).max(0.0);
+
+    *defender_burning_rounds = defender_burning_rounds.saturating_sub(1);
+    *defender_hull_breach_rounds = defender_hull_breach_rounds.saturating_sub(1);
+    *attacker_burning_rounds = attacker_burning_rounds.saturating_sub(1);
+    *attacker_hull_breach_rounds = attacker_hull_breach_rounds.saturating_sub(1);
+    *assimilated_rounds_remaining = assimilated_rounds_remaining.saturating_sub(1);
+    *defender_assimilated_rounds_remaining =
+        defender_assimilated_rounds_remaining.saturating_sub(1);
+
+    pc.trace.record_if(|| CombatEvent {
+        event_type: "end_of_round_effects".to_string(),
+        round_index,
+        phase: "end".to_string(),
+        source: EventSource {
+            player_bonus_source: Some("round_end_bonus".to_string()),
+            ..EventSource::default()
+        },
+        weapon_index: None,
+        values: Map::from_iter([
+            (
+                "bonus_damage".to_string(),
+                Value::from(round_f64(bonus_damage)),
+            ),
+            (
+                "burning_damage".to_string(),
+                Value::from(round_f64(burning_damage)),
+            ),
+            (
+                "attacker_burning_damage".to_string(),
+                Value::from(round_f64(attacker_burning_damage)),
+            ),
+            (
+                "running_hull_damage".to_string(),
+                Value::from(round_f64(*total_hull_damage)),
+            ),
+        ]),
+    });
+
+    if emit_snapshots {
+        let ctx_end = CombatContext {
+            round_index,
+            defender_hull_pct: 1.0
+                - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                *defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: 1.0
+                - (*total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                *attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+            attacker_morale_active: combat_ctx.attacker_morale_active,
+            defender_burning_active: *defender_burning_rounds > 0,
+            defender_hull_breach_active: *defender_hull_breach_rounds > 0,
+            attacker_burning_active: *attacker_burning_rounds > 0,
+            attacker_hull_breach_active: *attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+            defender_faction,
+            attacker_owner_faction: config.attacker_owner_faction,
+            defender_hull_faction_id: config.defender_hull_faction_id,
+            defender_ship_type,
+            attacker_ship_type,
+            attacker_ship_id: attacker.id.clone(),
+            defender_is_npc_hostile,
+            defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+            engagement_enemy_types: config.engagement_enemy_types.clone(),
+            combat_battle_type_id: None,
+            defender_level: config.defender_level,
+        };
+        let snap = build_combat_state_snapshot(
+            SnapshotAnchor::EndOfRoundPostEffects,
+            round_index,
+            None,
+            None,
+            attacker,
+            defender,
+            *total_hull_damage,
+            *total_attacker_hull_damage,
+            *defender_shield_remaining,
+            *attacker_shield_remaining,
+            &ctx_end,
+            *assimilated_rounds_remaining,
+            *defender_assimilated_rounds_remaining,
+            Some(&*phase_effects_round),
+        );
+        pc.trace.record(state_snapshot_as_combat_event(&snap));
+    }
+
+    // Fight ends when defender or attacker runs out of hull (HHP).
+    let defender_hull_now = (defender.hull_health - *total_hull_damage).max(0.0);
+    let mut attacker_hull_now = (attacker.hull_health - *total_attacker_hull_damage).max(0.0);
+    if defender_hull_now <= 0.0 {
+        let kill_ctx = CombatContext {
+            round_index,
+            defender_hull_pct: 0.0,
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                *defender_shield_remaining / defender.shield_health
+            } else {
+                0.0
+            },
+            attacker_hull_pct: 1.0
+                - (*total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                *attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+            attacker_morale_active: combat_ctx.attacker_morale_active,
+            defender_burning_active: combat_ctx.defender_burning_active,
+            defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
+            attacker_burning_active: combat_ctx.attacker_burning_active,
+            attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
+            defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+            defender_faction,
+            attacker_owner_faction: combat_ctx.attacker_owner_faction,
+            defender_hull_faction_id: config.defender_hull_faction_id,
+            defender_ship_type,
+            attacker_ship_type,
+            attacker_ship_id: attacker.id.clone(),
+            defender_is_npc_hostile,
+            defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge: combat_ctx
+                .attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+            engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+            combat_battle_type_id: combat_ctx.combat_battle_type_id,
+            defender_level: combat_ctx.defender_level,
+        };
+        let kill_filtered = filter_effects_by_condition(kill_effects, &kill_ctx);
+        let kill_assimilated = *assimilated_rounds_remaining > 0;
+        record_ability_activations(
+            pc.trace,
+            round_index,
+            "kill",
+            attacker,
+            &kill_filtered,
+            kill_assimilated,
+        );
+        roll_burning_triggers(
+            pc,
+            &kill_filtered,
+            kill_assimilated,
+            "kill",
+            &attacker.id,
+            None,
+            defender_burning_rounds,
+        );
+        let on_kill_regen = sum_on_kill_hull_regen(&kill_filtered, kill_assimilated);
+        *total_attacker_hull_damage = (*total_attacker_hull_damage
+            - on_kill_regen * attacker.hull_health.max(0.0))
+        .max(0.0);
+        attacker_hull_now = (attacker.hull_health - *total_attacker_hull_damage).max(0.0);
+    }
+    *attacker_hull_gross_damage_last_round = *attacker_hull_gross_damage_this_round;
+    *attacker_hull_gross_damage_this_round = 0.0;
+    *attacker_shield_gross_damage_last_round = *attacker_shield_gross_damage_this_round;
+    *attacker_shield_gross_damage_this_round = 0.0;
+
+    RoundEndOutcome {
+        continue_loop: !(defender_hull_now <= 0.0 || attacker_hull_now <= 0.0),
+    }
+}
+
+/// Runs the combat-end phase: builds the final `CombatContext` (with all status flags `false`)
+/// from the post-loop snapshot of hull/shield state, filters CombatEnd attacker-crew effects,
+/// applies CombatEnd regen (attacker hull/shield heal) and CombatEnd damage to the defender
+/// (shield/hull split), and emits the `combat_end_effects` trace event. Runs once after the
+/// round loop exits, before the `SimulationResult` is built.
+#[allow(clippy::too_many_arguments)] // round-phase helper; explicit borrows over state struct
+fn run_combat_end_phase(
+    pc: &mut RoundPhaseCtx<'_>,
+    setup: &PreCombatSetup,
+    rounds_completed: u32,
+    total_hull_damage: &mut f64,
+    total_shield_damage: &mut f64,
+    total_attacker_hull_damage: &mut f64,
+    defender_shield_remaining: &mut f64,
+    attacker_shield_remaining: &mut f64,
+) {
+    // shadow setup fields so the body reads like the original
+    let attacker = &setup.attacker;
+    let defender = &setup.defender;
+    let config = &setup.config;
+    let defender_faction = setup.defender_faction;
+    let defender_ship_type = setup.defender_ship_type;
+    let attacker_ship_type = setup.attacker_ship_type;
+    let defender_is_npc_hostile = setup.defender_is_npc_hostile;
+    let defender_is_player_ship = setup.defender_is_player_ship;
+    let attacker_tal_assigned_captain_or_bridge = setup.attacker_tal_assigned_captain_or_bridge;
+    let combat_end_effects = &setup.combat_end_effects;
+
+    let combat_end_ctx = CombatContext {
+        round_index: rounds_completed,
+        defender_hull_pct: 1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+        defender_shield_pct: if defender.shield_health > 0.0 {
+            *defender_shield_remaining / defender.shield_health
+        } else {
+            1.0
+        },
+        attacker_hull_pct: 1.0
+            - (*total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+        attacker_shield_pct: if attacker.shield_health > 0.0 {
+            *attacker_shield_remaining / attacker.shield_health
+        } else {
+            1.0
+        },
+        attacker_morale_active: false,
+        defender_burning_active: false,
+        defender_hull_breach_active: false,
+        attacker_burning_active: false,
+        attacker_hull_breach_active: false,
+        defender_assimilated_active: false,
+        defender_faction,
+        attacker_owner_faction: config.attacker_owner_faction,
+        defender_hull_faction_id: config.defender_hull_faction_id,
+        defender_ship_type,
+        attacker_ship_type,
+        attacker_ship_id: attacker.id.clone(),
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: config.engagement_enemy_types.clone(),
+        combat_battle_type_id: None,
+        defender_level: config.defender_level,
+    };
+    let combat_end_filtered = filter_effects_by_condition(combat_end_effects, &combat_end_ctx);
+    record_ability_activations(
+        pc.trace,
+        rounds_completed,
+        "combat_end",
+        attacker,
+        &combat_end_filtered,
+        false,
+    );
+
+    // Apply CombatEnd timing window effects: hull/shield damage, healing, and regen from
+    // attacker crew abilities that trigger at combat end (e.g. final-blow damage, deathrattle,
+    // combat-summary bonuses). Mirrors the RoundEnd pattern: build an EffectAccumulator,
+    // add CombatEnd-tagged effects, then apply regen and damage to the appropriate sides.
+    {
+        let mut combat_end_acc = EffectAccumulator::default();
+        combat_end_acc.add_effects(
+            TimingWindow::CombatEnd,
+            &combat_end_filtered,
+            attacker.attack,
+            false,
+            rounds_completed,
+        );
+
+        // Regen from attacker crew CombatEnd effects (applies to attacker's ship).
+        let ce_shield_regen = combat_end_acc.composed_shield_regen();
+        let ce_hull_regen = combat_end_acc.composed_hull_regen();
+        let ce_shield_regen_frac = combat_end_acc.composed_shield_regen_max_fraction();
+        let ce_hull_regen_frac = combat_end_acc.composed_hull_regen_max_fraction();
+        let ce_shield_heal =
+            ce_shield_regen + ce_shield_regen_frac * attacker.shield_health.max(0.0);
+        let ce_hull_heal = ce_hull_regen + ce_hull_regen_frac * attacker.hull_health.max(0.0);
+        *attacker_shield_remaining =
+            (*attacker_shield_remaining + ce_shield_heal).min(attacker.shield_health.max(0.0));
+        *total_attacker_hull_damage = (*total_attacker_hull_damage - ce_hull_heal).max(0.0);
+
+        // Apply CombatEnd damage from attacker crew effects to the defender.
+        let ce_defender_damage = combat_end_acc.compose_round_end_damage(0.0);
+        if ce_defender_damage > 0.0 {
+            let (dmg_to_shield, dmg_to_hull) = apply_shield_hull_split(
+                ce_defender_damage,
+                defender.shield_mitigation,
+                *defender_shield_remaining,
+            );
+            *defender_shield_remaining = (*defender_shield_remaining - dmg_to_shield).max(0.0);
+            *total_shield_damage += dmg_to_shield;
+            *total_hull_damage += dmg_to_hull;
+        }
+
+        pc.trace.record_if(|| CombatEvent {
+            event_type: "combat_end_effects".to_string(),
+            round_index: rounds_completed,
+            phase: "combat_end".to_string(),
+            source: EventSource {
+                player_bonus_source: Some("combat_end".to_string()),
+                ..EventSource::default()
+            },
+            weapon_index: None,
+            values: Map::from_iter([
+                (
+                    "attacker_shield_heal".to_string(),
+                    Value::from(round_f64(ce_shield_heal)),
+                ),
+                (
+                    "attacker_hull_heal".to_string(),
+                    Value::from(round_f64(ce_hull_heal)),
+                ),
+                (
+                    "defender_damage".to_string(),
+                    Value::from(round_f64(ce_defender_damage)),
+                ),
+            ]),
+        });
     }
 }
 
