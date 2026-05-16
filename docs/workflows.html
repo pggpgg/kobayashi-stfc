@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>KOBAYASHI — Architecture & Workflows</title>
+<meta name="viewport" content="width=1400" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c232c;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-2: #79c0ff;
+    --dim-opacity: 0.16;
+
+    --color-external: #d29922;
+    --color-frontend: #f778ba;
+    --color-server:   #58a6ff;
+    --color-backend:  #a371f7;
+    --color-data:     #3fb950;
+    --color-tooling:  #db6d28;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 13px; line-height: 1.4; }
+  a { color: var(--accent); }
+
+  header.top { padding: 14px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+  header.top h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; }
+  header.top .subtitle { color: var(--muted); font-size: 12px; }
+  header.top .source { margin-left: auto; color: var(--muted); font-size: 11.5px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .toolbar { padding: 12px 22px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--panel); }
+  .toolbar .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-right: 6px; }
+  .toolbar button {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 11px; font-size: 12px; cursor: pointer; font-family: inherit;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .toolbar button:hover { border-color: var(--accent); }
+  .toolbar button.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .reset { color: var(--muted); border-style: dashed; }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    min-height: calc(100vh - 110px);
+  }
+  .canvas-wrap { position: relative; padding: 22px 22px 60px; overflow: auto; }
+  .canvas {
+    display: grid;
+    gap: 28px 28px;
+    position: relative;
+    min-width: 1280px;
+    align-items: start;
+  }
+  .column { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .column-header {
+    color: var(--muted);
+    text-transform: uppercase; font-size: 10px; letter-spacing: 0.08em; font-weight: 700;
+    padding: 0 0 6px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .column[data-group="external"] .column-header { color: var(--color-external); border-color: rgba(210,153,34,0.4); }
+  .column[data-group="frontend"] .column-header { color: var(--color-frontend); border-color: rgba(247,120,186,0.4); }
+  .column[data-group="server"]   .column-header { color: var(--color-server);   border-color: rgba(88,166,255,0.4); }
+  .column[data-group="backend"]  .column-header { color: var(--color-backend);  border-color: rgba(163,113,247,0.4); }
+  .column[data-group="data"]     .column-header { color: var(--color-data);     border-color: rgba(63,185,80,0.4); }
+  .column[data-group="tooling"]  .column-header { color: var(--color-tooling);  border-color: rgba(219,109,40,0.4); }
+
+  .node {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: 5px;
+    padding: 7px 10px;
+    transition: opacity 0.18s, border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    cursor: default;
+  }
+  .column[data-group="external"] .node { border-left-color: var(--color-external); }
+  .column[data-group="frontend"] .node { border-left-color: var(--color-frontend); }
+  .column[data-group="server"]   .node { border-left-color: var(--color-server); }
+  .column[data-group="backend"]  .node { border-left-color: var(--color-backend); }
+  .column[data-group="data"]     .node { border-left-color: var(--color-data); }
+  .column[data-group="tooling"]  .node { border-left-color: var(--color-tooling); }
+
+  .node .label { font-weight: 600; font-size: 12.5px; color: var(--text); }
+  .node .sublabel { color: var(--muted); font-size: 10.5px; margin-top: 2px; font-family: ui-monospace, "SF Mono", Menlo, monospace; word-break: break-word; }
+
+  body.flow-active .node:not(.active) { opacity: var(--dim-opacity); }
+  body.flow-active .column-header { opacity: 0.55; }
+  .node.active { background: var(--panel-2); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .node.endpoint.active { box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(88,166,255,0.25); }
+
+  svg.connectors {
+    position: absolute; left: 0; top: 0;
+    pointer-events: none;
+  }
+  svg.connectors path.edge { fill: none; stroke: var(--accent); stroke-width: 1.8; opacity: 0.9; }
+  svg.connectors path.edge.faint { stroke-opacity: 0.22; }
+  svg.connectors path.edge.focused { stroke: var(--accent-2); stroke-width: 2.6; opacity: 1; }
+  svg.connectors circle.step-num { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+  svg.connectors circle.step-num.focused { fill: var(--accent-2); }
+  svg.connectors circle.step-num.faint { opacity: 0.25; }
+  svg.connectors text.step-num-text { fill: #0d1117; font-size: 10px; font-weight: 700; text-anchor: middle; dominant-baseline: central; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; pointer-events: none; }
+  svg.connectors text.step-num-text.faint { opacity: 0.25; }
+  svg.connectors g.edge-label { pointer-events: none; }
+  svg.connectors rect.edge-label-bg { fill: var(--panel); stroke: var(--accent-2); stroke-width: 1; rx: 4; ry: 4; }
+  svg.connectors text.edge-label-text { fill: var(--text); font-size: 11.5px; dominant-baseline: central; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  aside.sidebar {
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    padding: 20px 22px;
+    overflow-y: auto;
+    max-height: calc(100vh - 110px);
+    position: sticky;
+    top: 0;
+  }
+  aside.sidebar h2 { margin: 0 0 4px 0; font-size: 15px; }
+  aside.sidebar .flow-desc { color: var(--muted); font-size: 12.5px; margin: 6px 0 16px 0; }
+  aside.sidebar ol { margin: 0; padding-left: 0; list-style: none; counter-reset: step; }
+  aside.sidebar li {
+    counter-increment: step;
+    padding: 9px 11px 9px 36px;
+    border: 1px solid transparent; border-radius: 6px;
+    position: relative;
+    cursor: default;
+    margin-bottom: 3px;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  aside.sidebar li::before {
+    content: counter(step);
+    position: absolute; left: 9px; top: 10px;
+    background: var(--accent); color: #0d1117;
+    width: 20px; height: 20px; border-radius: 50%;
+    text-align: center; font-size: 10px; line-height: 20px; font-weight: 700;
+  }
+  aside.sidebar li:hover, aside.sidebar li.focused {
+    background: rgba(88, 166, 255, 0.07);
+    border-color: rgba(88, 166, 255, 0.45);
+  }
+  aside.sidebar li.focused::before { background: var(--accent-2); }
+  aside.sidebar .step-arrow {
+    color: var(--muted); font-size: 11px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    margin-bottom: 2px;
+  }
+  aside.sidebar .step-arrow b { color: var(--text); font-weight: 600; }
+  aside.sidebar .step-label { font-weight: 600; font-size: 12.5px; }
+  aside.sidebar .step-detail { color: var(--muted); font-size: 11.5px; margin-top: 3px; line-height: 1.45; }
+  aside.sidebar .empty { color: var(--muted); font-style: italic; font-size: 12px; }
+  aside.sidebar .error { color: #f85149; font-size: 12px; }
+  aside.sidebar .error code { background: var(--panel-2); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+  aside.sidebar .legend { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  aside.sidebar .legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+
+  .file-input-wrap {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 8px; border: 1px dashed var(--border); border-radius: 6px;
+    color: var(--muted); font-size: 11px;
+  }
+  .file-input-wrap input { font-size: 11px; color: var(--text); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>KOBAYASHI — Architecture & Workflows</h1>
+  <span class="subtitle">Click an action to see how packages cooperate. Driven from <code>docs/workflows.json</code>.</span>
+  <span class="source" id="source-status">loading…</span>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <span class="label">Flow</span>
+  <span id="flow-buttons"></span>
+  <span class="spacer"></span>
+  <button class="reset" id="reset-btn">Clear</button>
+  <span class="file-input-wrap" id="file-input-wrap" hidden>
+    fetch failed — load workflows.json manually:
+    <input type="file" id="file-input" accept="application/json,.json" />
+  </span>
+</div>
+
+<main>
+  <div class="canvas-wrap" id="canvas-wrap">
+    <svg class="connectors" id="connectors" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="canvas" id="canvas"></div>
+  </div>
+  <aside class="sidebar" id="sidebar">
+    <p class="empty">Select an action above to see the step-by-step flow between packages.</p>
+    <div class="legend" id="legend"></div>
+  </aside>
+</main>
+
+<script>
+(() => {
+  const canvas = document.getElementById("canvas");
+  const svg = document.getElementById("connectors");
+  const sidebar = document.getElementById("sidebar");
+  const flowButtons = document.getElementById("flow-buttons");
+  const resetBtn = document.getElementById("reset-btn");
+  const sourceStatus = document.getElementById("source-status");
+  const fileInputWrap = document.getElementById("file-input-wrap");
+  const fileInput = document.getElementById("file-input");
+
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const state = {
+    data: null,
+    nodesById: new Map(),
+    nodeColumnIdx: new Map(),
+    activeFlow: null,
+    focusedStep: null
+  };
+
+  // ---- Load JSON ----
+  fetch("./workflows.json", { cache: "no-cache" })
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(json => { sourceStatus.textContent = "./workflows.json"; init(json); })
+    .catch(err => {
+      sourceStatus.textContent = "fetch failed (" + err.message + ")";
+      sidebar.innerHTML = `
+        <p class="error">
+          Could not fetch <code>workflows.json</code>.<br><br>
+          If you opened this file directly (<code>file://</code>), browsers block local fetches.
+          Either:
+          <ul>
+            <li>Serve this folder: <code>python3 -m http.server</code> from the repo root, then open
+              <code>http://localhost:8000/docs/workflows.html</code>.</li>
+            <li>Or pick the JSON file with the file input in the toolbar.</li>
+          </ul>
+        </p>`;
+      fileInputWrap.hidden = false;
+    });
+
+  fileInput.addEventListener("change", () => {
+    const f = fileInput.files && fileInput.files[0];
+    if (!f) return;
+    f.text().then(t => {
+      try {
+        const json = JSON.parse(t);
+        sourceStatus.textContent = f.name + " (manual)";
+        sidebar.innerHTML = `<p class="empty">Select an action above to see the step-by-step flow between packages.</p><div class="legend" id="legend"></div>`;
+        init(json);
+      } catch (e) {
+        sidebar.innerHTML = `<p class="error">Failed to parse JSON: ${e.message}</p>`;
+      }
+    });
+  });
+
+  // ---- Init ----
+  function init(data) {
+    state.data = data;
+    renderColumns();
+    renderFlowButtons();
+    renderLegend();
+    window.addEventListener("resize", () => requestAnimationFrame(drawArrows));
+    document.getElementById("canvas-wrap").addEventListener("scroll", () => requestAnimationFrame(drawArrows));
+  }
+
+  // ---- Render columns + nodes ----
+  function renderColumns() {
+    canvas.innerHTML = "";
+    state.nodesById.clear();
+    state.nodeColumnIdx.clear();
+    canvas.style.gridTemplateColumns = `repeat(${state.data.groups.length}, minmax(190px, 1fr))`;
+
+    state.data.groups.forEach((group, gIdx) => {
+      const col = document.createElement("div");
+      col.className = "column";
+      col.dataset.group = group.id;
+
+      const h = document.createElement("div");
+      h.className = "column-header";
+      h.textContent = group.label;
+      col.appendChild(h);
+
+      const nodes = state.data.nodes.filter(n => n.group === group.id);
+      for (const n of nodes) {
+        const div = document.createElement("div");
+        div.className = "node" + (n.group === "server" ? " endpoint" : "");
+        div.dataset.nodeId = n.id;
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = n.label;
+        div.appendChild(label);
+        if (n.subtitle) {
+          const sub = document.createElement("div");
+          sub.className = "sublabel";
+          sub.textContent = n.subtitle;
+          div.appendChild(sub);
+        }
+        col.appendChild(div);
+        state.nodesById.set(n.id, div);
+        state.nodeColumnIdx.set(n.id, gIdx);
+      }
+      canvas.appendChild(col);
+    });
+  }
+
+  // ---- Render flow buttons ----
+  function renderFlowButtons() {
+    flowButtons.innerHTML = "";
+    for (const flow of state.data.flows) {
+      const btn = document.createElement("button");
+      btn.textContent = flow.title;
+      btn.dataset.flowId = flow.id;
+      btn.addEventListener("click", () => selectFlow(flow.id));
+      flowButtons.appendChild(btn);
+    }
+    resetBtn.onclick = () => selectFlow(null);
+  }
+
+  // ---- Render legend ----
+  function renderLegend() {
+    const legend = document.getElementById("legend");
+    if (!legend) return;
+    const items = state.data.groups.map(g => {
+      const varName = "--color-" + g.id;
+      return `<div><span class="swatch" style="background: var(${varName})"></span>${escapeHtml(g.label)}</div>`;
+    }).join("");
+    legend.innerHTML = `<strong style="color: var(--text); display: block; margin-bottom: 8px;">Legend</strong>${items}`;
+  }
+
+  // ---- Select flow ----
+  function selectFlow(flowId) {
+    state.focusedStep = null;
+    if (!flowId) {
+      state.activeFlow = null;
+      document.body.classList.remove("flow-active");
+      document.querySelectorAll(".toolbar button").forEach(b => b.classList.remove("active"));
+      state.nodesById.forEach(el => el.classList.remove("active"));
+      svg.innerHTML = "";
+      sidebar.innerHTML = `<p class="empty">Select an action above to see the step-by-step flow between packages.</p>`;
+      renderLegend();
+      return;
+    }
+    state.activeFlow = state.data.flows.find(f => f.id === flowId) || null;
+    if (!state.activeFlow) return;
+
+    document.body.classList.add("flow-active");
+    document.querySelectorAll(".toolbar button").forEach(b => b.classList.toggle("active", b.dataset.flowId === flowId));
+
+    const involved = new Set();
+    for (const step of state.activeFlow.steps) {
+      involved.add(step.from);
+      if (step.to) involved.add(step.to);
+    }
+    state.nodesById.forEach((el, id) => el.classList.toggle("active", involved.has(id)));
+
+    renderSidebar();
+    requestAnimationFrame(drawArrows);
+  }
+
+  // ---- Sidebar ----
+  function renderSidebar() {
+    sidebar.innerHTML = "";
+    const flow = state.activeFlow;
+    const h = document.createElement("h2");
+    h.textContent = flow.title;
+    sidebar.appendChild(h);
+    if (flow.description) {
+      const p = document.createElement("p");
+      p.className = "flow-desc";
+      p.textContent = flow.description;
+      sidebar.appendChild(p);
+    }
+    const ol = document.createElement("ol");
+    flow.steps.forEach((step, i) => {
+      const li = document.createElement("li");
+      li.dataset.stepIdx = i;
+      const fromNode = state.data.nodes.find(n => n.id === step.from);
+      const toNode = step.to ? state.data.nodes.find(n => n.id === step.to) : null;
+      const arrow = document.createElement("div");
+      arrow.className = "step-arrow";
+      arrow.innerHTML = toNode
+        ? `<b>${escapeHtml(fromNode.label)}</b> → <b>${escapeHtml(toNode.label)}</b>`
+        : `<b>${escapeHtml(fromNode.label)}</b> (internal)`;
+      li.appendChild(arrow);
+      const lab = document.createElement("div");
+      lab.className = "step-label";
+      lab.textContent = step.label;
+      li.appendChild(lab);
+      if (step.detail) {
+        const d = document.createElement("div");
+        d.className = "step-detail";
+        d.textContent = step.detail;
+        li.appendChild(d);
+      }
+      li.addEventListener("mouseenter", () => focusStep(i));
+      li.addEventListener("mouseleave", () => focusStep(null));
+      ol.appendChild(li);
+    });
+    sidebar.appendChild(ol);
+
+    const legendDiv = document.createElement("div");
+    legendDiv.className = "legend";
+    legendDiv.id = "legend";
+    sidebar.appendChild(legendDiv);
+    renderLegend();
+  }
+
+  function focusStep(i) {
+    state.focusedStep = i;
+    document.querySelectorAll("aside.sidebar li").forEach((el, idx) => el.classList.toggle("focused", idx === i));
+    requestAnimationFrame(drawArrows);
+  }
+
+  // ---- Draw arrows ----
+  function drawArrows() {
+    svg.innerHTML = "";
+    if (!state.activeFlow) return;
+
+    const wrap = document.getElementById("canvas-wrap");
+    const wrapRect = wrap.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const width = canvas.scrollWidth;
+    const height = canvas.scrollHeight;
+    const offsetX = canvasRect.left - wrapRect.left + wrap.scrollLeft;
+    const offsetY = canvasRect.top  - wrapRect.top  + wrap.scrollTop;
+
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", height);
+    svg.style.left = offsetX + "px";
+    svg.style.top  = offsetY + "px";
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+    // defs: arrowhead
+    const defs = document.createElementNS(SVG_NS, "defs");
+    defs.innerHTML = `
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"></path>
+      </marker>
+      <marker id="arrow-focus" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#79c0ff"></path>
+      </marker>`;
+    svg.appendChild(defs);
+
+    const steps = state.activeFlow.steps;
+    const focused = state.focusedStep;
+
+    // Pre-compute node-pair counts for same-pair index (for parallel-edge offsetting)
+    const pairKey = (a, b) => a + "→" + b;
+    const pairCount = new Map();
+    const pairIndex = [];
+    steps.forEach((s, i) => {
+      if (!s.to || s.from === s.to) { pairIndex.push({ idx: 0, count: 0 }); return; }
+      const k = pairKey(s.from, s.to);
+      const cur = (pairCount.get(k) || 0);
+      pairIndex.push({ idx: cur, count: 0 }); // count filled below
+      pairCount.set(k, cur + 1);
+    });
+    steps.forEach((s, i) => {
+      if (!s.to || s.from === s.to) return;
+      pairIndex[i].count = pairCount.get(pairKey(s.from, s.to));
+    });
+
+    // Draw all edges first, labels after (so labels are on top)
+    const labelTasks = [];
+
+    steps.forEach((step, i) => {
+      if (!step.to || step.from === step.to) return;
+      const fromEl = state.nodesById.get(step.from);
+      const toEl = state.nodesById.get(step.to);
+      if (!fromEl || !toEl) return;
+
+      const fromGroupIdx = state.nodeColumnIdx.get(step.from);
+      const toGroupIdx   = state.nodeColumnIdx.get(step.to);
+
+      const fr = rectOf(fromEl);
+      const tr = rectOf(toEl);
+
+      let x1, y1, x2, y2, sameCol = false;
+      if (toGroupIdx > fromGroupIdx) {
+        x1 = fr.right; y1 = fr.cy;
+        x2 = tr.left;  y2 = tr.cy;
+      } else if (toGroupIdx < fromGroupIdx) {
+        x1 = fr.left;  y1 = fr.cy;
+        x2 = tr.right; y2 = tr.cy;
+      } else {
+        sameCol = true;
+        // route along the right side for left half columns, left side for right half
+        const side = fromGroupIdx < state.data.groups.length / 2 ? "right" : "left";
+        if (side === "right") {
+          x1 = fr.right; y1 = fr.cy;
+          x2 = tr.right; y2 = tr.cy;
+        } else {
+          x1 = fr.left; y1 = fr.cy;
+          x2 = tr.left; y2 = tr.cy;
+        }
+      }
+
+      // offset parallel edges between the same pair so they don't overlap
+      const { idx: pIdx, count: pCount } = pairIndex[i];
+      const parallelOffset = pCount > 1 ? ((pIdx - (pCount - 1) / 2) * 10) : 0;
+
+      let d;
+      if (sameCol) {
+        const sideOffset = 38;
+        const sideX = (x1 === fr.right) ? Math.max(x1, x2) + sideOffset : Math.min(x1, x2) - sideOffset;
+        d = `M ${x1} ${y1 + parallelOffset} C ${sideX} ${y1 + parallelOffset}, ${sideX} ${y2 + parallelOffset}, ${x2} ${y2 + parallelOffset}`;
+      } else {
+        const dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
+        const cx1 = toGroupIdx > fromGroupIdx ? x1 + dx : x1 - dx;
+        const cx2 = toGroupIdx > fromGroupIdx ? x2 - dx : x2 + dx;
+        d = `M ${x1} ${y1 + parallelOffset} C ${cx1} ${y1 + parallelOffset}, ${cx2} ${y2 + parallelOffset}, ${x2} ${y2 + parallelOffset}`;
+      }
+
+      const path = document.createElementNS(SVG_NS, "path");
+      path.setAttribute("d", d);
+      path.classList.add("edge");
+      const isFocused = focused === i;
+      if (focused !== null && !isFocused) path.classList.add("faint");
+      if (isFocused) path.classList.add("focused");
+      path.setAttribute("marker-end", isFocused ? "url(#arrow-focus)" : "url(#arrow)");
+      svg.appendChild(path);
+
+      // step number bubble
+      const midPoint = midOfPath(path);
+      const r = 11;
+      const circle = document.createElementNS(SVG_NS, "circle");
+      circle.setAttribute("cx", midPoint.x);
+      circle.setAttribute("cy", midPoint.y);
+      circle.setAttribute("r", r);
+      circle.setAttribute("class", "step-num" + (isFocused ? " focused" : "") + (focused !== null && !isFocused ? " faint" : ""));
+      svg.appendChild(circle);
+      const text = document.createElementNS(SVG_NS, "text");
+      text.setAttribute("x", midPoint.x);
+      text.setAttribute("y", midPoint.y);
+      text.setAttribute("class", "step-num-text" + (focused !== null && !isFocused ? " faint" : ""));
+      text.textContent = String(i + 1);
+      svg.appendChild(text);
+
+      if (isFocused) {
+        labelTasks.push({ x: midPoint.x, y: midPoint.y, label: step.label, step: i });
+      }
+    });
+
+    // Draw focused-step floating label
+    for (const t of labelTasks) {
+      const g = document.createElementNS(SVG_NS, "g");
+      g.setAttribute("class", "edge-label");
+      const padX = 8, padY = 5;
+      const text = document.createElementNS(SVG_NS, "text");
+      text.setAttribute("class", "edge-label-text");
+      text.setAttribute("x", t.x);
+      text.setAttribute("y", t.y - 24);
+      text.setAttribute("text-anchor", "middle");
+      text.textContent = t.label.length > 64 ? t.label.slice(0, 61) + "…" : t.label;
+      g.appendChild(text);
+      svg.appendChild(g);
+      // background rect sized to text
+      const bbox = text.getBBox();
+      const rect = document.createElementNS(SVG_NS, "rect");
+      rect.setAttribute("class", "edge-label-bg");
+      rect.setAttribute("x", bbox.x - padX);
+      rect.setAttribute("y", bbox.y - padY);
+      rect.setAttribute("width", bbox.width + padX * 2);
+      rect.setAttribute("height", bbox.height + padY * 2);
+      g.insertBefore(rect, text);
+    }
+
+    function rectOf(el) {
+      const r = el.getBoundingClientRect();
+      return {
+        left: r.left - canvasRect.left,
+        right: r.right - canvasRect.left,
+        top: r.top - canvasRect.top,
+        bottom: r.bottom - canvasRect.top,
+        cx: (r.left + r.right) / 2 - canvasRect.left,
+        cy: (r.top + r.bottom) / 2 - canvasRect.top
+      };
+    }
+  }
+
+  function midOfPath(path) {
+    const len = path.getTotalLength();
+    return path.getPointAtLength(len / 2);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+})();
+</script>
+
+</body>
+</html>
