@@ -46,6 +46,11 @@ pub(crate) enum EffectStatKey {
     /// Multiplicative bypass of defender's shield mitigation; engine clamps total to `[0, 1]`
     /// and applies as `mitigation × (1 - bypass)` (see [`AbilityEffect::ShieldMitigationBypassFraction`]).
     ShieldMitigationBypass,
+    /// Attacker-self shield mitigation buff applied on counter-fire / inbound damage
+    /// (see [`AbilityEffect::AttackerShieldMitigationBonus`]). Engine reads via
+    /// [`EffectAccumulator::composed_attacker_shield_mitigation_bonus`] and adds to
+    /// `attacker.shield_mitigation` in `effective_incoming_shield_mitigation`.
+    AttackerShieldMitigationBonus,
 }
 
 impl EffectStatKey {
@@ -67,6 +72,7 @@ impl EffectStatKey {
             EffectStatKey::IsolyticCascadeDamageBonus => "isolytic_cascade_damage_bonus",
             EffectStatKey::ShieldMitigationBonus => "shield_mitigation_bonus",
             EffectStatKey::ShieldMitigationBypass => "shield_mitigation_bypass",
+            EffectStatKey::AttackerShieldMitigationBonus => "attacker_shield_mitigation_bonus",
         }
     }
 }
@@ -121,6 +127,10 @@ impl Default for EffectAccumulator {
         ));
         stacks.add(StackContribution::base(
             EffectStatKey::ShieldMitigationBypass,
+            0.0,
+        ));
+        stacks.add(StackContribution::base(
+            EffectStatKey::AttackerShieldMitigationBonus,
             0.0,
         ));
 
@@ -522,6 +532,16 @@ impl EffectAccumulator {
             .unwrap_or(0.0)
     }
 
+    /// Sum of attacker-self shield-mitigation bonuses (target=SelfShip officer effects).
+    /// Engine consumes this in `effective_incoming_shield_mitigation` (counter-fire path)
+    /// and clamps the final `attacker.shield_mitigation + bonus` to `[0, 1]` at the apply
+    /// site, so this getter is intentionally unclamped.
+    pub(crate) fn composed_attacker_shield_mitigation_bonus(&self) -> f64 {
+        self.stacks
+            .composed_for(&EffectStatKey::AttackerShieldMitigationBonus)
+            .unwrap_or(0.0)
+    }
+
     #[inline]
     pub(crate) fn crit_chance_bonus(&self) -> f64 {
         self.crit_chance_bonus
@@ -843,6 +863,15 @@ impl EffectAccumulator {
                         "ShieldMitigationBypassFraction",
                     );
                 }
+                AbilityEffect::AttackerShieldMitigationBonus(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackerShieldMitigationBonus,
+                        v,
+                        timing,
+                        source,
+                        "AttackerShieldMitigationBonus",
+                    );
+                }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1002,6 +1031,15 @@ impl EffectAccumulator {
                         "ShieldMitigationBypassFraction",
                     );
                 }
+                AbilityEffect::AttackerShieldMitigationBonus(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackerShieldMitigationBonus,
+                        v,
+                        timing,
+                        source,
+                        "AttackerShieldMitigationBonus",
+                    );
+                }
                 AbilityEffect::MitigationAdditive(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1130,6 +1168,15 @@ impl EffectAccumulator {
                         timing,
                         source,
                         "ShieldMitigationBypassFraction",
+                    );
+                }
+                AbilityEffect::AttackerShieldMitigationBonus(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackerShieldMitigationBonus,
+                        v,
+                        timing,
+                        source,
+                        "AttackerShieldMitigationBonus",
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
@@ -1266,6 +1313,15 @@ impl EffectAccumulator {
                         "ShieldMitigationBypassFraction",
                     );
                 }
+                AbilityEffect::AttackerShieldMitigationBonus(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackerShieldMitigationBonus,
+                        v,
+                        timing,
+                        source,
+                        "AttackerShieldMitigationBonus",
+                    );
+                }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression => {}
@@ -1400,6 +1456,15 @@ impl EffectAccumulator {
                         timing,
                         source,
                         "ShieldMitigationBypassFraction",
+                    );
+                }
+                AbilityEffect::AttackerShieldMitigationBonus(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackerShieldMitigationBonus,
+                        v,
+                        timing,
+                        source,
+                        "AttackerShieldMitigationBonus",
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
@@ -1565,6 +1630,15 @@ impl EffectAccumulator {
                         timing,
                         source,
                         "ShieldMitigationBypassFraction",
+                    );
+                }
+                AbilityEffect::AttackerShieldMitigationBonus(v) => {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::AttackerShieldMitigationBonus,
+                        v,
+                        timing,
+                        source,
+                        "AttackerShieldMitigationBonus",
                     );
                 }
                 AbilityEffect::MitigationAdditive(_) => {}
@@ -1744,6 +1818,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::ShieldMitigationBypassFraction(v) => {
             AbilityEffect::ShieldMitigationBypassFraction(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::AttackerShieldMitigationBonus(v) => {
+            AbilityEffect::AttackerShieldMitigationBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::OnKillHullRegen(v) => {
             AbilityEffect::OnKillHullRegen(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
@@ -2644,6 +2721,39 @@ mod tests {
         // The engine consumer clamps to 1.0 — verify the formula here.
         let total = acc.composed_shield_mitigation_bypass().clamp(0.0, 1.0);
         assert!((total - 1.0).abs() < 1e-12, "bypass capped at 100%");
+    }
+
+    // ── AttackerShieldMitigationBonus at CombatBegin ──
+
+    #[test]
+    fn attacker_shield_mitigation_bonus_accumulates_through_combat_begin() {
+        let mut acc = EffectAccumulator::default();
+        acc.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackerShieldMitigationBonus(0.18),
+            100.0,
+            1,
+            None,
+        );
+        // Lands on the new channel — does NOT leak into the additive
+        // `ShieldMitigationBonus` channel (which the engine consumes against the defender).
+        assert!((acc.composed_attacker_shield_mitigation_bonus() - 0.18).abs() < 1e-12);
+        assert!(acc.composed_shield_mitigation_bonus().abs() < 1e-12);
+    }
+
+    #[test]
+    fn attacker_shield_mitigation_bonus_sums_across_sources() {
+        let mut acc = EffectAccumulator::default();
+        for v in [0.04, 0.05, 0.06] {
+            acc.add_effect(
+                TimingWindow::CombatBegin,
+                AbilityEffect::AttackerShieldMitigationBonus(v),
+                100.0,
+                1,
+                None,
+            );
+        }
+        assert!((acc.composed_attacker_shield_mitigation_bonus() - 0.15).abs() < 1e-12);
     }
 
     // ── GalaxyAdditiveWeaponDamageGrowth at RoundStart ──

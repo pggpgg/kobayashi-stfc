@@ -581,6 +581,20 @@ pub fn compile_officer_combat_spec(
                 "sub" | "mul_sub" | "multiplysub" => -v,
                 _ => v,
             };
+            // target=AttackerSelf: buff the *attacker's* mitigation on counter-fire (engine
+            // adds via `effective_incoming_shield_mitigation`). Without this routing the
+            // bonus leaks into the `ShieldMitigationBonus` accumulator that the outbound
+            // path adds to `defender.shield_mitigation` — i.e. it would buff the **defender**
+            // and hurt the attacker. target=DefenderOpponent (and the default) keep emitting
+            // additive `ShieldMitigationBonus`; multiplicative bypass for the opponent path
+            // is handled separately (see `ShieldMitigationBypassFraction`).
+            if matches!(spec.target, AbilityTargetSpec::AttackerSelf) {
+                return Ok((
+                    timing,
+                    AbilityEffect::AttackerShieldMitigationBonus(add),
+                    compiled_condition.clone(),
+                ));
+            }
             Ok((
                 timing,
                 AbilityEffect::ShieldMitigationBonus(add),
@@ -972,12 +986,15 @@ mod tests {
     }
 
     #[test]
-    fn shield_mitigation_compile_self_target_keeps_positive_value() {
+    fn shield_mitigation_compile_attacker_self_emits_attacker_bonus_variant() {
+        // target=AttackerSelf shieldmitigation effects buff the attacker's own mitigation on
+        // counter-fire. They must NOT compile to `ShieldMitigationBonus`, which the engine
+        // adds to the *defender's* mitigation (would buff the defender and hurt the attacker).
         let spec = shield_mitigation_spec(AbilityTargetSpec::AttackerSelf, 0.18);
-        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("self shield mitigation");
+        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("self mitigation compiles");
         assert!(
-            matches!(effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.18).abs() < 1e-12),
-            "AttackerSelf with op=Add should keep value sign as-is, got {effect:?}"
+            matches!(effect, AbilityEffect::AttackerShieldMitigationBonus(v) if (v - 0.18).abs() < 1e-12),
+            "AttackerSelf target must emit AttackerShieldMitigationBonus, got {effect:?}"
         );
     }
 

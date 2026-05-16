@@ -761,8 +761,12 @@ mod tests {
             0,
         );
         assert_eq!(contexts_shield.len(), 1);
+        // target defaults to AttackerSelf (the helper sets `target: None`), so
+        // shield_mitigation routes to the attacker-side counter-fire channel rather than
+        // the additive `ShieldMitigationBonus` channel that the engine consumes against
+        // the defender.
         assert!(
-            matches!(contexts_shield[0].ability.effect, AbilityEffect::ShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12)
+            matches!(contexts_shield[0].ability.effect, AbilityEffect::AttackerShieldMitigationBonus(v) if (v - 0.05).abs() < 1e-12)
         );
 
         let ability_cascade = LcarsAbility {
