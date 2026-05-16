@@ -1,0 +1,222 @@
+{
+  "groups": [
+    { "id": "external", "label": "External & User" },
+    { "id": "frontend", "label": "Frontend (React)" },
+    { "id": "server",   "label": "Server (Axum)" },
+    { "id": "backend",  "label": "Backend modules" },
+    { "id": "data",     "label": "Data (filesystem)" },
+    { "id": "tooling",  "label": "Scripts & CLI bins" }
+  ],
+
+  "nodes": [
+    { "id": "user",            "group": "external", "label": "User",                       "subtitle": "player / maintainer" },
+    { "id": "ext-stfcspace",   "group": "external", "label": "data.stfc.space",            "subtitle": "community game DB (HTTP)" },
+    { "id": "ext-stfc-mod",    "group": "external", "label": "STFC Community Mod",         "subtitle": "in-game patch (netniV/stfc-mod)" },
+
+    { "id": "fe-workspace",    "group": "frontend", "label": "Workspace",                  "subtitle": "frontend/src/components/Workspace.tsx" },
+    { "id": "fe-optimize",     "group": "frontend", "label": "OptimizePanel",              "subtitle": "components/OptimizePanel.tsx" },
+    { "id": "fe-crew",         "group": "frontend", "label": "CrewBuilder",                "subtitle": "components/CrewBuilder.tsx" },
+    { "id": "fe-results",      "group": "frontend", "label": "SimResults",                 "subtitle": "components/SimResults.tsx" },
+    { "id": "fe-api",          "group": "frontend", "label": "API client",                 "subtitle": "frontend/src/lib/api.ts" },
+    { "id": "fe-warm",         "group": "frontend", "label": "Warm-start cache",           "subtitle": "lib/optimizeWarmStart.ts (localStorage)" },
+
+    { "id": "api-optimize",        "group": "server", "label": "POST /api/optimize",                       "subtitle": "sync optimizer" },
+    { "id": "api-optimize-start",  "group": "server", "label": "POST /api/optimize/start",                 "subtitle": "async job" },
+    { "id": "api-optimize-stream", "group": "server", "label": "GET  /api/optimize/jobs/:id/stream",       "subtitle": "Server-Sent Events" },
+    { "id": "api-optimize-cancel", "group": "server", "label": "POST /api/optimize/jobs/:id/cancel",       "subtitle": "" },
+    { "id": "api-simulate",        "group": "server", "label": "POST /api/simulate",                       "subtitle": "single fight" },
+    { "id": "api-import",          "group": "server", "label": "POST /api/officers/import",                "subtitle": "" },
+    { "id": "api-sync",            "group": "server", "label": "POST /api/sync/ingress",                   "subtitle": "stfc-sync-token header" },
+    { "id": "api-reads",           "group": "server", "label": "GET  /api/{officers,ships,hostiles,…}",    "subtitle": "catalog reads" },
+
+    { "id": "mod-server-api",  "group": "backend", "label": "server::api",       "subtitle": "src/server/api/{requests,execution}.rs" },
+    { "id": "mod-sync",        "group": "backend", "label": "server::sync",      "subtitle": "src/server/sync.rs" },
+    { "id": "mod-optimizer",   "group": "backend", "label": "optimizer",         "subtitle": "src/optimizer/ (crew_gen, MC, tiered/genetic, ranking)" },
+    { "id": "mod-combat",      "group": "backend", "label": "combat",            "subtitle": "src/combat/engine.rs (hot loop, SplitMix64)" },
+    { "id": "mod-lcars",       "group": "backend", "label": "lcars",             "subtitle": "src/lcars/{parser,resolver}.rs → BuffSet" },
+    { "id": "mod-data",        "group": "backend", "label": "data",              "subtitle": "src/data/{loader,profile,heuristics}.rs" },
+    { "id": "mod-jobs",        "group": "backend", "label": "OPTIMIZE_JOBS",     "subtitle": "in-mem Mutex<HashMap> (execution.rs:1460)" },
+
+    { "id": "data-canonical",  "group": "data", "label": "officers.canonical.json", "subtitle": "data/officers/" },
+    { "id": "data-lcars",      "group": "data", "label": "officers.lcars.yaml",     "subtitle": "data/officers/ (generated)" },
+    { "id": "data-id-reg",     "group": "data", "label": "id_registry.json",        "subtitle": "data/officers/" },
+    { "id": "data-ships",      "group": "data", "label": "ships_extended/",         "subtitle": "data/ + index.json" },
+    { "id": "data-hostiles",   "group": "data", "label": "hostiles/",               "subtitle": "data/ + index.json" },
+    { "id": "data-heur",       "group": "data", "label": "heuristics/",             "subtitle": "data/heuristics/*.txt" },
+    { "id": "data-import",     "group": "data", "label": "import/",                 "subtitle": "data/import/ (uploaded rosters)" },
+    { "id": "data-profiles",   "group": "data", "label": "profiles/",               "subtitle": "project root (sync target)" },
+    { "id": "data-upstream",   "group": "data", "label": "upstream/data-stfc-space/", "subtitle": "data/upstream/ (raw JSON cache)" },
+
+    { "id": "cli-serve",       "group": "tooling", "label": "kobayashi serve",                    "subtitle": "src/cli.rs run_with_args" },
+    { "id": "cli-simulate",    "group": "tooling", "label": "kobayashi simulate",                 "subtitle": "CLI subcommand" },
+    { "id": "script-ships",    "group": "tooling", "label": "fetch_stfcspace_ships.mjs",          "subtitle": "scripts/ (Node)" },
+    { "id": "script-hostiles", "group": "tooling", "label": "fetch_stfcspace_hostiles.mjs",       "subtitle": "scripts/ (Node)" },
+    { "id": "script-shipreg",  "group": "tooling", "label": "build_ship_registry.py",             "subtitle": "scripts/ (Python)" },
+    { "id": "bin-norm-ships",  "group": "tooling", "label": "normalize_data_stfc_space",          "subtitle": "src/bin/" },
+    { "id": "bin-norm-host",   "group": "tooling", "label": "normalize_hostiles_stfc_space",      "subtitle": "src/bin/" },
+    { "id": "bin-gen-lcars",   "group": "tooling", "label": "generate_lcars",                     "subtitle": "src/bin/generate_lcars.rs" }
+  ],
+
+  "flows": [
+    {
+      "id": "optimize-sync",
+      "title": "Run optimization (sync)",
+      "description": "User triggers Optimize from the SPA; the server runs the optimizer in-process and returns ranked crews in the HTTP response.",
+      "steps": [
+        { "from": "user",          "to": "fe-optimize",        "label": "Click 'Optimize'",                  "detail": "Picks ship, hostile, slot constraints, strategy (or 'auto'), warm-start, heuristic seeds." },
+        { "from": "fe-warm",       "to": "fe-optimize",        "label": "Load warm-start crews",             "detail": "Hydrates previously-good crews from versioned localStorage; prepended to the request." },
+        { "from": "fe-optimize",   "to": "fe-api",             "label": "buildOptimizeRequest()",            "detail": "Marshals form state + warm-start into OptimizeRequest JSON." },
+        { "from": "fe-api",        "to": "api-optimize",       "label": "fetch POST /api/optimize",          "detail": "JSON body: ship_id, hostile_id, sims, strategy?, warm_start_crews?, heuristics_seeds?, support_buffs?, …" },
+        { "from": "api-optimize",  "to": "mod-server-api",     "label": "handle_optimize → spawn_blocking", "detail": "CPU-bound work moved off the Tokio runtime; admission semaphore (KOBAYASHI_MAX_CONCURRENT_CPU_JOBS) gates entry → 503 cpu_busy if no slot." },
+        { "from": "mod-server-api","to": "mod-data",           "label": "loader::load_*()",                  "detail": "Resolves ship, hostile, support buffs, heuristic seeds from in-memory catalogs." },
+        { "from": "mod-server-api","to": "mod-optimizer",      "label": "optimize_scenario_…()",             "detail": "Auto-routes tiered vs exhaustive from effective candidate count; or honours explicit strategy (tiered|genetic|exhaustive)." },
+        { "from": "mod-optimizer", "to": "mod-lcars",          "label": "BuffSet lookup",                    "detail": "Officer abilities pre-resolved from officers.lcars.yaml at server start." },
+        { "from": "mod-optimizer", "to": "mod-combat",         "label": "engine::run_fight() × N sims",      "detail": "Rayon-parallel Monte Carlo; one SplitMix64 PRNG per thread; ranking by win_rate, hull_remaining, r1_kill_rate." },
+        { "from": "mod-optimizer", "to": "mod-server-api",     "label": "OptimizeOutcome",                   "detail": "Top crews + effective_strategy + strategy_auto + stats." },
+        { "from": "mod-server-api","to": "api-optimize",       "label": "200 JSON response",                 "detail": "" },
+        { "from": "api-optimize",  "to": "fe-api",             "label": "OptimizeResponse",                  "detail": "" },
+        { "from": "fe-api",        "to": "fe-results",         "label": "render ranked crews",               "detail": "" },
+        { "from": "fe-api",        "to": "fe-warm",            "label": "persist warm-start",                "detail": "Top crews written to localStorage for next run." }
+      ]
+    },
+
+    {
+      "id": "optimize-async",
+      "title": "Run optimization (async + SSE progress)",
+      "description": "Long-running optimize: server returns a job_id, frontend opens an SSE stream and renders progress until 'done' or 'error'.",
+      "steps": [
+        { "from": "user",            "to": "fe-optimize",         "label": "Click 'Optimize (background)'",   "detail": "" },
+        { "from": "fe-optimize",     "to": "fe-api",              "label": "buildOptimizeRequest()",          "detail": "" },
+        { "from": "fe-api",          "to": "api-optimize-start",  "label": "POST /api/optimize/start",        "detail": "Same body as /api/optimize." },
+        { "from": "api-optimize-start","to":"mod-server-api",     "label": "handle_optimize_start",           "detail": "Generates job_id, registers entry in OPTIMIZE_JOBS, spawns std::thread for the worker (still admission-gated)." },
+        { "from": "mod-server-api",  "to": "mod-jobs",            "label": "insert {status:Running,progress:0}", "detail": "execution.rs ~L1577." },
+        { "from": "api-optimize-start","to":"fe-api",             "label": "200 { job_id }",                  "detail": "" },
+        { "from": "fe-api",          "to": "api-optimize-stream", "label": "EventSource(/jobs/:id/stream)",   "detail": "Browser opens SSE connection." },
+        { "from": "api-optimize-stream","to":"mod-server-api",    "label": "handle_optimize_job_stream",      "detail": "tokio::spawn loop: every 300ms calls get_job_status and pushes an SSE Event via mpsc channel (routes.rs:982)." },
+        { "from": "mod-server-api",  "to": "mod-optimizer",       "label": "optimize_scenario_with_progress",  "detail": "Worker thread runs optimize; pushes OptimizeProgressTick callbacks." },
+        { "from": "mod-optimizer",   "to": "mod-jobs",            "label": "update progress, progress_preview","detail": "Top-k crews so far + percent (execution.rs:494,529)." },
+        { "from": "mod-jobs",        "to": "mod-server-api",      "label": "snapshot read on each tick",       "detail": "" },
+        { "from": "mod-server-api",  "to": "api-optimize-stream", "label": "SSE event: status/progress/preview","detail": "" },
+        { "from": "api-optimize-stream","to":"fe-api",            "label": "EventSource.onmessage",            "detail": "" },
+        { "from": "fe-api",          "to": "fe-results",          "label": "render preview + progress bar",    "detail": "" },
+        { "from": "user",            "to": "fe-optimize",         "label": "(optional) Cancel",                "detail": "" },
+        { "from": "fe-api",          "to": "api-optimize-cancel", "label": "POST /jobs/:id/cancel",            "detail": "Sets cancel flag; worker checks between ticks." },
+        { "from": "mod-optimizer",   "to": "mod-jobs",            "label": "status:Done + final ranking",      "detail": "" },
+        { "from": "mod-server-api",  "to": "api-optimize-stream", "label": "final SSE → stream closes",        "detail": "Loop breaks when status == done|error." }
+      ]
+    },
+
+    {
+      "id": "simulate",
+      "title": "Simulate a single fight",
+      "description": "One-shot deterministic fight with a fixed seed. Useful for debugging or scripted comparison.",
+      "steps": [
+        { "from": "user",          "to": "fe-optimize",     "label": "Configure ship/hostile/crew",        "detail": "" },
+        { "from": "fe-optimize",   "to": "fe-api",          "label": "buildSimulateRequest()",             "detail": "" },
+        { "from": "fe-api",        "to": "api-simulate",    "label": "POST /api/simulate",                 "detail": "Body: ship, hostile, crew, sims, seed." },
+        { "from": "api-simulate",  "to": "mod-server-api",  "label": "handle_simulate → spawn_blocking",   "detail": "" },
+        { "from": "mod-server-api","to": "mod-lcars",       "label": "resolve crew → BuffSet",             "detail": "" },
+        { "from": "mod-server-api","to": "mod-combat",      "label": "engine::run_fight() × sims",          "detail": "SplitMix64 PRNG; per-round effect order passive → round_start → sub-rounds → round_end → burning → cleanup." },
+        { "from": "mod-server-api","to": "api-simulate",    "label": "SimulationResponse",                  "detail": "Win rate, hull-remaining histogram, r1-kill rate, optional combat trace." },
+        { "from": "api-simulate",  "to": "fe-results",      "label": "render histogram + KPIs",             "detail": "" }
+      ]
+    },
+
+    {
+      "id": "import-roster",
+      "title": "Import officer roster",
+      "description": "User uploads a roster .txt/.json; server parses and persists it for the active profile.",
+      "steps": [
+        { "from": "user",         "to": "fe-workspace",  "label": "Choose roster file",         "detail": "WorkspaceHeader file picker." },
+        { "from": "fe-workspace", "to": "fe-api",        "label": "FormData / JSON body",       "detail": "" },
+        { "from": "fe-api",       "to": "api-import",    "label": "POST /api/officers/import",  "detail": "api_large_ingest route group (higher body size limit)." },
+        { "from": "api-import",   "to": "mod-server-api","label": "handle_officers_import",     "detail": "" },
+        { "from": "mod-server-api","to":"mod-data",      "label": "parse + validate against id_registry", "detail": "Name aliases resolved via name_aliases.json." },
+        { "from": "mod-data",     "to": "data-import",   "label": "write roster",               "detail": "data/import/<file>" },
+        { "from": "mod-data",     "to": "data-profiles", "label": "update active profile",       "detail": "profiles/<id>.json — owned-officer levels, ranks." },
+        { "from": "mod-server-api","to":"api-import",    "label": "200 { imported_count, … }",   "detail": "" },
+        { "from": "api-import",   "to": "fe-workspace",  "label": "refresh roster UI",          "detail": "" }
+      ]
+    },
+
+    {
+      "id": "sync-ingress",
+      "title": "Sync from STFC Community Mod",
+      "description": "Quasi-real-time sync: the game mod posts roster/research deltas to /api/sync/ingress; server routes by type and writes to disk.",
+      "steps": [
+        { "from": "ext-stfc-mod",   "to": "api-sync",       "label": "POST /api/sync/ingress",       "detail": "Body = JSON array; type-specific. Header stfc-sync-token must match KOBAYASHI_SYNC_TOKEN if set." },
+        { "from": "api-sync",       "to": "mod-sync",       "label": "ingress_payload()",             "detail": "src/server/sync.rs:79. Logs body_len, identifies sync_type, routes." },
+        { "from": "mod-sync",       "to": "data-profiles",  "label": "resolve profile by token",      "detail": "Matches stfc-sync-token to a profile entry; 401 otherwise." },
+        { "from": "mod-sync",       "to": "mod-data",       "label": "apply officer/research batch",  "detail": "Updates owned-officer levels or research state for the resolved profile." },
+        { "from": "mod-data",       "to": "data-profiles",  "label": "write updated profile",         "detail": "Same file the optimizer reads — recommendations stay in sync." },
+        { "from": "mod-sync",       "to": "api-sync",       "label": "200 { count }",                  "detail": "" }
+      ]
+    },
+
+    {
+      "id": "refresh-ships",
+      "title": "Refresh ship catalog from data.stfc.space",
+      "description": "Maintainer pulls fresh ship JSON from data.stfc.space, rebuilds the ID registry, and normalizes to the extended schema the server consumes.",
+      "steps": [
+        { "from": "user",            "to": "script-ships",     "label": "node fetch_stfcspace_ships.mjs",      "detail": "Default: missing-only; --full re-downloads every id in summary-ship.json." },
+        { "from": "script-ships",    "to": "ext-stfcspace",    "label": "HTTPS GET per ship id",                "detail": "" },
+        { "from": "ext-stfcspace",   "to": "data-upstream",    "label": "write data/upstream/data-stfc-space/ships/<id>.json", "detail": "Raw upstream JSON cached on disk." },
+        { "from": "user",            "to": "script-shipreg",   "label": "python3 build_ship_registry.py",       "detail": "Reads upstream summary-ship + translations." },
+        { "from": "script-shipreg",  "to": "data-id-reg",      "label": "write ship_id_registry",               "detail": "data/officers/ ship registry (used by hull_id_registry workflow too)." },
+        { "from": "user",            "to": "bin-norm-ships",   "label": "cargo run --bin normalize_data_stfc_space", "detail": "Normalizes to extended schema with tiers + levels (Option B)." },
+        { "from": "bin-norm-ships",  "to": "data-upstream",    "label": "read upstream JSON",                   "detail": "" },
+        { "from": "bin-norm-ships",  "to": "data-ships",       "label": "write ships_extended/<id>.json + index.json", "detail": "Carries data_version + source_note." },
+        { "from": "cli-serve",       "to": "data-ships",       "label": "(on next server start) load",          "detail": "mod-data::loader reads ships_extended/index.json at startup." }
+      ]
+    },
+
+    {
+      "id": "refresh-hostiles",
+      "title": "Refresh hostile catalog",
+      "description": "Same pattern as ships, but for hostiles — fetch raw upstream JSON, then normalize into data/hostiles/.",
+      "steps": [
+        { "from": "user",            "to": "script-hostiles", "label": "node fetch_stfcspace_hostiles.mjs",     "detail": "Default missing-only; --full re-downloads all." },
+        { "from": "script-hostiles", "to": "ext-stfcspace",   "label": "HTTPS GET per hostile id",              "detail": "" },
+        { "from": "ext-stfcspace",   "to": "data-upstream",   "label": "write upstream/data-stfc-space/hostiles/<id>.json", "detail": "" },
+        { "from": "user",            "to": "bin-norm-host",   "label": "cargo run --bin normalize_hostiles_stfc_space", "detail": "Optional env: STFCSPACE_HOSTILES_VERSION, _SOURCE_NOTE." },
+        { "from": "bin-norm-host",   "to": "data-upstream",   "label": "read upstream JSON",                    "detail": "" },
+        { "from": "bin-norm-host",   "to": "data-hostiles",   "label": "write hostiles/<id>.json + index.json",  "detail": "Numeric string ids; merge-updates data/registry.json (hostiles entry only)." },
+        { "from": "cli-serve",       "to": "data-hostiles",   "label": "(on next server start) load",            "detail": "" }
+      ]
+    },
+
+    {
+      "id": "regen-lcars",
+      "title": "Regenerate LCARS officer definitions",
+      "description": "Officer abilities are authored in officers.canonical.json (or scripts after an upstream refresh) and compiled to officers.lcars.yaml, which the engine loads.",
+      "steps": [
+        { "from": "user",          "to": "data-canonical", "label": "Edit officers.canonical.json",          "detail": "Maintainer-curated catalog. After upstream officer cache refresh: python3 scripts/normalize_officer_id_strings.py first." },
+        { "from": "user",          "to": "bin-gen-lcars",  "label": "cargo run --bin generate_lcars",          "detail": "Or: cargo xtask regen-lcars." },
+        { "from": "bin-gen-lcars", "to": "data-canonical", "label": "read canonical",                          "detail": "" },
+        { "from": "bin-gen-lcars", "to": "data-lcars",     "label": "write officers.lcars.yaml",               "detail": "Monolithic YAML — only *.lcars.yaml files in the dir are loaded." },
+        { "from": "user",          "to": "cli-serve",      "label": "restart ./target/release/kobayashi serve","detail": "From project root so data/ and frontend/dist resolve." },
+        { "from": "cli-serve",     "to": "mod-lcars",      "label": "lcars::load_lcars_dir('data/officers')",  "detail": "src/cli.rs:481." },
+        { "from": "mod-lcars",     "to": "data-lcars",     "label": "parse YAML",                              "detail": "" },
+        { "from": "mod-lcars",     "to": "mod-optimizer",  "label": "BuffSet available",                       "detail": "Static buffs + per-round effects + triggered effects, pre-resolved before any fight loop." }
+      ]
+    },
+
+    {
+      "id": "startup",
+      "title": "Server startup — what loads from where",
+      "description": "What gets loaded into memory the moment 'kobayashi serve' boots, before any HTTP request is served.",
+      "steps": [
+        { "from": "user",        "to": "cli-serve",       "label": "./target/release/kobayashi serve",     "detail": "Binds 127.0.0.1:3000 (override with KOBAYASHI_BIND). Run from project root." },
+        { "from": "cli-serve",   "to": "mod-data",        "label": "load catalogs",                        "detail": "src/cli.rs:run_with_args." },
+        { "from": "mod-data",    "to": "data-ships",      "label": "ships_extended/index.json + per-id",   "detail": "" },
+        { "from": "mod-data",    "to": "data-hostiles",   "label": "hostiles/index.json + per-id",          "detail": "" },
+        { "from": "mod-data",    "to": "data-canonical",  "label": "officers.canonical.json",               "detail": "Maintainer catalog." },
+        { "from": "mod-data",    "to": "data-heur",       "label": "heuristics/*.txt",                      "detail": "Community-known crew seeds." },
+        { "from": "mod-data",    "to": "data-profiles",   "label": "profiles/*.json",                       "detail": "Active profile + roster + research." },
+        { "from": "cli-serve",   "to": "mod-lcars",       "label": "lcars::load_lcars_dir(data/officers)",  "detail": "Only *.lcars.yaml is loaded; unknown effect types are skipped with a warning." },
+        { "from": "mod-lcars",   "to": "data-lcars",      "label": "parse officers.lcars.yaml",             "detail": "" },
+        { "from": "cli-serve",   "to": "mod-server-api",  "label": "build Axum Router + spawn runtime",     "detail": "src/server/mod.rs creates the multi-thread Tokio runtime and routes::build_router()." }
+      ]
+    }
+  ]
+}
