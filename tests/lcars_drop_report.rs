@@ -283,9 +283,11 @@ fn production_yaml_drop_baseline() {
     let file = load_lcars_file(path).unwrap();
     let drops = collect_lcars_drops(&file.officers);
 
-    // Baseline recorded 2026-05-16 after Step 1 landed. Update with intent: a *drop* in count
-    // is good news (new mappings), but a rise should be investigated before bumping.
-    const BASELINE: usize = 107;
+    // Baseline recorded 2026-05-16. Update with intent: a *drop* in count is good news (new
+    // mappings or `:non_combat` annotations in `generate_lcars`), but a rise should be
+    // investigated before bumping. Last bump: 107 → 39 after marking 21 economy/travel/loot
+    // modifiers as `:non_combat` upstream.
+    const BASELINE: usize = 39;
     let lo = BASELINE * 95 / 100;
     let hi = BASELINE * 105 / 100;
     let total = drops.len();

@@ -1131,14 +1131,40 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 None => MappedEffect::Tag(format!("add_state:{}", modifier.to_lowercase())),
             }
         }
+        // Modifiers known to be out-of-combat (economy, travel, post-combat rewards, loot drops,
+        // ability-side resources). Adding to this list is preferred to the `:unmapped` fallback —
+        // it removes them from `validate_data --coverage` noise so combat-relevant drops surface.
+        // Verify a candidate is non-combat (i.e. has no in-fight effect on damage / hull / shield /
+        // hit chance / proc chance) before adding it here.
         "MiningRate"
+        | "MiningReward"
         | "CargoCapacity"
+        | "CargoProtection"
         | "FactionPointsGain"
         | "PveChestLootMultiplierLimitedResources"
         | "HostileLoot"
         | "CombatScavenger"
         | "SkillCloakingDuration"
-        | "OffAbilityEffect" => {
+        | "OffAbilityEffect"
+        | "WarpSpeed"
+        | "WarpDistance"
+        | "ImpulseSpeed"
+        | "JumpAndTowCostEff"
+        | "RepairTime"
+        | "RepairCostsPost"
+        | "CombatXPReward"
+        | "CombatPveRewards"
+        | "CombatDilithiumReward"
+        | "CombatParsteelReward"
+        | "CombatTritaniumReward"
+        | "TrelliumRewards"
+        | "ActianVenomAndNanoprobeLoot"
+        | "ArtifactTokenLoot"
+        | "BrokenShipPartsLoot"
+        | "GornHostileVolatileLoot"
+        | "HirogenRelicAndBiotoxinLoot"
+        | "WokAugmentAllLootRewards"
+        | "XindiHostileLoot" => {
             MappedEffect::Tag(format!("{}:non_combat", modifier.to_lowercase()))
         }
         _ => MappedEffect::Tag(format!("{}:unmapped", modifier.to_lowercase())),
