@@ -14,7 +14,7 @@ pub use canonical_conditions::{
 };
 pub use effect_spec_adapter::{
     combat_tag_to_stat, lcars_condition_to_spec, lcars_effect_resolved_value,
-    lcars_effect_to_combat_effect_spec, lcars_trigger_str_to_spec,
+    lcars_effect_to_combat_effect_spec,
 };
 pub use parser::{
     load_lcars_dir, load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,

@@ -18,10 +18,6 @@ use crate::lcars::parser::{LcarsCondition, LcarsDuration, LcarsEffect, LcarsLeve
 use crate::lcars::resolver::effect_trigger_timing;
 use serde_json::json;
 
-fn normalize_trigger(s: &str) -> String {
-    s.trim().to_ascii_lowercase().replace('-', "_")
-}
-
 fn normalize_operator(op: Option<&str>) -> String {
     op.unwrap_or("add")
         .trim()
@@ -45,37 +41,6 @@ pub fn combat_tag_to_stat(tag: &str) -> Option<&'static str> {
         "shieldpiercing" => Some("pierce"),
         "accuracy" => Some("accuracy"),
         "shields" => Some("shield_hp"),
-        _ => None,
-    }
-}
-
-/// Map LCARS `trigger` string to canonical [`AbilityTriggerSpec`]. Unknown → [`None`].
-pub fn lcars_trigger_str_to_spec(trigger: &str) -> Option<AbilityTriggerSpec> {
-    let t = normalize_trigger(trigger);
-    match t.as_str() {
-        "on_own_shield_break" | "self_shields_depleted" | "own_shields_depleted" => {
-            Some(AbilityTriggerSpec::SelfShieldBreak)
-        }
-        "on_enemy_shield_break"
-        | "enemy_shields_depleted"
-        | "target_shields_depleted"
-        | "targetshieldsdepleted" => Some(AbilityTriggerSpec::ShieldBreak),
-        "shieldsdepleted" | "on_shield_break" => None,
-        "passive" => Some(AbilityTriggerSpec::CombatBegin),
-        "combatstart" | "on_combat_start" => Some(AbilityTriggerSpec::CombatBegin),
-        "ship_launched" | "shiplaunched" => Some(AbilityTriggerSpec::ShipLaunched),
-        "roundstart" | "on_round_start" => Some(AbilityTriggerSpec::RoundStart),
-        "criticalshotfired" | "enemytakeshit" | "on_attack" | "on_hit" | "on_critical" => {
-            Some(AbilityTriggerSpec::AttackPhase)
-        }
-        "after_shot" | "on_after_shot" | "subround_end" | "on_subround_end" | "after_weapon"
-        | "on_after_weapon" => Some(AbilityTriggerSpec::AfterSubround),
-        "hittaken" | "on_defense" => Some(AbilityTriggerSpec::DefensePhase),
-        "roundend" | "on_round_end" => Some(AbilityTriggerSpec::RoundEnd),
-        "battlewon" | "on_kill" => Some(AbilityTriggerSpec::Kill),
-        "hulldamagetaken" | "on_hull_breach" => Some(AbilityTriggerSpec::HullBreach),
-        "shielddamagetaken" | "on_receive_damage" => Some(AbilityTriggerSpec::ReceiveDamage),
-        "on_combat_end" => Some(AbilityTriggerSpec::CombatEnd),
         _ => None,
     }
 }

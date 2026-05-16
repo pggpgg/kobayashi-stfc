@@ -92,6 +92,11 @@ fn normalize_operator(op: Option<&str>) -> String {
 /// Shield semantics: **enemy** shields down → [`TimingWindow::ShieldBreak`]; **your** shields down
 /// → [`TimingWindow::SelfShieldBreak`]. Prefer explicit `on_enemy_shield_break` / `on_own_shield_break`;
 /// legacy `on_shield_break` uses `target: enemy` vs `target: self` (default `self` if omitted).
+///
+/// This is the **single source of truth** for LCARS trigger → engine timing. The runtime adapter
+/// at [`crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec`] calls into this
+/// function (do not reintroduce a string-keyed variant — it will silently diverge from the
+/// `target`-aware disambiguation above).
 pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow> {
     let t = effect.trigger.as_deref().map(normalize_trigger)?;
     match t.as_str() {
@@ -1369,5 +1374,60 @@ mod tests {
         );
         e.trigger = Some("on_enemy_shield_break".to_string());
         assert_eq!(effect_trigger_timing(&e), Some(TimingWindow::ShieldBreak));
+    }
+
+    #[test]
+    fn production_on_shield_break_effects_all_resolve_to_target_specific_timing() {
+        let path = Path::new("data/officers/officers.lcars.yaml");
+        if !path.exists() {
+            return; // skip in minimal checkouts (mirrors resolve_bundled_lcars_yaml_*)
+        }
+        let file = load_lcars_file(path).unwrap();
+        let mut total = 0usize;
+        let mut self_count = 0usize;
+        let mut enemy_count = 0usize;
+        let mut unresolved: Vec<String> = Vec::new();
+        for officer in &file.officers {
+            for ability in [
+                officer.captain_ability.as_ref(),
+                officer.bridge_ability.as_ref(),
+                officer.below_decks_ability.as_ref(),
+            ]
+            .into_iter()
+            .flatten()
+            {
+                for effect in &ability.effects {
+                    let trig = effect
+                        .trigger
+                        .as_deref()
+                        .unwrap_or("")
+                        .trim()
+                        .to_lowercase();
+                    if trig != "on_shield_break" {
+                        continue;
+                    }
+                    total += 1;
+                    match effect_trigger_timing(effect) {
+                        Some(TimingWindow::SelfShieldBreak) => self_count += 1,
+                        Some(TimingWindow::ShieldBreak) => enemy_count += 1,
+                        other => unresolved
+                            .push(format!("{}::{} → {:?}", officer.id, ability.name, other)),
+                    }
+                }
+            }
+        }
+        assert!(
+            unresolved.is_empty(),
+            "on_shield_break effects must all resolve via target field; unresolved: {unresolved:?}"
+        );
+        assert!(
+            total > 0,
+            "expected at least one on_shield_break effect in bundled LCARS"
+        );
+        assert_eq!(
+            total,
+            self_count + enemy_count,
+            "self_count + enemy_count should equal total"
+        );
     }
 }
