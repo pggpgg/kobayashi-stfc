@@ -74,15 +74,15 @@ pub(crate) fn accumulate_proc_attack_effects<'a>(
     let mut pierce_bonus = 0.0_f64;
     for e in effects {
         match e.effect {
-            AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
-                if roll_proc_chance_short_circuit(chance, rng) {
-                    mult *= multiplier.max(0.0);
-                }
+            AbilityEffect::ProcAttackMultiplier { chance, multiplier }
+                if roll_proc_chance_short_circuit(chance, rng) =>
+            {
+                mult *= multiplier.max(0.0);
             }
-            AbilityEffect::ProcPierceBonus { chance, bonus } => {
-                if roll_proc_chance_short_circuit(chance, rng) {
-                    pierce_bonus += bonus;
-                }
+            AbilityEffect::ProcPierceBonus { chance, bonus }
+                if roll_proc_chance_short_circuit(chance, rng) =>
+            {
+                pierce_bonus += bonus;
             }
             _ => {}
         }

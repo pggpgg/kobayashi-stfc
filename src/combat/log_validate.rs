@@ -84,10 +84,7 @@ pub fn validate_canonical_timeline(log: &IngestedCombatLog) -> TimelineValidatio
         by_round.entry(ev.round_index).or_default().push(ev);
     }
 
-    let has_state_snapshots = log
-        .events
-        .iter()
-        .any(|e| e.event_type == "state_snapshot");
+    let has_state_snapshots = log.events.iter().any(|e| e.event_type == "state_snapshot");
 
     for (round, evts) in &by_round {
         let mut saw_round_start = false;
@@ -222,7 +219,11 @@ fn stats_snapshot_satisfies_v4_provenance(snap: &serde_json::Map<String, Value>)
     })
 }
 
-fn validate_schema_v4(log: &IngestedCombatLog, errors: &mut Vec<String>, warnings: &mut Vec<String>) {
+fn validate_schema_v4(
+    log: &IngestedCombatLog,
+    errors: &mut Vec<String>,
+    warnings: &mut Vec<String>,
+) {
     for (i, ev) in log.events.iter().enumerate() {
         if let Some(ref ck) = ev.client_kind {
             if let Some(exp) = known_client_kind_expectation(ck) {
@@ -241,7 +242,12 @@ fn validate_schema_v4(log: &IngestedCombatLog, errors: &mut Vec<String>, warning
                 ));
             }
         }
-        if ev.values.get("collapsed_ambiguous").and_then(|v| v.as_bool()) == Some(true) {
+        if ev
+            .values
+            .get("collapsed_ambiguous")
+            .and_then(|v| v.as_bool())
+            == Some(true)
+        {
             warnings.push(format!(
                 "schema_version 4: event index {i} marks collapsed_ambiguous=true; repeat expansion may be lossy — verify against source"
             ));

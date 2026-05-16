@@ -152,7 +152,7 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
             }
         })
         .collect();
-    rows.sort_by(|a, b| a.bid.cmp(&b.bid));
+    rows.sort_by_key(|a| a.bid);
 
     let unmapped_bids: Vec<i64> = imported
         .iter()
