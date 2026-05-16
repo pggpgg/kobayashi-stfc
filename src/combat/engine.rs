@@ -51,6 +51,7 @@ fn effective_incoming_shield_mitigation(
     base_sm: f64,
     config: &SimulationConfig,
     round_index: u32,
+    attacker_self_bonus: f64,
 ) -> f64 {
     let extra = if config.incoming_shield_mitigation_bonus_rounds > 0
         && round_index > 0
@@ -61,7 +62,11 @@ fn effective_incoming_shield_mitigation(
     } else {
         0.0
     };
-    (base_sm + extra).clamp(0.0, 1.0)
+    // attacker_self_bonus comes from `AttackerShieldMitigationBonus` accumulator: target=SelfShip
+    // officer effects (e.g. shieldmitigation tag with target=self) that buff the attacker's
+    // own mitigation when they take counter-fire. Folds in alongside the config-driven
+    // `incoming_shield_mitigation_bonus`; final clamp keeps the total in [0, 1].
+    (base_sm + extra + attacker_self_bonus).clamp(0.0, 1.0)
 }
 
 /// Immutable combat setup precomputed once per crew, reused across multiple trials with different seeds.
@@ -2011,6 +2016,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             attacker.shield_mitigation,
                             config,
                             round_index,
+                            phase_effects.composed_attacker_shield_mitigation_bonus(),
                         );
                         counter_simd_damage_batch.push(counter_after_attack_phase);
                         counter_simd_isolytic_batch.push(counter_iso_taken);
@@ -2300,6 +2306,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             attacker.shield_mitigation,
                             config,
                             round_index,
+                            phase_effects.composed_attacker_shield_mitigation_bonus(),
                         )
                     } else {
                         0.0

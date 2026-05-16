@@ -105,12 +105,25 @@ pub enum AbilityEffect {
     /// Officer-granted isolytic cascade damage bonus (decimal). Multiplied by (1 + isolytic_damage_bonus) in isolytic_damage().
     IsolyticCascadeDamageBonus(f64),
     /// Officer-granted shield mitigation; additive to base (clamped 0..1).
+    ///
+    /// In the current engine this accumulator is consumed on the **outbound** damage path
+    /// (added to the *defender's* effective `shield_mitigation`). Effects whose canonical
+    /// `target` is `EnemyShip` belong here (debuff/buff the opponent — the sign of the value
+    /// encodes the direction). For attacker-self semantics (officer buffs their **own**
+    /// mitigation on counter-fire) see [`AbilityEffect::AttackerShieldMitigationBonus`].
     ShieldMitigationBonus(f64),
     /// **Multiplicative** shield-mitigation bypass on the defender. Engine applies as
     /// `defender_mitigation × (1 - bypass)` (e.g. Harrison "Sabotage" at canonical
     /// `op: MultiplySub` with value 0.7 → defender mitigates 30% of normal). Multiple sources
     /// stack additively; the total is clamped to `[0, 1]` so bypass cannot exceed 100%.
     ShieldMitigationBypassFraction(f64),
+    /// Officer-granted shield mitigation that buffs the **attacker's own** mitigation on
+    /// counter-fire / inbound damage (canonical `target: SelfShip`).
+    ///
+    /// The engine adds the composed value to `attacker.shield_mitigation` in
+    /// [`crate::combat::engine`]'s `effective_incoming_shield_mitigation` helper. Multiple
+    /// sources sum additively; the result is clamped to `[0, 1]` at the apply site.
+    AttackerShieldMitigationBonus(f64),
     /// Officer-granted accuracy bonus; additive fraction (e.g. 0.05 = +5% accuracy). Applied to attacker accuracy for mitigation calculations.
     AccuracyBonus(f64),
     /// Additive fraction merged into the **player** ship’s mitigation when the hostile returns fire
