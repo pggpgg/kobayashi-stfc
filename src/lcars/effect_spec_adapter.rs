@@ -110,6 +110,32 @@ impl LcarsDropReport {
         out
     }
 
+    /// `(reason, count, distinct_officer_count, sample_officer_ids[:3])` tuples sorted by count
+    /// descending. Sample officer ids are sorted alphabetically for stable output across runs.
+    pub fn reasons_with_officer_samples(&self) -> Vec<(String, usize, usize, Vec<String>)> {
+        use std::collections::{BTreeSet, HashMap};
+        let mut acc: HashMap<&str, (usize, BTreeSet<&str>)> = HashMap::new();
+        for d in &self.drops {
+            let entry = acc.entry(d.reason.as_str()).or_default();
+            entry.0 += 1;
+            entry.1.insert(d.officer_id.as_str());
+        }
+        let mut out: Vec<(String, usize, usize, Vec<String>)> = acc
+            .into_iter()
+            .map(|(reason, (count, officers))| {
+                let distinct = officers.len();
+                let samples = officers
+                    .into_iter()
+                    .take(3)
+                    .map(|s| s.to_string())
+                    .collect();
+                (reason.to_string(), count, distinct, samples)
+            })
+            .collect();
+        out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        out
+    }
+
     /// `(officer_id, count, top_reason)` triples sorted by count descending.
     pub fn officers_by_count(&self) -> Vec<(String, usize, String)> {
         use std::collections::HashMap;

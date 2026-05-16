@@ -179,8 +179,13 @@ fn write_lcars_coverage(
             "by_category": drops.category_counts().into_iter().map(|(cat, count, officers)| {
                 serde_json::json!({"category": cat, "count": count, "distinct_officers": officers})
             }).collect::<Vec<_>>(),
-            "by_reason": drops.reasons_by_count().into_iter().map(|(reason, count)| {
-                serde_json::json!({"reason": reason, "count": count})
+            "by_reason": drops.reasons_with_officer_samples().into_iter().map(|(reason, count, distinct, samples)| {
+                serde_json::json!({
+                    "reason": reason,
+                    "count": count,
+                    "distinct_officers": distinct,
+                    "sample_officer_ids": samples,
+                })
             }).collect::<Vec<_>>(),
             "by_officer": drops.officers_by_count().into_iter().map(|(officer, count, top)| {
                 serde_json::json!({"officer_id": officer, "count": count, "top_reason": top})
@@ -226,10 +231,23 @@ fn format_coverage_markdown(officer_count: usize, drops: &LcarsDropReport) -> St
     out.push('\n');
 
     out.push_str("## Top reasons\n\n");
-    out.push_str("| # | Reason | Count |\n");
-    out.push_str("|---:|---|---:|\n");
-    for (i, (reason, count)) in drops.reasons_by_count().iter().take(30).enumerate() {
-        out.push_str(&format!("| {} | `{reason}` | {count} |\n", i + 1));
+    out.push_str("| # | Reason | Count | Distinct officers | Sample officer ids |\n");
+    out.push_str("|---:|---|---:|---:|---|\n");
+    for (i, (reason, count, distinct, samples)) in drops
+        .reasons_with_officer_samples()
+        .iter()
+        .take(30)
+        .enumerate()
+    {
+        let sample_cells = samples
+            .iter()
+            .map(|s| format!("`{s}`"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        out.push_str(&format!(
+            "| {} | `{reason}` | {count} | {distinct} | {sample_cells} |\n",
+            i + 1
+        ));
     }
     out.push('\n');
 

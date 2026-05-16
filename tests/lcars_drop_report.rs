@@ -222,6 +222,54 @@ fn aggregation_methods_match_drop_categories() {
     assert_eq!(officers[0].1, 2);
 }
 
+#[test]
+fn reasons_with_officer_samples_groups_distinct_and_caps_samples() {
+    let mut report = LcarsDropReport::default();
+    // foo touched by 4 officers; samples should cap at 3 and be alphabetically sorted.
+    for officer in ["delta", "alpha", "charlie", "bravo"] {
+        let effect = lcars_effect_tag("foo:unmapped", "on_attack");
+        let _ = lcars_effect_to_combat_effect_spec_with_report(
+            &effect,
+            "id",
+            officer,
+            "Cap",
+            None,
+            None,
+            0,
+            Some(&mut report),
+        );
+    }
+    // bar touched only by alpha.
+    let effect = lcars_effect_tag("bar:unmapped", "on_attack");
+    let _ = lcars_effect_to_combat_effect_spec_with_report(
+        &effect,
+        "id",
+        "alpha",
+        "Cap",
+        None,
+        None,
+        0,
+        Some(&mut report),
+    );
+
+    let rows = report.reasons_with_officer_samples();
+    assert_eq!(rows.len(), 2);
+
+    // foo first (4 hits > 1 hit).
+    let (reason, count, distinct, samples) = &rows[0];
+    assert_eq!(reason, "unmapped_tag:foo");
+    assert_eq!(*count, 4);
+    assert_eq!(*distinct, 4);
+    assert_eq!(samples, &vec!["alpha", "bravo", "charlie"]);
+
+    // bar second.
+    let (reason, count, distinct, samples) = &rows[1];
+    assert_eq!(reason, "unmapped_tag:bar");
+    assert_eq!(*count, 1);
+    assert_eq!(*distinct, 1);
+    assert_eq!(samples, &vec!["alpha"]);
+}
+
 /// Drift detector for the bundled LCARS YAML. The baseline reflects the catalog at the time
 /// this test landed; if it drifts ±5% the test fails and the engineer must explicitly bless
 /// the new number (e.g. after Step 3 lands more `combat_tag_to_stat` mappings, this baseline
