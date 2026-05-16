@@ -514,7 +514,10 @@ fn schema_v4_collapsed_ambiguous_emits_warning() {
     let outcome = validate_canonical_timeline(&log);
     assert!(outcome.errors.is_empty(), "{:?}", outcome.errors);
     assert!(
-        outcome.warnings.iter().any(|w| w.contains("collapsed_ambiguous")),
+        outcome
+            .warnings
+            .iter()
+            .any(|w| w.contains("collapsed_ambiguous")),
         "expected warning, got {:?}",
         outcome.warnings
     );

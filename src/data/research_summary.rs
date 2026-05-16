@@ -146,7 +146,7 @@ fn research_combat_summary_from_imported(
             }
         })
         .collect();
-    rows.sort_by(|a, b| a.rid.cmp(&b.rid));
+    rows.sort_by_key(|a| a.rid);
 
     let mut unmapped_rids: Vec<i64> = imported
         .iter()

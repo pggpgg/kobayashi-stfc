@@ -470,7 +470,7 @@ fn apply_buffs_sync(
     }
 
     let mut buffs: Vec<import::GlobalBuffEntry> = by_bid.into_values().collect();
-    buffs.sort_by(|a, b| a.bid.cmp(&b.bid));
+    buffs.sort_by_key(|a| a.bid);
 
     let output_payload = serde_json::json!({
         "source_path": "stfc-mod sync",
@@ -558,7 +558,7 @@ fn apply_research_sync(
     }
 
     let mut research: Vec<import::ResearchEntry> = by_rid.into_values().collect();
-    research.sort_by(|a, b| a.rid.cmp(&b.rid));
+    research.sort_by_key(|a| a.rid);
 
     let output_payload = serde_json::json!({
         "source_path": "stfc-mod sync",
@@ -610,7 +610,7 @@ fn apply_buildings_sync(
     }
 
     let mut buildings: Vec<import::BuildingEntry> = by_bid.into_values().collect();
-    buildings.sort_by(|a, b| a.bid.cmp(&b.bid));
+    buildings.sort_by_key(|a| a.bid);
 
     let output_payload = serde_json::json!({
         "source_path": "stfc-mod sync",
@@ -677,7 +677,7 @@ fn apply_ships_sync(
     }
 
     let mut ships: Vec<import::ShipEntry> = by_psid.into_values().collect();
-    ships.sort_by(|a, b| a.psid.cmp(&b.psid));
+    ships.sort_by_key(|a| a.psid);
 
     let output_payload = serde_json::json!({
         "source_path": "stfc-mod sync",
@@ -738,7 +738,7 @@ fn apply_ft_sync(
     }
 
     let mut forbidden_tech: Vec<import::ForbiddenTechEntry> = by_fid.into_values().collect();
-    forbidden_tech.sort_by(|a, b| a.fid.cmp(&b.fid));
+    forbidden_tech.sort_by_key(|a| a.fid);
 
     let output_payload = serde_json::json!({
         "source_path": "stfc-mod sync",

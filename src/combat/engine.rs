@@ -368,11 +368,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         combat_begin_assimilated,
     );
     roll_burning_triggers(
+        &mut RoundPhaseCtx {
+            trace: &mut trace,
+            rng: &mut rng,
+            round_index: 0,
+        },
         combat_begin_filtered,
         combat_begin_assimilated,
-        &mut rng,
-        &mut trace,
-        0,
         "combat_begin",
         &attacker.id,
         None,
@@ -433,11 +435,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
         let def_rs_assim_active = defender_assimilated_rounds_remaining > 0;
         roll_assimilated_extensions_from_effects(
+            &mut RoundPhaseCtx {
+                trace: &mut trace,
+                rng: &mut rng,
+                round_index,
+            },
             &defender_rs_for_assim,
             def_rs_assim_active,
-            &mut rng,
-            &mut trace,
-            round_index,
             "round_start",
             &defender.id,
             &mut defender_assimilated_rounds_remaining,
@@ -606,15 +610,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 if breach_before == 0 && defender_hull_breach_rounds > 0 {
                     let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
                     apply_hull_breach_timing_window(
-                        &mut trace,
-                        round_index,
+                        &mut RoundPhaseCtx {
+                            trace: &mut trace,
+                            rng: &mut rng,
+                            round_index,
+                        },
+                        HullBreachSide::Defender,
                         attacker,
                         hull_breach_effects,
                         combat_ctx.clone(),
                         round_start_assimilated,
                         weapon_base_rs,
                         &mut phase_effects,
-                        &mut rng,
                         &mut defender_burning_rounds,
                     );
                 }
@@ -638,11 +645,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             }
 
             roll_burning_triggers(
+                &mut RoundPhaseCtx {
+                    trace: &mut trace,
+                    rng: &mut rng,
+                    round_index,
+                },
                 std::slice::from_ref(effect),
                 round_start_assimilated,
-                &mut rng,
-                &mut trace,
-                round_index,
                 "round_start",
                 &attacker.id,
                 None,
@@ -1291,15 +1300,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                     1.0
                                 };
                                 apply_hull_breach_timing_window(
-                                    &mut trace,
-                                    round_index,
+                                    &mut RoundPhaseCtx {
+                                        trace: &mut trace,
+                                        rng: &mut rng,
+                                        round_index,
+                                    },
+                                    HullBreachSide::Defender,
                                     attacker,
                                     hull_breach_effects,
                                     ctx_hb,
                                     attack_phase_assimilated,
                                     weapon_base,
                                     &mut phase_effects_round,
-                                    &mut rng,
                                     &mut defender_burning_rounds,
                                 );
                             }
@@ -1327,11 +1339,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         }
 
                         roll_burning_triggers(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
                             std::slice::from_ref(effect),
                             attack_phase_assimilated,
-                            &mut rng,
-                            &mut trace,
-                            round_index,
                             "attack",
                             &attacker.id,
                             None,
@@ -1341,11 +1355,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                     for effect in &defense_phase_filtered {
                         roll_burning_triggers(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
                             std::slice::from_ref(effect),
                             defense_phase_assimilated,
-                            &mut rng,
-                            &mut trace,
-                            round_index,
                             "defense",
                             &attacker.id,
                             None,
@@ -1355,11 +1371,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                     for effect in &defender_inbound_defense_filtered {
                         roll_burning_triggers(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
                             std::slice::from_ref(effect),
                             defender_inbound_assimilated,
-                            &mut rng,
-                            &mut trace,
-                            round_index,
                             "defense_inbound",
                             &defender.id,
                             None,
@@ -1520,11 +1538,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             &ctx_def_rd,
                         );
                         roll_burning_triggers(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
                             &def_rd_filtered,
                             def_rd_assim,
-                            &mut rng,
-                            &mut trace,
-                            round_index,
                             "receive_damage",
                             &defender.id,
                             None,
@@ -1623,11 +1643,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     round_index,
                 );
                 roll_burning_triggers(
+                    &mut RoundPhaseCtx {
+                        trace: &mut trace,
+                        rng: &mut rng,
+                        round_index,
+                    },
                     &shield_break_filtered,
                     attack_phase_assimilated,
-                    &mut rng,
-                    &mut trace,
-                    round_index,
                     "shield_break",
                     &attacker.id,
                     None,
@@ -1851,11 +1873,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     let defender_attack_phase_assimilated =
                         defender_assimilated_rounds_remaining > 0;
                     roll_assimilated_extensions_from_effects(
+                        &mut RoundPhaseCtx {
+                            trace: &mut trace,
+                            rng: &mut rng,
+                            round_index,
+                        },
                         &defender_attack_filtered,
                         defender_attack_phase_assimilated,
-                        &mut rng,
-                        &mut trace,
-                        round_index,
                         "attack",
                         &defender.id,
                         &mut defender_assimilated_rounds_remaining,
@@ -2054,16 +2078,19 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                                     } else {
                                                         0.0
                                                     };
-                                                apply_attacker_hull_breach_timing_window(
-                                                    &mut trace,
-                                                    round_index,
+                                                apply_hull_breach_timing_window(
+                                                    &mut RoundPhaseCtx {
+                                                        trace: &mut trace,
+                                                        rng: &mut rng,
+                                                        round_index,
+                                                    },
+                                                    HullBreachSide::Attacker,
                                                     attacker,
                                                     hull_breach_effects,
                                                     ctx_hb,
                                                     assimilated_rounds_remaining > 0,
                                                     defender_weapon_attack,
                                                     &mut phase_effects_round,
-                                                    &mut rng,
                                                     &mut defender_burning_rounds,
                                                 );
                                             }
@@ -2112,11 +2139,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                             });
                                         }
                                         roll_burning_triggers(
+                                            &mut RoundPhaseCtx {
+                                                trace: &mut trace,
+                                                rng: &mut rng,
+                                                round_index,
+                                            },
                                             std::slice::from_ref(effect),
                                             false,
-                                            &mut rng,
-                                            &mut trace,
-                                            round_index,
                                             "counter",
                                             &defender.id,
                                             Some(weapon_index as u32),
@@ -2200,11 +2229,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                         round_index,
                                     );
                                     roll_burning_triggers(
+                                        &mut RoundPhaseCtx {
+                                            trace: &mut trace,
+                                            rng: &mut rng,
+                                            round_index,
+                                        },
                                         &self_sb_combat,
                                         attack_phase_assimilated,
-                                        &mut rng,
-                                        &mut trace,
-                                        round_index,
                                         "self_shield_break",
                                         &attacker.id,
                                         None,
@@ -2231,11 +2262,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                         &ctx_receive,
                                     );
                                     roll_burning_triggers(
+                                        &mut RoundPhaseCtx {
+                                            trace: &mut trace,
+                                            rng: &mut rng,
+                                            round_index,
+                                        },
                                         &receive_damage_filtered,
                                         receive_damage_assimilated,
-                                        &mut rng,
-                                        &mut trace,
-                                        round_index,
                                         "receive_damage",
                                         &attacker.id,
                                         None,
@@ -2308,16 +2341,19 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                     } else {
                                         0.0
                                     };
-                                    apply_attacker_hull_breach_timing_window(
-                                        &mut trace,
-                                        round_index,
+                                    apply_hull_breach_timing_window(
+                                        &mut RoundPhaseCtx {
+                                            trace: &mut trace,
+                                            rng: &mut rng,
+                                            round_index,
+                                        },
+                                        HullBreachSide::Attacker,
                                         attacker,
                                         hull_breach_effects,
                                         ctx_hb,
                                         assimilated_rounds_remaining > 0,
                                         defender_weapon_attack,
                                         &mut phase_effects_round,
-                                        &mut rng,
                                         &mut defender_burning_rounds,
                                     );
                                 }
@@ -2360,11 +2396,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 });
                             }
                             roll_burning_triggers(
+                                &mut RoundPhaseCtx {
+                                    trace: &mut trace,
+                                    rng: &mut rng,
+                                    round_index,
+                                },
                                 std::slice::from_ref(effect),
                                 false,
-                                &mut rng,
-                                &mut trace,
-                                round_index,
                                 "counter",
                                 &defender.id,
                                 Some(weapon_index as u32),
@@ -2440,11 +2478,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             round_index,
                         );
                         roll_burning_triggers(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
                             &self_sb_combat,
                             attack_phase_assimilated,
-                            &mut rng,
-                            &mut trace,
-                            round_index,
                             "self_shield_break",
                             &attacker.id,
                             None,
@@ -2465,11 +2505,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         let receive_damage_filtered =
                             filter_effects_by_condition(receive_damage_effects, &ctx_receive);
                         roll_burning_triggers(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
                             &receive_damage_filtered,
                             receive_damage_assimilated,
-                            &mut rng,
-                            &mut trace,
-                            round_index,
                             "receive_damage",
                             &attacker.id,
                             None,
@@ -2555,11 +2597,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 attack_phase_assimilated,
             );
             roll_burning_triggers(
+                &mut RoundPhaseCtx {
+                    trace: &mut trace,
+                    rng: &mut rng,
+                    round_index,
+                },
                 &after_subround_filtered,
                 attack_phase_assimilated,
-                &mut rng,
-                &mut trace,
-                round_index,
                 "after_subround",
                 &attacker.id,
                 None,
@@ -2632,11 +2676,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let round_end_burn_filtered =
             filter_effects_by_condition(round_end_effects, &ctx_after_weapons);
         roll_burning_triggers(
+            &mut RoundPhaseCtx {
+                trace: &mut trace,
+                rng: &mut rng,
+                round_index,
+            },
             &round_end_burn_filtered,
             round_end_assimilated_early,
-            &mut rng,
-            &mut trace,
-            round_index,
             "round_end",
             &attacker.id,
             None,
@@ -2854,11 +2900,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 kill_assimilated,
             );
             roll_burning_triggers(
+                &mut RoundPhaseCtx {
+                    trace: &mut trace,
+                    rng: &mut rng,
+                    round_index,
+                },
                 &kill_filtered,
                 kill_assimilated,
-                &mut rng,
-                &mut trace,
-                round_index,
                 "kill",
                 &attacker.id,
                 None,
@@ -3029,16 +3077,39 @@ pub fn simulate_combat_batch(setup: &PreCombatSetup, seeds: &[u64]) -> Vec<Simul
         .collect()
 }
 
+/// Borrowed per-round context shared by engine-internal helpers (burning, assimilation,
+/// hull breach). Keeps the round-phase contract explicit: every per-round helper threads
+/// the same `Rng`, `TraceCollector`, and `round_index` so seeds stay deterministic.
+pub(crate) struct RoundPhaseCtx<'a> {
+    pub trace: &'a mut TraceCollector,
+    pub rng: &'a mut Rng,
+    pub round_index: u32,
+}
+
+/// Which side just entered hull breach. Selects the [`CombatContext`] flag and trace phase
+/// label for [`apply_hull_breach_timing_window`].
+#[derive(Copy, Clone)]
+pub(crate) enum HullBreachSide {
+    Defender,
+    Attacker,
+}
+
+impl HullBreachSide {
+    fn phase(self) -> &'static str {
+        match self {
+            HullBreachSide::Defender => "hull_breach",
+            HullBreachSide::Attacker => "attacker_hull_breach",
+        }
+    }
+}
+
 /// Rolls `Burning` procs from pre-filtered effects. Order of calls each round must stay stable for deterministic seeds:
 /// combat_begin (once); round_start; per shot: attack_phase then defense_phase; shield_break; hull_breach state entry;
 /// receive_damage (hull); round_end (before burn tick); kill when defender dies.
-#[allow(clippy::too_many_arguments)] // engine-internal; splitting would obscure round-phase contract
 fn roll_burning_triggers(
+    pc: &mut RoundPhaseCtx<'_>,
     effects: &[ActiveAbilityEffect],
     assimilated_active: bool,
-    rng: &mut Rng,
-    trace: &mut TraceCollector,
-    round_index: u32,
     phase: &'static str,
     attacker_id: &str,
     weapon_index: Option<u32>,
@@ -3051,13 +3122,14 @@ fn roll_burning_triggers(
             duration_rounds,
         } = effective_effect
         {
-            let burning_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let burning_roll = (pc.rng.next_u64() as f64) / (u64::MAX as f64);
             let triggered = burning_roll < chance.clamp(0.0, 1.0);
             if triggered {
                 let d = duration_rounds.max(1);
                 *burning_rounds = (*burning_rounds).max(d);
             }
-            trace.record_if(|| CombatEvent {
+            let round_index = pc.round_index;
+            pc.trace.record_if(|| CombatEvent {
                 event_type: "burning_trigger".to_string(),
                 round_index,
                 phase: phase.to_string(),
@@ -3079,13 +3151,10 @@ fn roll_burning_triggers(
 }
 
 /// Extends attacker or defender Assimilate duration from pre-filtered effects (matches legacy inline proc rules).
-#[allow(clippy::too_many_arguments)] // trace + phase split for assimilation proc logging
 fn roll_assimilated_extensions_from_effects(
+    pc: &mut RoundPhaseCtx<'_>,
     effects: &[ActiveAbilityEffect],
     assimilated_active_for_scale: bool,
-    rng: &mut Rng,
-    trace: &mut TraceCollector,
-    round_index: u32,
     phase: &'static str,
     ship_id_for_trace: &str,
     assimilated_rounds: &mut u32,
@@ -3097,12 +3166,13 @@ fn roll_assimilated_extensions_from_effects(
             duration_rounds,
         } = effective_effect
         {
-            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let assimilated_roll = (pc.rng.next_u64() as f64) / (u64::MAX as f64);
             let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
             if triggered {
                 *assimilated_rounds = (*assimilated_rounds).max(duration_rounds.max(1));
             }
-            trace.record_if(|| CombatEvent {
+            let round_index = pc.round_index;
+            pc.trace.record_if(|| CombatEvent {
                 event_type: "assimilated_trigger".to_string(),
                 round_index,
                 phase: phase.to_string(),
@@ -3123,27 +3193,33 @@ fn roll_assimilated_extensions_from_effects(
     }
 }
 
-/// `on_hull_breach` / [`TimingWindow::HullBreach`] effects run when the defender **enters** the hull-breached
+/// `on_hull_breach` / [`TimingWindow::HullBreach`] effects run when one side **enters** the hull-breached
 /// state (first stack of [`AbilityEffect::HullBreach`] duration), not from a hull HP fraction threshold.
-#[allow(clippy::too_many_arguments)]
+/// `side` selects which combatant just entered breach: [`HullBreachSide::Defender`] for the enemy,
+/// [`HullBreachSide::Attacker`] for the player. Burning sub-procs from these effects always damage the
+/// defender (enemy on fire) regardless of which side breached.
+#[allow(clippy::too_many_arguments)] // engine-internal; merged defender/attacker variants
 fn apply_hull_breach_timing_window(
-    trace: &mut TraceCollector,
-    round_index: u32,
+    pc: &mut RoundPhaseCtx<'_>,
+    side: HullBreachSide,
     attacker: &Combatant,
     hull_breach_effects: &[ActiveAbilityEffect],
     mut ctx: CombatContext,
     assimilated_active: bool,
     weapon_base: f64,
     accumulator: &mut EffectAccumulator,
-    rng: &mut Rng,
     defender_burning_rounds: &mut u32,
 ) {
-    ctx.defender_hull_breach_active = true;
+    match side {
+        HullBreachSide::Defender => ctx.defender_hull_breach_active = true,
+        HullBreachSide::Attacker => ctx.attacker_hull_breach_active = true,
+    }
+    let phase = side.phase();
     let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
     record_ability_activations(
-        trace,
-        round_index,
-        "hull_breach",
+        pc.trace,
+        pc.round_index,
+        phase,
         attacker,
         &hull_breach_filtered,
         assimilated_active,
@@ -3153,61 +3229,13 @@ fn apply_hull_breach_timing_window(
         &hull_breach_filtered,
         weapon_base,
         assimilated_active,
-        round_index,
+        pc.round_index,
     );
     roll_burning_triggers(
+        pc,
         &hull_breach_filtered,
         assimilated_active,
-        rng,
-        trace,
-        round_index,
-        "hull_breach",
-        &attacker.id,
-        None,
-        defender_burning_rounds,
-    );
-}
-
-/// When the **attacker** (player) enters hull breach, run player [`TimingWindow::HullBreach`] follow-ups.
-/// Burning sub-procs from those effects still apply to the **defender** (enemy on fire), same as
-/// [`apply_hull_breach_timing_window`].
-#[allow(clippy::too_many_arguments)]
-fn apply_attacker_hull_breach_timing_window(
-    trace: &mut TraceCollector,
-    round_index: u32,
-    attacker: &Combatant,
-    hull_breach_effects: &[ActiveAbilityEffect],
-    mut ctx: CombatContext,
-    assimilated_active: bool,
-    weapon_base: f64,
-    accumulator: &mut EffectAccumulator,
-    rng: &mut Rng,
-    defender_burning_rounds: &mut u32,
-) {
-    ctx.attacker_hull_breach_active = true;
-    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
-    record_ability_activations(
-        trace,
-        round_index,
-        "attacker_hull_breach",
-        attacker,
-        &hull_breach_filtered,
-        assimilated_active,
-    );
-    accumulator.add_effects(
-        TimingWindow::HullBreach,
-        &hull_breach_filtered,
-        weapon_base,
-        assimilated_active,
-        round_index,
-    );
-    roll_burning_triggers(
-        &hull_breach_filtered,
-        assimilated_active,
-        rng,
-        trace,
-        round_index,
-        "attacker_hull_breach",
+        phase,
         &attacker.id,
         None,
         defender_burning_rounds,
