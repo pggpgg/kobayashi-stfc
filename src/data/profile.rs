@@ -1916,17 +1916,23 @@ pub struct OfficerStatRuntimeBonus {
     /// Step-function bonus from `health_rating`. `(1 + health_bonus)` multiplies hull AND shield HP.
     pub health_bonus: f64,
     /// Defense-channel additive contributions, already routed by ship class (§2c):
-    ///   battleship → armor; explorer → shield_deflection; interceptor → dodge;
-    ///   survey → ⅓ to each channel.
-    /// At most one (or three for survey) is non-zero per call.
+    /// battleship → armor; explorer → shield_deflection; interceptor → dodge;
+    /// survey → ⅓ to each channel. At most one (or three for survey) is non-zero per call.
     pub defense_armor_add: f64,
     pub defense_shield_deflection_add: f64,
     pub defense_dodge_add: f64,
 }
 
 /// Compute the [`OfficerStatRuntimeBonus`] for a player ship + crew + profile combination.
-/// Performs the full §2 pipeline: per-officer profile multiplier (officer_attack/defense/health) →
-/// per-side rating → step-function breakpoint lookup → ship-class channel routing.
+/// Performs the full §2 pipeline: per-officer profile multiplier
+/// (officer_attack/defense/health) and LCARS ability contributions (officerstatall /
+/// officerstathealth from static_buffs) feed into the per-side rating, then a step-function
+/// breakpoint lookup, then ship-class channel routing.
+///
+/// `static_buffs` is the BuffSet's static_buffs map (passive/permanent LCARS contributions).
+/// Pass an empty map when no crew. The keys consumed here are `officer_attack` /
+/// `officer_defense` / `officer_health` (single-axis officer-stat buffs, §3) and
+/// `officer_stat_all` (the synthetic "all three axes" key produced by `officerstatall` tags).
 ///
 /// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /
 /// hostile-only records); callers do not need to special-case that path.
@@ -1935,17 +1941,27 @@ pub fn compute_officer_stat_runtime_bonus(
     ship: &crate::data::ship::ShipRecord,
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
 ) -> OfficerStatRuntimeBonus {
     if ship.officer_bonus.is_empty() {
         return OfficerStatRuntimeBonus::default();
     }
     let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
+    // §3 LCARS officerstat* ability contributions: passive/permanent effects with mapped
+    // officer-rating axis. Per-axis tags add to their channel; `officer_stat_all` (from
+    // `officerstatall` tags) adds to all three axes simultaneously.
+    let stat_all = static_buffs.get("officer_stat_all").copied().unwrap_or(0.0);
+    let ability_attack = static_buffs.get("officer_attack").copied().unwrap_or(0.0) + stat_all;
+    let ability_defense = static_buffs.get("officer_defense").copied().unwrap_or(0.0) + stat_all;
+    let ability_health = static_buffs.get("officer_health").copied().unwrap_or(0.0) + stat_all;
+
     // §2e: profile officer_attack/defense/health are pre-aggregation multipliers on each
     // crewed officer's A/D/H. Applied here on the summed totals (mathematically equivalent
-    // since the multiplier distributes over the sum).
-    let attack_rating = totals.attack * (1.0 + gb("officer_attack"));
-    let defense_rating = totals.defense * (1.0 + gb("officer_defense"));
-    let health_rating = totals.health * (1.0 + gb("officer_health"));
+    // since the multiplier distributes over the sum). §3 ability contributions stack
+    // additively into the same per-axis multiplier.
+    let attack_rating = totals.attack * (1.0 + gb("officer_attack") + ability_attack);
+    let defense_rating = totals.defense * (1.0 + gb("officer_defense") + ability_defense);
+    let health_rating = totals.health * (1.0 + gb("officer_health") + ability_health);
 
     let attack_bonus = ship.officer_bonus.attack_bonus(attack_rating);
     let defense_bonus = ship.officer_bonus.defense_bonus(defense_rating);
@@ -2904,6 +2920,148 @@ mod tests {
             (out.shield_mitigation - 0.25).abs() < 1e-9,
             "shield_mitigation = {}",
             out.shield_mitigation
+        );
+    }
+
+    #[test]
+    fn compute_runtime_bonus_consumes_officer_stat_all_static_buff() {
+        // §3: a passive `officerstatall +X` LCARS effect produces a static_buffs entry under
+        // `officer_stat_all`. `compute_officer_stat_runtime_bonus` reads this and adds it to
+        // EACH per-axis multiplier (attack / defense / health), boosting the rating before the
+        // breakpoint lookup.
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+        let ship = ShipRecord {
+            ship_class: "explorer".to_string(),
+            armor: 100.0,
+            shield_deflection: 1000.0,
+            dodge: 100.0,
+            officer_bonus: OfficerBonusTable {
+                attack: vec![
+                    OfficerBonusBreakpoint {
+                        value: 1000.0,
+                        bonus: 0.5,
+                    },
+                    OfficerBonusBreakpoint {
+                        value: 2000.0,
+                        bonus: 1.0,
+                    },
+                ],
+                defense: vec![
+                    OfficerBonusBreakpoint {
+                        value: 1000.0,
+                        bonus: 0.5,
+                    },
+                    OfficerBonusBreakpoint {
+                        value: 2000.0,
+                        bonus: 1.0,
+                    },
+                ],
+                health: vec![
+                    OfficerBonusBreakpoint {
+                        value: 1000.0,
+                        bonus: 0.5,
+                    },
+                    OfficerBonusBreakpoint {
+                        value: 2000.0,
+                        bonus: 1.0,
+                    },
+                ],
+            },
+            ..Default::default()
+        };
+        let profile = PlayerProfile::default();
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 1800.0,
+            defense: 1800.0,
+            health: 1800.0,
+        };
+        // Without ability buff: rating = 1800, attack_bonus = 0.5 (first breakpoint).
+        let static_buffs_none = HashMap::<String, f64>::new();
+        let osr_no_ability =
+            compute_officer_stat_runtime_bonus(totals, &ship, &profile, None, &static_buffs_none);
+        assert!(
+            (osr_no_ability.attack_bonus - 0.5).abs() < 1e-9,
+            "no-ability attack_bonus = {}",
+            osr_no_ability.attack_bonus
+        );
+
+        // With a passive `officerstatall +20%`: each axis multiplier = (1 + 0.20) = 1.2 →
+        // rating = 1800 × 1.2 = 2160 → attack_bonus = 1.0 (second breakpoint reached).
+        let mut static_buffs_with_all = HashMap::new();
+        static_buffs_with_all.insert("officer_stat_all".to_string(), 0.20);
+        let osr_with_all = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs_with_all,
+        );
+        assert!(
+            (osr_with_all.attack_bonus - 1.0).abs() < 1e-9,
+            "with-officerstatall attack_bonus = {}",
+            osr_with_all.attack_bonus
+        );
+        assert!(
+            (osr_with_all.health_bonus - 1.0).abs() < 1e-9,
+            "with-officerstatall health_bonus = {}",
+            osr_with_all.health_bonus
+        );
+        assert!(
+            (osr_with_all.defense_shield_deflection_add - 1000.0 * 1.0).abs() < 1e-9,
+            "explorer defense channel additive = {}",
+            osr_with_all.defense_shield_deflection_add
+        );
+    }
+
+    #[test]
+    fn compute_runtime_bonus_consumes_officer_stathealth_single_axis() {
+        // §3: a passive `officerstathealth +X` LCARS effect should only boost the health rating,
+        // leaving attack/defense unaffected.
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+        let ship = ShipRecord {
+            ship_class: "explorer".to_string(),
+            officer_bonus: OfficerBonusTable {
+                attack: vec![OfficerBonusBreakpoint {
+                    value: 1000.0,
+                    bonus: 0.5,
+                }],
+                defense: vec![OfficerBonusBreakpoint {
+                    value: 1000.0,
+                    bonus: 0.5,
+                }],
+                health: vec![
+                    OfficerBonusBreakpoint {
+                        value: 1000.0,
+                        bonus: 0.5,
+                    },
+                    OfficerBonusBreakpoint {
+                        value: 2000.0,
+                        bonus: 1.0,
+                    },
+                ],
+            },
+            ..Default::default()
+        };
+        let profile = PlayerProfile::default();
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 1800.0,
+            defense: 1800.0,
+            health: 1800.0,
+        };
+        let mut static_buffs = HashMap::new();
+        static_buffs.insert("officer_health".to_string(), 0.20);
+        let osr = compute_officer_stat_runtime_bonus(totals, &ship, &profile, None, &static_buffs);
+        // Health rating: 1800 × 1.20 = 2160 → health_bonus = 1.0.
+        assert!(
+            (osr.health_bonus - 1.0).abs() < 1e-9,
+            "health_bonus = {}",
+            osr.health_bonus
+        );
+        // Attack & defense ratings: 1800 (no boost) → bonus = 0.5.
+        assert!(
+            (osr.attack_bonus - 0.5).abs() < 1e-9,
+            "attack_bonus = {}",
+            osr.attack_bonus
         );
     }
 

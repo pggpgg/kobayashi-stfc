@@ -173,6 +173,9 @@ pub enum AbilityModifierSpec {
     /// LCARS `health` (officer-rating axis) — buffs the per-side officer Health rating.
     /// Defined in Phase 1; consumed in Phase 3. See `docs/OFFICER_STAT_FORMULA.md` §2d.
     OfficerHealth,
+    /// LCARS `officerstatall` — buffs the per-side officer Attack / Defense / Health ratings
+    /// simultaneously (the "all three stats" widget). See `docs/OFFICER_STAT_FORMULA.md` §3.
+    OfficerStatAll,
     TagOnly,
 }
 

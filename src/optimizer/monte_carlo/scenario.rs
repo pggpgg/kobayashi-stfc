@@ -729,6 +729,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 ship_rec,
                 &shared.profile,
                 ship_rec.faction.as_deref(),
+                &merged_static,
             ),
         );
         if shared.ship == USS_VOYAGER_SHIP_ID {
@@ -1243,6 +1244,7 @@ pub(crate) fn scenario_to_combat_input(
                 &ship_rec,
                 profile,
                 ship_rec.faction.as_deref(),
+                &static_buffs,
             ),
         );
         if !static_buffs.is_empty() {

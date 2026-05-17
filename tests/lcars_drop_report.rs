@@ -8,7 +8,7 @@ use std::path::Path;
 
 use kobayashi::lcars::{
     collect_lcars_drops, lcars_effect_to_combat_effect_spec_with_report, load_lcars_file,
-    LcarsCondition, LcarsDropReport, LcarsEffect,
+    LcarsCondition, LcarsDropReport, LcarsDuration, LcarsEffect,
 };
 
 fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
@@ -70,6 +70,64 @@ fn reports_unmapped_tag_for_allreloadspeed() {
     assert_eq!(drop.ability_name, "Ability A");
     assert_eq!(drop.effect_index, 0);
     assert_eq!(drop.reason, "unmapped_tag:allreloadspeed");
+}
+
+#[test]
+fn officerstathealth_tag_maps_to_officer_health_stat() {
+    // §3 of docs/OFFICER_STAT_FORMULA.md: `officerstathealth` is the single-axis officer Health
+    // tag. Maps to engine stat `officer_health`, consumed by
+    // `compute_officer_stat_runtime_bonus` via static_buffs.
+    let mut effect = lcars_effect_tag("officerstathealth:unmapped", "passive");
+    effect.duration = Some(LcarsDuration::Permanent("permanent".to_string()));
+    effect.value = Some(0.10);
+    let mut report = LcarsDropReport::default();
+    let out = lcars_effect_to_combat_effect_spec_with_report(
+        &effect,
+        "test:id",
+        "officer-h",
+        "Doctor",
+        None,
+        None,
+        0,
+        Some(&mut report),
+    );
+    assert!(
+        out.is_some(),
+        "officerstathealth tag should now produce a spec"
+    );
+    assert!(
+        report.drops.is_empty(),
+        "officerstathealth should not be silently dropped"
+    );
+}
+
+#[test]
+fn officerstatall_tag_maps_to_officer_stat_all() {
+    // §3: `officerstatall` is the synthetic all-three-axes tag — emits a single static_buffs
+    // entry under `officer_stat_all`, which the runtime consumer adds to each per-axis
+    // multiplier alongside the per-axis keys.
+    let mut effect = lcars_effect_tag("officerstatall:unmapped", "passive");
+    effect.duration = Some(LcarsDuration::Permanent("permanent".to_string()));
+    effect.value = Some(0.08);
+    let mut report = LcarsDropReport::default();
+    let out = lcars_effect_to_combat_effect_spec_with_report(
+        &effect,
+        "test:id",
+        "cadet-kirk",
+        "Motivational",
+        None,
+        None,
+        0,
+        Some(&mut report),
+    );
+    assert!(
+        out.is_some(),
+        "officerstatall tag should now produce a spec"
+    );
+    assert!(
+        report.drops.is_empty(),
+        "officerstatall should not be silently dropped"
+    );
 }
 
 #[test]
@@ -283,11 +341,15 @@ fn production_yaml_drop_baseline() {
     let file = load_lcars_file(path).unwrap();
     let drops = collect_lcars_drops(&file.officers);
 
-    // Baseline recorded 2026-05-16. Update with intent: a *drop* in count is good news (new
+    // Baseline recorded 2026-05-17. Update with intent: a *drop* in count is good news (new
     // mappings or `:non_combat` annotations in `generate_lcars`), but a rise should be
-    // investigated before bumping. Last bump: 107 → 39 after marking 21 economy/travel/loot
-    // modifiers as `:non_combat` upstream.
-    const BASELINE: usize = 39;
+    // investigated before bumping. Bump history:
+    //   107 → 39: marked 21 economy/travel/loot modifiers as `:non_combat` (2026-05-16).
+    //    39 → 18: Phase 3 of officer A/D/H runtime — mapped `officerstathealth` (9 officers)
+    //             and `officerstatall` (12 officers) tags to the officer-rating accumulator,
+    //             closing every silent drop except reload/cooldown/PvP-specific mechanics
+    //             that need their own engine-side modeling.
+    const BASELINE: usize = 18;
     let lo = BASELINE * 95 / 100;
     let hi = BASELINE * 105 / 100;
     let total = drops.len();
