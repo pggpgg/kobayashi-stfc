@@ -1923,6 +1923,134 @@ pub struct OfficerStatRuntimeBonus {
     pub defense_dodge_add: f64,
 }
 
+/// Fight-setup context used to evaluate static conditions on
+/// [`crate::lcars::resolver::PendingOfficerStatContribution`] entries (§3 of
+/// `docs/OFFICER_STAT_FORMULA.md`, Phase 4b). All fields default to "unknown"; conditions that
+/// depend on an unknown field evaluate to `None` (undecidable) and the contribution is dropped.
+///
+/// Dynamic conditions (round state, morale procs, hull breach state, …) are intentionally
+/// outside this struct's scope — they require per-round evaluation and are deferred to a
+/// future runtime path.
+#[derive(Debug, Clone, Default)]
+pub struct OfficerStatConditionContext {
+    /// Attacker's ship class slug (`battleship` / `explorer` / `interceptor` / `survey`).
+    /// Powers `AttackerShipTypeIs`.
+    pub attacker_ship_class: Option<String>,
+    /// Attacker's canonical ship id (e.g. `uss_cerritos`). Powers `AttackerShipIdIs`.
+    pub attacker_ship_id: Option<String>,
+    /// Attacker hull owner faction slug (`federation` / `klingon` / `romulan`). Powers
+    /// `AttackerOwnerFactionIs`.
+    pub attacker_owner_faction: Option<String>,
+    /// True iff the defender is a player ship (PvP). Powers `DefenderIsPlayerShip` and
+    /// (inverted) `DefenderIsNpcHostile`.
+    pub defender_is_player_ship: bool,
+    /// Defender's ship class slug. Powers `DefenderShipTypeIs`.
+    pub defender_ship_type: Option<String>,
+    /// Defender hull faction id (numeric upstream id). Powers `DefenderHullFactionIdIs`.
+    pub defender_faction_id: Option<i64>,
+    /// Defender hull faction slug (`federation` / …). Powers `DefenderFactionIs`.
+    pub defender_faction_slug: Option<String>,
+    /// Engagement enemy-type tags resolved for this scenario (e.g. `solo_armadas`, `armada`).
+    /// Powers `EngagementIncludes`.
+    pub engagement_types: Vec<String>,
+}
+
+/// Evaluate an [`AbilityConditionSpec`] against fight-setup context.
+///
+/// Returns:
+/// - `Some(true)` — condition holds at fight setup.
+/// - `Some(false)` — condition definitely fails (e.g. `LiteralBool { false }`, ship-class
+///   mismatch, PvE engagement when `DefenderIsPlayerShip` is required).
+/// - `None` — undecidable (variant depends on dynamic state, or required context is missing).
+///   Callers should treat `None` the same as `Some(false)`: drop the conditional bonus.
+fn eval_static_condition(
+    cond: &crate::data::combat_effect_spec::AbilityConditionSpec,
+    ctx: &OfficerStatConditionContext,
+) -> Option<bool> {
+    use crate::data::combat_effect_spec::AbilityConditionSpec as C;
+    match cond {
+        C::LiteralBool { value } => Some(*value),
+        C::AttackerShipTypeIs { ship_type } => ctx
+            .attacker_ship_class
+            .as_deref()
+            .map(|s| s.eq_ignore_ascii_case(ship_type)),
+        C::DefenderShipTypeIs { ship_type } => ctx
+            .defender_ship_type
+            .as_deref()
+            .map(|s| s.eq_ignore_ascii_case(ship_type)),
+        C::AttackerShipIdIs { ship_id } => ctx
+            .attacker_ship_id
+            .as_deref()
+            .map(|s| s.eq_ignore_ascii_case(ship_id)),
+        C::AttackerOwnerFactionIs { faction } => ctx
+            .attacker_owner_faction
+            .as_deref()
+            .map(|s| s.eq_ignore_ascii_case(faction)),
+        C::DefenderFactionIs { faction } => ctx
+            .defender_faction_slug
+            .as_deref()
+            .map(|s| s.eq_ignore_ascii_case(faction)),
+        C::DefenderHullFactionIdIs { faction_id } => {
+            ctx.defender_faction_id.map(|id| id == *faction_id)
+        }
+        C::DefenderIsPlayerShip => Some(ctx.defender_is_player_ship),
+        C::DefenderIsNpcHostile => Some(!ctx.defender_is_player_ship),
+        C::EngagementIncludes { enemy_type } => Some(
+            ctx.engagement_types
+                .iter()
+                .any(|t| t.eq_ignore_ascii_case(enemy_type)),
+        ),
+        C::Not { inner } => eval_static_condition(inner, ctx).map(|b| !b),
+        C::And { all } => {
+            // Short-circuit: any definitely-false wins; otherwise propagate any undecidable.
+            let mut any_undecidable = false;
+            for c in all {
+                match eval_static_condition(c, ctx) {
+                    Some(false) => return Some(false),
+                    None => any_undecidable = true,
+                    Some(true) => {}
+                }
+            }
+            if any_undecidable {
+                None
+            } else {
+                Some(true)
+            }
+        }
+        C::Or { any } => {
+            let mut any_undecidable = false;
+            for c in any {
+                match eval_static_condition(c, ctx) {
+                    Some(true) => return Some(true),
+                    None => any_undecidable = true,
+                    Some(false) => {}
+                }
+            }
+            if any_undecidable {
+                None
+            } else {
+                Some(false)
+            }
+        }
+        // Dynamic conditions (round state, morale procs, hull breach, …) cannot be evaluated
+        // at fight setup; report as undecidable so the caller drops the conditional bonus
+        // until Phase 4d adds per-round evaluation.
+        C::MoraleActive
+        | C::DefenderBurning
+        | C::DefenderHullBreach
+        | C::AttackerBurning
+        | C::AttackerHullBreach
+        | C::DefenderAssimilated
+        | C::AttackerOfficerTalNotOnBridge
+        | C::RoundRange { .. }
+        | C::StatBelow { .. }
+        | C::StatAbove { .. }
+        | C::CombatBattleTypeAny { .. }
+        | C::DefenderLevelAtMost { .. }
+        | C::StfcCcToken { .. } => None,
+    }
+}
+
 /// Compute the [`OfficerStatRuntimeBonus`] for a player ship + crew + profile combination.
 /// Performs the full §2 pipeline: per-officer profile multiplier
 /// (officer_attack/defense/health) and LCARS ability contributions (officerstatall /
@@ -1942,6 +2070,8 @@ pub fn compute_officer_stat_runtime_bonus(
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
     static_buffs: &HashMap<String, f64>,
+    pending_contributions: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
 ) -> OfficerStatRuntimeBonus {
     if ship.officer_bonus.is_empty() {
         return OfficerStatRuntimeBonus::default();
@@ -1951,9 +2081,38 @@ pub fn compute_officer_stat_runtime_bonus(
     // officer-rating axis. Per-axis tags add to their channel; `officer_stat_all` (from
     // `officerstatall` tags) adds to all three axes simultaneously.
     let stat_all = static_buffs.get("officer_stat_all").copied().unwrap_or(0.0);
-    let ability_attack = static_buffs.get("officer_attack").copied().unwrap_or(0.0) + stat_all;
-    let ability_defense = static_buffs.get("officer_defense").copied().unwrap_or(0.0) + stat_all;
-    let ability_health = static_buffs.get("officer_health").copied().unwrap_or(0.0) + stat_all;
+    let mut ability_attack = static_buffs.get("officer_attack").copied().unwrap_or(0.0) + stat_all;
+    let mut ability_defense =
+        static_buffs.get("officer_defense").copied().unwrap_or(0.0) + stat_all;
+    let mut ability_health = static_buffs.get("officer_health").copied().unwrap_or(0.0) + stat_all;
+
+    // Phase 4b: conditional officer-stat contributions. Only attacker-side entries
+    // (target:self) affect the attacker's compute; target:enemy entries stay in the pending
+    // list for Phase 4c (PvP defender-side handling). Conditions are evaluated against the
+    // fight-setup context; entries with any false or undecidable condition are dropped.
+    for c in pending_contributions {
+        if !c.target_attacker {
+            continue;
+        }
+        let all_true = c
+            .conditions
+            .iter()
+            .all(|cond| matches!(eval_static_condition(cond, cond_ctx), Some(true)));
+        if !all_true {
+            continue;
+        }
+        match c.stat_key.as_str() {
+            "officer_attack" => ability_attack += c.value,
+            "officer_defense" => ability_defense += c.value,
+            "officer_health" => ability_health += c.value,
+            "officer_stat_all" => {
+                ability_attack += c.value;
+                ability_defense += c.value;
+                ability_health += c.value;
+            }
+            _ => {}
+        }
+    }
 
     // §2e: profile officer_attack/defense/health are pre-aggregation multipliers on each
     // crewed officer's A/D/H. Applied here on the summed totals (mathematically equivalent
@@ -2977,8 +3136,17 @@ mod tests {
         };
         // Without ability buff: rating = 1800, attack_bonus = 0.5 (first breakpoint).
         let static_buffs_none = HashMap::<String, f64>::new();
-        let osr_no_ability =
-            compute_officer_stat_runtime_bonus(totals, &ship, &profile, None, &static_buffs_none);
+        let pending_none: Vec<crate::lcars::resolver::PendingOfficerStatContribution> = Vec::new();
+        let ctx_default = OfficerStatConditionContext::default();
+        let osr_no_ability = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs_none,
+            &pending_none,
+            &ctx_default,
+        );
         assert!(
             (osr_no_ability.attack_bonus - 0.5).abs() < 1e-9,
             "no-ability attack_bonus = {}",
@@ -2995,6 +3163,8 @@ mod tests {
             &profile,
             None,
             &static_buffs_with_all,
+            &pending_none,
+            &ctx_default,
         );
         assert!(
             (osr_with_all.attack_bonus - 1.0).abs() < 1e-9,
@@ -3050,7 +3220,17 @@ mod tests {
         };
         let mut static_buffs = HashMap::new();
         static_buffs.insert("officer_health".to_string(), 0.20);
-        let osr = compute_officer_stat_runtime_bonus(totals, &ship, &profile, None, &static_buffs);
+        let pending_none: Vec<crate::lcars::resolver::PendingOfficerStatContribution> = Vec::new();
+        let ctx_default = OfficerStatConditionContext::default();
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &pending_none,
+            &ctx_default,
+        );
         // Health rating: 1800 × 1.20 = 2160 → health_bonus = 1.0.
         assert!(
             (osr.health_bonus - 1.0).abs() < 1e-9,
@@ -3061,6 +3241,244 @@ mod tests {
         assert!(
             (osr.attack_bonus - 0.5).abs() < 1e-9,
             "attack_bonus = {}",
+            osr.attack_bonus
+        );
+    }
+
+    fn ship_with_three_bp_table(ship_class: &str) -> crate::data::ship::ShipRecord {
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+        ShipRecord {
+            ship_class: ship_class.to_string(),
+            officer_bonus: OfficerBonusTable {
+                attack: vec![
+                    OfficerBonusBreakpoint {
+                        value: 1000.0,
+                        bonus: 0.5,
+                    },
+                    OfficerBonusBreakpoint {
+                        value: 2000.0,
+                        bonus: 1.0,
+                    },
+                ],
+                defense: vec![OfficerBonusBreakpoint {
+                    value: 1000.0,
+                    bonus: 0.5,
+                }],
+                health: vec![OfficerBonusBreakpoint {
+                    value: 1000.0,
+                    bonus: 0.5,
+                }],
+            },
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn phase4b_pending_contribution_applies_when_attacker_ship_type_matches() {
+        // TOS McCoy pattern: passive + attacker_ship_type_is(explorer), target:self.
+        // When attacker is an explorer, the +20% officerstatall fires; otherwise it's dropped.
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+        let ship = ship_with_three_bp_table("explorer");
+        let profile = PlayerProfile::default();
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 1800.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let static_buffs = HashMap::<String, f64>::new();
+        let pending = vec![crate::lcars::resolver::PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.20,
+            target_attacker: true,
+            conditions: vec![AbilityConditionSpec::AttackerShipTypeIs {
+                ship_type: "explorer".to_string(),
+            }],
+        }];
+        // Explorer attacker → +20% → rating 1800 × 1.20 = 2160 → attack_bonus = 1.0
+        let ctx_explorer = OfficerStatConditionContext {
+            attacker_ship_class: Some("explorer".to_string()),
+            ..Default::default()
+        };
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &pending,
+            &ctx_explorer,
+        );
+        assert!(
+            (osr.attack_bonus - 1.0).abs() < 1e-9,
+            "explorer: {}",
+            osr.attack_bonus
+        );
+        // Battleship attacker → condition false → no boost → rating stays 1800 → attack_bonus = 0.5
+        let ctx_bship = OfficerStatConditionContext {
+            attacker_ship_class: Some("battleship".to_string()),
+            ..Default::default()
+        };
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &pending,
+            &ctx_bship,
+        );
+        assert!(
+            (osr.attack_bonus - 0.5).abs() < 1e-9,
+            "battleship: {}",
+            osr.attack_bonus
+        );
+    }
+
+    #[test]
+    fn phase4b_pending_contribution_target_enemy_does_not_buff_attacker() {
+        // Kras pattern: target:enemy debuff with defender_is_player_ship. In PvE the defender
+        // is a hostile, so the debuff is no-op on attacker compute (and would land on the
+        // defender via the deferred Phase 4c plumbing in PvP). Verify the attacker compute
+        // never picks up this target:enemy entry regardless of PvP/PvE.
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+        let ship = ship_with_three_bp_table("explorer");
+        let profile = PlayerProfile::default();
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 1800.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let static_buffs = HashMap::<String, f64>::new();
+        let pending = vec![crate::lcars::resolver::PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.20,
+            target_attacker: false, // target:enemy
+            conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
+        }];
+        for defender_is_player_ship in [false, true] {
+            let ctx = OfficerStatConditionContext {
+                defender_is_player_ship,
+                ..Default::default()
+            };
+            let osr = compute_officer_stat_runtime_bonus(
+                totals,
+                &ship,
+                &profile,
+                None,
+                &static_buffs,
+                &pending,
+                &ctx,
+            );
+            assert!(
+                (osr.attack_bonus - 0.5).abs() < 1e-9,
+                "target:enemy must not buff attacker (defender_is_player_ship={defender_is_player_ship}): {}",
+                osr.attack_bonus
+            );
+        }
+    }
+
+    #[test]
+    fn phase4b_and_composite_evaluates_all_branches() {
+        // Strike Team Una pattern: AND(defender_ship_type_is(explorer), defender_is_player_ship).
+        // Only fires when both branches are true.
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+        let ship = ship_with_three_bp_table("explorer");
+        let profile = PlayerProfile::default();
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 1800.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let static_buffs = HashMap::<String, f64>::new();
+        let pending = vec![crate::lcars::resolver::PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.20,
+            target_attacker: true,
+            conditions: vec![AbilityConditionSpec::And {
+                all: vec![
+                    AbilityConditionSpec::DefenderShipTypeIs {
+                        ship_type: "explorer".to_string(),
+                    },
+                    AbilityConditionSpec::DefenderIsPlayerShip,
+                ],
+            }],
+        }];
+
+        // Both true → bonus applies (rating 1800 × 1.20 = 2160 → attack_bonus = 1.0).
+        let ctx_pvp = OfficerStatConditionContext {
+            defender_is_player_ship: true,
+            defender_ship_type: Some("explorer".to_string()),
+            ..Default::default()
+        };
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &pending,
+            &ctx_pvp,
+        );
+        assert!(
+            (osr.attack_bonus - 1.0).abs() < 1e-9,
+            "both true: {}",
+            osr.attack_bonus
+        );
+
+        // One branch false → no bonus.
+        let ctx_pve = OfficerStatConditionContext {
+            defender_is_player_ship: false,
+            defender_ship_type: Some("explorer".to_string()),
+            ..Default::default()
+        };
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &pending,
+            &ctx_pve,
+        );
+        assert!(
+            (osr.attack_bonus - 0.5).abs() < 1e-9,
+            "pve no fire: {}",
+            osr.attack_bonus
+        );
+    }
+
+    #[test]
+    fn phase4b_dynamic_condition_drops_the_contribution() {
+        // Kirk-1323b6 pattern: on_round_start + morale_active. Dynamic condition can't be
+        // evaluated at fight setup, so the contribution is dropped (Phase 4d will revisit).
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+        let ship = ship_with_three_bp_table("explorer");
+        let profile = PlayerProfile::default();
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 1800.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let static_buffs = HashMap::<String, f64>::new();
+        let pending = vec![crate::lcars::resolver::PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.40,
+            target_attacker: true,
+            conditions: vec![AbilityConditionSpec::MoraleActive],
+        }];
+        let ctx = OfficerStatConditionContext::default();
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &pending,
+            &ctx,
+        );
+        assert!(
+            (osr.attack_bonus - 0.5).abs() < 1e-9,
+            "dynamic morale_active must not apply: {}",
             osr.attack_bonus
         );
     }

@@ -6,7 +6,7 @@ use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
     CrewOfficerStatTotals, CrewSeat, CrewSeatContext, TimingWindow,
 };
-use crate::data::combat_effect_spec::AbilityOperationSpec;
+use crate::data::combat_effect_spec::{AbilityConditionSpec, AbilityOperationSpec};
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsEffect, LcarsOfficer};
 use serde::Serialize;
@@ -60,6 +60,36 @@ pub struct BuffSet {
     /// weight 1.0, deduped by officer id). Populated in Phase 1; consumed in Phase 2/3.
     /// See `docs/OFFICER_STAT_FORMULA.md`.
     pub officer_stat_totals: CrewOfficerStatTotals,
+    /// Officer-rating ability contributions whose effect on the per-side multiplier depends on
+    /// fight-setup state that isn't known at resolve time (e.g. `attacker_ship_type_is`,
+    /// `defender_is_player_ship`). Evaluated by
+    /// [`crate::data::profile::compute_officer_stat_runtime_bonus`] against a setup context;
+    /// entries whose conditions are all true are added to the per-axis multiplier.
+    ///
+    /// Officer-stat effects with **no** conditions are accumulated directly into [`static_buffs`]
+    /// under their stat key (the simpler Phase 3 path); the pending list is only used when
+    /// conditions need late evaluation.
+    pub pending_officer_stat_contributions: Vec<PendingOfficerStatContribution>,
+}
+
+/// Officer-rating buff contribution whose application depends on conditions that can only be
+/// evaluated once fight-setup state is known. See [`BuffSet::pending_officer_stat_contributions`].
+#[derive(Debug, Clone)]
+pub struct PendingOfficerStatContribution {
+    /// Engine stat key the bonus targets: `officer_attack`, `officer_defense`, `officer_health`,
+    /// or the synthetic `officer_stat_all` (boosts all three axes).
+    pub stat_key: String,
+    /// Bonus value (e.g. `0.20` for +20%). Added into the matching per-axis multiplier on top
+    /// of the profile bonus and any unconditional static_buffs entries.
+    pub value: f64,
+    /// `true` for attacker-side buffs (the default `target: self`); `false` for defender-side
+    /// debuffs (`target: enemy`). Phase 4b/4a both filter target-enemy contributions out of the
+    /// attacker's compute path; Phase 4c will use this for PvP defender-side debuffs.
+    pub target_attacker: bool,
+    /// All conditions must evaluate to true at fight setup for the contribution to apply. If
+    /// any condition evaluates to `Some(false)` or `None` (undecidable / dynamic), the
+    /// contribution is silently dropped.
+    pub conditions: Vec<AbilityConditionSpec>,
 }
 
 impl BuffSet {
@@ -354,6 +384,7 @@ pub fn resolve_crew_to_buff_set(
     options: &ResolveOptions,
 ) -> BuffSet {
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
+    let mut pending_officer_stat_contributions: Vec<PendingOfficerStatContribution> = Vec::new();
     let mut seats: Vec<CrewSeatContext> = Vec::new();
     let mut proc_chance = 0.0_f64;
     let mut proc_multiplier = 1.0_f64;
@@ -430,32 +461,38 @@ pub fn resolve_crew_to_buff_set(
                 continue;
             };
 
-            // Phase 4a: filter by target. AttackerSelf is the established attacker static-buffs
-            // path; DefenderOpponent debuffs (e.g. Kras "Know Your Enemy") need PvP defender-side
-            // plumbing that is deferred to a later pass — silently skip them rather than
-            // incorrectly self-applying.
-            if !matches!(
+            let target_attacker = matches!(
                 spec.target,
                 crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
                     | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
-            ) {
+            );
+
+            // Phase 4b: officer-stat effects with conditions go into pending_contributions for
+            // fight-setup-time evaluation (TOS McCoy attacker_ship_type_is, Dezoc engagement gate,
+            // Strike Team Una composite, Kras defender_is_player_ship). Effects with no
+            // conditions and target:self take the simpler static_buffs path.
+            //
+            // target:enemy debuffs still skip the attacker's static_buffs path (Phase 4a target
+            // filter); the pending list preserves them with target_attacker=false so a future
+            // Phase 4c can route them through PvP defender-side compute.
+            if !spec.conditions.is_empty() {
+                pending_officer_stat_contributions.push(PendingOfficerStatContribution {
+                    stat_key: stat.to_string(),
+                    value: v,
+                    target_attacker,
+                    conditions: spec.conditions.clone(),
+                });
                 continue;
             }
-
-            // Phase 4a: honor LiteralBool(false) conditions at the static-buffs accumulator
-            // (e.g. mitchell-0217f7's `literal_false` clause). Other conditions are still
-            // ignored here — the static-buffs path doesn't have fight-setup context to
-            // evaluate dynamic gates (morale_active, defender_is_player_ship, etc.); those
-            // are deferred to a later pass.
-            let is_dead_clause = spec.conditions.iter().any(|c| {
-                matches!(
-                    c,
-                    crate::data::combat_effect_spec::AbilityConditionSpec::LiteralBool {
-                        value: false
-                    }
-                )
-            });
-            if is_dead_clause {
+            if !target_attacker {
+                // No conditions, but target:enemy: keep in pending for Phase 4c rather than
+                // discard. Attacker-side compute will silently ignore non-attacker entries.
+                pending_officer_stat_contributions.push(PendingOfficerStatContribution {
+                    stat_key: stat.to_string(),
+                    value: v,
+                    target_attacker,
+                    conditions: Vec::new(),
+                });
                 continue;
             }
 
@@ -664,6 +701,7 @@ pub fn resolve_crew_to_buff_set(
         proc_chance,
         proc_multiplier,
         officer_stat_totals,
+        pending_officer_stat_contributions,
     }
 }
 

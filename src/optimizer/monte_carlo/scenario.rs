@@ -630,13 +630,19 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         candidate,
         shared.lcars_data.as_ref(),
     );
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier, officer_stat_totals) =
-        build_crew_and_buffs(
-            candidate,
-            &shared.officer_index,
-            shared.lcars_data.as_ref(),
-            &resolve_opts,
-        );
+    let (
+        crew_seats,
+        static_buffs,
+        proc_chance,
+        proc_multiplier,
+        officer_stat_totals,
+        pending_officer_stat_contributions,
+    ) = build_crew_and_buffs(
+        candidate,
+        &shared.officer_index,
+        shared.lcars_data.as_ref(),
+        &resolve_opts,
+    );
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
@@ -724,13 +730,18 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             &shared.profile,
             ship_rec.faction.as_deref(),
-            crate::data::profile::compute_officer_stat_runtime_bonus(
-                officer_stat_totals,
-                ship_rec,
-                &shared.profile,
-                ship_rec.faction.as_deref(),
-                &merged_static,
-            ),
+            {
+                let cond_ctx = build_officer_stat_condition_context(shared, ship_rec);
+                crate::data::profile::compute_officer_stat_runtime_bonus(
+                    officer_stat_totals,
+                    ship_rec,
+                    &shared.profile,
+                    ship_rec.faction.as_deref(),
+                    &merged_static,
+                    &pending_officer_stat_contributions,
+                    &cond_ctx,
+                )
+            },
         );
         if shared.ship == USS_VOYAGER_SHIP_ID {
             if let Some(h) = shared.borg_alcove_hull_hp_bonus {
@@ -1017,6 +1028,7 @@ fn build_crew_and_buffs(
     f64,
     f64,
     crate::combat::CrewOfficerStatTotals,
+    Vec<crate::lcars::PendingOfficerStatContribution>,
 ) {
     if let Some(lcars) = lcars_data {
         let captain_id = lcars
@@ -1060,6 +1072,7 @@ fn build_crew_and_buffs(
                 buff_set.proc_chance,
                 buff_set.proc_multiplier,
                 buff_set.officer_stat_totals,
+                buff_set.pending_officer_stat_contributions,
             )
         } else {
             (
@@ -1068,6 +1081,7 @@ fn build_crew_and_buffs(
                 0.0,
                 1.0,
                 crate::combat::CrewOfficerStatTotals::default(),
+                Vec::new(),
             )
         }
     } else {
@@ -1077,7 +1091,47 @@ fn build_crew_and_buffs(
             0.0,
             1.0,
             crate::combat::CrewOfficerStatTotals::default(),
+            Vec::new(),
         )
+    }
+}
+
+/// Build the fight-setup condition context that
+/// [`crate::data::profile::compute_officer_stat_runtime_bonus`] uses to evaluate static
+/// officer-stat ability gates (Phase 4b of docs/OFFICER_STAT_FORMULA.md).
+fn build_officer_stat_condition_context(
+    shared: &SharedScenarioData,
+    ship_rec: &ShipRecord,
+) -> crate::data::profile::OfficerStatConditionContext {
+    let defender_ship_type = shared
+        .hostile_rec
+        .as_ref()
+        .map(|h| h.ship_class.trim().to_string())
+        .filter(|s| !s.is_empty());
+    // HostileRecord carries no faction slug — only the numeric id on the embedded
+    // HostileFactionRef. defender_faction_slug stays None (no condition in production data
+    // exercises it today); defender_hull_faction_id_is reads the numeric id.
+    let defender_faction_slug: Option<String> = None;
+    let defender_faction_id = shared
+        .hostile_rec
+        .as_ref()
+        .and_then(|h| h.faction.as_ref())
+        .map(|f| f.id);
+    let engagement_types: Vec<String> = shared
+        .engagement_enemy_types
+        .0
+        .iter()
+        .map(|t| format!("{:?}", t).to_lowercase())
+        .collect();
+    crate::data::profile::OfficerStatConditionContext {
+        attacker_ship_class: Some(ship_rec.ship_class.trim().to_string()).filter(|s| !s.is_empty()),
+        attacker_ship_id: Some(ship_rec.id.trim().to_string()).filter(|s| !s.is_empty()),
+        attacker_owner_faction: ship_rec.faction.clone(),
+        defender_is_player_ship: shared.defender_opponent.defender_is_player_ship(),
+        defender_ship_type,
+        defender_faction_id,
+        defender_faction_slug,
+        engagement_types,
     }
 }
 
@@ -1165,7 +1219,7 @@ fn resolve_player_defender_officer_bundle(
         bridge,
         below_decks,
     };
-    let (seats, static_buffs, _proc_c, _proc_m, _officer_stat_totals) =
+    let (seats, static_buffs, _proc_c, _proc_m, _officer_stat_totals, _pending_contribs) =
         build_crew_and_buffs(&candidate, officers_by_name, lcars_data, resolve_options);
     (seats, static_buffs)
 }
@@ -1192,8 +1246,14 @@ pub(crate) fn scenario_to_combat_input(
         roster_officer_ids_from_candidate(candidate, officers_by_name);
 
     let resolve_opts = ResolveOptions::default();
-    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier, officer_stat_totals) =
-        build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
+    let (
+        crew_seats,
+        mut static_buffs,
+        proc_chance,
+        proc_multiplier,
+        officer_stat_totals,
+        pending_officer_stat_contributions,
+    ) = build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
@@ -1239,13 +1299,32 @@ pub(crate) fn scenario_to_combat_input(
             },
             profile,
             ship_rec.faction.as_deref(),
-            crate::data::profile::compute_officer_stat_runtime_bonus(
-                officer_stat_totals,
-                &ship_rec,
-                profile,
-                ship_rec.faction.as_deref(),
-                &static_buffs,
-            ),
+            {
+                // scenario_to_combat_input variant: defender info is the hostile_rec (PvE only).
+                let defender_ship_type =
+                    Some(hostile_rec.ship_class.trim().to_string()).filter(|s| !s.is_empty());
+                let cond_ctx = crate::data::profile::OfficerStatConditionContext {
+                    attacker_ship_class: Some(ship_rec.ship_class.trim().to_string())
+                        .filter(|s| !s.is_empty()),
+                    attacker_ship_id: Some(ship_rec.id.trim().to_string())
+                        .filter(|s| !s.is_empty()),
+                    attacker_owner_faction: ship_rec.faction.clone(),
+                    defender_is_player_ship: false,
+                    defender_ship_type,
+                    defender_faction_id: hostile_rec.faction.as_ref().map(|f| f.id),
+                    defender_faction_slug: None,
+                    engagement_types: Vec::new(),
+                };
+                crate::data::profile::compute_officer_stat_runtime_bonus(
+                    officer_stat_totals,
+                    &ship_rec,
+                    profile,
+                    ship_rec.faction.as_deref(),
+                    &static_buffs,
+                    &pending_officer_stat_contributions,
+                    &cond_ctx,
+                )
+            },
         );
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
