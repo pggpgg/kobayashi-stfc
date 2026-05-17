@@ -12,7 +12,7 @@ use crate::data::loader::{
     defender_faction_for_cli_simulate, defender_hull_faction_id_for_cli_simulate, resolve_hostile,
     resolve_ship,
 };
-use crate::data::profile::{apply_profile_to_attacker, load_profile};
+use crate::data::profile::{apply_profile_to_attacker, load_profile, OfficerStatRuntimeBonus};
 use crate::data::profile_index::{
     ensure_profile_index_bootstrap, profile_data_dir, profile_path,
     prune_ephemeral_scenario_test_profiles, resolve_profile_id_for_api,
@@ -237,6 +237,7 @@ fn handle_simulate(args: &[String]) -> i32 {
         },
         &player_profile,
         None,
+        OfficerStatRuntimeBonus::default(),
     );
     let defender = Combatant {
         id: "hostile".to_string(),

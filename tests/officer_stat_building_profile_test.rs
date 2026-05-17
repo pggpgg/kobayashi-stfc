@@ -7,7 +7,8 @@ use kobayashi::combat::Combatant;
 use kobayashi::data::building::{BuildingBonusContext, BuildingIndex};
 use kobayashi::data::import::BuildingEntry;
 use kobayashi::data::profile::{
-    apply_profile_to_attacker, merge_building_bonuses_into_profile, PlayerProfile,
+    apply_profile_to_attacker, merge_building_bonuses_into_profile, OfficerStatRuntimeBonus,
+    PlayerProfile,
 };
 
 #[test]
@@ -66,11 +67,16 @@ fn command_center_level_80_officer_attack_multiplies_when_weapon_damage_absent()
         hostile_mitigation_params: None,
     };
 
-    let out = apply_profile_to_attacker(attacker, &profile, None);
-    let expected = 1000.0 * (1.0 + wd) * (1.0 + oa);
+    // §4 of docs/OFFICER_STAT_FORMULA.md migrated the `officer_attack` profile key from a
+    // post-aggregation ship-attack multiplier (legacy) to a pre-aggregation per-officer A/D/H
+    // multiplier (new). With no crew (empty `OfficerStatRuntimeBonus`) the officer_attack profile
+    // value has nothing to multiply, so the only attack multiplier applied here is `weapon_damage`.
+    let out =
+        apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
+    let expected = 1000.0 * (1.0 + wd);
     assert!(
         (out.attack - expected).abs() < 1e-3,
-        "attack {} expected {} (oa={oa}, wd={wd})",
+        "attack {} expected {} (oa={oa} is no-op without crew under new model; wd={wd})",
         out.attack,
         expected
     );

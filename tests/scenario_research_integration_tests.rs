@@ -2,7 +2,8 @@ use kobayashi::combat::Combatant;
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::import::ResearchEntry;
 use kobayashi::data::profile::{
-    apply_profile_to_attacker, merge_research_bonuses_into_profile, PlayerProfile,
+    apply_profile_to_attacker, merge_research_bonuses_into_profile, OfficerStatRuntimeBonus,
+    PlayerProfile,
 };
 use kobayashi::data::profile_index::{
     create_profile, delete_profile, load_profile_index, profile_path, RESEARCH_IMPORTED,
@@ -228,7 +229,8 @@ fn catalog_apex_research_round_trips_through_profile_combatant() {
         isolytic_defense: 0.0,
         hostile_mitigation_params: None,
     };
-    let out = apply_profile_to_attacker(attacker, &profile, None);
+    let out =
+        apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
     assert!(
         (out.apex_shred - (0.01 + apex_val)).abs() < 1e-6,
         "expected combatant apex_shred base 0.01 + research {}",

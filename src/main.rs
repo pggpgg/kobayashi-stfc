@@ -11,7 +11,7 @@ use kobayashi::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_battlelogs,
 };
 use kobayashi::data::loader::{defender_faction_for_cli_simulate, resolve_hostile, resolve_ship};
-use kobayashi::data::profile::{apply_profile_to_attacker, load_profile};
+use kobayashi::data::profile::{apply_profile_to_attacker, load_profile, OfficerStatRuntimeBonus};
 use kobayashi::data::profile_index::{
     ensure_profile_index_bootstrap, profile_data_dir, profile_path,
     prune_ephemeral_scenario_test_profiles, resolve_profile_id_for_api,
@@ -338,6 +338,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         },
         &player_profile,
         owner_faction_owned.as_deref(),
+        OfficerStatRuntimeBonus::default(),
     );
     let defender = Combatant {
         id: parsed.defender_id,

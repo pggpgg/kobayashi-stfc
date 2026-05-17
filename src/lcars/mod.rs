@@ -6,7 +6,7 @@
 mod canonical_conditions;
 pub mod effect_spec_adapter;
 mod parser;
-mod resolver;
+pub mod resolver;
 
 pub use canonical_conditions::{
     canonical_conditions_to_lcars, is_canonical_condition_mapped,
@@ -23,5 +23,6 @@ pub use parser::{
 };
 pub use resolver::{
     index_lcars_officers_by_id, lcars_effect_coverage, resolve_crew_to_buff_set,
-    resolve_officer_ability, BuffSet, LcarsEffectCoverage, MechanicCoverageTier, ResolveOptions,
+    resolve_officer_ability, BuffSet, LcarsEffectCoverage, MechanicCoverageTier,
+    PendingOfficerStatContribution, ResolveOptions,
 };

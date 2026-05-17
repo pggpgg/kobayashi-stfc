@@ -46,8 +46,9 @@ struct AbilityCatalogEntry {
 }
 
 use kobayashi::data::ship::{
-    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry,
-    ShipIdRegistryEntry, TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
+    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, OfficerBonusBreakpoint, OfficerBonusTable,
+    ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
+    DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -345,6 +346,8 @@ fn raw_to_extended(
         }
     });
 
+    let officer_bonus = parse_officer_bonus(raw);
+
     Ok(ExtendedShipRecord {
         id: canonical_id.to_string(),
         ship_name: ship_name.to_string(),
@@ -354,7 +357,38 @@ fn raw_to_extended(
         levels,
         crew_slots,
         abilities,
+        officer_bonus,
     })
+}
+
+fn parse_officer_bonus(raw: &Value) -> OfficerBonusTable {
+    let Some(node) = raw.get("officer_bonus") else {
+        return OfficerBonusTable::default();
+    };
+    let parse_channel = |key: &str| -> Vec<OfficerBonusBreakpoint> {
+        let Some(arr) = node.get(key).and_then(Value::as_array) else {
+            return Vec::new();
+        };
+        let mut out: Vec<OfficerBonusBreakpoint> = arr
+            .iter()
+            .filter_map(|row| {
+                let value = row.get("value").and_then(Value::as_f64)?;
+                let bonus = row.get("bonus").and_then(Value::as_f64)?;
+                Some(OfficerBonusBreakpoint { value, bonus })
+            })
+            .collect();
+        out.sort_by(|a, b| {
+            a.value
+                .partial_cmp(&b.value)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        out
+    };
+    OfficerBonusTable {
+        attack: parse_channel("attack"),
+        defense: parse_channel("defense"),
+        health: parse_channel("health"),
+    }
 }
 
 /// Order value used when component has no order or order is -1 (sort after valid weapons).
@@ -384,8 +418,15 @@ fn extract_tier_combat(
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
     let mut shield_mitigation = 0.8;
-    // Player defender stats for hostile→player counter-fire mitigation.
-    // Sources: `Armor.plating`, `Deflector.deflection`, `Impulse.dodge` on data.stfc.space tier components.
+    // Player defender stats for hostile→player counter-fire mitigation, and the per-ship channel
+    // constants for officer-stat Defense routing (see `docs/OFFICER_STAT_FORMULA.md` §2c).
+    // Sources on data.stfc.space tier components:
+    //   - `Armor.plating`           → `armor`              (battleship-primary channel)
+    //   - `Shield.absorption`       → `shield_deflection`  (explorer-primary channel)
+    //   - `Impulse.dodge`           → `dodge`              (interceptor-primary channel)
+    // The legacy `Deflector.deflection` field is a stale `120` for every ship and is intentionally
+    // ignored; the hostile normalizer (`normalize_hostiles_stfc_space.rs`) already sources
+    // `shield_deflection` from `Shield.absorption`, so this brings player ships into alignment.
     let mut armor_stat = 0.0;
     let mut shield_deflection_stat = 0.0;
     let mut dodge_stat = 0.0;
@@ -413,6 +454,9 @@ fn extract_tier_combat(
                 if let Some(m) = data.get("mitigation").and_then(Value::as_f64) {
                     shield_mitigation = m;
                 }
+                if let Some(a) = data.get("absorption").and_then(Value::as_f64) {
+                    shield_deflection_stat = a;
+                }
             }
             "Armor" => {
                 hull_health = data.get("hp").and_then(Value::as_f64).unwrap_or(0.0);
@@ -421,9 +465,8 @@ fn extract_tier_combat(
                 }
             }
             "Deflector" => {
-                if let Some(d) = data.get("deflection").and_then(Value::as_f64) {
-                    shield_deflection_stat = d;
-                }
+                // Legacy `Deflector.deflection` is a stale constant (120) across every upstream ship.
+                // The real shield-deflection mitigation lives in `Shield.absorption` (handled above).
             }
             "Impulse" => {
                 if let Some(d) = data.get("dodge").and_then(Value::as_f64) {

@@ -1,13 +1,16 @@
 {
   "id": "phindra",
   "ship_name": "PHINDRA",
-  "ship_class": "battleship",
+  "ship_class": "interceptor",
   "tiers": [
     {
       "tier": 1,
       "armor_piercing": 208.0,
       "shield_piercing": 34.0,
       "accuracy": 34.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 58.0,
       "attack": 556.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -46,6 +49,9 @@
       "armor_piercing": 516.0,
       "shield_piercing": 86.0,
       "accuracy": 86.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 86.0,
       "attack": 825.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -84,6 +90,9 @@
       "armor_piercing": 970.0,
       "shield_piercing": 162.0,
       "accuracy": 162.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 126.0,
       "attack": 1215.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -122,6 +131,9 @@
       "armor_piercing": 1482.0,
       "shield_piercing": 248.0,
       "accuracy": 248.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 142.0,
       "attack": 1367.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -160,6 +172,9 @@
       "armor_piercing": 2068.0,
       "shield_piercing": 346.0,
       "accuracy": 346.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 163.0,
       "attack": 1569.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -198,6 +213,9 @@
       "armor_piercing": 2954.0,
       "shield_piercing": 494.0,
       "accuracy": 494.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 259.0,
       "attack": 2366.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -236,6 +254,9 @@
       "armor_piercing": 4212.0,
       "shield_piercing": 704.0,
       "accuracy": 704.0,
+      "armor": 14.0,
+      "shield_deflection": 14.0,
+      "dodge": 350.0,
       "attack": 3362.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -480,5 +501,133 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
-  ]
+  ],
+  "officer_bonus": {
+    "attack": [
+      {
+        "value": 40.0,
+        "bonus": 0.22000000000000003
+      },
+      {
+        "value": 80.0,
+        "bonus": 0.44000000000000006
+      },
+      {
+        "value": 130.0,
+        "bonus": 0.66
+      },
+      {
+        "value": 180.0,
+        "bonus": 0.8800000000000001
+      },
+      {
+        "value": 240.0,
+        "bonus": 1.1
+      },
+      {
+        "value": 320.0,
+        "bonus": 1.32
+      },
+      {
+        "value": 440.0,
+        "bonus": 1.54
+      },
+      {
+        "value": 600.0,
+        "bonus": 1.7600000000000002
+      },
+      {
+        "value": 800.0,
+        "bonus": 1.98
+      },
+      {
+        "value": 1200.0,
+        "bonus": 2.2
+      }
+    ],
+    "defense": [
+      {
+        "value": 40.0,
+        "bonus": 0.22000000000000003
+      },
+      {
+        "value": 80.0,
+        "bonus": 0.44000000000000006
+      },
+      {
+        "value": 130.0,
+        "bonus": 0.66
+      },
+      {
+        "value": 180.0,
+        "bonus": 0.8800000000000001
+      },
+      {
+        "value": 240.0,
+        "bonus": 1.1
+      },
+      {
+        "value": 320.0,
+        "bonus": 1.32
+      },
+      {
+        "value": 440.0,
+        "bonus": 1.54
+      },
+      {
+        "value": 600.0,
+        "bonus": 1.7600000000000002
+      },
+      {
+        "value": 800.0,
+        "bonus": 1.98
+      },
+      {
+        "value": 1200.0,
+        "bonus": 2.2
+      }
+    ],
+    "health": [
+      {
+        "value": 40.0,
+        "bonus": 0.22000000000000003
+      },
+      {
+        "value": 80.0,
+        "bonus": 0.44000000000000006
+      },
+      {
+        "value": 130.0,
+        "bonus": 0.66
+      },
+      {
+        "value": 180.0,
+        "bonus": 0.8800000000000001
+      },
+      {
+        "value": 240.0,
+        "bonus": 1.1
+      },
+      {
+        "value": 320.0,
+        "bonus": 1.32
+      },
+      {
+        "value": 440.0,
+        "bonus": 1.54
+      },
+      {
+        "value": 600.0,
+        "bonus": 1.7600000000000002
+      },
+      {
+        "value": 800.0,
+        "bonus": 1.98
+      },
+      {
+        "value": 1200.0,
+        "bonus": 2.2
+      }
+    ]
+  }
 }

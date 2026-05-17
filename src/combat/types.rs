@@ -154,6 +154,20 @@ pub struct DefenderStats {
     pub dodge: f64,
 }
 
+/// Per-side sum of crewed-officer Attack / Defense / Health stats. Each crewed officer contributes
+/// at weight 1.0 regardless of slot (see `docs/OFFICER_STAT_FORMULA.md` §1). The values fed in are
+/// already post-multiplied by the profile's `officer_attack` / `officer_defense` / `officer_health`
+/// bonuses (the ~+1.25% Cerritos crewing delta from §2e) and by any officer-stat ability buffs.
+///
+/// Defined in Phase 1 of the officer-A/D/H runtime work. Consumed in Phase 2 (breakpoint lookup +
+/// ship-stat wiring) and Phase 3 (`officerstatall` / `officerstathealth` ability modifiers).
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub struct CrewOfficerStatTotals {
+    pub attack: f64,
+    pub defense: f64,
+    pub health: f64,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AttackerStats {
     pub armor_piercing: f64,

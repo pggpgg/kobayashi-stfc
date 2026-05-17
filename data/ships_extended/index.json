@@ -5,17 +5,17 @@
     {
       "id": "b_rel",
       "ship_name": "B'REL",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "legionary",
       "ship_name": "LEGIONARY",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "uss_kelvin",
       "ship_name": "U.S.S. KELVIN",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "grishnar",
@@ -25,7 +25,7 @@
     {
       "id": "the_vindicator",
       "ship_name": "THE VINDICATOR",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "botany_bay",
@@ -35,7 +35,7 @@
     {
       "id": "uss_franklin",
       "ship_name": "U.S.S. FRANKLIN",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "envoy",
@@ -50,42 +50,42 @@
     {
       "id": "phindra",
       "ship_name": "PHINDRA",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "vahklas",
       "ship_name": "VAHKLAS",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "sanctus",
       "ship_name": "SANCTUS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_defiant",
       "ship_name": "U.S.S. DEFIANT",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "hijacked_legionary",
       "ship_name": "HIJACKED LEGIONARY",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "korinar",
       "ship_name": "KORINAR",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_excelsior",
       "ship_name": "U.S.S. EXCELSIOR",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "separatist_d3_class",
       "ship_name": "SEPARATIST D3 CLASS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "b_chor",
@@ -95,32 +95,32 @@
     {
       "id": "uss_saladin",
       "ship_name": "U.S.S. SALADIN",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "nsea_protector",
       "ship_name": "NSEA PROTECTOR",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "enterprise_nx_01",
       "ship_name": "ENTERPRISE NX-01",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "minerva",
       "ship_name": "MINERVA",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_voyager",
       "ship_name": "U.S.S. VOYAGER",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_enterprise",
       "ship_name": "U.S.S. ENTERPRISE",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "divitae",
@@ -130,32 +130,32 @@
     {
       "id": "rotarran",
       "ship_name": "ROTARRAN",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_enterprise_e",
       "ship_name": "U.S.S. ENTERPRISE-E",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "stella",
       "ship_name": "STELLA",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "uss_cerritos",
       "ship_name": "U.S.S. CERRITOS",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "scimitar",
       "ship_name": "SCIMITAR",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "uss_socrates",
       "ship_name": "U.S.S. SOCRATES",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_beatty",
@@ -165,17 +165,17 @@
     {
       "id": "uss_relativity",
       "ship_name": "U.S.S. RELATIVITY",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "gorn_eviscerator",
       "ship_name": "GORN EVISCERATOR",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_vengeance",
       "ship_name": "U.S.S. VENGEANCE",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_antares",
@@ -185,7 +185,7 @@
     {
       "id": "pilum",
       "ship_name": "PILUM",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "ferengi_d_vor",
@@ -195,17 +195,17 @@
     {
       "id": "krencha",
       "ship_name": "KRENCHA",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "i_k_s_ak_voh",
       "ship_name": "I.K.S. AK'VOH",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_enterprise_a",
       "ship_name": "U.S.S. ENTERPRISE-A",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "k_vort",
@@ -215,22 +215,22 @@
     {
       "id": "snakehead",
       "ship_name": "SNAKEHEAD",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "hijacked_d3_class",
       "ship_name": "HIJACKED D3 CLASS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "vi_dar_talios",
       "ship_name": "VI'DAR TALIOS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "d_deridex",
       "ship_name": "D'DERIDEX",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "vrax",
@@ -245,37 +245,37 @@
     {
       "id": "uss_akira",
       "ship_name": "U.S.S. AKIRA",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "i_k_s_boreth",
       "ship_name": "I.K.S. BORETH",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "i_k_s_gre_thor",
       "ship_name": "I.K.S. GRE'THOR",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "vor_cha",
       "ship_name": "VOR'CHA",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "augur",
       "ship_name": "AUGUR",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "monaveen",
       "ship_name": "MONAVEEN",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "gladius",
       "ship_name": "GLADIUS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "ecs_horizon",
@@ -285,22 +285,22 @@
     {
       "id": "uss_crozier",
       "ship_name": "U.S.S. CROZIER",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "realta",
       "ship_name": "REALTA",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "negh_var",
       "ship_name": "NEGH'VAR",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "hegh_ta",
       "ship_name": "HEGH'TA",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "d_vor_feesha",
@@ -310,7 +310,7 @@
     {
       "id": "uss_dauntless",
       "ship_name": "U.S.S. DAUNTLESS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "mow_ga",
@@ -320,17 +320,17 @@
     {
       "id": "k_t_inga",
       "ship_name": "K'T'INGA",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "quv_sompek",
       "ship_name": "QUV'SOMPEK",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "turas",
       "ship_name": "TURAS",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "amalgam",
@@ -340,12 +340,12 @@
     {
       "id": "velox",
       "ship_name": "VELOX",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_franklin_a",
       "ship_name": "U.S.S. FRANKLIN-A",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "ecs_fortunate",
@@ -355,12 +355,12 @@
     {
       "id": "uss_reliant",
       "ship_name": "U.S.S. RELIANT",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_mayflower",
       "ship_name": "U.S.S. MAYFLOWER",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "vorta_vor",
@@ -370,7 +370,7 @@
     {
       "id": "iss_jellyfish",
       "ship_name": "I.S.S. JELLYFISH",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "aphelion",
@@ -380,27 +380,27 @@
     {
       "id": "uss_titan_a",
       "ship_name": "U.S.S. TITAN-A",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_newton",
       "ship_name": "U.S.S. NEWTON",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "talla",
       "ship_name": "TALLA",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "uss_discovery",
       "ship_name": "U.S.S. DISCOVERY",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "admonition",
       "ship_name": "ADMONITION",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "nova",
@@ -410,22 +410,22 @@
     {
       "id": "uss_enterprise_m414",
       "ship_name": "U.S.S. ENTERPRISE M414",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "orion_corvette",
       "ship_name": "ORION CORVETTE",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "kos_karii",
       "ship_name": "KOS'KARII",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "valdore",
       "ship_name": "VALDORE",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "borg_sphere",
@@ -435,32 +435,32 @@
     {
       "id": "sarcophagus",
       "ship_name": "SARCOPHAGUS",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "mantis",
       "ship_name": "MANTIS",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "borg_cube",
       "ship_name": "BORG CUBE",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "hijacked_uss_mayflower",
       "ship_name": "HIJACKED U.S.S. MAYFLOWER",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "vi_dar",
       "ship_name": "VI'DAR",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "d4_class",
       "ship_name": "D4 CLASS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "meridian",
@@ -470,7 +470,7 @@
     {
       "id": "kumari",
       "ship_name": "KUMARI",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "uss_hydra",
@@ -480,27 +480,27 @@
     {
       "id": "d3_class",
       "ship_name": "D3 CLASS",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "corvus",
       "ship_name": "CORVUS",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_stargazer",
       "ship_name": "U.S.S. STARGAZER",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "tribune",
       "ship_name": "TRIBUNE",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "uss_intrepid",
       "ship_name": "U.S.S. INTREPID",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "selkie",
@@ -510,32 +510,32 @@
     {
       "id": "uss_enterprise_d",
       "ship_name": "U.S.S. ENTERPRISE-D",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "jellyfish",
       "ship_name": "JELLYFISH",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "gs_31",
       "ship_name": "GS-31",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_titan",
       "ship_name": "U.S.S. TITAN",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     },
     {
       "id": "centurion",
       "ship_name": "CENTURION",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "uss_northcutt",
       "ship_name": "U.S.S. NORTHCUTT",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "uss_newgrange",
@@ -545,7 +545,7 @@
     {
       "id": "kehra",
       "ship_name": "KEHRA",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "serene_squall",
@@ -555,17 +555,17 @@
     {
       "id": "ss_revenant",
       "ship_name": "SS REVENANT",
-      "ship_class": "battleship"
+      "ship_class": "interceptor"
     },
     {
       "id": "praefortis",
       "ship_name": "PRAEFORTIS",
-      "ship_class": "interceptor"
+      "ship_class": "explorer"
     },
     {
       "id": "bortas",
       "ship_name": "BORTAS",
-      "ship_class": "explorer"
+      "ship_class": "battleship"
     }
   ]
 }

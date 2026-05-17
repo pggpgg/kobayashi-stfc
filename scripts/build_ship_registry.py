@@ -10,9 +10,14 @@ import re
 import sys
 from pathlib import Path
 
-# hull_type from data.stfc.space (aligned with STFC_SPACE_DATA_STRATEGY.md hostile mapping)
-# 0=battleship, 1=survey, 2=interceptor, 3=explorer, 4/5=survey variant
-HULL_TO_CLASS = {0: "battleship", 1: "survey", 2: "interceptor", 3: "explorer", 4: "survey", 5: "survey"}
+# hull_type from data.stfc.space. Verified against in-game ship classifications:
+#   hull_type 0 (interceptor): Gorn Eviscerator, D4 Class, SS Revenant
+#   hull_type 1 (survey):      Nova, Botany Bay, Envoy
+#   hull_type 2 (explorer):    U.S.S. Cerritos, Enterprise NX-01, Jellyfish
+#   hull_type 3 (battleship):  Borg Cube, D'Deridex, U.S.S. Crozier
+# Earlier versions of this script had hull_types 0/2/3 mapped wrong (was 0→battleship,
+# 2→interceptor, 3→explorer); only hull_type 1 (survey) was correct.
+HULL_TO_CLASS = {0: "interceptor", 1: "survey", 2: "explorer", 3: "battleship", 4: "survey", 5: "survey"}
 
 
 def name_to_canonical_id(text: str) -> str:

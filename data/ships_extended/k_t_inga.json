@@ -1,7 +1,7 @@
 {
   "id": "k_t_inga",
   "ship_name": "K'T'INGA",
-  "ship_class": "explorer",
+  "ship_class": "battleship",
   "faction": "klingon",
   "tiers": [
     {
@@ -9,6 +9,9 @@
       "armor_piercing": 9600.0,
       "shield_piercing": 96000.0,
       "accuracy": 11520.0,
+      "armor": 19622.0,
+      "shield_deflection": 1962.0,
+      "dodge": 2551.0,
       "attack": 183492.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -59,6 +62,9 @@
       "armor_piercing": 19824.0,
       "shield_piercing": 198240.0,
       "accuracy": 23790.0,
+      "armor": 20897.0,
+      "shield_deflection": 1962.0,
+      "dodge": 2717.0,
       "attack": 195420.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -109,6 +115,9 @@
       "armor_piercing": 30816.0,
       "shield_piercing": 308148.0,
       "accuracy": 36981.0,
+      "armor": 22464.0,
+      "shield_deflection": 1962.0,
+      "dodge": 2921.0,
       "attack": 210076.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -159,6 +168,9 @@
       "armor_piercing": 42741.0,
       "shield_piercing": 427398.0,
       "accuracy": 51294.0,
+      "armor": 24373.0,
+      "shield_deflection": 1962.0,
+      "dodge": 3169.0,
       "attack": 227930.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -209,6 +221,9 @@
       "armor_piercing": 55800.0,
       "shield_piercing": 557976.0,
       "accuracy": 66966.0,
+      "armor": 26688.0,
+      "shield_deflection": 1962.0,
+      "dodge": 3470.0,
       "attack": 249582.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -259,6 +274,9 @@
       "armor_piercing": 70230.0,
       "shield_piercing": 702264.0,
       "accuracy": 84285.0,
+      "armor": 29490.0,
+      "shield_deflection": 1962.0,
+      "dodge": 3834.0,
       "attack": 275790.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -309,6 +327,9 @@
       "armor_piercing": 86247.0,
       "shield_piercing": 862425.0,
       "accuracy": 103509.0,
+      "armor": 32734.0,
+      "shield_deflection": 1962.0,
+      "dodge": 4256.0,
       "attack": 306128.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -359,6 +380,9 @@
       "armor_piercing": 103947.0,
       "shield_piercing": 1039404.0,
       "accuracy": 124752.0,
+      "armor": 36171.0,
+      "shield_deflection": 1962.0,
+      "dodge": 4703.0,
       "attack": 338272.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -409,6 +433,9 @@
       "armor_piercing": 123240.0,
       "shield_piercing": 1232310.0,
       "accuracy": 147906.0,
+      "armor": 39426.0,
+      "shield_deflection": 1962.0,
+      "dodge": 5126.0,
       "attack": 368718.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -459,6 +486,9 @@
       "armor_piercing": 143979.0,
       "shield_piercing": 1439685.0,
       "accuracy": 172797.0,
+      "armor": 42383.0,
+      "shield_deflection": 1962.0,
+      "dodge": 5510.0,
       "attack": 396372.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -509,6 +539,9 @@
       "armor_piercing": 165963.0,
       "shield_piercing": 1659504.0,
       "accuracy": 199182.0,
+      "armor": 44926.0,
+      "shield_deflection": 1962.0,
+      "dodge": 5841.0,
       "attack": 420156.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -559,6 +592,9 @@
       "armor_piercing": 189156.0,
       "shield_piercing": 1891413.0,
       "accuracy": 227019.0,
+      "armor": 47397.0,
+      "shield_deflection": 1962.0,
+      "dodge": 6162.0,
       "attack": 443264.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -944,5 +980,133 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
-  ]
+  ],
+  "officer_bonus": {
+    "attack": [
+      {
+        "value": 700.0,
+        "bonus": 0.4
+      },
+      {
+        "value": 1400.0,
+        "bonus": 0.8
+      },
+      {
+        "value": 2275.0,
+        "bonus": 1.2
+      },
+      {
+        "value": 3150.0,
+        "bonus": 1.6
+      },
+      {
+        "value": 4200.0,
+        "bonus": 2.0
+      },
+      {
+        "value": 5600.0,
+        "bonus": 2.4
+      },
+      {
+        "value": 7700.0,
+        "bonus": 2.8
+      },
+      {
+        "value": 10500.0,
+        "bonus": 3.2
+      },
+      {
+        "value": 14000.0,
+        "bonus": 3.6
+      },
+      {
+        "value": 21000.0,
+        "bonus": 4.0
+      }
+    ],
+    "defense": [
+      {
+        "value": 700.0,
+        "bonus": 0.4
+      },
+      {
+        "value": 1400.0,
+        "bonus": 0.8
+      },
+      {
+        "value": 2275.0,
+        "bonus": 1.2
+      },
+      {
+        "value": 3150.0,
+        "bonus": 1.6
+      },
+      {
+        "value": 4200.0,
+        "bonus": 2.0
+      },
+      {
+        "value": 5600.0,
+        "bonus": 2.4
+      },
+      {
+        "value": 7700.0,
+        "bonus": 2.8
+      },
+      {
+        "value": 10500.0,
+        "bonus": 3.2
+      },
+      {
+        "value": 14000.0,
+        "bonus": 3.6
+      },
+      {
+        "value": 21000.0,
+        "bonus": 4.0
+      }
+    ],
+    "health": [
+      {
+        "value": 700.0,
+        "bonus": 0.4
+      },
+      {
+        "value": 1400.0,
+        "bonus": 0.8
+      },
+      {
+        "value": 2275.0,
+        "bonus": 1.2
+      },
+      {
+        "value": 3150.0,
+        "bonus": 1.6
+      },
+      {
+        "value": 4200.0,
+        "bonus": 2.0
+      },
+      {
+        "value": 5600.0,
+        "bonus": 2.4
+      },
+      {
+        "value": 7700.0,
+        "bonus": 2.8
+      },
+      {
+        "value": 10500.0,
+        "bonus": 3.2
+      },
+      {
+        "value": 14000.0,
+        "bonus": 3.6
+      },
+      {
+        "value": 21000.0,
+        "bonus": 4.0
+      }
+    ]
+  }
 }

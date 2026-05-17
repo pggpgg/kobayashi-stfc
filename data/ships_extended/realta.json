@@ -1,13 +1,16 @@
 {
   "id": "realta",
   "ship_name": "REALTA",
-  "ship_class": "interceptor",
+  "ship_class": "explorer",
   "tiers": [
     {
       "tier": 1,
       "armor_piercing": 2.0,
       "shield_piercing": 2.0,
       "accuracy": 30.0,
+      "armor": 3.0,
+      "shield_deflection": 8.0,
+      "dodge": 1.0,
       "attack": 32.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -46,6 +49,9 @@
       "armor_piercing": 4.0,
       "shield_piercing": 4.0,
       "accuracy": 72.0,
+      "armor": 3.0,
+      "shield_deflection": 11.0,
+      "dodge": 1.0,
       "attack": 45.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -84,6 +90,9 @@
       "armor_piercing": 8.0,
       "shield_piercing": 8.0,
       "accuracy": 130.0,
+      "armor": 3.0,
+      "shield_deflection": 16.0,
+      "dodge": 1.0,
       "attack": 62.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -122,6 +131,9 @@
       "armor_piercing": 14.0,
       "shield_piercing": 14.0,
       "accuracy": 212.0,
+      "armor": 3.0,
+      "shield_deflection": 22.0,
+      "dodge": 1.0,
       "attack": 88.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -283,5 +295,133 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
-  ]
+  ],
+  "officer_bonus": {
+    "attack": [
+      {
+        "value": 0.0,
+        "bonus": 0.1
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.2
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.3
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.4
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.5
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.6
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.7
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.8
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.9
+      },
+      {
+        "value": 0.0,
+        "bonus": 1.0
+      }
+    ],
+    "defense": [
+      {
+        "value": 0.0,
+        "bonus": 0.1
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.2
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.3
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.4
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.5
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.6
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.7
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.8
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.9
+      },
+      {
+        "value": 0.0,
+        "bonus": 1.0
+      }
+    ],
+    "health": [
+      {
+        "value": 0.0,
+        "bonus": 0.1
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.2
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.3
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.4
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.5
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.6
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.7
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.8
+      },
+      {
+        "value": 0.0,
+        "bonus": 0.9
+      },
+      {
+        "value": 0.0,
+        "bonus": 1.0
+      }
+    ]
+  }
 }

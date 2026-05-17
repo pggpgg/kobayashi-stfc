@@ -3,10 +3,10 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, TimingWindow,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
+    CrewOfficerStatTotals, CrewSeat, CrewSeatContext, TimingWindow,
 };
-use crate::data::combat_effect_spec::AbilityOperationSpec;
+use crate::data::combat_effect_spec::{AbilityConditionSpec, AbilityOperationSpec};
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsEffect, LcarsOfficer};
 use serde::Serialize;
@@ -56,6 +56,40 @@ pub struct BuffSet {
     pub proc_chance: f64,
     /// Extra attack proc multiplier (e.g. 2.0 for double shot). Applied when proc triggers.
     pub proc_multiplier: f64,
+    /// Per-side sum of crewed-officer Attack / Defense / Health stats (each crewed officer at
+    /// weight 1.0, deduped by officer id). Populated in Phase 1; consumed in Phase 2/3.
+    /// See `docs/OFFICER_STAT_FORMULA.md`.
+    pub officer_stat_totals: CrewOfficerStatTotals,
+    /// Officer-rating ability contributions whose effect on the per-side multiplier depends on
+    /// fight-setup state that isn't known at resolve time (e.g. `attacker_ship_type_is`,
+    /// `defender_is_player_ship`). Evaluated by
+    /// [`crate::data::profile::compute_officer_stat_runtime_bonus`] against a setup context;
+    /// entries whose conditions are all true are added to the per-axis multiplier.
+    ///
+    /// Officer-stat effects with **no** conditions are accumulated directly into [`static_buffs`]
+    /// under their stat key (the simpler Phase 3 path); the pending list is only used when
+    /// conditions need late evaluation.
+    pub pending_officer_stat_contributions: Vec<PendingOfficerStatContribution>,
+}
+
+/// Officer-rating buff contribution whose application depends on conditions that can only be
+/// evaluated once fight-setup state is known. See [`BuffSet::pending_officer_stat_contributions`].
+#[derive(Debug, Clone)]
+pub struct PendingOfficerStatContribution {
+    /// Engine stat key the bonus targets: `officer_attack`, `officer_defense`, `officer_health`,
+    /// or the synthetic `officer_stat_all` (boosts all three axes).
+    pub stat_key: String,
+    /// Bonus value (e.g. `0.20` for +20%). Added into the matching per-axis multiplier on top
+    /// of the profile bonus and any unconditional static_buffs entries.
+    pub value: f64,
+    /// `true` for attacker-side buffs (the default `target: self`); `false` for defender-side
+    /// debuffs (`target: enemy`). Phase 4b/4a both filter target-enemy contributions out of the
+    /// attacker's compute path; Phase 4c will use this for PvP defender-side debuffs.
+    pub target_attacker: bool,
+    /// All conditions must evaluate to true at fight setup for the contribution to apply. If
+    /// any condition evaluates to `Some(false)` or `None` (undecidable / dynamic), the
+    /// contribution is silently dropped.
+    pub conditions: Vec<AbilityConditionSpec>,
 }
 
 impl BuffSet {
@@ -294,6 +328,139 @@ pub fn lcars_effect_coverage(
 }
 
 /// Resolve one officer ability block (captain, bridge, or below decks) into seat contexts.
+/// Phase 4d: classify a condition as "dynamic" (must be evaluated each round by the engine)
+/// vs static (decidable at fight setup). Mirrors the deferred-list in
+/// [`crate::data::profile::eval_static_condition`]; composites are dynamic if any child is
+/// dynamic.
+fn condition_is_dynamic(cond: &AbilityConditionSpec) -> bool {
+    use AbilityConditionSpec as C;
+    match cond {
+        C::MoraleActive
+        | C::DefenderBurning
+        | C::AttackerBurning
+        | C::DefenderHullBreach
+        | C::AttackerHullBreach
+        | C::DefenderAssimilated
+        | C::AttackerOfficerTalNotOnBridge
+        | C::RoundRange { .. }
+        | C::StatBelow { .. }
+        | C::StatAbove { .. } => true,
+        C::And { all } => all.iter().any(condition_is_dynamic),
+        C::Or { any } => any.iter().any(condition_is_dynamic),
+        C::Not { inner } => condition_is_dynamic(inner),
+        _ => false,
+    }
+}
+
+/// Phase 4d: expand officer-stat effects with dynamic conditions into substituted ship-stat
+/// effects so the engine's existing per-round dynamic ability path can fire them when the
+/// condition becomes true.
+///
+/// **Only the Attack axis is wired here**, via [`crate::combat::AbilityEffect::AttackMultiplier`].
+/// The Health axis (`hull_hp` / `shield_hp`) is intentionally not emitted because those engine
+/// values are fight-setup-only — there is no per-round `AbilityEffect` that multiplies the
+/// shield/hull bars mid-fight. The Defense axis is similarly skipped because channel routing
+/// (armor / shield_deflection / dodge) needs ship-class context the resolver doesn't have.
+///
+/// **Approximation v1**: this routes the Attack axis through a direct `weapon_damage`
+/// multiplier instead of the §2 rating-via-breakpoint pipeline. Magnitude is correct for
+/// crews far from breakpoint tiers; near a tier boundary the breakpoint nuance is lost. The
+/// alternative (full per-round officer-stat-rating recomputation in the combat engine) is
+/// deferred to future work. Static-conditional contributions still go through the proper
+/// pipeline ([`PendingOfficerStatContribution`] + breakpoint lookup at compute time).
+///
+/// Production-data impact: kirk-1323b6 (`officerstatall +40% morale_active on_round_start`)
+/// is the only dynamic-conditional officer-stat effect in current data. After this pass it
+/// fires the Attack axis during morale-active rounds; Health and Defense axes are dropped
+/// (limitation documented above).
+///
+/// `target: enemy` contributions are dropped (Phase 4c territory: PvP defender-side compute).
+fn expand_dynamic_officer_stat_effects(
+    officer: &LcarsOfficer,
+    ability: &LcarsAbility,
+    seat: CrewSeat,
+    class: AbilityClass,
+    options: &ResolveOptions,
+    contribution_batch: u32,
+) -> Vec<CrewSeatContext> {
+    let mut out = Vec::new();
+    for effect in &ability.effects {
+        if effect.effect_type != "tag" {
+            continue;
+        }
+        let Some(stat) = crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
+        else {
+            continue;
+        };
+        if !matches!(
+            stat,
+            "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
+        ) {
+            continue;
+        }
+        let Some(ref cond_obj) = effect.condition else {
+            // No condition: handled by static path.
+            continue;
+        };
+        let Ok(cond_spec) = crate::lcars::effect_spec_adapter::lcars_condition_to_spec(cond_obj)
+        else {
+            continue;
+        };
+        if !condition_is_dynamic(&cond_spec) {
+            continue;
+        }
+        // Target filter: skip target:enemy entirely (Phase 4c).
+        if effect
+            .target
+            .as_deref()
+            .map(|t| t.trim().to_ascii_lowercase())
+            .as_deref()
+            == Some("enemy")
+        {
+            continue;
+        }
+        // See doc comment: only Attack axis has a per-round AbilityEffect. Health (max
+        // hull/shield) and Defense (channel routing) need engine work that's out of scope
+        // for this approximation.
+        let substitute_stats: &[&str] = match stat {
+            "officer_attack" | "officer_stat_all" => &["weapon_damage"],
+            _ => &[],
+        };
+        for &sub_stat in substitute_stats {
+            let synth_effect = LcarsEffect {
+                effect_type: "stat_modify".to_string(),
+                stat: Some(sub_stat.to_string()),
+                target: effect.target.clone(),
+                operator: effect.operator.clone(),
+                value: effect.value,
+                trigger: effect.trigger.clone(),
+                duration: effect.duration.clone(),
+                scaling: effect.scaling.clone(),
+                condition: effect.condition.clone(),
+                chance: None,
+                multiplier: None,
+                tag: None,
+                accumulate: None,
+                decay: None,
+            };
+            let synth_ability = LcarsAbility {
+                name: ability.name.clone(),
+                effects: vec![synth_effect],
+            };
+            let seats = resolve_officer_ability(
+                officer,
+                &synth_ability,
+                seat,
+                class,
+                options,
+                contribution_batch,
+            );
+            out.extend(seats);
+        }
+    }
+    out
+}
+
 pub fn resolve_officer_ability(
     officer: &LcarsOfficer,
     ability: &LcarsAbility,
@@ -350,6 +517,7 @@ pub fn resolve_crew_to_buff_set(
     options: &ResolveOptions,
 ) -> BuffSet {
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
+    let mut pending_officer_stat_contributions: Vec<PendingOfficerStatContribution> = Vec::new();
     let mut seats: Vec<CrewSeatContext> = Vec::new();
     let mut proc_chance = 0.0_f64;
     let mut proc_multiplier = 1.0_f64;
@@ -375,10 +543,29 @@ pub fn resolve_crew_to_buff_set(
             } else {
                 None
             };
-            if effective_stat.is_none()
-                || effect.trigger.as_deref().map(str::trim) != Some("passive")
-                || effect.duration.as_ref().is_some_and(|d| !d.is_permanent())
-            {
+            // Phase 4a: officer-rating accumulator keys (officer_attack / officer_defense /
+            // officer_health / officer_stat_all) accept on_combat_start and on_round_start
+            // triggers in addition to passive+permanent, because their semantic effect on
+            // per-side ratings is "constant for the duration of combat" regardless of the
+            // exact trigger phase (see docs/OFFICER_STAT_FORMULA.md §3). All other stat keys
+            // remain gated to passive+permanent.
+            let is_officer_stat_key = matches!(
+                effective_stat,
+                Some("officer_attack")
+                    | Some("officer_defense")
+                    | Some("officer_health")
+                    | Some("officer_stat_all")
+            );
+            let trigger_str = effect.trigger.as_deref().map(str::trim).unwrap_or("");
+            let trigger_ok = trigger_str == "passive"
+                || (is_officer_stat_key
+                    && matches!(trigger_str, "on_combat_start" | "on_round_start"));
+            let duration_ok = effect
+                .duration
+                .as_ref()
+                .map(|d| d.is_permanent())
+                .unwrap_or(is_officer_stat_key);
+            if effective_stat.is_none() || !trigger_ok || !duration_ok {
                 continue;
             }
             let stat = effective_stat.unwrap();
@@ -406,6 +593,41 @@ pub fn resolve_crew_to_buff_set(
             let Some(v) = value_spec.scalar else {
                 continue;
             };
+
+            let target_attacker = matches!(
+                spec.target,
+                crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
+                    | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
+            );
+
+            // Phase 4b: officer-stat effects with conditions go into pending_contributions for
+            // fight-setup-time evaluation (TOS McCoy attacker_ship_type_is, Dezoc engagement gate,
+            // Strike Team Una composite, Kras defender_is_player_ship). Effects with no
+            // conditions and target:self take the simpler static_buffs path.
+            //
+            // target:enemy debuffs still skip the attacker's static_buffs path (Phase 4a target
+            // filter); the pending list preserves them with target_attacker=false so a future
+            // Phase 4c can route them through PvP defender-side compute.
+            if !spec.conditions.is_empty() {
+                pending_officer_stat_contributions.push(PendingOfficerStatContribution {
+                    stat_key: stat.to_string(),
+                    value: v,
+                    target_attacker,
+                    conditions: spec.conditions.clone(),
+                });
+                continue;
+            }
+            if !target_attacker {
+                // No conditions, but target:enemy: keep in pending for Phase 4c rather than
+                // discard. Attacker-side compute will silently ignore non-attacker entries.
+                pending_officer_stat_contributions.push(PendingOfficerStatContribution {
+                    stat_key: stat.to_string(),
+                    value: v,
+                    target_attacker,
+                    conditions: Vec::new(),
+                });
+                continue;
+            }
 
             if spec.operation == AbilityOperationSpec::Multiply {
                 static_buffs
@@ -466,6 +688,20 @@ pub fn resolve_crew_to_buff_set(
         let contexts =
             resolve_officer_ability(officer, ability, seat, class, options, contribution_batch);
         seats.extend(contexts);
+        // Phase 4d: synthetic per-round seats for officer-stat effects with dynamic conditions
+        // (e.g. Kirk-1323b6 `morale_active`). The original officerstat* spec fails to compile
+        // because the engine has no officer-rating modifier handler; the substituted ship-stat
+        // specs (weapon_damage / hull_hp / shield_hp) compile cleanly and fire per round
+        // through the existing dynamic ability path.
+        let dynamic_extras = expand_dynamic_officer_stat_effects(
+            officer,
+            ability,
+            seat,
+            class,
+            options,
+            contribution_batch,
+        );
+        seats.extend(dynamic_extras);
     };
 
     if let Some(o) = officers.get(captain_id) {
@@ -570,11 +806,49 @@ pub fn resolve_crew_to_buff_set(
         }
     }
 
+    // Per-side officer-stat totals (Phase 1 of officer A/D/H runtime — see
+    // `docs/OFFICER_STAT_FORMULA.md` §1). Each crewed officer contributes their A/D/H from
+    // `stats_at_level(resolved_level)` at weight 1.0, deduped by officer id so a captain who
+    // also appears in `bridge` is only counted once.
+    let mut officer_stat_totals = CrewOfficerStatTotals::default();
+    let mut counted_for_totals: HashSet<String> = HashSet::new();
+    let mut add_officer_stats = |officer: &LcarsOfficer| {
+        if !counted_for_totals.insert(officer.id.clone()) {
+            return;
+        }
+        let officer_tier = options.tier_for(&officer.id);
+        let Some(level) = officer.resolve_level(options.level_for(&officer.id), officer_tier)
+        else {
+            return;
+        };
+        let Some(stats) = officer.stats_at_level(level) else {
+            return;
+        };
+        officer_stat_totals.attack += stats.attack;
+        officer_stat_totals.defense += stats.defense;
+        officer_stat_totals.health += stats.health;
+    };
+    if let Some(o) = officers.get(captain_id) {
+        add_officer_stats(o);
+    }
+    for id in bridge {
+        if let Some(o) = officers.get(id.as_str()) {
+            add_officer_stats(o);
+        }
+    }
+    for id in below_decks {
+        if let Some(o) = officers.get(id.as_str()) {
+            add_officer_stats(o);
+        }
+    }
+
     BuffSet {
         static_buffs,
         crew: CrewConfiguration { seats },
         proc_chance,
         proc_multiplier,
+        officer_stat_totals,
+        pending_officer_stat_contributions,
     }
 }
 
@@ -592,6 +866,426 @@ mod tests {
         load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
     };
     use std::path::Path;
+
+    fn officer_with_stats(
+        id: &str,
+        stats: Vec<crate::lcars::parser::LcarsLevelStats>,
+        max_level_by_rank: Vec<u32>,
+    ) -> LcarsOfficer {
+        LcarsOfficer {
+            id: id.to_string(),
+            name: id.to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats,
+            max_level_by_rank,
+        }
+    }
+
+    fn level_stats(
+        level: u32,
+        attack: f64,
+        defense: f64,
+        health: f64,
+    ) -> crate::lcars::parser::LcarsLevelStats {
+        crate::lcars::parser::LcarsLevelStats {
+            level,
+            attack,
+            defense,
+            health,
+        }
+    }
+
+    #[test]
+    fn officer_stat_totals_sum_captain_bridge_and_below_decks_at_resolved_level() {
+        // Per docs/OFFICER_STAT_FORMULA.md §1: every crewed officer contributes A/D/H at weight 1.0,
+        // resolved via officer.stats_at_level(officer.resolve_level(...)).
+        let cap = officer_with_stats(
+            "cap",
+            vec![level_stats(15, 1704.0, 4320.0, 824.0)],
+            vec![15],
+        );
+        let bridge = officer_with_stats(
+            "b1",
+            vec![
+                level_stats(10, 800.0, 900.0, 1000.0),
+                level_stats(30, 90206.0, 92060.0, 90091.0),
+            ],
+            vec![10, 30],
+        );
+        let bd = officer_with_stats("bd1", vec![level_stats(5, 10.0, 20.0, 30.0)], vec![5]);
+        let mut officers = HashMap::new();
+        officers.insert("cap".to_string(), cap);
+        officers.insert("b1".to_string(), bridge);
+        officers.insert("bd1".to_string(), bd);
+        let opts = ResolveOptions::default();
+        let buff = resolve_crew_to_buff_set(
+            "cap",
+            &["b1".to_string()],
+            &["bd1".to_string()],
+            &officers,
+            &opts,
+        );
+        // cap at level 15: 1704/4320/824
+        // b1 at max level 30: 90206/92060/90091
+        // bd1 at level 5: 10/20/30
+        assert_eq!(buff.officer_stat_totals.attack, 1704.0 + 90206.0 + 10.0);
+        assert_eq!(buff.officer_stat_totals.defense, 4320.0 + 92060.0 + 20.0);
+        assert_eq!(buff.officer_stat_totals.health, 824.0 + 90091.0 + 30.0);
+    }
+
+    #[test]
+    fn officer_stat_totals_dedup_by_officer_id_when_captain_also_on_bridge() {
+        // A captain who also appears in `bridge[]` must count once.
+        let cap = officer_with_stats("dup", vec![level_stats(20, 50.0, 60.0, 70.0)], vec![20]);
+        let mut officers = HashMap::new();
+        officers.insert("dup".to_string(), cap);
+        let opts = ResolveOptions::default();
+        let buff = resolve_crew_to_buff_set("dup", &["dup".to_string()], &[], &officers, &opts);
+        assert_eq!(buff.officer_stat_totals.attack, 50.0);
+        assert_eq!(buff.officer_stat_totals.defense, 60.0);
+        assert_eq!(buff.officer_stat_totals.health, 70.0);
+    }
+
+    #[test]
+    fn officer_stat_totals_skip_officers_without_stats() {
+        // Officers with empty stats arrays contribute nothing; no panic.
+        let cap = officer_with_stats("nostat", Vec::new(), Vec::new());
+        let mut officers = HashMap::new();
+        officers.insert("nostat".to_string(), cap);
+        let opts = ResolveOptions::default();
+        let buff = resolve_crew_to_buff_set("nostat", &[], &[], &officers, &opts);
+        assert_eq!(buff.officer_stat_totals.attack, 0.0);
+        assert_eq!(buff.officer_stat_totals.defense, 0.0);
+        assert_eq!(buff.officer_stat_totals.health, 0.0);
+    }
+
+    #[test]
+    fn officer_stat_totals_honor_per_officer_level_override() {
+        // ResolveOptions.officer_levels overrides resolve_level(), so totals reflect the chosen tier.
+        let cap = officer_with_stats(
+            "lvl",
+            vec![
+                level_stats(1, 6.0, 6.0, 12.0),
+                level_stats(30, 90091.0, 92060.0, 90206.0),
+            ],
+            vec![30],
+        );
+        let mut officers = HashMap::new();
+        officers.insert("lvl".to_string(), cap);
+        let mut levels = HashMap::new();
+        levels.insert("lvl".to_string(), 1u32);
+        let opts = ResolveOptions {
+            officer_levels: Some(levels),
+            ..Default::default()
+        };
+        let buff = resolve_crew_to_buff_set("lvl", &[], &[], &officers, &opts);
+        assert_eq!(buff.officer_stat_totals.attack, 6.0);
+        assert_eq!(buff.officer_stat_totals.defense, 6.0);
+        assert_eq!(buff.officer_stat_totals.health, 12.0);
+    }
+
+    fn lcars_effect_officerstat_tag(
+        tag: &str,
+        value: f64,
+        trigger: &str,
+        target: &str,
+        condition_type: Option<&str>,
+    ) -> LcarsEffect {
+        let duration = Some(LcarsDuration::Permanent("permanent".to_string()));
+        let condition = condition_type.map(|ct| crate::lcars::LcarsCondition {
+            condition_type: ct.to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: None,
+            conditions: None,
+        });
+        LcarsEffect {
+            effect_type: "tag".to_string(),
+            stat: None,
+            target: Some(target.to_string()),
+            operator: None,
+            value: Some(value),
+            trigger: Some(trigger.to_string()),
+            duration,
+            scaling: None,
+            condition,
+            chance: None,
+            multiplier: None,
+            tag: Some(tag.to_string()),
+            accumulate: None,
+            decay: None,
+        }
+    }
+
+    fn officer_with_officerstat_captain(
+        id: &str,
+        tag: &str,
+        value: f64,
+        trigger: &str,
+        target: &str,
+        condition_type: Option<&str>,
+    ) -> LcarsOfficer {
+        LcarsOfficer {
+            id: id.to_string(),
+            name: id.to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "Motivational".to_string(),
+                effects: vec![lcars_effect_officerstat_tag(
+                    tag,
+                    value,
+                    trigger,
+                    target,
+                    condition_type,
+                )],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![level_stats(1, 100.0, 100.0, 100.0)],
+            max_level_by_rank: vec![1],
+        }
+    }
+
+    #[test]
+    fn officerstat_passive_permanent_accumulates_into_static_buffs() {
+        // Baseline: cadet-kirk pattern (passive, no condition, target:self) — Phase 3 behavior,
+        // unchanged by Phase 4a.
+        let o = officer_with_officerstat_captain(
+            "k",
+            "officerstatall:unmapped",
+            0.08,
+            "passive",
+            "self",
+            None,
+        );
+        let mut officers = HashMap::new();
+        officers.insert("k".to_string(), o);
+        let buff = resolve_crew_to_buff_set("k", &[], &[], &officers, &ResolveOptions::default());
+        assert_eq!(
+            buff.static_buffs.get("officer_stat_all").copied(),
+            Some(0.08)
+        );
+    }
+
+    #[test]
+    fn officerstat_on_round_start_now_accumulates_into_static_buffs() {
+        // Phase 4a: Kumak pattern — on_round_start trigger with no condition. Previously
+        // dropped from the static-buffs path because trigger != "passive"; now accumulated
+        // because the effective stat is an officer-rating key.
+        let o = officer_with_officerstat_captain(
+            "kumak",
+            "officerstatall:unmapped",
+            0.05,
+            "on_round_start",
+            "self",
+            None,
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kumak".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kumak", &[], &[], &officers, &ResolveOptions::default());
+        assert_eq!(
+            buff.static_buffs.get("officer_stat_all").copied(),
+            Some(0.05)
+        );
+    }
+
+    #[test]
+    fn officerstat_on_combat_start_target_enemy_does_not_self_buff() {
+        // Phase 4a: Kras pattern — on_combat_start with target:enemy. PvP defender-side support
+        // is deferred; in the meantime the effect must NOT incorrectly accumulate into the
+        // attacker's static_buffs (which would have it buffing the player instead of debuffing
+        // the enemy).
+        let o = officer_with_officerstat_captain(
+            "kras",
+            "officerstatall:unmapped",
+            0.20,
+            "on_combat_start",
+            "enemy",
+            Some("defender_is_player_ship"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kras".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kras", &[], &[], &officers, &ResolveOptions::default());
+        assert!(
+            !buff.static_buffs.contains_key("officer_stat_all"),
+            "target:enemy must not self-apply"
+        );
+    }
+
+    #[test]
+    fn officerstat_passive_literal_false_does_not_apply() {
+        // Phase 4a: mitchell-0217f7 pattern — passive permanent with `literal_false` clause.
+        // Pre-Phase-4a the static-buffs accumulator ignored conditions entirely and would
+        // incorrectly add the bonus despite the always-false gate.
+        let o = officer_with_officerstat_captain(
+            "mitchell",
+            "officerstatall:unmapped",
+            0.20,
+            "passive",
+            "self",
+            Some("literal_false"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("mitchell".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("mitchell", &[], &[], &officers, &ResolveOptions::default());
+        assert!(
+            !buff.static_buffs.contains_key("officer_stat_all"),
+            "literal_false must skip the bonus"
+        );
+    }
+
+    #[test]
+    fn phase4d_dynamic_morale_active_emits_attack_multiplier_seat() {
+        // Kirk-1323b6 pattern: officerstatall on_round_start morale_active target:self val=0.4.
+        // Phase 4d (Attack-axis only): the spec compile errors out for OfficerStatAll modifier,
+        // BUT the dynamic expansion emits a synthetic weapon_damage seat that the engine fires
+        // per round when MoraleActive becomes true. The Health and Defense axes are dropped
+        // because they have no per-round AbilityEffect equivalent (limitation documented on
+        // `expand_dynamic_officer_stat_effects`).
+        let o = officer_with_officerstat_captain(
+            "kirk-dyn",
+            "officerstatall:unmapped",
+            0.40,
+            "on_round_start",
+            "self",
+            Some("morale_active"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kirk-dyn".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kirk-dyn", &[], &[], &officers, &ResolveOptions::default());
+        let attack_seats: Vec<_> = buff
+            .crew
+            .seats
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.ability.effect,
+                    crate::combat::AbilityEffect::AttackMultiplier(_)
+                )
+            })
+            .collect();
+        assert_eq!(
+            attack_seats.len(),
+            1,
+            "expected one synthetic AttackMultiplier seat; seats: {:?}",
+            buff.crew
+                .seats
+                .iter()
+                .map(|s| format!("{:?}", s.ability.effect))
+                .collect::<Vec<_>>()
+        );
+        let seat = attack_seats[0];
+        // Condition must be preserved so the engine evaluates it per round.
+        assert!(
+            matches!(
+                seat.ability.condition,
+                Some(crate::combat::AbilityCondition::MoraleActive)
+            ),
+            "expected MoraleActive condition; got: {:?}",
+            seat.ability.condition
+        );
+        // Trigger must remain RoundStart so the engine evaluates at the start of each round.
+        assert_eq!(seat.ability.timing, crate::combat::TimingWindow::RoundStart);
+    }
+
+    #[test]
+    fn phase4d_static_condition_does_not_emit_synthetic_seats() {
+        // TOS McCoy pattern: passive + attacker_ship_type_is(explorer). Static condition →
+        // Phase 4b path → pending_officer_stat_contributions only; the dynamic expansion
+        // must NOT emit synthetic seats for static-only conditions.
+        let mut effect = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.20,
+            "passive",
+            "self",
+            Some("attacker_ship_type_is"),
+        );
+        // attacker_ship_type_is needs the ship_type field populated to compile.
+        if let Some(ref mut c) = effect.condition {
+            c.ship_type = Some("explorer".to_string());
+        }
+        let o = LcarsOfficer {
+            id: "tos-mccoy".to_string(),
+            name: "tos-mccoy".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "Bones".to_string(),
+                effects: vec![effect],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![level_stats(1, 100.0, 100.0, 100.0)],
+            max_level_by_rank: vec![1],
+        };
+        let mut officers = HashMap::new();
+        officers.insert("tos-mccoy".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("tos-mccoy", &[], &[], &officers, &ResolveOptions::default());
+        let synthetic_count = buff
+            .crew
+            .seats
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.ability.effect,
+                    crate::combat::AbilityEffect::AttackMultiplier(_)
+                )
+            })
+            .count();
+        assert_eq!(
+            synthetic_count, 0,
+            "static-only condition must not trigger dynamic expansion"
+        );
+        // Static-conditional contribution goes to the pending list instead.
+        assert_eq!(
+            buff.pending_officer_stat_contributions.len(),
+            1,
+            "static conditional contribution should land in pending"
+        );
+    }
+
+    #[test]
+    fn officerstat_on_attack_trigger_still_skipped() {
+        // Phase 4a opens on_combat_start / on_round_start specifically; other triggers
+        // (on_attack, on_round_end, …) are still treated as dynamic and skipped by the
+        // static-buffs accumulator. Document via a guard test so we don't over-broaden later.
+        let o = officer_with_officerstat_captain(
+            "ondefense",
+            "officerstatall:unmapped",
+            0.10,
+            "on_attack",
+            "self",
+            None,
+        );
+        let mut officers = HashMap::new();
+        officers.insert("ondefense".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("ondefense", &[], &[], &officers, &ResolveOptions::default());
+        assert!(!buff.static_buffs.contains_key("officer_stat_all"));
+    }
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
         LcarsEffect {

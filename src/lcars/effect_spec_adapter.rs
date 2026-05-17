@@ -234,6 +234,13 @@ pub fn combat_tag_to_stat(tag: &str) -> Option<&'static str> {
         "shieldpiercing" => Some("pierce"),
         "accuracy" => Some("accuracy"),
         "shields" => Some("shield_hp"),
+        // Officer-stat ability tags (§3 of docs/OFFICER_STAT_FORMULA.md): map to the engine's
+        // officer-rating accumulator keys consumed by `compute_officer_stat_runtime_bonus`.
+        // The `*_all` variant is a synthetic key that boosts all three (Attack / Defense / Health)
+        // ratings; the consumer adds its value to each per-axis multiplier alongside the per-axis
+        // keys.
+        "officerstathealth" => Some("officer_health"),
+        "officerstatall" => Some("officer_stat_all"),
         _ => None,
     }
 }
@@ -464,6 +471,14 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "shots" | "weapon_shots" | "shots_per_weapon" | "shots_per_attack" => {
             Some(AbilityModifierSpec::ShotsBonus)
         }
+        // Officer-rating modifiers (§3): consumed in `compute_officer_stat_runtime_bonus` via the
+        // static_buffs map under the matching key name. The variant choice is informational for
+        // tracing; the static_buffs accumulation keyed by the stat string is what the runtime
+        // consumer reads.
+        "officer_attack" => Some(AbilityModifierSpec::OfficerAttack),
+        "officer_defense" => Some(AbilityModifierSpec::OfficerDefense),
+        "officer_health" => Some(AbilityModifierSpec::OfficerHealth),
+        "officer_stat_all" => Some(AbilityModifierSpec::OfficerStatAll),
         _ => None,
     }
 }
@@ -1409,10 +1424,18 @@ mod tests {
         );
         assert_eq!(combat_tag_to_stat("accuracy:unmapped"), Some("accuracy"));
         assert_eq!(combat_tag_to_stat("shields:unmapped"), Some("shield_hp"));
+        // Officer-rating tags (§3 of docs/OFFICER_STAT_FORMULA.md)
+        assert_eq!(
+            combat_tag_to_stat("officerstathealth:unmapped"),
+            Some("officer_health")
+        );
+        assert_eq!(
+            combat_tag_to_stat("officerstatall:unmapped"),
+            Some("officer_stat_all")
+        );
         // Economy / unmapped tags
         assert_eq!(combat_tag_to_stat("cargoprotection:unmapped"), None);
         assert_eq!(combat_tag_to_stat("impulsespeed:unmapped"), None);
-        assert_eq!(combat_tag_to_stat("officerstathealth:unmapped"), None);
         assert_eq!(combat_tag_to_stat("miningrate:non_combat"), None);
     }
 
