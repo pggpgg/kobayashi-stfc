@@ -379,10 +379,29 @@ pub fn resolve_crew_to_buff_set(
             } else {
                 None
             };
-            if effective_stat.is_none()
-                || effect.trigger.as_deref().map(str::trim) != Some("passive")
-                || effect.duration.as_ref().is_some_and(|d| !d.is_permanent())
-            {
+            // Phase 4a: officer-rating accumulator keys (officer_attack / officer_defense /
+            // officer_health / officer_stat_all) accept on_combat_start and on_round_start
+            // triggers in addition to passive+permanent, because their semantic effect on
+            // per-side ratings is "constant for the duration of combat" regardless of the
+            // exact trigger phase (see docs/OFFICER_STAT_FORMULA.md §3). All other stat keys
+            // remain gated to passive+permanent.
+            let is_officer_stat_key = matches!(
+                effective_stat,
+                Some("officer_attack")
+                    | Some("officer_defense")
+                    | Some("officer_health")
+                    | Some("officer_stat_all")
+            );
+            let trigger_str = effect.trigger.as_deref().map(str::trim).unwrap_or("");
+            let trigger_ok = trigger_str == "passive"
+                || (is_officer_stat_key
+                    && matches!(trigger_str, "on_combat_start" | "on_round_start"));
+            let duration_ok = effect
+                .duration
+                .as_ref()
+                .map(|d| d.is_permanent())
+                .unwrap_or(is_officer_stat_key);
+            if effective_stat.is_none() || !trigger_ok || !duration_ok {
                 continue;
             }
             let stat = effective_stat.unwrap();
@@ -410,6 +429,35 @@ pub fn resolve_crew_to_buff_set(
             let Some(v) = value_spec.scalar else {
                 continue;
             };
+
+            // Phase 4a: filter by target. AttackerSelf is the established attacker static-buffs
+            // path; DefenderOpponent debuffs (e.g. Kras "Know Your Enemy") need PvP defender-side
+            // plumbing that is deferred to a later pass — silently skip them rather than
+            // incorrectly self-applying.
+            if !matches!(
+                spec.target,
+                crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
+                    | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
+            ) {
+                continue;
+            }
+
+            // Phase 4a: honor LiteralBool(false) conditions at the static-buffs accumulator
+            // (e.g. mitchell-0217f7's `literal_false` clause). Other conditions are still
+            // ignored here — the static-buffs path doesn't have fight-setup context to
+            // evaluate dynamic gates (morale_active, defender_is_player_ship, etc.); those
+            // are deferred to a later pass.
+            let is_dead_clause = spec.conditions.iter().any(|c| {
+                matches!(
+                    c,
+                    crate::data::combat_effect_spec::AbilityConditionSpec::LiteralBool {
+                        value: false
+                    }
+                )
+            });
+            if is_dead_clause {
+                continue;
+            }
 
             if spec.operation == AbilityOperationSpec::Multiply {
                 static_buffs
@@ -754,6 +802,191 @@ mod tests {
         assert_eq!(buff.officer_stat_totals.attack, 6.0);
         assert_eq!(buff.officer_stat_totals.defense, 6.0);
         assert_eq!(buff.officer_stat_totals.health, 12.0);
+    }
+
+    fn lcars_effect_officerstat_tag(
+        tag: &str,
+        value: f64,
+        trigger: &str,
+        target: &str,
+        condition_type: Option<&str>,
+    ) -> LcarsEffect {
+        let duration = Some(LcarsDuration::Permanent("permanent".to_string()));
+        let condition = condition_type.map(|ct| crate::lcars::LcarsCondition {
+            condition_type: ct.to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: None,
+            conditions: None,
+        });
+        LcarsEffect {
+            effect_type: "tag".to_string(),
+            stat: None,
+            target: Some(target.to_string()),
+            operator: None,
+            value: Some(value),
+            trigger: Some(trigger.to_string()),
+            duration,
+            scaling: None,
+            condition,
+            chance: None,
+            multiplier: None,
+            tag: Some(tag.to_string()),
+            accumulate: None,
+            decay: None,
+        }
+    }
+
+    fn officer_with_officerstat_captain(
+        id: &str,
+        tag: &str,
+        value: f64,
+        trigger: &str,
+        target: &str,
+        condition_type: Option<&str>,
+    ) -> LcarsOfficer {
+        LcarsOfficer {
+            id: id.to_string(),
+            name: id.to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "Motivational".to_string(),
+                effects: vec![lcars_effect_officerstat_tag(
+                    tag,
+                    value,
+                    trigger,
+                    target,
+                    condition_type,
+                )],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![level_stats(1, 100.0, 100.0, 100.0)],
+            max_level_by_rank: vec![1],
+        }
+    }
+
+    #[test]
+    fn officerstat_passive_permanent_accumulates_into_static_buffs() {
+        // Baseline: cadet-kirk pattern (passive, no condition, target:self) — Phase 3 behavior,
+        // unchanged by Phase 4a.
+        let o = officer_with_officerstat_captain(
+            "k",
+            "officerstatall:unmapped",
+            0.08,
+            "passive",
+            "self",
+            None,
+        );
+        let mut officers = HashMap::new();
+        officers.insert("k".to_string(), o);
+        let buff = resolve_crew_to_buff_set("k", &[], &[], &officers, &ResolveOptions::default());
+        assert_eq!(
+            buff.static_buffs.get("officer_stat_all").copied(),
+            Some(0.08)
+        );
+    }
+
+    #[test]
+    fn officerstat_on_round_start_now_accumulates_into_static_buffs() {
+        // Phase 4a: Kumak pattern — on_round_start trigger with no condition. Previously
+        // dropped from the static-buffs path because trigger != "passive"; now accumulated
+        // because the effective stat is an officer-rating key.
+        let o = officer_with_officerstat_captain(
+            "kumak",
+            "officerstatall:unmapped",
+            0.05,
+            "on_round_start",
+            "self",
+            None,
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kumak".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kumak", &[], &[], &officers, &ResolveOptions::default());
+        assert_eq!(
+            buff.static_buffs.get("officer_stat_all").copied(),
+            Some(0.05)
+        );
+    }
+
+    #[test]
+    fn officerstat_on_combat_start_target_enemy_does_not_self_buff() {
+        // Phase 4a: Kras pattern — on_combat_start with target:enemy. PvP defender-side support
+        // is deferred; in the meantime the effect must NOT incorrectly accumulate into the
+        // attacker's static_buffs (which would have it buffing the player instead of debuffing
+        // the enemy).
+        let o = officer_with_officerstat_captain(
+            "kras",
+            "officerstatall:unmapped",
+            0.20,
+            "on_combat_start",
+            "enemy",
+            Some("defender_is_player_ship"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kras".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kras", &[], &[], &officers, &ResolveOptions::default());
+        assert!(
+            !buff.static_buffs.contains_key("officer_stat_all"),
+            "target:enemy must not self-apply"
+        );
+    }
+
+    #[test]
+    fn officerstat_passive_literal_false_does_not_apply() {
+        // Phase 4a: mitchell-0217f7 pattern — passive permanent with `literal_false` clause.
+        // Pre-Phase-4a the static-buffs accumulator ignored conditions entirely and would
+        // incorrectly add the bonus despite the always-false gate.
+        let o = officer_with_officerstat_captain(
+            "mitchell",
+            "officerstatall:unmapped",
+            0.20,
+            "passive",
+            "self",
+            Some("literal_false"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("mitchell".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("mitchell", &[], &[], &officers, &ResolveOptions::default());
+        assert!(
+            !buff.static_buffs.contains_key("officer_stat_all"),
+            "literal_false must skip the bonus"
+        );
+    }
+
+    #[test]
+    fn officerstat_on_attack_trigger_still_skipped() {
+        // Phase 4a opens on_combat_start / on_round_start specifically; other triggers
+        // (on_attack, on_round_end, …) are still treated as dynamic and skipped by the
+        // static-buffs accumulator. Document via a guard test so we don't over-broaden later.
+        let o = officer_with_officerstat_captain(
+            "ondefense",
+            "officerstatall:unmapped",
+            0.10,
+            "on_attack",
+            "self",
+            None,
+        );
+        let mut officers = HashMap::new();
+        officers.insert("ondefense".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("ondefense", &[], &[], &officers, &ResolveOptions::default());
+        assert!(!buff.static_buffs.contains_key("officer_stat_all"));
     }
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
