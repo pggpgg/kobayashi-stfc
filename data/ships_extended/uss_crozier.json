@@ -1,7 +1,7 @@
 {
   "id": "uss_crozier",
   "ship_name": "U.S.S. CROZIER",
-  "ship_class": "explorer",
+  "ship_class": "battleship",
   "faction": "federation",
   "tiers": [
     {
@@ -9,6 +9,9 @@
       "armor_piercing": 94911.0,
       "shield_piercing": 949143.0,
       "accuracy": 123390.0,
+      "armor": 112849.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 1612075.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -59,6 +62,9 @@
       "armor_piercing": 195990.0,
       "shield_piercing": 1959975.0,
       "accuracy": 254796.0,
+      "armor": 120184.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 1716844.5,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -109,6 +115,9 @@
       "armor_piercing": 304656.0,
       "shield_piercing": 3046620.0,
       "accuracy": 396063.0,
+      "armor": 129198.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 1845612.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -159,6 +168,9 @@
       "armor_piercing": 422553.0,
       "shield_piercing": 4225611.0,
       "accuracy": 549333.0,
+      "armor": 140177.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 2002463.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -209,6 +221,9 @@
       "armor_piercing": 551646.0,
       "shield_piercing": 5516592.0,
       "accuracy": 717165.0,
+      "armor": 153493.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 2192671.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -259,6 +274,9 @@
       "armor_piercing": 694293.0,
       "shield_piercing": 6943125.0,
       "accuracy": 902619.0,
+      "armor": 169609.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 2422902.5,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -309,6 +327,9 @@
       "armor_piercing": 852630.0,
       "shield_piercing": 8526567.0,
       "accuracy": 1108470.0,
+      "armor": 188265.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 2689406.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -359,6 +380,9 @@
       "armor_piercing": 1027593.0,
       "shield_piercing": 10276260.0,
       "accuracy": 1335936.0,
+      "armor": 208031.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 2971768.5,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -409,6 +433,9 @@
       "armor_piercing": 1218303.0,
       "shield_piercing": 12183426.0,
       "accuracy": 1583868.0,
+      "armor": 226754.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 3239226.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -459,6 +486,9 @@
       "armor_piercing": 1423317.0,
       "shield_piercing": 14233635.0,
       "accuracy": 1850397.0,
+      "armor": 243761.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 3482177.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -509,6 +539,9 @@
       "armor_piercing": 1640634.0,
       "shield_piercing": 16406853.0,
       "accuracy": 2132919.0,
+      "armor": 258388.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 3691109.5,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -559,6 +592,9 @@
       "armor_piercing": 1869903.0,
       "shield_piercing": 18699588.0,
       "accuracy": 2430975.0,
+      "armor": 272597.0,
+      "shield_deflection": 120.0,
+      "dodge": 11285.0,
       "attack": 3894102.5,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -948,5 +984,133 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
-  ]
+  ],
+  "officer_bonus": {
+    "attack": [
+      {
+        "value": 1800.0,
+        "bonus": 0.6000000000000001
+      },
+      {
+        "value": 3600.0,
+        "bonus": 1.2000000000000002
+      },
+      {
+        "value": 5850.0,
+        "bonus": 1.7999999999999998
+      },
+      {
+        "value": 8100.0,
+        "bonus": 2.4000000000000004
+      },
+      {
+        "value": 10800.0,
+        "bonus": 3.0
+      },
+      {
+        "value": 14400.0,
+        "bonus": 3.5999999999999996
+      },
+      {
+        "value": 19800.0,
+        "bonus": 4.199999999999999
+      },
+      {
+        "value": 27000.0,
+        "bonus": 4.800000000000001
+      },
+      {
+        "value": 36000.0,
+        "bonus": 5.4
+      },
+      {
+        "value": 54000.0,
+        "bonus": 6.0
+      }
+    ],
+    "defense": [
+      {
+        "value": 1800.0,
+        "bonus": 0.6000000000000001
+      },
+      {
+        "value": 3600.0,
+        "bonus": 1.2000000000000002
+      },
+      {
+        "value": 5850.0,
+        "bonus": 1.7999999999999998
+      },
+      {
+        "value": 8100.0,
+        "bonus": 2.4000000000000004
+      },
+      {
+        "value": 10800.0,
+        "bonus": 3.0
+      },
+      {
+        "value": 14400.0,
+        "bonus": 3.5999999999999996
+      },
+      {
+        "value": 19800.0,
+        "bonus": 4.199999999999999
+      },
+      {
+        "value": 27000.0,
+        "bonus": 4.800000000000001
+      },
+      {
+        "value": 36000.0,
+        "bonus": 5.4
+      },
+      {
+        "value": 54000.0,
+        "bonus": 6.0
+      }
+    ],
+    "health": [
+      {
+        "value": 1800.0,
+        "bonus": 0.6000000000000001
+      },
+      {
+        "value": 3600.0,
+        "bonus": 1.2000000000000002
+      },
+      {
+        "value": 5850.0,
+        "bonus": 1.7999999999999998
+      },
+      {
+        "value": 8100.0,
+        "bonus": 2.4000000000000004
+      },
+      {
+        "value": 10800.0,
+        "bonus": 3.0
+      },
+      {
+        "value": 14400.0,
+        "bonus": 3.5999999999999996
+      },
+      {
+        "value": 19800.0,
+        "bonus": 4.199999999999999
+      },
+      {
+        "value": 27000.0,
+        "bonus": 4.800000000000001
+      },
+      {
+        "value": 36000.0,
+        "bonus": 5.4
+      },
+      {
+        "value": 54000.0,
+        "bonus": 6.0
+      }
+    ]
+  }
 }

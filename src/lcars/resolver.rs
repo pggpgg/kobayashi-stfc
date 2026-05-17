@@ -3,8 +3,8 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, TimingWindow,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
+    CrewOfficerStatTotals, CrewSeat, CrewSeatContext, TimingWindow,
 };
 use crate::data::combat_effect_spec::AbilityOperationSpec;
 use crate::data::profile;
@@ -56,6 +56,10 @@ pub struct BuffSet {
     pub proc_chance: f64,
     /// Extra attack proc multiplier (e.g. 2.0 for double shot). Applied when proc triggers.
     pub proc_multiplier: f64,
+    /// Per-side sum of crewed-officer Attack / Defense / Health stats (each crewed officer at
+    /// weight 1.0, deduped by officer id). Populated in Phase 1; consumed in Phase 2/3.
+    /// See `docs/OFFICER_STAT_FORMULA.md`.
+    pub officer_stat_totals: CrewOfficerStatTotals,
 }
 
 impl BuffSet {
@@ -570,11 +574,48 @@ pub fn resolve_crew_to_buff_set(
         }
     }
 
+    // Per-side officer-stat totals (Phase 1 of officer A/D/H runtime — see
+    // `docs/OFFICER_STAT_FORMULA.md` §1). Each crewed officer contributes their A/D/H from
+    // `stats_at_level(resolved_level)` at weight 1.0, deduped by officer id so a captain who
+    // also appears in `bridge` is only counted once.
+    let mut officer_stat_totals = CrewOfficerStatTotals::default();
+    let mut counted_for_totals: HashSet<String> = HashSet::new();
+    let mut add_officer_stats = |officer: &LcarsOfficer| {
+        if !counted_for_totals.insert(officer.id.clone()) {
+            return;
+        }
+        let officer_tier = options.tier_for(&officer.id);
+        let Some(level) = officer.resolve_level(options.level_for(&officer.id), officer_tier)
+        else {
+            return;
+        };
+        let Some(stats) = officer.stats_at_level(level) else {
+            return;
+        };
+        officer_stat_totals.attack += stats.attack;
+        officer_stat_totals.defense += stats.defense;
+        officer_stat_totals.health += stats.health;
+    };
+    if let Some(o) = officers.get(captain_id) {
+        add_officer_stats(o);
+    }
+    for id in bridge {
+        if let Some(o) = officers.get(id.as_str()) {
+            add_officer_stats(o);
+        }
+    }
+    for id in below_decks {
+        if let Some(o) = officers.get(id.as_str()) {
+            add_officer_stats(o);
+        }
+    }
+
     BuffSet {
         static_buffs,
         crew: CrewConfiguration { seats },
         proc_chance,
         proc_multiplier,
+        officer_stat_totals,
     }
 }
 
@@ -592,6 +633,128 @@ mod tests {
         load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
     };
     use std::path::Path;
+
+    fn officer_with_stats(
+        id: &str,
+        stats: Vec<crate::lcars::parser::LcarsLevelStats>,
+        max_level_by_rank: Vec<u32>,
+    ) -> LcarsOfficer {
+        LcarsOfficer {
+            id: id.to_string(),
+            name: id.to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: None,
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats,
+            max_level_by_rank,
+        }
+    }
+
+    fn level_stats(
+        level: u32,
+        attack: f64,
+        defense: f64,
+        health: f64,
+    ) -> crate::lcars::parser::LcarsLevelStats {
+        crate::lcars::parser::LcarsLevelStats {
+            level,
+            attack,
+            defense,
+            health,
+        }
+    }
+
+    #[test]
+    fn officer_stat_totals_sum_captain_bridge_and_below_decks_at_resolved_level() {
+        // Per docs/OFFICER_STAT_FORMULA.md §1: every crewed officer contributes A/D/H at weight 1.0,
+        // resolved via officer.stats_at_level(officer.resolve_level(...)).
+        let cap = officer_with_stats(
+            "cap",
+            vec![level_stats(15, 1704.0, 4320.0, 824.0)],
+            vec![15],
+        );
+        let bridge = officer_with_stats(
+            "b1",
+            vec![
+                level_stats(10, 800.0, 900.0, 1000.0),
+                level_stats(30, 90206.0, 92060.0, 90091.0),
+            ],
+            vec![10, 30],
+        );
+        let bd = officer_with_stats("bd1", vec![level_stats(5, 10.0, 20.0, 30.0)], vec![5]);
+        let mut officers = HashMap::new();
+        officers.insert("cap".to_string(), cap);
+        officers.insert("b1".to_string(), bridge);
+        officers.insert("bd1".to_string(), bd);
+        let opts = ResolveOptions::default();
+        let buff = resolve_crew_to_buff_set(
+            "cap",
+            &["b1".to_string()],
+            &["bd1".to_string()],
+            &officers,
+            &opts,
+        );
+        // cap at level 15: 1704/4320/824
+        // b1 at max level 30: 90206/92060/90091
+        // bd1 at level 5: 10/20/30
+        assert_eq!(buff.officer_stat_totals.attack, 1704.0 + 90206.0 + 10.0);
+        assert_eq!(buff.officer_stat_totals.defense, 4320.0 + 92060.0 + 20.0);
+        assert_eq!(buff.officer_stat_totals.health, 824.0 + 90091.0 + 30.0);
+    }
+
+    #[test]
+    fn officer_stat_totals_dedup_by_officer_id_when_captain_also_on_bridge() {
+        // A captain who also appears in `bridge[]` must count once.
+        let cap = officer_with_stats("dup", vec![level_stats(20, 50.0, 60.0, 70.0)], vec![20]);
+        let mut officers = HashMap::new();
+        officers.insert("dup".to_string(), cap);
+        let opts = ResolveOptions::default();
+        let buff = resolve_crew_to_buff_set("dup", &["dup".to_string()], &[], &officers, &opts);
+        assert_eq!(buff.officer_stat_totals.attack, 50.0);
+        assert_eq!(buff.officer_stat_totals.defense, 60.0);
+        assert_eq!(buff.officer_stat_totals.health, 70.0);
+    }
+
+    #[test]
+    fn officer_stat_totals_skip_officers_without_stats() {
+        // Officers with empty stats arrays contribute nothing; no panic.
+        let cap = officer_with_stats("nostat", Vec::new(), Vec::new());
+        let mut officers = HashMap::new();
+        officers.insert("nostat".to_string(), cap);
+        let opts = ResolveOptions::default();
+        let buff = resolve_crew_to_buff_set("nostat", &[], &[], &officers, &opts);
+        assert_eq!(buff.officer_stat_totals.attack, 0.0);
+        assert_eq!(buff.officer_stat_totals.defense, 0.0);
+        assert_eq!(buff.officer_stat_totals.health, 0.0);
+    }
+
+    #[test]
+    fn officer_stat_totals_honor_per_officer_level_override() {
+        // ResolveOptions.officer_levels overrides resolve_level(), so totals reflect the chosen tier.
+        let cap = officer_with_stats(
+            "lvl",
+            vec![
+                level_stats(1, 6.0, 6.0, 12.0),
+                level_stats(30, 90091.0, 92060.0, 90206.0),
+            ],
+            vec![30],
+        );
+        let mut officers = HashMap::new();
+        officers.insert("lvl".to_string(), cap);
+        let mut levels = HashMap::new();
+        levels.insert("lvl".to_string(), 1u32);
+        let opts = ResolveOptions {
+            officer_levels: Some(levels),
+            ..Default::default()
+        };
+        let buff = resolve_crew_to_buff_set("lvl", &[], &[], &officers, &opts);
+        assert_eq!(buff.officer_stat_totals.attack, 6.0);
+        assert_eq!(buff.officer_stat_totals.defense, 6.0);
+        assert_eq!(buff.officer_stat_totals.health, 12.0);
+    }
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
         LcarsEffect {

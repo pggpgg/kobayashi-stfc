@@ -194,6 +194,36 @@ pub struct LevelBonus {
     pub health: f64,
 }
 
+/// Single breakpoint in the per-ship officer-stat → bonus mapping.
+/// When the cumulative officer rating (A/D/H sum across crewed officers) reaches `value`,
+/// the bonus jumps to `bonus` (step function, not interpolated). See
+/// `docs/OFFICER_STAT_FORMULA.md` §2a.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct OfficerBonusBreakpoint {
+    pub value: f64,
+    pub bonus: f64,
+}
+
+/// Per-ship breakpoint tables that map officer-stat ratings to bonus percentages.
+/// Mirrors `officer_bonus` from upstream data.stfc.space ship JSON.
+/// Consumed in Phase 2/3 to compute attack/defense/health bonuses from per-side rating sums.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct OfficerBonusTable {
+    #[serde(default)]
+    pub attack: Vec<OfficerBonusBreakpoint>,
+    #[serde(default)]
+    pub defense: Vec<OfficerBonusBreakpoint>,
+    #[serde(default)]
+    pub health: Vec<OfficerBonusBreakpoint>,
+}
+
+impl OfficerBonusTable {
+    /// True when every channel is empty (no breakpoints).
+    pub fn is_empty(&self) -> bool {
+        self.attack.is_empty() && self.defense.is_empty() && self.health.is_empty()
+    }
+}
+
 /// Below-decks officer slot unlock from upstream `crew_slots` (data.stfc.space ship JSON).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CrewSlotUnlock {
@@ -229,6 +259,10 @@ pub struct ExtendedShipRecord {
     /// Ship hull abilities from data.stfc.space ability array. Applied to all tiers.
     #[serde(default)]
     pub abilities: Option<Vec<ShipAbility>>,
+    /// Per-ship officer-stat breakpoint tables from upstream `officer_bonus`. Empty when upstream
+    /// data is missing (legacy ships); consumers must tolerate that. See `docs/OFFICER_STAT_FORMULA.md`.
+    #[serde(default, skip_serializing_if = "OfficerBonusTable::is_empty")]
+    pub officer_bonus: OfficerBonusTable,
 }
 
 impl ExtendedShipRecord {

@@ -1,13 +1,16 @@
 {
   "id": "uss_vengeance",
   "ship_name": "U.S.S. VENGEANCE",
-  "ship_class": "battleship",
+  "ship_class": "interceptor",
   "tiers": [
     {
       "tier": 1,
       "armor_piercing": 30979756.0,
       "shield_piercing": 12391904.0,
       "accuracy": 12391904.0,
+      "armor": 6195951.0,
+      "shield_deflection": 120.0,
+      "dodge": 30979757.0,
       "attack": 72757532.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -70,6 +73,9 @@
       "armor_piercing": 64128096.0,
       "shield_piercing": 25651240.0,
       "accuracy": 25651240.0,
+      "armor": 6629668.0,
+      "shield_deflection": 120.0,
+      "dodge": 33148340.0,
       "attack": 77850556.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -132,6 +138,9 @@
       "armor_piercing": 99596820.0,
       "shield_piercing": 39838728.0,
       "accuracy": 39838728.0,
+      "armor": 7093745.0,
+      "shield_deflection": 120.0,
+      "dodge": 35468724.0,
       "attack": 83300094.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -194,6 +203,9 @@
       "armor_piercing": 137548356.0,
       "shield_piercing": 55019340.0,
       "accuracy": 55019340.0,
+      "armor": 7590307.0,
+      "shield_deflection": 120.0,
+      "dodge": 37951535.0,
       "attack": 89131098.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -256,6 +268,9 @@
       "armor_piercing": 178156496.0,
       "shield_piercing": 71262596.0,
       "accuracy": 71262596.0,
+      "armor": 8121628.0,
+      "shield_deflection": 120.0,
+      "dodge": 40608142.0,
       "attack": 95370274.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -318,6 +333,9 @@
       "armor_piercing": 222013288.0,
       "shield_piercing": 88805312.0,
       "accuracy": 88805312.0,
+      "armor": 8771359.0,
+      "shield_deflection": 120.0,
+      "dodge": 43856793.0,
       "attack": 102999896.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -380,6 +398,9 @@
       "armor_piercing": 269378624.0,
       "shield_piercing": 107751448.0,
       "accuracy": 107751448.0,
+      "armor": 9473067.0,
+      "shield_deflection": 120.0,
+      "dodge": 47365337.0,
       "attack": 111239886.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -442,6 +463,9 @@
       "armor_piercing": 320533188.0,
       "shield_piercing": 128213272.0,
       "accuracy": 128213272.0,
+      "armor": 10230913.0,
+      "shield_deflection": 120.0,
+      "dodge": 51154564.0,
       "attack": 120139074.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -504,6 +528,9 @@
       "armor_piercing": 375780116.0,
       "shield_piercing": 150312044.0,
       "accuracy": 150312044.0,
+      "armor": 11049386.0,
+      "shield_deflection": 120.0,
+      "dodge": 55246929.0,
       "attack": 129750200.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -566,6 +593,9 @@
       "armor_piercing": 435999268.0,
       "shield_piercing": 174399704.0,
       "accuracy": 174399704.0,
+      "armor": 12043830.0,
+      "shield_deflection": 120.0,
+      "dodge": 60219152.0,
       "attack": 141427720.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -628,6 +658,9 @@
       "armor_piercing": 501638144.0,
       "shield_piercing": 200655256.0,
       "accuracy": 200655256.0,
+      "armor": 13127775.0,
+      "shield_deflection": 120.0,
+      "dodge": 65638876.0,
       "attack": 154156212.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -690,6 +723,9 @@
       "armor_piercing": 573184520.0,
       "shield_piercing": 229273808.0,
       "accuracy": 229273808.0,
+      "armor": 14309275.0,
+      "shield_deflection": 120.0,
+      "dodge": 71546375.0,
       "attack": 168030268.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -752,6 +788,9 @@
       "armor_piercing": 651885532.0,
       "shield_piercing": 260754212.0,
       "accuracy": 260754212.0,
+      "armor": 15740203.0,
+      "shield_deflection": 120.0,
+      "dodge": 78701013.0,
       "attack": 184833296.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -814,6 +853,9 @@
       "armor_piercing": 738456644.0,
       "shield_piercing": 295382656.0,
       "accuracy": 295382656.0,
+      "armor": 17314223.0,
+      "shield_deflection": 120.0,
+      "dodge": 86571114.0,
       "attack": 203316626.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -876,6 +918,9 @@
       "armor_piercing": 833684868.0,
       "shield_piercing": 333473948.0,
       "accuracy": 333473948.0,
+      "armor": 19045645.0,
+      "shield_deflection": 120.0,
+      "dodge": 95228225.0,
       "attack": 223648288.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -1370,5 +1415,133 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
-  ]
+  ],
+  "officer_bonus": {
+    "attack": [
+      {
+        "value": 56000.0,
+        "bonus": 6.5
+      },
+      {
+        "value": 112000.0,
+        "bonus": 13.0
+      },
+      {
+        "value": 182000.0,
+        "bonus": 19.5
+      },
+      {
+        "value": 252000.0,
+        "bonus": 26.0
+      },
+      {
+        "value": 336000.0,
+        "bonus": 32.5
+      },
+      {
+        "value": 448000.0,
+        "bonus": 39.0
+      },
+      {
+        "value": 616000.0,
+        "bonus": 45.5
+      },
+      {
+        "value": 840000.0,
+        "bonus": 52.0
+      },
+      {
+        "value": 1120000.0,
+        "bonus": 58.5
+      },
+      {
+        "value": 1680000.0,
+        "bonus": 65.0
+      }
+    ],
+    "defense": [
+      {
+        "value": 56000.0,
+        "bonus": 6.5
+      },
+      {
+        "value": 112000.0,
+        "bonus": 13.0
+      },
+      {
+        "value": 182000.0,
+        "bonus": 19.5
+      },
+      {
+        "value": 252000.0,
+        "bonus": 26.0
+      },
+      {
+        "value": 336000.0,
+        "bonus": 32.5
+      },
+      {
+        "value": 448000.0,
+        "bonus": 39.0
+      },
+      {
+        "value": 616000.0,
+        "bonus": 45.5
+      },
+      {
+        "value": 840000.0,
+        "bonus": 52.0
+      },
+      {
+        "value": 1120000.0,
+        "bonus": 58.5
+      },
+      {
+        "value": 1680000.0,
+        "bonus": 65.0
+      }
+    ],
+    "health": [
+      {
+        "value": 56000.0,
+        "bonus": 6.5
+      },
+      {
+        "value": 112000.0,
+        "bonus": 13.0
+      },
+      {
+        "value": 182000.0,
+        "bonus": 19.5
+      },
+      {
+        "value": 252000.0,
+        "bonus": 26.0
+      },
+      {
+        "value": 336000.0,
+        "bonus": 32.5
+      },
+      {
+        "value": 448000.0,
+        "bonus": 39.0
+      },
+      {
+        "value": 616000.0,
+        "bonus": 45.5
+      },
+      {
+        "value": 840000.0,
+        "bonus": 52.0
+      },
+      {
+        "value": 1120000.0,
+        "bonus": 58.5
+      },
+      {
+        "value": 1680000.0,
+        "bonus": 65.0
+      }
+    ]
+  }
 }

@@ -163,6 +163,16 @@ pub enum AbilityModifierSpec {
     OfficerHullRegenPrevRoundFraction,
     /// LCARS `shield_hp_repair_prev_round` (engine timing: round start).
     OfficerShieldRegenPrevRoundFraction,
+    /// LCARS `officerstathealth` / `attack` (officer-rating axis) — buffs the per-side officer Attack
+    /// rating before breakpoint lookup. Defined in Phase 1; consumed by ability handlers in Phase 3.
+    /// See `docs/OFFICER_STAT_FORMULA.md` §2b.
+    OfficerAttack,
+    /// LCARS `defense` (officer-rating axis) — buffs the per-side officer Defense rating.
+    /// Defined in Phase 1; consumed in Phase 3. See `docs/OFFICER_STAT_FORMULA.md` §2c.
+    OfficerDefense,
+    /// LCARS `health` (officer-rating axis) — buffs the per-side officer Health rating.
+    /// Defined in Phase 1; consumed in Phase 3. See `docs/OFFICER_STAT_FORMULA.md` §2d.
+    OfficerHealth,
     TagOnly,
 }
 

@@ -8,6 +8,44 @@ use kobayashi::data::ship::{
     load_extended_ship_index, load_extended_ship_record, DEFAULT_SHIPS_EXTENDED_DIR,
 };
 
+/// Regression guard: pin the `ship_class` of four iconic ships from each hull-type bucket.
+///
+/// Background: `scripts/build_ship_registry.py` maps upstream `hull_type` (0..3) to STFC ship
+/// classes. An earlier mapping had 0/2/3 wrong — only `1 → survey` was correct. This was caught
+/// during the officer-A/D/H runtime work because the Cerritos was claiming `interceptor` while
+/// its in-game Defense tooltip clearly routes to Shield (Explorer behavior). The corrected
+/// mapping is `0 → interceptor, 1 → survey, 2 → explorer, 3 → battleship`.
+///
+/// One representative ship per class, picked because the maintainer cross-checked each against
+/// the in-game ship browser. If this test fails after a registry refresh, either the upstream
+/// `hull_type` values changed (possible but unlikely) or the `HULL_TO_CLASS` mapping in
+/// `scripts/build_ship_registry.py` regressed — investigate before "fixing" the test.
+#[test]
+fn iconic_ships_have_expected_class() {
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    if !ext_dir.is_dir() {
+        eprintln!("Skipping: {} not found", ext_dir.display());
+        return;
+    }
+    let cases: &[(&str, &str)] = &[
+        ("uss_cerritos", "explorer"),
+        ("uss_crozier", "battleship"),
+        ("ss_revenant", "interceptor"),
+        ("nova", "survey"),
+    ];
+    for (id, expected_class) in cases {
+        let rec = load_extended_ship_record(ext_dir, id)
+            .unwrap_or_else(|| panic!("ship `{}` not found in {}", id, ext_dir.display()));
+        assert_eq!(
+            rec.ship_class, *expected_class,
+            "ship `{}` should be classified as `{}`; got `{}`. \
+             If upstream `hull_type` changed, verify against the in-game ship browser before \
+             updating this assertion or `scripts/build_ship_registry.py`.",
+            id, expected_class, rec.ship_class
+        );
+    }
+}
+
 #[test]
 fn ship_index_loads_and_has_provenance_fields() {
     let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);

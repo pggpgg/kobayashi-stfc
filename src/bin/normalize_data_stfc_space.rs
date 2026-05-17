@@ -46,8 +46,9 @@ struct AbilityCatalogEntry {
 }
 
 use kobayashi::data::ship::{
-    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, ShipAbility, ShipIdRegistry,
-    ShipIdRegistryEntry, TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
+    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, OfficerBonusBreakpoint, OfficerBonusTable,
+    ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
+    DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -345,6 +346,8 @@ fn raw_to_extended(
         }
     });
 
+    let officer_bonus = parse_officer_bonus(raw);
+
     Ok(ExtendedShipRecord {
         id: canonical_id.to_string(),
         ship_name: ship_name.to_string(),
@@ -354,7 +357,38 @@ fn raw_to_extended(
         levels,
         crew_slots,
         abilities,
+        officer_bonus,
     })
+}
+
+fn parse_officer_bonus(raw: &Value) -> OfficerBonusTable {
+    let Some(node) = raw.get("officer_bonus") else {
+        return OfficerBonusTable::default();
+    };
+    let parse_channel = |key: &str| -> Vec<OfficerBonusBreakpoint> {
+        let Some(arr) = node.get(key).and_then(Value::as_array) else {
+            return Vec::new();
+        };
+        let mut out: Vec<OfficerBonusBreakpoint> = arr
+            .iter()
+            .filter_map(|row| {
+                let value = row.get("value").and_then(Value::as_f64)?;
+                let bonus = row.get("bonus").and_then(Value::as_f64)?;
+                Some(OfficerBonusBreakpoint { value, bonus })
+            })
+            .collect();
+        out.sort_by(|a, b| {
+            a.value
+                .partial_cmp(&b.value)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        out
+    };
+    OfficerBonusTable {
+        attack: parse_channel("attack"),
+        defense: parse_channel("defense"),
+        health: parse_channel("health"),
+    }
 }
 
 /// Order value used when component has no order or order is -1 (sort after valid weapons).

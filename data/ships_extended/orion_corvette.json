@@ -1,13 +1,16 @@
 {
   "id": "orion_corvette",
   "ship_name": "ORION CORVETTE",
-  "ship_class": "explorer",
+  "ship_class": "battleship",
   "tiers": [
     {
       "tier": 1,
       "armor_piercing": 4.0,
       "shield_piercing": 60.0,
       "accuracy": 6.0,
+      "armor": 15.0,
+      "shield_deflection": 120.0,
+      "dodge": 4.0,
       "attack": 87.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -46,6 +49,9 @@
       "armor_piercing": 10.0,
       "shield_piercing": 144.0,
       "accuracy": 14.0,
+      "armor": 21.0,
+      "shield_deflection": 120.0,
+      "dodge": 4.0,
       "attack": 121.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -84,6 +90,9 @@
       "armor_piercing": 18.0,
       "shield_piercing": 262.0,
       "accuracy": 26.0,
+      "armor": 29.0,
+      "shield_deflection": 120.0,
+      "dodge": 4.0,
       "attack": 169.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -122,6 +131,9 @@
       "armor_piercing": 28.0,
       "shield_piercing": 426.0,
       "accuracy": 42.0,
+      "armor": 41.0,
+      "shield_deflection": 120.0,
+      "dodge": 4.0,
       "attack": 237.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
@@ -287,5 +299,133 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }
-  ]
+  ],
+  "officer_bonus": {
+    "attack": [
+      {
+        "value": 20.0,
+        "bonus": 0.15000000000000002
+      },
+      {
+        "value": 40.0,
+        "bonus": 0.30000000000000004
+      },
+      {
+        "value": 65.0,
+        "bonus": 0.45
+      },
+      {
+        "value": 90.0,
+        "bonus": 0.6000000000000001
+      },
+      {
+        "value": 120.0,
+        "bonus": 0.75
+      },
+      {
+        "value": 160.0,
+        "bonus": 0.8999999999999999
+      },
+      {
+        "value": 220.0,
+        "bonus": 1.0499999999999998
+      },
+      {
+        "value": 300.0,
+        "bonus": 1.2000000000000002
+      },
+      {
+        "value": 400.0,
+        "bonus": 1.35
+      },
+      {
+        "value": 600.0,
+        "bonus": 1.5
+      }
+    ],
+    "defense": [
+      {
+        "value": 20.0,
+        "bonus": 0.15000000000000002
+      },
+      {
+        "value": 40.0,
+        "bonus": 0.30000000000000004
+      },
+      {
+        "value": 65.0,
+        "bonus": 0.45
+      },
+      {
+        "value": 90.0,
+        "bonus": 0.6000000000000001
+      },
+      {
+        "value": 120.0,
+        "bonus": 0.75
+      },
+      {
+        "value": 160.0,
+        "bonus": 0.8999999999999999
+      },
+      {
+        "value": 220.0,
+        "bonus": 1.0499999999999998
+      },
+      {
+        "value": 300.0,
+        "bonus": 1.2000000000000002
+      },
+      {
+        "value": 400.0,
+        "bonus": 1.35
+      },
+      {
+        "value": 600.0,
+        "bonus": 1.5
+      }
+    ],
+    "health": [
+      {
+        "value": 20.0,
+        "bonus": 0.15000000000000002
+      },
+      {
+        "value": 40.0,
+        "bonus": 0.30000000000000004
+      },
+      {
+        "value": 65.0,
+        "bonus": 0.45
+      },
+      {
+        "value": 90.0,
+        "bonus": 0.6000000000000001
+      },
+      {
+        "value": 120.0,
+        "bonus": 0.75
+      },
+      {
+        "value": 160.0,
+        "bonus": 0.8999999999999999
+      },
+      {
+        "value": 220.0,
+        "bonus": 1.0499999999999998
+      },
+      {
+        "value": 300.0,
+        "bonus": 1.2000000000000002
+      },
+      {
+        "value": 400.0,
+        "bonus": 1.35
+      },
+      {
+        "value": 600.0,
+        "bonus": 1.5
+      }
+    ]
+  }
 }
