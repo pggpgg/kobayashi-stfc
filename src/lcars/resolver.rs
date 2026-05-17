@@ -328,6 +328,139 @@ pub fn lcars_effect_coverage(
 }
 
 /// Resolve one officer ability block (captain, bridge, or below decks) into seat contexts.
+/// Phase 4d: classify a condition as "dynamic" (must be evaluated each round by the engine)
+/// vs static (decidable at fight setup). Mirrors the deferred-list in
+/// [`crate::data::profile::eval_static_condition`]; composites are dynamic if any child is
+/// dynamic.
+fn condition_is_dynamic(cond: &AbilityConditionSpec) -> bool {
+    use AbilityConditionSpec as C;
+    match cond {
+        C::MoraleActive
+        | C::DefenderBurning
+        | C::AttackerBurning
+        | C::DefenderHullBreach
+        | C::AttackerHullBreach
+        | C::DefenderAssimilated
+        | C::AttackerOfficerTalNotOnBridge
+        | C::RoundRange { .. }
+        | C::StatBelow { .. }
+        | C::StatAbove { .. } => true,
+        C::And { all } => all.iter().any(condition_is_dynamic),
+        C::Or { any } => any.iter().any(condition_is_dynamic),
+        C::Not { inner } => condition_is_dynamic(inner),
+        _ => false,
+    }
+}
+
+/// Phase 4d: expand officer-stat effects with dynamic conditions into substituted ship-stat
+/// effects so the engine's existing per-round dynamic ability path can fire them when the
+/// condition becomes true.
+///
+/// **Only the Attack axis is wired here**, via [`crate::combat::AbilityEffect::AttackMultiplier`].
+/// The Health axis (`hull_hp` / `shield_hp`) is intentionally not emitted because those engine
+/// values are fight-setup-only — there is no per-round `AbilityEffect` that multiplies the
+/// shield/hull bars mid-fight. The Defense axis is similarly skipped because channel routing
+/// (armor / shield_deflection / dodge) needs ship-class context the resolver doesn't have.
+///
+/// **Approximation v1**: this routes the Attack axis through a direct `weapon_damage`
+/// multiplier instead of the §2 rating-via-breakpoint pipeline. Magnitude is correct for
+/// crews far from breakpoint tiers; near a tier boundary the breakpoint nuance is lost. The
+/// alternative (full per-round officer-stat-rating recomputation in the combat engine) is
+/// deferred to future work. Static-conditional contributions still go through the proper
+/// pipeline ([`PendingOfficerStatContribution`] + breakpoint lookup at compute time).
+///
+/// Production-data impact: kirk-1323b6 (`officerstatall +40% morale_active on_round_start`)
+/// is the only dynamic-conditional officer-stat effect in current data. After this pass it
+/// fires the Attack axis during morale-active rounds; Health and Defense axes are dropped
+/// (limitation documented above).
+///
+/// `target: enemy` contributions are dropped (Phase 4c territory: PvP defender-side compute).
+fn expand_dynamic_officer_stat_effects(
+    officer: &LcarsOfficer,
+    ability: &LcarsAbility,
+    seat: CrewSeat,
+    class: AbilityClass,
+    options: &ResolveOptions,
+    contribution_batch: u32,
+) -> Vec<CrewSeatContext> {
+    let mut out = Vec::new();
+    for effect in &ability.effects {
+        if effect.effect_type != "tag" {
+            continue;
+        }
+        let Some(stat) = crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
+        else {
+            continue;
+        };
+        if !matches!(
+            stat,
+            "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
+        ) {
+            continue;
+        }
+        let Some(ref cond_obj) = effect.condition else {
+            // No condition: handled by static path.
+            continue;
+        };
+        let Ok(cond_spec) = crate::lcars::effect_spec_adapter::lcars_condition_to_spec(cond_obj)
+        else {
+            continue;
+        };
+        if !condition_is_dynamic(&cond_spec) {
+            continue;
+        }
+        // Target filter: skip target:enemy entirely (Phase 4c).
+        if effect
+            .target
+            .as_deref()
+            .map(|t| t.trim().to_ascii_lowercase())
+            .as_deref()
+            == Some("enemy")
+        {
+            continue;
+        }
+        // See doc comment: only Attack axis has a per-round AbilityEffect. Health (max
+        // hull/shield) and Defense (channel routing) need engine work that's out of scope
+        // for this approximation.
+        let substitute_stats: &[&str] = match stat {
+            "officer_attack" | "officer_stat_all" => &["weapon_damage"],
+            _ => &[],
+        };
+        for &sub_stat in substitute_stats {
+            let synth_effect = LcarsEffect {
+                effect_type: "stat_modify".to_string(),
+                stat: Some(sub_stat.to_string()),
+                target: effect.target.clone(),
+                operator: effect.operator.clone(),
+                value: effect.value,
+                trigger: effect.trigger.clone(),
+                duration: effect.duration.clone(),
+                scaling: effect.scaling.clone(),
+                condition: effect.condition.clone(),
+                chance: None,
+                multiplier: None,
+                tag: None,
+                accumulate: None,
+                decay: None,
+            };
+            let synth_ability = LcarsAbility {
+                name: ability.name.clone(),
+                effects: vec![synth_effect],
+            };
+            let seats = resolve_officer_ability(
+                officer,
+                &synth_ability,
+                seat,
+                class,
+                options,
+                contribution_batch,
+            );
+            out.extend(seats);
+        }
+    }
+    out
+}
+
 pub fn resolve_officer_ability(
     officer: &LcarsOfficer,
     ability: &LcarsAbility,
@@ -555,6 +688,20 @@ pub fn resolve_crew_to_buff_set(
         let contexts =
             resolve_officer_ability(officer, ability, seat, class, options, contribution_batch);
         seats.extend(contexts);
+        // Phase 4d: synthetic per-round seats for officer-stat effects with dynamic conditions
+        // (e.g. Kirk-1323b6 `morale_active`). The original officerstat* spec fails to compile
+        // because the engine has no officer-rating modifier handler; the substituted ship-stat
+        // specs (weapon_damage / hull_hp / shield_hp) compile cleanly and fire per round
+        // through the existing dynamic ability path.
+        let dynamic_extras = expand_dynamic_officer_stat_effects(
+            officer,
+            ability,
+            seat,
+            class,
+            options,
+            contribution_batch,
+        );
+        seats.extend(dynamic_extras);
     };
 
     if let Some(o) = officers.get(captain_id) {
@@ -1004,6 +1151,119 @@ mod tests {
         assert!(
             !buff.static_buffs.contains_key("officer_stat_all"),
             "literal_false must skip the bonus"
+        );
+    }
+
+    #[test]
+    fn phase4d_dynamic_morale_active_emits_attack_multiplier_seat() {
+        // Kirk-1323b6 pattern: officerstatall on_round_start morale_active target:self val=0.4.
+        // Phase 4d (Attack-axis only): the spec compile errors out for OfficerStatAll modifier,
+        // BUT the dynamic expansion emits a synthetic weapon_damage seat that the engine fires
+        // per round when MoraleActive becomes true. The Health and Defense axes are dropped
+        // because they have no per-round AbilityEffect equivalent (limitation documented on
+        // `expand_dynamic_officer_stat_effects`).
+        let o = officer_with_officerstat_captain(
+            "kirk-dyn",
+            "officerstatall:unmapped",
+            0.40,
+            "on_round_start",
+            "self",
+            Some("morale_active"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kirk-dyn".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kirk-dyn", &[], &[], &officers, &ResolveOptions::default());
+        let attack_seats: Vec<_> = buff
+            .crew
+            .seats
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.ability.effect,
+                    crate::combat::AbilityEffect::AttackMultiplier(_)
+                )
+            })
+            .collect();
+        assert_eq!(
+            attack_seats.len(),
+            1,
+            "expected one synthetic AttackMultiplier seat; seats: {:?}",
+            buff.crew
+                .seats
+                .iter()
+                .map(|s| format!("{:?}", s.ability.effect))
+                .collect::<Vec<_>>()
+        );
+        let seat = attack_seats[0];
+        // Condition must be preserved so the engine evaluates it per round.
+        assert!(
+            matches!(
+                seat.ability.condition,
+                Some(crate::combat::AbilityCondition::MoraleActive)
+            ),
+            "expected MoraleActive condition; got: {:?}",
+            seat.ability.condition
+        );
+        // Trigger must remain RoundStart so the engine evaluates at the start of each round.
+        assert_eq!(seat.ability.timing, crate::combat::TimingWindow::RoundStart);
+    }
+
+    #[test]
+    fn phase4d_static_condition_does_not_emit_synthetic_seats() {
+        // TOS McCoy pattern: passive + attacker_ship_type_is(explorer). Static condition →
+        // Phase 4b path → pending_officer_stat_contributions only; the dynamic expansion
+        // must NOT emit synthetic seats for static-only conditions.
+        let mut effect = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.20,
+            "passive",
+            "self",
+            Some("attacker_ship_type_is"),
+        );
+        // attacker_ship_type_is needs the ship_type field populated to compile.
+        if let Some(ref mut c) = effect.condition {
+            c.ship_type = Some("explorer".to_string());
+        }
+        let o = LcarsOfficer {
+            id: "tos-mccoy".to_string(),
+            name: "tos-mccoy".to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "Bones".to_string(),
+                effects: vec![effect],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![level_stats(1, 100.0, 100.0, 100.0)],
+            max_level_by_rank: vec![1],
+        };
+        let mut officers = HashMap::new();
+        officers.insert("tos-mccoy".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("tos-mccoy", &[], &[], &officers, &ResolveOptions::default());
+        let synthetic_count = buff
+            .crew
+            .seats
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.ability.effect,
+                    crate::combat::AbilityEffect::AttackMultiplier(_)
+                )
+            })
+            .count();
+        assert_eq!(
+            synthetic_count, 0,
+            "static-only condition must not trigger dynamic expansion"
+        );
+        // Static-conditional contribution goes to the pending list instead.
+        assert_eq!(
+            buff.pending_officer_stat_contributions.len(),
+            1,
+            "static conditional contribution should land in pending"
         );
     }
 
