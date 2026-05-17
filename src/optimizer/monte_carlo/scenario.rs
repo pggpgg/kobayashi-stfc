@@ -630,12 +630,13 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         candidate,
         shared.lcars_data.as_ref(),
     );
-    let (crew_seats, static_buffs, proc_chance, proc_multiplier) = build_crew_and_buffs(
-        candidate,
-        &shared.officer_index,
-        shared.lcars_data.as_ref(),
-        &resolve_opts,
-    );
+    let (crew_seats, static_buffs, proc_chance, proc_multiplier, officer_stat_totals) =
+        build_crew_and_buffs(
+            candidate,
+            &shared.officer_index,
+            shared.lcars_data.as_ref(),
+            &resolve_opts,
+        );
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
@@ -723,6 +724,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             &shared.profile,
             ship_rec.faction.as_deref(),
+            crate::data::profile::compute_officer_stat_runtime_bonus(
+                officer_stat_totals,
+                ship_rec,
+                &shared.profile,
+                ship_rec.faction.as_deref(),
+            ),
         );
         if shared.ship == USS_VOYAGER_SHIP_ID {
             if let Some(h) = shared.borg_alcove_hull_hp_bonus {
@@ -824,6 +831,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         },
         &shared.profile,
         None,
+        // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
+        crate::data::profile::OfficerStatRuntimeBonus::default(),
     );
     if shared.ship == USS_VOYAGER_SHIP_ID {
         if let Some(h) = shared.borg_alcove_hull_hp_bonus {
@@ -992,13 +1001,22 @@ fn resolve_options_with_candidate_tiers(
     }
 }
 
-/// Build (crew_seats, static_buffs, proc_chance, proc_multiplier) from candidate and officer data.
+/// Build (crew_seats, static_buffs, proc_chance, proc_multiplier, officer_stat_totals) from
+/// candidate and officer data. The fifth element is the per-side summed Attack/Defense/Health
+/// across crewed officers (see `docs/OFFICER_STAT_FORMULA.md` §1); defaults to zero when LCARS
+/// data is unavailable, which silently disables the §2 runtime contribution.
 fn build_crew_and_buffs(
     candidate: &CrewCandidate,
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
-) -> (Vec<CrewSeatContext>, HashMap<String, f64>, f64, f64) {
+) -> (
+    Vec<CrewSeatContext>,
+    HashMap<String, f64>,
+    f64,
+    f64,
+    crate::combat::CrewOfficerStatTotals,
+) {
     if let Some(lcars) = lcars_data {
         let captain_id = lcars
             .name_to_id
@@ -1040,6 +1058,7 @@ fn build_crew_and_buffs(
                 buff_set.static_buffs,
                 buff_set.proc_chance,
                 buff_set.proc_multiplier,
+                buff_set.officer_stat_totals,
             )
         } else {
             (
@@ -1047,6 +1066,7 @@ fn build_crew_and_buffs(
                 HashMap::new(),
                 0.0,
                 1.0,
+                crate::combat::CrewOfficerStatTotals::default(),
             )
         }
     } else {
@@ -1055,6 +1075,7 @@ fn build_crew_and_buffs(
             HashMap::new(),
             0.0,
             1.0,
+            crate::combat::CrewOfficerStatTotals::default(),
         )
     }
 }
@@ -1143,7 +1164,7 @@ fn resolve_player_defender_officer_bundle(
         bridge,
         below_decks,
     };
-    let (seats, static_buffs, _proc_c, _proc_m) =
+    let (seats, static_buffs, _proc_c, _proc_m, _officer_stat_totals) =
         build_crew_and_buffs(&candidate, officers_by_name, lcars_data, resolve_options);
     (seats, static_buffs)
 }
@@ -1170,7 +1191,7 @@ pub(crate) fn scenario_to_combat_input(
         roster_officer_ids_from_candidate(candidate, officers_by_name);
 
     let resolve_opts = ResolveOptions::default();
-    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier) =
+    let (crew_seats, mut static_buffs, proc_chance, proc_multiplier, officer_stat_totals) =
         build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
@@ -1217,6 +1238,12 @@ pub(crate) fn scenario_to_combat_input(
             },
             profile,
             ship_rec.faction.as_deref(),
+            crate::data::profile::compute_officer_stat_runtime_bonus(
+                officer_stat_totals,
+                &ship_rec,
+                profile,
+                ship_rec.faction.as_deref(),
+            ),
         );
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -1299,6 +1326,8 @@ pub(crate) fn scenario_to_combat_input(
         },
         profile,
         None,
+        // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
+        crate::data::profile::OfficerStatRuntimeBonus::default(),
     );
     if !static_buffs.is_empty() {
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -2364,6 +2393,7 @@ mod tests {
             isolytic_damage: 0.0,
             weapons: None,
             abilities: None,
+            ..Default::default()
         };
         let stats = effective_attacker_stats_for_mitigation(
             &ship_rec,
@@ -2466,6 +2496,7 @@ mod tests {
                 round_cap: None,
                 level_scaled_values: None,
             }]),
+            ..Default::default()
         };
         let mut static_buffs = HashMap::new();
         static_buffs.insert("accuracy".to_string(), 10.0);
@@ -2586,6 +2617,7 @@ mod tests {
             isolytic_damage: 0.0,
             weapons: None,
             abilities: None,
+            ..Default::default()
         };
         let profile = PlayerProfile::default();
         let (m0, p0) = mitigation_and_pierce_for_player_vs_hostile(
@@ -2641,6 +2673,7 @@ mod tests {
                 round_cap: None,
                 level_scaled_values: None,
             }]),
+            ..Default::default()
         };
 
         let shared = SharedScenarioData {

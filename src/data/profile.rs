@@ -1899,28 +1899,111 @@ pub fn estimate_officer_stats_with_profile_bonuses(
     (attack, defense, health)
 }
 
-/// Apply effective_bonuses to attacker Combatant (multipliers and additive bonuses).
-/// Keys: weapon_damage × officer_attack on [`Combatant::attack`]; hull_hp × officer_health on hull;
-/// shield_mitigation + officer_defense on [`Combatant::shield_mitigation`]; shield_hp, crit_chance, crit_damage, pierce (additive),
-/// armor/dodge/damage_reduction (additive to mitigation),
-/// isolytic_damage / isolytic_defense, apex_shred / apex_barrier (additive; counter-attack uses player apex_barrier).
-/// `isolytic_cascade_damage` stays in `profile.bonuses` for the scenario attack-phase cascade seat.
+/// Precomputed officer-stat runtime contribution, derived once from
+/// [`crate::lcars::resolver::BuffSet::officer_stat_totals`] + ship breakpoint table + profile
+/// pre-aggregation multipliers, then handed to [`apply_profile_to_attacker`] for application.
 ///
-/// `owner_faction_slug`: lowercase-trimmed [`ShipRecord::faction`] when known (e.g. `"federation"`); merges
-/// [`PlayerProfile::research_owner_faction_bonuses`] for matching keys into the same stats as `profile.bonuses`.
+/// `Default` = all zeros = no officer-stat contribution; safe for callers without crew context
+/// (bare CLI `simulate`, tests that don't exercise the runtime path).
+///
+/// See `docs/OFFICER_STAT_FORMULA.md` for the empirical derivation (Sesha L15 / Chen / Ghrush L30
+/// observations on the Cerritos, and the Realta T4 L20 + Ghrush experiment that pinned
+/// `attack_bonus` as the sole attack-channel mechanism).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct OfficerStatRuntimeBonus {
+    /// Step-function bonus from `attack_rating`. `(1 + attack_bonus)` multiplies weapon damage.
+    pub attack_bonus: f64,
+    /// Step-function bonus from `health_rating`. `(1 + health_bonus)` multiplies hull AND shield HP.
+    pub health_bonus: f64,
+    /// Defense-channel additive contributions, already routed by ship class (§2c):
+    ///   battleship → armor; explorer → shield_deflection; interceptor → dodge;
+    ///   survey → ⅓ to each channel.
+    /// At most one (or three for survey) is non-zero per call.
+    pub defense_armor_add: f64,
+    pub defense_shield_deflection_add: f64,
+    pub defense_dodge_add: f64,
+}
+
+/// Compute the [`OfficerStatRuntimeBonus`] for a player ship + crew + profile combination.
+/// Performs the full §2 pipeline: per-officer profile multiplier (officer_attack/defense/health) →
+/// per-side rating → step-function breakpoint lookup → ship-class channel routing.
+///
+/// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /
+/// hostile-only records); callers do not need to special-case that path.
+pub fn compute_officer_stat_runtime_bonus(
+    totals: crate::combat::CrewOfficerStatTotals,
+    ship: &crate::data::ship::ShipRecord,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+) -> OfficerStatRuntimeBonus {
+    if ship.officer_bonus.is_empty() {
+        return OfficerStatRuntimeBonus::default();
+    }
+    let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
+    // §2e: profile officer_attack/defense/health are pre-aggregation multipliers on each
+    // crewed officer's A/D/H. Applied here on the summed totals (mathematically equivalent
+    // since the multiplier distributes over the sum).
+    let attack_rating = totals.attack * (1.0 + gb("officer_attack"));
+    let defense_rating = totals.defense * (1.0 + gb("officer_defense"));
+    let health_rating = totals.health * (1.0 + gb("officer_health"));
+
+    let attack_bonus = ship.officer_bonus.attack_bonus(attack_rating);
+    let defense_bonus = ship.officer_bonus.defense_bonus(defense_rating);
+    let health_bonus = ship.officer_bonus.health_bonus(health_rating);
+
+    // §2c: route defense_bonus × ship-channel-constant to the ship-class primary mitigation stat.
+    let class = ship.ship_class.trim().to_ascii_lowercase();
+    let (defense_armor_add, defense_shield_deflection_add, defense_dodge_add) = match class.as_str()
+    {
+        "battleship" => (ship.armor * defense_bonus, 0.0, 0.0),
+        "explorer" => (0.0, ship.shield_deflection * defense_bonus, 0.0),
+        "interceptor" => (0.0, 0.0, ship.dodge * defense_bonus),
+        "survey" => (
+            ship.armor * defense_bonus / 3.0,
+            ship.shield_deflection * defense_bonus / 3.0,
+            ship.dodge * defense_bonus / 3.0,
+        ),
+        _ => (0.0, 0.0, 0.0),
+    };
+
+    OfficerStatRuntimeBonus {
+        attack_bonus,
+        health_bonus,
+        defense_armor_add,
+        defense_shield_deflection_add,
+        defense_dodge_add,
+    }
+}
+
+/// Apply effective_bonuses to attacker Combatant (multipliers and additive bonuses).
+///
+/// Officer-stat contributions (§2 of `docs/OFFICER_STAT_FORMULA.md`) are passed in precomputed via
+/// `officer_stat_runtime`; pass [`OfficerStatRuntimeBonus::default`] when there is no crew (bare
+/// CLI simulate, tests without crew). The legacy `officer_attack` / `officer_health` /
+/// `officer_defense` profile keys are consumed inside [`compute_officer_stat_runtime_bonus`] as
+/// pre-aggregation multipliers on per-officer A/D/H, and are intentionally NOT applied here as
+/// post-aggregation ship-stat multipliers (the §4 migration).
+///
+/// `owner_faction_slug`: lowercase-trimmed [`crate::data::ship::ShipRecord::faction`] when known
+/// (e.g. `"federation"`); merges [`PlayerProfile::research_owner_faction_bonuses`] for matching
+/// keys into the same stats as `profile.bonuses`.
 pub fn apply_profile_to_attacker(
     attacker: Combatant,
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
+    officer_stat_runtime: OfficerStatRuntimeBonus,
 ) -> Combatant {
-    if profile.bonuses.is_empty() && profile.research_owner_faction_bonuses.is_empty() {
+    let osr = officer_stat_runtime;
+    let osr_is_zero = osr == OfficerStatRuntimeBonus::default();
+    if profile.bonuses.is_empty()
+        && profile.research_owner_faction_bonuses.is_empty()
+        && osr_is_zero
+    {
         return attacker;
     }
     let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
     let weapon = 1.0 + gb("weapon_damage");
-    let officer_attack_mult = 1.0 + gb("officer_attack");
     let hull_hp = 1.0 + gb("hull_hp");
-    let officer_health_mult = 1.0 + gb("officer_health");
     let shield_hp = 1.0 + gb("shield_hp");
     let isolytic_damage_add = gb("isolytic_damage");
     let isolytic_defense_add = gb("isolytic_defense");
@@ -1930,20 +2013,30 @@ pub fn apply_profile_to_attacker(
     let crit_damage_mult = 1.0 + gb("crit_damage");
     let pierce_add = gb("pierce");
     let shield_mit_add = gb("shield_mitigation");
-    let officer_def_add = gb("officer_defense");
-    let mitigation_add =
-        gb("armor") + gb("shield_deflection") + gb("dodge") + gb("damage_reduction");
+    // §2c: officer Defense does NOT add to shield_mitigation. The previous
+    // `shield_mitigation += officer_defense` line was incorrect and has been removed.
+    let mitigation_add = gb("armor")
+        + osr.defense_armor_add
+        + gb("shield_deflection")
+        + osr.defense_shield_deflection_add
+        + gb("dodge")
+        + osr.defense_dodge_add
+        + gb("damage_reduction");
+
+    // §2b/§2d: officer attack_bonus multiplies weapon damage; officer health_bonus multiplies
+    // BOTH hull and shield HP (the §4-migrated semantics — was hull-only before).
+    let attack_mult = 1.0 + osr.attack_bonus;
+    let health_mult = 1.0 + osr.health_bonus;
 
     Combatant {
-        attack: attacker.attack * weapon * officer_attack_mult,
-        hull_health: attacker.hull_health * hull_hp * officer_health_mult,
-        shield_health: attacker.shield_health * shield_hp,
+        attack: attacker.attack * weapon * attack_mult,
+        hull_health: attacker.hull_health * hull_hp * health_mult,
+        shield_health: attacker.shield_health * shield_hp * health_mult,
         crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
         mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
-        shield_mitigation: (attacker.shield_mitigation + shield_mit_add + officer_def_add)
-            .clamp(0.0, 1.0),
+        shield_mitigation: (attacker.shield_mitigation + shield_mit_add).clamp(0.0, 1.0),
         isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
         apex_shred: (attacker.apex_shred + apex_shred_add).max(0.0),
@@ -2300,7 +2393,8 @@ mod tests {
             isolytic_defense: 0.0,
             hostile_mitigation_params: None,
         };
-        let out = apply_profile_to_attacker(attacker, &profile, None);
+        let out =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
         assert!((out.apex_shred - 0.15).abs() < 1e-9, "expected 0.03 + 0.12");
     }
 
@@ -2330,7 +2424,8 @@ mod tests {
         profile
             .bonuses
             .insert("isolytic_damage_morale".to_string(), 0.5);
-        let out = apply_profile_to_attacker(attacker, &profile, None);
+        let out =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
         assert!(
             (out.isolytic_damage - 2.0).abs() < 1e-9,
             "morale-gated isolytic must not add to flat Combatant.isolytic_damage"
@@ -2479,13 +2574,29 @@ mod tests {
             .or_default()
             .insert("shield_deflection".to_string(), 0.05);
 
-        let out_fed = apply_profile_to_attacker(attacker.clone(), &profile, Some("federation"));
+        let out_fed = apply_profile_to_attacker(
+            attacker.clone(),
+            &profile,
+            Some("federation"),
+            OfficerStatRuntimeBonus::default(),
+        );
         assert!((out_fed.mitigation - 0.05).abs() < 1e-9);
-        let out_klg = apply_profile_to_attacker(attacker.clone(), &profile, Some("klingon"));
+        let out_klg = apply_profile_to_attacker(
+            attacker.clone(),
+            &profile,
+            Some("klingon"),
+            OfficerStatRuntimeBonus::default(),
+        );
         assert!((out_klg.mitigation).abs() < 1e-9);
-        let out_ci = apply_profile_to_attacker(attacker.clone(), &profile, Some("Federation"));
+        let out_ci = apply_profile_to_attacker(
+            attacker.clone(),
+            &profile,
+            Some("Federation"),
+            OfficerStatRuntimeBonus::default(),
+        );
         assert!((out_ci.mitigation - 0.05).abs() < 1e-9);
-        let out_none = apply_profile_to_attacker(attacker, &profile, None);
+        let out_none =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
         assert!((out_none.mitigation).abs() < 1e-9);
     }
 
@@ -2563,7 +2674,8 @@ mod tests {
         let mut profile = PlayerProfile::default();
         profile.bonuses.insert("apex_shred".to_string(), 0.15);
         profile.bonuses.insert("apex_barrier".to_string(), 200.0);
-        let out = apply_profile_to_attacker(attacker, &profile, None);
+        let out =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
         assert!((out.apex_shred - 0.25).abs() < 1e-9);
         assert!((out.apex_barrier - 300.0).abs() < 1e-9);
     }
@@ -2595,7 +2707,8 @@ mod tests {
         profile.bonuses.insert("dodge".to_string(), 0.03);
         profile.bonuses.insert("damage_reduction".to_string(), 0.02);
 
-        let out = apply_profile_to_attacker(attacker, &profile, None);
+        let out =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
         assert!((out.mitigation - 0.19).abs() < 1e-9);
     }
 
@@ -2658,7 +2771,15 @@ mod tests {
     }
 
     #[test]
-    fn officer_stat_compounds_with_ship_bonuses_in_attacker_math() {
+    fn officer_stat_profile_keys_are_no_op_without_crew_runtime() {
+        // §4 of docs/OFFICER_STAT_FORMULA.md: officer_attack / officer_defense / officer_health
+        // profile keys migrated from post-aggregation ship-stat multipliers (legacy) to
+        // pre-aggregation per-officer multipliers (new). They are consumed inside
+        // `compute_officer_stat_runtime_bonus` (which requires crew + ship breakpoint table),
+        // and no longer applied here. With no crew (default OfficerStatRuntimeBonus) they
+        // produce zero effect — only the non-officer profile keys (weapon_damage, hull_hp,
+        // shield_mitigation) are applied. The previously incorrect
+        // `shield_mitigation += officer_defense` line was also removed (§2c).
         let mut profile = PlayerProfile::default();
         let mut raw = HashMap::new();
         raw.insert("weapon_damage".to_string(), 0.10);
@@ -2696,11 +2817,94 @@ mod tests {
             weapons: vec![],
             hostile_mitigation_params: None,
         };
-        let out = apply_profile_to_attacker(attacker, &profile, None);
-        // 100 × 1.1 × 1.1; 1000 × 1.2 × 1.2; 0.2 + 0.05 + 0.05
-        assert!((out.attack - 121.0).abs() < 1e-9);
-        assert!((out.hull_health - 1440.0).abs() < 1e-9);
-        assert!((out.shield_mitigation - 0.30).abs() < 1e-9);
+        let out =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
+        // attack: 100 × 1.10 (weapon_damage only; officer_attack no-op without crew) = 110
+        // hull:   1000 × 1.20 (hull_hp only; officer_health no-op without crew)       = 1200
+        // shield_mitigation: 0.20 + 0.05 (shield_mitigation only; officer_defense removed) = 0.25
+        assert!(
+            (out.attack - 110.0).abs() < 1e-9,
+            "attack = {} (expected 110.0)",
+            out.attack
+        );
+        assert!(
+            (out.hull_health - 1200.0).abs() < 1e-9,
+            "hull_health = {} (expected 1200.0)",
+            out.hull_health
+        );
+        assert!(
+            (out.shield_mitigation - 0.25).abs() < 1e-9,
+            "shield_mitigation = {} (expected 0.25)",
+            out.shield_mitigation
+        );
+    }
+
+    #[test]
+    fn officer_stat_runtime_bonus_compounds_into_attacker_math() {
+        // Companion to the test above: when officer-stat runtime IS provided (i.e. crew + ship
+        // breakpoint table are present), the attack/defense/health bonuses apply as multipliers
+        // and channel-routed additives per §2 of docs/OFFICER_STAT_FORMULA.md.
+        let mut profile = PlayerProfile::default();
+        let mut raw = HashMap::new();
+        raw.insert("weapon_damage".to_string(), 0.10);
+        raw.insert("hull_hp".to_string(), 0.20);
+        raw.insert("shield_mitigation".to_string(), 0.05);
+        accumulate_combat_only_bonuses_from_raw(&mut profile, &raw);
+
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.10,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 500.0,
+            shield_mitigation: 0.20,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            weapons: vec![],
+            hostile_mitigation_params: None,
+        };
+        let osr = OfficerStatRuntimeBonus {
+            attack_bonus: 0.5, // 50% from a breakpoint
+            health_bonus: 1.0, // 100% — multiplies both hull and shield (§2d)
+            defense_armor_add: 0.0,
+            defense_shield_deflection_add: 0.4, // explorer-routed defense additive
+            defense_dodge_add: 0.0,
+        };
+        let out = apply_profile_to_attacker(attacker, &profile, None, osr);
+        // attack: 100 × (1 + 0.10) × (1 + 0.50)                 = 165
+        // hull:   1000 × (1 + 0.20) × (1 + 1.00)                = 2400
+        // shield_hp (new — health_mult on shield too): 500 × (1 + 0) × (1 + 1.00) = 1000
+        // mitigation: 0.10 + 0 (armor + add) + 0.40 (shield_defl add) + 0 (dodge add) = 0.50
+        // shield_mitigation: 0.20 + 0.05 = 0.25 (officer_defense add removed)
+        assert!((out.attack - 165.0).abs() < 1e-9, "attack = {}", out.attack);
+        assert!(
+            (out.hull_health - 2400.0).abs() < 1e-9,
+            "hull_health = {}",
+            out.hull_health
+        );
+        assert!(
+            (out.shield_health - 1000.0).abs() < 1e-9,
+            "shield_health = {}",
+            out.shield_health
+        );
+        assert!(
+            (out.mitigation - 0.50).abs() < 1e-9,
+            "mitigation = {}",
+            out.mitigation
+        );
+        assert!(
+            (out.shield_mitigation - 0.25).abs() < 1e-9,
+            "shield_mitigation = {}",
+            out.shield_mitigation
+        );
     }
 
     #[test]
@@ -3128,6 +3332,7 @@ mod tests {
             isolytic_damage: 0.0,
             weapons: None,
             abilities: None,
+            ..Default::default()
         };
         let hull = super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(
             &imported,
@@ -3227,6 +3432,7 @@ mod tests {
             isolytic_damage: 0.0,
             weapons: None,
             abilities: None,
+            ..Default::default()
         };
         let ship_bb = ShipRecord {
             id: "b".into(),
@@ -3249,6 +3455,7 @@ mod tests {
             isolytic_damage: 0.0,
             weapons: None,
             abilities: None,
+            ..Default::default()
         };
 
         let h_ex = super::ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship(

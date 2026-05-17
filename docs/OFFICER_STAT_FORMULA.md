@@ -64,24 +64,32 @@ bonus(rating) = max({ bp.bonus for bp in table if rating >= bp.value }, default=
 
 **Engine implication:** [src/bin/normalize_data_stfc_space.rs](../src/bin/normalize_data_stfc_space.rs) must be extended to copy `officer_bonus` from the upstream JSON into the normalized `data/ships_extended/<id>.json` schema. Today the normalized format ([data/ships_extended/admonition.json](../data/ships_extended/admonition.json) etc.) has only `id, ship_name, ship_class, faction, tiers, levels, crew_slots, abilities` — `officer_bonus` is dropped during normalization. Re-running the normalizer is part of Phase 1.
 
-### 2b. Attack — bonus multiplier + raw rating addition
+### 2b. Attack — bonus is a multiplier on the weapon damage channel only
 
-Attack contributes **two** things, in two channels:
+`attack_rating` is purely a rating value consumed by the breakpoint lookup. **It does not add flat damage anywhere.** The `(N Damage)` string in the tooltip (e.g. *"Your Officers provide an Attack Bonus of 100% (91,354 Damage)"*) is informational — it just echoes the rating value (= Σ crewed officers' Attack stats), not a damage delta added to the round.
 
-1. **Multiplier on weapon damage** via `attack_bonus`. This is already what today's [src/data/profile.rs:1938](../src/data/profile.rs) does:
-   ```
-   ship.effective_attack = ship.base_attack × (1 + weapon_damage_buff) × (1 + attack_bonus)
-   ```
-2. **Raw additive damage per shot** equal to `attack_rating` (the rating itself, *not* scaled by the bonus). Every weapon shot in the round receives this flat boost, so a 3-weapon × 4-shots ship adds `12 × attack_rating` per round of raw bonus damage.
+The full formula:
 
-Empirical confirmation (two data points, single ship, same Cerritos player):
+```
+per_round_damage = ship_weapon_damage × (1 + W) × (1 + attack_bonus)
+                   + flat_additives_unaffected_by_attack_bonus
+```
 
-| Crew | attack_rating | attack_bonus | tooltip raw damage |
-|---|---|---|---|
-| Sesha L15 | 1,726 | 50% (first breakpoint at 1,500) | **1,726** |
-| Ghrush L30 | 91,354 | 500% (last breakpoint at 45,000) | **91,354** |
+where:
+- `W` = profile's `weapon_damage` multiplier (research + buildings + forbidden tech)
+- `attack_bonus` = breakpoint lookup on `attack_rating` (per §2a)
+- `flat_additives` = isolytic damage + research/building flat-attack additives (per the user's §2 insight about small ships); these are unaffected by `attack_bonus`
 
-Tooltip wording: *"Your officers provide an Attack Bonus of {pct}% ({attack_rating} Damage)"*. The raw damage figure equals `attack_rating` exactly across both observations — so raw_damage = attack_rating, not a function of attack_bonus.
+**Empirical confirmation (Realta T4 L20 controlled experiment):**
+
+| Setup | crew | attack_rating | attack_bonus | damage/round | Δ |
+|---|---|---|---|---|---|
+| 1 | none | 0 | 0% | 7,069 | — |
+| 2 | Ghrush L30 alone | 91,354 | 100% | 7,218 | **+149** |
+
+The delta is **149 damage/round**, not 91,354 × 2 shots = 182,708. So `attack_rating` is *not* added per shot. Decomposing: `ship_weapon × (1 + W) × 1 + flat = 7069` and `ship_weapon × (1 + W) × 2 + flat = 7218`, subtracting gives `ship_weapon × (1 + W) = 149`. With Realta raw weapon = 88, that yields `(1 + W) ≈ 1.69` (W ≈ 69%, reasonable from research/buildings), and `flat ≈ 6,920`. Consistent.
+
+The Cerritos + Ghrush observation ("6.08M damage/round at 500% bonus") is also consistent — the larger absolute numbers reflect Cerritos' much higher base weapon damage, not any per-shot mechanic.
 
 ### 2c. Defense — bonus × per-ship channel constant, routed by ship class
 
@@ -255,3 +263,15 @@ Once the four sections above are filled in, the engine should reproduce these in
 - Kras "Know Your Enemy" -20% all stats on enemy: expected damage delta = _TBD_.
 
 These are the calibration anchors. Without at least one such example, Phase 2 has no way to know the formula is right.
+
+---
+
+## Phase 2b — formula resolved by the Realta T4 L20 + Ghrush experiment
+
+The "Tiny ship + biggest officer" experiment definitively pinned the attack formula. The §2b open question (whether `attack_rating` adds per-shot raw damage) is resolved as **no** — `attack_rating` is purely a rating consumed by the breakpoint lookup, and `attack_bonus` is the only mechanism by which officer Attack affects damage. See updated §2b above.
+
+Phase 2b can now proceed with the simpler model:
+- `attack_bonus` → multiplier on weapon damage channel
+- `defense_bonus` → additive to ship-class-primary mitigation stat (already confirmed in §2c)
+- `health_bonus` → multiplier on hull AND shield HP (already confirmed in §2d)
+- No `bonus_damage_per_shot` field, no per-shot raw damage in the engine.

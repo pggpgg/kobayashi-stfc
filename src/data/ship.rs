@@ -112,7 +112,7 @@ pub struct Ship {
 
 /// Normalized ship record (KOBAYASHI schema). Written by normalizer, loaded at runtime.
 /// Stats are for a chosen tier/level (e.g. tier 1, level 1).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ShipRecord {
     pub id: String,
     pub ship_name: String,
@@ -158,6 +158,12 @@ pub struct ShipRecord {
     /// Ship hull abilities (e.g. when hit, increase armor piercing). Evaluated per round in the combat engine.
     #[serde(default)]
     pub abilities: Option<Vec<ShipAbility>>,
+    /// Per-ship officer-stat breakpoint tables (attack/defense/health rating → bonus%). Carried
+    /// from [`ExtendedShipRecord::officer_bonus`] so combat consumers don't need the unresolved
+    /// extended record. Empty for legacy/hostile-derived ships; safe default produces zero
+    /// bonus from the lookup helpers. See `docs/OFFICER_STAT_FORMULA.md` §2a.
+    #[serde(default, skip_serializing_if = "OfficerBonusTable::is_empty")]
+    pub officer_bonus: OfficerBonusTable,
 }
 
 /// Per-tier combat stats (from data-stfc.space or extended normalizer). Used to resolve ShipRecord for a given tier/level.
@@ -452,6 +458,7 @@ impl ExtendedShipRecord {
             isolytic_damage: 0.0,
             weapons: t.weapons.clone(),
             abilities,
+            officer_bonus: self.officer_bonus.clone(),
         })
     }
 }

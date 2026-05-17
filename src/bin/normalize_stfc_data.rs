@@ -646,5 +646,6 @@ fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::
         isolytic_damage: 0.0,
         weapons,
         abilities: None,
+        ..Default::default()
     })
 }
