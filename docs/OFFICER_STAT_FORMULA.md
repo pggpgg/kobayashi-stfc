@@ -72,7 +72,7 @@ Attack contributes **two** things, in two channels:
    ```
    ship.effective_attack = ship.base_attack × (1 + weapon_damage_buff) × (1 + attack_bonus)
    ```
-2. **Raw additive damage per round** equal to `attack_rating` (the rating itself, *not* scaled by the bonus).
+2. **Raw additive damage per shot** equal to `attack_rating` (the rating itself, *not* scaled by the bonus). Every weapon shot in the round receives this flat boost, so a 3-weapon × 4-shots ship adds `12 × attack_rating` per round of raw bonus damage.
 
 Empirical confirmation (two data points, single ship, same Cerritos player):
 
@@ -102,7 +102,22 @@ HULL_TO_CLASS = {0: "interceptor", 1: "survey", 2: "explorer", 3: "battleship", 
 
 Both `data/upstream/data-stfc-space/ship_id_registry.json` and all 113 `data/ships_extended/<id>.json` files have been regenerated with the correct classes.
 
-Per-ship constants (e.g. Cerritos' `shield_deflection_per_bonus = 13338`) appear to be ship-specific. They're not yet known to exist in the upstream JSON as explicit fields — may need derivation from other ship stats or empirical fitting.
+**Per-ship channel constants are taken from existing upstream component fields:**
+
+| Ship class | channel | upstream field | engine stat |
+|---|---|---|---|
+| Battleship | armor | `Armor.plating` (tier component) | `armor` (already extracted) |
+| Explorer | shield_deflection | `Shield.absorption` (tier component) | **not yet extracted — Phase 2 adds it** |
+| Interceptor | dodge | `Impulse.dodge` (tier component) | `dodge` (already extracted) |
+| Survey | even thirds | matching field per channel | each routed via the rule above |
+
+Verified for the Cerritos: `Shield.absorption` at tier 12 = **13,338**, exactly matching the observed defense-channel constant. Note: the existing `shield_deflection` field extracted by [src/bin/normalize_data_stfc_space.rs](../src/bin/normalize_data_stfc_space.rs) reads `Deflector.deflection` which is a stale `120` across every ship — unrelated to the actual shield deflection mechanic and should be considered unused; Phase 2 will source the real value from `Shield.absorption`.
+
+**Defense additive routes to the primary mitigation stat** (not to `shield_mitigation`):
+- explorer: `shield_deflection += ship.shield_absorption × defense_bonus`
+- battleship: `armor += ship.armor × defense_bonus`
+- interceptor: `dodge += ship.dodge × defense_bonus`
+- survey: ⅓ of `defense_bonus` applied to each channel above with the matching ship constant.
 
 Empirical confirmation (Cerritos, both observations):
 

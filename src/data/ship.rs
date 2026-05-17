@@ -222,6 +222,141 @@ impl OfficerBonusTable {
     pub fn is_empty(&self) -> bool {
         self.attack.is_empty() && self.defense.is_empty() && self.health.is_empty()
     }
+
+    /// Step-function lookup: returns the largest `bonus` whose `value` threshold is reached by
+    /// `rating`. Returns `0.0` when rating is below the first breakpoint or the table is empty.
+    /// Assumes the breakpoint array is sorted by `value` ascending (the normalizer enforces this).
+    fn bonus_for(table: &[OfficerBonusBreakpoint], rating: f64) -> f64 {
+        let mut result = 0.0;
+        for bp in table {
+            if rating >= bp.value {
+                result = bp.bonus;
+            } else {
+                break;
+            }
+        }
+        result
+    }
+
+    pub fn attack_bonus(&self, rating: f64) -> f64 {
+        Self::bonus_for(&self.attack, rating)
+    }
+
+    pub fn defense_bonus(&self, rating: f64) -> f64 {
+        Self::bonus_for(&self.defense, rating)
+    }
+
+    pub fn health_bonus(&self, rating: f64) -> f64 {
+        Self::bonus_for(&self.health, rating)
+    }
+}
+
+#[cfg(test)]
+mod officer_bonus_table_tests {
+    use super::*;
+
+    fn cerritos_attack_table() -> OfficerBonusTable {
+        // Cerritos attack channel: 1500→50%, 3000→100%, ..., 45000→500%. Verified in
+        // docs/OFFICER_STAT_FORMULA.md §2b against in-game Sesha L15 (1726 rating → 50%) and
+        // Ghrush L30 (91354 rating → 500%) observations.
+        OfficerBonusTable {
+            attack: vec![
+                OfficerBonusBreakpoint {
+                    value: 1500.0,
+                    bonus: 0.5,
+                },
+                OfficerBonusBreakpoint {
+                    value: 3000.0,
+                    bonus: 1.0,
+                },
+                OfficerBonusBreakpoint {
+                    value: 45000.0,
+                    bonus: 5.0,
+                },
+            ],
+            defense: vec![],
+            health: vec![],
+        }
+    }
+
+    #[test]
+    fn bonus_below_first_breakpoint_is_zero() {
+        let t = cerritos_attack_table();
+        assert_eq!(t.attack_bonus(0.0), 0.0);
+        assert_eq!(t.attack_bonus(1499.99), 0.0);
+    }
+
+    #[test]
+    fn bonus_at_breakpoint_takes_that_breakpoint() {
+        let t = cerritos_attack_table();
+        assert_eq!(t.attack_bonus(1500.0), 0.5);
+        assert_eq!(t.attack_bonus(3000.0), 1.0);
+        assert_eq!(t.attack_bonus(45000.0), 5.0);
+    }
+
+    #[test]
+    fn bonus_between_breakpoints_holds_lower_value() {
+        // Step function: between 1500 and 3000, bonus stays at 0.5; not interpolated.
+        let t = cerritos_attack_table();
+        assert_eq!(t.attack_bonus(2000.0), 0.5);
+        assert_eq!(t.attack_bonus(2999.99), 0.5);
+    }
+
+    #[test]
+    fn bonus_above_last_breakpoint_caps_at_last_bonus() {
+        let t = cerritos_attack_table();
+        assert_eq!(t.attack_bonus(100_000.0), 5.0);
+    }
+
+    #[test]
+    fn empty_channel_returns_zero() {
+        let t = OfficerBonusTable::default();
+        assert_eq!(t.attack_bonus(99_999.0), 0.0);
+        assert_eq!(t.defense_bonus(99_999.0), 0.0);
+        assert_eq!(t.health_bonus(99_999.0), 0.0);
+    }
+
+    #[test]
+    fn cerritos_in_game_observations_match() {
+        // From docs/OFFICER_STAT_FORMULA.md §2b/§2c/§2d (Sesha L15 + Ghrush L30 + Chen).
+        // Use the actual Cerritos breakpoints rather than the simplified table.
+        let cerritos: OfficerBonusTable = serde_json::from_value(serde_json::json!({
+            "attack": [
+                {"value": 1500.0, "bonus": 0.5},
+                {"value": 3000.0, "bonus": 1.0},
+                {"value": 4875.0, "bonus": 1.5},
+                {"value": 7500.0, "bonus": 2.0},
+                {"value": 11250.0, "bonus": 2.5},
+                {"value": 15000.0, "bonus": 3.0},
+                {"value": 20625.0, "bonus": 3.5},
+                {"value": 27500.0, "bonus": 4.0},
+                {"value": 35000.0, "bonus": 4.5},
+                {"value": 45000.0, "bonus": 5.0}
+            ],
+            "defense": [
+                {"value": 1500.0, "bonus": 0.5},
+                {"value": 3000.0, "bonus": 1.0},
+                {"value": 45000.0, "bonus": 5.0}
+            ],
+            "health": [
+                {"value": 1500.0, "bonus": 0.5},
+                {"value": 4875.0, "bonus": 1.5},
+                {"value": 11250.0, "bonus": 2.5},
+                {"value": 45000.0, "bonus": 5.0}
+            ]
+        }))
+        .unwrap();
+        // Sesha L15 alone: attack=1726 → 50%, defense=4374 → 100%, health=834 → 0%.
+        assert_eq!(cerritos.attack_bonus(1726.0), 0.5);
+        assert_eq!(cerritos.defense_bonus(4374.0), 1.0);
+        assert_eq!(cerritos.health_bonus(834.0), 0.0);
+        // Chen: health=11620 → 250%.
+        assert_eq!(cerritos.health_bonus(11620.0), 2.5);
+        // Ghrush L30 alone: attack=91354 → 500%, defense=93209 → 500%, health=91240 → 500%.
+        assert_eq!(cerritos.attack_bonus(91354.0), 5.0);
+        assert_eq!(cerritos.defense_bonus(93209.0), 5.0);
+        assert_eq!(cerritos.health_bonus(91240.0), 5.0);
+    }
 }
 
 /// Below-decks officer slot unlock from upstream `crew_slots` (data.stfc.space ship JSON).

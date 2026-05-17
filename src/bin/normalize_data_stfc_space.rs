@@ -418,8 +418,15 @@ fn extract_tier_combat(
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
     let mut shield_mitigation = 0.8;
-    // Player defender stats for hostile→player counter-fire mitigation.
-    // Sources: `Armor.plating`, `Deflector.deflection`, `Impulse.dodge` on data.stfc.space tier components.
+    // Player defender stats for hostile→player counter-fire mitigation, and the per-ship channel
+    // constants for officer-stat Defense routing (see `docs/OFFICER_STAT_FORMULA.md` §2c).
+    // Sources on data.stfc.space tier components:
+    //   - `Armor.plating`           → `armor`              (battleship-primary channel)
+    //   - `Shield.absorption`       → `shield_deflection`  (explorer-primary channel)
+    //   - `Impulse.dodge`           → `dodge`              (interceptor-primary channel)
+    // The legacy `Deflector.deflection` field is a stale `120` for every ship and is intentionally
+    // ignored; the hostile normalizer (`normalize_hostiles_stfc_space.rs`) already sources
+    // `shield_deflection` from `Shield.absorption`, so this brings player ships into alignment.
     let mut armor_stat = 0.0;
     let mut shield_deflection_stat = 0.0;
     let mut dodge_stat = 0.0;
@@ -447,6 +454,9 @@ fn extract_tier_combat(
                 if let Some(m) = data.get("mitigation").and_then(Value::as_f64) {
                     shield_mitigation = m;
                 }
+                if let Some(a) = data.get("absorption").and_then(Value::as_f64) {
+                    shield_deflection_stat = a;
+                }
             }
             "Armor" => {
                 hull_health = data.get("hp").and_then(Value::as_f64).unwrap_or(0.0);
@@ -455,9 +465,8 @@ fn extract_tier_combat(
                 }
             }
             "Deflector" => {
-                if let Some(d) = data.get("deflection").and_then(Value::as_f64) {
-                    shield_deflection_stat = d;
-                }
+                // Legacy `Deflector.deflection` is a stale constant (120) across every upstream ship.
+                // The real shield-deflection mitigation lives in `Shield.absorption` (handled above).
             }
             "Impulse" => {
                 if let Some(d) = data.get("dodge").and_then(Value::as_f64) {
