@@ -819,6 +819,43 @@ pub fn compile_officer_combat_spec(
     }
 }
 
+/// Crew-aggregate `extra_attack` proc contribution compiled from an
+/// [`AbilityModifierSpec::ExtraAttackProc`] spec. Consumers (the LCARS resolver) fold these
+/// across all crewed officers into [`crate::combat::types::BuffSet::proc_chance`] /
+/// `proc_multiplier`. The aggregation rule (highest-chance-wins, tiebroken by highest
+/// multiplier) lives in the consumer, not here.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BuffSetProcContribution {
+    pub chance: f64,
+    pub multiplier: f64,
+}
+
+/// Compile an [`AbilityModifierSpec::ExtraAttackProc`] spec into a
+/// [`BuffSetProcContribution`]. Returns `None` for any other modifier (the caller is expected
+/// to dispatch on `spec.modifier` before calling this).
+///
+/// Chance is read from `spec.chance.scalar` (clamped to `[0.0, 1.0]`); multiplier from
+/// `spec.value.scalar` (floored at `1.0`). Defaults match the legacy LCARS walker:
+/// `chance = 0.0`, `multiplier = 2.0`.
+pub fn compile_officer_buffset_proc(spec: &CombatEffectSpec) -> Option<BuffSetProcContribution> {
+    if spec.modifier != AbilityModifierSpec::ExtraAttackProc {
+        return None;
+    }
+    let chance = spec
+        .chance
+        .as_ref()
+        .and_then(|c| c.scalar)
+        .unwrap_or(0.0)
+        .clamp(0.0, 1.0);
+    let multiplier = spec
+        .value
+        .as_ref()
+        .and_then(|v| v.scalar)
+        .unwrap_or(2.0)
+        .max(1.0);
+    Some(BuffSetProcContribution { chance, multiplier })
+}
+
 /// Research conditional attack-phase row: `weapon_damage` / `crit_*`, `add`, scalar fraction.
 pub fn compile_research_attack_effect(
     modifier: AbilityModifierSpec,

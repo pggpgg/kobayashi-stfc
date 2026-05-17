@@ -750,23 +750,34 @@ pub fn resolve_crew_to_buff_set(
 
     let mut accumulate_proc = |officer: &LcarsOfficer, ability: &LcarsAbility| {
         let officer_tier = options.tier_for(&officer.id);
-        for effect in &ability.effects {
-            if effect.effect_type == "extra_attack" {
-                let chance = effect
-                    .chance
-                    .or_else(|| {
-                        effect
-                            .scaling
-                            .as_ref()
-                            .map(|s| s.chance_at_rank(officer_tier))
-                    })
-                    .unwrap_or(0.0)
-                    .clamp(0.0, 1.0);
-                let mult = effect.multiplier.unwrap_or(2.0).max(1.0);
-                if chance > proc_chance || (chance == proc_chance && mult > proc_multiplier) {
-                    proc_chance = chance;
-                    proc_multiplier = mult;
-                }
+        let stats_row = officer
+            .resolve_level(options.level_for(&officer.id), officer_tier)
+            .and_then(|lvl| officer.stats_at_level(lvl));
+        for (idx, effect) in ability.effects.iter().enumerate() {
+            if effect.effect_type != "extra_attack" {
+                continue;
+            }
+            let stable_id = format!("lcars:{}:{}:proc:{idx}", officer.id, ability.name);
+            let Some(spec) = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
+                effect,
+                &stable_id,
+                &officer.id,
+                &ability.name,
+                officer_tier,
+                stats_row,
+            ) else {
+                continue;
+            };
+            let Some(contrib) =
+                crate::combat::effect_spec_compile::compile_officer_buffset_proc(&spec)
+            else {
+                continue;
+            };
+            if contrib.chance > proc_chance
+                || (contrib.chance == proc_chance && contrib.multiplier > proc_multiplier)
+            {
+                proc_chance = contrib.chance;
+                proc_multiplier = contrib.multiplier;
             }
         }
     };
