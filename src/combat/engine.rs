@@ -1489,6 +1489,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     };
 
                     if use_simd_outbound_weapon_path {
+                        // The SIMD kernel consumes parallel slices: damage / isolytic_taken /
+                        // shield_mitigation. The damage push was missing, so the kernel was
+                        // called with `damage_after_attack_phase=&[]` (len 0) and
+                        // `isolytic_taken=&[isolytic_taken]` (len 1), the length-mismatch
+                        // error was silently dropped via `let _`, the output buffer stayed
+                        // empty, and zero damage was applied on every avx2_supported() host.
+                        simd_damage_batch.push(damage);
                         simd_isolytic_batch.push(isolytic_taken);
                         simd_shield_mitigation_batch.push(effective_shield_mitigation);
 
