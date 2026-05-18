@@ -2,12 +2,12 @@
 # Kobayashi Criterion regression baseline: median time (ns) per benchmark id.
 # Refresh: see docs/PERFORMANCE.md § Regression gate.
 # baseline_env=CI=true KOBAYASHI_RAYON_THREADS=2 cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
-# runner_hint=initial_seed_local_then_refresh_from_ubuntu_24_04_CI_or_release_artifact
-# generated=unix_1778969805
-# refresh_source=pr_164_criterion_run_25973754635 (ubuntu-24.04, post-RoundPhaseCtx refactor)
-monte_carlo/parallel 1590672612
-monte_carlo/sequential 3104005103
-simulator/combat_100_rounds 698245
-simulator/combat_100_rounds_prev_round_hull_crew 731344
-simulator/combat_20_rounds 141959
-simulator/combat_3_rounds 22515
+# runner_hint=ubuntu-24.04 (.github/workflows/bench-refresh-baseline.yml)
+# generated unix_1779083453
+# refresh_source=workflow_dispatch_run_26015915508 (post-#171 SIMD outbound-damage fix; prior baseline reflected the bug where combat returned 0 damage and benches ran to the full round limit)
+monte_carlo/parallel 527192870
+monte_carlo/sequential 1029123876
+simulator/combat_100_rounds 8795
+simulator/combat_100_rounds_prev_round_hull_crew 9177
+simulator/combat_20_rounds 8810
+simulator/combat_3_rounds 8719
