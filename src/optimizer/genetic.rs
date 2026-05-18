@@ -206,6 +206,8 @@ fn random_crew(
         used.insert(name);
     }
 
+    bridge.sort();
+    below_decks.sort();
     Some(CrewCandidate {
         captain,
         bridge,
@@ -285,7 +287,13 @@ fn init_population_seeded(
         if constraints.is_none_or(|co| co.satisfies(candidate))
             && candidate_respects_pools(candidate, pools, below_decks_slots)
         {
-            pop.push(candidate.clone());
+            let mut canonical = candidate.clone();
+            // Canonical ordering — see comment in `crossover`. Keeps
+            // crew_candidate_stable_hash stable across runs even when seeds were
+            // authored with arbitrary bridge / below ordering.
+            canonical.bridge.sort();
+            canonical.below_decks.sort();
+            pop.push(canonical);
         }
     }
 
@@ -400,6 +408,16 @@ fn crossover(
         below_vec.truncate(below_decks_slots);
     }
 
+    // Canonicalize bridge/below ordering. The position of an officer within
+    // `bridge` / `below_decks` is incidental — combat aggregates the seats as a set
+    // (see `apply_duplicate_officer_policy` + the static-buff merge: officer Vec position
+    // doesn't influence fitness, only the *set* of officers does). Sorting here gives a
+    // deterministic canonical representation that's immune to upstream HashMap-iteration
+    // order leaks elsewhere in the resolve pipeline. Closes the residual flake on
+    // `ga_run_is_deterministic_for_same_seed` after the HashSet→Vec dedup fix in #174.
+    bridge_vec.sort();
+    below_vec.sort();
+
     CrewCandidate {
         captain,
         bridge: bridge_vec,
@@ -448,6 +466,9 @@ fn repair_crew(
         used.insert(pick.clone());
     }
     crew.below_decks.truncate(below_decks_slots);
+    // Canonical ordering — see comment in `crossover`.
+    crew.bridge.sort();
+    crew.below_decks.sort();
 }
 
 /// Mutate one slot: replace with random officer from the appropriate pool.
