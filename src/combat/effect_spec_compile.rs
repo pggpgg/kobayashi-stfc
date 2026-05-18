@@ -13,12 +13,9 @@ use crate::data::combat_effect_spec::{
 };
 use crate::data::ship_ability_resolve;
 
-/// Decaying `weapon_damage`: `{"amount": f64, "floor": f64}` on [`CombatEffectSpec::attributes`].
-pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY: &str = "kobayashi_officer_weapon_damage_decay";
-/// Accumulating `weapon_damage`: `{"amount": f64, "ceiling": f64}` on [`CombatEffectSpec::attributes`].
-pub const OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE: &str =
-    "kobayashi_officer_weapon_damage_accumulate";
 /// Raw LCARS operator string after dash/underscore normalization (matches resolver `normalize_operator`).
+/// Set by [`crate::lcars::effect_spec_adapter`] so the compiler can preserve multiply-family
+/// variants (`mul_add`, etc.) that the coarser `spec.operation` enum collapses into `Add`.
 pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
 
 #[derive(Debug, Clone, PartialEq)]
@@ -270,36 +267,24 @@ pub fn compile_officer_combat_spec(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            if let Some(obj) = spec
-                .attributes
-                .get(OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY)
-                .and_then(|x| x.as_object())
-            {
-                let decay_per_round = obj.get("amount").and_then(|x| x.as_f64()).unwrap_or(0.0);
-                let floor = obj.get("floor").and_then(|x| x.as_f64()).unwrap_or(1.0);
+            if let Some(decay) = spec.decay {
                 return Ok((
                     timing,
                     AbilityEffect::DecayingAttackMultiplier {
                         initial: v,
-                        decay_per_round,
-                        floor,
+                        decay_per_round: decay.amount,
+                        floor: decay.floor,
                     },
                     compiled_condition.clone(),
                 ));
             }
-            if let Some(obj) = spec
-                .attributes
-                .get(OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE)
-                .and_then(|x| x.as_object())
-            {
-                let growth_per_round = obj.get("amount").and_then(|x| x.as_f64()).unwrap_or(0.0);
-                let ceiling = obj.get("ceiling").and_then(|x| x.as_f64()).unwrap_or(2.0);
+            if let Some(acc) = spec.accumulate {
                 return Ok((
                     timing,
                     AbilityEffect::AccumulatingAttackMultiplier {
                         initial: v,
-                        growth_per_round,
-                        ceiling,
+                        growth_per_round: acc.amount,
+                        ceiling: acc.ceiling,
                     },
                     compiled_condition.clone(),
                 ));
@@ -1092,6 +1077,8 @@ mod tests {
             }),
             chance: None,
             duration: None,
+            decay: None,
+            accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
             stacking: None,
@@ -1159,6 +1146,8 @@ mod tests {
             }),
             chance: None,
             duration: None,
+            decay: None,
+            accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
             stacking: None,
@@ -1198,6 +1187,8 @@ mod tests {
             }),
             chance: None,
             duration: None,
+            decay: None,
+            accumulate: None,
             conditions: vec![AbilityConditionSpec::DefenderBurning],
             attributes: serde_json::Map::new(),
             stacking: None,

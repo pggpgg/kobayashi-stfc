@@ -141,6 +141,8 @@ mod tests {
             }),
             chance: None,
             duration: None,
+            decay: None,
+            accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
             stacking: None,

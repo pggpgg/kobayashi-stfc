@@ -72,6 +72,8 @@ pub fn hostile_ability_to_combat_effect_spec(
             by_rank: None,
         }),
         duration: None,
+        decay: None,
+        accumulate: None,
         conditions: Vec::new(),
         attributes: serde_json::Map::new(),
         stacking: None,

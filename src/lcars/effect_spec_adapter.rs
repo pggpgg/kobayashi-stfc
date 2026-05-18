@@ -4,10 +4,7 @@
 //! [`crate::combat::effect_spec_compile::compile_officer_combat_spec`] (see
 //! [`crate::lcars::resolver::resolve_effect`]). HTTP debug and parity tests use the same path.
 
-use crate::combat::effect_spec_compile::{
-    OFFICER_SPEC_ATTR_LCARS_OP, OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE,
-    OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY,
-};
+use crate::combat::effect_spec_compile::OFFICER_SPEC_ATTR_LCARS_OP;
 use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
@@ -19,7 +16,6 @@ use crate::lcars::parser::{
 };
 use crate::lcars::resolver::effect_trigger_timing;
 use serde::Serialize;
-use serde_json::json;
 
 /// A single LCARS effect that was silently dropped during YAML→IR conversion.
 ///
@@ -703,6 +699,8 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 by_rank: None,
             }),
             duration: None,
+            decay: None,
+            accumulate: None,
             conditions: Vec::new(),
             attributes: serde_json::Map::new(),
             stacking: None,
@@ -806,15 +804,33 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
         let value = resolved_value?;
         let stat = effective_stat;
 
+        // Schema rule (Phase 3): `decay` / `accumulate` are only valid on weapon_damage/attack.
+        // Other-stat decay/accumulate is rejected with an explicit drop reason rather than
+        // silently lost (pre-Phase-3 behaviour stuffed them into attributes that the engine
+        // only consumed when `modifier == WeaponDamage`).
+        if effect.decay.is_some() && stat != "weapon_damage" && stat != "attack" {
+            maybe_record_drop(
+                &mut drop_report,
+                officer_id,
+                ability_name,
+                effect_index,
+                format!("unsupported_decay_on_stat:{stat}"),
+            );
+            return None;
+        }
+        if effect.accumulate.is_some() && stat != "weapon_damage" && stat != "attack" {
+            maybe_record_drop(
+                &mut drop_report,
+                officer_id,
+                ability_name,
+                effect_index,
+                format!("unsupported_accumulate_on_stat:{stat}"),
+            );
+            return None;
+        }
+
         if stat == "weapon_damage" || stat == "attack" {
             if let Some(ref decay) = effect.decay {
-                attributes.insert(
-                    OFFICER_SPEC_ATTR_WEAPON_DAMAGE_DECAY.into(),
-                    json!({
-                        "amount": decay.amount.unwrap_or(0.0),
-                        "floor": decay.floor.unwrap_or(1.0),
-                    }),
-                );
                 return Some(CombatEffectSpec {
                     id: stable_id.to_string(),
                     source: EffectSource::LcarsOfficer,
@@ -836,6 +852,11 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     }),
                     chance: None,
                     duration,
+                    decay: Some(crate::data::combat_effect_spec::DecaySpec {
+                        amount: decay.amount.unwrap_or(0.0),
+                        floor: decay.floor.unwrap_or(1.0),
+                    }),
+                    accumulate: None,
                     conditions,
                     attributes,
                     stacking: None,
@@ -844,13 +865,6 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 });
             }
             if let Some(ref acc) = effect.accumulate {
-                attributes.insert(
-                    OFFICER_SPEC_ATTR_WEAPON_DAMAGE_ACCUMULATE.into(),
-                    json!({
-                        "amount": acc.amount.unwrap_or(0.0),
-                        "ceiling": acc.ceiling.unwrap_or(2.0),
-                    }),
-                );
                 return Some(CombatEffectSpec {
                     id: stable_id.to_string(),
                     source: EffectSource::LcarsOfficer,
@@ -872,6 +886,11 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     }),
                     chance: None,
                     duration,
+                    decay: None,
+                    accumulate: Some(crate::data::combat_effect_spec::AccumulateSpec {
+                        amount: acc.amount.unwrap_or(0.0),
+                        ceiling: acc.ceiling.unwrap_or(2.0),
+                    }),
                     conditions,
                     attributes,
                     stacking: None,
@@ -915,6 +934,8 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
             }),
             chance: None,
             duration,
+            decay: None,
+            accumulate: None,
             conditions,
             attributes,
             stacking: None,
@@ -945,6 +966,8 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     by_rank: None,
                 }),
                 duration,
+                decay: None,
+                accumulate: None,
                 conditions,
                 attributes,
                 stacking: None,
@@ -973,6 +996,8 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     by_rank: None,
                 }),
                 duration,
+                decay: None,
+                accumulate: None,
                 conditions,
                 attributes,
                 stacking: None,
@@ -1001,6 +1026,8 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     by_rank: None,
                 }),
                 duration,
+                decay: None,
+                accumulate: None,
                 conditions,
                 attributes,
                 stacking: None,
@@ -1029,6 +1056,8 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     by_rank: None,
                 }),
                 duration,
+                decay: None,
+                accumulate: None,
                 conditions,
                 attributes,
                 stacking: None,

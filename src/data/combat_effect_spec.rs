@@ -338,6 +338,30 @@ pub enum AbilityConditionSpec {
     },
 }
 
+/// Per-round multiplicative decay applied to an [`AbilityModifierSpec::WeaponDamage`] effect.
+/// Compiled into [`crate::combat::abilities::AbilityEffect::DecayingAttackMultiplier`]:
+/// `initial = (1 + value.scalar)`; per-round value `-= amount`, clamped at `floor`.
+///
+/// **Schema rule**: only valid when `modifier == WeaponDamage`. Other modifiers + decay are
+/// recorded as `unsupported_decay_on_stat:<stat>` drops by the adapter and the effect is
+/// discarded (vs the pre-Phase-3 behaviour of silent loss via attribute-pack lookup).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct DecaySpec {
+    pub amount: f64,
+    pub floor: f64,
+}
+
+/// Per-round multiplicative accumulation applied to an [`AbilityModifierSpec::WeaponDamage`]
+/// effect. Compiled into [`crate::combat::abilities::AbilityEffect::AccumulatingAttackMultiplier`]:
+/// `initial = (1 + value.scalar)`; per-round value `+= amount`, clamped at `ceiling`.
+///
+/// **Schema rule**: same `modifier == WeaponDamage` restriction as [`DecaySpec`].
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct AccumulateSpec {
+    pub amount: f64,
+    pub ceiling: f64,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StackingPolicySpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -385,6 +409,14 @@ pub struct CombatEffectSpec {
     pub chance: Option<ChanceSpec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub duration: Option<DurationSpec>,
+    /// Per-round multiplicative decay applied to a `WeaponDamage` effect. See [`DecaySpec`].
+    /// `decay` and `accumulate` are mutually exclusive on the same spec; the adapter / compiler
+    /// rejects both being set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub decay: Option<DecaySpec>,
+    /// Per-round multiplicative accumulation applied to a `WeaponDamage` effect. See [`AccumulateSpec`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accumulate: Option<AccumulateSpec>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub conditions: Vec<AbilityConditionSpec>,
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
@@ -433,6 +465,8 @@ mod tests {
             }),
             chance: None,
             duration: None,
+            decay: None,
+            accumulate: None,
             conditions: vec![AbilityConditionSpec::DefenderBurning],
             attributes: serde_json::Map::new(),
             stacking: None,

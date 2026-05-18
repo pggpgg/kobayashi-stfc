@@ -154,6 +154,8 @@ pub fn ship_ability_to_combat_effect_spec(ability: &ShipAbility) -> Option<Comba
         duration: ability
             .duration_rounds
             .map(|r| crate::data::combat_effect_spec::DurationSpec::Rounds { rounds: r }),
+        decay: None,
+        accumulate: None,
         conditions,
         attributes: serde_json::Map::new(),
         stacking: None,
