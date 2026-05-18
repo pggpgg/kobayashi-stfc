@@ -52,8 +52,8 @@ struct Args {
     strict: bool,
 
     /// Generate an LCARS coverage report (per-category drop counts + top reasons + top officers)
-    /// from `data/officers/officers.lcars.yaml` and write it to `coverage_report.json` /
-    /// `coverage_report.md` in the manifest dir. Respects `--format`.
+    /// from `data/officers/officers.lcars.yaml` and write it to `docs/lcars_coverage_report.json` /
+    /// `docs/lcars_coverage_report.md` (relative to the crate root). Respects `--format`.
     #[arg(long)]
     coverage: bool,
 }
@@ -168,7 +168,7 @@ fn write_lcars_coverage(
     );
 
     if write_json {
-        let path = manifest_dir.join("coverage_report.json");
+        let path = manifest_dir.join("docs/lcars_coverage_report.json");
         let payload = serde_json::json!({
             "summary": {
                 "officers_scanned": officer_count,
@@ -198,7 +198,7 @@ fn write_lcars_coverage(
     }
 
     if write_md {
-        let path = manifest_dir.join("coverage_report.md");
+        let path = manifest_dir.join("docs/lcars_coverage_report.md");
         let md = format_coverage_markdown(officer_count, &drops);
         fs::write(&path, md.as_bytes()).map_err(|e| format!("write {}: {e}", path.display()))?;
         eprintln!("Wrote {}", path.display());

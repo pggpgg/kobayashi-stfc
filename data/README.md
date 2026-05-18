@@ -57,3 +57,11 @@ Buildings are fully modeled for ship combat; optional and backlog items (station
 - **Where the optimizer reads FT state:** `profiles/{profile_id}/forbidden_tech.imported.json` holds **inventory** (fid, tier, level, shard_count) from stfc-mod. Combat merges **only** the two equipped slots stored on `profile.json`: `equipped_forbidden_fid` and `equipped_chaos_fid` (each optional; must match catalog `tech_type` when set). Bonuses from the catalog (by `fid`) are merged into the player profile; add and mult operators are supported.
 - **Level/tier scaling:** Opt-in via env `KOBAYASHI_FT_LEVEL_TIER_SCALING=1` (linear model; see `forbidden_tech_level_tier_scaling_enabled_from_env` in `src/data/profile.rs`).
 - **Partial / gaps:** Prefer calibrating S31 Torpedo Pods (and similar) from [`upstream/data-stfc-space/forbidden_tech/{fid}.json`](upstream/data-stfc-space/forbidden_tech/473132032.json) when available: use `values[level-1].value` as a percentage → catalog decimal. Some upstream copy is class-specific (e.g. Battleship) while the simulator applies generic profile keys. See ROADMAP for combat-timing uncertainty (profile-only vs per-sub-round).
+
+## Support buffs: request-scoped catalog
+
+Workspace simulations and optimizations can include **request-scoped** support buffs (Cerritos support, Defiant reinforcement, Titan-A Fortification, …). Selections are passed as `support_buffs: string[]` on simulate/optimize/compare API requests and are *not* persisted to `profile.json` — they represent the current fight setup only.
+
+- **Catalog:** `data/support_buffs.json`. The server deduplicates ids, applies `exclusive_group` priority for incompatible choices, and emits warnings for unknown ids.
+- **Research-catalog gating:** Some research rows are support-buff-gated — intentionally excluded from normal profile research summaries, merged into combat stats only when the matching support buff is active.
+- **Limitations:** Support buffs currently apply to the **attacker side only**. Defender-side alliance buffs and debuffs are not modeled as separate scenario inputs. Non-catalog support values are modeled only where `data/support_buffs.json` has explicit static bonuses or curated gated research ids. When in-game mechanics are uncertain, prefer updating the catalog with provenance notes rather than hard-coding a one-off combat exception.

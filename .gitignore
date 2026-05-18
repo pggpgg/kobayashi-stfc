@@ -29,8 +29,8 @@ Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx
 benchmark_log.csv
 
 # LCARS coverage report (cargo run --bin validate_data -- --coverage)
-/coverage_report.json
-/coverage_report.md
+/docs/lcars_coverage_report.json
+/docs/lcars_coverage_report.md
 
 # Sync ingress log (append-only when POST /api/sync/ingress is received)
 sync.log
