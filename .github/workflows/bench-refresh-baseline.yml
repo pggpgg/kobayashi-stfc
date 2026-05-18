@@ -1,0 +1,54 @@
+# On-demand refresh of `benchmark_results.log` from the same Ubuntu x86_64 environment the
+# Criterion regression gate runs in. Trigger via the GitHub UI ("Actions" -> this workflow
+# -> "Run workflow") or `gh workflow run bench-refresh-baseline.yml`. The fresh log is
+# uploaded as the `benchmark-results-log` artifact; download it locally and PR
+# `benchmark_results.log` into the repo root.
+#
+# This was previously only available via tagging a v* release (see release.yml's
+# "Criterion benchmark baseline log (linux only)" step). Refreshing without cutting a
+# release is the only use case here.
+
+name: Bench baseline refresh (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: Generate fresh benchmark_results.log
+    runs-on: ubuntu-24.04
+    env:
+      CI: "true"
+      KOBAYASHI_RAYON_THREADS: "2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-bench-refresh-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bench-refresh-cargo-
+
+      - name: Run benches + write baseline
+        run: |
+          set -euo pipefail
+          cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
+          cargo xtask bench-check --write-baseline
+
+      - name: Upload fresh benchmark_results.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-log
+          path: benchmark_results.log
+          retention-days: 14
