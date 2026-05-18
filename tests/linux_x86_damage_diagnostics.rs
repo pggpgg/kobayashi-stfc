@@ -14,10 +14,11 @@
 //! `linux_diag_<step>_<what>` so they run alphabetically in a known order.
 
 use kobayashi::combat::{
-    simulate_combat, simulate_combat_with_defender_faction_and_defender_crew, Ability,
-    AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
-    OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TimingWindow, TraceMode,
-    WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    effective_shots_for_weapon, serialize_events_json, simulate_combat,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass, AbilityEffect,
+    Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag, ShipType,
+    SimulationConfig, SimulationResult, TimingWindow, TraceMode, WeaponStats,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 
 fn bare_attacker(attack: f64, weapons: Vec<WeaponStats>) -> Combatant {
@@ -321,6 +322,92 @@ fn linux_diag_40_round_start_attack_multiplier_increases_damage() {
         "RoundStart AttackMultiplier(+1.0) should ~double damage. baseline: {} boosted: {}",
         fmt_result("step_40_baseline", &baseline),
         fmt_result("step_40_boosted", &boosted),
+    );
+}
+
+// ============================================================================
+// Step 50: Trace dumps. simulate_combat returns total_damage=0 on Linux but
+// rounds_simulated=1 — the loop runs but nothing happens. Capture trace events
+// to see WHICH internal phases fire on Linux vs not.
+// ============================================================================
+
+#[test]
+fn linux_diag_50_trace_single_weapon_one_shot() {
+    let a = bare_attacker(
+        0.0,
+        vec![WeaponStats {
+            attack: 1000.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+    );
+    let d = bare_defender(500.0);
+    let mut cfg = bare_config(1, 1);
+    cfg.trace_mode = TraceMode::Events;
+    let r = simulate_combat(&a, &d, &cfg, &CrewConfiguration::default());
+
+    // Always-panic test: dump event stream so the CI log shows exactly what fires.
+    let events_json = serialize_events_json(&r.events).unwrap_or_else(|e| format!("ERR: {e}"));
+    let event_types: Vec<String> = r
+        .events
+        .iter()
+        .map(|e| format!("{}@{}", e.event_type, e.phase))
+        .collect();
+    panic!(
+        "ALWAYS-DUMP step_50: {result}\nevent_types={event_types:?}\nevents_json={events_json}",
+        result = fmt_result("step_50", &r),
+    );
+}
+
+// ============================================================================
+// Step 60: Exported damage helpers. If these return wrong values on Linux, the
+// bug is below the engine — in the basic math.
+// ============================================================================
+
+#[test]
+fn linux_diag_60_effective_shots_for_weapon() {
+    let r0 = effective_shots_for_weapon(1, 0.0);
+    let r1 = effective_shots_for_weapon(3, 0.0);
+    let r2 = effective_shots_for_weapon(2, 0.5);
+    panic!("ALWAYS-DUMP step_60: effective_shots(1, 0.0)={r0}, (3, 0.0)={r1}, (2, 0.5)={r2}");
+}
+
+// ============================================================================
+// Step 70: Walk the structs that simulate_combat receives — confirm what Linux
+// sees vs what we pass in. (Linux build could be deserialising serde defaults
+// or padding the struct differently somehow.)
+// ============================================================================
+
+#[test]
+fn linux_diag_70_combatant_field_observability() {
+    let a = bare_attacker(
+        500.0,
+        vec![WeaponStats {
+            attack: 1000.0,
+            shots: Some(3),
+            pierce: Some(0.1),
+            crit_chance: Some(0.5),
+            crit_multiplier: Some(2.0),
+            proc_chance: Some(0.2),
+            proc_multiplier: Some(3.0),
+        }],
+    );
+    let w = &a.weapons[0];
+    panic!(
+        "ALWAYS-DUMP step_70: \
+         attacker.attack={atk}, weapons.len={wlen}, \
+         w0.attack={watk}, w0.shots={ws:?}, w0.pierce={wp:?}, \
+         w0.crit_chance={wcc:?}, w0.crit_multiplier={wcm:?}, \
+         w0.proc_chance={wpc:?}, w0.proc_multiplier={wpm:?}",
+        atk = a.attack,
+        wlen = a.weapons.len(),
+        watk = w.attack,
+        ws = w.shots,
+        wp = w.pierce,
+        wcc = w.crit_chance,
+        wcm = w.crit_multiplier,
+        wpc = w.proc_chance,
+        wpm = w.proc_multiplier,
     );
 }
 
