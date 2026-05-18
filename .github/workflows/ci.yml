@@ -54,9 +54,18 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --all-targets -- -D warnings
 
+      - name: Linux damage diagnostics (always runs first)
+        # Investigating a Linux-x86_64-only `total_damage=0` regression — these tests need
+        # to run regardless of what else fails. See tests/linux_x86_damage_diagnostics.rs.
+        # Workflow change is part of the throwaway diagnostic branch combat/linux-damage-bug-diagnostics.
+        run: cargo test --test linux_x86_damage_diagnostics -- --nocapture --test-threads=1
+        continue-on-error: true
+
       - name: cargo test
         # Includes CombatEffectSpec integration tests (research / LCARS / mixed).
-        run: cargo test
+        # --no-fail-fast lets all test binaries run so we see the full failure picture,
+        # not just whichever binary fails first.
+        run: cargo test --no-fail-fast
 
       - uses: actions/setup-node@v4
         with:
