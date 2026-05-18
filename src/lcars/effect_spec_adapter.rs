@@ -26,7 +26,7 @@ use serde_json::json;
 /// Populated by [`lcars_effect_to_combat_effect_spec_with_report`] at each adapter early-return
 /// site. See [`LcarsDropReport`] for the aggregator. The `reason` field uses short discriminators
 /// like `unknown_trigger:<raw>`, `unmapped_tag:<base>`, `unmapped_stat:<name>`,
-/// `unmapped_condition:<type>`, `extra_attack_unsupported`, or `unknown_effect_type:<type>`.
+/// `unmapped_condition:<type>`, or `unknown_effect_type:<type>`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DroppedLcarsEffect {
     pub officer_id: String,
@@ -608,9 +608,13 @@ fn op_to_spec(op: &str) -> AbilityOperationSpec {
 }
 
 /// Convert one LCARS officer effect to a [`CombatEffectSpec`] when the row maps cleanly.
-/// Returns [`None`] for `extra_attack`, `accuracy` at CombatBegin,
-/// unknown triggers, or a present `condition` that [`lcars_condition_to_spec`] cannot encode
-/// (aligned with [`crate::lcars::resolver::resolve_effect`]).
+/// Returns [`None`] for `accuracy` at CombatBegin, unknown triggers, or a present `condition`
+/// that [`lcars_condition_to_spec`] cannot encode (aligned with
+/// [`crate::lcars::resolver::resolve_effect`]).
+///
+/// `extra_attack` rows produce an [`AbilityModifierSpec::ExtraAttackProc`] spec which is
+/// consumed by [`crate::combat::effect_spec_compile::compile_officer_buffset_proc`] rather than
+/// the per-round combat compile path; `compile_officer_combat_spec` returns `Err` for it.
 ///
 /// Passive-permanent `stat_modify` / mapped-tag effects now emit `CombatBegin`-timed specs
 /// routed through the canonical IR in [`crate::lcars::resolver::resolve_crew_to_buff_set`].
@@ -658,14 +662,53 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
     mut drop_report: Option<&mut LcarsDropReport>,
 ) -> Option<CombatEffectSpec> {
     if effect.effect_type == "extra_attack" {
-        maybe_record_drop(
-            &mut drop_report,
-            officer_id,
-            ability_name,
-            effect_index,
-            "extra_attack_unsupported",
-        );
-        return None;
+        // Aggregate crew-level proc. Matches the legacy resolver walk: chance from
+        // `effect.chance` (or `scaling.chance_at_rank`), multiplier defaulted to 2.0 and floored
+        // at 1.0. The resulting spec is consumed by `compile_officer_buffset_proc`, not the
+        // per-round combat compile path.
+        let chance = effect
+            .chance
+            .or_else(|| {
+                effect
+                    .scaling
+                    .as_ref()
+                    .map(|s| s.chance_at_rank(officer_tier))
+            })
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        let multiplier = effect.multiplier.unwrap_or(2.0).max(1.0);
+        let _ = drop_report; // Drop report unused on the success path.
+        let _ = officer_stats; // No officer-stat scaling on extra_attack.
+        return Some(CombatEffectSpec {
+            id: stable_id.to_string(),
+            source: EffectSource::LcarsOfficer,
+            source_ref: Some(crate::data::combat_effect_spec::SourceRef {
+                officer_id: Some(officer_id.to_string()),
+                ability_id: Some(ability_name.to_string()),
+                ..Default::default()
+            }),
+            text: None,
+            trigger: AbilityTriggerSpec::CombatBegin,
+            target: AbilityTargetSpec::AttackerSelf,
+            modifier: AbilityModifierSpec::ExtraAttackProc,
+            operation: AbilityOperationSpec::ChanceApply,
+            value: Some(ValueSpec {
+                scalar: Some(multiplier),
+                by_rank: None,
+                unit: None,
+                officer_stat_scaling: None,
+            }),
+            chance: Some(ChanceSpec {
+                scalar: Some(chance),
+                by_rank: None,
+            }),
+            duration: None,
+            conditions: Vec::new(),
+            attributes: serde_json::Map::new(),
+            stacking: None,
+            category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
+            confidence: Some(crate::data::combat_effect_spec::EffectConfidence::Authoritative),
+        });
     }
 
     // If this is a tag effect, try to map it to an engine stat. Unmapped combat tags

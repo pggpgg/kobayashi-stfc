@@ -149,6 +149,14 @@ pub enum AbilityModifierSpec {
     ShotsBonus,
     ProcAttackMultiplier,
     ProcPierceBonus,
+    /// LCARS `extra_attack` — crew-aggregate proc that triggers an additional weapon shot at
+    /// `chance` with damage `multiplier`. Aggregates across all officers into
+    /// [`crate::combat::types::BuffSet::proc_chance`] / `proc_multiplier`
+    /// (highest-chance-wins, tiebroken by highest multiplier). Compiled via
+    /// [`crate::combat::effect_spec_compile::compile_officer_buffset_proc`] rather than the
+    /// per-round [`crate::combat::effect_spec_compile::compile_officer_combat_spec`] path —
+    /// `compile_officer_combat_spec` returns `Err` for this modifier.
+    ExtraAttackProc,
     HostileCritDamageReduction,
     CumulativeOpponentShieldMitigationDebuff,
     /// LCARS `shield_regen` / `shield_hp_repair` → [`crate::combat::abilities::AbilityEffect::ShieldRegen`].
