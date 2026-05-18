@@ -343,15 +343,19 @@ fn crossover(
     let mut used: HashSet<String> = HashSet::new();
     used.insert(captain.clone());
 
-    let bridge_union: Vec<String> = a
-        .bridge
-        .iter()
-        .chain(b.bridge.iter())
-        .map(String::clone)
-        .filter(|s| !used.contains(s))
-        .collect();
-    let bridge_set: HashSet<String> = bridge_union.into_iter().collect();
-    let mut bridge_vec: Vec<String> = bridge_set.into_iter().collect();
+    // Dedup-preserving-order: HashSet::into_iter().collect() reorders non-deterministically
+    // (RandomState hashing), which leaks into the crossover output and breaks
+    // `ga_run_is_deterministic_for_same_seed`. Walk the union once and keep first-seen.
+    let mut bridge_seen: HashSet<String> = HashSet::new();
+    let mut bridge_vec: Vec<String> = Vec::new();
+    for s in a.bridge.iter().chain(b.bridge.iter()) {
+        if used.contains(s) {
+            continue;
+        }
+        if bridge_seen.insert(s.clone()) {
+            bridge_vec.push(s.clone());
+        }
+    }
     while bridge_vec.len() < BRIDGE_SLOTS {
         let available: Vec<&String> = pools.bridge.iter().filter(|s| !used.contains(*s)).collect();
         if available.is_empty() {
@@ -368,15 +372,17 @@ fn crossover(
         used.insert(s.clone());
     }
 
-    let below_union: Vec<String> = a
-        .below_decks
-        .iter()
-        .chain(b.below_decks.iter())
-        .map(String::clone)
-        .filter(|s| !used.contains(s))
-        .collect();
-    let below_set: HashSet<String> = below_union.into_iter().collect();
-    let mut below_vec: Vec<String> = below_set.into_iter().collect();
+    // Same HashSet-iter non-determinism fix as the bridge block above.
+    let mut below_seen: HashSet<String> = HashSet::new();
+    let mut below_vec: Vec<String> = Vec::new();
+    for s in a.below_decks.iter().chain(b.below_decks.iter()) {
+        if used.contains(s) {
+            continue;
+        }
+        if below_seen.insert(s.clone()) {
+            below_vec.push(s.clone());
+        }
+    }
     while below_vec.len() < below_decks_slots {
         let available: Vec<&String> = pools
             .below_decks
