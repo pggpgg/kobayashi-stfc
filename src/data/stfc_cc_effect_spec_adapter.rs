@@ -509,6 +509,8 @@ pub fn try_stfc_cc_string_record_to_spec(
         value,
         chance: None,
         duration: None,
+        decay: None,
+        accumulate: None,
         conditions,
         attributes,
         stacking: None,
