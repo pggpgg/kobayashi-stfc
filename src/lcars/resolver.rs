@@ -6,7 +6,7 @@ use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
     CrewOfficerStatTotals, CrewSeat, CrewSeatContext, TimingWindow,
 };
-use crate::data::combat_effect_spec::{AbilityConditionSpec, AbilityOperationSpec};
+use crate::data::combat_effect_spec::AbilityConditionSpec;
 use crate::data::profile;
 use crate::lcars::parser::{LcarsAbility, LcarsEffect, LcarsOfficer};
 use serde::Serialize;
@@ -576,15 +576,14 @@ pub fn resolve_crew_to_buff_set(
 
             // Route passive-permanent stat_modify/mapped-tag through the canonical CombatEffectSpec IR.
             let stable_id = format!("lcars:{}:{}:static:{effect_idx}", officer.id, ability.name);
-            let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
+            let Some(spec) = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
                 effect,
                 &stable_id,
                 &officer.id,
                 &ability.name,
                 officer_tier,
                 stats_row,
-            );
-            let Some(spec) = spec else {
+            ) else {
                 continue;
             };
             let Some(ref value_spec) = spec.value else {
@@ -629,16 +628,10 @@ pub fn resolve_crew_to_buff_set(
                 continue;
             }
 
-            if spec.operation == AbilityOperationSpec::Multiply {
-                static_buffs
-                    .entry(stat.to_string())
-                    .and_modify(|x| *x *= v)
-                    .or_insert(v);
-            } else {
-                static_buffs
-                    .entry(stat.to_string())
-                    .and_modify(|x| *x += v)
-                    .or_insert(v);
+            if let Some(contrib) =
+                crate::combat::effect_spec_compile::compile_officer_static_buff(&spec, stat)
+            {
+                contrib.apply(&mut static_buffs);
             }
         }
         // Combat-begin `stat_modify` / mapped-tag accuracy: stacks into pre-mitigation attacker
@@ -669,21 +662,19 @@ pub fn resolve_crew_to_buff_set(
             ) else {
                 continue;
             };
-            let op = normalize_operator(effect.operator.as_deref());
-            if matches!(
-                op.as_str(),
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd"
-            ) {
-                static_buffs
-                    .entry("accuracy_cb_mult".to_string())
-                    .and_modify(|x| *x *= value)
-                    .or_insert(value);
-            } else {
-                static_buffs
-                    .entry("accuracy".to_string())
-                    .and_modify(|x| *x += value)
-                    .or_insert(value);
+            let op = crate::combat::effect_spec_compile::static_buff_op_from_lcars_op(
+                &normalize_operator(effect.operator.as_deref()),
+            );
+            let stat_key = match op {
+                crate::combat::effect_spec_compile::StaticBuffOp::Multiply => "accuracy_cb_mult",
+                crate::combat::effect_spec_compile::StaticBuffOp::Add => "accuracy",
+            };
+            crate::combat::effect_spec_compile::StaticBuffContribution {
+                stat_key: stat_key.to_string(),
+                op,
+                value,
             }
+            .apply(&mut static_buffs);
         }
         let contexts =
             resolve_officer_ability(officer, ability, seat, class, options, contribution_batch);
