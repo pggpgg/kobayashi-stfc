@@ -292,8 +292,6 @@ Conditions gate whether an effect activates. They are predicates evaluated by th
 | `attacker_burning`      | —                         | Player ship has burning (e.g. from hostile procs; aliases: `self_burning`, `player_burning`)                                                              |
 | `attacker_hull_breach`  | —                         | Player ship hull breached (aliases: `self_hull_breach`, `player_hull_breach`)                                                                               |
 | `not`                   | `conditions` (one child)  | Negates a single sub-condition (e.g. opponent is not `armada`)                                                                                              |
-| `group_count`           | group, min_members        | *(not implemented in resolver)*                                                                                                                            |
-| `has_tag`               | tag                       | *(not implemented in resolver)*                                                                                                                            |
 
 
 Hull slugs match `[ShipType::from_data_slug](src/combat/types.rs)`: `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
