@@ -830,6 +830,84 @@ pub struct BuffSetProcContribution {
     pub multiplier: f64,
 }
 
+/// How a [`StaticBuffContribution`] combines with the existing accumulator value in
+/// `BuffSet.static_buffs`. The two LCARS sources are passive-permanent `stat_modify` /
+/// mapped-tag effects (resolver Loop A) and combat-begin `accuracy` mods (Loop B). Both
+/// emit `Multiply` when the underlying LCARS operator is from the multiply family, else `Add`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StaticBuffOp {
+    Add,
+    Multiply,
+}
+
+/// A single LCARS effect compiled into a (stat_key, op, value) tuple ready to fold into
+/// [`crate::combat::types::BuffSet::static_buffs`]. The stat key is LCARS-side (e.g.
+/// `"weapon_damage"`, `"accuracy"`, or the synthetic `"accuracy_cb_mult"` for multiplicative
+/// accuracy combat-begin mods) — chosen by the caller, since the dispatch lives in the resolver.
+#[derive(Debug, Clone, PartialEq)]
+pub struct StaticBuffContribution {
+    pub stat_key: String,
+    pub op: StaticBuffOp,
+    pub value: f64,
+}
+
+impl StaticBuffContribution {
+    /// Fold this contribution into a `BuffSet.static_buffs`-style map. New keys take the value
+    /// directly (`*=` against an absent multiplicative entry would zero everything).
+    pub fn apply(self, buffs: &mut std::collections::HashMap<String, f64>) {
+        match self.op {
+            StaticBuffOp::Multiply => {
+                buffs
+                    .entry(self.stat_key)
+                    .and_modify(|x| *x *= self.value)
+                    .or_insert(self.value);
+            }
+            StaticBuffOp::Add => {
+                buffs
+                    .entry(self.stat_key)
+                    .and_modify(|x| *x += self.value)
+                    .or_insert(self.value);
+            }
+        }
+    }
+}
+
+/// Classify a normalized LCARS operator string into [`StaticBuffOp`]. The multiply family
+/// includes `multiply`, `mul_add` / `multiplyadd`, and `multiply_base_add` / `multiplybaseadd`;
+/// everything else (including unset / `add` / `sub` / `set`) folds as additive.
+pub fn static_buff_op_from_lcars_op(normalized_op: &str) -> StaticBuffOp {
+    if matches!(
+        normalized_op,
+        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd"
+    ) {
+        StaticBuffOp::Multiply
+    } else {
+        StaticBuffOp::Add
+    }
+}
+
+/// Compile a passive-permanent `stat_modify` / mapped-tag [`CombatEffectSpec`] into a
+/// [`StaticBuffContribution`]. Returns `None` when the spec has no resolvable scalar value.
+///
+/// The op classification reads the raw normalized LCARS op stashed by the adapter in
+/// `attributes[OFFICER_SPEC_ATTR_LCARS_OP]` so multiply-family variants (`mul_add` etc.) are
+/// honoured — the coarser `spec.operation` enum collapses them all into `Add`.
+///
+/// `stat_key` is the LCARS-side stat string the caller uses as the
+/// [`crate::combat::types::BuffSet::static_buffs`] hash-map key.
+pub fn compile_officer_static_buff(
+    spec: &CombatEffectSpec,
+    stat_key: &str,
+) -> Option<StaticBuffContribution> {
+    let value = spec.value.as_ref()?.scalar?;
+    let op = static_buff_op_from_lcars_op(&lcars_op_from_officer_spec(spec));
+    Some(StaticBuffContribution {
+        stat_key: stat_key.to_string(),
+        op,
+        value,
+    })
+}
+
 /// Compile an [`AbilityModifierSpec::ExtraAttackProc`] spec into a
 /// [`BuffSetProcContribution`]. Returns `None` for any other modifier (the caller is expected
 /// to dispatch on `spec.modifier` before calling this).
