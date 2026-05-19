@@ -772,20 +772,24 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
             let duration = if modifier.eq_ignore_ascii_case("AddRandomState") {
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|n| LcarsDuration::Rounds { rounds: n })
-                    .or_else(|| Some(LcarsDuration::Rounds { rounds: 3 }))
+                    .unwrap_or(LcarsDuration::Rounds { rounds: 3 })
+            } else if modifier.eq_ignore_ascii_case("AllReloadSpeed")
+                || modifier.eq_ignore_ascii_case("AllLoadSpeed")
+            {
+                reload_speed_tag_duration(a)
             } else {
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|n| LcarsDuration::Rounds { rounds: n })
-                    .or(Some(LcarsDuration::Permanent("permanent".to_string())))
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
             };
             Some(LcarsEffect {
                 effect_type: "tag".to_string(),
                 stat: None,
                 target: Some(target.to_string()),
-                operator: None,
+                operator: Some(map_lcars_operator(op)),
                 value: a.value_by_rank.first().copied(),
                 trigger: Some(trigger.to_string()),
-                duration,
+                duration: Some(duration),
                 scaling: chance_scaling,
                 condition: cond.clone(),
                 chance: chance_field,
@@ -1149,7 +1153,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         }
         "OfficerStatHealth" => MappedEffect::Tag("officerstathealth:unmapped".into()),
         "OfficerStatAll" => MappedEffect::Tag("officerstatall:unmapped".into()),
-        "AllReloadSpeed" | "AllLoadSpeed" => MappedEffect::Tag("allreloadspeed:unmapped".into()),
+        "AllReloadSpeed" | "AllLoadSpeed" => {
+            MappedEffect::Tag(map_allreloadspeed_tag(a, op))
+        }
         "CptManeuverEffect" => MappedEffect::Tag("cptmaneuvereffect:unmapped".into()),
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
@@ -1255,11 +1261,66 @@ fn map_trigger(canonical: &str) -> &'static str {
         "CombatStart" => "on_combat_start",
         "RoundStart" => "on_round_start",
         "RoundEnd" => "on_round_end",
-        "EnemyTakesHit" | "HitTaken" | "CriticalShotFired" => "on_hit",
+        "CriticalShotFired" => "on_critical",
+        "EnemyTakesHit" | "HitTaken" => "on_hit",
         "ShieldsDepleted" => "on_shield_break",
         "Kill" | "EnemyKilled" => "on_kill",
         _ => "passive",
     }
+}
+
+fn map_lcars_operator(op: &str) -> String {
+    match op.trim().to_ascii_lowercase().as_str() {
+        "sub" | "multiplysub" | "multiply_sub" | "mul_sub" => "sub".to_string(),
+        "multiplyadd" | "multiply_add" | "mul_add" => "multiply".to_string(),
+        "multiply" | "mul" => "multiply".to_string(),
+        "set" => "set".to_string(),
+        other => other.to_string(),
+    }
+}
+
+/// STFC `AllReloadSpeed` / `AllLoadSpeed`: enemy `Add` delays defender fire; self `Sub` recharges attacker weapons.
+fn map_allreloadspeed_tag(a: &CanonicalAbility, op: &str) -> String {
+    let target = map_target(a);
+    let op_l = op.trim().to_ascii_lowercase();
+    if target == "enemy"
+        && (op_l == "add"
+            || op_l == "multiplyadd"
+            || op_l == "multiply_add"
+            || op_l == "mul_add")
+    {
+        "allreloadspeed:enemy_delay".into()
+    } else if target == "self"
+        && (op_l == "sub"
+            || op_l == "multiplysub"
+            || op_l == "multiply_sub"
+            || op_l == "mul_sub")
+    {
+        "allreloadspeed:self_recharge".into()
+    } else {
+        eprintln!(
+            "warning: unmapped AllReloadSpeed/AllLoadSpeed target={target} op={op} officer ability={:?}",
+            a.ability_id
+        );
+        "allreloadspeed:unmapped".into()
+    }
+}
+
+fn reload_speed_tag_duration(a: &CanonicalAbility) -> LcarsDuration {
+    num_rounds_from_attributes(a.attributes.as_deref())
+        .map(|n| LcarsDuration::Rounds { rounds: n })
+        .or_else(|| {
+            a.value_by_rank.first().copied().and_then(|v| {
+                if v.is_finite() && (1.0..=10.0).contains(&v) && (v - v.round()).abs() < 1e-9 {
+                    Some(LcarsDuration::Rounds {
+                        rounds: v.round() as u32,
+                    })
+                } else {
+                    None
+                }
+            })
+        })
+        .unwrap_or(LcarsDuration::Rounds { rounds: 1 })
 }
 
 fn map_target(a: &CanonicalAbility) -> &'static str {
@@ -1276,7 +1337,7 @@ fn map_target(a: &CanonicalAbility) -> &'static str {
 fn scaling_from_ranks(
     value_by_rank: &[f64],
     chance_by_rank: &[f64],
-    modifier: &str,
+    _modifier: &str,
     attributes: Option<&str>,
 ) -> Option<LcarsScaling> {
     if value_by_rank.is_empty() && chance_by_rank.is_empty() {
@@ -1284,17 +1345,13 @@ fn scaling_from_ranks(
     }
 
     let max_rank = value_by_rank.len().max(chance_by_rank.len()).max(1) as u8;
-    let is_add_state = modifier.eq_ignore_ascii_case("AddState");
-
     let values = if !value_by_rank.is_empty() {
         Some(value_by_rank.to_vec())
     } else {
         None
     };
 
-    let chance_values = if (is_add_state || modifier.eq_ignore_ascii_case("AddRandomState"))
-        && !chance_by_rank.is_empty()
-    {
+    let chance_values = if !chance_by_rank.is_empty() {
         Some(chance_by_rank.to_vec())
     } else {
         None

@@ -195,6 +195,7 @@ pub enum AbilityEffect {
     DefenderFireDelay {
         chance: f64,
         delay_rounds: u32,
+        requires_critical: bool,
     },
     /// On round start: chance to apply one weighted random state to the defender.
     /// `state_outcomes`: `(STFC state id, relative weight)` e.g. `8→Morale`, `4→HullBreach`, `2→Burning`.
@@ -213,10 +214,10 @@ pub enum AbilityEffect {
 }
 
 /// Active prefix of a packed [`AbilityEffect::RandomDefenderState`] outcome table.
-pub fn random_defender_state_outcomes<'a>(
+pub fn random_defender_state_outcomes(
     count: u8,
-    outcomes: &'a [(u32, u32); RANDOM_DEFENDER_STATE_OUTCOMES_CAP],
-) -> &'a [(u32, u32)] {
+    outcomes: &[(u32, u32); RANDOM_DEFENDER_STATE_OUTCOMES_CAP],
+) -> &[(u32, u32)] {
     let n = (count as usize).min(RANDOM_DEFENDER_STATE_OUTCOMES_CAP);
     &outcomes[..n]
 }

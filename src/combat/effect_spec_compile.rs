@@ -17,6 +17,8 @@ use crate::data::ship_ability_resolve;
 /// Set by [`crate::lcars::effect_spec_adapter`] so the compiler can preserve multiply-family
 /// variants (`mul_add`, etc.) that the coarser `spec.operation` enum collapses into `Add`.
 pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
+/// When true, the effect only procs on critical hits (Chang bridge reload delay).
+pub const OFFICER_SPEC_ATTR_REQUIRES_CRITICAL: &str = "requires_critical";
 /// JSON array of STFC state ids from canonical `multi_state=[…]` (each id is also its weight).
 pub const OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS: &str = "random_state_weights";
 
@@ -303,11 +305,15 @@ pub fn compile_officer_combat_spec(
     spec: &CombatEffectSpec,
 ) -> Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError> {
     let (timing, effect, condition) = compile_officer_combat_spec_impl(spec)?;
-    Ok((
-        timing,
-        effect,
-        merge_duration_round_condition(condition, spec),
-    ))
+    // CombatBegin runs once at round_index 0; duration is encoded on the effect (e.g.
+    // ShotsBonus.duration_rounds, DefenderFireDelay.delay_rounds). A RoundRange {1, N} gate
+    // would incorrectly block that single application (Kuron self_recharge, Rom/Pon delays).
+    let condition = if timing == TimingWindow::CombatBegin {
+        condition
+    } else {
+        merge_duration_round_condition(condition, spec)
+    };
+    Ok((timing, effect, condition))
 }
 
 fn compile_officer_combat_spec_impl(
@@ -856,13 +862,16 @@ fn compile_officer_combat_spec_impl(
             ))
         }
         AbilityModifierSpec::DefenderFireDelay => {
-            let delay_rounds = spec
+            let delay_from_value = spec
                 .value
                 .as_ref()
                 .and_then(|v| v.scalar)
                 .filter(|s| s.is_finite() && *s >= 1.0 && *s <= 10.0)
-                .map(|s| s.round() as u32)
-                .unwrap_or(1)
+                .map(|s| s.round() as u32);
+            let delay_from_duration = officer_spec_duration_rounds(spec, 1);
+            let delay_rounds = delay_from_value
+                .map(|v| v.max(delay_from_duration))
+                .unwrap_or(delay_from_duration)
                 .max(1);
             let chance = spec
                 .chance
@@ -871,11 +880,36 @@ fn compile_officer_combat_spec_impl(
                 .filter(|c| c.is_finite())
                 .unwrap_or(1.0)
                 .clamp(0.0, 1.0);
+            let requires_critical = spec
+                .attributes
+                .get(OFFICER_SPEC_ATTR_REQUIRES_CRITICAL)
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
             Ok((
                 timing,
                 AbilityEffect::DefenderFireDelay {
                     chance,
                     delay_rounds,
+                    requires_critical,
+                },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::AttackerWeaponRecharge => {
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(1.0)
+                .clamp(0.0, 1.0);
+            let duration_rounds = officer_spec_duration_rounds(spec, 1);
+            Ok((
+                timing,
+                AbilityEffect::ShotsBonus {
+                    chance,
+                    bonus_pct: 1.0,
+                    duration_rounds,
                 },
                 compiled_condition.clone(),
             ))
@@ -1246,6 +1280,19 @@ mod tests {
     }
 
     #[test]
+    fn combat_begin_finite_duration_does_not_add_round_range_gate() {
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
+        spec.trigger = AbilityTriggerSpec::CombatBegin;
+        let (_, _, condition) =
+            compile_officer_combat_spec(&spec).expect("combat begin shield mitigation");
+        assert!(
+            !matches!(condition, Some(AbilityCondition::RoundRange { .. })),
+            "CombatBegin should not get RoundRange from duration; got {condition:?}"
+        );
+    }
+
+    #[test]
     fn shield_mitigation_compile_defender_opponent_emits_bypass_fraction() {
         // Harrison's "Sabotage": canonical `op: MultiplySub, value 0.7 (rank 2), target EnemyShip`
         // → multiplicative bypass of defender's shield_mitigation. Engine math:
@@ -1259,11 +1306,24 @@ mod tests {
             "DefenderOpponent target should emit ShieldMitigationBypassFraction(0.7), got {effect:?}"
         );
         assert!(
+            !matches!(condition, Some(AbilityCondition::RoundRange { .. })),
+            "CombatBegin duration is encoded on the effect, not via RoundRange; got {condition:?}"
+        );
+    }
+
+    #[test]
+    fn round_start_finite_duration_adds_round_range_gate() {
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
+        spec.trigger = AbilityTriggerSpec::RoundStart;
+        let (_, _, condition) =
+            compile_officer_combat_spec(&spec).expect("round start shield mitigation");
+        assert!(
             matches!(
                 condition,
                 Some(AbilityCondition::RoundRange { min: 1, max: 1 })
             ),
-            "finite duration should add RoundRange gate, got {condition:?}"
+            "RoundStart finite duration should add RoundRange gate, got {condition:?}"
         );
     }
 

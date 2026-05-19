@@ -13,9 +13,9 @@ pub use canonical_conditions::{
     is_canonical_officer_condition_resolved, map_canonical_condition_token,
 };
 pub use effect_spec_adapter::{
-    collect_lcars_drops, combat_tag_to_stat, lcars_condition_to_spec, lcars_effect_resolved_value,
-    lcars_effect_to_combat_effect_spec, lcars_effect_to_combat_effect_spec_with_report,
-    DroppedLcarsEffect, LcarsDropReport,
+    collect_lcars_drops, combat_tag_to_stat, combat_tag_to_stat_for_effect,
+    lcars_condition_to_spec, lcars_effect_resolved_value, lcars_effect_to_combat_effect_spec,
+    lcars_effect_to_combat_effect_spec_with_report, DroppedLcarsEffect, LcarsDropReport,
 };
 pub use parser::{
     load_lcars_dir, load_lcars_file, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,

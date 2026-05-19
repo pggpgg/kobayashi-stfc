@@ -51,8 +51,7 @@ fn lcars_effect_tag(tag: &str, trigger: &str) -> LcarsEffect {
 
 #[test]
 fn allreloadspeed_tag_compiles_to_defender_fire_delay() {
-    let mut effect = lcars_effect_tag("allreloadspeed:unmapped", "on_shield_break");
-    effect.target = Some("enemy".to_string());
+    let mut effect = lcars_effect_tag("allreloadspeed:enemy_delay", "on_shield_break");
     effect.value = Some(1.0);
     effect.chance = Some(0.5);
     let mut report = LcarsDropReport::default();

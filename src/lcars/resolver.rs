@@ -203,8 +203,7 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
         return true;
     }
     if effect.effect_type == "tag" {
-        let tag_str = effect.tag.as_deref().unwrap_or("");
-        return crate::lcars::combat_tag_to_stat(tag_str).is_some();
+        return crate::lcars::effect_spec_adapter::combat_tag_to_stat_for_effect(effect).is_some();
     }
     false
 }
@@ -214,7 +213,7 @@ fn effective_stat_for_effect(effect: &LcarsEffect) -> Option<&str> {
     if effect.effect_type == "stat_modify" {
         effect.stat.as_deref().filter(|s| !s.trim().is_empty())
     } else if effect.effect_type == "tag" {
-        crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
+        crate::lcars::effect_spec_adapter::combat_tag_to_stat_for_effect(effect)
     } else {
         None
     }
@@ -480,9 +479,7 @@ fn officer_rating_tag_coverage_path(
         tier,
         None,
     )?;
-    if spec.value.as_ref().and_then(|v| v.scalar).is_none() {
-        return None;
-    }
+    spec.value.as_ref().and_then(|v| v.scalar)?;
     let target_attacker = matches!(
         spec.target,
         crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
@@ -509,9 +506,7 @@ fn accuracy_combat_begin_coverage_path(
         return None;
     }
     let tier = options.tier_for(officer_id);
-    if crate::lcars::effect_spec_adapter::lcars_effect_resolved_value(effect, tier, None).is_none() {
-        return None;
-    }
+    crate::lcars::effect_spec_adapter::lcars_effect_resolved_value(effect, tier, None)?;
     Some("accuracy_combat_begin".to_string())
 }
 

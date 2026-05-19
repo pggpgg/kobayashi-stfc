@@ -23,7 +23,10 @@ officers:
         - 0.04
         - 0.02
         - 0.04
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -66,7 +69,12 @@ officers:
         - 0.09
         - 0.12
         - 0.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -505,7 +513,10 @@ officers:
         - 0.2
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -548,7 +559,12 @@ officers:
         - -0.4
         - -0.4
         - -0.4
-        chance_values: null
+        chance_values:
+        - 0.25
+        - 0.3
+        - 0.35
+        - 0.4
+        - 0.5
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -989,7 +1005,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -999,7 +1015,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -1545,7 +1564,12 @@ officers:
         - 0.35
         - 0.5
         - 0.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -1618,7 +1642,12 @@ officers:
         - 1500.0
         - 2000.0
         - 3000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -2134,7 +2163,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -2144,7 +2173,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -2157,7 +2191,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -2167,7 +2201,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -2608,7 +2647,12 @@ officers:
         - 0.9
         - 1.1
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -2696,7 +2740,12 @@ officers:
         - 0.65
         - 0.85
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -3181,7 +3230,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -3191,7 +3240,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -3219,7 +3271,12 @@ officers:
         - 2600.0
         - 2900.0
         - 3200.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -3776,7 +3833,12 @@ officers:
         - 0.3
         - 0.4
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: stat_below
         stat: attacker_hull_hp
@@ -4258,7 +4320,12 @@ officers:
         - 1.1400000000000001
         - 1.16
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -4684,7 +4751,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 65.0
       trigger: passive
       duration: permanent
@@ -4694,7 +4761,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -4707,7 +4777,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -4717,7 +4787,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -5199,7 +5274,12 @@ officers:
         - 0.2
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -5641,7 +5721,12 @@ officers:
         - 6.0
         - 9.0
         - 15.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_is_npc_hostile
@@ -6125,7 +6210,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -6135,7 +6220,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -6148,7 +6236,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -6158,7 +6246,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -6612,7 +6705,10 @@ officers:
         - 1.25
         - 1.025
         - 1.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -6640,7 +6736,12 @@ officers:
         - 8.0
         - 11.0
         - 14.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition: null
       chance: null
@@ -7083,7 +7184,12 @@ officers:
         - -0.15
         - -0.18
         - -0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -7171,7 +7277,12 @@ officers:
         - 0.3
         - 0.45
         - 0.65
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -7596,7 +7707,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -7606,7 +7717,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -7634,7 +7748,12 @@ officers:
         - 0.2
         - 0.25
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -8121,7 +8240,12 @@ officers:
         - 1.15
         - 1.25
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -8149,7 +8273,12 @@ officers:
         - 2.15
         - 2.4
         - 2.8
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -8587,7 +8716,10 @@ officers:
         - 4.0
         - 1.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_ship_type_is
@@ -8631,7 +8763,12 @@ officers:
         - 0.06
         - 0.08
         - 0.12
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -9085,7 +9222,10 @@ officers:
         - 2.0
         - 0.5
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_is_npc_hostile
@@ -9129,7 +9269,12 @@ officers:
         - 2.5
         - 3.0
         - 3.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: defender_is_npc_hostile
@@ -9572,7 +9717,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.75
       trigger: passive
       duration: permanent
@@ -9582,7 +9727,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -9610,7 +9760,12 @@ officers:
         - 3.0
         - 4.0
         - 6.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -10051,7 +10206,12 @@ officers:
         - 0.9
         - 1.3
         - 2.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -10094,7 +10254,12 @@ officers:
         - 0.05
         - 0.07
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -10579,7 +10744,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: on_combat_start
       duration: permanent
@@ -10589,7 +10754,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_level_at_most
         stat: null
@@ -10632,7 +10800,12 @@ officers:
         - 0.2
         - 0.25
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_level_at_most
         stat: null
@@ -11089,7 +11262,12 @@ officers:
         - 0.04
         - 0.05
         - 0.07
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -11162,7 +11340,12 @@ officers:
         - 3.0
         - 4.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -11648,7 +11831,12 @@ officers:
         - 0.4
         - 0.45
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -11676,7 +11864,12 @@ officers:
         - 0.85
         - 1.075
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -12117,7 +12310,12 @@ officers:
         - 0.12
         - 0.17
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -12145,7 +12343,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.15
       trigger: passive
       duration: permanent
@@ -12155,7 +12353,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -12580,7 +12783,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.08
       trigger: passive
       duration: permanent
@@ -12590,7 +12793,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -12618,7 +12824,12 @@ officers:
         - 1.12
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -13044,7 +13255,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -13054,7 +13265,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -13067,7 +13281,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.04
       trigger: on_combat_start
       duration: permanent
@@ -13077,7 +13291,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -13516,7 +13735,10 @@ officers:
         - 1.1
         - 1.02
         - 1.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -13529,7 +13751,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 1.0
       trigger: passive
       duration: permanent
@@ -13539,7 +13761,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -13978,7 +14205,10 @@ officers:
         - 1.05
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -14006,7 +14236,12 @@ officers:
         - 1.1
         - 1.12
         - 1.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -14445,7 +14680,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -14533,7 +14771,12 @@ officers:
         - 1.09
         - 1.11
         - 1.1400000000000001
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -14972,7 +15215,10 @@ officers:
         - 0.5
         - 0.15
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: and
@@ -15092,7 +15338,12 @@ officers:
         - 0.7
         - 0.8
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_hull_breach
@@ -15547,7 +15798,10 @@ officers:
         - 0.4
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -15620,7 +15874,12 @@ officers:
         - 1.3
         - 1.35
         - 1.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -16060,7 +16319,10 @@ officers:
         - 1.0
         - 0.01
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -16103,7 +16365,12 @@ officers:
         - 0.9
         - 1.1
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -16619,7 +16886,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -16629,7 +16896,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -16657,7 +16927,12 @@ officers:
         - 0.18
         - 0.21
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -17202,7 +17477,10 @@ officers:
         - 0.4
         - 0.3
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -17245,7 +17523,12 @@ officers:
         - 0.16
         - 0.22
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -17699,7 +17982,10 @@ officers:
         - 1.1
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: stat_below
         stat: attacker_hull_hp
@@ -17727,9 +18013,9 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: add
       value: 1.0
-      trigger: on_hit
+      trigger: on_critical
       duration:
         rounds: 1
       scaling:
@@ -17738,7 +18024,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.3
+        - 0.35
+        - 0.4
+        - 0.45
+        - 0.5
       condition:
         type: and
         stat: null
@@ -17817,7 +18108,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:enemy_delay
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -18252,7 +18543,10 @@ officers:
         - 0.02
         - 0.01
         - 0.02
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -18325,7 +18619,12 @@ officers:
         - 0.18
         - 0.25
         - 0.35
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_ship_type_is
@@ -18823,7 +19122,12 @@ officers:
         - 4.0
         - 8.0
         - 16.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition: null
       chance: null
@@ -19263,7 +19567,10 @@ officers:
         - 0.2
         - 0.1
         - 0.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -19336,7 +19643,12 @@ officers:
         - 0.2
         - 0.25
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -19880,7 +20192,10 @@ officers:
         - 0.5
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: and
@@ -19970,7 +20285,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -19980,7 +20295,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -20421,7 +20741,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -20431,7 +20751,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -20459,7 +20782,12 @@ officers:
         - 1.0
         - 2.5
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: and
@@ -20962,7 +21290,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -20972,7 +21300,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -21000,7 +21333,12 @@ officers:
         - 2.35
         - 2.7
         - 3.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -21425,7 +21763,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -21435,7 +21773,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -21464,7 +21805,12 @@ officers:
         - 1.0
         - 1.0
         - 1.0
-        chance_values: null
+        chance_values:
+        - 0.3
+        - 0.4
+        - 0.55
+        - 0.75
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -21907,7 +22253,7 @@ officers:
       target: self
       operator: add
       value: null
-      trigger: on_hit
+      trigger: on_critical
       duration: permanent
       scaling:
         base: null
@@ -21918,7 +22264,10 @@ officers:
         - 0.02
         - 0.02
         - 0.03
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -21993,7 +22342,7 @@ officers:
       target: enemy
       operator: add
       value: null
-      trigger: on_hit
+      trigger: on_critical
       duration: permanent
       scaling:
         base: null
@@ -22006,7 +22355,12 @@ officers:
         - 0.35
         - 0.42
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -22493,7 +22847,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -22503,7 +22857,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -22531,7 +22890,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 20.0
       trigger: passive
       duration: permanent
@@ -22541,7 +22900,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -22979,7 +23343,10 @@ officers:
         - 1.1
         - 1.02
         - 1.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -23037,7 +23404,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -23047,7 +23414,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -23501,7 +23873,10 @@ officers:
         - 0.17
         - 0.03
         - 0.04
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -23544,7 +23919,12 @@ officers:
         - 1.8
         - 2.4
         - 3.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: combat_battle_type_any
         stat: null
@@ -24005,7 +24385,10 @@ officers:
         - 0.15
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -24048,7 +24431,12 @@ officers:
         - 3.0
         - 3.5
         - 4.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -24532,7 +24920,10 @@ officers:
         - 0.1
         - 0.2
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -24575,7 +24966,12 @@ officers:
         - 1.08
         - 1.09
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -25017,7 +25413,12 @@ officers:
         - 1.1
         - 1.3
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -25105,7 +25506,12 @@ officers:
         - 0.5
         - 0.65
         - 0.8
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -25621,7 +26027,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: on_combat_start
       duration: permanent
@@ -25631,7 +26037,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -26145,7 +26556,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.05
       trigger: on_round_start
       duration: permanent
@@ -26155,7 +26566,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -26213,7 +26629,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -26223,7 +26639,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -26649,7 +27070,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: set
       value: 1.0
       trigger: on_round_start
       duration:
@@ -26711,7 +27132,12 @@ officers:
         - 1.2
         - 1.8
         - 2.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -27151,7 +27577,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -27161,7 +27587,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -27174,7 +27603,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -27184,7 +27613,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -27625,7 +28059,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.35
       trigger: passive
       duration: permanent
@@ -27635,7 +28069,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -27648,7 +28085,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -27658,7 +28095,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -28097,7 +28539,10 @@ officers:
         - 0.1
         - 0.05
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -28140,7 +28585,12 @@ officers:
         - 1.65
         - 1.75
         - 1.85
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -28566,7 +29016,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -28576,7 +29026,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -28589,7 +29042,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -28599,7 +29052,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -29038,7 +29496,10 @@ officers:
         - 1.0
         - 0.15
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -29112,7 +29573,12 @@ officers:
         - 0.34
         - 0.4
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -29630,7 +30096,12 @@ officers:
         - 0.2
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -29703,7 +30174,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -29713,7 +30184,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -30138,7 +30614,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -30148,7 +30624,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -30176,7 +30655,12 @@ officers:
         - 0.07
         - 0.1
         - 0.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -30662,7 +31146,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -30672,7 +31156,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -30700,7 +31187,12 @@ officers:
         - 0.06
         - 0.08
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -31142,7 +31634,12 @@ officers:
         - 8.0
         - 12.0
         - 16.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: and
@@ -31231,7 +31728,12 @@ officers:
         - 0.45
         - 0.65
         - 0.9
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -31684,7 +32186,10 @@ officers:
         - 1.1
         - 1.02
         - 1.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_level_at_most
         stat: null
@@ -31727,7 +32232,12 @@ officers:
         - 0.05
         - 0.05
         - 0.05
-        chance_values: null
+        chance_values:
+        - 0.35
+        - 0.45
+        - 0.55
+        - 0.65
+        - 0.75
       condition:
         type: defender_level_at_most
         stat: null
@@ -32181,7 +32691,10 @@ officers:
         - 15.0
         - 0.0
         - 0.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -32269,7 +32782,12 @@ officers:
         - 1.6
         - 1.8
         - 2.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -32800,7 +33318,10 @@ officers:
         - 0.4
         - 0.3
         - 0.8
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -32855,7 +33376,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -32865,7 +33386,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -33291,7 +33817,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.55
       trigger: passive
       duration: permanent
@@ -33301,7 +33827,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -33314,7 +33843,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: sub
       value: 0.3
       trigger: passive
       duration: permanent
@@ -33324,7 +33853,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -33763,7 +34297,10 @@ officers:
         - 2.0
         - 2.0
         - 4.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition: null
       chance: null
@@ -33777,7 +34314,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -33787,7 +34324,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -34213,7 +34755,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -34223,7 +34765,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -34236,7 +34781,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -34246,7 +34791,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -34689,7 +35239,12 @@ officers:
         - 0.35
         - 0.4
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -34762,7 +35317,12 @@ officers:
         - 0.1
         - 0.14
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -35277,7 +35837,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -35287,7 +35847,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -35315,7 +35878,12 @@ officers:
         - 0.3
         - 0.4
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -35799,7 +36367,10 @@ officers:
         - 0.05
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -35902,7 +36473,12 @@ officers:
         - 0.42
         - 0.5
         - 0.6
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -36388,7 +36964,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -36398,7 +36974,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -36426,7 +37005,12 @@ officers:
         - 3.0
         - 3.5
         - 4.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -36910,7 +37494,10 @@ officers:
         - 1.0
         - 0.15
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_burning
         stat: null
@@ -37380,7 +37967,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -37390,7 +37977,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -37403,7 +37995,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -37413,7 +38005,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -37838,7 +38435,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -37848,7 +38445,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -37861,7 +38461,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.06
       trigger: passive
       duration: permanent
@@ -37871,7 +38471,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -38310,7 +38915,10 @@ officers:
         - 0.08
         - 0.01
         - 0.02
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -38353,7 +38961,12 @@ officers:
         - 0.15
         - 0.2
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -38807,7 +39420,10 @@ officers:
         - 0.2
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -38835,7 +39451,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.15
       trigger: passive
       duration: permanent
@@ -38845,7 +39461,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -39284,7 +39905,10 @@ officers:
         - 0.1
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -39299,7 +39923,7 @@ officers:
       target: enemy
       operator: null
       value: null
-      trigger: on_hit
+      trigger: on_critical
       duration: permanent
       scaling:
         base: null
@@ -39754,7 +40378,12 @@ officers:
         - 0.1
         - 0.15
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -39827,7 +40456,12 @@ officers:
         - 1.75
         - 2.25
         - 3.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -40310,7 +40944,10 @@ officers:
         - 1.5
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_true
         stat: null
@@ -40353,7 +40990,12 @@ officers:
         - 8.0
         - 11.0
         - 14.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition: null
       chance: null
@@ -40867,7 +41509,12 @@ officers:
         - 0.35
         - 0.42
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -41353,7 +42000,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.15
       trigger: passive
       duration: permanent
@@ -41363,7 +42010,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -41376,7 +42026,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -41386,7 +42036,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -41840,7 +42495,10 @@ officers:
         - 1.2
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -41898,7 +42556,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.6
       trigger: on_combat_start
       duration:
@@ -41909,7 +42567,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -42426,7 +43089,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.07
       trigger: passive
       duration: permanent
@@ -42436,7 +43099,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -42904,7 +43572,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.18
       trigger: on_combat_start
       duration:
@@ -42915,7 +43583,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.4
+        - 0.1
+        - 0.2
       condition:
         type: defender_level_at_most
         stat: null
@@ -42959,7 +43630,12 @@ officers:
         - 1.0
         - 1.0
         - 1.0
-        chance_values: null
+        chance_values:
+        - 0.2
+        - 0.3
+        - 0.4
+        - 0.5
+        - 0.6
       condition:
         type: defender_level_at_most
         stat: null
@@ -43400,7 +44076,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -43410,7 +44086,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -43423,7 +44102,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -43433,7 +44112,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_true
         stat: null
@@ -43887,7 +44571,10 @@ officers:
         - 0.2
         - 0.1
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: stat_below
         stat: attacker_hull_hp
@@ -43915,7 +44602,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -43925,7 +44612,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -44368,7 +45060,7 @@ officers:
       target: self
       operator: add
       value: null
-      trigger: on_hit
+      trigger: on_critical
       duration: permanent
       scaling:
         base: null
@@ -44379,7 +45071,10 @@ officers:
         - 0.3
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_is_player_ship
@@ -44423,7 +45118,12 @@ officers:
         - 0.6
         - 0.75
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -44865,7 +45565,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -44875,7 +45575,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -44888,7 +45593,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -44898,7 +45603,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -45324,7 +46034,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -45334,7 +46044,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -45362,7 +46077,12 @@ officers:
         - 0.25
         - 0.25
         - 0.25
-        chance_values: null
+        chance_values:
+        - 0.45
+        - 0.5
+        - 0.6
+        - 0.7
+        - 1.0
       condition:
         type: and
         stat: null
@@ -45863,7 +46583,12 @@ officers:
         - 8000.0
         - 10000.0
         - 12500.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -45951,7 +46676,12 @@ officers:
         - 0.95
         - 1.15
         - 1.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -46479,7 +47209,10 @@ officers:
         - 0.2
         - 0.15
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -46552,7 +47285,12 @@ officers:
         - 1.62
         - 1.7
         - 1.8
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -47054,7 +47792,12 @@ officers:
         - 0.42
         - 0.52
         - 0.65
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -47127,7 +47870,12 @@ officers:
         - 17500.0
         - 21000.0
         - 25000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -47670,7 +48418,10 @@ officers:
         - 1.05
         - 1.02
         - 1.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -47698,7 +48449,12 @@ officers:
         - 0.12
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -48140,7 +48896,12 @@ officers:
         - 0.9
         - 1.1
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -48228,7 +48989,12 @@ officers:
         - 0.65
         - 0.85
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -48726,7 +49492,10 @@ officers:
         - 7.0
         - 1.75
         - 3.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: engagement_includes
@@ -48770,7 +49539,12 @@ officers:
         - 6.5
         - 9.0
         - 12.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: engagement_includes
@@ -49212,7 +49986,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -49222,7 +49996,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -49250,7 +50027,12 @@ officers:
         - 0.25
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -49691,7 +50473,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -49701,7 +50483,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: or
         stat: null
@@ -49775,7 +50560,12 @@ officers:
         - 3.0
         - 4.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -50276,7 +51066,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: on_combat_start
       duration: permanent
@@ -50286,7 +51076,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_level_at_most
         stat: null
@@ -50329,7 +51122,12 @@ officers:
         - 0.15
         - 0.2
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -50768,7 +51566,10 @@ officers:
         - 10000000.0
         - 0.0
         - 0.0
-        chance_values: null
+        chance_values:
+        - 0.5
+        - 0.1
+        - 0.25
       condition:
         type: and
         stat: null
@@ -50841,7 +51642,12 @@ officers:
         - 0.2
         - 0.25
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -51312,7 +52118,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -51322,7 +52128,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -51335,7 +52144,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -51345,7 +52154,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -51771,7 +52585,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 3.0
       trigger: passive
       duration: permanent
@@ -51781,7 +52595,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -51809,7 +52626,12 @@ officers:
         - 0.2
         - 0.3
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -52308,7 +53130,10 @@ officers:
         - 0.5
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: engagement_includes
         stat: null
@@ -52351,7 +53176,12 @@ officers:
         - 0.35
         - 0.45
         - 0.6
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: engagement_includes
         stat: null
@@ -52792,7 +53622,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -52802,7 +53632,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -52830,7 +53663,12 @@ officers:
         - 0.14
         - 0.16
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -53358,7 +54196,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiplybaseadd
       value: 1.0
       trigger: on_combat_start
       duration: permanent
@@ -53368,7 +54206,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -53794,7 +54637,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.06
       trigger: passive
       duration:
@@ -53805,7 +54648,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -53848,7 +54694,12 @@ officers:
         - 0.2
         - 0.3
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -54302,7 +55153,10 @@ officers:
         - 0.04
         - 0.02
         - 0.03
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -54375,7 +55229,12 @@ officers:
         - 0.25
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -54859,7 +55718,10 @@ officers:
         - 1.2
         - 1.07
         - 1.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -54902,7 +55764,12 @@ officers:
         - 1.3
         - 1.35
         - 1.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -55343,7 +56210,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: on_shield_break
       duration: permanent
@@ -55353,7 +56220,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -55381,7 +56251,12 @@ officers:
         - 0.3
         - 0.4
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_true
         stat: null
@@ -55835,7 +56710,10 @@ officers:
         - -10.0
         - -0.0
         - -0.0
-        chance_values: null
+        chance_values:
+        - 0.5
+        - 0.1
+        - 0.25
       condition:
         type: and
         stat: null
@@ -55908,7 +56786,12 @@ officers:
         - 0.03
         - 0.04
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -56335,7 +57218,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.04
       trigger: on_combat_start
       duration: permanent
@@ -56345,7 +57228,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -56388,7 +57276,12 @@ officers:
         - 0.2
         - 0.25
         - 0.35
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -56828,7 +57721,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: on_round_start
       duration:
@@ -56839,7 +57732,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: morale_active
         stat: null
@@ -57308,7 +58204,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -57318,7 +58214,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -57346,7 +58245,12 @@ officers:
         - 0.13
         - 0.17
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -57785,7 +58689,10 @@ officers:
         - 1.2
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -57858,7 +58765,12 @@ officers:
         - 0.1
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -58329,7 +59241,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -58339,7 +59251,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -58382,7 +59297,12 @@ officers:
         - 1.15
         - 1.2
         - 1.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -58853,7 +59773,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.2
       trigger: on_combat_start
       duration: permanent
@@ -58863,7 +59783,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -58891,7 +59814,7 @@ officers:
     - type: tag
       stat: null
       target: enemy_bridge
-      operator: null
+      operator: sub
       value: 0.2
       trigger: on_combat_start
       duration: permanent
@@ -58901,7 +59824,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -59383,7 +60311,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: defender_hull_faction_id
@@ -59825,7 +60758,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: on_round_start
       duration: permanent
@@ -59835,7 +60768,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -59863,7 +60799,12 @@ officers:
         - 0.6
         - 0.8
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_burning
         stat: null
@@ -60304,7 +61245,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: sub
       value: 100.0
       trigger: on_combat_start
       duration:
@@ -60315,7 +61256,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.5
+        - 0.1
+        - 0.2
       condition:
         type: literal_true
         stat: null
@@ -60334,7 +61278,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:self_recharge
       accumulate: null
       decay: null
   bridge_ability:
@@ -60343,7 +61287,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -60353,7 +61297,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -60779,7 +61728,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -60789,7 +61738,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -60817,7 +61769,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_hull_faction_id
@@ -61260,7 +62217,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.66
       trigger: passive
       duration: permanent
@@ -61270,7 +62227,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -61313,7 +62275,12 @@ officers:
         - 2000.0
         - 2700.0
         - 3500.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -61796,7 +62763,10 @@ officers:
         - 0.05
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -61854,7 +62824,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -61864,7 +62834,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -62318,7 +63293,10 @@ officers:
         - 4000.0
         - 1000.0
         - 3500.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -62451,7 +63429,12 @@ officers:
         - 1.18
         - 1.22
         - 1.28
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -62890,7 +63873,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -62918,7 +63904,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition: null
       chance: null
@@ -63345,7 +64336,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -63355,7 +64346,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -63398,7 +64392,12 @@ officers:
         - 1.4
         - 1.5
         - 1.6
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -63852,7 +64851,10 @@ officers:
         - 1.0
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -64351,7 +65353,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.3
       trigger: passive
       duration: permanent
@@ -64361,7 +65363,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -64389,7 +65394,12 @@ officers:
         - 0.4
         - 0.55
         - 0.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -64873,7 +65883,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -64916,7 +65929,12 @@ officers:
         - 0.22
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -65370,7 +66388,10 @@ officers:
         - 0.2
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -65398,7 +66419,12 @@ officers:
         - 1.2
         - 1.25
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -65824,7 +66850,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -65834,7 +66860,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -65847,7 +66876,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -65857,7 +66886,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -66296,7 +67330,10 @@ officers:
         - 1.2
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -66324,7 +67361,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.2
       trigger: on_round_end
       duration: permanent
@@ -66334,7 +67371,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -66851,7 +67893,12 @@ officers:
         - 0.04
         - 0.065
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: engagement_includes
         stat: null
@@ -66894,7 +67941,12 @@ officers:
         - 0.1
         - 0.12
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -67375,7 +68427,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiplybaseadd
       value: 1.0
       trigger: on_combat_start
       duration: permanent
@@ -67385,7 +68437,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -67827,7 +68884,12 @@ officers:
         - 0.75
         - 0.95
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -67900,7 +68962,12 @@ officers:
         - 10000.0
         - 12000.0
         - 15000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -68385,7 +69452,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -68395,7 +69462,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -68408,7 +69478,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -68418,7 +69488,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -68857,7 +69932,10 @@ officers:
         - 1.5
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_true
         stat: null
@@ -68885,7 +69963,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiplybaseadd
       value: 2.0
       trigger: on_combat_start
       duration: permanent
@@ -68895,7 +69973,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -69337,7 +70420,12 @@ officers:
         - 1500.0
         - 2750.0
         - 5000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -69380,7 +70468,12 @@ officers:
         - 0.06
         - 0.08
         - 0.12
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -69820,7 +70913,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -69830,7 +70923,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -69843,7 +70939,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -69853,7 +70949,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -70279,7 +71380,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 15.0
       trigger: passive
       duration: permanent
@@ -70289,7 +71390,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -70317,7 +71421,12 @@ officers:
         - 0.85
         - 3.0
         - 4.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_is_player_ship
@@ -70776,7 +71885,12 @@ officers:
         - 1.0
         - 1.0
         - 1.0
-        chance_values: null
+        chance_values:
+        - 0.25
+        - 0.3
+        - 0.35
+        - 0.4
+        - 0.5
       condition:
         type: defender_ship_type_is
         stat: null
@@ -70804,7 +71918,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.7
       trigger: passive
       duration: permanent
@@ -70814,7 +71928,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -71280,7 +72399,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: defender_hull_faction_id
@@ -71735,7 +72859,10 @@ officers:
         - 7500.0
         - 3500.0
         - 18750.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -72262,7 +73389,10 @@ officers:
         - 7500.0
         - 3500.0
         - 18750.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -72350,7 +73480,12 @@ officers:
         - 16.0
         - 24.0
         - 36.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -72849,7 +73984,10 @@ officers:
         - 1500.0
         - 1500.0
         - 1500.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -72923,7 +74061,12 @@ officers:
         - 0.25
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -73407,7 +74550,10 @@ officers:
         - 0.5
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -73450,7 +74596,12 @@ officers:
         - 17000.0
         - 22000.0
         - 30000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -73949,7 +75100,10 @@ officers:
         - 7500.0
         - 3500.0
         - 18750.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -74037,7 +75191,12 @@ officers:
         - 16.0
         - 24.0
         - 36.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -74539,7 +75698,12 @@ officers:
         - 0.6
         - 0.8
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -74642,7 +75806,12 @@ officers:
         - 1200.0
         - 1600.0
         - 2000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -75158,7 +76327,12 @@ officers:
         - 0.75
         - 0.95
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -75231,7 +76405,12 @@ officers:
         - 10000.0
         - 12000.0
         - 15000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -75716,7 +76895,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -75726,7 +76905,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -75769,7 +76951,12 @@ officers:
         - 1.5
         - 1.6
         - 1.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -76208,7 +77395,10 @@ officers:
         - 0.4
         - 0.1
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -76236,7 +77426,12 @@ officers:
         - 0.5
         - 0.6
         - 0.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -76765,7 +77960,10 @@ officers:
         - 0.1
         - 0.03
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -76838,7 +78036,12 @@ officers:
         - 4.0
         - 4.5
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_level_at_most
         stat: null
@@ -77279,7 +78482,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -77289,7 +78492,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -77317,7 +78523,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.3
       trigger: passive
       duration: permanent
@@ -77327,7 +78533,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -77355,7 +78566,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.5
       trigger: passive
       duration: permanent
@@ -77365,7 +78576,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -77803,7 +79019,10 @@ officers:
         - 0.2
         - 0.1
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_hull_breach
         stat: null
@@ -77846,7 +79065,12 @@ officers:
         - 0.85
         - 1.1
         - 1.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_hull_breach
         stat: null
@@ -78288,7 +79512,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -78298,7 +79522,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -78824,7 +80053,10 @@ officers:
         - 1.4
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_burning
         stat: null
@@ -79293,7 +80525,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.3
       trigger: on_combat_start
       duration: permanent
@@ -79303,7 +80535,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -79346,7 +80581,12 @@ officers:
         - 3200.0
         - 4000.0
         - 5000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -79847,7 +81087,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -79857,7 +81097,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -79870,7 +81113,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.04
       trigger: on_combat_start
       duration: permanent
@@ -79880,7 +81123,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -80306,7 +81554,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.08
       trigger: passive
       duration: permanent
@@ -80316,7 +81564,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -80344,7 +81595,12 @@ officers:
         - 1.12
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -80783,7 +82039,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -80871,7 +82130,12 @@ officers:
         - 1.09
         - 1.11
         - 1.1400000000000001
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -81310,7 +82574,10 @@ officers:
         - 1.05
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -81338,7 +82605,12 @@ officers:
         - 1.1
         - 1.12
         - 1.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -81777,7 +83049,10 @@ officers:
         - 1.05
         - 1.02
         - 1.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -81805,7 +83080,12 @@ officers:
         - 0.12
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -82244,7 +83524,10 @@ officers:
         - 0.1
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -82287,7 +83570,12 @@ officers:
         - 0.65
         - 0.75
         - 0.85
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -82726,7 +84014,10 @@ officers:
         - 20000.0
         - 0.0
         - 0.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -82814,7 +84105,12 @@ officers:
         - 0.5
         - 0.6
         - 0.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -83346,7 +84642,12 @@ officers:
         - 0.6
         - 0.8
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: engagement_includes
         stat: null
@@ -83389,7 +84690,12 @@ officers:
         - 0.35
         - 0.45
         - 0.6
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -83814,7 +85120,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.05
       trigger: on_combat_start
       duration: permanent
@@ -83824,7 +85130,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -83837,7 +85146,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -83847,7 +85156,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -84286,7 +85600,10 @@ officers:
         - 15.0
         - 2.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -84314,7 +85631,12 @@ officers:
         - 1.16
         - 1.2
         - 1.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -84753,7 +86075,10 @@ officers:
         - 10.0
         - 2.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -84781,7 +86106,12 @@ officers:
         - 1.1
         - 1.12
         - 1.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -85207,7 +86537,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 10.0
       trigger: passive
       duration: permanent
@@ -85217,7 +86547,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -85230,7 +86563,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -85240,7 +86573,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -85679,7 +87017,10 @@ officers:
         - 1.2
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -85752,7 +87093,12 @@ officers:
         - 1.4
         - 1.5
         - 1.6
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -86178,7 +87524,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -86188,7 +87534,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -86642,7 +87991,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -86652,7 +88001,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -86695,7 +88047,12 @@ officers:
         - 1.2
         - 1.6
         - 2.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -87167,7 +88524,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -87177,7 +88534,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -87190,7 +88552,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -87200,7 +88562,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -87641,7 +89008,12 @@ officers:
         - 0.6
         - 0.75
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -87729,7 +89101,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -87739,7 +89111,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -88220,7 +89597,12 @@ officers:
         - 16.0
         - 23.0
         - 31.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -88707,7 +90089,12 @@ officers:
         - 0.05
         - 0.06
         - 0.08
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -88780,7 +90167,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -88790,7 +90177,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -89216,7 +90608,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -89226,7 +90618,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -89254,7 +90651,12 @@ officers:
         - 0.15
         - 0.2
         - 0.35
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -89735,7 +91137,12 @@ officers:
         - 16.0
         - 23.0
         - 31.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -90262,7 +91669,12 @@ officers:
         - 16.0
         - 23.0
         - 31.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -90733,7 +92145,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: on_combat_start
       duration: permanent
@@ -90743,7 +92155,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_level_at_most
         stat: null
@@ -90771,7 +92186,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -90781,7 +92196,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -91207,17 +92627,21 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: add
       value: 3.0
       trigger: on_combat_start
-      duration: permanent
+      duration:
+        rounds: 3
       scaling:
         base: null
         per_rank: null
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.1
+        - 0.1
+        - 0.15
       condition:
         type: and
         stat: null
@@ -91281,7 +92705,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:enemy_delay
       accumulate: null
       decay: null
   bridge_ability:
@@ -91305,7 +92729,12 @@ officers:
         - 0.63
         - 0.7
         - 0.78
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -91804,7 +93233,10 @@ officers:
         - -0.35
         - -0.1
         - -0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -91892,7 +93324,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: on_round_start
       duration: permanent
@@ -91902,7 +93334,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_hull_breach
         stat: null
@@ -92343,7 +93780,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.9
       trigger: passive
       duration: permanent
@@ -92353,7 +93790,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -92366,7 +93806,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.8
       trigger: passive
       duration: permanent
@@ -92376,7 +93816,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -92818,7 +94263,12 @@ officers:
         - 0.8
         - 1.1
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -92861,7 +94311,12 @@ officers:
         - 0.4
         - 0.55
         - 0.75
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -93347,7 +94802,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -93357,7 +94812,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -93385,7 +94845,12 @@ officers:
         - 1500.0
         - 2000.0
         - 3000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -93916,7 +95381,12 @@ officers:
         - 0.15
         - 0.25
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -93929,7 +95399,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -93939,7 +95409,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -94377,7 +95852,10 @@ officers:
         - 1.4
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_hull_breach
         stat: null
@@ -94420,7 +95898,12 @@ officers:
         - 0.1
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_hull_breach
         stat: null
@@ -94861,7 +96344,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -94871,7 +96354,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -94899,7 +96385,12 @@ officers:
         - 3.0
         - 3.0
         - 3.0
-        chance_values: null
+        chance_values:
+        - 0.2
+        - 0.3
+        - 0.4
+        - 0.5
+        - 0.6
         officer_stat: attack
       condition: null
       chance: null
@@ -95326,17 +96817,21 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: add
       value: 1.0
       trigger: on_combat_start
-      duration: permanent
+      duration:
+        rounds: 1
       scaling:
         base: null
         per_rank: null
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -95400,7 +96895,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:enemy_delay
       accumulate: null
       decay: null
   bridge_ability:
@@ -95425,7 +96920,12 @@ officers:
         - 0.9
         - 1.2
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -95927,7 +97427,12 @@ officers:
         - 1.4
         - 1.7
         - 2.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -96000,7 +97505,12 @@ officers:
         - 10000.0
         - 12000.0
         - 15000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -96498,7 +98008,10 @@ officers:
         - 1.2
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -96571,7 +98084,12 @@ officers:
         - 1.1
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -97058,7 +98576,12 @@ officers:
         - 0.7
         - 1.0
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -97146,7 +98669,12 @@ officers:
         - 0.5
         - 0.7
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -97602,7 +99130,12 @@ officers:
         - 0.4
         - 0.45
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -97630,7 +99163,12 @@ officers:
         - 1.9
         - 2.1
         - 2.35
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -98068,7 +99606,10 @@ officers:
         - 0.1
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -98111,7 +99652,12 @@ officers:
         - 0.5
         - 0.6
         - 0.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -98552,7 +100098,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -98562,7 +100108,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -98590,7 +100139,12 @@ officers:
         - 1.1400000000000001
         - 1.16
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -99029,7 +100583,10 @@ officers:
         - 0.5
         - 0.1
         - 0.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -99072,7 +100629,12 @@ officers:
         - 0.04
         - 0.05
         - 0.06
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -99526,7 +101088,10 @@ officers:
         - 0.15
         - 0.0
         - 0.0
-        chance_values: null
+        chance_values:
+        - 0.2
+        - 0.1
+        - 0.2
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -99569,7 +101134,12 @@ officers:
         - 0.5
         - 0.7
         - 0.9
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -100026,7 +101596,12 @@ officers:
         - 0.2
         - 0.25
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -100114,7 +101689,12 @@ officers:
         - 0.22
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -100613,7 +102193,10 @@ officers:
         - 2.0
         - 0.0
         - 0.0
-        chance_values: null
+        chance_values:
+        - 0.2
+        - 0.15
+        - 0.35
       condition:
         type: and
         stat: null
@@ -100686,7 +102269,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -100696,7 +102279,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -101138,7 +102726,12 @@ officers:
         - 1.3
         - 1.6
         - 2.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -101181,7 +102774,12 @@ officers:
         - 0.26
         - 0.36
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -101634,7 +103232,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -101737,7 +103338,12 @@ officers:
         - 1.4
         - 1.5
         - 1.6
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_burning
         stat: null
@@ -102194,7 +103800,12 @@ officers:
         - 0.9
         - 1.1
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -102282,7 +103893,12 @@ officers:
         - 0.65
         - 0.85
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -102767,7 +104383,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -102777,7 +104393,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -102805,7 +104424,12 @@ officers:
         - 1.1
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -103277,7 +104901,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -103287,7 +104911,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -103300,7 +104929,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -103310,7 +104939,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -103748,7 +105382,10 @@ officers:
         - 0.2
         - 0.1
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition: null
       chance: null
@@ -103777,7 +105414,12 @@ officers:
         - 0.2
         - 0.3
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_ship_type_is
@@ -104220,7 +105862,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 10.0
       trigger: passive
       duration: permanent
@@ -104230,7 +105872,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -104258,7 +105905,12 @@ officers:
         - 16.0
         - 22.0
         - 31.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -104699,7 +106351,12 @@ officers:
         - 14.0
         - 19.0
         - 25.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: and
@@ -104788,7 +106445,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.7
       trigger: passive
       duration: permanent
@@ -104798,7 +106455,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -105223,7 +106885,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.4
       trigger: on_combat_start
       duration: permanent
@@ -105233,7 +106895,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -105321,7 +106986,12 @@ officers:
         - 13.0
         - 21.0
         - 36.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -105808,7 +107478,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -105818,7 +107488,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -105831,7 +107506,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -105841,7 +107516,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -106279,7 +107959,10 @@ officers:
         - 15.0
         - 15.0
         - 25.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: and
@@ -106368,7 +108051,12 @@ officers:
         - 0.06
         - 0.08
         - 0.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -106855,7 +108543,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -106865,7 +108553,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -106893,7 +108586,12 @@ officers:
         - 0.15
         - 0.25
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -107391,7 +109089,10 @@ officers:
         - 0.15
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -107479,7 +109180,12 @@ officers:
         - 11.0
         - 14.0
         - 18.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: and
@@ -108012,7 +109718,12 @@ officers:
         - 0.1
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -108100,7 +109811,12 @@ officers:
         - 0.45
         - 0.7
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -108525,7 +110241,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.04
       trigger: on_combat_start
       duration: permanent
@@ -108535,7 +110251,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -108608,7 +110327,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.1
       trigger: on_combat_start
       duration: permanent
@@ -108618,7 +110337,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -109117,7 +110841,10 @@ officers:
         - 0.1
         - 0.05
         - 0.08
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -109205,7 +110932,12 @@ officers:
         - 1.5
         - 2.3
         - 3.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -109707,7 +111439,12 @@ officers:
         - 0.8
         - 1.1
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -109750,7 +111487,12 @@ officers:
         - 4.5
         - 6.0
         - 8.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -110188,7 +111930,10 @@ officers:
         - 0.15
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -110276,7 +112021,12 @@ officers:
         - 11.0
         - 14.0
         - 18.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: and
@@ -110809,7 +112559,12 @@ officers:
         - 18.0
         - 21.0
         - 25.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: and
@@ -110883,7 +112638,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -110893,7 +112648,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -111331,7 +113091,10 @@ officers:
         - 0.15
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -111419,7 +113182,12 @@ officers:
         - 11.0
         - 14.0
         - 18.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: and
@@ -111949,7 +113717,10 @@ officers:
         - 2.0
         - 1.75
         - 2.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -112022,7 +113793,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 15.0
       trigger: passive
       duration: permanent
@@ -112032,7 +113803,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -112544,7 +114320,12 @@ officers:
         - 14000.0
         - 15000.0
         - 16000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -113059,7 +114840,10 @@ officers:
         - 0.6
         - 0.1
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -113601,7 +115385,10 @@ officers:
         - 1.15
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -113629,7 +115416,12 @@ officers:
         - 1.0
         - 4.0
         - 7.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: morale_active
@@ -114127,7 +115919,12 @@ officers:
         - 14000.0
         - 15000.0
         - 16000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -114628,7 +116425,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -114638,7 +116435,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -114651,7 +116451,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -114661,7 +116461,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -115101,7 +116906,10 @@ officers:
         - 0.1
         - 0.25
         - 0.65
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -115731,7 +117539,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: add
       value: 1.0
       trigger: on_round_start
       duration:
@@ -115742,7 +117550,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.4
+        - 0.45
+        - 0.52
+        - 0.6
+        - 0.7
       condition:
         type: and
         stat: null
@@ -115791,7 +117604,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:enemy_delay
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -116213,7 +118026,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.3
       trigger: on_round_start
       duration: permanent
@@ -116223,7 +118036,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -116281,7 +118097,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.25
       trigger: on_round_start
       duration: permanent
@@ -116291,7 +118107,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -116778,7 +118599,12 @@ officers:
         - 0.18
         - 0.21
         - 0.24
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -116866,7 +118692,12 @@ officers:
         - 0.65
         - 0.9
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -117392,7 +119223,12 @@ officers:
         - 1.25
         - 1.3
         - 1.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -117863,7 +119699,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.15
       trigger: passive
       duration: permanent
@@ -117873,7 +119709,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -117901,7 +119740,12 @@ officers:
         - 0.1
         - 0.15
         - 0.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -118433,7 +120277,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.7
       trigger: passive
       duration: permanent
@@ -118443,7 +120287,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -118456,7 +120305,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -118466,7 +120315,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -118891,7 +120745,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.4
       trigger: passive
       duration: permanent
@@ -118901,7 +120755,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -118914,7 +120771,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -118924,7 +120781,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -119363,7 +121225,10 @@ officers:
         - 1.2
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -119406,7 +121271,12 @@ officers:
         - 0.07
         - 0.08
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -119980,7 +121850,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: combat_battle_type_any
         stat: null
@@ -120024,7 +121897,12 @@ officers:
         - 1.3
         - 1.4
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: combat_battle_type_any
         stat: null
@@ -120472,7 +122350,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -120482,7 +122360,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -120495,7 +122376,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.8
       trigger: passive
       duration: permanent
@@ -120505,7 +122386,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -120947,7 +122833,12 @@ officers:
         - 7.5
         - 12.5
         - 20.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_is_npc_hostile
@@ -120976,7 +122867,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.15
       trigger: passive
       duration: permanent
@@ -120986,7 +122877,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -121425,7 +123321,10 @@ officers:
         - 1.2
         - 0.4
         - 0.4
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -121453,7 +123352,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: set
       value: 1.0
       trigger: on_round_start
       duration:
@@ -121464,9 +123363,9 @@ officers:
         max_rank: 5
         base_chance: null
         values:
-        - 8.0
         - 4.0
         - 2.0
+        - 64.0
         chance_values:
         - 0.5
         - 0.65
@@ -121913,7 +123812,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.6
       trigger: passive
       duration: permanent
@@ -121923,7 +123822,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -121936,7 +123838,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 3.0
       trigger: passive
       duration: permanent
@@ -121946,7 +123848,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -122385,7 +124292,10 @@ officers:
         - 0.1
         - 0.05
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -122458,7 +124368,12 @@ officers:
         - 0.15
         - 0.15
         - 0.15
-        chance_values: null
+        chance_values:
+        - 0.3
+        - 0.35
+        - 0.4
+        - 0.45
+        - 0.5
       condition: null
       chance: null
       multiplier: null
@@ -122884,7 +124799,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.04
       trigger: on_combat_start
       duration:
@@ -122895,7 +124810,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -122938,7 +124856,12 @@ officers:
         - 1.0
         - 1.0
         - 1.0
-        chance_values: null
+        chance_values:
+        - 0.35
+        - 0.45
+        - 0.55
+        - 0.65
+        - 0.75
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -123392,7 +125315,10 @@ officers:
         - 2000.0
         - 3000.0
         - 3000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -123486,7 +125412,12 @@ officers:
         - 0.06
         - 0.08
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -124073,7 +126004,12 @@ officers:
         - 0.3
         - 0.4
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: combat_battle_type_any
         stat: null
@@ -124535,7 +126471,12 @@ officers:
         - 4.0
         - 7.0
         - 11.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: defender_ship_type_is
@@ -124564,7 +126505,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -124574,7 +126515,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -125015,7 +126961,12 @@ officers:
         - 0.1
         - 0.15
         - 0.25
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -125058,7 +127009,12 @@ officers:
         - 3.0
         - 4.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: defender_is_npc_hostile
@@ -125512,7 +127468,10 @@ officers:
         - 1.0
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -125555,7 +127514,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_hull_faction_id
@@ -125997,7 +127961,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 10.0
       trigger: passive
       duration: permanent
@@ -126007,7 +127971,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -126050,7 +128017,12 @@ officers:
         - 0.75
         - 1.0
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -126565,7 +128537,10 @@ officers:
         - 0.5
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: and
@@ -127108,7 +129083,10 @@ officers:
         - 3.0
         - 0.5
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: literal_false
@@ -127137,7 +129115,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -127147,7 +129125,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -127588,7 +129571,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 4.0
       trigger: passive
       duration: permanent
@@ -127598,7 +129581,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -127626,7 +129612,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.1
       trigger: passive
       duration: permanent
@@ -127636,7 +129622,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -128075,7 +130066,10 @@ officers:
         - 1.0
         - 0.5
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: literal_false
@@ -128119,7 +130113,12 @@ officers:
         - 1.0
         - 1.25
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -128631,7 +130630,12 @@ officers:
         - 0.1
         - 0.12
         - 0.15
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -129115,7 +131119,10 @@ officers:
         - 0.1
         - 0.25
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -129173,7 +131180,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.08
       trigger: on_round_start
       duration:
@@ -129184,7 +131191,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -129671,7 +131683,12 @@ officers:
         - 1.2
         - 1.8
         - 2.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -129744,7 +131761,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.3
       trigger: passive
       duration: permanent
@@ -129754,7 +131771,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -130180,7 +132202,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.8
       trigger: passive
       duration: permanent
@@ -130190,7 +132212,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -130203,7 +132230,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: passive
       duration: permanent
@@ -130213,7 +132240,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -130653,7 +132685,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -130663,7 +132695,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -130676,7 +132711,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.5
       trigger: passive
       duration: permanent
@@ -130686,7 +132721,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -131125,7 +133165,10 @@ officers:
         - 1.6
         - 1.15
         - 1.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -131229,7 +133272,12 @@ officers:
         - 0.7
         - 0.8
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_burning
@@ -131671,7 +133719,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: add
       value: 1.0
       trigger: on_shield_break
       duration:
@@ -131682,11 +133730,14 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.5
+        - 0.1
+        - 0.2
       condition: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:enemy_delay
       accumulate: null
       decay: null
   bridge_ability:
@@ -131710,7 +133761,12 @@ officers:
         - 1.6
         - 1.7
         - 1.8
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -132149,7 +134205,10 @@ officers:
         - 1.2
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -132222,7 +134281,12 @@ officers:
         - 1.1
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -132693,7 +134757,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.25
       trigger: passive
       duration: permanent
@@ -132703,7 +134767,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -132731,7 +134798,12 @@ officers:
         - 1.1
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -133215,7 +135287,10 @@ officers:
         - 1.1
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -133243,7 +135318,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.05
       trigger: passive
       duration: permanent
@@ -133253,7 +135328,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -133692,7 +135772,10 @@ officers:
         - 0.05
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -133720,7 +135803,12 @@ officers:
         - 1.0
         - 4.0
         - 7.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_burning
@@ -134179,7 +136267,12 @@ officers:
         - 1.2
         - 1.8
         - 3.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -134252,7 +136345,12 @@ officers:
         - 0.2
         - 0.3
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -134693,7 +136791,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.6
       trigger: on_combat_start
       duration:
@@ -134704,7 +136802,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -134777,7 +136880,12 @@ officers:
         - 2.0
         - 2.5
         - 3.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -135217,7 +137325,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: add
       value: 1.0
       trigger: on_round_start
       duration:
@@ -135228,7 +137336,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 0.06
+        - 0.01
+        - 0.02
       condition:
         type: and
         stat: null
@@ -135292,7 +137403,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allreloadspeed:unmapped
+      tag: allreloadspeed:enemy_delay
       accumulate: null
       decay: null
   bridge_ability:
@@ -135316,7 +137427,12 @@ officers:
         - 0.15
         - 0.2
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -135800,7 +137916,10 @@ officers:
         - 1.0
         - 0.25
         - 0.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: attack
       condition:
         type: defender_is_npc_hostile
@@ -135829,7 +137948,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -135839,7 +137958,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -136352,7 +138476,12 @@ officers:
         - 0.88
         - 1.0
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -136851,7 +138980,10 @@ officers:
         - 2.0
         - 1.1
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -136894,7 +139026,12 @@ officers:
         - 3.0
         - 3.5
         - 4.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -137366,7 +139503,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 1.5
       trigger: passive
       duration: permanent
@@ -137376,7 +139513,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -137389,7 +139531,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: add
       value: 0.05
       trigger: passive
       duration:
@@ -137400,7 +139542,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -137901,7 +140048,12 @@ officers:
         - 35000.0
         - 50000.0
         - 75000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -138004,7 +140156,12 @@ officers:
         - 2.0
         - 3.0
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -138445,7 +140602,12 @@ officers:
         - 15.0
         - 30.0
         - 50.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: literal_false
@@ -138489,7 +140651,12 @@ officers:
         - 4.5
         - 6.0
         - 8.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: defender_is_npc_hostile
@@ -138946,7 +141113,12 @@ officers:
         - 1.1
         - 1.3
         - 1.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -138989,7 +141161,12 @@ officers:
         - 0.3
         - 0.5
         - 0.7
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -139535,7 +141712,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.2
       trigger: passive
       duration: permanent
@@ -139545,7 +141722,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -139558,7 +141740,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: sub
       value: 0.1
       trigger: on_combat_start
       duration: permanent
@@ -139568,7 +141750,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -140053,7 +142240,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.7
       trigger: passive
       duration: permanent
@@ -140063,7 +142250,10 @@ officers:
         max_rank: 3
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -140091,7 +142281,12 @@ officers:
         - 0.6
         - 0.8
         - 1.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: combat_battle_type_any
         stat: null
@@ -140552,7 +142747,10 @@ officers:
         - 1.1
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -140580,7 +142778,7 @@ officers:
     - type: tag
       stat: null
       target: self
-      operator: null
+      operator: multiply
       value: 0.15
       trigger: passive
       duration: permanent
@@ -140590,7 +142788,12 @@ officers:
         max_rank: 5
         base_chance: null
         values: null
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -141044,7 +143247,10 @@ officers:
         - 1.1
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -141072,7 +143278,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_hull_faction_id
@@ -141527,7 +143738,10 @@ officers:
         - 0.1
         - 0.02
         - 0.05
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -141615,7 +143829,12 @@ officers:
         - 0.75
         - 1.75
         - 5.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: health
       condition:
         type: defender_hull_faction_id
@@ -142070,7 +144289,10 @@ officers:
         - 1.1
         - 1.05
         - 1.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -142113,7 +144335,12 @@ officers:
         - 1.1
         - 1.15
         - 1.2
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: literal_false
         stat: null
@@ -142570,7 +144797,12 @@ officers:
         - 1.4
         - 1.9
         - 2.5
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -142613,7 +144845,12 @@ officers:
         - 0.12
         - 0.2
         - 0.3
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: defender_ship_type_is
         stat: null
@@ -143054,7 +145291,7 @@ officers:
     - type: tag
       stat: null
       target: enemy
-      operator: null
+      operator: multiply
       value: 1.0
       trigger: on_round_start
       duration:
@@ -143116,7 +145353,12 @@ officers:
         - 1500.0
         - 2000.0
         - 3000.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
       condition:
         type: and
         stat: null
@@ -143644,7 +145886,10 @@ officers:
         - 0.15
         - 0.06
         - 0.1
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
       condition: null
       chance: null
       multiplier: null
@@ -143672,7 +145917,12 @@ officers:
         - 0.8
         - 1.6
         - 3.0
-        chance_values: null
+        chance_values:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
         officer_stat: defense
       condition:
         type: morale_active

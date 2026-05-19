@@ -47,6 +47,52 @@ use crate::combat::snapshot::{
 };
 use crate::combat::types::BURNING_HULL_DAMAGE_PER_ROUND;
 
+#[allow(clippy::too_many_arguments)]
+fn apply_defender_fire_delay(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    phase: &str,
+    attacker_id: &str,
+    ability_name: &str,
+    chance: f64,
+    delay_rounds: u32,
+    requires_critical: bool,
+    is_crit: bool,
+    defender_weapon_fire_delayed_rounds: &mut u32,
+) {
+    if requires_critical && !is_crit {
+        return;
+    }
+    let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+    let triggered = roll < chance.clamp(0.0, 1.0);
+    if triggered {
+        *defender_weapon_fire_delayed_rounds =
+            (*defender_weapon_fire_delayed_rounds).max(delay_rounds.max(1));
+    }
+    trace.record_if(|| CombatEvent {
+        event_type: "defender_fire_delay_trigger".to_string(),
+        round_index,
+        phase: phase.to_string(),
+        source: EventSource {
+            officer_id: Some(attacker_id.to_string()),
+            ship_ability_id: Some(ability_name.to_string()),
+            ..EventSource::default()
+        },
+        weapon_index: None,
+        values: Map::from_iter([
+            ("roll".to_string(), Value::from(round_f64(roll))),
+            ("triggered".to_string(), Value::Bool(triggered)),
+            ("chance".to_string(), Value::from(round_f64(chance))),
+            ("delay_rounds".to_string(), Value::from(delay_rounds)),
+            (
+                "requires_critical".to_string(),
+                Value::Bool(requires_critical),
+            ),
+        ]),
+    });
+}
+
 #[inline]
 fn effective_incoming_shield_mitigation(
     base_sm: f64,
@@ -147,8 +193,9 @@ pub fn build_combat_setup(
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
     let combat_begin_pre_scale = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
+    // RoundRange gates on finite-duration combat-begin effects use min: 1 (see Harrison Sabotage).
     let combat_begin_ctx = CombatContext {
-        round_index: 0,
+        round_index: 1,
         defender_hull_pct: 1.0,
         defender_shield_pct: 1.0,
         attacker_hull_pct: 1.0,
@@ -405,6 +452,61 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         &mut defender_burning_rounds,
     );
 
+    for effect in combat_begin_filtered {
+        let effective_effect = scale_effect(effect.effect, combat_begin_assimilated);
+        if let AbilityEffect::DefenderFireDelay {
+            chance,
+            delay_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            apply_defender_fire_delay(
+                &mut trace,
+                &mut rng,
+                0,
+                "combat_begin",
+                &attacker.id,
+                &effect.ability_name,
+                chance,
+                delay_rounds,
+                requires_critical,
+                false,
+                &mut defender_weapon_fire_delayed_rounds,
+            );
+        }
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                shots_bonus_entries.push((bonus_pct, duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "shots_bonus_trigger".to_string(),
+                round_index: 0,
+                phase: "combat_begin".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
     defender_shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
@@ -415,7 +517,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
         let skip_defender_counter_attack = defender_weapon_fire_delayed_rounds > 0;
         if defender_weapon_fire_delayed_rounds > 0 {
-            defender_weapon_fire_delayed_rounds -= 1;
+            defender_weapon_fire_delayed_rounds = defender_weapon_fire_delayed_rounds.saturating_sub(1);
         }
 
         let defender_hull_pct_for_def_round_start =
@@ -723,6 +825,27 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 });
             }
 
+            if let AbilityEffect::DefenderFireDelay {
+                chance,
+                delay_rounds,
+                requires_critical,
+            } = effective_effect
+            {
+                apply_defender_fire_delay(
+                    &mut trace,
+                    &mut rng,
+                    round_index,
+                    "round_start",
+                    &attacker.id,
+                    &effect.ability_name,
+                    chance,
+                    delay_rounds,
+                    requires_critical,
+                    false,
+                    &mut defender_weapon_fire_delayed_rounds,
+                );
+            }
+
             if let AbilityEffect::RandomDefenderState {
                 chance,
                 duration_rounds,
@@ -881,6 +1004,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         };
         combat_ctx.attacker_morale_active = morale_triggered;
         combat_ctx.defender_morale_active = defender_morale_rounds_remaining > 0;
+        // Round-start procs above may have applied breach/burning; refresh gates before attack-phase filtering.
+        combat_ctx.defender_hull_breach_active = defender_hull_breach_rounds > 0;
+        combat_ctx.attacker_hull_breach_active = attacker_hull_breach_rounds > 0;
+        combat_ctx.defender_burning_active = defender_burning_rounds > 0;
+        combat_ctx.attacker_burning_active = attacker_burning_rounds > 0;
 
         let full_round_start = filter_effects_by_condition(round_start_effects, &combat_ctx);
         let round_start_extra: Vec<_> = full_round_start
@@ -1443,6 +1571,27 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             });
                         }
 
+                        if let AbilityEffect::DefenderFireDelay {
+                            chance,
+                            delay_rounds,
+                            requires_critical,
+                        } = effective_effect
+                        {
+                            apply_defender_fire_delay(
+                                &mut trace,
+                                &mut rng,
+                                round_index,
+                                "attack",
+                                &attacker.id,
+                                &effect.ability_name,
+                                chance,
+                                delay_rounds,
+                                requires_critical,
+                                is_crit,
+                                &mut defender_weapon_fire_delayed_rounds,
+                            );
+                        }
+
                         roll_burning_triggers(
                             &mut RoundPhaseCtx {
                                 trace: &mut trace,
@@ -1781,31 +1930,22 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     if let AbilityEffect::DefenderFireDelay {
                         chance,
                         delay_rounds,
+                        requires_critical,
                     } = scale_effect(effect.effect, attack_phase_assimilated)
                     {
-                        let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                        let triggered = roll < chance.clamp(0.0, 1.0);
-                        if triggered {
-                            defender_weapon_fire_delayed_rounds = defender_weapon_fire_delayed_rounds
-                                .max(delay_rounds.max(1));
-                        }
-                        trace.record_if(|| CombatEvent {
-                            event_type: "defender_fire_delay_trigger".to_string(),
+                        apply_defender_fire_delay(
+                            &mut trace,
+                            &mut rng,
                             round_index,
-                            phase: "shield_break".to_string(),
-                            source: EventSource {
-                                officer_id: Some(attacker.id.clone()),
-                                ship_ability_id: Some(effect.ability_name.clone()),
-                                ..EventSource::default()
-                            },
-                            weapon_index: None,
-                            values: Map::from_iter([
-                                ("roll".to_string(), Value::from(round_f64(roll))),
-                                ("triggered".to_string(), Value::Bool(triggered)),
-                                ("chance".to_string(), Value::from(round_f64(chance))),
-                                ("delay_rounds".to_string(), Value::from(delay_rounds)),
-                            ]),
-                        });
+                            "shield_break",
+                            &attacker.id,
+                            &effect.ability_name,
+                            chance,
+                            delay_rounds,
+                            requires_critical,
+                            false,
+                            &mut defender_weapon_fire_delayed_rounds,
+                        );
                     }
                 }
 

@@ -2,7 +2,7 @@
 # Keys must be LCARS officer ids (see officers.lcars.yaml). Regenerate the doc after edits:
 #   cargo run --bin generate_officer_scorecard
 
-chang-ecc238: "Captain weapon bonus condition fixed to hull_hp (enemy hull <60%); bridge reload delay vs breached target is not modeled (reload speed mechanics)."
+chang-ecc238: "Bridge enemy_delay on crit (on_critical) when defender hull breach active; DefenderFireDelay skips counter-fire. Captain weapon bonus uses hull_hp <60% gate."
 gorkon-b8d2e7: "Captain crit window OK; bridge hull breach proc is correctly modeled as hull_breach effect with chance scaling."
 ent-e-data-871245: "Isolytic cascade line OK for combat start; missing non-Armada hostile filter in LCARS."
 jean-luc-picard-e0515c: "Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. Not an officer-stat-scaling gap."
@@ -14,8 +14,12 @@ laliari-87e81a: "Omega-13 cooldown reduction on ship active ability — not mode
 lursa-57a544: "Cloaking cooldown on ship active ability — not modeled in combat sim (:non_combat)."
 phlox-72c07b: "Cutting Beam ability cost on below decks — not modeled in combat sim (:non_combat)."
 neelix-c8a380: "Voyager active-ability cost efficiency — not modeled in combat sim (:non_combat)."
-uhura-ea117c: "Captain shield-break reload delay modeled as skip defender counter-fire for N rounds; chance from rank scaling."
-chang-ecc238: "Bridge allreloadspeed on hull-breach target not separately modeled; captain reload delay uses DefenderFireDelay when present."
+uhura-ea117c: "Captain shield-break enemy_delay: DefenderFireDelay skips defender counter-fire for N rounds; chance from rank scaling."
+kuron-15cda2: "Captain self_recharge at combat start modeled as +100% shots round 1 (ShotsBonus proxy). ModuleKinetic gate is lenient (all weapons) — no weapon-type dimension in engine."
+pon-a2ddd4: "Captain enemy_delay 3R at combat begin; gated SelfExplorer + EnemyPlayer + SelfDefending — inactive in default hostile optimize."
+rom-621ae3: "Captain enemy_delay 1R at combat begin vs station (EnemySentinel + SelfAttacking); inactive vs default NPC hostiles."
+strike-team-ortegas-d9df30: "Bridge enemy_delay at round start vs player defender on BB; upstream trigger is RoundStart (text says on your shot — verify in-game)."
+vixis-9eec06: "Captain enemy_delay 2R at round start; chance rank-scaled."
 zeph-21ee5c: "AddRandomState vs NPC hostiles at round start: rank-scaled proc chance; weighted 8:4:2 Morale / Hull Breach / Burning on defender; defender Morale boosts counter-fire primary pierce (BB/INT)."
 doctor-t-ana-b98f82: "AddRandomState vs player defenders only (PvP); same weighted states and rank proc as Zeph; inactive in default hostile optimize."
 kras-a47042: "CptManeuverEffect + enemy OfficerStatAll are PvP-gated (EnemyPlayer); inactive vs NPC hostiles."

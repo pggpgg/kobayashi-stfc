@@ -1359,6 +1359,7 @@ fn resolve_options_with_candidate_tiers(
 /// candidate and officer data. The fifth element is the per-side summed Attack/Defense/Health
 /// across crewed officers (see `docs/OFFICER_STAT_FORMULA.md` §1); defaults to zero when LCARS
 /// data is unavailable, which silently disables the §2 runtime contribution.
+#[allow(clippy::type_complexity)]
 fn build_crew_and_buffs(
     candidate: &CrewCandidate,
     officers_by_name: &HashMap<String, Officer>,

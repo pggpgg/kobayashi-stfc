@@ -214,12 +214,35 @@ fn normalize_operator(op: Option<&str>) -> String {
         .replace('-', "_")
 }
 
+/// Resolve reload-speed tag using suffix and, for legacy `:unmapped`, target + operator.
+fn reload_tag_stat_from_effect(effect: &LcarsEffect) -> Option<&'static str> {
+    let target = effect
+        .target
+        .as_deref()
+        .unwrap_or("self")
+        .trim()
+        .to_ascii_lowercase();
+    let op = normalize_operator(effect.operator.as_deref());
+    match (target.as_str(), op.as_str()) {
+        ("enemy", "add" | "multiply") => Some("defender_fire_delay"),
+        ("self", "sub") => Some("attacker_weapon_recharge"),
+        _ => None,
+    }
+}
+
 /// Map a combat-intent LCARS `tag` string (e.g. `shieldmitigation:unmapped`) to an engine stat
 /// name when the tag represents a modifier directly expressible as `stat_modify`.
 /// Returns [`None`] for economy / non-combat tags or tags without a direct stat mapping.
+/// Reload-speed tags require [`combat_tag_to_stat_for_effect`] when the suffix is `:unmapped`.
 pub fn combat_tag_to_stat(tag: &str) -> Option<&'static str> {
-    let base = tag
-        .trim()
+    let tag_lower = tag.trim().to_ascii_lowercase();
+    if tag_lower.contains(":enemy_delay") {
+        return Some("defender_fire_delay");
+    }
+    if tag_lower.contains(":self_recharge") {
+        return Some("attacker_weapon_recharge");
+    }
+    let base = tag_lower
         .split(':')
         .next()
         .map(str::to_ascii_lowercase)
@@ -230,19 +253,30 @@ pub fn combat_tag_to_stat(tag: &str) -> Option<&'static str> {
         "shieldpiercing" => Some("pierce"),
         "accuracy" => Some("accuracy"),
         "shields" => Some("shield_hp"),
-        // Officer-stat ability tags (§3 of docs/OFFICER_STAT_FORMULA.md): map to the engine's
-        // officer-rating accumulator keys consumed by `compute_officer_stat_runtime_bonus`.
-        // The `*_all` variant is a synthetic key that boosts all three (Attack / Defense / Health)
-        // ratings; the consumer adds its value to each per-axis multiplier alongside the per-axis
-        // keys.
         "officerstathealth" => Some("officer_health"),
         "officerstatall" => Some("officer_stat_all"),
-        "allreloadspeed" | "allloadspeed" => Some("defender_fire_delay"),
+        "allreloadspeed" | "allloadspeed" => None,
         "addrandomstate" => Some("random_defender_state"),
         "cptmaneuvereffect" => Some("opponent_captain_maneuver"),
         "offabilityeffect" => Some("bridge_ability_effectiveness"),
         _ => None,
     }
+}
+
+/// Like [`combat_tag_to_stat`] but resolves legacy `allreloadspeed:unmapped` using effect target/op.
+pub fn combat_tag_to_stat_for_effect(effect: &LcarsEffect) -> Option<&'static str> {
+    let tag = effect.tag.as_deref().unwrap_or("").trim();
+    if tag.is_empty() {
+        return None;
+    }
+    if let Some(stat) = combat_tag_to_stat(tag) {
+        return Some(stat);
+    }
+    let base = tag.split(':').next().unwrap_or("").to_ascii_lowercase();
+    if (base == "allreloadspeed" || base == "allloadspeed") && tag.contains(":unmapped") {
+        return reload_tag_stat_from_effect(effect);
+    }
+    None
 }
 
 /// LCARS condition → spec IR (same coverage as [`crate::lcars::resolver::resolve_lcars_condition`]).
@@ -480,6 +514,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "officer_health" => Some(AbilityModifierSpec::OfficerHealth),
         "officer_stat_all" => Some(AbilityModifierSpec::OfficerStatAll),
         "defender_fire_delay" => Some(AbilityModifierSpec::DefenderFireDelay),
+        "attacker_weapon_recharge" => Some(AbilityModifierSpec::AttackerWeaponRecharge),
         "random_defender_state" => Some(AbilityModifierSpec::RandomDefenderState),
         "opponent_captain_maneuver" => Some(AbilityModifierSpec::OpponentCaptainManeuverEffect),
         "bridge_ability_effectiveness" => Some(AbilityModifierSpec::BridgeAbilityEffectiveness),
@@ -721,8 +756,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
     // If this is a tag effect, try to map it to an engine stat. Unmapped combat tags
     // (and all non-combat tags) remain unsupported here.
     let tag_mapped_stat: Option<&'static str> = if effect.effect_type == "tag" {
-        let tag_str = effect.tag.as_deref().unwrap_or("");
-        combat_tag_to_stat(tag_str)
+        combat_tag_to_stat_for_effect(effect)
     } else {
         None
     };
@@ -732,12 +766,19 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
         // returning None is intentional, so we don't record them as drops.
         if !tag_str.to_ascii_lowercase().contains(":non_combat") {
             let tag_base = tag_str.split(':').next().unwrap_or("").trim();
+            let reason = if tag_base.eq_ignore_ascii_case("allreloadspeed")
+                || tag_base.eq_ignore_ascii_case("allloadspeed")
+            {
+                format!("unmapped_reload_tag:{tag_base}")
+            } else {
+                format!("unmapped_tag:{tag_base}")
+            };
             maybe_record_drop(
                 &mut drop_report,
                 officer_id,
                 ability_name,
                 effect_index,
-                format!("unmapped_tag:{tag_base}"),
+                reason,
             );
         }
         return None;
@@ -804,6 +845,16 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
         OFFICER_SPEC_ATTR_LCARS_OP.into(),
         serde_json::Value::String(op_norm.clone()),
     );
+    if effect
+        .trigger
+        .as_deref()
+        .is_some_and(|t| t.trim().eq_ignore_ascii_case("on_critical"))
+    {
+        attributes.insert(
+            crate::combat::effect_spec_compile::OFFICER_SPEC_ATTR_REQUIRES_CRITICAL.into(),
+            serde_json::Value::Bool(true),
+        );
+    }
     let operation = op_to_spec(op_norm.as_str());
 
     // stat_modify and mapped-tag effects share the same spec-building logic.
@@ -1544,11 +1595,16 @@ mod tests {
             combat_tag_to_stat("officerstathealth:unmapped"),
             Some("officer_health")
         );
+        assert_eq!(combat_tag_to_stat("officerstatall:unmapped"), Some("officer_stat_all"));
         assert_eq!(
-            combat_tag_to_stat("officerstatall:unmapped"),
-            Some("officer_stat_all")
+            combat_tag_to_stat("allreloadspeed:enemy_delay"),
+            Some("defender_fire_delay")
         );
-        // Economy / unmapped tags
+        assert_eq!(
+            combat_tag_to_stat("allreloadspeed:self_recharge"),
+            Some("attacker_weapon_recharge")
+        );
+        assert_eq!(combat_tag_to_stat("allreloadspeed:unmapped"), None);
         assert_eq!(combat_tag_to_stat("cargoprotection:unmapped"), None);
         assert_eq!(combat_tag_to_stat("impulsespeed:unmapped"), None);
         assert_eq!(combat_tag_to_stat("miningrate:non_combat"), None);
@@ -1599,6 +1655,24 @@ mod tests {
             decay: None,
         };
         assert!(lcars_effect_to_combat_effect_spec(&e, "x", "o", "a", None, None).is_none());
+
+        let enemy = LcarsEffect {
+            target: Some("enemy".into()),
+            operator: Some("add".into()),
+            ..e.clone()
+        };
+        assert!(lcars_effect_to_combat_effect_spec(&enemy, "x", "o", "a", None, None).is_some());
+
+        let self_recharge = LcarsEffect {
+            target: Some("self".into()),
+            operator: Some("sub".into()),
+            tag: Some("allreloadspeed:self_recharge".into()),
+            trigger: Some("on_combat_start".into()),
+            ..e
+        };
+        let spec = lcars_effect_to_combat_effect_spec(&self_recharge, "x", "o", "a", None, None)
+            .expect("self recharge");
+        assert_eq!(spec.modifier, AbilityModifierSpec::AttackerWeaponRecharge);
     }
 
     #[test]

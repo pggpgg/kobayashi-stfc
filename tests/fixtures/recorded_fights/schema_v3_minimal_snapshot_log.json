@@ -46,6 +46,7 @@
           "total_attacker_hull_damage": 0.0,
           "flags": {
             "attacker_morale_active": false,
+            "defender_morale_active": false,
             "defender_burning_active": false,
             "attacker_burning_active": false,
             "defender_hull_breach_active": false,
@@ -88,6 +89,7 @@
           "total_attacker_hull_damage": 0.0,
           "flags": {
             "attacker_morale_active": false,
+            "defender_morale_active": false,
             "defender_burning_active": false,
             "attacker_burning_active": false,
             "defender_hull_breach_active": false,

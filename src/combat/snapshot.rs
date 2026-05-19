@@ -41,6 +41,7 @@ pub struct CombatantSnapshotResources {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CombatSnapshotFlags {
     pub attacker_morale_active: bool,
+    #[serde(default)]
     pub defender_morale_active: bool,
     pub defender_burning_active: bool,
     pub attacker_burning_active: bool,

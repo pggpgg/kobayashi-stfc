@@ -2151,6 +2151,7 @@ fn axis_rating_from_parts(
 /// `bridge_totals`: captain + bridge A/D/H subset of `totals`; required for
 /// [`crate::lcars::resolver::OfficerStatOpponentScope::BridgeOfficers`] debuffs. When `bridge`
 /// equals `totals` (no below-decks officers), bridge-only debuffs still behave correctly.
+#[allow(clippy::too_many_arguments)]
 pub fn compute_officer_stat_runtime_bonus(
     totals: crate::combat::CrewOfficerStatTotals,
     bridge_totals: crate::combat::CrewOfficerStatTotals,
