@@ -337,6 +337,48 @@ pub(crate) fn ship_weapons_with_resolved_pierce_through(
     weapons
 }
 
+/// Attacker outbound weapons with per-row pierce vs a player defender ship.
+pub(crate) fn ship_weapons_with_pierce_vs_defender_ship(
+    ship_rec: &ShipRecord,
+    defender_ship: &ShipRecord,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+) -> Vec<crate::combat::WeaponStats> {
+    let mut weapons = ship_rec.to_weapons();
+    let defender_stats = defender_ship.to_defender_stats();
+    let ship_type = defender_ship.ship_type();
+    let Some(rows) = ship_rec.weapons.as_ref() else {
+        return weapons;
+    };
+    if rows.is_empty() || weapons.is_empty() {
+        return weapons;
+    }
+    let any = rows
+        .iter()
+        .any(|w| w.armor_piercing.is_some() || w.shield_piercing.is_some() || w.accuracy.is_some());
+    if !any {
+        return weapons;
+    }
+    for (i, w) in weapons.iter_mut().enumerate() {
+        let row = rows.get(i);
+        let has_row = row.is_some_and(|r| {
+            r.armor_piercing.is_some() || r.shield_piercing.is_some() || r.accuracy.is_some()
+        });
+        if !has_row {
+            continue;
+        }
+        let stats = effective_attacker_stats_for_ship_weapon_row(
+            ship_rec,
+            row,
+            profile,
+            static_buffs,
+            ship_type,
+        );
+        w.pierce = Some(pierce_damage_through_bonus(defender_stats, stats, ship_type));
+    }
+    weapons
+}
+
 pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     ship_rec: &ShipRecord,
     hostile_rec: &HostileRecord,
@@ -357,6 +399,165 @@ pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     );
     let pierce = pierce_damage_through_bonus(defender_stats, attacker_stats, ship_type);
     (defender_mitigation, pierce)
+}
+
+/// Outbound mitigation and pierce for player attacker vs player defender ship (no hostile mystery factor).
+pub fn mitigation_and_pierce_for_player_vs_player(
+    attacker_ship: &ShipRecord,
+    defender_ship: &ShipRecord,
+    attacker_profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+) -> (f64, f64) {
+    let ship_type = defender_ship.ship_type();
+    let attacker_stats = effective_attacker_stats_for_mitigation(
+        attacker_ship,
+        attacker_profile,
+        static_buffs,
+        ship_type,
+    );
+    let defender_stats = defender_ship.to_defender_stats();
+    let defender_mitigation = mitigation_for_hostile(
+        defender_stats,
+        attacker_stats,
+        ship_type,
+        0.0,
+        MITIGATION_FLOOR,
+        MITIGATION_CEILING,
+    );
+    let pierce = pierce_damage_through_bonus(defender_stats, attacker_stats, ship_type);
+    (defender_mitigation, pierce)
+}
+
+/// Per-weapon pierce for defender ship counter-fire vs attacker hull class.
+pub(crate) fn ship_weapons_with_pierce_vs_player_defender(
+    defender_ship: &ShipRecord,
+    defender_profile: &PlayerProfile,
+    defender_static_buffs: &HashMap<String, f64>,
+    attacker_ship_type: ShipType,
+    attacker_defender_stats: DefenderStats,
+) -> Vec<crate::combat::WeaponStats> {
+    let mut weapons = defender_ship.to_weapons();
+    let Some(rows) = defender_ship.weapons.as_ref() else {
+        let stats = effective_attacker_stats_for_mitigation(
+            defender_ship,
+            defender_profile,
+            defender_static_buffs,
+            attacker_ship_type,
+        );
+        let pierce = pierce_damage_through_bonus(attacker_defender_stats, stats, attacker_ship_type);
+        for w in &mut weapons {
+            if w.pierce.is_none() {
+                w.pierce = Some(pierce);
+            }
+        }
+        return weapons;
+    };
+    if rows.is_empty() || weapons.is_empty() {
+        return weapons;
+    }
+    for (i, w) in weapons.iter_mut().enumerate() {
+        let row = rows.get(i);
+        let stats = effective_attacker_stats_for_ship_weapon_row(
+            defender_ship,
+            row,
+            defender_profile,
+            defender_static_buffs,
+            attacker_ship_type,
+        );
+        w.pierce = Some(pierce_damage_through_bonus(
+            attacker_defender_stats,
+            stats,
+            attacker_ship_type,
+        ));
+    }
+    weapons
+}
+
+/// Ship-vs-ship defender [`Combatant`] (counter-fire uses defender weapons vs attacker `to_defender_stats`).
+fn defender_combatant_from_ship_record(
+    defender_lookup_id: &str,
+    defender_ship: &ShipRecord,
+    defender_mitigation: f64,
+    attacker_ship_type: ShipType,
+    attacker_defender_stats: DefenderStats,
+    defender_profile: &PlayerProfile,
+    defender_static_buffs: &HashMap<String, f64>,
+) -> Combatant {
+    let weapons = ship_weapons_with_pierce_vs_player_defender(
+        defender_ship,
+        defender_profile,
+        defender_static_buffs,
+        attacker_ship_type,
+        attacker_defender_stats,
+    );
+    let attack = if weapons.is_empty() {
+        defender_ship.attack
+    } else {
+        0.0
+    };
+    let counter_stats = effective_attacker_stats_for_mitigation(
+        defender_ship,
+        defender_profile,
+        defender_static_buffs,
+        attacker_ship_type,
+    );
+    let pierce = pierce_damage_through_bonus(
+        attacker_defender_stats,
+        counter_stats,
+        attacker_ship_type,
+    );
+    Combatant {
+        id: defender_lookup_id.to_string(),
+        attack,
+        mitigation: defender_mitigation,
+        pierce,
+        crit_chance: defender_ship.crit_chance,
+        crit_multiplier: defender_ship.crit_damage,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: defender_ship.hull_health,
+        shield_health: defender_ship.shield_health,
+        shield_mitigation: defender_ship.shield_mitigation.unwrap_or(0.8),
+        apex_barrier: 0.0,
+        apex_shred: defender_ship.apex_shred,
+        isolytic_damage: defender_ship.isolytic_damage,
+        isolytic_defense: 0.0,
+        weapons,
+        hostile_mitigation_params: None,
+    }
+}
+
+/// PvP scenario: fixed defender player ship + opponent profile (optimize searches attacker crews only).
+#[derive(Debug, Clone)]
+pub struct PvpScenarioParams {
+    pub defender_ship: String,
+    pub defender_ship_tier: Option<u32>,
+    pub defender_ship_level: Option<u32>,
+    pub defender_profile_id: String,
+}
+
+/// Build PvP params when API validation has already ensured `defender_profile_id` is present.
+pub fn pvp_scenario_params_from_api_fields(
+    defender_ship: Option<&str>,
+    defender_ship_tier: Option<u32>,
+    defender_ship_level: Option<u32>,
+    defender_profile_id: Option<&str>,
+) -> Option<PvpScenarioParams> {
+    let ds = defender_ship?.trim();
+    if ds.is_empty() {
+        return None;
+    }
+    let pid = defender_profile_id?.trim();
+    if pid.is_empty() {
+        return None;
+    }
+    Some(PvpScenarioParams {
+        defender_ship: ds.to_string(),
+        defender_ship_tier,
+        defender_ship_level,
+        defender_profile_id: pid.to_string(),
+    })
 }
 
 /// Defender [`Combatant`] from [`HostileRecord`], including weapons and pierce/crit used on the
@@ -497,6 +698,13 @@ pub(crate) struct SharedScenarioData {
     pub player_defender_officer_seats: Vec<CrewSeatContext>,
     /// Static buff map from optional defender officer LCARS; merged onto defender [`Combatant`] at scenario build.
     pub player_defender_static_buffs: HashMap<String, f64>,
+    /// When set, defender stats come from [`Self::defender_ship_rec`] + [`Self::defender_profile`] (ship-vs-ship PvP).
+    pub pvp: Option<PvpScenarioParams>,
+    pub defender_ship_rec: Option<ShipRecord>,
+    pub defender_profile: Option<PlayerProfile>,
+    /// Incoming shield mitigation on the **attacker** from counter-fire (defender profile research).
+    pub defender_incoming_shield_mitigation_bonus: f64,
+    pub defender_incoming_shield_mitigation_bonus_rounds: u32,
 }
 
 fn attacker_owner_faction_from_ship(ship_rec: Option<&ShipRecord>) -> OpponentFactionTag {
@@ -511,7 +719,7 @@ fn dual_gate_hull_shield_for_scenario(
     imported_research: &[import::ResearchEntry],
     exclude_canonical_rids: &HashSet<i64>,
     ship_rec: Option<&ShipRecord>,
-    hostile_rec: Option<&HostileRecord>,
+    defender_faction: OpponentFactionTag,
 ) -> (f64, f64) {
     let Some(cat) = catalog else {
         return (0.0, 0.0);
@@ -523,15 +731,25 @@ fn dual_gate_hull_shield_for_scenario(
         .iter()
         .filter(|r| levels.contains_key(&r.rid))
         .collect();
-    let defender_tag = hostile_rec
-        .map(|h| h.opponent_faction_tag())
-        .unwrap_or(OpponentFactionTag::Unknown);
     cumulative_dual_gate_hull_shield_research_fractions(
         &records,
         &levels,
         ship_rec.and_then(|s| s.faction.as_deref()),
-        defender_tag,
+        defender_faction,
     )
+}
+
+fn defender_faction_tag_for_scenario(
+    hostile_rec: Option<&HostileRecord>,
+    defender_ship_rec: Option<&ShipRecord>,
+) -> OpponentFactionTag {
+    if let Some(h) = hostile_rec {
+        return h.opponent_faction_tag();
+    }
+    defender_ship_rec
+        .and_then(|s| s.faction.as_deref())
+        .and_then(OpponentFactionTag::from_data_slug)
+        .unwrap_or(OpponentFactionTag::Unknown)
 }
 
 fn apply_dual_gate_hull_shield_research(attacker: &mut Combatant, shared: &SharedScenarioData) {
@@ -546,10 +764,17 @@ fn apply_dual_gate_hull_shield_research(attacker: &mut Combatant, shared: &Share
 impl SharedScenarioData {
     /// Hostile hull class for ability conditions and mitigation (defaults when no hostile record).
     pub(crate) fn defender_ship_type_for_combat(&self) -> ShipType {
+        if let Some(ref ds) = self.defender_ship_rec {
+            return ds.ship_type();
+        }
         self.hostile_rec
             .as_ref()
             .map(|h| h.ship_type_for_combat())
             .unwrap_or(ShipType::Battleship)
+    }
+
+    pub(crate) fn is_pvp(&self) -> bool {
+        self.pvp.is_some()
     }
 
     /// Hostile tag bitmask for [`crate::combat::SimulationConfig::defender_hostile_tag_mask`] (0 when no hostile record or no tags).
@@ -653,11 +878,19 @@ pub(crate) fn scenario_to_combat_input_from_shared(
 
     let hostile_ability_catalog =
         load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
-    let mut defender_crew = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog.as_ref()))
-        .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() });
+    let mut defender_crew = if shared.is_pvp() {
+        let mut seats = Vec::new();
+        extend_crew_with_ship_abilities(&mut seats, shared.defender_ship_rec.as_ref());
+        CrewConfiguration { seats }
+    } else {
+        shared
+            .hostile_rec
+            .as_ref()
+            .map(|h| {
+                hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog.as_ref())
+            })
+            .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() })
+    };
     defender_crew
         .seats
         .extend_from_slice(&shared.player_defender_officer_seats);
@@ -668,10 +901,17 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared.cached_rounds,
         shared.cached_defender_hull,
     ) {
-        let (defender_mitigation, pierce) = shared
-            .hostile_rec
-            .as_ref()
-            .map(|h| {
+        let (defender_mitigation, pierce) = if shared.is_pvp() {
+            shared.defender_ship_rec.as_ref().map(|def_ship| {
+                mitigation_and_pierce_for_player_vs_player(
+                    ship_rec,
+                    def_ship,
+                    &shared.profile,
+                    &merged_static,
+                )
+            })
+        } else {
+            shared.hostile_rec.as_ref().map(|h| {
                 mitigation_and_pierce_for_player_vs_hostile(
                     ship_rec,
                     h,
@@ -679,14 +919,15 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                     &merged_static,
                 )
             })
-            .unwrap_or_else(|| {
-                (
-                    shared
-                        .cached_defender_mitigation
-                        .unwrap_or(cached_defender.mitigation),
-                    shared.cached_pierce.unwrap_or(0.0),
-                )
-            });
+        }
+        .unwrap_or_else(|| {
+            (
+                shared
+                    .cached_defender_mitigation
+                    .unwrap_or(cached_defender.mitigation),
+                shared.cached_pierce.unwrap_or(0.0),
+            )
+        });
         let mut defender = cached_defender.clone();
         defender.mitigation = defender_mitigation;
         apply_support_defender_static_if_pvp(shared, &mut defender);
@@ -714,18 +955,33 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 apex_shred: ship_rec.apex_shred,
                 isolytic_damage: ship_rec.isolytic_damage,
                 isolytic_defense: 0.0,
-                weapons: shared
-                    .hostile_rec
-                    .as_ref()
-                    .map(|h| {
-                        ship_weapons_with_resolved_pierce_through(
-                            ship_rec,
-                            h,
-                            &shared.profile,
-                            &merged_static,
-                        )
-                    })
-                    .unwrap_or_else(|| ship_rec.to_weapons()),
+                weapons: if shared.is_pvp() {
+                    shared
+                        .defender_ship_rec
+                        .as_ref()
+                        .map(|def_ship| {
+                            ship_weapons_with_pierce_vs_defender_ship(
+                                ship_rec,
+                                def_ship,
+                                &shared.profile,
+                                &merged_static,
+                            )
+                        })
+                        .unwrap_or_else(|| ship_rec.to_weapons())
+                } else {
+                    shared
+                        .hostile_rec
+                        .as_ref()
+                        .map(|h| {
+                            ship_weapons_with_resolved_pierce_through(
+                                ship_rec,
+                                h,
+                                &shared.profile,
+                                &merged_static,
+                            )
+                        })
+                        .unwrap_or_else(|| ship_rec.to_weapons())
+                },
                 hostile_mitigation_params: None,
             },
             &shared.profile,
@@ -809,8 +1065,16 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             engagement_enemy_types: shared.engagement_enemy_types.clone(),
             defender_level: shared.defender_level,
             attacker_roster_officer_ids,
-            incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
-            incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
+            incoming_shield_mitigation_bonus: if shared.is_pvp() {
+                shared.defender_incoming_shield_mitigation_bonus
+            } else {
+                shared.incoming_shield_mitigation_bonus
+            },
+            incoming_shield_mitigation_bonus_rounds: if shared.is_pvp() {
+                shared.defender_incoming_shield_mitigation_bonus_rounds
+            } else {
+                shared.incoming_shield_mitigation_bonus_rounds
+            },
             attacker_owner_faction: shared.attacker_owner_faction,
         };
     }
@@ -1104,10 +1368,17 @@ fn build_officer_stat_condition_context(
     ship_rec: &ShipRecord,
 ) -> crate::data::profile::OfficerStatConditionContext {
     let defender_ship_type = shared
-        .hostile_rec
+        .defender_ship_rec
         .as_ref()
-        .map(|h| h.ship_class.trim().to_string())
-        .filter(|s| !s.is_empty());
+        .map(|s| s.ship_class.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .or_else(|| {
+            shared
+                .hostile_rec
+                .as_ref()
+                .map(|h| h.ship_class.trim().to_string())
+                .filter(|s| !s.is_empty())
+        });
     // HostileRecord carries no faction slug — only the numeric id on the embedded
     // HostileFactionRef. defender_faction_slug stays None (no condition in production data
     // exercises it today); defender_hull_faction_id_is reads the numeric id.
@@ -1798,13 +2069,15 @@ pub(crate) fn build_shared_scenario_data_standalone(
     let defender_level = hostile_rec.as_ref().map(|h| h.level);
 
     let attacker_owner_faction = attacker_owner_faction_from_ship(ship_rec.as_ref());
+    let defender_faction_tag =
+        defender_faction_tag_for_scenario(hostile_rec.as_ref(), None);
     let (dual_gate_research_hull_hp, dual_gate_research_shield_hp) =
         dual_gate_hull_shield_for_scenario(
             shared_research_catalog.as_ref(),
             &imported_research,
             &exclude_canonical_rids,
             ship_rec.as_ref(),
-            hostile_rec.as_ref(),
+            defender_faction_tag,
         );
 
     let (player_defender_officer_seats, player_defender_static_buffs) =
@@ -1850,7 +2123,107 @@ pub(crate) fn build_shared_scenario_data_standalone(
         incoming_shield_mitigation_bonus_rounds,
         player_defender_officer_seats,
         player_defender_static_buffs,
+        pvp: None,
+        defender_ship_rec: None,
+        defender_profile: None,
+        defender_incoming_shield_mitigation_bonus: 0.0,
+        defender_incoming_shield_mitigation_bonus_rounds: 0,
     }
+}
+
+/// Merge buildings, research, and forbidden tech into a profile for PvP defender-side stats.
+fn load_defender_profile_for_pvp(
+    registry: &crate::data::data_registry::DataRegistry,
+    defender_profile_id: &str,
+    defender_ship_id: &str,
+) -> (PlayerProfile, f64, u32) {
+    let pid = profile_index::resolve_profile_id_for_api(Some(defender_profile_id));
+    let profile_path_str = profile_path(&pid, PROFILE_JSON)
+        .to_string_lossy()
+        .to_string();
+    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let mut profile = load_profile(&profile_path_str);
+    let ft_entries = import::load_imported_forbidden_tech(&ft_path).unwrap_or_default();
+    let scale_by_level_tier = forbidden_tech_level_tier_scaling_enabled_from_env();
+    let effective_fids: Vec<i64> = registry
+        .forbidden_chaos_catalog()
+        .map(|c| resolve_effective_tech_fids(&profile, &ft_entries, c))
+        .unwrap_or_default();
+    if let Some(catalog) = registry.forbidden_chaos_catalog() {
+        if !effective_fids.is_empty() {
+            merge_tech_fids_into_profile_with_level_tier(
+                &mut profile,
+                &effective_fids,
+                &ft_entries,
+                catalog,
+                scale_by_level_tier,
+            );
+        }
+    }
+    if let Some(imported_buildings) = import::load_imported_buildings(
+        profile_path(&pid, BUILDINGS_IMPORTED)
+            .to_string_lossy()
+            .as_ref(),
+    ) {
+        if !imported_buildings.is_empty() {
+            if let Some(building_index) =
+                building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
+            {
+                if let Some(bid_to_id) = load_bid_to_building_id(
+                    DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
+                    &building_index,
+                ) {
+                    let building_context = BuildingBonusContext {
+                        ops_level: profile
+                            .ops_level
+                            .or_else(|| infer_ops_level(&imported_buildings, &bid_to_id)),
+                        mode: BuildingMode::ShipCombat,
+                        defender_opponent: BuildingDefenderOpponent::PlayerShip,
+                        attacker_faction: resolve_ship(defender_ship_id)
+                            .and_then(|s| s.faction)
+                            .as_deref()
+                            .map(BuildingAttackerFaction::from_ship_faction_slug)
+                            .unwrap_or(BuildingAttackerFaction::Unknown),
+                        attacker_tal_assigned_captain_or_bridge: false,
+                    };
+                    let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
+                        .parent()
+                        .unwrap_or_else(|| Path::new("data/buildings"));
+                    merge_building_bonuses_into_profile(
+                        &mut profile,
+                        &imported_buildings,
+                        &bid_to_id,
+                        &building_index,
+                        data_dir,
+                        &building_context,
+                    );
+                }
+            }
+        }
+    }
+    let research_path = profile_path(&pid, RESEARCH_IMPORTED)
+        .to_string_lossy()
+        .into_owned();
+    let imported_research = import::load_imported_research(&research_path).unwrap_or_default();
+    let canonical_overrides = load_research_canonical_overrides(DEFAULT_RESEARCH_CANONICAL_PATH);
+    let exclude_canonical_rids: HashSet<i64> = canonical_overrides.keys().copied().collect();
+    let (incoming_shield_mitigation_bonus, incoming_shield_mitigation_bonus_rounds) =
+        incoming_shield_mitigation_for_combat(&imported_research, &canonical_overrides);
+    if let Some(catalog) = registry.research_catalog() {
+        merge_research_bonuses_into_profile(
+            &mut profile,
+            &imported_research,
+            catalog,
+            Some(&exclude_canonical_rids),
+        );
+    }
+    (
+        profile,
+        incoming_shield_mitigation_bonus,
+        incoming_shield_mitigation_bonus_rounds,
+    )
 }
 
 /// Build SharedScenarioData from registry (officers, ship, hostile) and load profile/roster/LCARS at call time.
@@ -1865,7 +2238,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     support_buffs_request: Option<&[String]>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<PvpScenarioParams>,
 ) -> SharedScenarioData {
+    let defender_opponent = if pvp.is_some() {
+        DefenderOpponent::Player
+    } else {
+        defender_opponent
+    };
     let officer_index = registry.officer_index().clone();
 
     let pid = profile_index::resolve_profile_id_for_api(profile_id);
@@ -2075,7 +2454,27 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .unwrap_or_default();
 
     let ship_rec = registry.resolve_ship_with_tier_level(ship, ship_tier, ship_level);
-    let hostile_rec = registry.resolve_hostile(hostile);
+    let hostile_rec = if pvp.is_some() {
+        None
+    } else {
+        registry.resolve_hostile(hostile)
+    };
+    let (defender_ship_rec, defender_profile, defender_incoming_shield_mitigation_bonus, defender_incoming_shield_mitigation_bonus_rounds) =
+        if let Some(ref pvp_cfg) = pvp {
+            let def_rec = registry.resolve_ship_with_tier_level(
+                &pvp_cfg.defender_ship,
+                pvp_cfg.defender_ship_tier,
+                pvp_cfg.defender_ship_level,
+            );
+            let (def_prof, ism, ismr) = load_defender_profile_for_pvp(
+                registry,
+                &pvp_cfg.defender_profile_id,
+                &pvp_cfg.defender_ship,
+            );
+            (def_rec, Some(def_prof), ism, ismr)
+        } else {
+            (None, None, 0.0, 0)
+        };
 
     let class_gated_tp_hull = registry.forbidden_chaos_catalog().and_then(|cat| {
         if effective_fids.is_empty() {
@@ -2126,7 +2525,48 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         cached_defender_hull,
         cached_pierce,
         cached_defender_mitigation,
-    ) = if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
+    ) = if let (Some(ref ship_r), Some(ref def_ship_r), Some(ref def_profile)) =
+        (&ship_rec, &defender_ship_rec, &defender_profile)
+    {
+        let empty_buffs = HashMap::new();
+        let (defender_mitigation, pierce) = mitigation_and_pierce_for_player_vs_player(
+            ship_r,
+            def_ship_r,
+            &profile,
+            &empty_buffs,
+        );
+        let def_level = pvp
+            .as_ref()
+            .and_then(|p| p.defender_ship_level)
+            .unwrap_or(1);
+        let rounds = 100u32.min(10u32.saturating_add(def_level));
+        let defender_id = pvp
+            .as_ref()
+            .map(|p| p.defender_ship.as_str())
+            .unwrap_or(hostile);
+        let mut defender = defender_combatant_from_ship_record(
+            defender_id,
+            def_ship_r,
+            defender_mitigation,
+            ship_r.ship_type(),
+            ship_r.to_defender_stats(),
+            def_profile,
+            &empty_buffs,
+        );
+        defender = apply_profile_to_attacker(
+            defender,
+            def_profile,
+            def_ship_r.faction.as_deref(),
+            crate::data::profile::OfficerStatRuntimeBonus::default(),
+        );
+        (
+            Some(defender),
+            Some(rounds),
+            Some(def_ship_r.hull_health),
+            Some(pierce),
+            Some(defender_mitigation),
+        )
+    } else if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
         let mut attacker_stats = ship_r.to_attacker_stats();
         apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, &profile);
         let defender_mitigation = mitigation_for_hostile(
@@ -2164,20 +2604,30 @@ pub(crate) fn build_shared_scenario_data_from_registry(
 
     let using_placeholder_combatants = cached_defender.is_none();
 
-    let engagement_enemy_types = hostile_rec
-        .as_ref()
-        .map(|h| h.engagement_enemy_types_for_combat())
-        .unwrap_or_default();
-    let defender_level = hostile_rec.as_ref().map(|h| h.level);
+    let engagement_enemy_types = if pvp.is_some() {
+        EnemyTypes::default()
+    } else {
+        hostile_rec
+            .as_ref()
+            .map(|h| h.engagement_enemy_types_for_combat())
+            .unwrap_or_default()
+    };
+    let defender_level = if let Some(ref pvp_cfg) = pvp {
+        pvp_cfg.defender_ship_level
+    } else {
+        hostile_rec.as_ref().map(|h| h.level)
+    };
 
     let attacker_owner_faction = attacker_owner_faction_from_ship(ship_rec.as_ref());
+    let defender_faction_tag =
+        defender_faction_tag_for_scenario(hostile_rec.as_ref(), defender_ship_rec.as_ref());
     let (dual_gate_research_hull_hp, dual_gate_research_shield_hp) =
         dual_gate_hull_shield_for_scenario(
             registry.research_catalog(),
             &imported_research,
             &exclude_canonical_rids,
             ship_rec.as_ref(),
-            hostile_rec.as_ref(),
+            defender_faction_tag,
         );
 
     let (player_defender_officer_seats, player_defender_static_buffs) =
@@ -2188,9 +2638,14 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             &resolve_options,
         );
 
+    let scenario_hostile_key = pvp
+        .as_ref()
+        .map(|p| p.defender_ship.clone())
+        .unwrap_or_else(|| hostile.to_string());
+
     SharedScenarioData {
         ship: ship.to_string(),
-        hostile: hostile.to_string(),
+        hostile: scenario_hostile_key,
         officer_index,
         profile,
         lcars_data,
@@ -2223,6 +2678,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         incoming_shield_mitigation_bonus_rounds,
         player_defender_officer_seats,
         player_defender_static_buffs,
+        pvp,
+        defender_ship_rec,
+        defender_profile,
+        defender_incoming_shield_mitigation_bonus,
+        defender_incoming_shield_mitigation_bonus_rounds,
     }
 }
 
@@ -2513,6 +2973,7 @@ mod tests {
             None,
             DefenderOpponent::Hostile,
             None,
+            None,
         );
 
         let ship = shared.ship_rec.as_ref().expect("ship record");
@@ -2796,6 +3257,11 @@ mod tests {
             incoming_shield_mitigation_bonus_rounds: 0,
             player_defender_officer_seats: vec![],
             player_defender_static_buffs: HashMap::new(),
+            pvp: None,
+            defender_ship_rec: None,
+            defender_profile: None,
+            defender_incoming_shield_mitigation_bonus: 0.0,
+            defender_incoming_shield_mitigation_bonus_rounds: 0,
         };
 
         let candidate = CrewCandidate {
@@ -2958,6 +3424,7 @@ mod tests {
             Some(&entry.id),
             None,
             DefenderOpponent::Hostile,
+            None,
             None,
         );
 

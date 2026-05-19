@@ -20,6 +20,7 @@ What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](N
 - Chain-grinding simulation (N sequential fights, hull carry-over, full shields each link) — optimizer + API + UI
 - SSE streaming for long-running optimize jobs
 - Process-wide CPU admission control (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`, optional bounded queue)
+- **PvP mode** (`/pvp`): ship-vs-ship fights with a fixed defender ship + opponent profile; optimize searches attacker crews only ([PVP.md](PVP.md))
 
 ## Planned
 
@@ -27,7 +28,7 @@ What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](N
 - Armada mode (multi-ship combat)
 - Sensitivity analysis ("what if I promote this officer one rank?")
 - Full LCARS coverage of all 280+ officers (incremental; see [OFFICER_MODELING_SCORECARD.md](OFFICER_MODELING_SCORECARD.md) for fidelity gaps)
-- Defender-side support buffs and alliance debuffs as scenario inputs
+- Defender-side support buffs and alliance debuffs as scenario inputs (partial: defender-static support buff keys apply in PvP-shaped scenarios; alliance debuffs not yet scenario inputs)
 
 ## Buildings
 

@@ -6,6 +6,7 @@ import Workspace from "./pages/Workspace";
 const ResultsLibrary = lazy(() => import("./pages/ResultsLibrary"));
 const RosterProfile = lazy(() => import("./pages/RosterProfile"));
 const DataMechanics = lazy(() => import("./pages/DataMechanics"));
+const PvpWorkspace = lazy(() => import("./pages/PvpWorkspace"));
 
 function RouteFallback() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Workspace />} />
+          <Route path="/pvp" element={<PvpWorkspace />} />
           <Route path="/results" element={<ResultsLibrary />} />
           <Route path="/roster" element={<RosterProfile />} />
           <Route path="/data" element={<DataMechanics />} />

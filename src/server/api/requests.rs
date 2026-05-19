@@ -207,6 +207,13 @@ pub struct OptimizeRequest {
     /// Opaque fingerprint (same string as SPA `buildOptimizeWarmStartKey`) for `profiles/{id}/optimize_history.json`.
     #[serde(default)]
     pub optimize_cache_key: Option<String>,
+    /// PvP: defender player ship (mutually exclusive with `hostile`). Requires `defender_profile_id`.
+    #[serde(default)]
+    pub defender_ship: Option<String>,
+    pub defender_ship_tier: Option<u32>,
+    pub defender_ship_level: Option<u32>,
+    #[serde(default)]
+    pub defender_profile_id: Option<String>,
 }
 
 /// Resolve the effective [`BelowDecksPoolMode`] for a request. New `below_decks_pool_mode` field
@@ -323,11 +330,14 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         });
     }
 
-    if request.hostile.trim().is_empty() {
-        errors.push(ValidationIssue {
-            field: "hostile",
-            messages: vec!["must not be empty".to_string()],
-        });
+    if let Err(pvp_errors) = super::pvp::validate_scenario_target(&super::pvp::ScenarioTargetFields {
+        hostile: Some(request.hostile.clone()),
+        defender_ship: request.defender_ship.clone(),
+        defender_ship_tier: request.defender_ship_tier,
+        defender_ship_level: request.defender_ship_level,
+        defender_profile_id: request.defender_profile_id.clone(),
+    }) {
+        errors.extend(pvp_errors);
     }
 
     if !(1..=MAX_SIMS).contains(&sims) {
@@ -883,6 +893,10 @@ pub fn parse_optimize_estimate_query(
         novelty_pool: None,
         novelty_history_anchors: None,
         optimize_cache_key: None,
+        defender_ship: None,
+        defender_ship_tier: None,
+        defender_ship_level: None,
+        defender_profile_id: None,
     };
     let mode = below_decks_pool_mode_resolved(&stub);
     Ok((

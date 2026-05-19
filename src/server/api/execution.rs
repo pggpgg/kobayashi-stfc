@@ -25,7 +25,8 @@ use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_with_shared, scenario::build_shared_scenario_data_from_registry,
+    run_monte_carlo_with_shared,
+    scenario::{build_shared_scenario_data_from_registry, DefenderOpponent},
     SimulationResult,
 };
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
@@ -861,16 +862,31 @@ fn gather_optimize_simulation_results(
         *sink_skip = fast_discovery && !is_seeded_genetic;
     }
 
+    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
+        request.defender_ship.as_deref(),
+        request.defender_ship_tier,
+        request.defender_ship_level,
+        request.defender_profile_id.as_deref(),
+    );
+    let scenario_hostile: String = pvp
+        .as_ref()
+        .map(|p| p.defender_ship.clone())
+        .unwrap_or_else(|| request.hostile.trim().to_string());
     let shared_scenario = build_shared_scenario_data_from_registry(
         registry,
         &request.ship,
-        &request.hostile,
+        scenario_hostile.as_str(),
         request.ship_tier,
         request.ship_level,
         profile_id,
         request.support_buffs.as_deref(),
-        request.defender_opponent,
+        if pvp.is_some() {
+            DefenderOpponent::Player
+        } else {
+            request.defender_opponent
+        },
         player_defender_officer_crew.clone(),
+        pvp.clone(),
     );
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
 
@@ -911,7 +927,7 @@ fn gather_optimize_simulation_results(
     let analytical_prefilter = if !heuristics_only {
         let scenario = OptimizationScenario {
             ship: &request.ship,
-            hostile: &request.hostile,
+            hostile: scenario_hostile.as_str(),
             ship_tier: request.ship_tier,
             ship_level: request.ship_level,
             simulation_count: sims as usize,
@@ -950,8 +966,13 @@ fn gather_optimize_simulation_results(
             constraints: crew_constraints.clone(),
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
             chain_grind: chain_grind.clone(),
-            defender_opponent: request.defender_opponent,
+            defender_opponent: if pvp.is_some() {
+                DefenderOpponent::Player
+            } else {
+                request.defender_opponent
+            },
             player_defender_officer_crew: player_defender_officer_crew.clone(),
+            pvp: pvp.clone(),
             warm_start: scenario_warm_start,
             prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),

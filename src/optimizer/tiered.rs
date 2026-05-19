@@ -409,6 +409,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<super::monte_carlo::scenario::PvpScenarioParams>,
     // When set, matching crews skip scout and/or confirm Monte Carlo using stored aggregates.
     preconfirmed: Option<&HashMap<u64, SimulationResult>>,
     scout_adaptive: bool,
@@ -457,6 +458,7 @@ where
         support_buffs,
         defender_opponent,
         player_defender_officer_crew,
+        pvp,
     );
 
     let scout_cap = scout_sims.max(1);

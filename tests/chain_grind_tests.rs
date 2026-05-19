@@ -39,6 +39,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
         None,
         DefenderOpponent::Hostile,
         None,
+        None,
     );
     let (chain, ph2) = run_monte_carlo_with_registry(
         &registry,
@@ -56,6 +57,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
             secondary: ChainSecondaryObjective::MinHullDamage,
         }),
         DefenderOpponent::Hostile,
+        None,
         None,
     );
 

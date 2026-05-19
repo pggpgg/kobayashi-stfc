@@ -477,6 +477,11 @@ mod tests {
             incoming_shield_mitigation_bonus_rounds: 0,
             player_defender_officer_seats: vec![],
             player_defender_static_buffs: Default::default(),
+            pvp: None,
+            defender_ship_rec: None,
+            defender_profile: None,
+            defender_incoming_shield_mitigation_bonus: 0.0,
+            defender_incoming_shield_mitigation_bonus_rounds: 0,
         }
     }
 

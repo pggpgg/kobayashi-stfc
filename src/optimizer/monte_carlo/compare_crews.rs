@@ -225,6 +225,7 @@ pub fn compare_crews_monte_carlo_with_registry(
     proc_sample_trials: u32,
     support_buffs: Option<&[String]>,
     defender_opponent: DefenderOpponent,
+    pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> CompareCrewsOutcome {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -236,6 +237,7 @@ pub fn compare_crews_monte_carlo_with_registry(
         support_buffs,
         defender_opponent,
         None,
+        pvp,
     );
     let placeholder = shared.using_placeholder_combatants;
     let crews: Vec<CompareCrewDistribution> = candidates

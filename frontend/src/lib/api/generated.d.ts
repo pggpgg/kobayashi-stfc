@@ -1817,6 +1817,12 @@ export interface components {
             defender_opponent?: string;
             /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities in PvE). Same shape as `crew`. Non-empty `captain` required when any bridge or below_deck slot is set; omitted or empty = defender officers from hostile data only. */
             defender_crew?: components["schemas"]["SimulateCrew"];
+            /** @description Player defender ship id (ships_extended). Mutually exclusive with `hostile`. Requires `defender_profile_id` (opponent account profile, not the attacker profile header). */
+            defender_ship?: string;
+            defender_ship_tier?: number;
+            defender_ship_level?: number;
+            /** @description Opponent profile id when `defender_ship` is set. */
+            defender_profile_id?: string;
         };
         SimulateStats: {
             win_rate: number;
@@ -1847,6 +1853,11 @@ export interface components {
             proc_sample_trials?: number;
             support_buffs?: string[];
             defender_opponent?: string;
+            defender_crew?: components["schemas"]["SimulateCrew"];
+            defender_ship?: string;
+            defender_ship_tier?: number;
+            defender_ship_level?: number;
+            defender_profile_id?: string;
         };
         CompareCrewsResponse: {
             status: string;
@@ -1919,6 +1930,11 @@ export interface components {
             defender_opponent?: string;
             /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities). Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation). */
             defender_crew?: components["schemas"]["SimulateCrew"];
+            /** @description Fixed opponent player ship for PvP (mutually exclusive with `hostile`). Optimize searches attacker crews only. Requires `defender_profile_id`. */
+            defender_ship?: string;
+            defender_ship_tier?: number;
+            defender_ship_level?: number;
+            defender_profile_id?: string;
             novelty_lambda?: number;
             novelty_diverse_top?: number;
             novelty_pool?: number;

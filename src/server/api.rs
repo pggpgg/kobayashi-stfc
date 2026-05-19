@@ -1,5 +1,8 @@
 mod execution;
+mod pvp;
 mod requests;
+
+pub use pvp::{validate_scenario_target, ScenarioTarget, ScenarioTargetFields};
 
 pub use execution::{
     cancel_job, get_job_status, run_optimize, start_optimize_job, CrewRecommendation,
@@ -371,6 +374,14 @@ pub struct SimulateRequest {
     /// Same shape as `crew`; requires non-empty `captain` to take effect.
     #[serde(default)]
     pub defender_crew: Option<SimulateCrew>,
+    /// Player ship id for PvP (mutually exclusive with `hostile`). Requires `defender_profile_id`.
+    #[serde(default)]
+    pub defender_ship: Option<String>,
+    pub defender_ship_tier: Option<u32>,
+    pub defender_ship_level: Option<u32>,
+    /// Opponent profile id when `defender_ship` is set (not the attacker profile header).
+    #[serde(default)]
+    pub defender_profile_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -424,6 +435,14 @@ pub struct CompareCrewsRequest {
     pub support_buffs: Option<Vec<String>>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
+    #[serde(default)]
+    pub defender_crew: Option<SimulateCrew>,
+    #[serde(default)]
+    pub defender_ship: Option<String>,
+    pub defender_ship_tier: Option<u32>,
+    pub defender_ship_level: Option<u32>,
+    #[serde(default)]
+    pub defender_profile_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -636,6 +655,36 @@ pub fn simulate_payload(
     profile_id: Option<&str>,
 ) -> Result<String, SimulateError> {
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
+    if let Err(errors) = validate_scenario_target(&ScenarioTargetFields {
+        hostile: Some(req.hostile.clone()),
+        defender_ship: req.defender_ship.clone(),
+        defender_ship_tier: req.defender_ship_tier,
+        defender_ship_level: req.defender_ship_level,
+        defender_profile_id: req.defender_profile_id.clone(),
+    }) {
+        return Err(SimulateError::Validation(
+            errors
+                .into_iter()
+                .flat_map(|e| e.messages)
+                .collect::<Vec<_>>()
+                .join("; "),
+        ));
+    }
+    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
+        req.defender_ship.as_deref(),
+        req.defender_ship_tier,
+        req.defender_ship_level,
+        req.defender_profile_id.as_deref(),
+    );
+    let scenario_hostile: String = pvp
+        .as_ref()
+        .map(|p| p.defender_ship.clone())
+        .unwrap_or_else(|| req.hostile.trim().to_string());
+    let defender_opponent = if pvp.is_some() {
+        DefenderOpponent::Player
+    } else {
+        req.defender_opponent
+    };
     let num_sims = req.num_sims.unwrap_or(5000).clamp(1, 100_000);
     let seed = req.seed.unwrap_or(0);
     if let Some(n) = req.below_decks_slots {
@@ -705,7 +754,7 @@ pub fn simulate_payload(
     let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
         registry,
         &req.ship,
-        &req.hostile,
+        scenario_hostile.as_str(),
         req.ship_tier,
         req.ship_level,
         &candidates,
@@ -714,8 +763,9 @@ pub fn simulate_payload(
         profile_id,
         req.support_buffs.as_deref(),
         chain_grind,
-        req.defender_opponent,
+        defender_opponent,
         player_defender_officer_crew,
+        pvp,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         candidate: CrewCandidate {
@@ -809,6 +859,36 @@ pub fn compare_crews_payload(
     profile_id: Option<&str>,
 ) -> Result<String, CompareCrewsError> {
     let req: CompareCrewsRequest = serde_json::from_str(body).map_err(CompareCrewsError::Parse)?;
+    if let Err(errors) = validate_scenario_target(&ScenarioTargetFields {
+        hostile: Some(req.hostile.clone()),
+        defender_ship: req.defender_ship.clone(),
+        defender_ship_tier: req.defender_ship_tier,
+        defender_ship_level: req.defender_ship_level,
+        defender_profile_id: req.defender_profile_id.clone(),
+    }) {
+        return Err(CompareCrewsError::Validation(
+            errors
+                .into_iter()
+                .flat_map(|e| e.messages)
+                .collect::<Vec<_>>()
+                .join("; "),
+        ));
+    }
+    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
+        req.defender_ship.as_deref(),
+        req.defender_ship_tier,
+        req.defender_ship_level,
+        req.defender_profile_id.as_deref(),
+    );
+    let scenario_hostile: String = pvp
+        .as_ref()
+        .map(|p| p.defender_ship.clone())
+        .unwrap_or_else(|| req.hostile.trim().to_string());
+    let defender_opponent = if pvp.is_some() {
+        DefenderOpponent::Player
+    } else {
+        req.defender_opponent
+    };
     let crew_count = req.crews.len();
     if !(2..=5).contains(&crew_count) {
         return Err(CompareCrewsError::Validation(
@@ -867,7 +947,7 @@ pub fn compare_crews_payload(
     let outcome = compare_crews_monte_carlo_with_registry(
         registry,
         &req.ship,
-        &req.hostile,
+        scenario_hostile.as_str(),
         req.ship_tier,
         req.ship_level,
         &candidates,
@@ -876,7 +956,8 @@ pub fn compare_crews_payload(
         profile_id,
         proc_sample,
         req.support_buffs.as_deref(),
-        req.defender_opponent,
+        defender_opponent,
+        pvp,
     );
 
     let mut warnings = Vec::new();

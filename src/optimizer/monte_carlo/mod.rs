@@ -13,7 +13,10 @@ pub use compare_crews::{
     compare_crews_monte_carlo_with_registry, CompareCrewDistribution, CompareCrewsOutcome,
 };
 pub use crew_resolution::crew_from_officer_names;
-pub use scenario::DefenderOpponent;
+pub use scenario::{
+    mitigation_and_pierce_for_player_vs_player, DefenderOpponent, PvpScenarioParams,
+    pvp_scenario_params_from_api_fields,
+};
 pub use simulation::{
     crew_candidate_stable_hash, replay_optimize_iteration_with_registry, run_monte_carlo,
     run_monte_carlo_parallel, run_monte_carlo_parallel_deduped,

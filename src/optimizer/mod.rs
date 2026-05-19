@@ -411,6 +411,8 @@ pub struct OptimizationScenario<'a> {
     pub defender_opponent: DefenderOpponent,
     /// Optional LCARS defender crew (API `defender_crew`) merged into shared scenario for registry tiered/exhaustive paths.
     pub player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    /// Ship-vs-ship PvP: fixed defender ship + opponent profile (optimize searches attacker crews only).
+    pub pvp: Option<crate::optimizer::monte_carlo::scenario::PvpScenarioParams>,
     /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
     pub warm_start: Vec<CrewCandidate>,
     /// Crews used only for matchup priors in analytical ranking (not prepended to the candidate list).
@@ -460,6 +462,7 @@ impl Default for OptimizationScenario<'_> {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
+            pvp: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -706,6 +709,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario_support_slice(scenario),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
+        scenario.pvp.clone(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -752,6 +756,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.chain_grind.clone(),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
+        scenario.pvp.clone(),
         pre_ref,
         !scenario.tiered_scout_uniform,
         scenario.tiered_confirm_budget_cap_mult,
@@ -804,6 +809,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario_support_slice(scenario),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
+        scenario.pvp.clone(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -989,6 +995,7 @@ where
                 chain_grind: scenario.chain_grind.clone(),
                 defender_opponent: scenario.defender_opponent,
                 player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
+                pvp: scenario.pvp.clone(),
                 warm_start: scenario.warm_start.clone(),
                 prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
@@ -1143,6 +1150,7 @@ where
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
+                scenario.pvp.clone(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
@@ -1251,6 +1259,7 @@ where
                 scenario.chain_grind.clone(),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
+                scenario.pvp.clone(),
                 pre_ref,
                 scout_adaptive,
                 scenario.tiered_confirm_budget_cap_mult,
@@ -1292,6 +1301,7 @@ where
                 scenario_support_slice(scenario),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
+                scenario.pvp.clone(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
@@ -1560,6 +1570,7 @@ pub fn optimize_crew(
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
         player_defender_officer_crew: None,
+        pvp: None,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
@@ -1599,6 +1610,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
             None,
         );
         let seed = 11u64;
@@ -1700,6 +1712,7 @@ mod tests {
             None,
             DefenderOpponent::Hostile,
             None,
+            None,
         );
         let seed = 11u64;
         let history_shape = CrewCandidate {
@@ -1778,6 +1791,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
+            pvp: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -1930,6 +1944,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
+            pvp: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2001,6 +2016,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
+            pvp: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2066,6 +2082,7 @@ mod tests {
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
+            pvp: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2116,6 +2133,7 @@ mod tests {
             None,
             DefenderOpponent::Hostile,
             None,
+            None,
         );
         let shared_high = build_shared_scenario_data_from_registry(
             &registry,
@@ -2126,6 +2144,7 @@ mod tests {
             None,
             None,
             DefenderOpponent::Hostile,
+            None,
             None,
         );
         assert!(

@@ -1265,6 +1265,20 @@ components:
             Optional LCARS crew for the defending combatant (merged with hostile ship abilities in PvE).
             Same shape as `crew`. Non-empty `captain` required when any bridge or below_deck slot is set;
             omitted or empty = defender officers from hostile data only.
+        defender_ship:
+          type: string
+          description: >
+            Player defender ship id (ships_extended). Mutually exclusive with `hostile`.
+            Requires `defender_profile_id` (opponent account profile, not the attacker profile header).
+        defender_ship_tier:
+          type: integer
+          minimum: 1
+        defender_ship_level:
+          type: integer
+          minimum: 1
+        defender_profile_id:
+          type: string
+          description: Opponent profile id when `defender_ship` is set.
 
     SimulateStats:
       type: object
@@ -1343,6 +1357,16 @@ components:
           items:
             type: string
         defender_opponent:
+          type: string
+        defender_crew:
+          $ref: "#/components/schemas/SimulateCrew"
+        defender_ship:
+          type: string
+        defender_ship_tier:
+          type: integer
+        defender_ship_level:
+          type: integer
+        defender_profile_id:
           type: string
 
     CompareCrewsResponse:
@@ -1528,6 +1552,17 @@ components:
           description: >
             Optional LCARS crew for the defending combatant (merged with hostile ship abilities).
             Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation).
+        defender_ship:
+          type: string
+          description: >
+            Fixed opponent player ship for PvP (mutually exclusive with `hostile`). Optimize searches
+            attacker crews only. Requires `defender_profile_id`.
+        defender_ship_tier:
+          type: integer
+        defender_ship_level:
+          type: integer
+        defender_profile_id:
+          type: string
         novelty_lambda:
           type: number
         novelty_diverse_top:

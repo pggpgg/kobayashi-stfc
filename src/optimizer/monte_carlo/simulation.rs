@@ -802,6 +802,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -813,6 +814,7 @@ pub fn run_monte_carlo_parallel_with_registry(
         support_buffs,
         defender_opponent,
         player_defender_officer_crew,
+        pvp,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -838,6 +840,7 @@ pub fn run_monte_carlo_with_registry(
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> (Vec<SimulationResult>, bool) {
     let shared = build_shared_scenario_data_from_registry(
         registry,
@@ -849,6 +852,7 @@ pub fn run_monte_carlo_with_registry(
         support_buffs,
         defender_opponent,
         player_defender_officer_crew,
+        pvp,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -931,6 +935,7 @@ pub fn replay_optimize_iteration_with_registry(
         profile_id,
         support_buffs,
         defender_opponent,
+        None,
         None,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
