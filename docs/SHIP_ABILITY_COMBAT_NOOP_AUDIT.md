@@ -2,7 +2,9 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
 
-**Catalog revision (2026-04-04):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **73** map to `effect_type: combat_noop` (inventory-only in combat). **67** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
+**Catalog revision (2026-05-19, Track D audit):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **71** map to `effect_type: combat_noop` (inventory-only in combat). **69** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
+
+**Inventory drift vs prior audit (2026-04-04):** Two ids previously listed as `combat_noop` are now modeled — remove from §1 noop list: `509252162` (`attack_multiplier`), `2425475474` (`conqueror_borg_beam_suppression`). Shard detail: [docs/audit_shards/](audit_shards/).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).
 
@@ -10,9 +12,9 @@ Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_des
 
 ## 1. Inventory
 
-All `combat_noop` ability ids (sorted; regen-safe):
+All `combat_noop` ability ids (sorted; regen-safe; **71** ids):
 
-`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `509252162`, `546190599`, `673187302`, `701705952`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1379978713`, `1428543762`, `1439253182`, `1463338054`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2425475474`, `2441576367`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
+`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `673187302`, `701705952`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1379978713`, `1428543762`, `1439253182`, `1463338054`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2441576367`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
 
 Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc` text (empty string).
 
@@ -22,22 +24,22 @@ Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc
 
 | Bucket | Approx. count | Why noop |
 | --- | ---: | --- |
-| Economy — mining / materials | ~28 | Mining speed, special nodes, officer-health mining, Latinum/Isogen/Trellium variants; out of combat scope. Generator explicitly sends these to `NOOP`. |
-| Economy — loot / progression | ~13 | Extra resources from hostiles, loot multipliers, encrypted intel, splicers, chaos modules, mixed Defiant research strings, post-battle cargo (Amalgam). |
-| Economy — hazards / resistances | ~3 | Radiation, ion storm, asteroid field resistance; not combat stats. |
-| Economy — officer / alliance meta | ~4 | Captain maneuver effectiveness, Cerritos support duration, Titan fortification counts, station Protector-style multi-ship shield (partially overlaps scope). |
-| Stat — max hull / shield from ability text | ~2 | “Maximum Hull/Shield Health … increased”: rolled into ship stats upstream, not a timed combat effect in this catalog. |
-| Scope — defending / station / allies | ~5 | “When defending”, round-start buffs to all ships and platforms; not modeled as attacker-centric hull abilities. |
-| Scope — takeover / nodes | ~1 | Capture or mining node in Takeover. |
-| Scope — armada | ~4 | Armada-only clauses or bundles (including Franklin-A Swarm + Armada, Revenant + Borg armada disable, Stella Eclipse + Armada). |
-| Opponent ship class | ~~6~~ **0** (remaining) | Class-gated hull rows use `condition_opponent_ship_class` + [`AbilityCondition::DefenderShipTypeIs`](../src/combat/abilities.rs). Regen catalog after upstream text changes. |
-| Opponent tag / special faction | ~5 | `[DQ]`, `[DAL]`, Krenim Invading Entities, Apex Raiders (Solo Wave Defense), Q-Continuum reward lines — not mapped to [`OpponentFactionTag`](../src/combat/types.rs) or unsafe to infer. |
-| Hostile debuffs / shield drain | ~3 | Decrease hostile pierce/accuracy; Sanctus-style shield drain over rounds; B’Rel first-round debuff — need hostile-side stat hooks and timings. |
-| Proc chains | ~2 | Hull breach + crit + cumulative (e.g. Rotarran, Hegh’ta); intentionally left unmodeled per [DESIGN.md](DESIGN.md) §3.6. |
-| Out-of-combat / overworld | ~1 | Borg Cutting Beam HHP outside battle. |
-| Weapon / mechanic disable | ~1 | Collective’s Bane vs Borg Type 03 / Polygon armadas. |
-| Self defensive stats vs hostiles | ~1 | U.S.S. Intrepid — armor, shield deflection, dodge vs hostiles (not “weapon damage” Gladius pattern). |
-| Empty translation | ~2 | No description text for `loca_id`. |
+| Economy — mining / materials | 26 | Mining speed, special nodes, officer-health mining, Latinum/Isogen/Trellium variants; out of combat scope. Generator explicitly sends these to `NOOP`. |
+| Economy — loot / progression | 13 | Extra resources from hostiles, loot multipliers, encrypted intel, splicers, chaos modules, mixed Defiant research strings, post-battle cargo (Amalgam). |
+| Economy — hazards / resistances | 3 | Radiation, ion storm, asteroid field resistance; not combat stats. |
+| Economy — officer / alliance meta | 3 | Captain maneuver effectiveness, Cerritos support duration, Titan fortification counts, station Protector-style multi-ship shield (partially overlaps scope). |
+| Economy / other (review) | 4 | Residual text the classifier did not bucket; all `keep_noop` pending only if new patterns warrant generator rules. |
+| Stat — max hull / shield from ability text | 1 | “Maximum Hull/Shield Health … increased”: rolled into ship stats upstream, not a timed combat effect in this catalog. |
+| Scope — defending / station / allies | 5 | “When defending”, round-start buffs to all ships and platforms; not modeled as attacker-centric hull abilities. |
+| Scope — armada | 1 | Armada / non-armada overworld clauses (e.g. Borg Cutting Beam HHP outside battle). |
+| Opponent ship class | **0** (remaining) | Class-gated hull rows use `condition_opponent_ship_class` + [`AbilityCondition::DefenderShipTypeIs`](../src/combat/abilities.rs). |
+| Opponent tag / special faction | 5 | `[DQ]`, `[DAL]`, Krenim Invading Entities, Apex Raiders (Solo Wave Defense), etc. — keep noop until stable hostile metadata slugs. |
+| Hostile debuffs / shield drain | 3 | See §6 — Quv’Sompek, Sanctus, B’Rel; need defender stat modifiers + round timing. |
+| Proc chains | 2 | Rotarran `2520552521`, Hegh’ta `3014221215` — **keep noop** per [DESIGN.md](DESIGN.md) §3.6 unless simplified proxy approved. |
+| Out-of-combat / overworld | 0 | (Borg cutting beam counted under Scope — armada.) |
+| Weapon / mechanic disable | 1 | Collective’s Bane vs Borg Type 03 / Polygon armadas. |
+| Self defensive stats vs hostiles | 1 | U.S.S. Intrepid `1463338054` — see §6. |
+| Empty translation | 3 | `953555085`, `4214885989`, and one additional row with missing `ship_ability_desc`. |
 
 Counts are approximate because a few lines span multiple themes (e.g. Trellium mining + Mirror hazard immunity).
 
@@ -85,3 +87,43 @@ When adding new ships from upstream:
 
 - If a new ability stays `combat_noop`, add a row to the bucket table above (or extend the generator comment) if the reason is non-obvious.
 - Prefer extending `classify_single_ability` for repeatable text patterns; use `ship_ability_catalog_overrides.json` for one-offs.
+
+---
+
+## 6. Track D shard audit (2026-05-19)
+
+Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, `translations-ship_buffs.json`, and the live catalog. Per-id tables: [`docs/audit_shards/ship_ability_noop_shard_1.md`](audit_shards/ship_ability_noop_shard_1.md) … `_8.md`. Supervisor assignments: [`docs/TRACK_D_SUPERVISOR.md`](TRACK_D_SUPERVISOR.md).
+
+**Summary:** 68 `keep_noop`, 4 `extend_resolver` (documented below; **no resolver code in this batch** — requires defender-side hooks), 2 `reclassify_catalog` (removed from §1 inventory).
+
+### 6.1 Actionable resolver specs (future implementer)
+
+| id | Ship | Ability | Proposed modeling | Blocker |
+| --- | --- | --- | --- | --- |
+| `701705952` | Quv’Sompek | Intimidating Presence — decreases hostile **accuracy** when fighting hostiles | `combat_begin` debuff on defender accuracy (or mitigation proxy); duration from upstream `values[]` | Defender crew stat surface; confirm debuff applies to hostile counter-fire only |
+| `1379978713` | Sanctus | Drain of the Empire — decreases hostile **shield health** each round for first N rounds | `round_start` fractional shield drain on defender for `duration_rounds` | Defender shield tick hook (not attacker pierce) |
+| `2441576367` | B’Rel | Obfuscation — **first round** combat debuff vs hostiles | `combat_begin` or round-1-only defender stat reduction (pierce/accuracy TBD from in-game) | Parse “first round” + which stat; trace vs `hostile_crit_damage_reduction` pattern |
+| `1463338054` | U.S.S. Intrepid | Frontline Defender — armor, shield deflection, dodge vs hostiles | `combat_begin` additive mitigation / dodge on **attacker** (self buff) | Engine lacks ship-ability dodge/deflection channel; may mirror `apex_barrier` or new `ShipAbilityEffect` |
+
+**Supervisor test plan (when implemented):** `cargo test -p kobayashi ship_ability_resolve::`; add `tests/ship_ability_hostile_debuff.rs` or extend `tests/combat_tests.rs` with filtered fn names — do not run full `cargo test` from subagents.
+
+### 6.2 Proc chains (review-only; keep noop)
+
+| id | Ship | Notes |
+| --- | --- | --- |
+| `2520552521` | Rotarran | Hull breach + crit → cumulative crit damage; multi-condition proc chain |
+| `3014221215` | Hegh’ta | Hull breach + weapon hit → crit chance increase |
+
+### 6.3 In-game verification (HiggsBozo)
+
+- Confirm B’Rel `2441576367` debuff stat (pierce vs accuracy vs damage) and round-1-only scope.
+- Confirm Sanctus `1379978713` shield drain is % of max shield per round and round cap from ability tier.
+- Intrepid `1463338054`: whether dodge/deflection stack with officer buffs in hostile fights.
+- Reclassified ids `509252162`, `2425475474`: spot-check optimizer scenarios that use those ships still pick up hull abilities.
+
+### 6.4 Reclassified (remove from noop inventory)
+
+| id | Current `effect_type` |
+| --- | --- |
+| `509252162` | `attack_multiplier` |
+| `2425475474` | `conqueror_borg_beam_suppression` |
