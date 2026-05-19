@@ -240,6 +240,7 @@ pub fn combat_tag_to_stat(tag: &str) -> Option<&'static str> {
         "allreloadspeed" | "allloadspeed" => Some("defender_fire_delay"),
         "addrandomstate" => Some("random_defender_state"),
         "cptmaneuvereffect" => Some("opponent_captain_maneuver"),
+        "offabilityeffect" => Some("bridge_ability_effectiveness"),
         _ => None,
     }
 }
@@ -481,6 +482,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "defender_fire_delay" => Some(AbilityModifierSpec::DefenderFireDelay),
         "random_defender_state" => Some(AbilityModifierSpec::RandomDefenderState),
         "opponent_captain_maneuver" => Some(AbilityModifierSpec::OpponentCaptainManeuverEffect),
+        "bridge_ability_effectiveness" => Some(AbilityModifierSpec::BridgeAbilityEffectiveness),
         _ => None,
     }
 }

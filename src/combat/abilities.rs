@@ -200,6 +200,10 @@ pub enum AbilityEffect {
     },
     /// Multiplier on opponent captain-maneuver seat effects (1.0 = no change; 0.8 = 20% reduction).
     OpponentCaptainManeuverMultiplier(f64),
+    /// Captain-only meta effect (Pike / McCoy / Picard `OffAbilityEffect`). Consumed at combat
+    /// setup via [`sum_bridge_ability_effectiveness_add`] + [`scale_crew_bridge_ability_effects`];
+    /// not applied per round. Value is the additive bonus (e.g. `0.4` for +40%).
+    BridgeAbilityEffectivenessBonus(f64),
 }
 
 /// Combat context for condition evaluation at runtime.
@@ -539,6 +543,135 @@ pub fn opponent_captain_maneuver_multiplier_from_effects(effects: &[ActiveAbilit
         }
     }
     mult
+}
+
+/// Sum additive bridge-ability effectiveness bonuses from combat-begin rows (Pike captain, etc.).
+pub fn sum_bridge_ability_effectiveness_add(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::BridgeAbilityEffectivenessBonus(v) if v.is_finite() && v > 0.0 => {
+                Some(v)
+            }
+            _ => None,
+        })
+        .sum()
+}
+
+/// Scale bridge-officer ability magnitudes: `effective = base × (1 + bonus_add)`, capped at `1.0`
+/// for probability-style stats (shield bypass, proc chances, etc.).
+pub fn scale_crew_bridge_ability_effects(crew: &mut CrewConfiguration, bonus_add: f64) {
+    if !bonus_add.is_finite() || bonus_add <= 0.0 {
+        return;
+    }
+    for seat in &mut crew.seats {
+        if seat.seat != CrewSeat::Bridge || seat.ability.class != AbilityClass::BridgeAbility {
+            continue;
+        }
+        scale_bridge_officer_ability_effect(&mut seat.ability.effect, bonus_add);
+    }
+}
+
+/// Apply Pike-style officer-ability effectiveness to one compiled bridge effect.
+pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add: f64) {
+    if !bonus_add.is_finite() || bonus_add <= 0.0 {
+        return;
+    }
+    let factor = 1.0 + bonus_add;
+    let cap_one = |v: f64| (v * factor).clamp(0.0, 1.0);
+    let scale = |v: f64| v * factor;
+    match effect {
+        AbilityEffect::ShieldMitigationBypassFraction(v) => *v = cap_one(*v),
+        AbilityEffect::Morale(chance) => *chance = cap_one(*chance),
+        AbilityEffect::Assimilated {
+            chance,
+            duration_rounds: _,
+        } => *chance = cap_one(*chance),
+        AbilityEffect::HullBreach {
+            chance,
+            duration_rounds: _,
+            requires_critical: _,
+        } => *chance = cap_one(*chance),
+        AbilityEffect::Burning {
+            chance,
+            duration_rounds: _,
+        } => *chance = cap_one(*chance),
+        AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
+            *chance = cap_one(*chance);
+            *multiplier = scale(*multiplier);
+        }
+        AbilityEffect::ProcPierceBonus { chance, bonus } => {
+            *chance = cap_one(*chance);
+            *bonus = scale(*bonus);
+        }
+        AbilityEffect::CritChanceBonus(c) => *c = cap_one(*c),
+        AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
+        AbilityEffect::PierceBonus(p) => *p = scale(*p),
+        AbilityEffect::CritDamageMultiplier(m) => *m = scale(*m),
+        AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
+        AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
+        AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
+        AbilityEffect::DodgeBonus(v) => *v = cap_one(*v),
+        AbilityEffect::IsolyticDamageBonus(v) => *v = scale(*v),
+        AbilityEffect::IsolyticDefenseBonus(v) => *v = scale(*v),
+        AbilityEffect::IsolyticCascadeDamageBonus(v) => *v = scale(*v),
+        AbilityEffect::ApexShredBonus(v) => *v = scale(*v),
+        AbilityEffect::ApexBarrierBonus(v) => *v = scale(*v),
+        AbilityEffect::ShieldRegen(v) => *v = scale(*v),
+        AbilityEffect::ShieldRegenMaxFraction(f) => *f = cap_one(*f),
+        AbilityEffect::HullRegen(v) => *v = scale(*v),
+        AbilityEffect::HullRegenMaxFraction(f) => *f = cap_one(*f),
+        AbilityEffect::HullRegenPrevRoundFraction(f) => *f = cap_one(*f),
+        AbilityEffect::ShieldRegenPrevRoundFraction(f) => *f = cap_one(*f),
+        AbilityEffect::DecayingAttackMultiplier {
+            initial,
+            decay_per_round,
+            floor,
+        } => {
+            *initial = scale(*initial);
+            *decay_per_round = scale(*decay_per_round);
+            *floor = scale(*floor);
+        }
+        AbilityEffect::AccumulatingAttackMultiplier {
+            initial,
+            growth_per_round,
+            ceiling,
+        } => {
+            *initial = scale(*initial);
+            *growth_per_round = scale(*growth_per_round);
+            *ceiling = scale(*ceiling);
+        }
+        AbilityEffect::OnKillHullRegen(v) => *v = scale(*v),
+        AbilityEffect::AccuracyBonus(v) => *v = scale(*v),
+        AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+            growth_per_round,
+            ceiling,
+        } => {
+            *growth_per_round = scale(*growth_per_round);
+            *ceiling = scale(*ceiling);
+        }
+        AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds: _,
+        } => {
+            *chance = cap_one(*chance);
+            *bonus_pct = scale(*bonus_pct);
+        }
+        AbilityEffect::HostileCritDamageReduction {
+            reduction,
+            duration_rounds: _,
+        } => *reduction = cap_one(*reduction),
+        AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
+            *per_round = scale(*per_round);
+            *cap = scale(*cap);
+        }
+        AbilityEffect::BridgeAbilityEffectivenessBonus(_)
+        | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+        | AbilityEffect::DefenderFireDelay { .. }
+        | AbilityEffect::RandomDefenderState { .. }
+        | AbilityEffect::ConquerorBorgBeamSuppression => {}
+    }
 }
 
 /// Scale captain-maneuver seat effects on `crew` (PvP defender debuff from attacker LCARS).

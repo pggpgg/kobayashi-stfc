@@ -860,6 +860,25 @@ pub fn compile_officer_combat_spec(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::BridgeAbilityEffectiveness => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let bonus_add = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => v,
+                "add" => v,
+                _ => v,
+            }
+            .max(0.0);
+            Ok((
+                timing,
+                AbilityEffect::BridgeAbilityEffectivenessBonus(bonus_add),
+                compiled_condition.clone(),
+            ))
+        }
         _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
             modifier: spec.modifier,
             operation: spec.operation,

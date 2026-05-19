@@ -57,7 +57,6 @@ const NON_COMBAT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "JumpAndTowCostEff",
     "MiningRate",
     "MiningReward",
-    "OffAbilityEffect",
     "Omega13Cooldown",
     "PveChestLootMultiplierLimitedResources",
     "RepairCostsPost",

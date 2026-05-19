@@ -19,3 +19,4 @@ chang-ecc238: "Bridge allreloadspeed on hull-breach target not separately modele
 zeph-21ee5c: "AddRandomState vs hostiles: random burning/hull_breach/assimilated on defender at round start (morale bucket uses assimilated proxy)."
 doctor-t-ana-b98f82: "AddRandomState vs EnemyPlayer only; inactive in default hostile optimize."
 kras-a47042: "CptManeuverEffect + enemy OfficerStatAll are PvP-gated (EnemyPlayer); inactive vs NPC hostiles."
+pike-1e7d0d: "Captain OffAbilityEffect scales bridge combat abilities by min(1, base×(1+X)) vs hostiles ≤70; SelfBridge only (not captain-seat bridge row)."

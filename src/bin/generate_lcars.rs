@@ -1107,6 +1107,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "AllReloadSpeed" | "AllLoadSpeed" => MappedEffect::Tag("allreloadspeed:unmapped".into()),
         "CptManeuverEffect" => MappedEffect::Tag("cptmaneuvereffect:unmapped".into()),
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
+        "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
         "AllDefenses" => {
             if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
@@ -1176,7 +1177,6 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         | "SkillCuttingBeamAbilityCost"
         | "Omega13Cooldown"
         | "VoyagerAsaCE"
-        | "OffAbilityEffect"
         | "WarpSpeed"
         | "WarpDistance"
         | "ImpulseSpeed"

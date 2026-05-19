@@ -879,7 +879,8 @@ impl EffectAccumulator {
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
-                | AbilityEffect::OpponentCaptainManeuverMultiplier(_) => {}
+                | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1050,7 +1051,8 @@ impl EffectAccumulator {
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
-                | AbilityEffect::OpponentCaptainManeuverMultiplier(_) => {}
+                | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1192,7 +1194,8 @@ impl EffectAccumulator {
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
-                | AbilityEffect::OpponentCaptainManeuverMultiplier(_) => {}
+                | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1336,7 +1339,8 @@ impl EffectAccumulator {
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
-                | AbilityEffect::OpponentCaptainManeuverMultiplier(_) => {}
+                | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
@@ -1486,7 +1490,8 @@ impl EffectAccumulator {
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
-                | AbilityEffect::OpponentCaptainManeuverMultiplier(_) => {}
+                | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1663,7 +1668,8 @@ impl EffectAccumulator {
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
-                | AbilityEffect::OpponentCaptainManeuverMultiplier(_) => {}
+                | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1892,6 +1898,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::DefenderFireDelay { .. } => effect,
         AbilityEffect::RandomDefenderState { .. } => effect,
         AbilityEffect::OpponentCaptainManeuverMultiplier(_) => effect,
+        AbilityEffect::BridgeAbilityEffectivenessBonus(_) => effect,
         AbilityEffect::AccuracyBonus(_) => effect,
         AbilityEffect::DodgeBonus(_) => effect,
     }

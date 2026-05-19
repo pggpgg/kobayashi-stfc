@@ -10608,7 +10608,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: offabilityeffect:non_combat
+      tag: offabilityeffect:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -50297,7 +50297,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: offabilityeffect:non_combat
+      tag: offabilityeffect:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -90754,7 +90754,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: offabilityeffect:non_combat
+      tag: offabilityeffect:unmapped
       accumulate: null
       decay: null
   bridge_ability:

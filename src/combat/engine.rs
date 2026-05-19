@@ -141,7 +141,7 @@ pub fn build_combat_setup(
     defender_is_player_ship: bool,
     defender_crew: &CrewConfiguration,
 ) -> PreCombatSetup {
-    let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
+    let mut attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let mut defender_crew = apply_duplicate_officer_policy(defender_crew);
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
@@ -175,6 +175,12 @@ pub fn build_combat_setup(
     };
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
+    let bridge_ability_effectiveness_add =
+        crate::combat::abilities::sum_bridge_ability_effectiveness_add(&combat_begin_filtered);
+    crate::combat::abilities::scale_crew_bridge_ability_effects(
+        &mut attacker_crew,
+        bridge_ability_effectiveness_add,
+    );
     let conqueror_borg_beam_suppression = combat_begin_filtered
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));

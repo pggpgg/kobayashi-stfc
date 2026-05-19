@@ -190,6 +190,9 @@ pub enum AbilityModifierSpec {
     RandomDefenderState,
     /// LCARS `cptmaneuvereffect` — scale opponent captain maneuver seat effects (PvP-shaped).
     OpponentCaptainManeuverEffect,
+    /// LCARS `offabilityeffect` at combat begin (Pike / McCoy / Picard captain) — additive bonus to
+    /// bridge officer ability magnitudes: `effective = min(1, base × (1 + bonus))` for capped stats.
+    BridgeAbilityEffectiveness,
     TagOnly,
 }
 
