@@ -38,7 +38,7 @@ Optional `defender_crew` uses the same shape as attacker `crew` and is merged wi
 
 - Optimizing defender crew (attacker discovery only).
 - Armada / multi-ship fights.
-- Full routing of every `target:enemy` officer effect on the defender crew during defender-owned evaluation (incremental fidelity work; see officer scorecard).
+- Per-round dynamic officer-stat conditions on either crew (Phase 4d); fight-setup `target: enemy` / `enemy_bridge` officer-stat debuffs **are** applied in PvP (Phase 4c — e.g. Kras “Know Your Enemy” debuffs defender captain + bridge only when `defender_is_player_ship` passes).
 
 ## Optimize cache / warm-start
 

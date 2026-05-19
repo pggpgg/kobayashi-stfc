@@ -206,7 +206,7 @@ health_rating  = Σ officer.effective_health
 Examples:
 
 - **Cadet Kirk captain "Motivational" `target: self +8%`** — every crewed officer on Kirk's side gets +8% to each of A/D/H. Kirk is one of the affected officers (his +8% applies to himself like to anyone else).
-- **Kras bridge "Know Your Enemy" `target: enemy -20%`** — every crewed officer on the *defender's* side gets -20% to each of A/D/H. (On the simulator's player-vs-hostile path the defender is a hostile, which doesn't have crewed officers in the LCARS sense — see open question below.)
+- **Kras bridge "Know Your Enemy" `target: enemy_bridge -20%`** — captain + the two bridge officers on the *defender's* side get -20% to each of A/D/H; below-decks officers are unaffected. (On the player-vs-hostile path the defender is a hostile with no crewed officers — no-op.)
 - **Marla bridge "Let Me Help You" `target: self +50%`** — same crew-wide-pre-sum scope as Kirk's, just larger.
 
 **The scoping rule is the same regardless of trigger phase.** Passive, on_combat_start, on_round_start, conditional — all apply to per-officer A/D/H before the rating sum. Differences between triggers only affect *when* the buff is active, not *who* it covers.

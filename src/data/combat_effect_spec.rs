@@ -113,6 +113,9 @@ pub enum AbilityTargetSpec {
     SelfShip,
     /// Opponent hull the ability references (enemy ship).
     DefenderOpponent,
+    /// Opponent captain + bridge officers only (canonical `EnemyBridge`, e.g. Kras OA).
+    #[serde(alias = "enemy_bridge")]
+    EnemyBridgeOfficers,
     #[serde(alias = "enemy_ship")]
     EnemyShip,
     AttackerTeam,

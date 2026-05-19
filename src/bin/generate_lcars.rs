@@ -1219,7 +1219,9 @@ fn map_trigger(canonical: &str) -> &'static str {
 
 fn map_target(a: &CanonicalAbility) -> &'static str {
     let t = a.target.as_deref().unwrap_or("").to_lowercase();
-    if t.contains("enemy") {
+    if t.contains("enemybridge") {
+        "enemy_bridge"
+    } else if t.contains("enemy") {
         "enemy"
     } else {
         "self"

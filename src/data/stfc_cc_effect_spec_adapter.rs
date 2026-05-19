@@ -166,7 +166,8 @@ pub fn map_stfc_cc_target(raw: &str) -> Result<AbilityTargetSpec, String> {
         // AoE / seat shorthand from cheat-sheet columns.
         "EnemyAllShips" | "EnemyAll" => Ok(AbilityTargetSpec::DefenderTeam),
         "SelfCaptain" => Ok(AbilityTargetSpec::AttackerSelf),
-        "EnemyBridge" | "EnemyCaptain" => Ok(AbilityTargetSpec::EnemyShip),
+        "EnemyBridge" => Ok(AbilityTargetSpec::EnemyBridgeOfficers),
+        "EnemyCaptain" => Ok(AbilityTargetSpec::EnemyShip),
         "SelfAllShips" => Ok(AbilityTargetSpec::AttackerTeam),
         "SelfOfficer" => Ok(AbilityTargetSpec::AttackerSelf),
         _ => Err(format!("unmapped_target:{s}")),

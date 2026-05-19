@@ -594,6 +594,7 @@ fn officer_target_from_effect(effect: &LcarsEffect) -> AbilityTargetSpec {
         .as_deref()
         .map(|s| s.trim().to_ascii_lowercase())
     {
+        Some(ref t) if t == "enemy_bridge" => AbilityTargetSpec::EnemyBridgeOfficers,
         Some(ref t) if t == "enemy" => AbilityTargetSpec::DefenderOpponent,
         Some(ref t) if t == "self" || t.is_empty() => AbilityTargetSpec::AttackerSelf,
         None => AbilityTargetSpec::AttackerSelf,

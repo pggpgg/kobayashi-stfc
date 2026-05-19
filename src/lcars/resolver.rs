@@ -60,6 +60,9 @@ pub struct BuffSet {
     /// weight 1.0, deduped by officer id). Populated in Phase 1; consumed in Phase 2/3.
     /// See `docs/OFFICER_STAT_FORMULA.md`.
     pub officer_stat_totals: CrewOfficerStatTotals,
+    /// Captain + bridge officer A/D/H (subset of [`Self::officer_stat_totals`]); used for
+    /// `EnemyBridge`-scoped opponent debuffs.
+    pub bridge_officer_stat_totals: CrewOfficerStatTotals,
     /// Officer-rating ability contributions whose effect on the per-side multiplier depends on
     /// fight-setup state that isn't known at resolve time (e.g. `attacker_ship_type_is`,
     /// `defender_is_player_ship`). Evaluated by
@@ -70,6 +73,16 @@ pub struct BuffSet {
     /// under their stat key (the simpler Phase 3 path); the pending list is only used when
     /// conditions need late evaluation.
     pub pending_officer_stat_contributions: Vec<PendingOfficerStatContribution>,
+}
+
+/// Which opponent crewed officers receive a `target: enemy` officer-stat modifier (Phase 4c).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum OfficerStatOpponentScope {
+    /// Every crewed officer on the opponent side (default `target: enemy`).
+    #[default]
+    AllCrewed,
+    /// Captain + bridge slots only (canonical `EnemyBridge`, e.g. Kras "Know Your Enemy").
+    BridgeOfficers,
 }
 
 /// Officer-rating buff contribution whose application depends on conditions that can only be
@@ -83,13 +96,17 @@ pub struct PendingOfficerStatContribution {
     /// of the profile bonus and any unconditional static_buffs entries.
     pub value: f64,
     /// `true` for attacker-side buffs (the default `target: self`); `false` for defender-side
-    /// debuffs (`target: enemy`). Phase 4b/4a both filter target-enemy contributions out of the
-    /// attacker's compute path; Phase 4c will use this for PvP defender-side debuffs.
+    /// debuffs (`target: enemy`). Phase 4b/4a filter these out of the owning crew's self compute;
+    /// Phase 4c applies them to the opponent's officer ratings in PvP via
+    /// [`crate::data::profile::compute_officer_stat_runtime_bonus`] `opponent_enemy_target_pending`.
     pub target_attacker: bool,
     /// All conditions must evaluate to true at fight setup for the contribution to apply. If
     /// any condition evaluates to `Some(false)` or `None` (undecidable / dynamic), the
     /// contribution is silently dropped.
     pub conditions: Vec<AbilityConditionSpec>,
+    /// When [`Self::target_attacker`] is false, limits which opponent officers receive the
+    /// debuff. Ignored for `target: self` rows (always crew-wide on the owning side).
+    pub opponent_scope: OfficerStatOpponentScope,
 }
 
 impl BuffSet {
@@ -192,6 +209,37 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
     false
 }
 
+/// Effective combat stat key for `stat_modify` or mapped `tag` effects.
+fn effective_stat_for_effect(effect: &LcarsEffect) -> Option<&str> {
+    if effect.effect_type == "stat_modify" {
+        effect.stat.as_deref().filter(|s| !s.trim().is_empty())
+    } else if effect.effect_type == "tag" {
+        crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
+    } else {
+        None
+    }
+}
+
+fn is_officer_stat_key(stat: &str) -> bool {
+    matches!(
+        stat,
+        "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
+    )
+}
+
+fn officer_stat_trigger_ok(trigger_str: &str, officer_stat_key: bool) -> bool {
+    trigger_str == "passive"
+        || (officer_stat_key && matches!(trigger_str, "on_combat_start" | "on_round_start"))
+}
+
+fn officer_stat_duration_ok(effect: &LcarsEffect, officer_stat_key: bool) -> bool {
+    effect
+        .duration
+        .as_ref()
+        .map(|d| d.is_permanent())
+        .unwrap_or(officer_stat_key)
+}
+
 /// Resolve a single LCARS effect into timing, effect body, and optional AND-combined condition
 /// from the CombatEffectSpec compile path when supported.
 ///
@@ -290,6 +338,18 @@ pub fn lcars_effect_coverage(
                 pathway: "static_passive_tag_mapped".to_string(),
             };
         }
+        if let Some(pathway) = officer_rating_tag_coverage_path(effect, officer_id, options) {
+            return LcarsEffectCoverage {
+                tier: MechanicCoverageTier::Implemented,
+                pathway,
+            };
+        }
+        if let Some(pathway) = accuracy_combat_begin_coverage_path(effect, officer_id, options) {
+            return LcarsEffectCoverage {
+                tier: MechanicCoverageTier::Implemented,
+                pathway,
+            };
+        }
     }
     if effect_trigger_timing(effect).is_none() {
         let tr = effect
@@ -352,6 +412,103 @@ fn condition_is_dynamic(cond: &AbilityConditionSpec) -> bool {
     }
 }
 
+/// Phase 4d dynamic officer-stat path (e.g. Kirk `morale_active`); mirrors
+/// [`expand_dynamic_officer_stat_effects`].
+fn officer_stat_dynamic_coverage_path(effect: &LcarsEffect) -> Option<&'static str> {
+    if effect.effect_type != "tag" {
+        return None;
+    }
+    let stat = effective_stat_for_effect(effect)?;
+    if !is_officer_stat_key(stat) {
+        return None;
+    }
+    let cond_obj = effect.condition.as_ref()?;
+    let cond_spec = crate::lcars::effect_spec_adapter::lcars_condition_to_spec(cond_obj).ok()?;
+    if !condition_is_dynamic(&cond_spec) {
+        return None;
+    }
+    if effect
+        .target
+        .as_deref()
+        .map(|t| t.trim().to_ascii_lowercase())
+        .as_deref()
+        == Some("enemy")
+    {
+        return None;
+    }
+    match stat {
+        "officer_attack" | "officer_stat_all" => Some("officer_stat_dynamic_attack_axis"),
+        _ => None,
+    }
+}
+
+/// Officer-rating tag pathways used by [`resolve_crew_to_buff_set`] static / pending loops.
+fn officer_rating_tag_coverage_path(
+    effect: &LcarsEffect,
+    officer_id: &str,
+    options: &ResolveOptions,
+) -> Option<String> {
+    if effect.effect_type != "tag" {
+        return None;
+    }
+    if let Some(path) = officer_stat_dynamic_coverage_path(effect) {
+        return Some(path.to_string());
+    }
+    let stat = effective_stat_for_effect(effect)?;
+    if !is_officer_stat_key(stat) {
+        return None;
+    }
+    if stat.eq_ignore_ascii_case("accuracy") {
+        return None;
+    }
+    let trigger_str = effect.trigger.as_deref().map(str::trim).unwrap_or("");
+    if !officer_stat_trigger_ok(trigger_str, true) || !officer_stat_duration_ok(effect, true) {
+        return None;
+    }
+    let tier = options.tier_for(officer_id);
+    let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
+        effect,
+        "coverage:officer_stat",
+        officer_id,
+        "coverage",
+        tier,
+        None,
+    )?;
+    if spec.value.as_ref().and_then(|v| v.scalar).is_none() {
+        return None;
+    }
+    let target_attacker = matches!(
+        spec.target,
+        crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
+            | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
+    );
+    if !spec.conditions.is_empty() || !target_attacker {
+        return Some("officer_stat_pending".to_string());
+    }
+    Some("officer_stat_static_buff".to_string())
+}
+
+/// Combat-begin accuracy from mapped tags (Kang bridge pattern).
+fn accuracy_combat_begin_coverage_path(
+    effect: &LcarsEffect,
+    officer_id: &str,
+    options: &ResolveOptions,
+) -> Option<String> {
+    let is_accuracy = effective_stat_for_effect(effect)
+        .is_some_and(|s| s.eq_ignore_ascii_case("accuracy"));
+    if !is_accuracy {
+        return None;
+    }
+    if effect_trigger_timing(effect) != Some(TimingWindow::CombatBegin) {
+        return None;
+    }
+    let tier = options.tier_for(officer_id);
+    if crate::lcars::effect_spec_adapter::lcars_effect_resolved_value(effect, tier, None).is_none() {
+        return None;
+    }
+    Some("accuracy_combat_begin".to_string())
+}
+
 /// Phase 4d: expand officer-stat effects with dynamic conditions into substituted ship-stat
 /// effects so the engine's existing per-round dynamic ability path can fire them when the
 /// condition becomes true.
@@ -374,7 +531,7 @@ fn condition_is_dynamic(cond: &AbilityConditionSpec) -> bool {
 /// fires the Attack axis during morale-active rounds; Health and Defense axes are dropped
 /// (limitation documented above).
 ///
-/// `target: enemy` contributions are dropped (Phase 4c territory: PvP defender-side compute).
+/// `target: enemy` contributions are skipped here (Phase 4c applies them on the opponent side in PvP).
 fn expand_dynamic_officer_stat_effects(
     officer: &LcarsOfficer,
     ability: &LcarsAbility,
@@ -388,14 +545,10 @@ fn expand_dynamic_officer_stat_effects(
         if effect.effect_type != "tag" {
             continue;
         }
-        let Some(stat) = crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
-        else {
+        let Some(stat) = effective_stat_for_effect(effect) else {
             continue;
         };
-        if !matches!(
-            stat,
-            "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
-        ) {
+        if !is_officer_stat_key(stat) {
             continue;
         }
         let Some(ref cond_obj) = effect.condition else {
@@ -534,41 +687,18 @@ pub fn resolve_crew_to_buff_set(
             .resolve_level(options.level_for(&officer.id), officer_tier)
             .and_then(|lvl| officer.stats_at_level(lvl));
         for (effect_idx, effect) in ability.effects.iter().enumerate() {
-            // Determine the effective stat for passive permanent effects.
-            // stat_modify reads from effect.stat; mapped tag effects use the tag→stat table.
-            let effective_stat = if effect.effect_type == "stat_modify" {
-                effect.stat.as_deref().filter(|s| !s.trim().is_empty())
-            } else if effect.effect_type == "tag" {
-                crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
-            } else {
-                None
+            let Some(stat) = effective_stat_for_effect(effect) else {
+                continue;
             };
-            // Phase 4a: officer-rating accumulator keys (officer_attack / officer_defense /
-            // officer_health / officer_stat_all) accept on_combat_start and on_round_start
-            // triggers in addition to passive+permanent, because their semantic effect on
-            // per-side ratings is "constant for the duration of combat" regardless of the
-            // exact trigger phase (see docs/OFFICER_STAT_FORMULA.md §3). All other stat keys
-            // remain gated to passive+permanent.
-            let is_officer_stat_key = matches!(
-                effective_stat,
-                Some("officer_attack")
-                    | Some("officer_defense")
-                    | Some("officer_health")
-                    | Some("officer_stat_all")
-            );
+            // Phase 4a: officer-rating keys accept on_combat_start / on_round_start in addition
+            // to passive+permanent (see docs/OFFICER_STAT_FORMULA.md §3).
+            let officer_stat_key = is_officer_stat_key(stat);
             let trigger_str = effect.trigger.as_deref().map(str::trim).unwrap_or("");
-            let trigger_ok = trigger_str == "passive"
-                || (is_officer_stat_key
-                    && matches!(trigger_str, "on_combat_start" | "on_round_start"));
-            let duration_ok = effect
-                .duration
-                .as_ref()
-                .map(|d| d.is_permanent())
-                .unwrap_or(is_officer_stat_key);
-            if effective_stat.is_none() || !trigger_ok || !duration_ok {
+            if !officer_stat_trigger_ok(trigger_str, officer_stat_key)
+                || !officer_stat_duration_ok(effect, officer_stat_key)
+            {
                 continue;
             }
-            let stat = effective_stat.unwrap();
             if stat.eq_ignore_ascii_case("accuracy") {
                 // Folded into `accuracy` / `accuracy_cb_mult` in the combat-begin accuracy loop below.
                 continue;
@@ -598,6 +728,12 @@ pub fn resolve_crew_to_buff_set(
                 crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
                     | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
             );
+            let opponent_scope = match spec.target {
+                crate::data::combat_effect_spec::AbilityTargetSpec::EnemyBridgeOfficers => {
+                    OfficerStatOpponentScope::BridgeOfficers
+                }
+                _ => OfficerStatOpponentScope::AllCrewed,
+            };
 
             // Phase 4b: officer-stat effects with conditions go into pending_contributions for
             // fight-setup-time evaluation (TOS McCoy attacker_ship_type_is, Dezoc engagement gate,
@@ -613,6 +749,7 @@ pub fn resolve_crew_to_buff_set(
                     value: v,
                     target_attacker,
                     conditions: spec.conditions.clone(),
+                    opponent_scope,
                 });
                 continue;
             }
@@ -624,6 +761,7 @@ pub fn resolve_crew_to_buff_set(
                     value: v,
                     target_attacker,
                     conditions: Vec::new(),
+                    opponent_scope,
                 });
                 continue;
             }
@@ -637,18 +775,8 @@ pub fn resolve_crew_to_buff_set(
         // Combat-begin `stat_modify` / mapped-tag accuracy: stacks into pre-mitigation attacker
         // stats (scenario), not a crew seat. Multiplicative entries use key `accuracy_cb_mult`.
         for effect in &ability.effects {
-            let is_accuracy = if effect.effect_type == "stat_modify" {
-                effect
-                    .stat
-                    .as_deref()
-                    .map(|s| s.trim())
-                    .is_some_and(|s: &str| s.eq_ignore_ascii_case("accuracy"))
-            } else if effect.effect_type == "tag" {
-                crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or(""))
-                    .is_some_and(|s: &str| s.eq_ignore_ascii_case("accuracy"))
-            } else {
-                false
-            };
+            let is_accuracy = effective_stat_for_effect(effect)
+                .is_some_and(|s| s.eq_ignore_ascii_case("accuracy"));
             if !is_accuracy {
                 continue;
             }
@@ -813,8 +941,10 @@ pub fn resolve_crew_to_buff_set(
     // `stats_at_level(resolved_level)` at weight 1.0, deduped by officer id so a captain who
     // also appears in `bridge` is only counted once.
     let mut officer_stat_totals = CrewOfficerStatTotals::default();
+    let mut bridge_officer_stat_totals = CrewOfficerStatTotals::default();
     let mut counted_for_totals: HashSet<String> = HashSet::new();
-    let mut add_officer_stats = |officer: &LcarsOfficer| {
+    let mut counted_for_bridge: HashSet<String> = HashSet::new();
+    let mut add_officer_stats = |officer: &LcarsOfficer, bridge_only: bool| {
         if !counted_for_totals.insert(officer.id.clone()) {
             return;
         }
@@ -829,18 +959,23 @@ pub fn resolve_crew_to_buff_set(
         officer_stat_totals.attack += stats.attack;
         officer_stat_totals.defense += stats.defense;
         officer_stat_totals.health += stats.health;
+        if bridge_only && counted_for_bridge.insert(officer.id.clone()) {
+            bridge_officer_stat_totals.attack += stats.attack;
+            bridge_officer_stat_totals.defense += stats.defense;
+            bridge_officer_stat_totals.health += stats.health;
+        }
     };
     if let Some(o) = officers.get(captain_id) {
-        add_officer_stats(o);
+        add_officer_stats(o, true);
     }
     for id in bridge {
         if let Some(o) = officers.get(id.as_str()) {
-            add_officer_stats(o);
+            add_officer_stats(o, true);
         }
     }
     for id in below_decks {
         if let Some(o) = officers.get(id.as_str()) {
-            add_officer_stats(o);
+            add_officer_stats(o, false);
         }
     }
 
@@ -850,6 +985,7 @@ pub fn resolve_crew_to_buff_set(
         proc_chance,
         proc_multiplier,
         officer_stat_totals,
+        bridge_officer_stat_totals,
         pending_officer_stat_contributions,
     }
 }
@@ -938,6 +1074,9 @@ mod tests {
         assert_eq!(buff.officer_stat_totals.attack, 1704.0 + 90206.0 + 10.0);
         assert_eq!(buff.officer_stat_totals.defense, 4320.0 + 92060.0 + 20.0);
         assert_eq!(buff.officer_stat_totals.health, 824.0 + 90091.0 + 30.0);
+        assert_eq!(buff.bridge_officer_stat_totals.attack, 1704.0 + 90206.0);
+        assert_eq!(buff.bridge_officer_stat_totals.defense, 4320.0 + 92060.0);
+        assert_eq!(buff.bridge_officer_stat_totals.health, 824.0 + 90091.0);
     }
 
     #[test]
@@ -1134,6 +1273,27 @@ mod tests {
     }
 
     #[test]
+    fn officerstat_enemy_bridge_pending_scope_is_bridge_officers_only() {
+        use super::OfficerStatOpponentScope;
+        let o = officer_with_officerstat_captain(
+            "kras",
+            "officerstatall:unmapped",
+            0.20,
+            "on_combat_start",
+            "enemy_bridge",
+            Some("defender_is_player_ship"),
+        );
+        let mut officers = HashMap::new();
+        officers.insert("kras".to_string(), o);
+        let buff =
+            resolve_crew_to_buff_set("kras", &[], &[], &officers, &ResolveOptions::default());
+        assert_eq!(buff.pending_officer_stat_contributions.len(), 1);
+        let c = &buff.pending_officer_stat_contributions[0];
+        assert!(!c.target_attacker);
+        assert_eq!(c.opponent_scope, OfficerStatOpponentScope::BridgeOfficers);
+    }
+
+    #[test]
     fn officerstat_passive_literal_false_does_not_apply() {
         // Phase 4a: mitchell-0217f7 pattern — passive permanent with `literal_false` clause.
         // Pre-Phase-4a the static-buffs accumulator ignored conditions entirely and would
@@ -1287,6 +1447,128 @@ mod tests {
         let buff =
             resolve_crew_to_buff_set("ondefense", &[], &[], &officers, &ResolveOptions::default());
         assert!(!buff.static_buffs.contains_key("officer_stat_all"));
+    }
+
+    fn assert_coverage_implemented(effect: &LcarsEffect, officer_id: &str, pathway: &str) {
+        let cov = lcars_effect_coverage(effect, officer_id, &ResolveOptions::default());
+        assert_eq!(cov.tier, MechanicCoverageTier::Implemented, "{:?}", cov);
+        assert_eq!(cov.pathway, pathway);
+    }
+
+    fn assert_coverage_partial(effect: &LcarsEffect, officer_id: &str) {
+        let cov = lcars_effect_coverage(effect, officer_id, &ResolveOptions::default());
+        assert_eq!(cov.tier, MechanicCoverageTier::Partial, "{:?}", cov);
+    }
+
+    #[test]
+    fn officer_rating_tag_coverage_kumak_static_buff() {
+        let eff = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.05,
+            "on_round_start",
+            "self",
+            None,
+        );
+        assert_coverage_implemented(&eff, "kumak-c5b0db", "officer_stat_static_buff");
+    }
+
+    #[test]
+    fn officer_rating_tag_coverage_dezoc_pending() {
+        let mut eff = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.10,
+            "on_combat_start",
+            "self",
+            Some("and"),
+        );
+        if let Some(ref mut c) = eff.condition {
+            c.conditions = Some(vec![
+                crate::lcars::LcarsCondition {
+                    condition_type: "engagement_includes".to_string(),
+                    stat: None,
+                    threshold_pct: None,
+                    min: None,
+                    max: None,
+                    faction: None,
+                    group: None,
+                    min_members: None,
+                    tag: None,
+                    ship_type: None,
+                    faction_id: None,
+                    ship_id: None,
+                    enemy_type: Some("solo_armadas".to_string()),
+                    battle_types: None,
+                    conditions: None,
+                },
+                crate::lcars::LcarsCondition {
+                    condition_type: "defender_hull_faction_id".to_string(),
+                    stat: None,
+                    threshold_pct: None,
+                    min: None,
+                    max: None,
+                    faction: None,
+                    group: None,
+                    min_members: None,
+                    tag: None,
+                    ship_type: None,
+                    faction_id: Some(2943562711),
+                    ship_id: None,
+                    enemy_type: None,
+                    battle_types: None,
+                    conditions: None,
+                },
+            ]);
+        }
+        assert_coverage_implemented(&eff, "dezoc-381416", "officer_stat_pending");
+    }
+
+    #[test]
+    fn officer_rating_tag_coverage_kras_enemy_bridge_pending() {
+        let eff = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.20,
+            "on_combat_start",
+            "enemy_bridge",
+            Some("defender_is_player_ship"),
+        );
+        assert_coverage_implemented(&eff, "kras-a47042", "officer_stat_pending");
+    }
+
+    #[test]
+    fn officer_rating_tag_coverage_kirk_dynamic_attack_axis() {
+        let mut eff = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.40,
+            "on_round_start",
+            "self",
+            Some("morale_active"),
+        );
+        eff.duration = Some(crate::lcars::LcarsDuration::Rounds { rounds: 1 });
+        assert_coverage_implemented(&eff, "kirk-1323b6", "officer_stat_dynamic_attack_axis");
+    }
+
+    #[test]
+    fn officer_rating_tag_coverage_on_attack_stays_partial() {
+        let eff = lcars_effect_officerstat_tag(
+            "officerstatall:unmapped",
+            0.10,
+            "on_attack",
+            "self",
+            None,
+        );
+        assert_coverage_partial(&eff, "ondefense");
+    }
+
+    #[test]
+    fn accuracy_combat_begin_tag_coverage_kang_pattern() {
+        let eff = lcars_effect_officerstat_tag(
+            "accuracy:unmapped",
+            1.0,
+            "on_combat_start",
+            "self",
+            None,
+        );
+        assert_coverage_implemented(&eff, "kang-55e67a", "accuracy_combat_begin");
     }
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {

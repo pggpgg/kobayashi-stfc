@@ -2062,36 +2062,29 @@ fn eval_static_condition(
 /// `officer_defense` / `officer_health` (single-axis officer-stat buffs, §3) and
 /// `officer_stat_all` (the synthetic "all three axes" key produced by `officerstatall` tags).
 ///
-/// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /
-/// hostile-only records); callers do not need to special-case that path.
-pub fn compute_officer_stat_runtime_bonus(
-    totals: crate::combat::CrewOfficerStatTotals,
-    ship: &crate::data::ship::ShipRecord,
-    profile: &PlayerProfile,
-    owner_faction_slug: Option<&str>,
-    static_buffs: &HashMap<String, f64>,
-    pending_contributions: &[crate::lcars::resolver::PendingOfficerStatContribution],
-    cond_ctx: &OfficerStatConditionContext,
-) -> OfficerStatRuntimeBonus {
-    if ship.officer_bonus.is_empty() {
-        return OfficerStatRuntimeBonus::default();
-    }
-    let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
-    // §3 LCARS officerstat* ability contributions: passive/permanent effects with mapped
-    // officer-rating axis. Per-axis tags add to their channel; `officer_stat_all` (from
-    // `officerstatall` tags) adds to all three axes simultaneously.
-    let stat_all = static_buffs.get("officer_stat_all").copied().unwrap_or(0.0);
-    let mut ability_attack = static_buffs.get("officer_attack").copied().unwrap_or(0.0) + stat_all;
-    let mut ability_defense =
-        static_buffs.get("officer_defense").copied().unwrap_or(0.0) + stat_all;
-    let mut ability_health = static_buffs.get("officer_health").copied().unwrap_or(0.0) + stat_all;
+#[derive(Default)]
+struct OfficerStatAxisMults {
+    crew_wide_attack: f64,
+    crew_wide_defense: f64,
+    crew_wide_health: f64,
+    bridge_only_attack: f64,
+    bridge_only_defense: f64,
+    bridge_only_health: f64,
+}
 
-    // Phase 4b: conditional officer-stat contributions. Only attacker-side entries
-    // (target:self) affect the attacker's compute; target:enemy entries stay in the pending
-    // list for Phase 4c (PvP defender-side handling). Conditions are evaluated against the
-    // fight-setup context; entries with any false or undecidable condition are dropped.
-    for c in pending_contributions {
-        if !c.target_attacker {
+/// Apply pending officer-stat rows whose `target_attacker` matches `want_target_attacker`.
+/// When `want_target_attacker` is false (Phase 4c: `target: enemy` debuffs on the opponent's
+/// crewed officers), values are negated so positive LCARS magnitudes become rating penalties.
+/// `target: enemy_bridge` rows only affect [`OfficerStatAxisMults::bridge_only_*`].
+fn apply_pending_officer_stat_contributions(
+    mults: &mut OfficerStatAxisMults,
+    pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    want_target_attacker: bool,
+    cond_ctx: &OfficerStatConditionContext,
+) {
+    use crate::lcars::resolver::OfficerStatOpponentScope;
+    for c in pending {
+        if c.target_attacker != want_target_attacker {
             continue;
         }
         let all_true = c
@@ -2101,26 +2094,133 @@ pub fn compute_officer_stat_runtime_bonus(
         if !all_true {
             continue;
         }
-        match c.stat_key.as_str() {
-            "officer_attack" => ability_attack += c.value,
-            "officer_defense" => ability_defense += c.value,
-            "officer_health" => ability_health += c.value,
-            "officer_stat_all" => {
-                ability_attack += c.value;
-                ability_defense += c.value;
-                ability_health += c.value;
+        let v = if want_target_attacker {
+            c.value
+        } else {
+            -c.value
+        };
+        let bridge_only = !want_target_attacker
+            && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
+        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| {
+            match c.stat_key.as_str() {
+                "officer_attack" => *attack += v,
+                "officer_defense" => *defense += v,
+                "officer_health" => *health += v,
+                "officer_stat_all" => {
+                    *attack += v;
+                    *defense += v;
+                    *health += v;
+                }
+                _ => {}
             }
-            _ => {}
+        };
+        if bridge_only {
+            add(
+                &mut mults.bridge_only_attack,
+                &mut mults.bridge_only_defense,
+                &mut mults.bridge_only_health,
+            );
+        } else {
+            add(
+                &mut mults.crew_wide_attack,
+                &mut mults.crew_wide_defense,
+                &mut mults.crew_wide_health,
+            );
         }
     }
+}
 
-    // §2e: profile officer_attack/defense/health are pre-aggregation multipliers on each
-    // crewed officer's A/D/H. Applied here on the summed totals (mathematically equivalent
-    // since the multiplier distributes over the sum). §3 ability contributions stack
-    // additively into the same per-axis multiplier.
-    let attack_rating = totals.attack * (1.0 + gb("officer_attack") + ability_attack);
-    let defense_rating = totals.defense * (1.0 + gb("officer_defense") + ability_defense);
-    let health_rating = totals.health * (1.0 + gb("officer_health") + ability_health);
+fn axis_rating_from_parts(
+    bridge_raw: f64,
+    below_raw: f64,
+    profile_mult: f64,
+    crew_mult: f64,
+    bridge_only_mult: f64,
+) -> f64 {
+    bridge_raw * (1.0 + profile_mult + crew_mult + bridge_only_mult)
+        + below_raw * (1.0 + profile_mult + crew_mult)
+}
+
+/// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /
+/// hostile-only records); callers do not need to special-case that path.
+///
+/// `self_pending_contributions`: `target: self` rows from this side's crew (Phase 4b).
+/// `opponent_enemy_target_pending`: `target: enemy` rows from the **opponent's** crew (Phase 4c;
+/// PvP only — debuffs this side's officer ratings when conditions pass).
+///
+/// `bridge_totals`: captain + bridge A/D/H subset of `totals`; required for
+/// [`crate::lcars::resolver::OfficerStatOpponentScope::BridgeOfficers`] debuffs. When `bridge`
+/// equals `totals` (no below-decks officers), bridge-only debuffs still behave correctly.
+pub fn compute_officer_stat_runtime_bonus(
+    totals: crate::combat::CrewOfficerStatTotals,
+    bridge_totals: crate::combat::CrewOfficerStatTotals,
+    ship: &crate::data::ship::ShipRecord,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+    self_pending_contributions: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
+    opponent_enemy_target_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+) -> OfficerStatRuntimeBonus {
+    if ship.officer_bonus.is_empty() {
+        return OfficerStatRuntimeBonus::default();
+    }
+    let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
+    // §3 LCARS officerstat* ability contributions: passive/permanent effects with mapped
+    // officer-rating axis. Per-axis tags add to their channel; `officer_stat_all` (from
+    // `officerstatall` tags) adds to all three axes simultaneously.
+    let stat_all = static_buffs.get("officer_stat_all").copied().unwrap_or(0.0);
+    let mut mults = OfficerStatAxisMults {
+        crew_wide_attack: static_buffs.get("officer_attack").copied().unwrap_or(0.0) + stat_all,
+        crew_wide_defense: static_buffs.get("officer_defense").copied().unwrap_or(0.0) + stat_all,
+        crew_wide_health: static_buffs.get("officer_health").copied().unwrap_or(0.0) + stat_all,
+        ..OfficerStatAxisMults::default()
+    };
+
+    // Phase 4b: conditional `target: self` contributions from this crew (crew-wide).
+    apply_pending_officer_stat_contributions(
+        &mut mults,
+        self_pending_contributions,
+        true,
+        cond_ctx,
+    );
+    // Phase 4c: `target: enemy` / `enemy_bridge` from the opponent's crew.
+    apply_pending_officer_stat_contributions(
+        &mut mults,
+        opponent_enemy_target_pending,
+        false,
+        cond_ctx,
+    );
+
+    let below_decks = crate::combat::CrewOfficerStatTotals {
+        attack: (totals.attack - bridge_totals.attack).max(0.0),
+        defense: (totals.defense - bridge_totals.defense).max(0.0),
+        health: (totals.health - bridge_totals.health).max(0.0),
+    };
+
+    // §2e + §3: per-officer multipliers, then sum. Bridge-only opponent debuffs hit captain +
+    // bridge slots only; crew-wide buffs/debuffs hit below decks too.
+    let attack_rating = axis_rating_from_parts(
+        bridge_totals.attack,
+        below_decks.attack,
+        gb("officer_attack"),
+        mults.crew_wide_attack,
+        mults.bridge_only_attack,
+    );
+    let defense_rating = axis_rating_from_parts(
+        bridge_totals.defense,
+        below_decks.defense,
+        gb("officer_defense"),
+        mults.crew_wide_defense,
+        mults.bridge_only_defense,
+    );
+    let health_rating = axis_rating_from_parts(
+        bridge_totals.health,
+        below_decks.health,
+        gb("officer_health"),
+        mults.crew_wide_health,
+        mults.bridge_only_health,
+    );
 
     let attack_bonus = ship.officer_bonus.attack_bonus(attack_rating);
     let defense_bonus = ship.officer_bonus.defense_bonus(defense_rating);
@@ -3140,12 +3240,14 @@ mod tests {
         let ctx_default = OfficerStatConditionContext::default();
         let osr_no_ability = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs_none,
             &pending_none,
             &ctx_default,
+            &[],
         );
         assert!(
             (osr_no_ability.attack_bonus - 0.5).abs() < 1e-9,
@@ -3159,12 +3261,14 @@ mod tests {
         static_buffs_with_all.insert("officer_stat_all".to_string(), 0.20);
         let osr_with_all = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs_with_all,
             &pending_none,
             &ctx_default,
+            &[],
         );
         assert!(
             (osr_with_all.attack_bonus - 1.0).abs() < 1e-9,
@@ -3224,12 +3328,14 @@ mod tests {
         let ctx_default = OfficerStatConditionContext::default();
         let osr = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs,
             &pending_none,
             &ctx_default,
+            &[],
         );
         // Health rating: 1800 × 1.20 = 2160 → health_bonus = 1.0.
         assert!(
@@ -3293,6 +3399,7 @@ mod tests {
             conditions: vec![AbilityConditionSpec::AttackerShipTypeIs {
                 ship_type: "explorer".to_string(),
             }],
+            opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
         }];
         // Explorer attacker → +20% → rating 1800 × 1.20 = 2160 → attack_bonus = 1.0
         let ctx_explorer = OfficerStatConditionContext {
@@ -3301,12 +3408,14 @@ mod tests {
         };
         let osr = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs,
             &pending,
             &ctx_explorer,
+            &[],
         );
         assert!(
             (osr.attack_bonus - 1.0).abs() < 1e-9,
@@ -3320,12 +3429,14 @@ mod tests {
         };
         let osr = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs,
             &pending,
             &ctx_bship,
+            &[],
         );
         assert!(
             (osr.attack_bonus - 0.5).abs() < 1e-9,
@@ -3354,6 +3465,7 @@ mod tests {
             value: 0.20,
             target_attacker: false, // target:enemy
             conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
+            opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
         }];
         for defender_is_player_ship in [false, true] {
             let ctx = OfficerStatConditionContext {
@@ -3362,12 +3474,14 @@ mod tests {
             };
             let osr = compute_officer_stat_runtime_bonus(
                 totals,
+                totals,
                 &ship,
                 &profile,
                 None,
                 &static_buffs,
                 &pending,
                 &ctx,
+                &[],
             );
             assert!(
                 (osr.attack_bonus - 0.5).abs() < 1e-9,
@@ -3375,6 +3489,117 @@ mod tests {
                 osr.attack_bonus
             );
         }
+    }
+
+    #[test]
+    fn phase4c_opponent_enemy_target_pending_debuffs_defender_ratings() {
+        // Kras "Know Your Enemy": `EnemyBridge` debuffs captain + bridge only, not below decks.
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+        use crate::lcars::resolver::OfficerStatOpponentScope;
+        let ship = ship_with_three_bp_table("explorer");
+        let profile = PlayerProfile::default();
+        let bridge_totals = crate::combat::CrewOfficerStatTotals {
+            attack: 2000.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 3000.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let static_buffs = HashMap::<String, f64>::new();
+        let attacker_kras = vec![crate::lcars::resolver::PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.20,
+            target_attacker: false,
+            conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
+            opponent_scope: OfficerStatOpponentScope::BridgeOfficers,
+        }];
+        let ctx_pvp = OfficerStatConditionContext {
+            defender_is_player_ship: true,
+            ..Default::default()
+        };
+        let osr_baseline = compute_officer_stat_runtime_bonus(
+            totals,
+            bridge_totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &[],
+            &ctx_pvp,
+            &[],
+        );
+        assert!(
+            (osr_baseline.attack_bonus - 1.0).abs() < 1e-9,
+            "baseline: {}",
+            osr_baseline.attack_bonus
+        );
+        let osr_bridge_debuff = compute_officer_stat_runtime_bonus(
+            totals,
+            bridge_totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &[],
+            &ctx_pvp,
+            &attacker_kras,
+        );
+        // 2000×0.8 + 1000 = 2600 → still second breakpoint (attack_bonus 1.0).
+        assert!(
+            (osr_bridge_debuff.attack_bonus - 1.0).abs() < 1e-9,
+            "bridge-only -20% leaves below decks untouched: {}",
+            osr_bridge_debuff.attack_bonus
+        );
+        let attacker_kras_all_crew = vec![crate::lcars::resolver::PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.20,
+            target_attacker: false,
+            conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+        }];
+        let osr_full_crew_debuff = compute_officer_stat_runtime_bonus(
+            totals,
+            bridge_totals,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &[],
+            &ctx_pvp,
+            &attacker_kras_all_crew,
+        );
+        // Crew-wide -20% hits below decks too (3000×0.8 = 2400) — weaker total rating than
+        // bridge-only debuff (2600) at this breakpoint table.
+        assert!(
+            osr_full_crew_debuff.attack_bonus <= osr_bridge_debuff.attack_bonus,
+            "crew-wide debuff must not be milder than bridge-only: full={} bridge={}",
+            osr_full_crew_debuff.attack_bonus,
+            osr_bridge_debuff.attack_bonus
+        );
+        let bridge_only_crew = crate::combat::CrewOfficerStatTotals {
+            attack: 2000.0,
+            defense: 0.0,
+            health: 0.0,
+        };
+        let osr_no_below = compute_officer_stat_runtime_bonus(
+            bridge_only_crew,
+            bridge_only_crew,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &[],
+            &ctx_pvp,
+            &attacker_kras,
+        );
+        assert!(
+            (osr_no_below.attack_bonus - 0.5).abs() < 1e-9,
+            "bridge-only crew with -20%: {}",
+            osr_no_below.attack_bonus
+        );
     }
 
     #[test]
@@ -3402,6 +3627,7 @@ mod tests {
                     AbilityConditionSpec::DefenderIsPlayerShip,
                 ],
             }],
+            opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
         }];
 
         // Both true → bonus applies (rating 1800 × 1.20 = 2160 → attack_bonus = 1.0).
@@ -3412,12 +3638,14 @@ mod tests {
         };
         let osr = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs,
             &pending,
             &ctx_pvp,
+            &[],
         );
         assert!(
             (osr.attack_bonus - 1.0).abs() < 1e-9,
@@ -3433,12 +3661,14 @@ mod tests {
         };
         let osr = compute_officer_stat_runtime_bonus(
             totals,
+            totals,
             &ship,
             &profile,
             None,
             &static_buffs,
             &pending,
             &ctx_pve,
+            &[],
         );
         assert!(
             (osr.attack_bonus - 0.5).abs() < 1e-9,
@@ -3465,9 +3695,11 @@ mod tests {
             value: 0.40,
             target_attacker: true,
             conditions: vec![AbilityConditionSpec::MoraleActive],
+            opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
         }];
         let ctx = OfficerStatConditionContext::default();
         let osr = compute_officer_stat_runtime_bonus(
+            totals,
             totals,
             &ship,
             &profile,
@@ -3475,6 +3707,7 @@ mod tests {
             &static_buffs,
             &pending,
             &ctx,
+            &[],
         );
         assert!(
             (osr.attack_bonus - 0.5).abs() < 1e-9,

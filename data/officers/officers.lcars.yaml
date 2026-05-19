@@ -58882,7 +58882,7 @@ officers:
     effects:
     - type: tag
       stat: null
-      target: enemy
+      target: enemy_bridge
       operator: null
       value: 0.2
       trigger: on_combat_start
