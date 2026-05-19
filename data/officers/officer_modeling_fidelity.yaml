@@ -8,7 +8,7 @@ ent-e-data-871245: "Isolytic cascade line OK for combat start; missing non-Armad
 jean-luc-picard-e0515c: "Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. Not an officer-stat-scaling gap."
 snw-sam-kirk-0a77f9: "Captain enemy SHP drain modeled as negative shield_regen on attacker crew — requires engine changes for enemy-targeted shield drain."
 seska-848b5b: "On-hit crit buff now limited to rounds 1-4 via round_range condition; once-per-weapon gating requires engine refinement."
-harrison-56cc6c: "Captain: Explorer hostile gate modeled in LCARS; level-70 unlock gated via defender_level_at_most condition; bridge shield ignore is mapped via shieldmitigation tag but enemy-targeted mitigation reduction requires engine refinement."
+harrison-56cc6c: "Captain: Explorer hostile gate modeled in LCARS; level-70 unlock gated via defender_level_at_most condition; bridge Sabotage uses ShieldMitigationBypassFraction on defender mitigation for round 1 only (duration→RoundRange)."
 naga-delvos-aa4e10: "Ouroboros buffs Borg Cube Cutting Beam active ability — not modeled in combat sim (:non_combat)."
 laliari-87e81a: "Omega-13 cooldown reduction on ship active ability — not modeled in combat sim (:non_combat)."
 lursa-57a544: "Cloaking cooldown on ship active ability — not modeled in combat sim (:non_combat)."

@@ -236,6 +236,24 @@ fn officer_spec_duration_rounds(spec: &CombatEffectSpec, fallback: u32) -> u32 {
     }
 }
 
+/// AND-merge a `RoundRange { min: 1, max: rounds }` gate from finite LCARS duration so
+/// combat-begin rows (e.g. Harrison Sabotage) do not re-apply every round.
+fn merge_duration_round_condition(
+    condition: Option<AbilityCondition>,
+    spec: &CombatEffectSpec,
+) -> Option<AbilityCondition> {
+    let rounds = match spec.duration.as_ref() {
+        Some(DurationSpec::Rounds { rounds }) => (*rounds).max(1),
+        Some(DurationSpec::Stacks { stacks }) => (*stacks).max(1),
+        Some(DurationSpec::Permanent) | None => return condition,
+    };
+    let round_gate = AbilityCondition::RoundRange { min: 1, max: rounds };
+    Some(match condition {
+        None => round_gate,
+        Some(existing) => AbilityCondition::And(vec![existing, round_gate]),
+    })
+}
+
 fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
     spec.attributes
         .get(OFFICER_SPEC_ATTR_LCARS_OP)
@@ -253,6 +271,17 @@ fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
 /// Compile LCARS-authored [`CombatEffectSpec`] into runtime [`AbilityEffect`] + [`TimingWindow`] +
 /// optional AND-combined [`AbilityCondition`] from `spec.conditions`.
 pub fn compile_officer_combat_spec(
+    spec: &CombatEffectSpec,
+) -> Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError> {
+    let (timing, effect, condition) = compile_officer_combat_spec_impl(spec)?;
+    Ok((
+        timing,
+        effect,
+        merge_duration_round_condition(condition, spec),
+    ))
+}
+
+fn compile_officer_combat_spec_impl(
     spec: &CombatEffectSpec,
 ) -> Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError> {
     let timing = compile_trigger(spec.trigger)?;
@@ -1187,12 +1216,20 @@ mod tests {
         // Harrison's "Sabotage": canonical `op: MultiplySub, value 0.7 (rank 2), target EnemyShip`
         // → multiplicative bypass of defender's shield_mitigation. Engine math:
         // `mitigation × (1 - 0.7)`. Regression test for the `harrison-56cc6c` fidelity gap.
-        let spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
-        let (_, effect, _) =
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
+        let (_, effect, condition) =
             compile_officer_combat_spec(&spec).expect("defender shield mitigation");
         assert!(
             matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 0.7).abs() < 1e-12),
             "DefenderOpponent target should emit ShieldMitigationBypassFraction(0.7), got {effect:?}"
+        );
+        assert!(
+            matches!(
+                condition,
+                Some(AbilityCondition::RoundRange { min: 1, max: 1 })
+            ),
+            "finite duration should add RoundRange gate, got {condition:?}"
         );
     }
 

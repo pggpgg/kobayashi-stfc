@@ -146,7 +146,7 @@ pub fn build_combat_setup(
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
-    let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_pre_scale = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_ctx = CombatContext {
         round_index: 0,
         defender_hull_pct: 1.0,
@@ -173,14 +173,19 @@ pub fn build_combat_setup(
         combat_battle_type_id: None,
         defender_level: config.defender_level,
     };
-    let combat_begin_filtered =
-        filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
-    let bridge_ability_effectiveness_add =
-        crate::combat::abilities::sum_bridge_ability_effectiveness_add(&combat_begin_filtered);
+    let combat_begin_pre_scale_filtered =
+        filter_effects_by_condition(&combat_begin_pre_scale, &combat_begin_ctx);
+    let bridge_ability_effectiveness_add = crate::combat::abilities::sum_bridge_ability_effectiveness_add(
+        &combat_begin_pre_scale_filtered,
+    );
     crate::combat::abilities::scale_crew_bridge_ability_effects(
         &mut attacker_crew,
         bridge_ability_effectiveness_add,
     );
+    // Re-read combat-begin seats after Pike-style bridge scaling so bypass fractions match crew.
+    let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_filtered =
+        filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
     let conqueror_borg_beam_suppression = combat_begin_filtered
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
@@ -321,6 +326,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let mut defender_weapon_fire_delayed_rounds = 0_u32;
 
     // Re-use precomputed effects from setup
+    let combat_begin_effects = &setup.combat_begin_effects;
     let combat_begin_filtered = &setup.combat_begin_filtered;
     let attacker_mitigation_additive = setup.attacker_mitigation_additive;
     let attacker_accuracy_bonus = setup.attacker_accuracy_bonus;
@@ -532,9 +538,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         };
 
         let mut phase_effects = EffectAccumulator::default();
+        let combat_begin_this_round =
+            filter_effects_by_condition(combat_begin_effects, &combat_ctx);
         phase_effects.add_effects(
             TimingWindow::CombatBegin,
-            combat_begin_filtered,
+            &combat_begin_this_round,
             attacker.attack,
             assimilated_rounds_remaining > 0,
             round_index,
