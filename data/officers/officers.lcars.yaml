@@ -993,7 +993,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -2132,7 +2138,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -2149,7 +2161,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -3167,7 +3185,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -4664,7 +4688,13 @@ officers:
       value: 65.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -4681,7 +4711,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -6093,7 +6129,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -6110,7 +6152,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -7552,7 +7600,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -9522,7 +9576,13 @@ officers:
       value: 0.75
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -10523,7 +10583,13 @@ officers:
       value: 0.2
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_level_at_most
         stat: null
@@ -12083,7 +12149,13 @@ officers:
       value: 0.15
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -12512,7 +12584,13 @@ officers:
       value: 0.08
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -12970,7 +13048,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -12987,7 +13071,13 @@ officers:
       value: 0.04
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -13443,7 +13533,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -16527,7 +16623,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -17628,8 +17730,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_hit
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -19865,7 +19974,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -20310,7 +20425,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -20845,7 +20966,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -21302,7 +21429,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -22364,7 +22497,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -22396,7 +22535,13 @@ officers:
       value: 20.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -22896,7 +23041,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -25474,7 +25625,13 @@ officers:
       value: 0.1
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -25992,7 +26149,13 @@ officers:
       value: 0.05
       trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -26054,7 +26217,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -26483,8 +26652,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 3
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_is_player_ship
         stat: null
@@ -26971,7 +27147,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -26988,7 +27170,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: literal_false
         stat: null
@@ -27433,7 +27621,13 @@ officers:
       value: 0.35
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -27450,7 +27644,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -28362,7 +28562,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -28379,7 +28585,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -29487,7 +29699,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -29916,7 +30134,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -30434,7 +30658,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -32621,7 +32851,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -33051,7 +33287,13 @@ officers:
       value: 0.55
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -33068,7 +33310,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -33525,7 +33773,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -33955,7 +34209,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -33972,7 +34232,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -35007,7 +35273,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -36112,7 +36384,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -37098,7 +37376,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -37115,7 +37399,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -37544,7 +37834,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -37561,7 +37857,13 @@ officers:
       value: 0.06
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -38529,7 +38831,13 @@ officers:
       value: 0.15
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -41041,7 +41349,13 @@ officers:
       value: 0.15
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -41058,7 +41372,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -41573,8 +41893,15 @@ officers:
       operator: null
       value: 0.6
       trigger: on_combat_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -42095,7 +42422,13 @@ officers:
       value: 0.07
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -42566,8 +42899,15 @@ officers:
       operator: null
       value: 0.18
       trigger: on_combat_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 2
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_level_at_most
         stat: null
@@ -43056,7 +43396,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -43073,7 +43419,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: literal_true
         stat: null
@@ -43559,7 +43911,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -44503,7 +44861,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -44520,7 +44884,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -44950,7 +45320,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -48832,7 +49208,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -49305,7 +49687,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: or
         stat: null
@@ -49884,7 +50272,13 @@ officers:
       value: 0.2
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_level_at_most
         stat: null
@@ -50914,7 +51308,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -50931,7 +51331,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -51361,7 +51767,13 @@ officers:
       value: 3.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -52376,7 +52788,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -52936,7 +53354,13 @@ officers:
       value: 1.0
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -53365,8 +53789,15 @@ officers:
       operator: null
       value: 0.06
       trigger: passive
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_is_npc_hostile
         stat: null
@@ -54908,7 +55339,13 @@ officers:
       value: 0.5
       trigger: on_shield_break
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -55894,7 +56331,13 @@ officers:
       value: 0.04
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: literal_false
         stat: null
@@ -56380,8 +56823,15 @@ officers:
       operator: null
       value: 0.4
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: morale_active
         stat: null
@@ -56854,7 +57304,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -57869,7 +58325,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -58387,7 +58849,13 @@ officers:
       value: 0.2
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_is_player_ship
         stat: null
@@ -58419,7 +58887,13 @@ officers:
       value: 0.2
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_is_player_ship
         stat: null
@@ -59347,7 +59821,13 @@ officers:
       value: 0.05
       trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -59819,8 +60299,15 @@ officers:
       operator: null
       value: 100.0
       trigger: on_combat_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: literal_true
         stat: null
@@ -59852,7 +60339,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -60282,7 +60775,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -60757,7 +61256,13 @@ officers:
       value: 0.66
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -60776,7 +61281,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: omega13cooldown:unmapped
+      tag: omega13cooldown:non_combat
       accumulate: null
       decay: null
   below_decks_ability:
@@ -61345,7 +61850,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -62830,7 +63341,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -63830,11 +64347,17 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
-      tag: skillcloakingcooldown:unmapped
+      tag: skillcloakingcooldown:non_combat
       accumulate: null
       decay: null
   bridge_ability:
@@ -65297,7 +65820,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -65314,7 +65843,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -65785,7 +66320,13 @@ officers:
       value: 0.2
       trigger: on_round_end
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -66830,7 +67371,13 @@ officers:
       value: 1.0
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -67834,7 +68381,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -67851,7 +68404,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -68322,7 +68881,13 @@ officers:
       value: 2.0
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -69251,7 +69816,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -69268,7 +69839,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -69698,7 +70275,13 @@ officers:
       value: 15.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -70217,7 +70800,13 @@ officers:
       value: 0.7
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -75123,7 +75712,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: literal_false
         stat: null
@@ -76680,7 +77275,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -76712,7 +77313,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -76731,7 +77338,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: skillcuttingbeampvpbasedamagepercentage:unmapped
+      tag: skillcuttingbeampvpbasedamagepercentage:non_combat
       accumulate: null
       decay: null
   below_decks_ability:
@@ -76744,7 +77351,13 @@ officers:
       value: 1.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -77671,7 +78284,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -77690,7 +78309,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: voyagerasace:unmapped
+      tag: voyagerasace:non_combat
       accumulate: null
       decay: null
   below_decks_ability:
@@ -78670,7 +79289,13 @@ officers:
       value: 0.3
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: literal_false
         stat: null
@@ -79218,7 +79843,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -79235,7 +79866,13 @@ officers:
       value: 0.04
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -79665,7 +80302,13 @@ officers:
       value: 0.08
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -83167,7 +83810,13 @@ officers:
       value: 0.05
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -83184,7 +83833,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -84548,7 +85203,13 @@ officers:
       value: 10.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -84565,7 +85226,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -85507,7 +86174,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -85965,7 +86638,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -86484,7 +87163,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -86501,7 +87186,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -87034,11 +87725,17 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
-      tag: skillcuttingbeamabilitycost:unmapped
+      tag: skillcuttingbeamabilitycost:non_combat
       accumulate: null
       decay: null
   stats:
@@ -88079,7 +88776,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -88509,7 +89212,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -90020,7 +90729,13 @@ officers:
       value: 0.4
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_level_at_most
         stat: null
@@ -90052,7 +90767,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -90482,7 +91203,13 @@ officers:
       value: 3.0
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -90546,7 +91273,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allloadspeed:unmapped
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -91161,7 +91888,13 @@ officers:
       value: 0.3
       trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_hull_breach
         stat: null
@@ -91606,7 +92339,13 @@ officers:
       value: 0.9
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -91623,7 +92362,13 @@ officers:
       value: 0.8
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -92598,7 +93343,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -93174,7 +93925,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -94100,7 +94857,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -94559,7 +95322,13 @@ officers:
       value: 1.0
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -94623,7 +95392,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: allloadspeed:unmapped
+      tag: allreloadspeed:unmapped
       accumulate: null
       decay: null
   bridge_ability:
@@ -97779,7 +98548,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -99907,7 +100682,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -101982,7 +102763,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -102486,7 +103273,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -102503,7 +103296,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -103417,7 +104216,13 @@ officers:
       value: 10.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -103979,7 +104784,13 @@ officers:
       value: 0.7
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -104408,7 +105219,13 @@ officers:
       value: 0.4
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -104987,7 +105804,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -105004,7 +105827,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -106022,7 +106851,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -107686,7 +108521,13 @@ officers:
       value: 0.04
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -107763,7 +108604,13 @@ officers:
       value: 0.1
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -110032,7 +110879,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -111165,7 +112018,13 @@ officers:
       value: 15.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -113765,7 +114624,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -113782,7 +114647,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -114855,8 +115726,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -115331,7 +116209,13 @@ officers:
       value: 1.3
       trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -115393,7 +116277,13 @@ officers:
       value: 0.25
       trigger: on_round_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -116969,7 +117859,13 @@ officers:
       value: 0.15
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -117533,7 +118429,13 @@ officers:
       value: 0.7
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -117550,7 +118452,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -117979,7 +118887,13 @@ officers:
       value: 0.4
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -117996,7 +118910,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -119548,7 +120468,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -119565,7 +120491,13 @@ officers:
       value: 0.8
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -120040,7 +120972,13 @@ officers:
       value: 0.15
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -120510,8 +121448,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 2
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_is_player_ship
         stat: null
@@ -120956,7 +121901,13 @@ officers:
       value: 0.6
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -120973,7 +121924,13 @@ officers:
       value: 3.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -121914,8 +122871,15 @@ officers:
       operator: null
       value: 0.04
       trigger: on_combat_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 3
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_hull_faction_id
         stat: null
@@ -123588,7 +124552,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -125015,7 +125985,13 @@ officers:
       value: 10.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -126149,7 +127125,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -126594,7 +127576,13 @@ officers:
       value: 4.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -126626,7 +127614,13 @@ officers:
       value: 0.1
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -128166,8 +129160,15 @@ officers:
       operator: null
       value: 0.08
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -128731,7 +129732,13 @@ officers:
       value: 0.3
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -129161,7 +130168,13 @@ officers:
       value: 0.8
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -129178,7 +130191,13 @@ officers:
       value: 1.0
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_id_is
         stat: null
@@ -129622,7 +130641,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -129639,7 +130664,13 @@ officers:
       value: 0.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -130627,8 +131658,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_shield_break
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 2
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -131643,7 +132681,13 @@ officers:
       value: 0.25
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -132187,7 +133231,13 @@ officers:
       value: 0.05
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -133630,8 +134680,15 @@ officers:
       operator: null
       value: 0.6
       trigger: on_combat_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 3
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -134147,8 +135204,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 2
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -134753,7 +135817,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -136284,7 +137354,13 @@ officers:
       value: 1.5
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -136300,8 +137376,15 @@ officers:
       operator: null
       value: 0.05
       trigger: passive
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 1
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -138440,7 +139523,13 @@ officers:
       value: 0.2
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -138457,7 +139546,13 @@ officers:
       value: 0.1
       trigger: on_combat_start
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: and
         stat: null
@@ -138946,7 +140041,13 @@ officers:
       value: 0.7
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 3
+        base_chance: null
+        values: null
+        chance_values: null
       condition: null
       chance: null
       multiplier: null
@@ -139467,7 +140568,13 @@ officers:
       value: 0.15
       trigger: passive
       duration: permanent
-      scaling: null
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: attacker_ship_type_is
         stat: null
@@ -141934,8 +143041,15 @@ officers:
       operator: null
       value: 1.0
       trigger: on_round_start
-      duration: permanent
-      scaling: null
+      duration:
+        rounds: 3
+      scaling:
+        base: null
+        per_rank: null
+        max_rank: 5
+        base_chance: null
+        values: null
+        chance_values: null
       condition:
         type: defender_is_npc_hostile
         stat: null

@@ -797,6 +797,69 @@ pub fn compile_officer_combat_spec(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::DefenderFireDelay => {
+            let delay_rounds = spec
+                .value
+                .as_ref()
+                .and_then(|v| v.scalar)
+                .filter(|s| s.is_finite() && *s >= 1.0 && *s <= 10.0)
+                .map(|s| s.round() as u32)
+                .unwrap_or(1)
+                .max(1);
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(1.0)
+                .clamp(0.0, 1.0);
+            Ok((
+                timing,
+                AbilityEffect::DefenderFireDelay {
+                    chance,
+                    delay_rounds,
+                },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::RandomDefenderState => {
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(1.0)
+                .clamp(0.0, 1.0);
+            let duration_rounds = officer_spec_duration_rounds(spec, 3);
+            Ok((
+                timing,
+                AbilityEffect::RandomDefenderState {
+                    chance,
+                    duration_rounds,
+                },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::OpponentCaptainManeuverEffect => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let mult = match op {
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
+                    (1.0 - v).clamp(0.0, 1.0)
+                }
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => v.clamp(0.0, 1.0),
+                _ => (1.0 - v).clamp(0.0, 1.0),
+            };
+            Ok((
+                timing,
+                AbilityEffect::OpponentCaptainManeuverMultiplier(mult),
+                compiled_condition.clone(),
+            ))
+        }
         _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
             modifier: spec.modifier,
             operation: spec.operation,

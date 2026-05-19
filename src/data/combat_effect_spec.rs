@@ -184,6 +184,12 @@ pub enum AbilityModifierSpec {
     /// LCARS `officerstatall` — buffs the per-side officer Attack / Defense / Health ratings
     /// simultaneously (the "all three stats" widget). See `docs/OFFICER_STAT_FORMULA.md` §3.
     OfficerStatAll,
+    /// LCARS `allreloadspeed` / `allloadspeed` on shield break — skip defender counter-fire for N rounds.
+    DefenderFireDelay,
+    /// LCARS `addrandomstate` on round start — apply morale, burning, or hull breach at random.
+    RandomDefenderState,
+    /// LCARS `cptmaneuvereffect` — scale opponent captain maneuver seat effects (PvP-shaped).
+    OpponentCaptainManeuverEffect,
     TagOnly,
 }
 

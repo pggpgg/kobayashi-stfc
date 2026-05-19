@@ -50,26 +50,40 @@ fn lcars_effect_tag(tag: &str, trigger: &str) -> LcarsEffect {
 }
 
 #[test]
-fn reports_unmapped_tag_for_allreloadspeed() {
-    let effect = lcars_effect_tag("allreloadspeed:unmapped", "on_attack");
+fn allreloadspeed_tag_compiles_to_defender_fire_delay() {
+    let mut effect = lcars_effect_tag("allreloadspeed:unmapped", "on_shield_break");
+    effect.target = Some("enemy".to_string());
+    effect.value = Some(1.0);
+    effect.chance = Some(0.5);
     let mut report = LcarsDropReport::default();
     let out = lcars_effect_to_combat_effect_spec_with_report(
         &effect,
         "test:id",
-        "officer-x",
-        "Ability A",
+        "uhura-ea117c",
+        "Hailing Frequencies Open",
         None,
         None,
         0,
         Some(&mut report),
     );
-    assert!(out.is_none(), "unmapped tag should produce no spec");
-    assert_eq!(report.drops.len(), 1, "expected one drop record");
-    let drop = &report.drops[0];
-    assert_eq!(drop.officer_id, "officer-x");
-    assert_eq!(drop.ability_name, "Ability A");
-    assert_eq!(drop.effect_index, 0);
-    assert_eq!(drop.reason, "unmapped_tag:allreloadspeed");
+    assert!(out.is_some(), "allreloadspeed should compile to DefenderFireDelay");
+    assert!(
+        report.drops.is_empty(),
+        "mapped allreloadspeed should not be dropped"
+    );
+    let compiled = kobayashi::combat::effect_spec_compile::compile_officer_combat_spec(&out.unwrap())
+        .expect("compile");
+    assert!(
+        matches!(
+            compiled.1,
+            kobayashi::combat::AbilityEffect::DefenderFireDelay {
+                delay_rounds: 1,
+                ..
+            }
+        ),
+        "expected DefenderFireDelay, got {:?}",
+        compiled.1
+    );
 }
 
 #[test]
@@ -349,7 +363,10 @@ fn production_yaml_drop_baseline() {
     //             and `officerstatall` (12 officers) tags to the officer-rating accumulator,
     //             closing every silent drop except reload/cooldown/PvP-specific mechanics
     //             that need their own engine-side modeling.
-    const BASELINE: usize = 18;
+    //    18 → 0: Officer LCARS gaps — DefenderFireDelay, RandomDefenderState,
+    //             OpponentCaptainManeuverEffect compile paths; ship active-ability modifiers
+    //             marked `:non_combat` in `generate_lcars`.
+    const BASELINE: usize = 0;
     let lo = BASELINE * 95 / 100;
     let hi = BASELINE * 105 / 100;
     let total = drops.len();

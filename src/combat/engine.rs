@@ -19,7 +19,8 @@ use serde_json::{Map, Value};
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, filter_effects_by_condition,
-    hostile_crit_damage_reduction_from_crew, sum_accuracy_bonus, sum_dodge_bonus,
+    hostile_crit_damage_reduction_from_crew, opponent_captain_maneuver_multiplier_from_effects,
+    scale_crew_captain_maneuver_effects, sum_accuracy_bonus, sum_dodge_bonus,
     sum_mitigation_additive, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
     TimingWindow,
 };
@@ -141,7 +142,7 @@ pub fn build_combat_setup(
     defender_crew: &CrewConfiguration,
 ) -> PreCombatSetup {
     let attacker_crew = apply_duplicate_officer_policy(attacker_crew);
-    let defender_crew = apply_duplicate_officer_policy(defender_crew);
+    let mut defender_crew = apply_duplicate_officer_policy(defender_crew);
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
@@ -195,6 +196,9 @@ pub fn build_combat_setup(
     let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
     let attacker_accuracy_bonus = sum_accuracy_bonus(&combat_begin_filtered);
     let attacker_dodge_bonus = sum_dodge_bonus(&combat_begin_filtered);
+    let opponent_captain_maneuver_multiplier =
+        opponent_captain_maneuver_multiplier_from_effects(&combat_begin_filtered);
+    scale_crew_captain_maneuver_effects(&mut defender_crew, opponent_captain_maneuver_multiplier);
 
     // Precompute all effect vectors before moving crews into the struct
     let round_start_effects = active_effects_for_timing(&attacker_crew, TimingWindow::RoundStart);
@@ -308,6 +312,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let mut defender_assimilated_rounds_remaining = 0_u32;
     let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
     let mut defender_shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
+    let mut defender_weapon_fire_delayed_rounds = 0_u32;
 
     // Re-use precomputed effects from setup
     let combat_begin_filtered = &setup.combat_begin_filtered;
@@ -393,6 +398,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
+
+        let skip_defender_counter_attack = defender_weapon_fire_delayed_rounds > 0;
+        if defender_weapon_fire_delayed_rounds > 0 {
+            defender_weapon_fire_delayed_rounds -= 1;
+        }
 
         let defender_hull_pct_for_def_round_start =
             1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
@@ -691,6 +701,52 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         ("chance".to_string(), Value::from(round_f64(chance))),
                         ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
                         ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ]),
+                });
+            }
+
+            if let AbilityEffect::RandomDefenderState {
+                chance,
+                duration_rounds,
+            } = effective_effect
+            {
+                let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let triggered = roll < chance.clamp(0.0, 1.0);
+                let mut state_applied = String::from("none");
+                if triggered {
+                    let dur = duration_rounds.max(1);
+                    match rng.next_u64() % 3 {
+                        0 => {
+                            defender_burning_rounds = defender_burning_rounds.max(dur);
+                            state_applied = "burning".into();
+                        }
+                        1 => {
+                            defender_hull_breach_rounds = defender_hull_breach_rounds.max(dur);
+                            state_applied = "hull_breach".into();
+                        }
+                        _ => {
+                            defender_assimilated_rounds_remaining =
+                                defender_assimilated_rounds_remaining.max(dur);
+                            state_applied = "assimilated".into();
+                        }
+                    }
+                }
+                trace.record_if(|| CombatEvent {
+                    event_type: "random_defender_state_trigger".to_string(),
+                    round_index,
+                    phase: "round_start".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        ship_ability_id: Some(effect.ability_name.clone()),
+                        ..EventSource::default()
+                    },
+                    weapon_index: None,
+                    values: Map::from_iter([
+                        ("roll".to_string(), Value::from(round_f64(roll))),
+                        ("triggered".to_string(), Value::Bool(triggered)),
+                        ("chance".to_string(), Value::from(round_f64(chance))),
+                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                        ("state".to_string(), Value::String(state_applied)),
                     ]),
                 });
             }
@@ -1677,6 +1733,38 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     &mut defender_burning_rounds,
                 );
 
+                for effect in &shield_break_filtered {
+                    if let AbilityEffect::DefenderFireDelay {
+                        chance,
+                        delay_rounds,
+                    } = scale_effect(effect.effect, attack_phase_assimilated)
+                    {
+                        let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                        let triggered = roll < chance.clamp(0.0, 1.0);
+                        if triggered {
+                            defender_weapon_fire_delayed_rounds = defender_weapon_fire_delayed_rounds
+                                .max(delay_rounds.max(1));
+                        }
+                        trace.record_if(|| CombatEvent {
+                            event_type: "defender_fire_delay_trigger".to_string(),
+                            round_index,
+                            phase: "shield_break".to_string(),
+                            source: EventSource {
+                                officer_id: Some(attacker.id.clone()),
+                                ship_ability_id: Some(effect.ability_name.clone()),
+                                ..EventSource::default()
+                            },
+                            weapon_index: None,
+                            values: Map::from_iter([
+                                ("roll".to_string(), Value::from(round_f64(roll))),
+                                ("triggered".to_string(), Value::Bool(triggered)),
+                                ("chance".to_string(), Value::from(round_f64(chance))),
+                                ("delay_rounds".to_string(), Value::from(delay_rounds)),
+                            ]),
+                        });
+                    }
+                }
+
                 let def_sb_filtered =
                     filter_effects_by_condition(defender_shield_break_effects, &combat_ctx);
                 record_ability_activations(
@@ -1711,6 +1799,9 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             }
 
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
+                if skip_defender_counter_attack {
+                    continue;
+                }
                 // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
                 // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
                 // so the two paths stay in sync. Shot count mirrors outbound: `effective_shots_for_weapon`

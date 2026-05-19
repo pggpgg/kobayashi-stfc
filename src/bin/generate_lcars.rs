@@ -756,22 +756,43 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
     let cond = effect_condition_from_canonical(a, officer_name, ability_label);
 
     match mapped {
-        MappedEffect::Tag(tag_name) => Some(LcarsEffect {
-            effect_type: "tag".to_string(),
-            stat: None,
-            target: Some(target.to_string()),
-            operator: None,
-            value: a.value_by_rank.first().copied(),
-            trigger: Some(trigger.to_string()),
-            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
-            scaling: None,
-            condition: cond.clone(),
-            chance: None,
-            multiplier: None,
-            tag: Some(tag_name),
-            accumulate: None,
-            decay: None,
-        }),
+        MappedEffect::Tag(tag_name) => {
+            let chance_scaling = if a.chance_by_rank.len() > 1 {
+                scaling_from_ranks(&[], &a.chance_by_rank, modifier, None)
+            } else {
+                None
+            };
+            let chance_field = if a.chance_by_rank.len() == 1 {
+                a.chance_by_rank.first().copied()
+            } else {
+                None
+            };
+            let duration = if modifier.eq_ignore_ascii_case("AddRandomState") {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|n| LcarsDuration::Rounds { rounds: n })
+                    .or_else(|| Some(LcarsDuration::Rounds { rounds: 3 }))
+            } else {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|n| LcarsDuration::Rounds { rounds: n })
+                    .or(Some(LcarsDuration::Permanent("permanent".to_string())))
+            };
+            Some(LcarsEffect {
+                effect_type: "tag".to_string(),
+                stat: None,
+                target: Some(target.to_string()),
+                operator: None,
+                value: a.value_by_rank.first().copied(),
+                trigger: Some(trigger.to_string()),
+                duration,
+                scaling: chance_scaling,
+                condition: cond.clone(),
+                chance: chance_field,
+                multiplier: None,
+                tag: Some(tag_name),
+                accumulate: None,
+                decay: None,
+            })
+        }
         MappedEffect::State(state_type, chance) => {
             let effect_type = match state_type {
                 StateType::Morale => "morale",
@@ -1081,6 +1102,11 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "ShipArmor" | "OfficerStatDefense" => {
             MappedEffect::StatModify("armor".into(), "add".into(), val)
         }
+        "OfficerStatHealth" => MappedEffect::Tag("officerstathealth:unmapped".into()),
+        "OfficerStatAll" => MappedEffect::Tag("officerstatall:unmapped".into()),
+        "AllReloadSpeed" | "AllLoadSpeed" => MappedEffect::Tag("allreloadspeed:unmapped".into()),
+        "CptManeuverEffect" => MappedEffect::Tag("cptmaneuvereffect:unmapped".into()),
+        "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "AllDefenses" => {
             if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
@@ -1145,6 +1171,11 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         | "HostileLoot"
         | "CombatScavenger"
         | "SkillCloakingDuration"
+        | "SkillCloakingCooldown"
+        | "SkillCuttingBeamPvPBaseDamagePercentage"
+        | "SkillCuttingBeamAbilityCost"
+        | "Omega13Cooldown"
+        | "VoyagerAsaCE"
         | "OffAbilityEffect"
         | "WarpSpeed"
         | "WarpDistance"

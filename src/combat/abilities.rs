@@ -187,6 +187,19 @@ pub enum AbilityEffect {
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
     ConquerorBorgBeamSuppression,
+    /// On shield break (attacker proc): chance to skip all defender counter-attacks for `delay_rounds`
+    /// combat rounds starting the round after the break (Uhura-style reload delay).
+    DefenderFireDelay {
+        chance: f64,
+        delay_rounds: u32,
+    },
+    /// On round start: chance to apply one random state (morale / burning / hull breach) to the defender.
+    RandomDefenderState {
+        chance: f64,
+        duration_rounds: u32,
+    },
+    /// Multiplier on opponent captain-maneuver seat effects (1.0 = no change; 0.8 = 20% reduction).
+    OpponentCaptainManeuverMultiplier(f64),
 }
 
 /// Combat context for condition evaluation at runtime.
@@ -516,6 +529,37 @@ pub fn sum_dodge_bonus(effects: &[ActiveAbilityEffect]) -> f64 {
         })
         .sum()
 }
+
+/// Product of [`AbilityEffect::OpponentCaptainManeuverMultiplier`] from combat-begin rows (default 1.0).
+pub fn opponent_captain_maneuver_multiplier_from_effects(effects: &[ActiveAbilityEffect]) -> f64 {
+    let mut mult = 1.0_f64;
+    for e in effects {
+        if let AbilityEffect::OpponentCaptainManeuverMultiplier(m) = e.effect {
+            mult *= m.clamp(0.0, 1.0);
+        }
+    }
+    mult
+}
+
+/// Scale captain-maneuver seat effects on `crew` (PvP defender debuff from attacker LCARS).
+pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multiplier: f64) {
+    if multiplier >= 1.0 - 1e-12 {
+        return;
+    }
+    for seat in &mut crew.seats {
+        if seat.ability.class != AbilityClass::CaptainManeuver {
+            continue;
+        }
+        match &mut seat.ability.effect {
+            AbilityEffect::AttackMultiplier(m) => *m *= multiplier,
+            AbilityEffect::PierceBonus(p) => *p *= multiplier,
+            AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
+            AbilityEffect::CritDamageMultiplier(c) => *c *= multiplier,
+            _ => {}
+        }
+    }
+}
+
 /// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier) and gated forbidden-tech
 /// seats (e.g. Borg Operating Table vs Conqueror Borg). When multiple seats match **for the same
 /// [`CombatContext`]**, uses the maximum `reduction` and maximum `duration_rounds`.

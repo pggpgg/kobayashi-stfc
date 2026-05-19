@@ -237,6 +237,9 @@ pub fn combat_tag_to_stat(tag: &str) -> Option<&'static str> {
         // keys.
         "officerstathealth" => Some("officer_health"),
         "officerstatall" => Some("officer_stat_all"),
+        "allreloadspeed" | "allloadspeed" => Some("defender_fire_delay"),
+        "addrandomstate" => Some("random_defender_state"),
+        "cptmaneuvereffect" => Some("opponent_captain_maneuver"),
         _ => None,
     }
 }
@@ -475,6 +478,9 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "officer_defense" => Some(AbilityModifierSpec::OfficerDefense),
         "officer_health" => Some(AbilityModifierSpec::OfficerHealth),
         "officer_stat_all" => Some(AbilityModifierSpec::OfficerStatAll),
+        "defender_fire_delay" => Some(AbilityModifierSpec::DefenderFireDelay),
+        "random_defender_state" => Some(AbilityModifierSpec::RandomDefenderState),
+        "opponent_captain_maneuver" => Some(AbilityModifierSpec::OpponentCaptainManeuverEffect),
         _ => None,
     }
 }
@@ -932,7 +938,23 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 unit: None,
                 officer_stat_scaling: scaling_spec,
             }),
-            chance: None,
+            chance: {
+                let c = effect_chance_at_officer_tier(effect, officer_tier);
+                if effect.chance.is_some()
+                    || effect
+                        .scaling
+                        .as_ref()
+                        .and_then(|s| s.chance_values.as_ref())
+                        .is_some_and(|v| !v.is_empty())
+                {
+                    Some(ChanceSpec {
+                        scalar: Some(c),
+                        by_rank: None,
+                    })
+                } else {
+                    None
+                }
+            },
             duration,
             decay: None,
             accumulate: None,
