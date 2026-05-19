@@ -350,6 +350,12 @@ pub fn lcars_effect_coverage(
                 pathway,
             };
         }
+        if let Some(pathway) = random_defender_state_coverage_path(effect, officer_id, options) {
+            return LcarsEffectCoverage {
+                tier: MechanicCoverageTier::Implemented,
+                pathway,
+            };
+        }
     }
     if effect_trigger_timing(effect).is_none() {
         let tr = effect
@@ -507,6 +513,33 @@ fn accuracy_combat_begin_coverage_path(
         return None;
     }
     Some("accuracy_combat_begin".to_string())
+}
+
+/// Round-start weighted defender states from mapped `addrandomstate` tags (T'Ana / Zeph).
+fn random_defender_state_coverage_path(
+    effect: &LcarsEffect,
+    officer_id: &str,
+    options: &ResolveOptions,
+) -> Option<String> {
+    let is_random_state = effective_stat_for_effect(effect)
+        .is_some_and(|s| s == "random_defender_state");
+    if !is_random_state {
+        return None;
+    }
+    if effect_trigger_timing(effect) != Some(TimingWindow::RoundStart) {
+        return None;
+    }
+    let tier = options.tier_for(officer_id);
+    let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
+        effect,
+        "coverage:random_defender_state",
+        officer_id,
+        "coverage",
+        tier,
+        None,
+    )?;
+    crate::combat::effect_spec_compile::compile_officer_combat_spec(&spec).ok()?;
+    Some("random_defender_state_round_start".to_string())
 }
 
 /// Phase 4d: expand officer-stat effects with dynamic conditions into substituted ship-stat
@@ -1569,6 +1602,32 @@ mod tests {
             None,
         );
         assert_coverage_implemented(&eff, "kang-55e67a", "accuracy_combat_begin");
+    }
+
+    #[test]
+    fn random_defender_state_tag_coverage_tana_pattern() {
+        let mut eff = lcars_effect_officerstat_tag(
+            "addrandomstate:unmapped",
+            1.0,
+            "on_round_start",
+            "enemy",
+            Some("defender_is_player_ship"),
+        );
+        eff.duration = Some(crate::lcars::LcarsDuration::Rounds { rounds: 3 });
+        eff.scaling = Some(crate::lcars::LcarsScaling {
+            base: None,
+            per_rank: None,
+            max_rank: Some(5),
+            base_chance: None,
+            values: Some(vec![8.0, 4.0, 2.0]),
+            chance_values: Some(vec![0.4, 0.45, 0.55, 0.75, 1.0]),
+            officer_stat: None,
+        });
+        assert_coverage_implemented(
+            &eff,
+            "doctor-t-ana-b98f82",
+            "random_defender_state_round_start",
+        );
     }
 
     fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {

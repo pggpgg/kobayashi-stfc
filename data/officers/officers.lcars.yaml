@@ -26659,8 +26659,16 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
-        chance_values: null
+        values:
+        - 8.0
+        - 4.0
+        - 2.0
+        chance_values:
+        - 0.4
+        - 0.45
+        - 0.55
+        - 0.75
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -121455,8 +121463,16 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
-        chance_values: null
+        values:
+        - 8.0
+        - 4.0
+        - 2.0
+        chance_values:
+        - 0.5
+        - 0.65
+        - 0.8
+        - 0.9
+        - 1.0
       condition:
         type: defender_is_player_ship
         stat: null
@@ -122426,7 +122442,7 @@ officers:
     effects:
     - type: stat_modify
       stat: weapon_damage
-      target: enemy
+      target: enemy_bridge
       operator: add
       value: null
       trigger: on_hit
@@ -143048,8 +143064,16 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
-        chance_values: null
+        values:
+        - 8.0
+        - 4.0
+        - 2.0
+        chance_values:
+        - 0.4
+        - 0.45
+        - 0.55
+        - 0.75
+        - 1.0
       condition:
         type: defender_is_npc_hostile
         stat: null

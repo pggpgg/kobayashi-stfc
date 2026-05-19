@@ -213,6 +213,7 @@ mod tests {
             attacker_hull_pct: 0.9,
             attacker_shield_pct: 0.1,
             attacker_morale_active: true,
+            defender_morale_active: false,
             defender_burning_active: false,
             defender_hull_breach_active: false,
             attacker_burning_active: false,

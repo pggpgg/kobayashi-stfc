@@ -757,7 +757,9 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
 
     match mapped {
         MappedEffect::Tag(tag_name) => {
-            let chance_scaling = if a.chance_by_rank.len() > 1 {
+            let chance_scaling = if modifier.eq_ignore_ascii_case("AddRandomState") {
+                scaling_for_add_random_state(a.attributes.as_deref(), &a.chance_by_rank)
+            } else if a.chance_by_rank.len() > 1 {
                 scaling_from_ranks(&[], &a.chance_by_rank, modifier, None)
             } else {
                 None
@@ -1023,6 +1025,49 @@ fn hull_health_condition_from_canonical_attributes(
     })
 }
 
+/// Parse `multi_state=[8, 4, 2]` from canonical ability attributes.
+/// Integers are STFC state ids (8=Morale, 4=HullBreach, 2=Burning, 64=Assimilated); used as relative weights.
+pub(crate) fn multi_state_from_attributes(raw: Option<&str>) -> Option<Vec<u32>> {
+    let raw = raw?;
+    let start = raw
+        .find("multi_state=[")
+        .or_else(|| raw.find("multi_state =["))?;
+    let after_bracket = start + raw[start..].find('[')? + 1;
+    let close = raw[after_bracket..].find(']')? + after_bracket;
+    let inner = raw[after_bracket..close].trim();
+    let ids: Vec<u32> = inner
+        .split(',')
+        .filter_map(|s| s.trim().parse::<u32>().ok())
+        .collect();
+    if ids.is_empty() {
+        None
+    } else {
+        Some(ids)
+    }
+}
+
+/// LCARS scaling for `AddRandomState`: rank proc chances + `multi_state` weight ids in `values`.
+fn scaling_for_add_random_state(
+    attributes: Option<&str>,
+    chance_by_rank: &[f64],
+) -> Option<LcarsScaling> {
+    let state_ids = multi_state_from_attributes(attributes).unwrap_or_else(|| vec![8, 4, 2]);
+    let max_rank = chance_by_rank.len().max(state_ids.len()).max(1) as u8;
+    Some(LcarsScaling {
+        base: None,
+        per_rank: None,
+        max_rank: Some(max_rank),
+        base_chance: None,
+        values: Some(state_ids.into_iter().map(|n| n as f64).collect()),
+        chance_values: if chance_by_rank.len() > 1 {
+            Some(chance_by_rank.to_vec())
+        } else {
+            None
+        },
+        officer_stat: None,
+    })
+}
+
 /// Parse `num_rounds=N` from canonical ability `attributes` (comma-separated `key=value` pairs).
 fn num_rounds_from_attributes(raw: Option<&str>) -> Option<u32> {
     let raw = raw?;
@@ -1247,7 +1292,9 @@ fn scaling_from_ranks(
         None
     };
 
-    let chance_values = if is_add_state && !chance_by_rank.is_empty() {
+    let chance_values = if (is_add_state || modifier.eq_ignore_ascii_case("AddRandomState"))
+        && !chance_by_rank.is_empty()
+    {
         Some(chance_by_rank.to_vec())
     } else {
         None
@@ -1514,6 +1561,41 @@ mod canonical_condition_tests {
         );
         assert_eq!(super::num_rounds_from_attributes(Some("")), None);
         assert_eq!(super::num_rounds_from_attributes(None), None);
+    }
+
+    #[test]
+    fn multi_state_from_attributes_parses_bracket_list() {
+        assert_eq!(
+            super::multi_state_from_attributes(Some("multi_state=[8, 4, 2], num_rounds=3")),
+            Some(vec![8, 4, 2])
+        );
+        assert_eq!(
+            super::multi_state_from_attributes(Some("multi_state=[4,2,64]")),
+            Some(vec![4, 2, 64])
+        );
+    }
+
+    #[test]
+    fn add_random_state_emits_chance_values_and_multi_state_weights() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "modifier": "AddRandomState",
+            "operation": "Set",
+            "trigger": "RoundStart",
+            "target": "EnemyShip",
+            "attributes": "multi_state=[8, 4, 2], num_rounds=3",
+            "conditions": ["EnemyHostile"],
+            "chance_by_rank": [0.4, 0.45, 0.55, 0.75, 1.0],
+            "value_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0]
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "Zeph").expect("effect");
+        assert_eq!(e.tag.as_deref(), Some("addrandomstate:unmapped"));
+        let scaling = e.scaling.as_ref().expect("scaling");
+        assert_eq!(
+            scaling.chance_values.as_ref().unwrap(),
+            &vec![0.4, 0.45, 0.55, 0.75, 1.0]
+        );
+        assert_eq!(scaling.values.as_ref().unwrap(), &vec![8.0, 4.0, 2.0]);
     }
 
     #[test]

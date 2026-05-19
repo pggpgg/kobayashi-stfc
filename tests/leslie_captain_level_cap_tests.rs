@@ -48,6 +48,7 @@ fn ctx_with(hull_pct: f64, defender_level: Option<u32>) -> CombatContext {
         attacker_hull_pct: hull_pct,
         attacker_shield_pct: 1.0,
         attacker_morale_active: false,
+        defender_morale_active: false,
         defender_burning_active: false,
         defender_hull_breach_active: false,
         attacker_burning_active: false,

@@ -154,6 +154,7 @@ pub fn build_combat_setup(
         attacker_hull_pct: 1.0,
         attacker_shield_pct: 1.0,
         attacker_morale_active: false,
+        defender_morale_active: false,
         defender_burning_active: false,
         defender_hull_breach_active: false,
         attacker_burning_active: false,
@@ -321,6 +322,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let mut attacker_burning_rounds = 0_u32;
     let mut assimilated_rounds_remaining = 0_u32;
     let mut defender_assimilated_rounds_remaining = 0_u32;
+    let mut defender_morale_rounds_remaining = 0_u32;
     let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
     let mut defender_shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
     let mut defender_weapon_fire_delayed_rounds = 0_u32;
@@ -439,6 +441,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             attacker_hull_pct: attacker_hull_pct_round,
             attacker_shield_pct: attacker_shield_pct_round,
             attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
             defender_burning_active: defender_burning_rounds > 0,
             defender_hull_breach_active: defender_hull_breach_rounds > 0,
             attacker_burning_active: attacker_burning_rounds > 0,
@@ -517,6 +520,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             attacker_hull_pct: attacker_hull_pct_round,
             attacker_shield_pct: attacker_shield_pct_round,
             attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
             defender_burning_active: defender_burning_rounds > 0,
             defender_hull_breach_active: defender_hull_breach_rounds > 0,
             attacker_burning_active: attacker_burning_rounds > 0,
@@ -722,27 +726,52 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             if let AbilityEffect::RandomDefenderState {
                 chance,
                 duration_rounds,
+                state_outcome_count,
+                state_outcomes,
             } = effective_effect
             {
                 let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                 let triggered = roll < chance.clamp(0.0, 1.0);
                 let mut state_applied = String::from("none");
                 if triggered {
-                    let dur = duration_rounds.max(1);
-                    match rng.next_u64() % 3 {
-                        0 => {
-                            defender_burning_rounds = defender_burning_rounds.max(dur);
-                            state_applied = "burning".into();
-                        }
-                        1 => {
-                            defender_hull_breach_rounds = defender_hull_breach_rounds.max(dur);
-                            state_applied = "hull_breach".into();
-                        }
-                        _ => {
-                            defender_assimilated_rounds_remaining =
-                                defender_assimilated_rounds_remaining.max(dur);
-                            state_applied = "assimilated".into();
-                        }
+                    let breach_before = defender_hull_breach_rounds;
+                    let weights = crate::combat::abilities::random_defender_state_outcomes(
+                        state_outcome_count,
+                        &state_outcomes,
+                    );
+                    let state_id = crate::combat::abilities::pick_weighted_state_id(
+                        weights,
+                        rng.next_u64(),
+                    );
+                    let label = crate::combat::abilities::apply_defender_random_state_id(
+                        state_id,
+                        duration_rounds,
+                        &mut defender_burning_rounds,
+                        &mut defender_hull_breach_rounds,
+                        &mut defender_assimilated_rounds_remaining,
+                        &mut defender_morale_rounds_remaining,
+                    );
+                    state_applied = label.to_string();
+                    if breach_before == 0
+                        && defender_hull_breach_rounds > 0
+                        && label == "hull_breach"
+                    {
+                        let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
+                        apply_hull_breach_timing_window(
+                            &mut RoundPhaseCtx {
+                                trace: &mut trace,
+                                rng: &mut rng,
+                                round_index,
+                            },
+                            HullBreachSide::Defender,
+                            attacker,
+                            hull_breach_effects,
+                            combat_ctx.clone(),
+                            round_start_assimilated,
+                            weapon_base_rs,
+                            &mut phase_effects,
+                            &mut defender_burning_rounds,
+                        );
                     }
                 }
                 trace.record_if(|| CombatEvent {
@@ -851,6 +880,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             }
         };
         combat_ctx.attacker_morale_active = morale_triggered;
+        combat_ctx.defender_morale_active = defender_morale_rounds_remaining > 0;
 
         let full_round_start = filter_effects_by_condition(round_start_effects, &combat_ctx);
         let round_start_extra: Vec<_> = full_round_start
@@ -1842,6 +1872,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     attacker_hull_pct: combat_ctx.attacker_hull_pct,
                     attacker_shield_pct: combat_ctx.attacker_shield_pct,
                     attacker_morale_active: false,
+                    defender_morale_active: defender_morale_rounds_remaining > 0,
                     defender_burning_active: false,
                     defender_hull_breach_active: false,
                     attacker_burning_active: combat_ctx.attacker_burning_active,
@@ -2040,10 +2071,15 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         None,
                     );
 
-                    let counter_damage_through = compute_damage_through_factor(
-                        counter_mitigation_mult,
+                    let counter_pierce = crate::combat::abilities::defender_morale_adjusted_pierce(
                         defender.weapon_pierce(weapon_index)
                             + defender_phase_effects.pre_attack_pierce_bonus(),
+                        defender_ship_type,
+                        defender_morale_rounds_remaining > 0,
+                    );
+                    let counter_damage_through = compute_damage_through_factor(
+                        counter_mitigation_mult,
+                        counter_pierce,
                         defender_phase_effects.defense_mitigation_bonus(),
                     );
                     let attacker_hull_breach_active_for_crit = attacker_hull_breach_rounds > 0;
@@ -2694,6 +2730,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     1.0
                 },
                 attacker_morale_active: combat_ctx.attacker_morale_active,
+                defender_morale_active: defender_morale_rounds_remaining > 0,
                 defender_burning_active: defender_burning_rounds > 0,
                 defender_hull_breach_active: defender_hull_breach_rounds > 0,
                 attacker_burning_active: attacker_burning_rounds > 0,
@@ -2781,6 +2818,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 1.0
             },
             attacker_morale_active: combat_ctx.attacker_morale_active,
+            defender_morale_active: combat_ctx.defender_morale_active,
             defender_burning_active: combat_ctx.defender_burning_active,
             defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
             attacker_burning_active: combat_ctx.attacker_burning_active,
@@ -2891,6 +2929,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         assimilated_rounds_remaining = assimilated_rounds_remaining.saturating_sub(1);
         defender_assimilated_rounds_remaining =
             defender_assimilated_rounds_remaining.saturating_sub(1);
+        defender_morale_rounds_remaining = defender_morale_rounds_remaining.saturating_sub(1);
 
         trace.record_if(|| CombatEvent {
             event_type: "end_of_round_effects".to_string(),
@@ -2939,6 +2978,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     1.0
                 },
                 attacker_morale_active: combat_ctx.attacker_morale_active,
+                defender_morale_active: defender_morale_rounds_remaining > 0,
                 defender_burning_active: defender_burning_rounds > 0,
                 defender_hull_breach_active: defender_hull_breach_rounds > 0,
                 attacker_burning_active: attacker_burning_rounds > 0,
@@ -2997,6 +3037,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     1.0
                 },
                 attacker_morale_active: combat_ctx.attacker_morale_active,
+                defender_morale_active: combat_ctx.defender_morale_active,
                 defender_burning_active: combat_ctx.defender_burning_active,
                 defender_hull_breach_active: combat_ctx.defender_hull_breach_active,
                 attacker_burning_active: combat_ctx.attacker_burning_active,
@@ -3072,6 +3113,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             1.0
         },
         attacker_morale_active: false,
+        defender_morale_active: false,
         defender_burning_active: false,
         defender_hull_breach_active: false,
         attacker_burning_active: false,

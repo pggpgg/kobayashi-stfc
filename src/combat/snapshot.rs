@@ -41,6 +41,7 @@ pub struct CombatantSnapshotResources {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CombatSnapshotFlags {
     pub attacker_morale_active: bool,
+    pub defender_morale_active: bool,
     pub defender_burning_active: bool,
     pub attacker_burning_active: bool,
     pub defender_hull_breach_active: bool,
@@ -124,6 +125,7 @@ pub(crate) fn build_combat_state_snapshot(
         total_attacker_hull_damage,
         flags: CombatSnapshotFlags {
             attacker_morale_active: ctx.attacker_morale_active,
+            defender_morale_active: ctx.defender_morale_active,
             defender_burning_active: ctx.defender_burning_active,
             attacker_burning_active: ctx.attacker_burning_active,
             defender_hull_breach_active: ctx.defender_hull_breach_active,

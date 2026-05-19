@@ -162,6 +162,7 @@ fn harrison_sabotage_round_range_gates_bypass_to_first_combat_round() {
         attacker_hull_pct: 1.0,
         attacker_shield_pct: 1.0,
         attacker_morale_active: false,
+        defender_morale_active: false,
         defender_burning_active: false,
         defender_hull_breach_active: false,
         attacker_burning_active: false,

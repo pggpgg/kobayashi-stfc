@@ -17,6 +17,35 @@ use crate::data::ship_ability_resolve;
 /// Set by [`crate::lcars::effect_spec_adapter`] so the compiler can preserve multiply-family
 /// variants (`mul_add`, etc.) that the coarser `spec.operation` enum collapses into `Add`.
 pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
+/// JSON array of STFC state ids from canonical `multi_state=[…]` (each id is also its weight).
+pub const OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS: &str = "random_state_weights";
+
+/// Default T'Ana / Zeph style weights when LCARS omits `multi_state`.
+pub const DEFAULT_RANDOM_STATE_WEIGHTS: &[(u32, u32)] = &[(8, 8), (4, 4), (2, 2)];
+
+/// `(state_id, weight)` pairs for [`crate::combat::AbilityEffect::RandomDefenderState`].
+pub fn random_state_weighted_outcomes_from_spec(
+    attributes: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<(u32, u32)> {
+    let Some(arr) = attributes
+        .get(OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS)
+        .and_then(|v| v.as_array())
+    else {
+        return DEFAULT_RANDOM_STATE_WEIGHTS.to_vec();
+    };
+    let parsed: Vec<(u32, u32)> = arr
+        .iter()
+        .filter_map(|v| {
+            let id = v.as_u64().or_else(|| v.as_f64().map(|f| f.round() as u64))? as u32;
+            Some((id, id))
+        })
+        .collect();
+    if parsed.is_empty() {
+        DEFAULT_RANDOM_STATE_WEIGHTS.to_vec()
+    } else {
+        parsed
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EffectSpecCompileError {
@@ -860,11 +889,16 @@ fn compile_officer_combat_spec_impl(
                 .unwrap_or(1.0)
                 .clamp(0.0, 1.0);
             let duration_rounds = officer_spec_duration_rounds(spec, 3);
+            let pairs = random_state_weighted_outcomes_from_spec(&spec.attributes);
+            let (state_outcome_count, state_outcomes) =
+                crate::combat::abilities::pack_random_defender_state_outcomes(&pairs);
             Ok((
                 timing,
                 AbilityEffect::RandomDefenderState {
                     chance,
                     duration_rounds,
+                    state_outcome_count,
+                    state_outcomes,
                 },
                 compiled_condition.clone(),
             ))

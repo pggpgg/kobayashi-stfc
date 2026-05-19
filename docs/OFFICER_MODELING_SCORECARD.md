@@ -103,7 +103,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | demarco-7f2d86 | Demarco | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | dezoc-381416 | Dezoc | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 0 | combat_tag_gaps | — |
 | dixon-hill-b7ea10 | Dixon Hill | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 50 | mixed | — |
-| doctor-t-ana-b98f82 | Doctor T'Ana | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 0 | combat_tag_gaps | AddRandomState vs EnemyPlayer only; inactive in default hostile optimize. |
+| doctor-t-ana-b98f82 | Doctor T'Ana | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 0 | combat_tag_gaps | AddRandomState vs player defenders only (PvP); same weighted states and rank proc as Zeph; inactive in default hostile optimize. |
 | eight-of-eleven-cb5f3c | Eight Of Eleven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | emp-georgiou-1564b5 | Emp. Georgiou | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ent-e-data-871245 | Ent-E Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Isolytic cascade line OK for combat start; missing non-Armada hostile filter in LCARS. |
@@ -303,7 +303,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | yuki-1ab97a | Yuki | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | zahra-e3f002 | Zahra | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | zefram-cochrane-f8a1c2 | Zefram Cochrane | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| zeph-21ee5c | Zeph | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 0 | combat_tag_gaps | AddRandomState vs hostiles: random burning/hull_breach/assimilated on defender at round start (morale bucket uses assimilated proxy). |
+| zeph-21ee5c | Zeph | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 0 | combat_tag_gaps | AddRandomState vs NPC hostiles at round start: rank-scaled proc chance; weighted 8:4:2 Morale / Hull Breach / Burning on defender; defender Morale boosts counter-fire primary pierce (BB/INT). |
 | zhou-5d4d4b | Zhou | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | alonzo-freeman-ef0f9b | Alonzo Freeman | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | arrock-0791b2 | Arrock | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |

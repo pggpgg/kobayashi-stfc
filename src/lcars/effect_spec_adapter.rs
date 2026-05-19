@@ -922,6 +922,24 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 return None;
             }
         };
+        if stat == "random_defender_state" {
+            if let Some(ids) = effect
+                .scaling
+                .as_ref()
+                .and_then(|s| s.values.as_ref())
+                .filter(|v| !v.is_empty())
+            {
+                attributes.insert(
+                    crate::combat::effect_spec_compile::OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS
+                        .into(),
+                    serde_json::Value::Array(
+                        ids.iter()
+                            .map(|v| serde_json::Value::from(v.round() as u64))
+                            .collect(),
+                    ),
+                );
+            }
+        }
         return Some(CombatEffectSpec {
             id: stable_id.to_string(),
             source: EffectSource::LcarsOfficer,

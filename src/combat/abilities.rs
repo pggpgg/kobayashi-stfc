@@ -44,6 +44,9 @@ pub enum CrewSeat {
     Ship,
 }
 
+/// Max `(state_id, weight)` pairs on [`AbilityEffect::RandomDefenderState`] (Hierarch uses 3).
+pub const RANDOM_DEFENDER_STATE_OUTCOMES_CAP: usize = 8;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AbilityEffect {
     AttackMultiplier(f64),
@@ -193,10 +196,13 @@ pub enum AbilityEffect {
         chance: f64,
         delay_rounds: u32,
     },
-    /// On round start: chance to apply one random state (morale / burning / hull breach) to the defender.
+    /// On round start: chance to apply one weighted random state to the defender.
+    /// `state_outcomes`: `(STFC state id, relative weight)` e.g. `8→Morale`, `4→HullBreach`, `2→Burning`.
     RandomDefenderState {
         chance: f64,
         duration_rounds: u32,
+        state_outcome_count: u8,
+        state_outcomes: [(u32, u32); RANDOM_DEFENDER_STATE_OUTCOMES_CAP],
     },
     /// Multiplier on opponent captain-maneuver seat effects (1.0 = no change; 0.8 = 20% reduction).
     OpponentCaptainManeuverMultiplier(f64),
@@ -204,6 +210,95 @@ pub enum AbilityEffect {
     /// setup via [`sum_bridge_ability_effectiveness_add`] + [`scale_crew_bridge_ability_effects`];
     /// not applied per round. Value is the additive bonus (e.g. `0.4` for +40%).
     BridgeAbilityEffectivenessBonus(f64),
+}
+
+/// Active prefix of a packed [`AbilityEffect::RandomDefenderState`] outcome table.
+pub fn random_defender_state_outcomes<'a>(
+    count: u8,
+    outcomes: &'a [(u32, u32); RANDOM_DEFENDER_STATE_OUTCOMES_CAP],
+) -> &'a [(u32, u32)] {
+    let n = (count as usize).min(RANDOM_DEFENDER_STATE_OUTCOMES_CAP);
+    &outcomes[..n]
+}
+
+/// Pack compiled `(id, weight)` pairs into a fixed `Copy`-friendly table.
+pub fn pack_random_defender_state_outcomes(
+    pairs: &[(u32, u32)],
+) -> (u8, [(u32, u32); RANDOM_DEFENDER_STATE_OUTCOMES_CAP]) {
+    let mut outcomes = [(0_u32, 0_u32); RANDOM_DEFENDER_STATE_OUTCOMES_CAP];
+    let n = pairs.len().min(RANDOM_DEFENDER_STATE_OUTCOMES_CAP);
+    for (i, p) in pairs.iter().take(n).enumerate() {
+        outcomes[i] = *p;
+    }
+    (n as u8, outcomes)
+}
+
+/// Weighted pick from `(state_id, weight)` pairs; `draw` should be in `0..total_weight`.
+pub fn pick_weighted_state_id(state_weights: &[(u32, u32)], draw: u64) -> u32 {
+    let total: u64 = state_weights.iter().map(|(_, w)| *w as u64).sum();
+    if total == 0 {
+        return state_weights.first().map(|(id, _)| *id).unwrap_or(8);
+    }
+    let mut pick = draw % total;
+    for (id, w) in state_weights {
+        if pick < *w as u64 {
+            return *id;
+        }
+        pick -= *w as u64;
+    }
+    state_weights.last().map(|(id, _)| *id).unwrap_or(8)
+}
+
+/// Apply one STFC random-state id to defender timers; returns trace label.
+pub fn apply_defender_random_state_id(
+    state_id: u32,
+    duration_rounds: u32,
+    defender_burning_rounds: &mut u32,
+    defender_hull_breach_rounds: &mut u32,
+    defender_assimilated_rounds_remaining: &mut u32,
+    defender_morale_rounds_remaining: &mut u32,
+) -> &'static str {
+    let dur = duration_rounds.max(1);
+    match state_id {
+        8 => {
+            *defender_morale_rounds_remaining =
+                (*defender_morale_rounds_remaining).max(dur);
+            "morale"
+        }
+        4 => {
+            *defender_hull_breach_rounds = (*defender_hull_breach_rounds).max(dur);
+            "hull_breach"
+        }
+        2 => {
+            *defender_burning_rounds = (*defender_burning_rounds).max(dur);
+            "burning"
+        }
+        64 => {
+            *defender_assimilated_rounds_remaining =
+                (*defender_assimilated_rounds_remaining).max(dur);
+            "assimilated"
+        }
+        _ => "unknown",
+    }
+}
+
+/// Counter-fire pierce with defender Morale (primary pierce channel by hull class).
+pub fn defender_morale_adjusted_pierce(
+    base_pierce: f64,
+    ship_type: crate::combat::ShipType,
+    morale_active: bool,
+) -> f64 {
+    if !morale_active {
+        return base_pierce;
+    }
+    use crate::combat::types::MORALE_PRIMARY_PIERCING_BONUS;
+    match ship_type {
+        crate::combat::ShipType::Battleship | crate::combat::ShipType::Interceptor => {
+            base_pierce * (1.0 + MORALE_PRIMARY_PIERCING_BONUS)
+        }
+        // Explorer morale is accuracy in-game; aggregate pierce unchanged.
+        _ => base_pierce,
+    }
 }
 
 /// Combat context for condition evaluation at runtime.
@@ -216,6 +311,8 @@ pub struct CombatContext {
     pub attacker_shield_pct: f64,
     /// True after the round-start Morale proc succeeds for this combat round (attacker).
     pub attacker_morale_active: bool,
+    /// True when the defender has an active Morale duration (e.g. random state id 8 from AddRandomState).
+    pub defender_morale_active: bool,
     /// True when the defender (hostile) still has a Burning duration from the attacker's procs.
     pub defender_burning_active: bool,
     /// True when the defender still has a Hull Breach duration from the attacker's procs.
@@ -736,6 +833,7 @@ mod tests {
             attacker_hull_pct: 1.0,
             attacker_shield_pct: 1.0,
             attacker_morale_active: false,
+            defender_morale_active: false,
             defender_burning_active: false,
             defender_hull_breach_active: false,
             attacker_burning_active: false,
