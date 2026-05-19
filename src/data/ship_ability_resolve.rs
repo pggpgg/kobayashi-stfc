@@ -101,6 +101,30 @@ pub fn ship_ability_effect_from_catalog(
                 duration_rounds: duration_rounds.unwrap_or(5).max(1),
             })
         }
+        "hostile_counter_stat_debuff" | "hostile_pierce_accuracy_debuff" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileCounterStatDebuff {
+                reduction: value.clamp(0.0, 0.95),
+                duration_rounds: duration_rounds.unwrap_or(5).max(1),
+            })
+        }
+        "defender_shield_drain_per_round" | "hostile_shield_drain_per_round" => {
+            if timing != TimingWindow::RoundStart {
+                return None;
+            }
+            Some(AbilityEffect::DefenderShieldDrainPerRound {
+                fraction: value.clamp(0.0, 0.95),
+                duration_rounds: duration_rounds.unwrap_or(5).max(1),
+            })
+        }
+        "hostile_engagement_defensive" | "hostile_fight_defensive_bonus" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileEngagementDefensiveBonus(value.clamp(0.0, 0.95)))
+        }
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
             Some(AbilityEffect::PierceBonus(value))
         }
@@ -641,6 +665,66 @@ mod tests {
             AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
         ));
         assert_eq!(seat.ability.condition, Some(AbilityCondition::MoraleActive));
+    }
+
+    #[test]
+    fn track_d_hostile_counter_stat_debuff_maps_from_combat_begin() {
+        let e = ship_ability_effect_from_catalog(
+            "hostile_counter_stat_debuff",
+            TimingWindow::CombatBegin,
+            0.15,
+            Some(5),
+        )
+        .expect("maps");
+        assert!(matches!(
+            e,
+            AbilityEffect::HostileCounterStatDebuff {
+                reduction: r,
+                duration_rounds: 5
+            } if (r - 0.15).abs() < 1e-12
+        ));
+    }
+
+    #[test]
+    fn track_d_defender_shield_drain_maps_from_round_start() {
+        let e = ship_ability_effect_from_catalog(
+            "defender_shield_drain_per_round",
+            TimingWindow::RoundStart,
+            0.1,
+            Some(5),
+        )
+        .expect("maps");
+        assert!(matches!(
+            e,
+            AbilityEffect::DefenderShieldDrainPerRound {
+                fraction: f,
+                duration_rounds: 5
+            } if (f - 0.1).abs() < 1e-12
+        ));
+        assert!(
+            ship_ability_effect_from_catalog(
+                "defender_shield_drain_per_round",
+                TimingWindow::CombatBegin,
+                0.1,
+                Some(5),
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn track_d_hostile_engagement_defensive_maps_from_combat_begin() {
+        let e = ship_ability_effect_from_catalog(
+            "hostile_engagement_defensive",
+            TimingWindow::CombatBegin,
+            0.4,
+            None,
+        )
+        .expect("maps");
+        assert!(matches!(
+            e,
+            AbilityEffect::HostileEngagementDefensiveBonus(v) if (v - 0.4).abs() < 1e-12
+        ));
     }
 
     #[test]

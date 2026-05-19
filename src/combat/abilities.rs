@@ -180,6 +180,22 @@ pub enum AbilityEffect {
         reduction: f64,
         duration_rounds: u32,
     },
+    /// Player ship hull ability (Quv'Sompek, B'Rel): reduces hostile counter-fire pierce effectiveness
+    /// for the first `duration_rounds` combat rounds. `reduction` is a fraction (0.15 = 15% off pierce,
+    /// armor pierce, and accuracy — approximated as a uniform pierce multiplier on the counter path).
+    HostileCounterStatDebuff {
+        reduction: f64,
+        duration_rounds: u32,
+    },
+    /// Player ship hull ability (Sanctus): at round start, drain `fraction` of defender max shield HP
+    /// for rounds `1..=duration_rounds` (when fighting hostiles).
+    DefenderShieldDrainPerRound {
+        fraction: f64,
+        duration_rounds: u32,
+    },
+    /// Player ship hull ability (U.S.S. Intrepid): additive armor / deflection / dodge proxy — same
+    /// fraction applied to counter-fire mitigation and dodge bonus sums at combat begin.
+    HostileEngagementDefensiveBonus(f64),
     /// Reduces the **defender's** shield-mitigation fraction cumulatively each round (Slipstream-style).
     /// Engine applies `min(per_round * round_index, cap)` as a negative add to defender shield mitigation.
     CumulativeOpponentShieldMitigationDebuff {
@@ -760,6 +776,15 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             reduction,
             duration_rounds: _,
         } => *reduction = cap_one(*reduction),
+        AbilityEffect::HostileCounterStatDebuff {
+            reduction,
+            duration_rounds: _,
+        } => *reduction = cap_one(*reduction),
+        AbilityEffect::DefenderShieldDrainPerRound {
+            fraction,
+            duration_rounds: _,
+        } => *fraction = cap_one(*fraction),
+        AbilityEffect::HostileEngagementDefensiveBonus(v) => *v = cap_one(*v),
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
             *per_round = scale(*per_round);
             *cap = scale(*cap);
@@ -818,6 +843,74 @@ pub fn hostile_crit_damage_reduction_from_crew(
         }
     }
     (reduction.clamp(0.0, 0.95), rounds)
+}
+
+/// Hostile pierce/accuracy debuff from player ship hull abilities (Quv'Sompek, B'Rel).
+pub fn hostile_counter_stat_debuff_from_crew(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+) -> (f64, u32) {
+    let mut reduction = 0.0_f64;
+    let mut rounds = 0_u32;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileCounterStatDebuff {
+            reduction: r,
+            duration_rounds: d,
+        } = s.ability.effect
+        {
+            if s.ability
+                .condition
+                .as_ref()
+                .is_some_and(|c| !c.evaluate(ctx))
+            {
+                continue;
+            }
+            reduction = reduction.max(r);
+            rounds = rounds.max(d);
+        }
+    }
+    (reduction.clamp(0.0, 0.95), rounds)
+}
+
+/// Sanctus-style per-round defender shield drain from player ship hull abilities at round start.
+pub fn defender_shield_drain_per_round_from_crew(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+) -> (f64, u32) {
+    let mut fraction = 0.0_f64;
+    let mut rounds = 0_u32;
+    for s in &crew.seats {
+        if s.ability.timing != TimingWindow::RoundStart {
+            continue;
+        }
+        if let AbilityEffect::DefenderShieldDrainPerRound {
+            fraction: f,
+            duration_rounds: d,
+        } = s.ability.effect
+        {
+            if s.ability
+                .condition
+                .as_ref()
+                .is_some_and(|c| !c.evaluate(ctx))
+            {
+                continue;
+            }
+            fraction = fraction.max(f);
+            rounds = rounds.max(d);
+        }
+    }
+    (fraction.clamp(0.0, 0.95), rounds)
+}
+
+/// Intrepid-style defensive bonus vs hostiles (mitigation + dodge proxy).
+pub fn sum_hostile_engagement_defensive_bonus(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::HostileEngagementDefensiveBonus(v) => Some(v),
+            _ => None,
+        })
+        .sum()
 }
 
 #[cfg(test)]

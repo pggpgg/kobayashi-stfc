@@ -876,6 +876,9 @@ impl EffectAccumulator {
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::HostileCounterStatDebuff { .. }
+                | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1048,6 +1051,9 @@ impl EffectAccumulator {
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::HostileCounterStatDebuff { .. }
+                | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1191,6 +1197,9 @@ impl EffectAccumulator {
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::HostileCounterStatDebuff { .. }
+                | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1336,6 +1345,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::HostileCounterStatDebuff { .. }
+                | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1487,6 +1499,9 @@ impl EffectAccumulator {
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::HostileCounterStatDebuff { .. }
+                | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1665,6 +1680,9 @@ impl EffectAccumulator {
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::HostileCounterStatDebuff { .. }
+                | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1893,6 +1911,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
+        AbilityEffect::HostileCounterStatDebuff { .. } => effect,
+        AbilityEffect::DefenderShieldDrainPerRound { .. } => effect,
+        AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
         AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,

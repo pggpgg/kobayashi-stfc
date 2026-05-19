@@ -2,9 +2,9 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
 
-**Catalog revision (2026-05-19, Track D audit):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **71** map to `effect_type: combat_noop` (inventory-only in combat). **69** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
+**Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
-**Inventory drift vs prior audit (2026-04-04):** Two ids previously listed as `combat_noop` are now modeled — remove from §1 noop list: `509252162` (`attack_multiplier`), `2425475474` (`conqueror_borg_beam_suppression`). Shard detail: [docs/audit_shards/](audit_shards/).
+**Inventory drift vs prior audits:** Six ids left the noop list: `509252162` (`attack_multiplier`), `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Shard detail: [docs/audit_shards/](audit_shards/).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).
 
@@ -12,9 +12,9 @@ Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_des
 
 ## 1. Inventory
 
-All `combat_noop` ability ids (sorted; regen-safe; **71** ids):
+All `combat_noop` ability ids (sorted; regen-safe; **67** ids):
 
-`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `673187302`, `701705952`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1379978713`, `1428543762`, `1439253182`, `1463338054`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2441576367`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
+`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `673187302`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1428543762`, `1439253182`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
 
 Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc` text (empty string).
 
@@ -34,11 +34,11 @@ Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc
 | Scope — armada | 1 | Armada / non-armada overworld clauses (e.g. Borg Cutting Beam HHP outside battle). |
 | Opponent ship class | **0** (remaining) | Class-gated hull rows use `condition_opponent_ship_class` + [`AbilityCondition::DefenderShipTypeIs`](../src/combat/abilities.rs). |
 | Opponent tag / special faction | 5 | `[DQ]`, `[DAL]`, Krenim Invading Entities, Apex Raiders (Solo Wave Defense), etc. — keep noop until stable hostile metadata slugs. |
-| Hostile debuffs / shield drain | 3 | See §6 — Quv’Sompek, Sanctus, B’Rel; need defender stat modifiers + round timing. |
+| Hostile debuffs / shield drain | 0 | Modeled in D2: Quv’Sompek, Sanctus, B’Rel (§6.1). |
 | Proc chains | 2 | Rotarran `2520552521`, Hegh’ta `3014221215` — **keep noop** per [DESIGN.md](DESIGN.md) §3.6 unless simplified proxy approved. |
 | Out-of-combat / overworld | 0 | (Borg cutting beam counted under Scope — armada.) |
 | Weapon / mechanic disable | 1 | Collective’s Bane vs Borg Type 03 / Polygon armadas. |
-| Self defensive stats vs hostiles | 1 | U.S.S. Intrepid `1463338054` — see §6. |
+| Self defensive stats vs hostiles | 0 | Intrepid `1463338054` modeled in D2 (§6.1). |
 | Empty translation | 3 | `953555085`, `4214885989`, and one additional row with missing `ship_ability_desc`. |
 
 Counts are approximate because a few lines span multiple themes (e.g. Trellium mining + Mirror hazard immunity).
@@ -94,18 +94,18 @@ When adding new ships from upstream:
 
 Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, `translations-ship_buffs.json`, and the live catalog. Per-id tables: [`docs/audit_shards/ship_ability_noop_shard_1.md`](audit_shards/ship_ability_noop_shard_1.md) … `_8.md`. Supervisor assignments: [`docs/TRACK_D_SUPERVISOR.md`](TRACK_D_SUPERVISOR.md).
 
-**Summary:** 68 `keep_noop`, 4 `extend_resolver` (documented below; **no resolver code in this batch** — requires defender-side hooks), 2 `reclassify_catalog` (removed from §1 inventory).
+**Summary:** 64 `keep_noop`, 4 modeled in Track D2 (§6.1), 2 `reclassify_catalog` (earlier), 2 proc chains review-only.
 
-### 6.1 Actionable resolver specs (future implementer)
+### 6.1 Track D2 — implemented (2026-05-19)
 
-| id | Ship | Ability | Proposed modeling | Blocker |
+| id | Ship | Catalog `effect_type` | Engine effect | Assumption |
 | --- | --- | --- | --- | --- |
-| `701705952` | Quv’Sompek | Intimidating Presence — decreases hostile **accuracy** when fighting hostiles | `combat_begin` debuff on defender accuracy (or mitigation proxy); duration from upstream `values[]` | Defender crew stat surface; confirm debuff applies to hostile counter-fire only |
-| `1379978713` | Sanctus | Drain of the Empire — decreases hostile **shield health** each round for first N rounds | `round_start` fractional shield drain on defender for `duration_rounds` | Defender shield tick hook (not attacker pierce) |
-| `2441576367` | B’Rel | Obfuscation — **first round** combat debuff vs hostiles | `combat_begin` or round-1-only defender stat reduction (pierce/accuracy TBD from in-game) | Parse “first round” + which stat; trace vs `hostile_crit_damage_reduction` pattern |
-| `1463338054` | U.S.S. Intrepid | Frontline Defender — armor, shield deflection, dodge vs hostiles | `combat_begin` additive mitigation / dodge on **attacker** (self buff) | Engine lacks ship-ability dodge/deflection channel; may mirror `apex_barrier` or new `ShipAbilityEffect` |
+| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Uniform pierce multiplier on counter-fire (proxy for armor/shield pierce + accuracy debuff). |
+| `1379978713` | Sanctus | `defender_shield_drain_per_round` | [`DefenderShieldDrainPerRound`](../src/combat/abilities.rs) — `round_start`, 5 rounds | Drains `fraction × max_shield` at round start. |
+| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | First-round-only pierce debuff (same proxy as Quv’Sompek). |
+| `1463338054` | U.S.S. Intrepid | `hostile_engagement_defensive` | [`HostileEngagementDefensiveBonus`](../src/combat/abilities.rs) | Same % added to counter-fire mitigation + dodge sums. |
 
-**Supervisor test plan (when implemented):** `cargo test -p kobayashi ship_ability_resolve::`; add `tests/ship_ability_hostile_debuff.rs` or extend `tests/combat_tests.rs` with filtered fn names — do not run full `cargo test` from subagents.
+Tests: [`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_debuff.rs). Regenerate `ships_extended` after catalog change: `cargo run --bin normalize_data_stfc_space` (or full data refresh).
 
 ### 6.2 Proc chains (review-only; keep noop)
 

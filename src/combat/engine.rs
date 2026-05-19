@@ -19,9 +19,11 @@ use serde_json::{Map, Value};
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, filter_effects_by_condition,
+    defender_shield_drain_per_round_from_crew, hostile_counter_stat_debuff_from_crew,
     hostile_crit_damage_reduction_from_crew, opponent_captain_maneuver_multiplier_from_effects,
     scale_crew_captain_maneuver_effects, sum_accuracy_bonus, sum_dodge_bonus,
-    sum_mitigation_additive, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
+    sum_hostile_engagement_defensive_bonus, sum_mitigation_additive, AbilityEffect,
+    ActiveAbilityEffect, CombatContext, CrewConfiguration,
     TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
@@ -252,9 +254,13 @@ pub fn build_combat_setup(
         &config.attacker_roster_officer_ids,
     );
 
-    let attacker_mitigation_additive = sum_mitigation_additive(&combat_begin_filtered);
+    let hostile_engagement_defensive =
+        sum_hostile_engagement_defensive_bonus(&combat_begin_filtered);
+    let attacker_mitigation_additive =
+        sum_mitigation_additive(&combat_begin_filtered) + hostile_engagement_defensive;
     let attacker_accuracy_bonus = sum_accuracy_bonus(&combat_begin_filtered);
-    let attacker_dodge_bonus = sum_dodge_bonus(&combat_begin_filtered);
+    let attacker_dodge_bonus =
+        sum_dodge_bonus(&combat_begin_filtered) + hostile_engagement_defensive;
     let opponent_captain_maneuver_multiplier =
         opponent_captain_maneuver_multiplier_from_effects(&combat_begin_filtered);
     scale_crew_captain_maneuver_effects(&mut defender_crew, opponent_captain_maneuver_multiplier);
@@ -605,6 +611,51 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defender_shield_remaining =
                 (defender_shield_remaining + shield_heal).min(defender.shield_health.max(0.0));
             total_hull_damage = (total_hull_damage - hull_heal).max(0.0);
+        }
+
+        let shield_drain_ctx = CombatContext {
+            round_index,
+            defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+            attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
+            defender_burning_active: defender_burning_rounds > 0,
+            defender_hull_breach_active: defender_hull_breach_rounds > 0,
+            attacker_burning_active: attacker_burning_rounds > 0,
+            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+            defender_faction,
+            attacker_owner_faction: config.attacker_owner_faction,
+            defender_hull_faction_id: config.defender_hull_faction_id,
+            defender_ship_type,
+            attacker_ship_type,
+            attacker_ship_id: attacker.id.clone(),
+            defender_is_npc_hostile,
+            defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+            engagement_enemy_types: config.engagement_enemy_types.clone(),
+            combat_battle_type_id: None,
+            defender_level: config.defender_level,
+        };
+        let (shield_drain_frac, shield_drain_rounds) =
+            defender_shield_drain_per_round_from_crew(attacker_crew, &shield_drain_ctx);
+        if shield_drain_frac > 0.0
+            && round_in_inclusive_first_n(round_index, shield_drain_rounds)
+            && defender.shield_health > 0.0
+        {
+            let drain = shield_drain_frac * defender.shield_health;
+            defender_shield_remaining = (defender_shield_remaining - drain).max(0.0);
         }
 
         let defender_hull_pct_round =
@@ -2044,6 +2095,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                 let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
                     hostile_crit_damage_reduction_from_crew(attacker_crew, &defender_ctx);
+                let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
+                    hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
 
                 defender_phase_template.add_effects(
                     TimingWindow::CombatBegin,
@@ -2211,12 +2264,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         None,
                     );
 
-                    let counter_pierce = crate::combat::abilities::defender_morale_adjusted_pierce(
+                    let mut counter_pierce = crate::combat::abilities::defender_morale_adjusted_pierce(
                         defender.weapon_pierce(weapon_index)
                             + defender_phase_effects.pre_attack_pierce_bonus(),
                         defender_ship_type,
                         defender_morale_rounds_remaining > 0,
                     );
+                    if hostile_counter_debuff > 0.0
+                        && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
+                    {
+                        counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
+                    }
                     let counter_damage_through = compute_damage_through_factor(
                         counter_mitigation_mult,
                         counter_pierce,
