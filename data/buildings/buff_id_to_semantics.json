@@ -334,5 +334,17 @@
       { "stat": "shield_deflection" },
       { "stat": "dodge" }
     ]
+  },
+  "4257724198": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": ["attacker_ship_type_battleship"],
+    "notes": "Foundry: Shield Health Bonus for Battleship-class player ships."
+  },
+  "753685799": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": ["attacker_ship_type_explorer"],
+    "notes": "Science Lab: Shield Health Bonus for Explorer-class player ships."
   }
 }

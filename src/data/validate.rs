@@ -774,6 +774,11 @@ pub fn is_known_building_condition(raw: &str) -> bool {
             | "defender_is_player_ship"
             | "attacker_officer_tal_not_on_bridge"
             | "attacker_ship_faction_any_fed_klg_rom"
+            | "attacker_ship_type_battleship"
+            | "attacker_ship_type_explorer"
+            | "attacker_ship_type_interceptor"
+            | "attacker_ship_type_survey"
+            | "attacker_ship_type_armada"
     )
 }
 

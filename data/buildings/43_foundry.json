@@ -17,11 +17,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -38,11 +38,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.06,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -59,11 +59,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.09,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -80,11 +80,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.12,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -101,11 +101,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -122,11 +122,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.18,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -143,11 +143,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.21,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -164,11 +164,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.24,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -185,11 +185,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.27,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -206,11 +206,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -227,11 +227,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.33,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -248,11 +248,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.36,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -269,11 +269,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.39,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -290,11 +290,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.42,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -311,11 +311,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.45,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -332,11 +332,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.48,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -353,11 +353,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.51,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -374,11 +374,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.54,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -395,11 +395,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.57,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -416,11 +416,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -437,11 +437,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.63,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -458,11 +458,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.66,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -479,11 +479,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.69,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -500,11 +500,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.72,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -521,11 +521,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -542,11 +542,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.78,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -563,11 +563,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.81,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -584,11 +584,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.84,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -605,11 +605,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.87,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -626,11 +626,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -647,11 +647,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.93,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -668,11 +668,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.96,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -689,11 +689,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 0.99,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -710,11 +710,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.02,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -731,11 +731,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -752,11 +752,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.08,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -773,11 +773,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.11,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -794,11 +794,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.14,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -815,11 +815,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.17,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -836,11 +836,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -857,11 +857,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.23,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -878,11 +878,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.26,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -899,11 +899,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.29,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -920,11 +920,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.32,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -941,11 +941,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -962,11 +962,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.38,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -983,11 +983,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.41,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1004,11 +1004,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.44,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1025,11 +1025,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.47,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1046,11 +1046,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1067,11 +1067,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.53,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1088,11 +1088,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.56,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1109,11 +1109,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.59,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1130,11 +1130,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.62,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1151,11 +1151,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.65,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1172,11 +1172,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.68,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1193,11 +1193,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.71,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1214,11 +1214,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.74,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1235,11 +1235,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.77,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1256,11 +1256,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1277,11 +1277,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 1.85,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1298,11 +1298,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 2.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1319,11 +1319,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 2.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1340,11 +1340,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 2.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1361,11 +1361,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 2.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1382,11 +1382,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 3.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1403,11 +1403,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 3.45,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1424,11 +1424,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 3.85,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1445,11 +1445,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 4.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1466,11 +1466,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1487,11 +1487,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 5.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1508,11 +1508,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 6.4,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1529,11 +1529,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 7.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1550,11 +1550,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 7.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1571,11 +1571,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 8.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1592,11 +1592,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 9.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1613,11 +1613,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 9.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1634,11 +1634,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 10.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1655,11 +1655,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 11.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     },
@@ -1676,11 +1676,11 @@
           "notes": "Foundry: increases ship armor."
         },
         {
-          "stat": "buff_4257724198",
+          "stat": "shield_hp",
           "value": 12,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=7"
+          "conditions": ["attacker_ship_type_battleship"],
+          "notes": "Foundry: Shield Health Bonus for Battleship-class player ships (buff_4257724198)."
         }
       ]
     }

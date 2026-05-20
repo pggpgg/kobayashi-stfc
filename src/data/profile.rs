@@ -17,6 +17,8 @@
 //! [`ship_class_gated_torpedo_family_derived_seats`], [`ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship`],
 //! and scenario-side hostile shield / accuracy patches.
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
+//! Foundry / Science Lab `shield_hp` are gated by player hull class via building `conditions` and
+//! [`crate::data::building::BuildingBonusContext::attacker_ship_type`] at merge time (not global).
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
 //! **Titan-A Fortify:** several Titan research `rid`s apply combat catalog stats only while the alliance
 //! Fortify support buff is selected (`titan_a_fortification` / `titan_a_max_fortification`); see
@@ -2327,7 +2329,7 @@ mod tests {
     use std::path::Path;
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    use crate::combat::{AttackerStats, Combatant};
+    use crate::combat::{AttackerStats, Combatant, ShipType};
     use crate::data::building::{
         BuildingBonusContext, BuildingIndex, BuildingIndexEntry, BuildingMode,
     };
@@ -2490,6 +2492,7 @@ mod tests {
                 defender_opponent: crate::data::building::BuildingDefenderOpponent::Unknown,
                 attacker_faction: crate::data::building::BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
+                attacker_ship_type: None,
             },
         );
 
@@ -3764,6 +3767,142 @@ mod tests {
         assert_eq!(profile.bonuses.get("officer_attack"), Some(&0.05));
         assert_eq!(profile.bonuses.get("weapon_damage"), Some(&0.03));
         let _ = std::fs::remove_dir_all(&data_dir);
+    }
+
+    #[test]
+    fn merge_building_bonuses_into_profile_merges_holodeck_pierce_not_opaque_buff() {
+        let mut profile = PlayerProfile::default();
+        let imported_buildings = vec![BuildingEntry { bid: 69, level: 5 }];
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(69i64, "building_69".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "building_69".to_string(),
+                building_name: "Holodeck".to_string(),
+                file: Some("69_holodeck.json".to_string()),
+                bid: Some(69),
+            }],
+        };
+        let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+        merge_building_bonuses_into_profile(
+            &mut profile,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext::default(),
+        );
+        assert!(
+            profile.bonuses.get("pierce").copied().unwrap_or(0.0) > 0.0,
+            "holodeck level 5 should contribute pierce via normalized stat"
+        );
+        assert!(!profile.bonuses.contains_key("buff_473361651"));
+    }
+
+    /// Spot-check against HiggsBozo in-game starbase levels (2026-05): Holodeck 20, Foundry 60, Science Lab 60.
+    #[test]
+    fn merge_building_bonuses_higgsbozo_holodeck_foundry_science_lab_levels() {
+        let imported_buildings = vec![
+            BuildingEntry { bid: 69, level: 20 },
+            BuildingEntry { bid: 43, level: 60 },
+            BuildingEntry { bid: 29, level: 60 },
+        ];
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(69i64, "building_69".to_string());
+        bid_to_id.insert(43i64, "building_43".to_string());
+        bid_to_id.insert(29i64, "building_29".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![
+                BuildingIndexEntry {
+                    id: "building_69".to_string(),
+                    building_name: "Holodeck".to_string(),
+                    file: Some("69_holodeck".to_string()),
+                    bid: Some(69),
+                },
+                BuildingIndexEntry {
+                    id: "building_43".to_string(),
+                    building_name: "Foundry".to_string(),
+                    file: Some("43_foundry".to_string()),
+                    bid: Some(43),
+                },
+                BuildingIndexEntry {
+                    id: "building_29".to_string(),
+                    building_name: "Science Lab".to_string(),
+                    file: Some("29_science_lab".to_string()),
+                    bid: Some(29),
+                },
+            ],
+        };
+        let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+
+        let mut profile_bb = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut profile_bb,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext {
+                mode: BuildingMode::ShipCombat,
+                attacker_ship_type: Some(ShipType::Battleship),
+                ..BuildingBonusContext::default()
+            },
+        );
+        assert_eq!(profile_bb.bonuses.get("pierce"), Some(&5.0), "Holodeck 20 pierce");
+        assert_eq!(profile_bb.bonuses.get("armor"), Some(&1.4), "Foundry 60 armor");
+        assert_eq!(
+            profile_bb.bonuses.get("shield_deflection"),
+            Some(&1.4),
+            "Science Lab 60 shield deflection (global)"
+        );
+        assert_eq!(
+            profile_bb.bonuses.get("shield_hp"),
+            Some(&1.8),
+            "Battleship: Foundry shield_hp only at L60"
+        );
+
+        let mut profile_ex = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut profile_ex,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext {
+                mode: BuildingMode::ShipCombat,
+                attacker_ship_type: Some(ShipType::Explorer),
+                ..BuildingBonusContext::default()
+            },
+        );
+        assert_eq!(
+            profile_ex.bonuses.get("shield_hp"),
+            Some(&1.8),
+            "Explorer: Science Lab shield_hp only at L60"
+        );
+
+        let mut profile_int = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut profile_int,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext {
+                mode: BuildingMode::ShipCombat,
+                attacker_ship_type: Some(ShipType::Interceptor),
+                ..BuildingBonusContext::default()
+            },
+        );
+        assert!(
+            profile_int.bonuses.get("shield_hp").copied().unwrap_or(0.0).abs() < 1e-9,
+            "Interceptor gets neither Foundry nor Science Lab class shield_hp"
+        );
+        assert!(!profile_bb.bonuses.contains_key("buff_2151753795"));
+        assert!(!profile_bb.bonuses.contains_key("buff_1593096695"));
     }
 
     #[test]

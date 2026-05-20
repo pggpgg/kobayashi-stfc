@@ -166,6 +166,7 @@ pub fn building_combat_summary_for_profile(profile_id: &str) -> BuildingCombatSu
         defender_opponent: crate::data::building::BuildingDefenderOpponent::Unknown,
         attacker_faction: crate::data::building::BuildingAttackerFaction::Unknown,
         attacker_tal_assigned_captain_or_bridge: false,
+        attacker_ship_type: None,
     };
     let mut scratch = PlayerProfile {
         ops_level: player.ops_level,

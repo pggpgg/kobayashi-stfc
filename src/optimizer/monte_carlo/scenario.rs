@@ -2312,6 +2312,8 @@ fn load_defender_profile_for_pvp(
                             .map(BuildingAttackerFaction::from_ship_faction_slug)
                             .unwrap_or(BuildingAttackerFaction::Unknown),
                         attacker_tal_assigned_captain_or_bridge: false,
+                        attacker_ship_type: resolve_ship(defender_ship_id)
+                            .map(|s| ship_class_to_type(&s.ship_class)),
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
@@ -2468,6 +2470,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                             .map(BuildingAttackerFaction::from_ship_faction_slug)
                             .unwrap_or(BuildingAttackerFaction::Unknown),
                         attacker_tal_assigned_captain_or_bridge: false,
+                        attacker_ship_type: resolve_ship(ship)
+                            .map(|s| ship_class_to_type(&s.ship_class)),
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
