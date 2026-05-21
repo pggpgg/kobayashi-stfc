@@ -285,11 +285,16 @@ fn is_empty_or_placeholder(s: &str) -> bool {
 }
 
 pub(crate) fn normalize_lookup_key(value: &str) -> String {
-    value
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    // The filter keeps only ASCII alphanumerics, so `to_ascii_lowercase` is correct here and
+    // far cheaper than `char::to_lowercase` (which returns an iterator per char to handle
+    // Unicode case-folding). Pre-allocate to avoid grow-by-1 reallocations.
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        }
+    }
+    out
 }
 
 pub(crate) fn split_name_and_tier(input: &str) -> (String, Option<u8>) {

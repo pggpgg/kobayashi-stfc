@@ -292,13 +292,16 @@ pub fn build_officer_pools_from_registry(
 }
 
 /// Registry officer name key (alphanumeric only, lowercase) — matches [`DataRegistry::officer_index`].
+/// See note in `crate::data::officer::normalize_officer_lookup_key` about the four duplicate copies.
 #[inline]
 fn officer_lookup_key(value: &str) -> String {
-    value
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        }
+    }
+    out
 }
 
 fn pool_display_name_norm(name: &str) -> String {

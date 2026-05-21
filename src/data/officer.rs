@@ -196,20 +196,31 @@ impl OfficerAbility {
 }
 
 /// Normalized officer name key (alphanumeric only, lowercase) — matches `DataRegistry::officer_index` keys.
+///
+/// The filter keeps only ASCII alphanumerics, so `to_ascii_lowercase` is correct and far cheaper
+/// than `char::to_lowercase` (which returns an iterator per char to handle Unicode case-folding).
+///
+/// Note: this is duplicated as `crew_resolution::normalize_lookup_key` and
+/// `crew_generator::officer_lookup_key`. Consolidation would be cleanup; the four copies are
+/// kept identical and performance-equivalent.
 pub fn normalize_officer_lookup_key(value: &str) -> String {
-    value
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        }
+    }
+    out
 }
 
 fn normalize_for_lookup(input: &str) -> String {
-    input
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    let mut out = String::with_capacity(input.len());
+    for ch in input.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        }
+    }
+    out
 }
 
 #[derive(Debug, Deserialize)]

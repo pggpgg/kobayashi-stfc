@@ -13,21 +13,36 @@ use crate::data::ship::{
     DEFAULT_SHIPS_EXTENDED_DIR,
 };
 
-/// Normalize a string for lookup: lowercase, collapse spaces/underscores.
+/// Normalize a string for lookup: lowercase, collapse runs of whitespace/underscore into a single
+/// `_`, trim leading and trailing separators.
+///
+/// Single-pass / single-allocation implementation. Replaces a 3-allocation form (`to_lowercase` +
+/// `chars().map().collect::<String>()` + `split_whitespace().collect::<Vec<_>>().join("_")`) that
+/// showed as the dominant `String::FromIterator<char>` source in profiling. Hot path: called by
+/// `resolve_hostile_with_index` and `resolve_ship_with_tier_level` once per index entry per
+/// scenario build (so up to O(ships + hostiles) String allocs per GA run on the old version).
 fn normalize_lookup(s: &str) -> String {
-    s.to_lowercase()
-        .chars()
-        .map(|c| {
-            if c.is_whitespace() || c == '_' {
-                ' '
-            } else {
-                c
+    let mut out = String::with_capacity(s.len());
+    // Suppresses a leading `_` by treating the start of input as if the previous char were a
+    // separator. Also collapses runs.
+    let mut prev_was_sep = true;
+    for ch in s.chars() {
+        if ch.is_whitespace() || ch == '_' {
+            if !prev_was_sep {
+                out.push('_');
+                prev_was_sep = true;
             }
-        })
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join("_")
+        } else {
+            for low in ch.to_lowercase() {
+                out.push(low);
+            }
+            prev_was_sep = false;
+        }
+    }
+    if out.ends_with('_') {
+        out.pop();
+    }
+    out
 }
 
 /// Resolve a hostile using a pre-loaded index. Used by DataRegistry.
