@@ -62,11 +62,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -128,11 +128,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -194,11 +194,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -260,11 +260,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -326,11 +326,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -392,11 +392,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -458,11 +458,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -524,11 +524,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -590,11 +590,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -656,11 +656,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 10,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -722,11 +722,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 11,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -788,11 +788,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -854,11 +854,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 13,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -920,11 +920,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -986,11 +986,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1052,11 +1052,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 16,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1118,11 +1118,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 17,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1184,11 +1184,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 18,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1250,11 +1250,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1316,11 +1316,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 20,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1382,11 +1382,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 21.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1448,11 +1448,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 23,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1514,11 +1514,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 24.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1580,11 +1580,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 26,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1646,11 +1646,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 27.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1712,11 +1712,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 29,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1778,11 +1778,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 30.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1844,11 +1844,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 32,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1910,11 +1910,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 33.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -1976,11 +1976,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 35,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2042,11 +2042,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 36.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2108,11 +2108,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 38,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2174,11 +2174,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 39.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2240,11 +2240,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 41,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2306,11 +2306,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 42.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2372,11 +2372,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 44,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2438,11 +2438,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 45.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2504,11 +2504,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 47,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2570,11 +2570,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 48.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2636,11 +2636,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 50,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2702,11 +2702,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 51.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2768,11 +2768,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 53,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2834,11 +2834,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 54.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2900,11 +2900,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 56,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -2966,11 +2966,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 57.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3032,11 +3032,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 59,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3098,11 +3098,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 60.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3164,11 +3164,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 62,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3230,11 +3230,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 63.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3296,11 +3296,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 65,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3362,11 +3362,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 67,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3428,11 +3428,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 69,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3494,11 +3494,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 71,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3560,11 +3560,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 73,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3626,11 +3626,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3692,11 +3692,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 77,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3758,11 +3758,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 79,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3824,11 +3824,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 81,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3890,11 +3890,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 83,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -3956,11 +3956,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 85,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4022,11 +4022,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 87,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4088,11 +4088,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 89,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4154,11 +4154,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 91,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4220,11 +4220,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 93,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4286,11 +4286,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4352,11 +4352,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 98,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4418,11 +4418,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 101,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4484,11 +4484,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 104,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4550,11 +4550,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 107,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4616,11 +4616,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4682,11 +4682,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4748,11 +4748,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4814,11 +4814,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4880,11 +4880,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -4946,11 +4946,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -5012,11 +5012,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -5078,11 +5078,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -5144,11 +5144,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -5210,11 +5210,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     },
@@ -5276,11 +5276,11 @@
           "notes": "auto-imported from data.stfc.space; loca_id=74007"
         },
         {
-          "stat": "buff_341559099",
+          "stat": "weapon_damage",
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=74008"
+          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
         }
       ]
     }
