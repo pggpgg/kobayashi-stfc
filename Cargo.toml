@@ -72,6 +72,10 @@ path = "src/bin/generate_officer_scorecard.rs"
 name = "stfc_cc_cheat_sheet_report"
 path = "src/bin/stfc_cc_cheat_sheet_report.rs"
 
+[[bin]]
+name = "genetic_one_minute"
+path = "src/bin/genetic_one_minute.rs"
+
 [[bench]]
 name = "simulator"
 harness = false
@@ -86,6 +90,11 @@ path = "benches/monte_carlo_parallel_bench.rs"
 name = "simd_damage_kernel"
 harness = false
 path = "benches/simd_damage_kernel_bench.rs"
+
+[[bench]]
+name = "genetic_throughput"
+harness = false
+path = "benches/genetic_throughput_bench.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

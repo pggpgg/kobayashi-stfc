@@ -12,20 +12,84 @@
 //! balancing gentle exploration around good seeds with escape from local optima.
 
 use crate::combat::rng::Rng;
+use crate::data::data_registry::DataRegistry;
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
-    build_officer_pools, CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
+    build_officer_pools, build_officer_pools_with_constraints_from_registry, CrewCandidate,
+    OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
-use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
+use crate::optimizer::monte_carlo::scenario::{
+    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
+    DefenderOpponent, SharedScenarioData,
+};
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_parallel, run_monte_carlo_parallel_deduped_chunked,
-    SimulationResult,
+    crew_candidate_stable_hash, run_monte_carlo_parallel,
+    run_monte_carlo_parallel_deduped_chunked_with_shared, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::{HashMap, HashSet};
 #[cfg(test)]
 use std::sync::atomic::AtomicUsize;
+
+/// Summary statistics produced by one GA run. Useful for measuring exploration throughput
+/// (how many distinct crew compositions the optimizer actually visited).
+#[derive(Debug, Clone, Default)]
+pub struct GeneticRunStats {
+    /// Number of distinct crew compositions (by stable hash) the GA evaluated across all generations.
+    /// Includes seeded crews and elite carryovers, counted once per distinct composition.
+    pub unique_crews_evaluated: usize,
+    /// Number of generations whose population was actually scored. May be less than `config.generations`
+    /// when stagnation triggers early stop or a callback aborts the run.
+    pub generations_completed: usize,
+}
+
+/// Build the shared scenario data used by every Monte Carlo call inside the GA loop.
+///
+/// Priority order:
+///   1. Use the caller-provided `registry` (production path — server keeps a single registry
+///      per process and reuses it across all requests, avoiding repeated officer YAML parses).
+///   2. Otherwise call [`DataRegistry::load`] (CLI / bench first iteration).
+///   3. If that fails (missing data dirs in unit tests), fall back to the standalone builder
+///      which loads everything from disk but cannot apply `ship_tier` / `ship_level`.
+fn build_shared_for_genetic(
+    ship: &str,
+    hostile: &str,
+    config: &GeneticConfig,
+    registry: Option<&DataRegistry>,
+) -> SharedScenarioData {
+    let support_slice =
+        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
+
+    let from_registry = |registry: &DataRegistry| {
+        build_shared_scenario_data_from_registry(
+            registry,
+            ship,
+            hostile,
+            config.ship_tier,
+            config.ship_level,
+            config.roster_profile_id.as_deref(),
+            support_slice,
+            config.defender_opponent,
+            None,
+            None,
+        )
+    };
+
+    if let Some(reg) = registry {
+        return from_registry(reg);
+    }
+    match DataRegistry::load() {
+        Ok(loaded) => from_registry(&loaded),
+        Err(_) => build_shared_scenario_data_standalone(
+            ship,
+            hostile,
+            support_slice,
+            config.defender_opponent,
+            None,
+        ),
+    }
+}
 
 /// Single-fight: hull-weighted win rate. Chain: lexicographic proxy (primary then conditional secondary).
 fn fitness_from_result(result: &SimulationResult) -> f32 {
@@ -91,6 +155,12 @@ pub struct GeneticConfig {
     /// scout estimate exceeds the elite's fitness or its Wilson upper bound suggests potential.
     /// When `None` or 1.0, all offspring get full `sims_per_eval`. Recommended: 0.25.
     pub offspring_reduced_budget_mul: Option<f64>,
+
+    /// Attacker ship tier (1-based). When set, the genetic MC path resolves the ship at this
+    /// tier via the data registry. `None` falls back to tier 1 stats.
+    pub ship_tier: Option<u32>,
+    /// Attacker ship level (1-based). Paired with `ship_tier` to apply per-level scaling.
+    pub ship_level: Option<u32>,
 }
 
 impl Default for GeneticConfig {
@@ -116,6 +186,8 @@ impl Default for GeneticConfig {
             roster_profile_id: None,
             incremental_fitness: false,
             offspring_reduced_budget_mul: None,
+            ship_tier: None,
+            ship_level: None,
         }
     }
 }
@@ -540,26 +612,44 @@ fn mutate(
     repair_crew(crew, pools, rng, below_decks_slots);
 }
 
-/// Run genetic optimization. Returns top individuals for final ranking and whether the run
+/// Run genetic optimization. Returns top individuals for final ranking, whether the run
 /// stopped early because [`on_progress`] returned false or [`eval_should_continue`] returned false
-/// (cooperative cancel). When `aborted` is true, callers should not run an expensive final Monte Carlo pass.
+/// (cooperative cancel), and per-run [`GeneticRunStats`]. When `aborted` is true, callers should
+/// not run an expensive final Monte Carlo pass.
+///
+/// Pass `registry: Some(_)` to reuse a pre-loaded [`DataRegistry`] (server path — avoids the
+/// ~20 % of GA wall time spent re-parsing officer YAML when a fresh registry is loaded inside
+/// the call). Pass `None` to make the GA load its own registry (CLI / standalone).
+///
 /// Progress callback: (generation, max_generations, best_fitness); returns false to abort.
 pub fn run_genetic_optimizer(
     ship: &str,
     hostile: &str,
     config: &GeneticConfig,
     seed: u64,
+    registry: Option<&DataRegistry>,
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
     mut eval_should_continue: impl FnMut() -> bool,
-) -> (Vec<CrewCandidate>, bool) {
+) -> (Vec<CrewCandidate>, bool, GeneticRunStats) {
+    let mut stats = GeneticRunStats::default();
     let bd_slots = config.below_decks_slots;
-    let pools = match build_officer_pools(
-        config.below_decks_pool_mode,
-        bd_slots,
-        config.roster_profile_id.as_deref(),
-    ) {
+    let pools = match registry {
+        Some(reg) => build_officer_pools_with_constraints_from_registry(
+            reg,
+            config.below_decks_pool_mode,
+            bd_slots,
+            config.roster_profile_id.as_deref(),
+            None,
+        ),
+        None => build_officer_pools(
+            config.below_decks_pool_mode,
+            bd_slots,
+            config.roster_profile_id.as_deref(),
+        ),
+    };
+    let pools = match pools {
         Some(p) => p,
-        None => return (Vec::new(), false),
+        None => return (Vec::new(), false, stats),
     };
 
     let mut population = init_population_seeded(
@@ -571,8 +661,15 @@ pub fn run_genetic_optimizer(
         config.constraints.as_ref(),
     );
     if population.is_empty() {
-        return (Vec::new(), false);
+        return (Vec::new(), false, stats);
     }
+
+    // Build scenario data once and reuse across every generation and chunk. Without this hoist
+    // every Monte Carlo chunk would re-load officers/profile/forbidden-tech/research from disk.
+    let shared = build_shared_for_genetic(ship, hostile, config, registry);
+
+    // Count distinct crew compositions visited across the entire run for throughput reporting.
+    let mut seen_crews: HashSet<u64> = HashSet::with_capacity(config.population_size * 2);
 
     // Adaptive mutation: start low when seeded, ramp up on stagnation.
     let is_seeded = !config.seed_population.is_empty();
@@ -586,8 +683,6 @@ pub fn run_genetic_optimizer(
     let mut best_individuals: Vec<CrewCandidate> = Vec::new();
     let mut stagnation = 0_usize;
 
-    let support_slice =
-        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
     let mut last_stable_best: Vec<CrewCandidate> = Vec::new();
     let uniq_chunk = (config.population_size / 8).clamp(1, 64);
 
@@ -603,6 +698,11 @@ pub fn run_genetic_optimizer(
     let use_reduced_budget = config.incremental_fitness && offspring_scout_mul < 1.0;
 
     for generation in 0..config.generations {
+        // Record every distinct crew composition the GA visits. Crews carried over via elitism
+        // or seeded into the initial population get counted once (HashSet semantics).
+        for c in &population {
+            seen_crews.insert(crew_candidate_stable_hash(c));
+        }
         // ── Build sim results, reusing cached elite rows when incremental_fitness is on ──
         let sim_results: Vec<SimulationResult> = if config.incremental_fitness {
             // Split population: which need fresh MC, which can reuse elite cache
@@ -630,20 +730,20 @@ pub fn run_genetic_optimizer(
                         (full_iters as f64 * offspring_scout_mul).round().max(1.0) as usize;
 
                     // Phase 1: scout on all uncached
-                    let scout_results = match run_monte_carlo_parallel_deduped_chunked(
-                        ship,
-                        hostile,
+                    let scout_results = match run_monte_carlo_parallel_deduped_chunked_with_shared(
+                        &shared,
                         &uncached_crews,
                         scout_iters,
                         seed.wrapping_add(generation as u64),
-                        support_slice,
                         config.chain_grind.clone(),
-                        config.defender_opponent,
                         uniq_chunk,
                         &mut eval_should_continue,
                     ) {
                         Some(rows) => rows,
-                        None => return (last_stable_best, true),
+                        None => {
+                            stats.unique_crews_evaluated = seen_crews.len();
+                            return (last_stable_best, true, stats);
+                        }
                     };
 
                     // Find current best fitness from cached rows
@@ -685,20 +785,20 @@ pub fn run_genetic_optimizer(
                     }
 
                     if !full_crews.is_empty() {
-                        let full_results = match run_monte_carlo_parallel_deduped_chunked(
-                            ship,
-                            hostile,
+                        let full_results = match run_monte_carlo_parallel_deduped_chunked_with_shared(
+                            &shared,
                             &full_crews,
                             full_iters,
                             seed.wrapping_add(generation as u64).wrapping_add(0xDEAD),
-                            support_slice,
                             config.chain_grind.clone(),
-                            config.defender_opponent,
                             uniq_chunk,
                             &mut eval_should_continue,
                         ) {
                             Some(rows) => rows,
-                            None => return (last_stable_best, true),
+                            None => {
+                            stats.unique_crews_evaluated = seen_crews.len();
+                            return (last_stable_best, true, stats);
+                        }
                         };
                         for (crew, row) in full_crews.iter().zip(full_results) {
                             slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
@@ -706,20 +806,20 @@ pub fn run_genetic_optimizer(
                     }
                 } else {
                     // ── Single-pass: full sims on all uncached ──
-                    let fresh = match run_monte_carlo_parallel_deduped_chunked(
-                        ship,
-                        hostile,
+                    let fresh = match run_monte_carlo_parallel_deduped_chunked_with_shared(
+                        &shared,
                         &uncached_crews,
                         full_iters,
                         seed.wrapping_add(generation as u64),
-                        support_slice,
                         config.chain_grind.clone(),
-                        config.defender_opponent,
                         uniq_chunk,
                         &mut eval_should_continue,
                     ) {
                         Some(rows) => rows,
-                        None => return (last_stable_best, true),
+                        None => {
+                            stats.unique_crews_evaluated = seen_crews.len();
+                            return (last_stable_best, true, stats);
+                        }
                     };
                     for (crew, row) in uncached_crews.iter().zip(fresh) {
                         slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
@@ -738,20 +838,20 @@ pub fn run_genetic_optimizer(
                 .collect()
         } else {
             // ── Legacy: run full sims on the entire population ──
-            match run_monte_carlo_parallel_deduped_chunked(
-                ship,
-                hostile,
+            match run_monte_carlo_parallel_deduped_chunked_with_shared(
+                &shared,
                 &population,
                 config.sims_per_eval,
                 seed.wrapping_add(generation as u64),
-                support_slice,
                 config.chain_grind.clone(),
-                config.defender_opponent,
                 uniq_chunk,
                 &mut eval_should_continue,
             ) {
                 Some(rows) => rows,
-                None => return (last_stable_best, true),
+                None => {
+                    stats.unique_crews_evaluated = seen_crews.len();
+                    return (last_stable_best, true, stats);
+                }
             }
         };
         let fitness: Vec<f32> = sim_results.iter().map(fitness_from_result).collect();
@@ -790,12 +890,16 @@ pub fn run_genetic_optimizer(
         }
 
         if !on_progress(generation + 1, config.generations, best_fitness) {
-            return (best_individuals, true);
+            stats.unique_crews_evaluated = seen_crews.len();
+            stats.generations_completed = generation + 1;
+            return (best_individuals, true, stats);
         }
 
         if let Some(limit) = config.stagnation_limit {
             if stagnation >= limit {
-                return (best_individuals, false);
+                stats.unique_crews_evaluated = seen_crews.len();
+                stats.generations_completed = generation + 1;
+                return (best_individuals, false, stats);
             }
         }
 
@@ -832,33 +936,65 @@ pub fn run_genetic_optimizer(
         }
         population = next_pop;
         last_stable_best = best_individuals.clone();
+        stats.generations_completed = generation + 1;
     }
 
-    (best_individuals, false)
+    stats.unique_crews_evaluated = seen_crews.len();
+    (best_individuals, false, stats)
 }
 
 /// Run genetic optimization and return ranked results (same shape as optimize_scenario).
 /// Runs a final Monte Carlo pass on top candidates with requested sim count, then ranks.
 /// Progress callback returns false to abort.
+///
+/// Pass `registry: Some(_)` from the server (where a registry is already loaded) to avoid
+/// re-parsing officer YAML on every call; pass `None` for CLI / standalone use.
 pub fn run_genetic_optimizer_ranked(
     ship: &str,
     hostile: &str,
     config: &GeneticConfig,
     seed: u64,
     final_sims: usize,
-    mut on_progress: impl FnMut(usize, usize, f32) -> bool,
-    mut eval_should_continue: impl FnMut() -> bool,
+    registry: Option<&DataRegistry>,
+    on_progress: impl FnMut(usize, usize, f32) -> bool,
+    eval_should_continue: impl FnMut() -> bool,
 ) -> Vec<RankedCrewResult> {
-    let (top, aborted) = run_genetic_optimizer(
+    run_genetic_optimizer_ranked_with_stats(
         ship,
         hostile,
         config,
         seed,
+        final_sims,
+        registry,
+        on_progress,
+        eval_should_continue,
+    )
+    .0
+}
+
+/// Like [`run_genetic_optimizer_ranked`] but also returns [`GeneticRunStats`] for benchmark /
+/// observability use. The ranked results are identical to the non-stats variant for the same inputs.
+pub fn run_genetic_optimizer_ranked_with_stats(
+    ship: &str,
+    hostile: &str,
+    config: &GeneticConfig,
+    seed: u64,
+    final_sims: usize,
+    registry: Option<&DataRegistry>,
+    mut on_progress: impl FnMut(usize, usize, f32) -> bool,
+    mut eval_should_continue: impl FnMut() -> bool,
+) -> (Vec<RankedCrewResult>, GeneticRunStats) {
+    let (top, aborted, stats) = run_genetic_optimizer(
+        ship,
+        hostile,
+        config,
+        seed,
+        registry,
         &mut on_progress,
         &mut eval_should_continue,
     );
     if top.is_empty() || aborted {
-        return Vec::new();
+        return (Vec::new(), stats);
     }
     #[cfg(test)]
     FINAL_GENETIC_FULL_MC_CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -874,7 +1010,7 @@ pub fn run_genetic_optimizer_ranked(
         config.chain_grind.clone(),
         config.defender_opponent,
     );
-    rank_results(final_results)
+    (rank_results(final_results), stats)
 }
 
 #[cfg(test)]
@@ -1070,6 +1206,7 @@ mod tests {
             &config,
             99,
             2000,
+            None,
             |gen, _, _| gen < 1,
             || true,
         );
@@ -1093,6 +1230,7 @@ mod tests {
             "swarm",
             &config,
             12345,
+            None,
             |_, _, _| true,
             || true,
         );
@@ -1101,6 +1239,7 @@ mod tests {
             "swarm",
             &config,
             12345,
+            None,
             |_, _, _| true,
             || true,
         );
@@ -1139,6 +1278,7 @@ mod integration_tests {
             &config,
             99,
             50,
+            None,
             |gen, max_gen, _| {
                 progress_calls += 1;
                 assert!(gen <= max_gen);
