@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::OnceLock;
 
-use kobayashi::combat::abilities::{active_effects_for_timing, AbilityCondition, CrewConfiguration, TimingWindow};
+use kobayashi::combat::abilities::{
+    active_effects_for_timing, AbilityCondition, CrewConfiguration, TimingWindow,
+};
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::{
     build_combat_setup, simulate_combat_from_setup, AbilityEffect, Combatant, OpponentFactionTag,
@@ -106,7 +108,9 @@ fn ent_e_data_bridge_lcars_maps_non_armada_hostile_gate() {
     let cond = effect.condition.as_ref().expect("condition");
     assert_eq!(cond.condition_type, "and");
     let kids = cond.conditions.as_ref().expect("and children");
-    assert!(kids.iter().any(|c| c.condition_type == "defender_is_npc_hostile"));
+    assert!(kids
+        .iter()
+        .any(|c| c.condition_type == "defender_is_npc_hostile"));
     let not_armada = kids
         .iter()
         .find(|c| c.condition_type == "not")
@@ -136,7 +140,9 @@ fn ent_e_data_bridge_lcars_maps_non_armada_hostile_gate() {
     ));
     match runtime_cond {
         Some(AbilityCondition::And(parts)) => {
-            assert!(parts.iter().any(|p| matches!(p, AbilityCondition::DefenderIsNpcHostile)));
+            assert!(parts
+                .iter()
+                .any(|p| matches!(p, AbilityCondition::DefenderIsNpcHostile)));
             let not_armada = parts.iter().find_map(|p| match p {
                 AbilityCondition::Not(inner) => match inner.as_ref() {
                     AbilityCondition::DefenderShipTypeIs(ShipType::Armada) => Some(()),
@@ -144,7 +150,10 @@ fn ent_e_data_bridge_lcars_maps_non_armada_hostile_gate() {
                 },
                 _ => None,
             });
-            assert!(not_armada.is_some(), "expected Not(DefenderShipTypeIs(Armada))");
+            assert!(
+                not_armada.is_some(),
+                "expected Not(DefenderShipTypeIs(Armada))"
+            );
         }
         other => panic!("expected And condition, got {other:?}"),
     }

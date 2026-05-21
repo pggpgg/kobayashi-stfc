@@ -785,21 +785,22 @@ pub fn run_genetic_optimizer(
                     }
 
                     if !full_crews.is_empty() {
-                        let full_results = match run_monte_carlo_parallel_deduped_chunked_with_shared(
-                            &shared,
-                            &full_crews,
-                            full_iters,
-                            seed.wrapping_add(generation as u64).wrapping_add(0xDEAD),
-                            config.chain_grind.clone(),
-                            uniq_chunk,
-                            &mut eval_should_continue,
-                        ) {
-                            Some(rows) => rows,
-                            None => {
-                            stats.unique_crews_evaluated = seen_crews.len();
-                            return (last_stable_best, true, stats);
-                        }
-                        };
+                        let full_results =
+                            match run_monte_carlo_parallel_deduped_chunked_with_shared(
+                                &shared,
+                                &full_crews,
+                                full_iters,
+                                seed.wrapping_add(generation as u64).wrapping_add(0xDEAD),
+                                config.chain_grind.clone(),
+                                uniq_chunk,
+                                &mut eval_should_continue,
+                            ) {
+                                Some(rows) => rows,
+                                None => {
+                                    stats.unique_crews_evaluated = seen_crews.len();
+                                    return (last_stable_best, true, stats);
+                                }
+                            };
                         for (crew, row) in full_crews.iter().zip(full_results) {
                             slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
                         }

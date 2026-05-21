@@ -779,12 +779,9 @@ pub fn optimize_scenario_with_registry(
         OptimizerStrategy::Exhaustive => {
             optimize_scenario_exhaustive_with_registry(registry, scenario)
         }
-        OptimizerStrategy::Genetic => optimize_scenario_genetic_inner(
-            Some(registry),
-            scenario,
-            |_, _, _| true,
-            || true,
-        ),
+        OptimizerStrategy::Genetic => {
+            optimize_scenario_genetic_inner(Some(registry), scenario, |_, _, _| true, || true)
+        }
         OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
     }
 }

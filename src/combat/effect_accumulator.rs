@@ -148,7 +148,6 @@ impl EffectStatStacks {
     }
 }
 
-
 impl EffectStatKey {
     pub(crate) fn as_trace_key(self) -> &'static str {
         match self {
@@ -378,7 +377,8 @@ impl EffectAccumulator {
     }
 
     pub(crate) fn pre_attack_pierce_bonus(&self) -> f64 {
-        self.stacks.composed_for(EffectStatKey::PreAttackPierceBonus)
+        self.stacks
+            .composed_for(EffectStatKey::PreAttackPierceBonus)
     }
 
     pub(crate) fn defense_mitigation_bonus(&self) -> f64 {
@@ -529,8 +529,7 @@ impl EffectAccumulator {
     }
 
     pub(crate) fn composed_isolytic_damage_bonus(&self) -> f64 {
-        self.stacks
-            .composed_for(EffectStatKey::IsolyticDamageBonus)
+        self.stacks.composed_for(EffectStatKey::IsolyticDamageBonus)
     }
 
     pub(crate) fn composed_isolytic_defense_bonus(&self) -> f64 {

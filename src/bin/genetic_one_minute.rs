@@ -59,8 +59,7 @@ fn main() {
     // Estimate gens to fill the budget. The attempted-crew count is `pop × gens`; cap below
     // to avoid silly numbers if someone passes target_secs=3600.
     let estimated_attempts = target_secs * REF_CREWS_PER_SEC;
-    let generations = ((estimated_attempts / pop as f64).round() as usize)
-        .clamp(2, 50_000);
+    let generations = ((estimated_attempts / pop as f64).round() as usize).clamp(2, 50_000);
 
     let config = GeneticConfig {
         population_size: pop,
@@ -77,8 +76,7 @@ fn main() {
         ..GeneticConfig::default()
     };
 
-    let registry =
-        DataRegistry::load().expect("DataRegistry::load() failed — run from repo root");
+    let registry = DataRegistry::load().expect("DataRegistry::load() failed — run from repo root");
 
     eprintln!(
         "running GA: pop={pop} generations={generations} sims_per_eval=1 \
@@ -125,10 +123,7 @@ fn main() {
         unique / secs,
         attempted / secs
     );
-    println!(
-        "top crew kept   : {} entries returned",
-        results.len()
-    );
+    println!("top crew kept   : {} entries returned", results.len());
     if let Some(top) = results.first() {
         println!(
             "best win_rate   : {:.4}  (captain={}, bridge={:?}, below={:?})",

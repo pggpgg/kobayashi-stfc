@@ -38,7 +38,9 @@ pub fn random_state_weighted_outcomes_from_spec(
     let parsed: Vec<(u32, u32)> = arr
         .iter()
         .filter_map(|v| {
-            let id = v.as_u64().or_else(|| v.as_f64().map(|f| f.round() as u64))? as u32;
+            let id = v
+                .as_u64()
+                .or_else(|| v.as_f64().map(|f| f.round() as u64))? as u32;
             Some((id, id))
         })
         .collect();
@@ -278,7 +280,10 @@ fn merge_duration_round_condition(
         Some(DurationSpec::Stacks { stacks }) => (*stacks).max(1),
         Some(DurationSpec::Permanent) | None => return condition,
     };
-    let round_gate = AbilityCondition::RoundRange { min: 1, max: rounds };
+    let round_gate = AbilityCondition::RoundRange {
+        min: 1,
+        max: rounds,
+    };
     Some(match condition {
         None => round_gate,
         Some(existing) => AbilityCondition::And(vec![existing, round_gate]),
@@ -478,14 +483,16 @@ fn compile_officer_combat_spec_impl(
             let enemy_drain = matches!(spec.target, AbilityTargetSpec::DefenderOpponent)
                 && matches!(
                     op,
-                    "sub" | "mul_sub" | "multiplysub" | "multiply_sub" | "multiply_base_sub"
+                    "sub"
+                        | "mul_sub"
+                        | "multiplysub"
+                        | "multiply_sub"
+                        | "multiply_base_sub"
                         | "multiplybasesub"
                 );
             if enemy_drain && timing == TimingWindow::RoundStart {
-                let duration_rounds = officer_spec_duration_rounds(
-                    spec,
-                    crate::combat::types::MAX_COMBAT_ROUNDS,
-                );
+                let duration_rounds =
+                    officer_spec_duration_rounds(spec, crate::combat::types::MAX_COMBAT_ROUNDS);
                 return Ok((
                     timing,
                     AbilityEffect::DefenderShieldDrainPerRound {

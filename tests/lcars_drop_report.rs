@@ -65,13 +65,17 @@ fn allreloadspeed_tag_compiles_to_defender_fire_delay() {
         0,
         Some(&mut report),
     );
-    assert!(out.is_some(), "allreloadspeed should compile to DefenderFireDelay");
+    assert!(
+        out.is_some(),
+        "allreloadspeed should compile to DefenderFireDelay"
+    );
     assert!(
         report.drops.is_empty(),
         "mapped allreloadspeed should not be dropped"
     );
-    let compiled = kobayashi::combat::effect_spec_compile::compile_officer_combat_spec(&out.unwrap())
-        .expect("compile");
+    let compiled =
+        kobayashi::combat::effect_spec_compile::compile_officer_combat_spec(&out.unwrap())
+            .expect("compile");
     assert!(
         matches!(
             compiled.1,

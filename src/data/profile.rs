@@ -2102,20 +2102,19 @@ fn apply_pending_officer_stat_contributions(
         } else {
             -c.value
         };
-        let bridge_only = !want_target_attacker
-            && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
-        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| {
-            match c.stat_key.as_str() {
-                "officer_attack" => *attack += v,
-                "officer_defense" => *defense += v,
-                "officer_health" => *health += v,
-                "officer_stat_all" => {
-                    *attack += v;
-                    *defense += v;
-                    *health += v;
-                }
-                _ => {}
+        let bridge_only =
+            !want_target_attacker && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
+        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key.as_str()
+        {
+            "officer_attack" => *attack += v,
+            "officer_defense" => *defense += v,
+            "officer_health" => *health += v,
+            "officer_stat_all" => {
+                *attack += v;
+                *defense += v;
+                *health += v;
             }
+            _ => {}
         };
         if bridge_only {
             add(
@@ -3861,8 +3860,16 @@ mod tests {
                 ..BuildingBonusContext::default()
             },
         );
-        assert_eq!(profile_bb.bonuses.get("pierce"), Some(&5.0), "Holodeck 20 pierce");
-        assert_eq!(profile_bb.bonuses.get("armor"), Some(&1.4), "Foundry 60 armor");
+        assert_eq!(
+            profile_bb.bonuses.get("pierce"),
+            Some(&5.0),
+            "Holodeck 20 pierce"
+        );
+        assert_eq!(
+            profile_bb.bonuses.get("armor"),
+            Some(&1.4),
+            "Foundry 60 armor"
+        );
         assert_eq!(
             profile_bb.bonuses.get("shield_deflection"),
             Some(&1.4),

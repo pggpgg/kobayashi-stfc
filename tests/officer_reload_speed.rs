@@ -6,14 +6,13 @@ use std::sync::OnceLock;
 
 use kobayashi::lcars::LcarsOfficer;
 
-use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::abilities::{
     Ability, AbilityClass, CrewSeat, CrewSeatContext, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
+use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::{
     active_effects_for_timing, build_combat_setup, simulate_combat_from_setup, AbilityEffect,
-    Combatant, CrewConfiguration, ShipType, SimulationConfig, TimingWindow, TraceMode,
-    WeaponStats,
+    Combatant, CrewConfiguration, ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
 };
 use kobayashi::data::combat_effect_spec::AbilityModifierSpec;
 use kobayashi::lcars::{
@@ -28,7 +27,9 @@ fn delay_events(events: &[kobayashi::combat::CombatEvent]) -> Vec<&kobayashi::co
         .collect()
 }
 
-fn shots_bonus_events(events: &[kobayashi::combat::CombatEvent]) -> Vec<&kobayashi::combat::CombatEvent> {
+fn shots_bonus_events(
+    events: &[kobayashi::combat::CombatEvent],
+) -> Vec<&kobayashi::combat::CombatEvent> {
     events
         .iter()
         .filter(|e| e.event_type == "shots_bonus_trigger")
@@ -168,11 +169,7 @@ fn lcars_officers_by_id() -> &'static HashMap<String, LcarsOfficer> {
     })
 }
 
-fn resolve_crew(
-    captain: &str,
-    bridge: &[String],
-    tier: u8,
-) -> CrewConfiguration {
+fn resolve_crew(captain: &str, bridge: &[String], tier: u8) -> CrewConfiguration {
     let officers = lcars_officers_by_id();
     let opts = ResolveOptions {
         tier: Some(tier),
@@ -190,7 +187,15 @@ fn setup_fight(
     defender_is_npc: bool,
     defender_is_player: bool,
 ) -> kobayashi::combat::PreCombatSetup {
-    setup_fight_with_defender(crew, seed, rounds, attacker_ship, defender_is_npc, defender_is_player, shielded_defender())
+    setup_fight_with_defender(
+        crew,
+        seed,
+        rounds,
+        attacker_ship,
+        defender_is_npc,
+        defender_is_player,
+        shielded_defender(),
+    )
 }
 
 fn setup_fight_with_defender(
@@ -266,9 +271,10 @@ fn uhura_captain_emits_defender_fire_delay_on_shield_break() {
     for seed in 0..300_u64 {
         let setup = uhura_shield_break_setup(&crew, seed, 4);
         let result = simulate_combat_from_setup(&setup, seed);
-        if delay_events(&result.events).iter().any(|e| {
-            event_bool(e, "triggered") && event_phase(e) == "shield_break"
-        }) {
+        if delay_events(&result.events)
+            .iter()
+            .any(|e| event_bool(e, "triggered") && event_phase(e) == "shield_break")
+        {
             saw_delay = true;
             break;
         }
@@ -355,9 +361,10 @@ fn kuron_captain_combat_start_shots_bonus_increases_damage() {
     let with_kuron = resolve_crew("kuron-15cda2", &[], 1);
     let kuron_setup = setup_fight(&with_kuron, 0, 2, ShipType::Battleship, true, false);
     assert!(
-        kuron_setup.combat_begin_filtered.iter().any(|e| {
-            matches!(e.effect, AbilityEffect::ShotsBonus { .. })
-        }),
+        kuron_setup
+            .combat_begin_filtered
+            .iter()
+            .any(|e| { matches!(e.effect, AbilityEffect::ShotsBonus { .. }) }),
         "Kuron should be active at combat_begin after setup"
     );
 
@@ -383,7 +390,10 @@ fn kuron_captain_combat_start_shots_bonus_increases_damage() {
         }
         seed += 1;
     }
-    assert!(saw_proc, "expected at least one Kuron combat_begin shots_bonus proc in 500 seeds");
+    assert!(
+        saw_proc,
+        "expected at least one Kuron combat_begin shots_bonus proc in 500 seeds"
+    );
 }
 
 #[test]
@@ -396,9 +406,10 @@ fn vixis_captain_round_start_can_delay_defender_fire() {
     for seed in 0..500_u64 {
         let setup = setup_fight(&crew, seed, 12, ShipType::Battleship, true, false);
         let result = simulate_combat_from_setup(&setup, seed);
-        if delay_events(&result.events).iter().any(|e| {
-            event_bool(e, "triggered") && event_phase(e) == "round_start"
-        }) {
+        if delay_events(&result.events)
+            .iter()
+            .any(|e| event_bool(e, "triggered") && event_phase(e) == "round_start")
+        {
             saw_delay = true;
             break;
         }
@@ -454,9 +465,10 @@ fn pon_captain_fires_delay_vs_player_defender_on_explorer() {
     for seed in 0..300_u64 {
         let setup = setup_fight(&crew, seed, 6, ShipType::Explorer, false, true);
         let result = simulate_combat_from_setup(&setup, seed);
-        if delay_events(&result.events).iter().any(|e| {
-            event_bool(e, "triggered") && event_phase(e) == "combat_begin"
-        }) {
+        if delay_events(&result.events)
+            .iter()
+            .any(|e| event_bool(e, "triggered") && event_phase(e) == "combat_begin")
+        {
             saw_delay = true;
             break;
         }
@@ -573,14 +585,19 @@ fn ortegas_bridge_round_start_delay_vs_player_defender() {
     if !Path::new("data/officers/officers.lcars.yaml").exists() {
         return;
     }
-    let crew = resolve_crew("kirk-1323b6", &["strike-team-ortegas-d9df30".to_string()], 5);
+    let crew = resolve_crew(
+        "kirk-1323b6",
+        &["strike-team-ortegas-d9df30".to_string()],
+        5,
+    );
     let mut saw_delay = false;
     for seed in 0..200_u64 {
         let setup = setup_fight(&crew, seed, 8, ShipType::Battleship, false, true);
         let result = simulate_combat_from_setup(&setup, seed);
-        if delay_events(&result.events).iter().any(|e| {
-            event_bool(e, "triggered") && event_phase(e) == "round_start"
-        }) {
+        if delay_events(&result.events)
+            .iter()
+            .any(|e| event_bool(e, "triggered") && event_phase(e) == "round_start")
+        {
             saw_delay = true;
             break;
         }

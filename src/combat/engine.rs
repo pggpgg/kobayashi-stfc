@@ -18,13 +18,12 @@ use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
-    attacker_crew_tal_assigned_captain_or_bridge, filter_effects_by_condition,
-    defender_shield_drain_per_round_from_crew, hostile_counter_stat_debuff_from_crew,
+    attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
+    filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
     hostile_crit_damage_reduction_from_crew, opponent_captain_maneuver_multiplier_from_effects,
     scale_crew_captain_maneuver_effects, sum_accuracy_bonus, sum_dodge_bonus,
     sum_hostile_engagement_defensive_bonus, sum_mitigation_additive, AbilityEffect,
-    ActiveAbilityEffect, CombatContext, CrewConfiguration,
-    TimingWindow,
+    ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -194,7 +193,8 @@ pub fn build_combat_setup(
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
-    let combat_begin_pre_scale = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
+    let combat_begin_pre_scale =
+        active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     // RoundRange gates on finite-duration combat-begin effects use min: 1 (see Harrison Sabotage).
     let combat_begin_ctx = CombatContext {
         round_index: 1,
@@ -225,9 +225,10 @@ pub fn build_combat_setup(
     };
     let combat_begin_pre_scale_filtered =
         filter_effects_by_condition(&combat_begin_pre_scale, &combat_begin_ctx);
-    let bridge_ability_effectiveness_add = crate::combat::abilities::sum_bridge_ability_effectiveness_add(
-        &combat_begin_pre_scale_filtered,
-    );
+    let bridge_ability_effectiveness_add =
+        crate::combat::abilities::sum_bridge_ability_effectiveness_add(
+            &combat_begin_pre_scale_filtered,
+        );
     crate::combat::abilities::scale_crew_bridge_ability_effects(
         &mut attacker_crew,
         bridge_ability_effectiveness_add,
@@ -523,7 +524,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
         let skip_defender_counter_attack = defender_weapon_fire_delayed_rounds > 0;
         if defender_weapon_fire_delayed_rounds > 0 {
-            defender_weapon_fire_delayed_rounds = defender_weapon_fire_delayed_rounds.saturating_sub(1);
+            defender_weapon_fire_delayed_rounds =
+                defender_weapon_fire_delayed_rounds.saturating_sub(1);
         }
 
         let defender_hull_pct_for_def_round_start =
@@ -913,10 +915,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         state_outcome_count,
                         &state_outcomes,
                     );
-                    let state_id = crate::combat::abilities::pick_weighted_state_id(
-                        weights,
-                        rng.next_u64(),
-                    );
+                    let state_id =
+                        crate::combat::abilities::pick_weighted_state_id(weights, rng.next_u64());
                     let label = crate::combat::abilities::apply_defender_random_state_id(
                         state_id,
                         duration_rounds,
@@ -2264,12 +2264,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         None,
                     );
 
-                    let mut counter_pierce = crate::combat::abilities::defender_morale_adjusted_pierce(
-                        defender.weapon_pierce(weapon_index)
-                            + defender_phase_effects.pre_attack_pierce_bonus(),
-                        defender_ship_type,
-                        defender_morale_rounds_remaining > 0,
-                    );
+                    let mut counter_pierce =
+                        crate::combat::abilities::defender_morale_adjusted_pierce(
+                            defender.weapon_pierce(weapon_index)
+                                + defender_phase_effects.pre_attack_pierce_bonus(),
+                            defender_ship_type,
+                            defender_morale_rounds_remaining > 0,
+                        );
                     if hostile_counter_debuff > 0.0
                         && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
                     {

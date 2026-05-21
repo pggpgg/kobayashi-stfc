@@ -1595,7 +1595,10 @@ mod tests {
             combat_tag_to_stat("officerstathealth:unmapped"),
             Some("officer_health")
         );
-        assert_eq!(combat_tag_to_stat("officerstatall:unmapped"), Some("officer_stat_all"));
+        assert_eq!(
+            combat_tag_to_stat("officerstatall:unmapped"),
+            Some("officer_stat_all")
+        );
         assert_eq!(
             combat_tag_to_stat("allreloadspeed:enemy_delay"),
             Some("defender_fire_delay")
