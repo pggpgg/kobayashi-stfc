@@ -711,6 +711,13 @@ mod tests {
                         conditions: vec!["attacker_ship_type_explorer".to_string()],
                         notes: None,
                     },
+                    BonusEntry {
+                        stat: "shield_hp".to_string(),
+                        value: 1.8,
+                        operator: "add".to_string(),
+                        conditions: vec!["attacker_ship_type_interceptor".to_string()],
+                        notes: None,
+                    },
                 ],
             }],
         };
@@ -762,7 +769,7 @@ mod tests {
                 attacker_ship_type: Some(ShipType::Interceptor),
             },
         );
-        assert!(!interceptor.contains_key("shield_hp"));
+        assert_eq!(interceptor.get("shield_hp"), Some(&1.8));
     }
 
     #[test]

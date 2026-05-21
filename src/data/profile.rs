@@ -17,7 +17,8 @@
 //! [`ship_class_gated_torpedo_family_derived_seats`], [`ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship`],
 //! and scenario-side hostile shield / accuracy patches.
 //! Bonuses from synced buildings (by bid) are merged in when [merge_building_bonuses_into_profile] is used.
-//! Foundry / Science Lab `shield_hp` are gated by player hull class via building `conditions` and
+//! Foundry / Science Lab / Engine Technology Lab `shield_hp` are gated by player hull class (BB /
+//! Explorer / Interceptor) via building `conditions` and
 //! [`crate::data::building::BuildingBonusContext::attacker_ship_type`] at merge time (not global).
 //! Bonuses from synced research (by rid) are merged in when [merge_research_bonuses_into_profile] is used.
 //! **Titan-A Fortify:** several Titan research `rid`s apply combat catalog stats only while the alliance
@@ -3801,18 +3802,20 @@ mod tests {
         assert!(!profile.bonuses.contains_key("buff_473361651"));
     }
 
-    /// Spot-check against HiggsBozo in-game starbase levels (2026-05): Holodeck 20, Foundry 60, Science Lab 60.
+    /// Spot-check triangle buildings at L60: Foundry / Science Lab / Engine Technology Lab shield_hp by hull class.
     #[test]
     fn merge_building_bonuses_higgsbozo_holodeck_foundry_science_lab_levels() {
         let imported_buildings = vec![
             BuildingEntry { bid: 69, level: 20 },
             BuildingEntry { bid: 43, level: 60 },
             BuildingEntry { bid: 29, level: 60 },
+            BuildingEntry { bid: 14, level: 60 },
         ];
         let mut bid_to_id = HashMap::new();
         bid_to_id.insert(69i64, "building_69".to_string());
         bid_to_id.insert(43i64, "building_43".to_string());
         bid_to_id.insert(29i64, "building_29".to_string());
+        bid_to_id.insert(14i64, "engine_technology_lab".to_string());
         let building_index = BuildingIndex {
             data_version: None,
             source_note: None,
@@ -3834,6 +3837,12 @@ mod tests {
                     building_name: "Science Lab".to_string(),
                     file: Some("29_science_lab".to_string()),
                     bid: Some(29),
+                },
+                BuildingIndexEntry {
+                    id: "engine_technology_lab".to_string(),
+                    building_name: "Engine Technology Lab".to_string(),
+                    file: Some("14_engine_technology_lab".to_string()),
+                    bid: Some(14),
                 },
             ],
         };
@@ -3897,9 +3906,15 @@ mod tests {
                 ..BuildingBonusContext::default()
             },
         );
-        assert!(
-            profile_int.bonuses.get("shield_hp").copied().unwrap_or(0.0).abs() < 1e-9,
-            "Interceptor gets neither Foundry nor Science Lab class shield_hp"
+        assert_eq!(
+            profile_int.bonuses.get("dodge"),
+            Some(&1.4),
+            "Engine Technology Lab 60 dodge (global)"
+        );
+        assert_eq!(
+            profile_int.bonuses.get("shield_hp"),
+            Some(&1.8),
+            "Interceptor: Engine Technology Lab shield_hp only at L60"
         );
         assert!(!profile_bb.bonuses.contains_key("buff_2151753795"));
         assert!(!profile_bb.bonuses.contains_key("buff_1593096695"));
