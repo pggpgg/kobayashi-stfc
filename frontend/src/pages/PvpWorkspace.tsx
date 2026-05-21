@@ -163,7 +163,9 @@ export default function PvpWorkspace() {
   }, [ownedOnly, activeProfileId]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+    >
       <header
         style={{
           padding: "1rem 1.25rem",
@@ -172,10 +174,23 @@ export default function PvpWorkspace() {
         }}
       >
         <h1 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem" }}>PvP</h1>
-        <p style={{ margin: "0 0 1rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+        <p
+          style={{
+            margin: "0 0 1rem",
+            color: "var(--text-muted)",
+            fontSize: "0.9rem",
+          }}
+        >
           Optimize attacker crews vs a fixed opponent ship and profile.
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "1rem",
+            alignItems: "center",
+          }}
+        >
           <ProfileSwitcher />
           <label>
             Opponent profile{" "}
@@ -227,7 +242,9 @@ export default function PvpWorkspace() {
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <main style={{ flex: 1, padding: "1rem 1.25rem", overflow: "auto" }}>
           <section style={{ marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>Attacker (your profile)</h2>
+            <h2 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
+              Attacker (your profile)
+            </h2>
             <ShipSelectors
               label="Ship"
               shipId={pvp.attackerShipId}
@@ -252,7 +269,9 @@ export default function PvpWorkspace() {
           </section>
 
           <section>
-            <h2 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>Defender (opponent)</h2>
+            <h2 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
+              Defender (opponent)
+            </h2>
             <ShipSelectors
               label="Ship"
               shipId={pvp.defenderShipId}

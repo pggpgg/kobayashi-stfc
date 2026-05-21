@@ -278,8 +278,7 @@ pub fn apply_defender_random_state_id(
     let dur = duration_rounds.max(1);
     match state_id {
         8 => {
-            *defender_morale_rounds_remaining =
-                (*defender_morale_rounds_remaining).max(dur);
+            *defender_morale_rounds_remaining = (*defender_morale_rounds_remaining).max(dur);
             "morale"
         }
         4 => {

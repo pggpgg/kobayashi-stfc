@@ -330,13 +330,15 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         });
     }
 
-    if let Err(pvp_errors) = super::pvp::validate_scenario_target(&super::pvp::ScenarioTargetFields {
-        hostile: Some(request.hostile.clone()),
-        defender_ship: request.defender_ship.clone(),
-        defender_ship_tier: request.defender_ship_tier,
-        defender_ship_level: request.defender_ship_level,
-        defender_profile_id: request.defender_profile_id.clone(),
-    }) {
+    if let Err(pvp_errors) =
+        super::pvp::validate_scenario_target(&super::pvp::ScenarioTargetFields {
+            hostile: Some(request.hostile.clone()),
+            defender_ship: request.defender_ship.clone(),
+            defender_ship_tier: request.defender_ship_tier,
+            defender_ship_level: request.defender_ship_level,
+            defender_profile_id: request.defender_profile_id.clone(),
+        })
+    {
         errors.extend(pvp_errors);
     }
 

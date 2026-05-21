@@ -2,13 +2,11 @@
 
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::{load_profile_index, DEMO_PROFILE_ID};
+use kobayashi::optimizer::crew_generator::CrewCandidate;
 use kobayashi::optimizer::monte_carlo::{
     pvp_scenario_params_from_api_fields, run_monte_carlo_with_registry, DefenderOpponent,
 };
-use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::server::api::{
-    validate_scenario_target, ScenarioTarget, ScenarioTargetFields,
-};
+use kobayashi::server::api::{validate_scenario_target, ScenarioTarget, ScenarioTargetFields};
 
 fn second_profile_id() -> Option<String> {
     let index = load_profile_index();
@@ -39,8 +37,8 @@ fn validate_scenario_target_pvp_and_pve() {
 
 #[test]
 fn mitigation_player_vs_player_is_deterministic() {
-    use kobayashi::optimizer::monte_carlo::mitigation_and_pierce_for_player_vs_player;
     use kobayashi::data::profile::PlayerProfile;
+    use kobayashi::optimizer::monte_carlo::mitigation_and_pierce_for_player_vs_player;
 
     let registry = DataRegistry::load().expect("registry");
     let ent = registry
@@ -68,13 +66,9 @@ fn pvp_simulate_resolves_ships_not_placeholder() {
         }
     };
     let registry = DataRegistry::load().expect("registry");
-    let pvp = pvp_scenario_params_from_api_fields(
-        Some("rotarran"),
-        Some(5),
-        Some(50),
-        Some(&opponent),
-    )
-    .expect("pvp params");
+    let pvp =
+        pvp_scenario_params_from_api_fields(Some("rotarran"), Some(5), Some(50), Some(&opponent))
+            .expect("pvp params");
     let candidate = CrewCandidate {
         captain: "ent-e-picard-556227".to_string(),
         bridge: vec![

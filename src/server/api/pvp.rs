@@ -26,7 +26,9 @@ pub struct ScenarioTargetFields {
 }
 
 /// Validate `hostile` vs `defender_ship` exclusivity and required companion fields.
-pub fn validate_scenario_target(fields: &ScenarioTargetFields) -> Result<ScenarioTarget, Vec<ValidationIssue>> {
+pub fn validate_scenario_target(
+    fields: &ScenarioTargetFields,
+) -> Result<ScenarioTarget, Vec<ValidationIssue>> {
     let hostile = fields
         .hostile
         .as_deref()
@@ -73,7 +75,7 @@ pub fn validate_scenario_target(fields: &ScenarioTargetFields) -> Result<Scenari
                 errors.push(ValidationIssue {
                     field: "defender_profile_id",
                     messages: vec![
-                        "defender_profile_id is required when defender_ship is set".to_string(),
+                        "defender_profile_id is required when defender_ship is set".to_string()
                     ],
                 });
             }

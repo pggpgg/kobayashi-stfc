@@ -1,8 +1,8 @@
 //! Track D2: ship hull abilities that debuff hostiles or buff the player vs hostiles.
 
 use kobayashi::combat::{
-    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration,
-    CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
+    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
 };
 
 fn high_crit_defender() -> Combatant {

@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::OnceLock;
 
-use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::abilities::{active_effects_for_timing, CrewConfiguration, TimingWindow};
+use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::{
     build_combat_setup, simulate_combat_from_setup, AbilityEffect, Combatant, ShipType,
     SimulationConfig, TraceMode, WeaponStats,
@@ -141,10 +141,7 @@ fn snw_sam_kirk_drains_npc_hostile_shields_at_round_start() {
     assert!(
         active_effects_for_timing(&crew, TimingWindow::RoundStart)
             .iter()
-            .any(|e| matches!(
-                e.effect,
-                AbilityEffect::DefenderShieldDrainPerRound { .. }
-            )),
+            .any(|e| matches!(e.effect, AbilityEffect::DefenderShieldDrainPerRound { .. })),
         "Sam Kirk should resolve round-start defender shield drain on crew"
     );
 

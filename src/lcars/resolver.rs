@@ -497,8 +497,8 @@ fn accuracy_combat_begin_coverage_path(
     officer_id: &str,
     options: &ResolveOptions,
 ) -> Option<String> {
-    let is_accuracy = effective_stat_for_effect(effect)
-        .is_some_and(|s| s.eq_ignore_ascii_case("accuracy"));
+    let is_accuracy =
+        effective_stat_for_effect(effect).is_some_and(|s| s.eq_ignore_ascii_case("accuracy"));
     if !is_accuracy {
         return None;
     }
@@ -516,8 +516,8 @@ fn random_defender_state_coverage_path(
     officer_id: &str,
     options: &ResolveOptions,
 ) -> Option<String> {
-    let is_random_state = effective_stat_for_effect(effect)
-        .is_some_and(|s| s == "random_defender_state");
+    let is_random_state =
+        effective_stat_for_effect(effect).is_some_and(|s| s == "random_defender_state");
     if !is_random_state {
         return None;
     }
@@ -1589,13 +1589,8 @@ mod tests {
 
     #[test]
     fn accuracy_combat_begin_tag_coverage_kang_pattern() {
-        let eff = lcars_effect_officerstat_tag(
-            "accuracy:unmapped",
-            1.0,
-            "on_combat_start",
-            "self",
-            None,
-        );
+        let eff =
+            lcars_effect_officerstat_tag("accuracy:unmapped", 1.0, "on_combat_start", "self", None);
         assert_coverage_implemented(&eff, "kang-55e67a", "accuracy_combat_begin");
     }
 

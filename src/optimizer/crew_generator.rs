@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroUsize;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
 use lru::LruCache;
 
@@ -27,6 +27,20 @@ use crate::perf_log;
 /// skipped so tests and tools see the full canonical officer catalog (see unit tests using this id).
 pub const NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS: &str =
     "__kobayashi_test_profile_without_roster_dir__";
+
+/// Process-wide LCARS officer cache used by [`build_officer_pools_inner`] when no registry-backed
+/// cache is available. Without this, every GA invocation re-parses every `*.lcars.yaml` file —
+/// 22 % of GA wall time per [`docs/PERFORMANCE.md`] profiling. The data is read-only and never
+/// invalidated for the lifetime of the process; restart to pick up edits on disk.
+static LCARS_POOL_CACHE: OnceLock<Vec<LcarsOfficer>> = OnceLock::new();
+
+fn lcars_pool_cache() -> &'static [LcarsOfficer] {
+    LCARS_POOL_CACHE
+        .get_or_init(|| {
+            load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)).unwrap_or_default()
+        })
+        .as_slice()
+}
 
 /// Path to `roster.imported.json` for the given API profile id (or default profile when `None`).
 pub fn roster_import_json_path_for_profile(profile_id: Option<&str>) -> String {
@@ -278,13 +292,16 @@ pub fn build_officer_pools_from_registry(
 }
 
 /// Registry officer name key (alphanumeric only, lowercase) — matches [`DataRegistry::officer_index`].
+/// See note in `crate::data::officer::normalize_officer_lookup_key` about the four duplicate copies.
 #[inline]
 fn officer_lookup_key(value: &str) -> String {
-    value
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        }
+    }
+    out
 }
 
 fn pool_display_name_norm(name: &str) -> String {
@@ -603,14 +620,57 @@ pub fn build_officer_pools_with_constraints(
     roster_profile_id: Option<&str>,
     constraints: Option<&CrewSearchConstraints>,
 ) -> Option<OfficerPools> {
-    let mut officers = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
-        .map(|loaded| {
-            loaded
-                .into_iter()
-                .filter(|officer| !officer.name.trim().is_empty())
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
+    build_officer_pools_inner(
+        None,
+        below_decks_pool_mode,
+        below_decks_slots,
+        roster_profile_id,
+        constraints,
+    )
+}
+
+/// Like [`build_officer_pools_with_constraints`] but reuses a caller-provided [`DataRegistry`] for
+/// the canonical-officer list and LCARS rows, avoiding the per-call disk-read + YAML-parse cost.
+/// Called from the genetic optimizer when a registry is plumbed through.
+pub fn build_officer_pools_with_constraints_from_registry(
+    registry: &DataRegistry,
+    below_decks_pool_mode: BelowDecksPoolMode,
+    below_decks_slots: usize,
+    roster_profile_id: Option<&str>,
+    constraints: Option<&CrewSearchConstraints>,
+) -> Option<OfficerPools> {
+    build_officer_pools_inner(
+        Some(registry),
+        below_decks_pool_mode,
+        below_decks_slots,
+        roster_profile_id,
+        constraints,
+    )
+}
+
+fn build_officer_pools_inner(
+    registry: Option<&DataRegistry>,
+    below_decks_pool_mode: BelowDecksPoolMode,
+    below_decks_slots: usize,
+    roster_profile_id: Option<&str>,
+    constraints: Option<&CrewSearchConstraints>,
+) -> Option<OfficerPools> {
+    let mut officers = match registry {
+        Some(reg) => reg
+            .officers()
+            .iter()
+            .filter(|officer| !officer.name.trim().is_empty())
+            .cloned()
+            .collect::<Vec<_>>(),
+        None => load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
+            .map(|loaded| {
+                loaded
+                    .into_iter()
+                    .filter(|officer| !officer.name.trim().is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default(),
+    };
 
     let roster_path = roster_import_json_path_for_profile(roster_profile_id);
     if let Some(roster_ids) = load_imported_roster_ids_unlocked_only(&roster_path) {
@@ -642,10 +702,15 @@ pub fn build_officer_pools_with_constraints(
         .map(|o| o.name.clone())
         .collect();
 
-    let lcars_loaded =
-        load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)).unwrap_or_default();
+    // Borrow LCARS from the registry when its KOBAYASHI_OFFICER_SOURCE-gated cache is populated;
+    // otherwise fall back to a process-wide OnceLock cache so the *.lcars.yaml files are parsed
+    // at most once per process instead of once per GA invocation.
+    let lcars_slice: &[LcarsOfficer] = match registry.and_then(|r| r.lcars_officers()) {
+        Some(slice) => slice,
+        None => lcars_pool_cache(),
+    };
     let mut lcars_by_id: HashMap<&str, &LcarsOfficer> = HashMap::new();
-    for lo in &lcars_loaded {
+    for lo in lcars_slice {
         lcars_by_id.entry(lo.id.as_str()).or_insert(lo);
     }
     sort_below_decks_by_rank_and_power(

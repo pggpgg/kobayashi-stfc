@@ -785,6 +785,95 @@ pub fn run_monte_carlo_parallel_deduped_chunked(
     )
 }
 
+/// Like [`run_monte_carlo_parallel_deduped_chunked`] but reuses a pre-built [`SharedScenarioData`]
+/// across all chunks instead of rebuilding it from disk on every call.
+/// Used by the genetic optimizer where the same (ship, hostile, tier, level, profile) is reused
+/// across every generation and every chunk within a generation.
+pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
+    shared: &SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    chain_grind: Option<ChainGrindParams>,
+    max_unique_per_chunk: usize,
+    mut should_continue: impl FnMut() -> bool,
+) -> Option<Vec<SimulationResult>> {
+    if candidates.is_empty() {
+        return Some(Vec::new());
+    }
+
+    let mut seen_hashes: HashSet<u64> = HashSet::with_capacity(candidates.len());
+    let mut unique_indices: Vec<usize> = Vec::new();
+    for (i, c) in candidates.iter().enumerate() {
+        let k = crew_candidate_stable_hash(c);
+        if seen_hashes.insert(k) {
+            unique_indices.push(i);
+        }
+    }
+
+    let uniq: Vec<CrewCandidate> = unique_indices
+        .iter()
+        .map(|&i| candidates[i].clone())
+        .collect();
+
+    let chunk_sz = max_unique_per_chunk.max(1);
+    let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq.len());
+    for chunk in uniq.chunks(chunk_sz) {
+        if !should_continue() {
+            return None;
+        }
+        let part = run_monte_carlo_inner(
+            shared,
+            chunk,
+            iterations,
+            seed,
+            true,
+            None,
+            chain_grind.clone(),
+        );
+        for (c, r) in chunk.iter().zip(part) {
+            by_hash.insert(
+                crew_candidate_stable_hash(c),
+                SimulationResult {
+                    candidate: c.clone(),
+                    trials_run: r.trials_run,
+                    win_rate: r.win_rate,
+                    win_rate_ci_low: r.win_rate_ci_low,
+                    win_rate_ci_high: r.win_rate_ci_high,
+                    stall_rate: r.stall_rate,
+                    stall_rate_ci_low: r.stall_rate_ci_low,
+                    stall_rate_ci_high: r.stall_rate_ci_high,
+                    loss_rate: r.loss_rate,
+                    loss_rate_ci_low: r.loss_rate_ci_low,
+                    loss_rate_ci_high: r.loss_rate_ci_high,
+                    r1_kill_rate: r.r1_kill_rate,
+                    r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+                    r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
+                    avg_hull_remaining: r.avg_hull_remaining,
+                    avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+                    avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+                    avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+                    avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+                    avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+                    chain: r.chain.clone(),
+                },
+            );
+        }
+    }
+
+    Some(
+        candidates
+            .iter()
+            .map(|c| {
+                by_hash
+                    .get(&crew_candidate_stable_hash(c))
+                    .expect("dedup chunked MC: hash present")
+                    .clone()
+            })
+            .collect(),
+    )
+}
+
 /// Like [run_monte_carlo_parallel] but uses [DataRegistry] for officers and ship/hostile resolution (no reload).
 /// When ship_tier or ship_level is set, uses data/ships_extended for accurate stats.
 #[allow(clippy::too_many_arguments)]
@@ -1054,7 +1143,7 @@ pub(crate) fn run_monte_carlo_with_shared(
 ) -> Vec<SimulationResult> {
     let t0 = perf_log::perf_start();
     let out = run_monte_carlo_inner(
-        shared,
+        &shared,
         candidates,
         iterations,
         seed,
@@ -1085,7 +1174,7 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
 ) -> Vec<SimulationResult> {
     let cfg = ScoutEarlyStopCfg::for_scout_iterations(iterations.max(1));
     run_monte_carlo_inner(
-        shared,
+        &shared,
         candidates,
         iterations,
         seed,
@@ -1095,8 +1184,16 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
     )
 }
 
+/// Minimum total work units (candidates × iterations) at which Rayon parallelism pays off.
+/// Below this the join/wake cost dominates the actual sim time, so we use a serial loop.
+///
+/// Tuned for the extreme exploration bench (`pop=128, sims=1`, chunks of 16) where parallel mode
+/// spent 80 %+ of samples in `__psynch_cvwait`. Production workloads at `sims=500` are far above
+/// this threshold and stay on the parallel path.
+const PARALLEL_MIN_WORK_UNITS: usize = 1024;
+
 fn run_monte_carlo_inner(
-    shared: SharedScenarioData,
+    shared: &SharedScenarioData,
     candidates: &[CrewCandidate],
     iterations: usize,
     seed: u64,
@@ -1104,6 +1201,9 @@ fn run_monte_carlo_inner(
     early_scout: Option<ScoutEarlyStopCfg>,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
+    // Auto-degrade to serial when total work is small enough that Rayon's overhead would dominate.
+    let work_units = candidates.len().saturating_mul(iterations.max(1));
+    let parallel = parallel && work_units >= PARALLEL_MIN_WORK_UNITS;
     // Shared best-so-far for progressive abandonment: candidates that fall hopelessly
     // behind the current leader can terminate early, saving sim budget.
     let best_so_far = Arc::new(Mutex::new(BestSoFar::default()));
@@ -1118,7 +1218,7 @@ fn run_monte_carlo_inner(
     let run_one = |candidate: &CrewCandidate| {
         let result = match chain_grind.as_ref() {
             None => run_candidate_monte_carlo(
-                &shared,
+                shared,
                 candidate,
                 seed,
                 iterations,
@@ -1127,7 +1227,7 @@ fn run_monte_carlo_inner(
                 progressive_abandon,
             ),
             Some(c) => run_candidate_chain_monte_carlo(
-                &shared,
+                shared,
                 candidate,
                 seed,
                 iterations,

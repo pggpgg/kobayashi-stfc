@@ -14,8 +14,8 @@ pub use compare_crews::{
 };
 pub use crew_resolution::crew_from_officer_names;
 pub use scenario::{
-    mitigation_and_pierce_for_player_vs_player, DefenderOpponent, PvpScenarioParams,
-    pvp_scenario_params_from_api_fields,
+    mitigation_and_pierce_for_player_vs_player, pvp_scenario_params_from_api_fields,
+    DefenderOpponent, PvpScenarioParams,
 };
 pub use simulation::{
     crew_candidate_stable_hash, replay_optimize_iteration_with_registry, run_monte_carlo,
@@ -24,6 +24,6 @@ pub use simulation::{
     run_monte_carlo_with_registry, MonteCarloSeedReplay, SimulationResult,
 };
 pub(crate) use simulation::{
-    run_monte_carlo_scout_phase_with_shared, run_monte_carlo_with_shared,
-    run_monte_carlo_with_shared_variable_iterations,
+    run_monte_carlo_parallel_deduped_chunked_with_shared, run_monte_carlo_scout_phase_with_shared,
+    run_monte_carlo_with_shared, run_monte_carlo_with_shared_variable_iterations,
 };

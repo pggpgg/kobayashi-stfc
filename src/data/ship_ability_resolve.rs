@@ -123,7 +123,9 @@ pub fn ship_ability_effect_from_catalog(
             if timing != TimingWindow::CombatBegin {
                 return None;
             }
-            Some(AbilityEffect::HostileEngagementDefensiveBonus(value.clamp(0.0, 0.95)))
+            Some(AbilityEffect::HostileEngagementDefensiveBonus(
+                value.clamp(0.0, 0.95),
+            ))
         }
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
             Some(AbilityEffect::PierceBonus(value))
@@ -701,15 +703,13 @@ mod tests {
                 duration_rounds: 5
             } if (f - 0.1).abs() < 1e-12
         ));
-        assert!(
-            ship_ability_effect_from_catalog(
-                "defender_shield_drain_per_round",
-                TimingWindow::CombatBegin,
-                0.1,
-                Some(5),
-            )
-            .is_none()
-        );
+        assert!(ship_ability_effect_from_catalog(
+            "defender_shield_drain_per_round",
+            TimingWindow::CombatBegin,
+            0.1,
+            Some(5),
+        )
+        .is_none());
     }
 
     #[test]

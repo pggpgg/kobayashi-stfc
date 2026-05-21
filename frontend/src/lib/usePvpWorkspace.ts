@@ -14,8 +14,15 @@ import {
   loadWarmStartCrews,
   saveWarmStartFromRecommendations,
 } from "./optimizeWarmStart";
-import { buildPvpDefenderFingerprint, buildPvpOptimizeStartBody, buildPvpSimulateParams } from "./pvpRequests";
-import { normalizeSupportBuffSelection, type SupportBuffId } from "./supportBuffs";
+import {
+  buildPvpDefenderFingerprint,
+  buildPvpOptimizeStartBody,
+  buildPvpSimulateParams,
+} from "./pvpRequests";
+import {
+  normalizeSupportBuffSelection,
+  type SupportBuffId,
+} from "./supportBuffs";
 import {
   belowDeckSlotCount,
   type CrewState,
@@ -56,7 +63,9 @@ export function usePvpWorkspace() {
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [simResult, setSimResult] = useState<SimulateStats | null>(null);
   const [loadingSim, setLoadingSim] = useState(false);
-  const [recommendations, setRecommendations] = useState<CrewRecommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<CrewRecommendation[]>(
+    [],
+  );
   const [loadingOptimize, setLoadingOptimize] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,12 +96,17 @@ export function usePvpWorkspace() {
       maxCandidates: 100,
       constraintsFingerprint: "pvp",
       defenderOpponent: "Player",
-      belowDecksSlots: belowDeckSlotCount(attackerShipLevel, belowDeckUnlockLevels),
+      belowDecksSlots: belowDeckSlotCount(
+        attackerShipLevel,
+        belowDeckUnlockLevels,
+      ),
     });
 
   const handleRunSim = useCallback(async () => {
     if (!canRun) {
-      setError("Select attacker ship, defender ship, opponent profile, and attacker captain.");
+      setError(
+        "Select attacker ship, defender ship, opponent profile, and attacker captain.",
+      );
       return;
     }
     const params = buildPvpSimulateParams({
@@ -138,7 +152,9 @@ export function usePvpWorkspace() {
 
   const handleRunOptimize = useCallback(async () => {
     if (!canRun) {
-      setError("Select attacker ship, defender ship, opponent profile, and attacker captain.");
+      setError(
+        "Select attacker ship, defender ship, opponent profile, and attacker captain.",
+      );
       return;
     }
     setLoadingOptimize(true);
@@ -207,7 +223,9 @@ export function usePvpWorkspace() {
     optimizeCacheKey,
   ]);
 
-  const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<SupportBuffId[]>([]);
+  const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
+    SupportBuffId[]
+  >([]);
   const setValidatedSelectedSupportBuffs = (ids: readonly string[]) => {
     setSelectedSupportBuffs(normalizeSupportBuffSelection(ids).ids);
   };

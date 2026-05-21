@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildPvpDefenderFingerprint, buildPvpSimulateParams } from "./pvpRequests";
+import {
+  buildPvpDefenderFingerprint,
+  buildPvpSimulateParams,
+} from "./pvpRequests";
 import { createEmptyCrew } from "./types";
 
 describe("buildPvpSimulateParams", () => {

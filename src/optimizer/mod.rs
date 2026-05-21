@@ -779,7 +779,9 @@ pub fn optimize_scenario_with_registry(
         OptimizerStrategy::Exhaustive => {
             optimize_scenario_exhaustive_with_registry(registry, scenario)
         }
-        OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true, || true),
+        OptimizerStrategy::Genetic => {
+            optimize_scenario_genetic_inner(Some(registry), scenario, |_, _, _| true, || true)
+        }
         OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
     }
 }
@@ -915,6 +917,19 @@ where
     F: FnMut(usize, usize, f32) -> bool,
     G: FnMut() -> bool,
 {
+    optimize_scenario_genetic_inner(None, scenario, on_progress, eval_should_continue)
+}
+
+fn optimize_scenario_genetic_inner<F, G>(
+    registry: Option<&DataRegistry>,
+    scenario: &OptimizationScenario<'_>,
+    on_progress: F,
+    eval_should_continue: G,
+) -> Vec<RankedCrewResult>
+where
+    F: FnMut(usize, usize, f32) -> bool,
+    G: FnMut() -> bool,
+{
     let filtered_seeds: Vec<CrewCandidate> =
         apply_crew_constraints(scenario.seed_population.clone(), scenario);
 
@@ -927,6 +942,8 @@ where
             chain_grind: scenario.chain_grind.clone(),
             defender_opponent: scenario.defender_opponent,
             roster_profile_id: scenario.profile_id.map(String::from),
+            ship_tier: scenario.ship_tier,
+            ship_level: scenario.ship_level,
             ..GeneticConfig::default()
         }
     } else {
@@ -938,6 +955,8 @@ where
         cfg.chain_grind = scenario.chain_grind.clone();
         cfg.defender_opponent = scenario.defender_opponent;
         cfg.roster_profile_id = scenario.profile_id.map(String::from);
+        cfg.ship_tier = scenario.ship_tier;
+        cfg.ship_level = scenario.ship_level;
         cfg
     };
     run_genetic_optimizer_ranked(
@@ -946,6 +965,7 @@ where
         &config,
         scenario.seed,
         scenario.simulation_count.max(1),
+        registry,
         on_progress,
         eval_should_continue,
     )

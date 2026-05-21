@@ -285,11 +285,16 @@ fn is_empty_or_placeholder(s: &str) -> bool {
 }
 
 pub(crate) fn normalize_lookup_key(value: &str) -> String {
-    value
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    // The filter keeps only ASCII alphanumerics, so `to_ascii_lowercase` is correct here and
+    // far cheaper than `char::to_lowercase` (which returns an iterator per char to handle
+    // Unicode case-folding). Pre-allocate to avoid grow-by-1 reallocations.
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        }
+    }
+    out
 }
 
 pub(crate) fn split_name_and_tier(input: &str) -> (String, Option<u8>) {
@@ -400,7 +405,9 @@ mod tests {
                     description: Some("Apply Morale".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -434,7 +441,9 @@ mod tests {
                     description: Some("Apply Assimilate".to_string()),
                     chance_by_rank: vec![0.4, 0.45, 0.5],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -474,7 +483,9 @@ mod tests {
                     description: Some("Apply Hull Breach".to_string()),
                     chance_by_rank: vec![0.5, 0.6, 0.7],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -510,7 +521,9 @@ mod tests {
                     description: Some("Hull Breach on critical hit".to_string()),
                     chance_by_rank: vec![0.7, 0.75, 0.8],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -546,7 +559,9 @@ mod tests {
                     description: Some("Chance to apply Hull Breach".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -586,7 +601,9 @@ mod tests {
                     description: Some("Apply Burning".to_string()),
                     chance_by_rank: vec![0.25, 0.3, 0.35],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -626,7 +643,9 @@ mod tests {
                     description: Some("Apply Morale".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 

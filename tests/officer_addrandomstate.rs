@@ -73,7 +73,9 @@ fn sim_config(seed: u64, rounds: u32) -> SimulationConfig {
     }
 }
 
-fn random_state_events(events: &[kobayashi::combat::CombatEvent]) -> Vec<&kobayashi::combat::CombatEvent> {
+fn random_state_events(
+    events: &[kobayashi::combat::CombatEvent],
+) -> Vec<&kobayashi::combat::CombatEvent> {
     events
         .iter()
         .filter(|e| e.event_type == "random_defender_state_trigger")
@@ -293,5 +295,8 @@ fn zeph_weighted_pick_skews_toward_morale_over_burning() {
             _ => {}
         }
     }
-    assert!(morale > burning, "weight 8 should dominate weight 2 over draws 0..13");
+    assert!(
+        morale > burning,
+        "weight 8 should dominate weight 2 over draws 0..13"
+    );
 }

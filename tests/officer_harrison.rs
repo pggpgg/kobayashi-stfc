@@ -215,8 +215,7 @@ fn harrison_sabotage_increases_outbound_hull_damage_vs_high_shield_mitigation() 
         &opts,
     )
     .crew;
-    let without_harrison =
-        resolve_crew_to_buff_set("kirk-1323b6", &[], &[], &officers, &opts).crew;
+    let without_harrison = resolve_crew_to_buff_set("kirk-1323b6", &[], &[], &officers, &opts).crew;
 
     let attacker = Combatant {
         id: "att".into(),

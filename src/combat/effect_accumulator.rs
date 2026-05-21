@@ -4,14 +4,14 @@ use serde_json::{Map, Value};
 
 use crate::combat::abilities::{AbilityEffect, ActiveAbilityEffect, TimingWindow};
 use crate::combat::events::round_f64;
-use crate::combat::stacking::{StackContribution, StatStacking};
+use crate::combat::stacking::{CategoryTotals, StackContribution};
 use crate::combat::types::{
     CombatEvent, Combatant, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
 };
 
 #[derive(Debug, Clone)]
 pub(crate) struct EffectAccumulator {
-    stacks: StatStacking<EffectStatKey>,
+    stacks: EffectStatStacks,
     pre_attack_modifier_sum: f64,
     /// Cumulative Galaxy-class hull growth `g` (weapon_damage fraction units); applied in the engine as `×(1+g/(1+p))`.
     galaxy_additive_weapon_frac: f64,
@@ -27,30 +27,125 @@ pub(crate) struct EffectAccumulator {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
 pub(crate) enum EffectStatKey {
-    PreAttackPierceBonus,
-    DefenseMitigationBonus,
-    PreAttackDamage,
-    AttackPhaseDamage,
-    RoundEndDamage,
-    ApexShredBonus,
-    ApexBarrierBonus,
-    ShieldRegen,
-    HullRegen,
-    ShieldRegenMaxFraction,
-    HullRegenMaxFraction,
-    IsolyticDamageBonus,
-    IsolyticDefenseBonus,
-    IsolyticCascadeDamageBonus,
-    ShieldMitigationBonus,
+    PreAttackPierceBonus = 0,
+    DefenseMitigationBonus = 1,
+    PreAttackDamage = 2,
+    AttackPhaseDamage = 3,
+    RoundEndDamage = 4,
+    ApexShredBonus = 5,
+    ApexBarrierBonus = 6,
+    ShieldRegen = 7,
+    HullRegen = 8,
+    ShieldRegenMaxFraction = 9,
+    HullRegenMaxFraction = 10,
+    IsolyticDamageBonus = 11,
+    IsolyticDefenseBonus = 12,
+    IsolyticCascadeDamageBonus = 13,
+    ShieldMitigationBonus = 14,
     /// Multiplicative bypass of defender's shield mitigation; engine clamps total to `[0, 1]`
     /// and applies as `mitigation × (1 - bypass)` (see [`AbilityEffect::ShieldMitigationBypassFraction`]).
-    ShieldMitigationBypass,
+    ShieldMitigationBypass = 15,
     /// Attacker-self shield mitigation buff applied on counter-fire / inbound damage
     /// (see [`AbilityEffect::AttackerShieldMitigationBonus`]). Engine reads via
     /// [`EffectAccumulator::composed_attacker_shield_mitigation_bonus`] and adds to
     /// `attacker.shield_mitigation` in `effective_incoming_shield_mitigation`.
-    AttackerShieldMitigationBonus,
+    AttackerShieldMitigationBonus = 16,
+}
+
+/// Number of [`EffectStatKey`] variants. Kept in sync with the enum manually — a unit test below
+/// asserts every variant in [`EffectStatKey::ALL`] is present and that no index exceeds this.
+pub(crate) const EFFECT_STAT_KEY_COUNT: usize = 17;
+
+impl EffectStatKey {
+    /// All variants in declaration order (matches discriminant). Used for trace iteration and
+    /// for the [`EffectAccumulator::Default`] base seeding.
+    pub(crate) const ALL: [EffectStatKey; EFFECT_STAT_KEY_COUNT] = [
+        EffectStatKey::PreAttackPierceBonus,
+        EffectStatKey::DefenseMitigationBonus,
+        EffectStatKey::PreAttackDamage,
+        EffectStatKey::AttackPhaseDamage,
+        EffectStatKey::RoundEndDamage,
+        EffectStatKey::ApexShredBonus,
+        EffectStatKey::ApexBarrierBonus,
+        EffectStatKey::ShieldRegen,
+        EffectStatKey::HullRegen,
+        EffectStatKey::ShieldRegenMaxFraction,
+        EffectStatKey::HullRegenMaxFraction,
+        EffectStatKey::IsolyticDamageBonus,
+        EffectStatKey::IsolyticDefenseBonus,
+        EffectStatKey::IsolyticCascadeDamageBonus,
+        EffectStatKey::ShieldMitigationBonus,
+        EffectStatKey::ShieldMitigationBypass,
+        EffectStatKey::AttackerShieldMitigationBonus,
+    ];
+
+    /// Discriminant as index into a fixed-size array.
+    #[inline]
+    pub(crate) fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Fixed-size stacking accumulator specialized for [`EffectStatKey`].
+///
+/// Replaces the previous `StatStacking<EffectStatKey>` (BTreeMap-backed) on the hot accumulator
+/// path. Memory: `17 × 24 bytes = 408 bytes` per accumulator, fully stack-allocated, no heap
+/// allocations. Profile-driven: `BTreeMap::Entry::or_default` was 7 % self time and `Default::default`
+/// 10 % self time before this change — the array eliminates both.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct EffectStatStacks {
+    totals: [CategoryTotals; EFFECT_STAT_KEY_COUNT],
+}
+
+impl EffectStatStacks {
+    #[inline]
+    pub(crate) fn add(&mut self, contribution: StackContribution<EffectStatKey>) {
+        self.totals[contribution.key.index()].apply(contribution.category, contribution.value);
+    }
+
+    #[inline]
+    pub(crate) fn totals_for(&self, key: EffectStatKey) -> CategoryTotals {
+        self.totals[key.index()]
+    }
+
+    #[inline]
+    pub(crate) fn composed_for(&self, key: EffectStatKey) -> f64 {
+        self.totals[key.index()].compose()
+    }
+
+    /// Reset a single key back to zero — semantic match for the old BTreeMap `remove` call.
+    /// (Downstream `composed_for` returns 0 for either a missing-key or a zero-stack slot.)
+    #[inline]
+    pub(crate) fn reset(&mut self, key: EffectStatKey) {
+        self.totals[key.index()] = CategoryTotals::default();
+    }
+
+    /// Reset every key.
+    #[inline]
+    pub(crate) fn clear(&mut self) {
+        self.totals = [CategoryTotals::default(); EFFECT_STAT_KEY_COUNT];
+    }
+
+    /// Additive merge of every channel from `other`.
+    #[inline]
+    pub(crate) fn merge_from(&mut self, other: &EffectStatStacks) {
+        for i in 0..EFFECT_STAT_KEY_COUNT {
+            self.totals[i].add_from(&other.totals[i]);
+        }
+    }
+
+    /// Iterate `(key, &totals)` in discriminant order (matches the old BTreeMap iteration order
+    /// because `EffectStatKey`'s `Ord` is derived from declaration order). Trace consumers filter
+    /// near-zero entries themselves, so iterating all 17 produces identical observable output.
+    #[inline]
+    pub(crate) fn iter_totals(&self) -> impl Iterator<Item = (EffectStatKey, &CategoryTotals)> {
+        EffectStatKey::ALL
+            .iter()
+            .copied()
+            .map(move |k| (k, &self.totals[k.index()]))
+    }
 }
 
 impl EffectStatKey {
@@ -79,63 +174,11 @@ impl EffectStatKey {
 
 impl Default for EffectAccumulator {
     fn default() -> Self {
-        let mut stacks = StatStacking::new();
-        stacks.add(StackContribution::base(
-            EffectStatKey::PreAttackPierceBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::DefenseMitigationBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(EffectStatKey::PreAttackDamage, 0.0));
-        stacks.add(StackContribution::base(
-            EffectStatKey::AttackPhaseDamage,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(EffectStatKey::RoundEndDamage, 0.0));
-        stacks.add(StackContribution::base(EffectStatKey::ApexShredBonus, 0.0));
-        stacks.add(StackContribution::base(
-            EffectStatKey::ApexBarrierBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(EffectStatKey::ShieldRegen, 0.0));
-        stacks.add(StackContribution::base(EffectStatKey::HullRegen, 0.0));
-        stacks.add(StackContribution::base(
-            EffectStatKey::ShieldRegenMaxFraction,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::HullRegenMaxFraction,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::IsolyticDamageBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::IsolyticDefenseBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::IsolyticCascadeDamageBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::ShieldMitigationBonus,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::ShieldMitigationBypass,
-            0.0,
-        ));
-        stacks.add(StackContribution::base(
-            EffectStatKey::AttackerShieldMitigationBonus,
-            0.0,
-        ));
-
+        // `EffectStatStacks::default()` already zero-initializes every channel, so the previous
+        // 17 explicit `StackContribution::base(_, 0.0)` calls are unnecessary. This used to be
+        // ~10 % of self time per profiling.
         Self {
-            stacks,
+            stacks: EffectStatStacks::default(),
             pre_attack_modifier_sum: 0.0,
             galaxy_additive_weapon_frac: 0.0,
             attack_phase_damage_modifier_sum: 0.0,
@@ -335,50 +378,38 @@ impl EffectAccumulator {
 
     pub(crate) fn pre_attack_pierce_bonus(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::PreAttackPierceBonus)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::PreAttackPierceBonus)
     }
 
     pub(crate) fn defense_mitigation_bonus(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::DefenseMitigationBonus)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::DefenseMitigationBonus)
     }
 
     pub(crate) fn composed_apex_shred_bonus(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::ApexShredBonus)
-            .unwrap_or(0.0)
+        self.stacks.composed_for(EffectStatKey::ApexShredBonus)
     }
 
     pub(crate) fn composed_apex_barrier_bonus(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::ApexBarrierBonus)
-            .unwrap_or(0.0)
+        self.stacks.composed_for(EffectStatKey::ApexBarrierBonus)
     }
 
     pub(crate) fn composed_shield_regen(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::ShieldRegen)
-            .unwrap_or(0.0)
+        self.stacks.composed_for(EffectStatKey::ShieldRegen)
     }
 
     pub(crate) fn composed_hull_regen(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::HullRegen)
-            .unwrap_or(0.0)
+        self.stacks.composed_for(EffectStatKey::HullRegen)
     }
 
     pub(crate) fn composed_shield_regen_max_fraction(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::ShieldRegenMaxFraction)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::ShieldRegenMaxFraction)
     }
 
     pub(crate) fn composed_hull_regen_max_fraction(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::HullRegenMaxFraction)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::HullRegenMaxFraction)
     }
 
     /// Sum flat shield restoration from timed effects (used for defender round-start before the main phase accumulator runs).
@@ -491,36 +522,29 @@ impl EffectAccumulator {
 
     /// Remove shield/hull regen stacks so values from CombatBegin/RoundStart are not applied again at round end.
     pub(crate) fn clear_shield_hull_regen_stacks(&mut self) {
-        self.stacks.remove_totals_for(&EffectStatKey::ShieldRegen);
-        self.stacks.remove_totals_for(&EffectStatKey::HullRegen);
-        self.stacks
-            .remove_totals_for(&EffectStatKey::ShieldRegenMaxFraction);
-        self.stacks
-            .remove_totals_for(&EffectStatKey::HullRegenMaxFraction);
+        self.stacks.reset(EffectStatKey::ShieldRegen);
+        self.stacks.reset(EffectStatKey::HullRegen);
+        self.stacks.reset(EffectStatKey::ShieldRegenMaxFraction);
+        self.stacks.reset(EffectStatKey::HullRegenMaxFraction);
     }
 
     pub(crate) fn composed_isolytic_damage_bonus(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::IsolyticDamageBonus)
-            .unwrap_or(0.0)
+        self.stacks.composed_for(EffectStatKey::IsolyticDamageBonus)
     }
 
     pub(crate) fn composed_isolytic_defense_bonus(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::IsolyticDefenseBonus)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::IsolyticDefenseBonus)
     }
 
     pub(crate) fn composed_isolytic_cascade_damage_bonus(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::IsolyticCascadeDamageBonus)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::IsolyticCascadeDamageBonus)
     }
 
     pub(crate) fn composed_shield_mitigation_bonus(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::ShieldMitigationBonus)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::ShieldMitigationBonus)
     }
 
     /// Sum of multiplicative shield-mitigation bypass contributions. Not clamped here — the
@@ -528,8 +552,7 @@ impl EffectAccumulator {
     /// total to `[0, 1]` so a single contribution exceeding 100% still caps cleanly.
     pub(crate) fn composed_shield_mitigation_bypass(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::ShieldMitigationBypass)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::ShieldMitigationBypass)
     }
 
     /// Sum of attacker-self shield-mitigation bonuses (target=SelfShip officer effects).
@@ -538,8 +561,7 @@ impl EffectAccumulator {
     /// site, so this getter is intentionally unclamped.
     pub(crate) fn composed_attacker_shield_mitigation_bonus(&self) -> f64 {
         self.stacks
-            .composed_for(&EffectStatKey::AttackerShieldMitigationBonus)
-            .unwrap_or(0.0)
+            .composed_for(EffectStatKey::AttackerShieldMitigationBonus)
     }
 
     #[inline]
@@ -561,11 +583,7 @@ impl EffectAccumulator {
     }
 
     fn compose_damage_channel(&self, key: EffectStatKey, base: f64) -> f64 {
-        let flat = self
-            .stacks
-            .totals_for(&key)
-            .map(|totals| totals.flat)
-            .unwrap_or(0.0);
+        let flat = self.stacks.totals_for(key).flat;
         let multiplier = match key {
             EffectStatKey::AttackPhaseDamage => 1.0 + self.attack_phase_damage_modifier_sum,
             EffectStatKey::RoundEndDamage => 1.0 + self.round_end_modifier_sum,
@@ -583,9 +601,7 @@ impl EffectAccumulator {
     }
 
     pub(crate) fn composed_pre_attack_damage(&self) -> f64 {
-        self.stacks
-            .composed_for(&EffectStatKey::PreAttackDamage)
-            .unwrap_or(0.0)
+        self.stacks.composed_for(EffectStatKey::PreAttackDamage)
     }
 
     pub(crate) fn clear(&mut self) {
@@ -664,7 +680,7 @@ impl EffectAccumulator {
         }
 
         let mut stacks_obj = Map::new();
-        for (&key, totals) in self.stacks.iter_totals() {
+        for (key, totals) in self.stacks.iter_totals() {
             if totals.base.abs() <= EPS && totals.modifier.abs() <= EPS && totals.flat.abs() <= EPS
             {
                 continue;

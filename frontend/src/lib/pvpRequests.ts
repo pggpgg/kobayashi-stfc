@@ -1,6 +1,7 @@
 import type { ChainGrindRequestBody, OptimizerStrategyType } from "./api";
 import { normalizeSupportBuffSelection } from "./supportBuffs";
 import type { CrewState } from "./types";
+
 function crewToApiBody(crew: CrewState) {
   return {
     captain: crew.captain,

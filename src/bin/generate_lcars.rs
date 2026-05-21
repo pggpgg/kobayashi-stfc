@@ -1167,9 +1167,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             };
             MappedEffect::StatModify("officer_stat_all".into(), "multiply".into(), v)
         }
-        "AllReloadSpeed" | "AllLoadSpeed" => {
-            MappedEffect::Tag(map_allreloadspeed_tag(a, op))
-        }
+        "AllReloadSpeed" | "AllLoadSpeed" => MappedEffect::Tag(map_allreloadspeed_tag(a, op)),
         "CptManeuverEffect" => MappedEffect::Tag("cptmaneuvereffect:unmapped".into()),
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
@@ -1298,17 +1296,11 @@ fn map_allreloadspeed_tag(a: &CanonicalAbility, op: &str) -> String {
     let target = map_target(a);
     let op_l = op.trim().to_ascii_lowercase();
     if target == "enemy"
-        && (op_l == "add"
-            || op_l == "multiplyadd"
-            || op_l == "multiply_add"
-            || op_l == "mul_add")
+        && (op_l == "add" || op_l == "multiplyadd" || op_l == "multiply_add" || op_l == "mul_add")
     {
         "allreloadspeed:enemy_delay".into()
     } else if target == "self"
-        && (op_l == "sub"
-            || op_l == "multiplysub"
-            || op_l == "multiply_sub"
-            || op_l == "mul_sub")
+        && (op_l == "sub" || op_l == "multiplysub" || op_l == "multiply_sub" || op_l == "mul_sub")
     {
         "allreloadspeed:self_recharge".into()
     } else {
