@@ -36,7 +36,7 @@ describe("WorkspaceHeader", () => {
       { id: "ship1", ship_name: "Enterprise", ship_class: "explorer" },
     ]);
     vi.mocked(api.fetchHostiles).mockResolvedValue([
-      { id: "h1", hostile_name: "Borg", level: 30 },
+      { id: "h1", hostile_name: "Borg", level: 30, ship_class: "interceptor" },
     ]);
     vi.mocked(api.getShipTiersLevels).mockResolvedValue({
       tiers: [1],
