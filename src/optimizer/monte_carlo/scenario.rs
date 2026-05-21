@@ -19,8 +19,7 @@ use crate::data::building_bid_resolver::{
 use crate::data::forbidden_chaos;
 use crate::data::hostile::{ship_class_to_type, HostileRecord};
 use crate::data::hostile_ability_resolve::{
-    hostile_abilities_to_defender_crew, load_hostile_ability_catalog,
-    DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
+    hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
 };
 use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
@@ -940,8 +939,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             seats: crew_seats.clone(),
         });
 
-    let hostile_ability_catalog =
-        load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
+    // Use the process-wide cached catalog instead of re-reading + re-parsing the JSON file
+    // on every candidate. Source of the `__open` hotspot in earlier profiling.
+    let hostile_ability_catalog = hostile_ability_catalog_for_default_path();
     let mut defender_crew = if shared.is_pvp() {
         let mut seats = Vec::new();
         extend_crew_with_ship_abilities(&mut seats, shared.defender_ship_rec.as_ref());
@@ -950,9 +950,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared
             .hostile_rec
             .as_ref()
-            .map(|h| {
-                hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog.as_ref())
-            })
+            .map(|h| hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog))
             .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() })
     };
     defender_crew
@@ -1643,12 +1641,9 @@ pub(crate) fn scenario_to_combat_input(
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
-        let hostile_ability_catalog =
-            load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH);
-        let defender_crew = hostile_abilities_to_defender_crew(
-            &hostile_rec.ability,
-            hostile_ability_catalog.as_ref(),
-        );
+        let hostile_ability_catalog = hostile_ability_catalog_for_default_path();
+        let defender_crew =
+            hostile_abilities_to_defender_crew(&hostile_rec.ability, hostile_ability_catalog);
         let (defender_mitigation, pierce) = mitigation_and_pierce_for_player_vs_hostile(
             &ship_rec,
             &hostile_rec,

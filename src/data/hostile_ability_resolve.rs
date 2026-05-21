@@ -58,6 +58,24 @@ pub fn load_hostile_ability_catalog(path: &str) -> Option<HostileAbilityCatalog>
     serde_json::from_str(&s).ok()
 }
 
+/// Process-wide cache for the default hostile-ability catalog. Built once on first access and
+/// reused — every Monte Carlo candidate prep was previously re-reading and re-parsing this JSON
+/// file from disk (showed as ~5 % of total samples in profiling). Restart the process to pick
+/// up edits to the file on disk.
+///
+/// Use this through [`hostile_ability_catalog_for_default_path`] from per-candidate hot paths.
+static DEFAULT_HOSTILE_ABILITY_CATALOG: std::sync::OnceLock<Option<HostileAbilityCatalog>> =
+    std::sync::OnceLock::new();
+
+/// Cached accessor for the default catalog. Returns the same `Option<&_>` every call.
+/// Hot-path-safe (no I/O after first call). For non-default paths, callers should use
+/// [`load_hostile_ability_catalog`] directly.
+pub fn hostile_ability_catalog_for_default_path() -> Option<&'static HostileAbilityCatalog> {
+    DEFAULT_HOSTILE_ABILITY_CATALOG
+        .get_or_init(|| load_hostile_ability_catalog(DEFAULT_HOSTILE_ABILITY_CATALOG_PATH))
+        .as_ref()
+}
+
 fn json_f64(v: &Value) -> Option<f64> {
     v.as_f64()
         .or_else(|| v.as_i64().map(|i| i as f64))
