@@ -1184,6 +1184,14 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
     )
 }
 
+/// Minimum total work units (candidates × iterations) at which Rayon parallelism pays off.
+/// Below this the join/wake cost dominates the actual sim time, so we use a serial loop.
+///
+/// Tuned for the extreme exploration bench (`pop=128, sims=1`, chunks of 16) where parallel mode
+/// spent 80 %+ of samples in `__psynch_cvwait`. Production workloads at `sims=500` are far above
+/// this threshold and stay on the parallel path.
+const PARALLEL_MIN_WORK_UNITS: usize = 1024;
+
 fn run_monte_carlo_inner(
     shared: &SharedScenarioData,
     candidates: &[CrewCandidate],
@@ -1193,6 +1201,9 @@ fn run_monte_carlo_inner(
     early_scout: Option<ScoutEarlyStopCfg>,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
+    // Auto-degrade to serial when total work is small enough that Rayon's overhead would dominate.
+    let work_units = candidates.len().saturating_mul(iterations.max(1));
+    let parallel = parallel && work_units >= PARALLEL_MIN_WORK_UNITS;
     // Shared best-so-far for progressive abandonment: candidates that fall hopelessly
     // behind the current leader can terminate early, saving sim budget.
     let best_so_far = Arc::new(Mutex::new(BestSoFar::default()));
