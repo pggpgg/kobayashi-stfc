@@ -473,6 +473,28 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
+            // Enemy-targeted ShieldHPRepair / MultiplySub (SNW Sam Kirk): drain defender max SHP
+            // each round at round start, not attacker shield regen.
+            let enemy_drain = matches!(spec.target, AbilityTargetSpec::DefenderOpponent)
+                && matches!(
+                    op,
+                    "sub" | "mul_sub" | "multiplysub" | "multiply_sub" | "multiply_base_sub"
+                        | "multiplybasesub"
+                );
+            if enemy_drain && timing == TimingWindow::RoundStart {
+                let duration_rounds = officer_spec_duration_rounds(
+                    spec,
+                    crate::combat::types::MAX_COMBAT_ROUNDS,
+                );
+                return Ok((
+                    timing,
+                    AbilityEffect::DefenderShieldDrainPerRound {
+                        fraction: v.clamp(0.0, 0.95),
+                        duration_rounds,
+                    },
+                    compiled_condition.clone(),
+                ));
+            }
             Ok((
                 timing,
                 AbilityEffect::ShieldRegen(v),
@@ -1337,6 +1359,49 @@ mod tests {
         assert!(
             matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 1.0).abs() < 1e-12),
             "Bypass > 100% must clamp to 1.0; got {effect:?}"
+        );
+    }
+
+    #[test]
+    fn enemy_shield_regen_sub_at_round_start_compiles_defender_drain() {
+        let spec = CombatEffectSpec {
+            id: "lcars:test:sam_kirk_drain".into(),
+            source: EffectSource::LcarsOfficer,
+            source_ref: None,
+            text: None,
+            trigger: AbilityTriggerSpec::RoundStart,
+            target: AbilityTargetSpec::DefenderOpponent,
+            modifier: AbilityModifierSpec::OfficerShieldRegenFlat,
+            operation: AbilityOperationSpec::Add,
+            value: Some(ValueSpec {
+                scalar: Some(0.1),
+                by_rank: None,
+                unit: None,
+                officer_stat_scaling: None,
+            }),
+            chance: None,
+            duration: Some(DurationSpec::Permanent),
+            decay: None,
+            accumulate: None,
+            conditions: vec![],
+            attributes: serde_json::Map::from_iter([(
+                OFFICER_SPEC_ATTR_LCARS_OP.into(),
+                serde_json::Value::String("sub".into()),
+            )]),
+            stacking: None,
+            category: Some(EffectCategory::Combat),
+            confidence: Some(EffectConfidence::Authoritative),
+        };
+        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("enemy drain");
+        assert!(
+            matches!(
+                effect,
+                AbilityEffect::DefenderShieldDrainPerRound {
+                    fraction,
+                    duration_rounds
+                } if (fraction - 0.1).abs() < 1e-12 && duration_rounds >= 10
+            ),
+            "enemy sub shield_regen at round start → DefenderShieldDrainPerRound, got {effect:?}"
         );
     }
 

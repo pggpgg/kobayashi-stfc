@@ -92688,21 +92688,6 @@ officers:
           enemy_type: null
           battle_types: null
           conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
       chance: null
       multiplier: null
       tag: allreloadspeed:enemy_delay
@@ -110828,7 +110813,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: sub
       value: null
       trigger: on_round_start
       duration: permanent

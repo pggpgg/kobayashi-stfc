@@ -1151,8 +1151,22 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "ShipArmor" | "OfficerStatDefense" => {
             MappedEffect::StatModify("armor".into(), "add".into(), val)
         }
-        "OfficerStatHealth" => MappedEffect::Tag("officerstathealth:unmapped".into()),
-        "OfficerStatAll" => MappedEffect::Tag("officerstatall:unmapped".into()),
+        "OfficerStatHealth" => {
+            let v = if op.eq_ignore_ascii_case("MultiplyAdd") {
+                1.0 + val
+            } else {
+                val
+            };
+            MappedEffect::StatModify("officer_health".into(), "multiply".into(), v)
+        }
+        "OfficerStatAll" => {
+            let v = if op.eq_ignore_ascii_case("MultiplyAdd") {
+                1.0 + val
+            } else {
+                val
+            };
+            MappedEffect::StatModify("officer_stat_all".into(), "multiply".into(), v)
+        }
         "AllReloadSpeed" | "AllLoadSpeed" => {
             MappedEffect::Tag(map_allreloadspeed_tag(a, op))
         }

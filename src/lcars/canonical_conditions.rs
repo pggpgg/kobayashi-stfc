@@ -136,7 +136,9 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "TargetNotASB" | "SelfAttacking" | "TargetNotPlayerStation" => {
             return Some(lcars_cond_base("literal_true"));
         }
-        "SelfDefending" => return Some(lcars_cond_base("literal_false")),
+        // Default ship-vs-hostile / PvP attack path assumes the player is not defending.
+        // Omit from LCARS `and` (do not emit literal_false — that arm never evaluates true).
+        "SelfDefending" => return None,
         // Solo armada — matches [`crate::combat::EnemyType::SoloArmadas`] when hostile sets `engagement_enemy_types`.
         "SelfAtSoloArmada" => {
             let mut c = lcars_cond_base("engagement_includes");
@@ -526,6 +528,7 @@ mod tests {
 
     #[test]
     fn scenario_literal_tokens_map_and_resolve() {
+        assert!(map_canonical_condition_token("SelfDefending").is_none());
         for (tok, expected) in [
             ("TargetNotASB", AbilityCondition::LiteralBool(true)),
             ("SelfAttacking", AbilityCondition::LiteralBool(true)),
@@ -533,7 +536,6 @@ mod tests {
                 "TargetNotPlayerStation",
                 AbilityCondition::LiteralBool(true),
             ),
-            ("SelfDefending", AbilityCondition::LiteralBool(false)),
             ("EnemySentinel", AbilityCondition::LiteralBool(false)),
             ("CombatGameContext", AbilityCondition::LiteralBool(false)),
             (

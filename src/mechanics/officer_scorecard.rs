@@ -172,17 +172,25 @@ fn analyze_tags(officer: &LcarsOfficer) -> (usize, usize, usize) {
     (total, non_combat, combatish)
 }
 
-fn nc_ack_and_label(total: usize, non_combat: usize, combatish: usize) -> (i32, String) {
+fn nc_ack_and_label(
+    total: usize,
+    non_combat: usize,
+    combatish: usize,
+    unmapped_combat_tags: u32,
+) -> (i32, String) {
     if total == 0 {
         return (100, "none".to_string());
     }
     if combatish == 0 {
         return (100, "economy_only".to_string());
     }
+    if unmapped_combat_tags > 0 {
+        return (0, "combat_tag_gaps".to_string());
+    }
     if non_combat > 0 {
         return (50, "mixed".to_string());
     }
-    (0, "combat_tag_gaps".to_string())
+    (100, "none".to_string())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -324,7 +332,8 @@ pub fn scorecard_row_for_officer(
         .unwrap_or_else(|| "—".to_string());
 
     let (tag_total, tag_nc, tag_combat) = analyze_tags(officer);
-    let (nc_ack, noncombat_label) = nc_ack_and_label(tag_total, tag_nc, tag_combat);
+    let (nc_ack, noncombat_label) =
+        nc_ack_and_label(tag_total, tag_nc, tag_combat, tallies.unmapped_combat_tags);
 
     let (cap_score, br_score, bd_score) = slot_raw_means(officer, opts);
 
@@ -505,6 +514,44 @@ mod tests {
         assert_eq!(row.unmapped_combat_tags, 0);
         assert_eq!(row.nc_ack, 100);
         assert_eq!(row.noncombat_label, "economy_only");
+    }
+
+    #[test]
+    fn mapped_combat_tag_does_not_set_combat_tag_gaps_label() {
+        let officer = LcarsOfficer {
+            id: "test-mapped".into(),
+            name: "Test".into(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(crate::lcars::LcarsAbility {
+                name: "C".into(),
+                effects: vec![LcarsEffect {
+                    effect_type: "tag".into(),
+                    stat: None,
+                    target: Some("self".into()),
+                    operator: Some("multiply".into()),
+                    value: Some(1.08),
+                    trigger: Some("passive".into()),
+                    duration: Some(crate::lcars::LcarsDuration::Permanent("permanent".into())),
+                    scaling: None,
+                    condition: None,
+                    chance: None,
+                    multiplier: None,
+                    tag: Some("officerstatall:unmapped".into()),
+                    accumulate: None,
+                    decay: None,
+                }],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: Vec::new(),
+            max_level_by_rank: Vec::new(),
+        };
+        let row = scorecard_row_for_officer(&officer, &opts(), "—");
+        assert_eq!(row.unmapped_combat_tags, 0);
+        assert_eq!(row.nc_ack, 100);
+        assert_eq!(row.noncombat_label, "none");
     }
 
     #[test]

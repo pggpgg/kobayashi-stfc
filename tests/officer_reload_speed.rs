@@ -445,6 +445,43 @@ fn pon_captain_compiles_enemy_delay_at_combat_begin() {
 }
 
 #[test]
+fn pon_captain_fires_delay_vs_player_defender_on_explorer() {
+    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+        return;
+    }
+    let crew = resolve_crew("pon-a2ddd4", &[], 3);
+    let mut saw_delay = false;
+    for seed in 0..300_u64 {
+        let setup = setup_fight(&crew, seed, 6, ShipType::Explorer, false, true);
+        let result = simulate_combat_from_setup(&setup, seed);
+        if delay_events(&result.events).iter().any(|e| {
+            event_bool(e, "triggered") && event_phase(e) == "combat_begin"
+        }) {
+            saw_delay = true;
+            break;
+        }
+    }
+    assert!(
+        saw_delay,
+        "Pon (Explorer vs player defender) should proc combat_begin defender fire delay in some seeds"
+    );
+}
+
+#[test]
+fn rom_captain_inactive_vs_npc_hostile_attacker() {
+    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+        return;
+    }
+    let crew = resolve_crew("rom-621ae3", &[], 1);
+    let setup = setup_fight(&crew, 42, 4, ShipType::Battleship, true, false);
+    let result = simulate_combat_from_setup(&setup, 42);
+    assert!(
+        delay_events(&result.events).is_empty(),
+        "Rom station/sentinel gates (EnemySentinel literal_false) block delay on default hostile attack"
+    );
+}
+
+#[test]
 fn pon_captain_inactive_vs_npc_hostile_attacker() {
     if !Path::new("data/officers/officers.lcars.yaml").exists() {
         return;
@@ -486,6 +523,46 @@ fn rom_captain_compiles_one_round_combat_begin_delay() {
     )
     .expect("compile");
     match compile_officer_combat_spec(&spec).expect("runtime").1 {
+        AbilityEffect::DefenderFireDelay { delay_rounds, .. } => assert_eq!(delay_rounds, 1),
+        other => panic!("expected DefenderFireDelay, got {other:?}"),
+    }
+}
+
+#[test]
+fn ortegas_bridge_compiles_round_start_enemy_delay_from_canonical() {
+    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+        return;
+    }
+    let path = Path::new("data/officers/officers.lcars.yaml");
+    let file = load_lcars_file(path).expect("load lcars");
+    let ortegas = file
+        .officers
+        .into_iter()
+        .find(|o| o.id == "strike-team-ortegas-d9df30")
+        .expect("ortegas");
+    let bridge = ortegas.bridge_ability.expect("bridge");
+    let effect = bridge
+        .effects
+        .iter()
+        .find(|e| e.tag.as_deref().is_some_and(|t| t.contains("enemy_delay")))
+        .expect("reload");
+    assert_eq!(
+        effect.trigger.as_deref(),
+        Some("on_round_start"),
+        "canonical RoundStart → on_round_start (not on_attack)"
+    );
+    let spec = lcars_effect_to_combat_effect_spec(
+        effect,
+        "test:ortegas:reload",
+        "strike-team-ortegas-d9df30",
+        &bridge.name,
+        Some(5),
+        None,
+    )
+    .expect("compile");
+    assert_eq!(spec.modifier, AbilityModifierSpec::DefenderFireDelay);
+    let (_, compiled, _) = compile_officer_combat_spec(&spec).expect("runtime");
+    match compiled {
         AbilityEffect::DefenderFireDelay { delay_rounds, .. } => assert_eq!(delay_rounds, 1),
         other => panic!("expected DefenderFireDelay, got {other:?}"),
     }
