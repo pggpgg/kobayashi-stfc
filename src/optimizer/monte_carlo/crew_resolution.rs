@@ -405,7 +405,9 @@ mod tests {
                     description: Some("Apply Morale".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -439,7 +441,9 @@ mod tests {
                     description: Some("Apply Assimilate".to_string()),
                     chance_by_rank: vec![0.4, 0.45, 0.5],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -479,7 +483,9 @@ mod tests {
                     description: Some("Apply Hull Breach".to_string()),
                     chance_by_rank: vec![0.5, 0.6, 0.7],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -515,7 +521,9 @@ mod tests {
                     description: Some("Hull Breach on critical hit".to_string()),
                     chance_by_rank: vec![0.7, 0.75, 0.8],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -551,7 +559,9 @@ mod tests {
                     description: Some("Chance to apply Hull Breach".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -591,7 +601,9 @@ mod tests {
                     description: Some("Apply Burning".to_string()),
                     chance_by_rank: vec![0.25, 0.3, 0.35],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 
@@ -631,7 +643,9 @@ mod tests {
                     description: Some("Apply Morale".to_string()),
                     chance_by_rank: vec![0.1, 0.15, 0.3, 0.6, 1.0],
                     value_by_rank: vec![],
-                }],
+                    state_mask: 0,
+                }
+                .with_state_mask_recomputed()],
             },
         );
 

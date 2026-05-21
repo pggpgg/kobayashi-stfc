@@ -671,6 +671,7 @@ mod tests {
                     description: None,
                     chance_by_rank: vec![],
                     value_by_rank: vec![],
+                    state_mask: 0,
                 })
                 .collect(),
         }
@@ -809,6 +810,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         assert!(super::has_combat_below_decks_slot_ability(&o_combat));
 
@@ -821,6 +823,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         assert!(!super::has_combat_below_decks_slot_ability(&o_loot));
     }
@@ -847,6 +850,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         idx.insert(super::normalize_officer_lookup_key("LootOnly"), loot_only);
         let out = filter_heuristic_seed_crews(vec![crew], &idx, true);
@@ -873,6 +877,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         assert_eq!(
             below_decks_combat_relevance_rank(&combat),
@@ -888,6 +893,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         assert_eq!(
             below_decks_combat_relevance_rank(&ambiguous),
@@ -903,6 +909,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         assert_eq!(
             below_decks_combat_relevance_rank(&economy),
@@ -919,6 +926,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         assert_eq!(
             below_decks_combat_relevance_rank(&mixed),
@@ -966,6 +974,7 @@ mod tests {
             description: None,
             chance_by_rank: vec![],
             value_by_rank: vec![],
+            state_mask: 0,
         });
         idx.insert(super::normalize_officer_lookup_key("LootOnly"), loot_only);
         let out = filter_heuristic_seed_crews(vec![crew], &idx, false);
