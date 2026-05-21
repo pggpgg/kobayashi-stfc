@@ -4,8 +4,18 @@ import type { HostileListItem } from "../lib/api";
 import HostilePicker from "./HostilePicker";
 
 const hostiles: HostileListItem[] = [
-  { id: "hostile_a", hostile_name: "Borg Probe", level: 30, ship_class: "interceptor" },
-  { id: "hostile_b", hostile_name: "Klingon Bird", level: 20, ship_class: "explorer" },
+  {
+    id: "hostile_a",
+    hostile_name: "Borg Probe",
+    level: 30,
+    ship_class: "interceptor",
+  },
+  {
+    id: "hostile_b",
+    hostile_name: "Klingon Bird",
+    level: 20,
+    ship_class: "explorer",
+  },
 ];
 
 describe("HostilePicker", () => {

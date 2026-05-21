@@ -950,6 +950,7 @@ pub fn run_genetic_optimizer(
 ///
 /// Pass `registry: Some(_)` from the server (where a registry is already loaded) to avoid
 /// re-parsing officer YAML on every call; pass `None` for CLI / standalone use.
+#[allow(clippy::too_many_arguments)]
 pub fn run_genetic_optimizer_ranked(
     ship: &str,
     hostile: &str,
@@ -975,6 +976,7 @@ pub fn run_genetic_optimizer_ranked(
 
 /// Like [`run_genetic_optimizer_ranked`] but also returns [`GeneticRunStats`] for benchmark /
 /// observability use. The ranked results are identical to the non-stats variant for the same inputs.
+#[allow(clippy::too_many_arguments)]
 pub fn run_genetic_optimizer_ranked_with_stats(
     ship: &str,
     hostile: &str,

@@ -36,15 +36,13 @@ pub struct OfficerAbility {
     pub value_by_rank: Vec<f64>,
 
     /// Bit-packed cache of the four `applies_*_state` predicates, computed once at load time
-    /// (or when this ability is constructed in tests).
-    ///   * bit 0: `applies_morale_state`
-    ///   * bit 1: `applies_assimilated_state`
-    ///   * bit 2: `applies_hull_breach_state`
-    ///   * bit 3: `applies_burning_state`
-    /// Zero means "no state effect". `#[serde(skip)]` so JSON loads still set 0, then
-    /// `load_canonical_officers` runs [`Self::recompute_state_mask`] to fill it. Test code
-    /// that builds `OfficerAbility` via struct literal can default this to 0 — but should
-    /// call `recompute_state_mask()` afterwards if it expects `applies_*_state` to fire.
+    /// (or when this ability is constructed in tests). Bits:
+    /// `0`=morale, `1`=assimilated, `2`=hull_breach, `3`=burning. Zero means "no state effect".
+    ///
+    /// `#[serde(skip)]` so JSON loads start at 0; [`load_canonical_officers`] then runs
+    /// [`Self::recompute_state_mask`] to fill it. Test code that builds `OfficerAbility` via
+    /// struct literal can default this to 0 — but should call `recompute_state_mask()`
+    /// afterwards if it expects `applies_*_state` to fire.
     #[serde(skip, default)]
     pub state_mask: u8,
 }
