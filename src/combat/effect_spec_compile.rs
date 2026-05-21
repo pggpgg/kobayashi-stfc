@@ -304,16 +304,50 @@ fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
         })
 }
 
+/// True when the compiled effect carries its own `duration_rounds` / `delay_rounds` field that
+/// the engine reads to time-bound application. Such effects must NOT also be AND'd with a
+/// `RoundRange` condition — the engine would see both gates and apply only once at round 1
+/// (e.g. Kuron `ShotsBonus.duration_rounds=N` would lose rounds 2..=N).
+///
+/// Effects without an intrinsic duration field are plain scalars buffed into a per-round
+/// accumulator. At `CombatBegin` they need an explicit `RoundRange { 1, duration }` gate
+/// (e.g. Harrison Sabotage `ShieldMitigationBypassFraction` for `duration_rounds=1`); without
+/// it the accumulator stays buffed for the entire fight instead of just the first round.
+fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
+    matches!(
+        effect,
+        AbilityEffect::Assimilated { .. }
+            | AbilityEffect::HullBreach { .. }
+            | AbilityEffect::Burning { .. }
+            | AbilityEffect::ShotsBonus { .. }
+            | AbilityEffect::HostileCritDamageReduction { .. }
+            | AbilityEffect::HostileCounterStatDebuff { .. }
+            | AbilityEffect::DefenderShieldDrainPerRound { .. }
+            | AbilityEffect::DefenderFireDelay { .. }
+            | AbilityEffect::RandomDefenderState { .. }
+            | AbilityEffect::DecayingAttackMultiplier { .. }
+            | AbilityEffect::AccumulatingAttackMultiplier { .. }
+            | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
+            | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
+    )
+}
+
 /// Compile LCARS-authored [`CombatEffectSpec`] into runtime [`AbilityEffect`] + [`TimingWindow`] +
 /// optional AND-combined [`AbilityCondition`] from `spec.conditions`.
 pub fn compile_officer_combat_spec(
     spec: &CombatEffectSpec,
 ) -> Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError> {
     let (timing, effect, condition) = compile_officer_combat_spec_impl(spec)?;
-    // CombatBegin runs once at round_index 0; duration is encoded on the effect (e.g.
-    // ShotsBonus.duration_rounds, DefenderFireDelay.delay_rounds). A RoundRange {1, N} gate
-    // would incorrectly block that single application (Kuron self_recharge, Rom/Pon delays).
-    let condition = if timing == TimingWindow::CombatBegin {
+    // At `CombatBegin`, effects with their own `duration_rounds` / `delay_rounds` field
+    // (Kuron self_recharge `ShotsBonus`, Rom/Pon `DefenderFireDelay`, etc.) must NOT also be
+    // gated by a `RoundRange` condition — that would clip the engine-managed duration.
+    // Scalar effects without such a field (Harrison Sabotage
+    // `ShieldMitigationBypassFraction`, Apex / Isolytic / shield-mitigation bonuses, ...)
+    // DO need the gate so the buff stays bounded to `duration_rounds` instead of leaking
+    // into the accumulator for the rest of the fight.
+    let skip_round_gate =
+        timing == TimingWindow::CombatBegin && effect_has_intrinsic_duration(&effect);
+    let condition = if skip_round_gate {
         condition
     } else {
         merge_duration_round_condition(condition, spec)
@@ -1309,15 +1343,67 @@ mod tests {
     }
 
     #[test]
-    fn combat_begin_finite_duration_does_not_add_round_range_gate() {
+    fn combat_begin_intrinsic_duration_effect_does_not_add_round_range_gate() {
+        // Effects that carry their own `duration_rounds` field (compiled `ShotsBonus`,
+        // `DefenderFireDelay`, `Burning`, etc.) must NOT also be AND'd with a `RoundRange`
+        // condition — that would clip the engine-managed duration to round 1.
+        let spec = CombatEffectSpec {
+            id: "lcars:test:shots_bonus".into(),
+            source: EffectSource::LcarsOfficer,
+            source_ref: None,
+            text: None,
+            trigger: AbilityTriggerSpec::CombatBegin,
+            target: AbilityTargetSpec::AttackerSelf,
+            modifier: AbilityModifierSpec::ShotsBonus,
+            operation: AbilityOperationSpec::Multiply,
+            value: Some(ValueSpec {
+                scalar: Some(1.3),
+                by_rank: None,
+                unit: None,
+                officer_stat_scaling: None,
+            }),
+            chance: None,
+            duration: Some(DurationSpec::Rounds { rounds: 3 }),
+            decay: None,
+            accumulate: None,
+            conditions: vec![],
+            attributes: serde_json::Map::new(),
+            stacking: None,
+            category: Some(EffectCategory::Combat),
+            confidence: Some(EffectConfidence::Authoritative),
+        };
+        let (_, effect, condition) =
+            compile_officer_combat_spec(&spec).expect("combat begin shots bonus");
+        assert!(
+            matches!(
+                effect,
+                AbilityEffect::ShotsBonus {
+                    duration_rounds: 3,
+                    ..
+                }
+            ),
+            "ShotsBonus should carry duration_rounds=3 on the effect; got {effect:?}"
+        );
+        assert!(
+            !matches!(condition, Some(AbilityCondition::RoundRange { .. })),
+            "Effect with intrinsic duration_rounds should not get a RoundRange gate; got {condition:?}"
+        );
+    }
+
+    #[test]
+    fn combat_begin_scalar_effect_with_duration_adds_round_range_gate() {
+        // Scalar effects (no intrinsic duration field) buffed into per-round accumulators at
+        // `CombatBegin` need an explicit `RoundRange { 1, duration }` gate so they don't leak
+        // into the accumulator for the rest of the fight. Regression test for the Harrison
+        // Sabotage `ShieldMitigationBypassFraction` first-round-only semantic.
         let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
         spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
         spec.trigger = AbilityTriggerSpec::CombatBegin;
         let (_, _, condition) =
             compile_officer_combat_spec(&spec).expect("combat begin shield mitigation");
         assert!(
-            !matches!(condition, Some(AbilityCondition::RoundRange { .. })),
-            "CombatBegin should not get RoundRange from duration; got {condition:?}"
+            condition_contains_round_range_1_1(condition.as_ref()),
+            "CombatBegin scalar effect with duration_rounds=1 should get RoundRange {{1,1}}; got {condition:?}"
         );
     }
 
@@ -1334,10 +1420,30 @@ mod tests {
             matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 0.7).abs() < 1e-12),
             "DefenderOpponent target should emit ShieldMitigationBypassFraction(0.7), got {effect:?}"
         );
+        // The bypass effect has no intrinsic `duration_rounds` field, so the compiler MUST add a
+        // `RoundRange { 1, 1 }` gate from the spec's `duration_rounds: 1` — without it the
+        // accumulator would stay buffed for the entire fight (Harrison "first round only").
         assert!(
-            !matches!(condition, Some(AbilityCondition::RoundRange { .. })),
-            "CombatBegin duration is encoded on the effect, not via RoundRange; got {condition:?}"
+            condition_contains_round_range_1_1(condition.as_ref()),
+            "Scalar bypass effect at CombatBegin with duration_rounds=1 should be gated by RoundRange {{1,1}}; got {condition:?}"
         );
+    }
+
+    /// True when the condition is `RoundRange { 1, 1 }` directly, or is an `And` whose immediate
+    /// children include such a node. Used by Sabotage / Harrison regression assertions.
+    fn condition_contains_round_range_1_1(condition: Option<&AbilityCondition>) -> bool {
+        let Some(c) = condition else {
+            return false;
+        };
+        match c {
+            AbilityCondition::RoundRange { min: 1, max: 1 } => true,
+            AbilityCondition::And(parts) => parts.iter().any(|child| {
+                matches!(child, AbilityCondition::RoundRange { min: 1, max: 1 })
+                    || matches!(child, AbilityCondition::And(_))
+                        && condition_contains_round_range_1_1(Some(child))
+            }),
+            _ => false,
+        }
     }
 
     #[test]
