@@ -20,8 +20,16 @@ cargo build --release
 # Run all tests
 cargo test
 
-# Run a specific test
-cargo test <test_name>
+# Run one integration test crate (file under tests/*.rs — use the stem, not a substring guess)
+cargo test --test officer_reload_speed
+cargo test --test combat_tests
+
+# Run one test function inside a crate (filters #[test] fn names, not file names)
+cargo test kuron_captain_combat_start_shots_bonus_increases_damage
+cargo test --test officer_reload_speed kuron_captain
+
+# Unit tests in src/ only
+cargo test --lib resolve_crew
 
 # Lint
 cargo clippy --all-targets

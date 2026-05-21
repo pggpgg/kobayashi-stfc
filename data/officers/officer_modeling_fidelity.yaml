@@ -4,7 +4,7 @@
 
 chang-ecc238: "Bridge enemy_delay on crit (on_critical) when defender hull breach active; DefenderFireDelay skips counter-fire. Captain weapon bonus uses hull_hp <60% gate."
 gorkon-b8d2e7: "Captain crit window OK; bridge hull breach proc is correctly modeled as hull_breach effect with chance scaling."
-ent-e-data-871245: "Isolytic cascade line OK for combat start; missing non-Armada hostile filter in LCARS."
+ent-e-data-871245: "Bridge isolytic_cascade_damage at combat start vs NPC hostiles only, excluding Armada (EnemyHostile + TargetNotArmada → defender_is_npc_hostile AND NOT defender_ship_type_is armada)."
 jean-luc-picard-e0515c: "Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. Not an officer-stat-scaling gap."
 snw-sam-kirk-0a77f9: "Captain ShieldHPRepair MultiplySub vs non-Armada hostiles: LCARS enemy shield_regen sub at round_start → DefenderShieldDrainPerRound (fraction of defender max SHP each round)."
 seska-848b5b: "On-hit crit buff now limited to rounds 1-4 via round_range condition; once-per-weapon gating requires engine refinement."

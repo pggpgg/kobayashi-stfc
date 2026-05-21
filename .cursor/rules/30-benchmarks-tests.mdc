@@ -19,3 +19,14 @@ When proposing or validating a fix, include:
 - the expected affected fight families,
 - the overfitting risk,
 - the tests or benchmark slices that should change.
+
+## Running Rust tests (avoid false greens)
+
+Integration tests live in `tests/<name>.rs` as **separate crates**. The file stem is **not** a `cargo test` name filter.
+
+- **Wrong:** `cargo test officer_reload_speed` — scans all crates for a **function** name containing that string; often runs 0 tests and still exits 0.
+- **Right (whole file):** `cargo test --test officer_reload_speed`
+- **Right (one fn in that file):** `cargo test --test officer_reload_speed kuron_captain`
+- **Right (lib unit tests):** `cargo test --lib some_fn_name`
+
+After a targeted run, confirm output includes `Running tests/<name>.rs` and `N passed` with `N > 0`, or an explicit `test result: ok` for the intended crate—not `0 passed; … filtered out` across many binaries.

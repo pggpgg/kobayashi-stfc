@@ -1793,4 +1793,31 @@ mod canonical_condition_tests {
         assert_eq!(kids[1].condition_type, "defender_level_at_most");
         assert_eq!(kids[1].max, Some(70));
     }
+
+    #[test]
+    fn ent_e_data_isolytic_maps_enemy_hostile_and_target_not_armada() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot": "officer",
+            "trigger": "CombatStart",
+            "modifier": "IsolyticCascadeDamage",
+            "operation": "MultiplyAdd",
+            "target": "SelfShip",
+            "conditions": ["EnemyHostile", " TargetNotArmada"],
+            "chance_by_rank": [1.0, 1.0, 1.0, 1.0, 1.0],
+            "value_by_rank": [0.1, 0.15, 0.2, 0.3, 0.4]
+        }))
+        .unwrap();
+        let e = convert_ability_to_effect(&a, "Ent-E Data").expect("effect");
+        assert_eq!(e.stat.as_deref(), Some("isolytic_cascade_damage"));
+        assert_eq!(e.trigger.as_deref(), Some("on_combat_start"));
+        let cond = e.condition.as_ref().expect("cond");
+        assert_eq!(cond.condition_type, "and");
+        let kids = cond.conditions.as_ref().expect("kids");
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[0].condition_type, "defender_is_npc_hostile");
+        assert_eq!(kids[1].condition_type, "not");
+        let inner = kids[1].conditions.as_ref().expect("not inner")[0].clone();
+        assert_eq!(inner.condition_type, "defender_ship_type_is");
+        assert_eq!(inner.ship_type.as_deref(), Some("armada"));
+    }
 }
