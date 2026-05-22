@@ -853,7 +853,9 @@ pub fn parse_optimize_estimate_query(
 
 #[cfg(test)]
 mod below_decks_relax_tests {
-    use super::{below_decks_pool_mode_resolved, relax_below_decks_combat_strictness, OptimizeRequest};
+    use super::{
+        below_decks_pool_mode_resolved, relax_below_decks_combat_strictness, OptimizeRequest,
+    };
     use crate::data::heuristics::BelowDecksPoolMode;
 
     fn req_from_json(s: &str) -> OptimizeRequest {
@@ -864,13 +866,15 @@ mod below_decks_relax_tests {
     fn strict_when_pool_mode_absent() {
         let r = req_from_json(r#"{"ship":"s","hostile":"h"}"#);
         assert!(!relax_below_decks_combat_strictness(&r));
-        assert_eq!(below_decks_pool_mode_resolved(&r), BelowDecksPoolMode::Strict);
+        assert_eq!(
+            below_decks_pool_mode_resolved(&r),
+            BelowDecksPoolMode::Strict
+        );
     }
 
     #[test]
     fn relax_when_pool_mode_relaxed() {
-        let r =
-            req_from_json(r#"{"ship":"s","hostile":"h","below_decks_pool_mode":"relaxed"}"#);
+        let r = req_from_json(r#"{"ship":"s","hostile":"h","below_decks_pool_mode":"relaxed"}"#);
         assert!(relax_below_decks_combat_strictness(&r));
         assert_eq!(
             below_decks_pool_mode_resolved(&r),
@@ -890,8 +894,7 @@ mod below_decks_relax_tests {
 
     #[test]
     fn pool_mode_unknown_value_falls_back_to_strict() {
-        let r =
-            req_from_json(r#"{"ship":"s","hostile":"h","below_decks_pool_mode":"unknown"}"#);
+        let r = req_from_json(r#"{"ship":"s","hostile":"h","below_decks_pool_mode":"unknown"}"#);
         assert_eq!(
             below_decks_pool_mode_resolved(&r),
             BelowDecksPoolMode::Strict

@@ -483,4 +483,3 @@ fn raw_to_building_record(
         levels,
     }
 }
-
