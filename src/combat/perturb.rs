@@ -15,15 +15,14 @@
 //!   reduction stat. The engine adds this perturb value to whatever crew-derived crit
 //!   damage reduction is resolved at combat time.
 //!
-//! Engine limitations documented in `docs/ROADMAP.md` (Stat modeling improvements):
-//!
-//! - "Critical Damage Floor" research nodes feed the same `crit_damage` field as
-//!   headline crit damage; no separate floor clamp is modeled.
-//!
 //! The four mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`)
-//! are now tracked separately on [`Combatant`] post-resolution and weighted by ship-type
+//! are tracked separately on [`Combatant`] post-resolution and weighted by ship-type
 //! coefficients in the engine's inbound counter-fire path. Each is exposed as its own
 //! `StatKey` variant; the aggregated [`StatKey::Mitigation`] is no longer surfaced.
+//!
+//! `crit_damage_floor` is exposed via [`StatKey::CritDamageFloor`]: a defensive clamp
+//! enforced at the per-shot crit resolution site after opponent-side crit-damage
+//! reductions are applied (see [`crate::combat::crit::resolve_vehicle_weapon_crit`]).
 
 use serde::{Deserialize, Serialize};
 
@@ -49,6 +48,7 @@ pub enum StatKey {
     ApexBarrier,
     IsolyticDefense,
     CritDamageReduction,
+    CritDamageFloor,
     HullHp,
     ShieldHp,
     ShieldMitigation,
@@ -73,6 +73,7 @@ impl StatKey {
         StatKey::ApexBarrier,
         StatKey::IsolyticDefense,
         StatKey::CritDamageReduction,
+        StatKey::CritDamageFloor,
         StatKey::HullHp,
         StatKey::ShieldHp,
         StatKey::ShieldMitigation,
@@ -95,6 +96,7 @@ impl StatKey {
             StatKey::ApexBarrier => "apex_barrier",
             StatKey::IsolyticDefense => "isolytic_defense",
             StatKey::CritDamageReduction => "crit_damage_reduction",
+            StatKey::CritDamageFloor => "crit_damage_floor",
             StatKey::HullHp => "hull_hp",
             StatKey::ShieldHp => "shield_hp",
             StatKey::ShieldMitigation => "shield_mitigation",
@@ -128,6 +130,10 @@ impl StatKey {
             StatKey::ApexBarrier => 0.01,
             StatKey::IsolyticDefense => 0.05,
             StatKey::CritDamageReduction => 0.01,
+            // Same units as crit_damage (raw multiplier). +0.10 = floor moves up by 0.10×
+            // damage. The clamp matters only when an attacker-outbound CDR is reducing the
+            // crit multiplier below the floor — dormant otherwise.
+            StatKey::CritDamageFloor => 0.10,
             StatKey::HullHp => 0.05,
             StatKey::ShieldHp => 0.05,
             StatKey::ShieldMitigation => 0.01,
@@ -233,6 +239,9 @@ pub fn apply_perturbation(
             config.crit_damage_reduction_perturb =
                 (config.crit_damage_reduction_perturb + delta).clamp(-0.95, 0.95);
         }
+        StatKey::CritDamageFloor => {
+            attacker.crit_damage_floor = (attacker.crit_damage_floor + delta).max(0.0);
+        }
         StatKey::HullHp => {
             attacker.hull_health *= 1.0 + delta;
         }
@@ -262,6 +271,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.5,
             crit_multiplier: 2.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 0.0,
             end_of_round_damage: 0.0,
@@ -335,5 +345,35 @@ mod tests {
             assert!(d.is_finite(), "{} delta not finite", stat.as_str());
             assert!(d > 0.0, "{} delta not positive", stat.as_str());
         }
+    }
+
+    #[test]
+    fn crit_damage_floor_perturbation_is_additive_and_clamped_at_zero() {
+        let mut a = mk_combatant();
+        let mut d = mk_combatant();
+        let mut cfg = SimulationConfig::default();
+        a.crit_damage_floor = 0.5;
+        apply_perturbation(&mut a, &mut d, &mut cfg, StatKey::CritDamageFloor, 0.25);
+        assert!(
+            (a.crit_damage_floor - 0.75).abs() < 1e-9,
+            "expected 0.75, got {}",
+            a.crit_damage_floor
+        );
+        // Defender + config are untouched.
+        assert!(d.crit_damage_floor == 0.0);
+        assert!(cfg.crit_damage_reduction_perturb == 0.0);
+        // Negative delta clamps the field at zero.
+        apply_perturbation(&mut a, &mut d, &mut cfg, StatKey::CritDamageFloor, -10.0);
+        assert!(a.crit_damage_floor == 0.0);
+    }
+
+    #[test]
+    fn stat_key_all_contains_19_entries_after_critical_damage_floor() {
+        assert_eq!(StatKey::ALL.len(), 19);
+        assert!(StatKey::ALL.contains(&StatKey::CritDamageFloor));
+        assert_eq!(
+            StatKey::parse_str("crit_damage_floor"),
+            Some(StatKey::CritDamageFloor)
+        );
     }
 }

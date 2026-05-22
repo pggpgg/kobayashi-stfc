@@ -348,6 +348,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let attacker = &setup.attacker;
     let defender = &setup.defender;
     let attacker_crew = &setup.attacker_crew;
+    let defender_crew = &setup.defender_crew;
     let defender_faction = setup.defender_faction;
     let defender_ship_type = setup.defender_ship_type;
     let attacker_ship_type = setup.attacker_ship_type;
@@ -694,6 +695,22 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             engagement_enemy_types: config.engagement_enemy_types.clone(),
             combat_battle_type_id: None,
             defender_level: config.defender_level,
+        };
+
+        // Symmetric attacker-outbound CDR: read `HostileCritDamageReduction` from the
+        // defender's crew (in PvP, the opponent's `player_crit_damage_reduction` profile
+        // bonus is wired in as a `HostileCritDamageReduction` seat in scenario.rs). The
+        // floor clamp at the per-shot crit resolution site limits how low this can drive
+        // the multiplier. Gated by `round_in_inclusive_first_n` so duration-limited
+        // debuffs honor their round budget.
+        let (attacker_crit_reduction, attacker_crit_reduction_rounds) =
+            hostile_crit_damage_reduction_from_crew(defender_crew, &combat_ctx);
+        let attacker_crit_reduction_active_this_round = attacker_crit_reduction > 0.0
+            && round_in_inclusive_first_n(round_index, attacker_crit_reduction_rounds);
+        let effective_attacker_crit_reduction = if attacker_crit_reduction_active_this_round {
+            attacker_crit_reduction
+        } else {
+            0.0
         };
 
         let mut phase_effects = EffectAccumulator::default();
@@ -1493,6 +1510,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         phase_effects.crit_chance_bonus(),
                         attacker.weapon_crit_multiplier(weapon_index),
                         phase_effects.crit_damage_multiplier(),
+                        effective_attacker_crit_reduction,
+                        attacker.crit_damage_floor,
                         hull_breach_active,
                         &mut rng,
                     );
@@ -1515,6 +1534,14 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             (
                                 "effective_crit_chance".to_string(),
                                 Value::from(round_f64(crit.effective_crit_chance)),
+                            ),
+                            (
+                                "attacker_crit_reduction".to_string(),
+                                Value::from(round_f64(effective_attacker_crit_reduction)),
+                            ),
+                            (
+                                "crit_damage_floor".to_string(),
+                                Value::from(round_f64(attacker.crit_damage_floor)),
                             ),
                             (
                                 "hull_breach_active".to_string(),
@@ -2327,11 +2354,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         defender_phase_effects.defense_mitigation_bonus(),
                     );
                     let attacker_hull_breach_active_for_crit = attacker_hull_breach_rounds > 0;
+                    // Defender counter-fire: pass 0 for the new attacker-outbound CDR / floor
+                    // params. The existing `hostile_crit_reduction` post-call adjustment below
+                    // keeps the player-side defensive CDR semantics intact.
                     let def_crit = resolve_vehicle_weapon_crit(
                         defender.weapon_crit_chance(weapon_index),
                         defender_phase_effects.crit_chance_bonus(),
                         defender.weapon_crit_multiplier(weapon_index),
                         defender_phase_effects.crit_damage_multiplier(),
+                        0.0,
+                        0.0,
                         attacker_hull_breach_active_for_crit,
                         &mut rng,
                     );

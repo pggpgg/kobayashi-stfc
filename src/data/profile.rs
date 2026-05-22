@@ -1234,7 +1234,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
 ///
 /// | Key | Flat merge into `profile.bonuses` | Applied via |
 /// |-----|-----------------------------------|---------------|
-/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `pierce`, `shield_mitigation`, `armor`, `shield_deflection`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `armor` / `shield_deflection` / `dodge` add into [`Combatant::mitigation`]; `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
+/// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `crit_damage_floor`, `pierce`, `shield_mitigation`, `armor`, `shield_deflection`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `armor` / `shield_deflection` / `dodge` add into [`Combatant::mitigation`]; `crit_damage_floor` populates [`Combatant::crit_damage_floor`] (clamped at the per-shot crit resolution site after any attacker-outbound crit-damage reduction); `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
 /// | `officer_attack`, `officer_health` | yes | Multiplicative with `weapon_damage` / `hull_hp`: attack × `(1+weapon_damage)×(1+officer_attack)`, hull × `(1+hull_hp)×(1+officer_health)` |
 /// | `officer_defense` | yes | Additive with `shield_mitigation` into [`Combatant::shield_mitigation`] (same cap `[0,1]`) |
 /// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
@@ -1268,6 +1268,11 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         }
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),
+        // Defensive clamp: ensures the attacker's effective crit multiplier never drops
+        // below this floor after opponent-side crit-damage reductions are applied.
+        // Populated by the 4 "Critical Damage Floor" research nodes (596446780,
+        // 1336793796, 1727094437, 2601710565), additive across owned nodes.
+        "crit_damage_floor" => Some("crit_damage_floor"),
         "pierce" | "armor_pierce" | "shield_pierce" => Some("pierce"),
         "shield_mitigation" => Some("shield_mitigation"),
         "armor" => Some("armor"),
@@ -1848,6 +1853,7 @@ pub fn apply_static_buffs_to_combatant(
         pierce: (combatant.pierce + pierce_add).max(0.0),
         crit_chance: (combatant.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (combatant.crit_multiplier * crit_damage_mult).max(0.0),
+        crit_damage_floor: 0.0,
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
         apex_shred: (combatant.apex_shred + apex_shred_add).max(0.0),
@@ -2289,6 +2295,11 @@ pub fn apply_profile_to_attacker(
     let apex_barrier_add = gb("apex_barrier");
     let crit_chance_add = gb("crit_chance");
     let crit_damage_mult = 1.0 + gb("crit_damage");
+    // Defensive clamp populated by the 4 "Critical Damage Floor" research nodes.
+    // Additive across nodes per the upstream catalog operator. Consumed at the per-shot
+    // crit-resolution site in `crit.rs` to enforce `effective ≥ floor` AFTER any
+    // attacker-outbound crit-damage reduction and BEFORE hull-breach amplification.
+    let crit_damage_floor_add = gb("crit_damage_floor");
     let pierce_add = gb("pierce");
     let shield_mit_add = gb("shield_mitigation");
     // §2c: officer Defense does NOT add to shield_mitigation. The previous
@@ -2316,6 +2327,7 @@ pub fn apply_profile_to_attacker(
         shield_health: attacker.shield_health * shield_hp * health_mult,
         crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
+        crit_damage_floor: (attacker.crit_damage_floor + crit_damage_floor_add).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
         mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
         armor: (attacker.armor + armor_add).max(0.0),
@@ -2671,6 +2683,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -2702,6 +2715,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -2853,6 +2867,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -2915,6 +2930,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -2965,6 +2981,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -3000,6 +3017,7 @@ mod tests {
             pierce: 0.05,
             crit_chance: 0.10,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -3052,6 +3070,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -3079,6 +3098,53 @@ mod tests {
         assert!((out.damage_reduction - 0.0).abs() < 1e-9);
         // Aggregate scalar tracks the sum.
         assert!((out.mitigation - 0.12).abs() < 1e-9);
+    }
+
+    #[test]
+    fn apply_profile_to_attacker_routes_crit_damage_floor() {
+        // 4 floor research nodes contribute additively to a single `crit_damage_floor`
+        // profile key. Verify the resolved Combatant.crit_damage_floor reflects the sum.
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 2.0,
+            crit_damage_floor: 0.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            apex_barrier: 0.0,
+            weapons: vec![],
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
+        };
+        let mut profile = PlayerProfile::default();
+        // Sum of two floor research nodes: +0.5 floor.
+        profile.bonuses.insert("crit_damage_floor".to_string(), 0.5);
+        let out =
+            apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
+        assert!(
+            (out.crit_damage_floor - 0.5).abs() < 1e-9,
+            "crit_damage_floor: expected 0.5, got {}",
+            out.crit_damage_floor
+        );
+        // `crit_damage` profile key is untouched (regression guard against accidental
+        // routing of floor research to base crit damage).
+        assert!(
+            (out.crit_multiplier - 2.0).abs() < 1e-9,
+            "crit_multiplier should not have been touched by crit_damage_floor"
+        );
     }
 
     #[test]
@@ -3177,6 +3243,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,
@@ -3235,6 +3302,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             end_of_round_damage: 0.0,

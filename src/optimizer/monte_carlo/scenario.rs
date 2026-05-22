@@ -237,6 +237,46 @@ fn extend_crew_with_player_crit_damage_reduction_profile_bonus(
     });
 }
 
+/// Symmetric twin of [`extend_crew_with_player_crit_damage_reduction_profile_bonus`]: in PvP,
+/// the opponent player's `player_crit_damage_reduction` profile bonus reduces the attacker's
+/// **outbound** crit. Implemented by pushing a `HostileCritDamageReduction` ability onto the
+/// **defender's** crew; the engine reads from `defender_crew` at the attacker's per-shot crit
+/// resolution site and clamps the reduced multiplier against `attacker.crit_damage_floor`.
+fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
+    defender_seats: &mut Vec<CrewSeatContext>,
+    opponent_profile: &PlayerProfile,
+    defender_opponent: DefenderOpponent,
+) {
+    if defender_opponent != DefenderOpponent::Player {
+        return;
+    }
+    let v = opponent_profile
+        .bonuses
+        .get("player_crit_damage_reduction")
+        .copied()
+        .unwrap_or(0.0);
+    if !v.is_finite() || v <= 0.0 {
+        return;
+    }
+    defender_seats.push(CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: "opponent_profile_player_crit_damage_reduction".to_string(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::CombatBegin,
+            boostable: false,
+            effect: AbilityEffect::HostileCritDamageReduction {
+                reduction: v.clamp(0.0, 0.95),
+                duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+            },
+            condition: None,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    });
+}
+
 /// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
 /// accuracy multiplier, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
 /// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
@@ -518,6 +558,7 @@ fn defender_combatant_from_ship_record(
         pierce,
         crit_chance: defender_ship.crit_chance,
         crit_multiplier: defender_ship.crit_damage,
+        crit_damage_floor: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -604,6 +645,7 @@ fn defender_combatant_from_hostile_record(
         pierce,
         crit_chance,
         crit_multiplier,
+        crit_damage_floor: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -967,6 +1009,16 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     defender_crew
         .seats
         .extend_from_slice(&shared.player_defender_officer_seats);
+    // Symmetric PvP CDR: opponent's `player_crit_damage_reduction` reduces the attacker's
+    // outbound crit. Engine reads from defender_crew at the per-shot crit resolution site;
+    // attacker.crit_damage_floor clamps the reduced multiplier.
+    if let Some(def_profile) = shared.defender_profile.as_ref() {
+        extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
+            &mut defender_crew.seats,
+            def_profile,
+            shared.defender_opponent,
+        );
+    }
 
     if let (Some(ref ship_rec), Some(ref cached_defender), Some(rounds), Some(defender_hull)) = (
         &shared.ship_rec,
@@ -1033,6 +1085,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 pierce,
                 crit_chance: ship_rec.crit_chance,
                 crit_multiplier: ship_rec.crit_damage,
+                crit_damage_floor: 0.0,
                 proc_chance,
                 proc_multiplier,
                 end_of_round_damage: 0.0,
@@ -1187,6 +1240,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance,
             proc_multiplier,
             end_of_round_damage: 0.0,
@@ -1270,6 +1324,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         pierce: 0.0,
         crit_chance: 0.0,
         crit_multiplier: 1.0,
+        crit_damage_floor: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         weapons: vec![],
@@ -1687,6 +1742,7 @@ pub(crate) fn scenario_to_combat_input(
                 pierce,
                 crit_chance: ship_rec.crit_chance,
                 crit_multiplier: ship_rec.crit_damage,
+                crit_damage_floor: 0.0,
                 proc_chance,
                 proc_multiplier,
                 end_of_round_damage: 0.0,
@@ -1806,6 +1862,7 @@ pub(crate) fn scenario_to_combat_input(
             pierce: 0.08 + ((ship_hash >> 8) % 14) as f64 / 100.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance,
             proc_multiplier,
             end_of_round_damage: 0.0,
@@ -1848,6 +1905,7 @@ pub(crate) fn scenario_to_combat_input(
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             weapons: vec![],
@@ -3660,6 +3718,7 @@ mod tests {
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 1.0,
             weapons: vec![],
