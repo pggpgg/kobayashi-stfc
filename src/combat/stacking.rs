@@ -118,19 +118,12 @@ impl<K: Ord> StatStacking<K> {
         self.totals.clear();
     }
 
-    /// Drop accumulated totals for `key` (e.g. after applying round-start regen so it is not double-counted at round end).
-    /// Currently only used by the generic API surface — the production [`EffectAccumulator`] uses a fixed-array
-    /// specialization in `combat::effect_accumulator::EffectStatStacks` that has its own `reset(key)`.
-    #[allow(dead_code)]
+    /// Drop accumulated totals for `key`. Used by the generic-API unit tests only — the production
+    /// [`crate::combat::effect_accumulator::EffectStatStacks`] uses a fixed-array specialization
+    /// with its own `reset(key)`.
+    #[cfg(test)]
     pub(crate) fn remove_totals_for(&mut self, key: &K) {
         self.totals.remove(key);
-    }
-
-    /// Iterate accumulated category totals per key (for trace / diagnostics).
-    /// See the comment on [`Self::remove_totals_for`] regarding production callers.
-    #[allow(dead_code)]
-    pub(crate) fn iter_totals(&self) -> impl Iterator<Item = (&K, &CategoryTotals)> {
-        self.totals.iter()
     }
 
     /// Merges state from `other` into self (adds totals per key). Used to restore round base without cloning.
