@@ -716,6 +716,25 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 **Current:** The workspace UI defaults to **tiered**; omitting `strategy` on optimize lets the **server auto-pick** tiered vs exhaustive from **effective** candidate count (after constraints and warm-start). Use **`strategy: "genetic"`** for huge below-decks exploration spaces. **Tiered** supports optional `tiered_scout_sims` / `tiered_top_k` and **`warm_start_crews`**. Non-genetic paths can apply **analytical prefilter** (explicit `analytical_prefilter_keep` or **`analytical_prefilter_keep_auto`** when omitted). The SPA persists last winning crews in **localStorage** with a versioned key (`frontend/src/lib/optimizeWarmStart.ts`, **SCHEMA** bumps invalidate stale entries). **Planned:** richer synergy ordering inside tiered and deeper “deep dive” tooling (§6.3 phase 3) as first-class UI.
 
+### 6.9 Sensitivity Analysis (stat-level Δ-on-outcome)
+
+**Implemented.** For a fixed scenario (crew + ship + research + hostile + profile + support buffs), rank in-game stats by their measured Δ on a chosen outcome metric — answering "which stat, if it were higher right now, would matter most." Surfaced as `POST /api/sensitivity`, CLI `kobayashi sensitivity`, and the `/sensitivity` SPA page. Engine: [`src/optimizer/sensitivity.rs`](../src/optimizer/sensitivity.rs); perturbation hook: [`src/combat/perturb.rs`](../src/combat/perturb.rs).
+
+**Perturbation model.** A stat is perturbed by mutating one or more of three pieces of resolved state immediately before `build_combat_setup` / `simulate_combat_from_setup`:
+
+- `Combatant` (attacker) for HP, crit, isolytic, apex, shield mitigation, and the aggregated `mitigation` scalar.
+- `HostileMitigationParams::base_attacker_stats` embedded in the defender's `Combatant` for armor piercing, shield piercing, and accuracy (these feed the component-based mitigation calc in [`mitigation_breakdown`](../src/combat/mitigation.rs)).
+- `SimulationConfig::crit_damage_reduction_perturb` for the universal `crit_damage_reduction` stat — the engine adds this value to whatever crew-derived crit damage reduction is resolved at combat time, applied for the configured rounds (or the full fight when the crew has no base reduction).
+
+**Method.** One stat at a time (OAT) with paired Common Random Numbers — baseline run uses seeds `s0..s0+N`, each perturbed run uses the *same* seeds. We compute per-seed Δ, then a 95% paired t-interval (large-N normal approximation, `z = 1.959963…`). When a perturbation changes a branch (e.g. extra crit triggers an extra weapon roll), downstream RNG draws *diverge* from the baseline for that seed — pairing still helps because the initial state is shared, but variance reduction is partial. The reported CI reflects whatever variance survives.
+
+**Engine limitations** (tracked in [ROADMAP.md § Stat modeling improvements](ROADMAP.md)):
+
+- `armor`, `shield_deflection`, `dodge`, `damage_reduction` collapse into one `Combatant.mitigation` scalar in `apply_profile_to_attacker`, so the v1 sensitivity catalog exposes a single aggregated `mitigation` row instead of four separate ones.
+- Critical Damage Floor research feeds the same `crit_damage` engine field as headline crit damage; no separate floor clamp is modeled.
+
+**Future work.** Sobol / Morris variance decomposition for first-order, total-order, and pairwise interactions (best **pair** to invest in together). Cost: `r × (k+1)` sims for Morris screening, `N × (2k+2)` sims for Sobol with `N ≥ 1024`. Build on top of the v1 OAT runner.
+
 ---
 
 ## 7. Synergy System

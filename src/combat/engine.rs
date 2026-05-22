@@ -2093,8 +2093,22 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 let defender_defense_filtered =
                     filter_effects_by_condition(defender_defense_phase_effects, &defender_ctx);
 
-                let (hostile_crit_reduction, hostile_crit_reduction_rounds) =
-                    hostile_crit_damage_reduction_from_crew(attacker_crew, &defender_ctx);
+                let (hostile_crit_reduction, hostile_crit_reduction_rounds) = {
+                    let (r, d) =
+                        hostile_crit_damage_reduction_from_crew(attacker_crew, &defender_ctx);
+                    let perturb = config.crit_damage_reduction_perturb;
+                    if perturb == 0.0 {
+                        (r, d)
+                    } else {
+                        // Sensitivity perturbation: add the universal crit-damage-reduction delta
+                        // and re-clamp. When the crew has no base reduction (`d == 0`), the
+                        // perturbation needs an active window to take effect — apply it for the
+                        // whole fight so the stat is meaningful regardless of crew composition.
+                        let perturbed = (r + perturb).clamp(0.0, 0.95);
+                        let rounds = if d == 0 { config.rounds } else { d };
+                        (perturbed, rounds)
+                    }
+                };
                 let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
                     hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
 

@@ -10,7 +10,17 @@
       "Bash(find /Users/pgagnong/dev/kobayashi/kobayashi-stfc/frontend/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec wc -l {} +)",
       "Bash(find /Users/pgagnong/dev/kobayashi/kobayashi-stfc/tests -name \"*.rs\" -exec wc -l {} +)",
       "Bash(cargo clippy --all-targets)",
-      "Bash(cargo build --tests)"
+      "Bash(cargo build --tests)",
+      "Bash(find /Users/pgagnong/Dev/kobayashi-stfc -type f -name \"*.rs\" | grep -E \"\\(server|simulate|optimize\\)\" | head -20)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx biome *)",
+      "Bash(npx vitest *)",
+      "Bash(npm run *)",
+      "Bash(cargo fmt *)",
+      "Bash(echo \"fmt_exit=$?\")",
+      "Bash(echo \"ok exit=$?\")",
+      "Bash(echo \"tsc=$?\")"
     ]
   }
 }

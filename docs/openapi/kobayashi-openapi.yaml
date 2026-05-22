@@ -25,6 +25,7 @@ tags:
   - name: simulate
   - name: optimize
   - name: compare
+  - name: sensitivity
   - name: sync
   - name: debug
 
@@ -678,6 +679,59 @@ paths:
               schema:
                 $ref: "#/components/schemas/CpuBusyError"
 
+  /api/sensitivity:
+    post:
+      tags: [sensitivity]
+      summary: Stat-level Δ-on-outcome sensitivity analysis (paired CRN Monte Carlo)
+      description: |
+        For a fixed scenario (crew + ship + research + hostile + profile + support buffs),
+        perturbs each stat in the catalog by a per-stat δ and measures how the outcome
+        metric changes. Uses paired Common Random Numbers (same seed sequence for baseline
+        and perturbed runs) so per-seed differences cancel most of the variance. Returns one
+        row per stat with a 95% confidence interval on the paired mean difference; rows
+        whose CI excludes zero are flagged `significant: true`.
+        Synchronous v1 — long runs are gated by the process-wide CPU admission semaphore.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SensitivityRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitivityResponse"
+        "400":
+          description: Validation or parse error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/sensitivity/defaults:
+    get:
+      tags: [sensitivity]
+      summary: Default per-stat δ catalog (15 stats)
+      description: |
+        Returns the default δ each stat is perturbed by when the request body omits an override.
+        `multiplicative: true` means the engine applies `value *= 1 + δ`; `false` means
+        `value += δ`. UI uses this to format the override input appropriately.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitivityDefaultsResponse"
+
   /api/optimize:
     post:
       tags: [optimize]
@@ -1324,6 +1378,114 @@ components:
           type: array
           items:
             type: string
+
+    SensitivityRequest:
+      type: object
+      required: [ship, hostile]
+      properties:
+        ship:
+          type: string
+          description: Ship id (e.g. `uss_enterprise_d`).
+        hostile:
+          type: string
+          description: Hostile id or normalized name+level.
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        captain:
+          type: string
+        bridge:
+          type: array
+          items: { type: string }
+        below_decks:
+          type: array
+          items: { type: string }
+        support_buffs:
+          type: array
+          items: { type: string }
+        profile_id:
+          type: string
+          description: Profile id (header / query also accepted).
+        num_sims:
+          type: integer
+          minimum: 2
+          maximum: 50000
+          description: Paired sims per stat (also used for the baseline). Clamped server-side.
+        seed:
+          type: integer
+          format: int64
+        rounds:
+          type: integer
+        metric:
+          type: string
+          enum: [hull_remaining, win_rate, rounds_to_kill, defender_hull_remaining]
+          description: Outcome scalar each stat's Δ is measured against. Default `hull_remaining`.
+        deltas:
+          type: object
+          additionalProperties:
+            type: number
+          description: |
+            Per-stat δ overrides. Keys are stat names (snake_case). A value of `0.0`
+            skips that stat from the report. Missing keys use the default δ catalog.
+
+    SensitivityRow:
+      type: object
+      required: [stat, delta_applied, mean_diff, ci95_low, ci95_high, significant]
+      properties:
+        stat:
+          type: string
+        delta_applied:
+          type: number
+        mean_diff:
+          type: number
+          description: Mean of `(perturbed - baseline)` per-seed metric values.
+        mean_diff_relative:
+          type: number
+          nullable: true
+          description: "mean_diff / baseline_mean. Null when baseline is zero or non-finite."
+        ci95_low:
+          type: number
+        ci95_high:
+          type: number
+        significant:
+          type: boolean
+          description: True iff the 95% CI excludes zero.
+
+    SensitivityResponse:
+      type: object
+      required: [metric, baseline_mean, num_sims, base_seed, rows]
+      properties:
+        metric:
+          type: string
+        baseline_mean:
+          type: number
+        num_sims:
+          type: integer
+        base_seed:
+          type: integer
+          format: int64
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/SensitivityRow"
+
+    SensitivityDefaultsResponse:
+      type: object
+      required: [deltas]
+      properties:
+        deltas:
+          type: array
+          items:
+            type: object
+            required: [stat, delta, multiplicative]
+            properties:
+              stat:
+                type: string
+              delta:
+                type: number
+              multiplicative:
+                type: boolean
 
     CompareCrewsRequest:
       type: object
