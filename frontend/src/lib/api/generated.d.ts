@@ -2047,13 +2047,13 @@ export interface components {
                 name: string;
                 ship: string;
                 scenario: string;
-                schema_version?: number;
+                schema_version: number;
             } & {
                 [key: string]: unknown;
             })[];
         };
         Preset: {
-            schema_version?: number;
+            schema_version: number;
             id: string;
             name: string;
             ship: string;
@@ -2061,7 +2061,7 @@ export interface components {
             crew: {
                 [key: string]: unknown;
             };
-            provenance?: {
+            provenance: {
                 [key: string]: unknown;
             };
         };

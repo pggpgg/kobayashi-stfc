@@ -1225,7 +1225,7 @@ components:
           type: array
           items:
             type: object
-            required: [id, name, ship, scenario]
+            required: [id, name, ship, scenario, schema_version]
             properties:
               id:
                 type: string
@@ -1241,7 +1241,7 @@ components:
 
     Preset:
       type: object
-      required: [id, name, ship, scenario, crew]
+      required: [id, name, ship, scenario, crew, schema_version, provenance]
       properties:
         schema_version:
           type: integer

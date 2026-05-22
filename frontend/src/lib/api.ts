@@ -1178,14 +1178,13 @@ export interface PresetCrew {
   below_deck?: (string | null)[];
 }
 
-/** Embedded when saving a preset (API v2); optional on read for legacy files until enriched. */
+/** Embedded when saving a preset. */
 export interface PresetProvenance {
   saved_at: string;
   kobayashi_version: string;
   hostile_data_version?: string | null;
   ship_data_version?: string | null;
   source?: string | null;
-  inferred?: boolean;
 }
 
 export interface Preset {
@@ -1194,8 +1193,8 @@ export interface Preset {
   ship: string;
   scenario: string;
   crew: PresetCrew;
-  schema_version?: number | null;
-  provenance?: PresetProvenance | null;
+  schema_version: number;
+  provenance: PresetProvenance;
 }
 
 export interface PresetSummary {
@@ -1203,7 +1202,7 @@ export interface PresetSummary {
   name: string;
   ship: string;
   scenario: string;
-  schema_version?: number | null;
+  schema_version: number;
 }
 
 export async function fetchPresets(
