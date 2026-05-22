@@ -2044,11 +2044,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 let def_base_shots = defender.weapon_base_shots(weapon_index);
                 let def_effective_shots = effective_shots_for_weapon(def_base_shots, def_b_shots);
 
+                // Inbound counter-fire mitigation: weight each component by the attacker
+                // ship-type coefficients (c_armor, c_shield, c_dodge). `damage_reduction`
+                // and `attacker_mitigation_additive` are flat post-mitigation reductions.
+                // Fallback: when no profile-resolved components are set (e.g. legacy test
+                // fixtures with only `attacker.mitigation` populated), use the aggregated
+                // scalar directly so existing fixtures keep their calibrated behavior.
                 let eff_player_mitigation = {
-                    let (_c_armor, _c_shield, c_dodge) = attacker_ship_type.coefficients();
-                    let dodge_mitigation = attacker_dodge_bonus * c_dodge;
-                    (attacker.mitigation + attacker_mitigation_additive + dodge_mitigation)
-                        .clamp(0.0, 1.0)
+                    let (c_armor, c_shield, c_dodge) = attacker_ship_type.coefficients();
+                    let component_sum = c_armor * attacker.armor
+                        + c_shield * attacker.shield_deflection
+                        + c_dodge * (attacker.dodge + attacker_dodge_bonus)
+                        + attacker.damage_reduction;
+                    let base = if component_sum > 0.0 {
+                        component_sum
+                    } else {
+                        attacker.mitigation + attacker_dodge_bonus * c_dodge
+                    };
+                    (base + attacker_mitigation_additive).clamp(0.0, 1.0)
                 };
                 let counter_mitigation_mult = (1.0 - eff_player_mitigation).max(0.0);
 
@@ -2188,7 +2201,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                 for hit_index in 0..def_effective_shots {
                     trace.record_if(|| {
-                        let (_c_armor, _c_shield, c_dodge) = attacker_ship_type.coefficients();
+                        let (c_armor, c_shield, c_dodge) = attacker_ship_type.coefficients();
                         let dodge_mitigation = attacker_dodge_bonus * c_dodge;
                         CombatEvent {
                             event_type: "mitigation_calc".to_string(),
@@ -2214,6 +2227,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 (
                                     "base_mitigation".to_string(),
                                     Value::from(round_f64(attacker.mitigation)),
+                                ),
+                                (
+                                    "armor_component".to_string(),
+                                    Value::from(round_f64(c_armor * attacker.armor)),
+                                ),
+                                (
+                                    "shield_deflection_component".to_string(),
+                                    Value::from(round_f64(c_shield * attacker.shield_deflection)),
+                                ),
+                                (
+                                    "dodge_component".to_string(),
+                                    Value::from(round_f64(
+                                        c_dodge * (attacker.dodge + attacker_dodge_bonus),
+                                    )),
+                                ),
+                                (
+                                    "damage_reduction".to_string(),
+                                    Value::from(round_f64(attacker.damage_reduction)),
                                 ),
                                 (
                                     "mitigation_additive_bonus".to_string(),

@@ -2293,13 +2293,17 @@ pub fn apply_profile_to_attacker(
     let shield_mit_add = gb("shield_mitigation");
     // §2c: officer Defense does NOT add to shield_mitigation. The previous
     // `shield_mitigation += officer_defense` line was incorrect and has been removed.
-    let mitigation_add = gb("armor")
-        + osr.defense_armor_add
-        + gb("shield_deflection")
-        + osr.defense_shield_deflection_add
-        + gb("dodge")
-        + osr.defense_dodge_add
-        + gb("damage_reduction");
+    //
+    // Mitigation components are tracked separately post-resolution so the engine can apply
+    // ship-type coefficients (c_armor, c_shield, c_dodge) in the inbound counter-fire path.
+    // `damage_reduction` is a flat post-mitigation reduction not subject to ship-type weighting.
+    // The aggregated `mitigation` scalar is preserved as a back-compat fallback for consumers
+    // that read a single value (external serialized state, debug traces).
+    let armor_add = gb("armor") + osr.defense_armor_add;
+    let shield_deflection_add = gb("shield_deflection") + osr.defense_shield_deflection_add;
+    let dodge_add = gb("dodge") + osr.defense_dodge_add;
+    let damage_reduction_add = gb("damage_reduction");
+    let mitigation_add = armor_add + shield_deflection_add + dodge_add + damage_reduction_add;
 
     // §2b/§2d: officer attack_bonus multiplies weapon damage; officer health_bonus multiplies
     // BOTH hull and shield HP (the §4-migrated semantics — was hull-only before).
@@ -2314,6 +2318,10 @@ pub fn apply_profile_to_attacker(
         crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
         mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
+        armor: (attacker.armor + armor_add).max(0.0),
+        shield_deflection: (attacker.shield_deflection + shield_deflection_add).max(0.0),
+        dodge: (attacker.dodge + dodge_add).max(0.0),
+        damage_reduction: (attacker.damage_reduction + damage_reduction_add).max(0.0),
         shield_mitigation: (attacker.shield_mitigation + shield_mit_add).clamp(0.0, 1.0),
         isolytic_damage: (attacker.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (attacker.isolytic_defense + isolytic_defense_add).max(0.0),
@@ -2656,6 +2664,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -2683,6 +2695,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -2830,6 +2846,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -2888,6 +2908,10 @@ mod tests {
             id: "test".to_string(),
             attack: 0.0,
             mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -2934,6 +2958,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -2965,6 +2993,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.10,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.05,
             crit_chance: 0.10,
             crit_multiplier: 1.0,
@@ -2988,7 +3020,65 @@ mod tests {
 
         let out =
             apply_profile_to_attacker(attacker, &profile, None, OfficerStatRuntimeBonus::default());
+        // Aggregated scalar: attacker.mitigation (0.10 baseline) + sum of component adds (0.09).
         assert!((out.mitigation - 0.19).abs() < 1e-9);
+        // Each component populated separately from its own profile key. The attacker started
+        // with armor=0, shield_deflection=0, dodge=0, damage_reduction=0, so each post-resolution
+        // value equals just the profile bonus add.
+        assert!((out.armor - 0.04).abs() < 1e-9, "armor from profile");
+        assert!(
+            (out.shield_deflection - 0.0).abs() < 1e-9,
+            "shield_deflection had no contributor"
+        );
+        assert!((out.dodge - 0.03).abs() < 1e-9, "dodge from profile");
+        assert!(
+            (out.damage_reduction - 0.02).abs() < 1e-9,
+            "damage_reduction from profile"
+        );
+    }
+
+    #[test]
+    fn apply_profile_to_attacker_routes_components_with_officer_runtime() {
+        // Officer Defense bonuses (defense_armor_add, defense_shield_deflection_add,
+        // defense_dodge_add) add to the matching components, not just the aggregate.
+        let attacker = Combatant {
+            id: "test".to_string(),
+            attack: 100.0,
+            mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health: 1000.0,
+            shield_health: 500.0,
+            shield_mitigation: 0.2,
+            apex_barrier: 0.0,
+            weapons: vec![],
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
+        };
+        let profile = PlayerProfile::default();
+        let osr = OfficerStatRuntimeBonus {
+            defense_armor_add: 0.05,
+            defense_shield_deflection_add: 0.04,
+            defense_dodge_add: 0.03,
+            ..OfficerStatRuntimeBonus::default()
+        };
+        let out = apply_profile_to_attacker(attacker, &profile, None, osr);
+        assert!((out.armor - 0.05).abs() < 1e-9);
+        assert!((out.shield_deflection - 0.04).abs() < 1e-9);
+        assert!((out.dodge - 0.03).abs() < 1e-9);
+        assert!((out.damage_reduction - 0.0).abs() < 1e-9);
+        // Aggregate scalar tracks the sum.
+        assert!((out.mitigation - 0.12).abs() < 1e-9);
     }
 
     #[test]
@@ -3080,6 +3170,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.10,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,
@@ -3134,6 +3228,10 @@ mod tests {
             id: "test".to_string(),
             attack: 100.0,
             mitigation: 0.10,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.0,
             crit_multiplier: 1.0,

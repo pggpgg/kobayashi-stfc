@@ -412,7 +412,27 @@ pub struct HostileMitigationParams {
 pub struct Combatant {
     pub id: String,
     pub attack: f64,
+    /// Aggregated mitigation scalar. After `apply_profile_to_attacker` ran, this is the
+    /// clamped sum `armor + shield_deflection + dodge + damage_reduction`. Retained for
+    /// backward compatibility with consumers that read a single scalar; the per-shot
+    /// inbound counter-fire path in `engine.rs` reads the individual components and
+    /// applies ship-type coefficients instead.
     pub mitigation: f64,
+    /// Static armor (component of inbound mitigation). Weighted by ship-type `c_armor` at
+    /// combat time. Populated by `apply_profile_to_attacker` from the `armor` profile key
+    /// + officer `defense_armor_add` runtime bonus.
+    #[serde(default)]
+    pub armor: f64,
+    /// Static shield deflection. Weighted by ship-type `c_shield` at combat time.
+    #[serde(default)]
+    pub shield_deflection: f64,
+    /// Static dodge. Weighted by ship-type `c_dodge` at combat time. Per-round dodge
+    /// bonuses from officer abilities are added on top before weighting.
+    #[serde(default)]
+    pub dodge: f64,
+    /// Flat damage reduction (post-mitigation, not subject to ship-type coefficients).
+    #[serde(default)]
+    pub damage_reduction: f64,
     pub pierce: f64,
     pub crit_chance: f64,
     pub crit_multiplier: f64,
@@ -438,6 +458,35 @@ pub struct Combatant {
     /// Morale piercing bonus and MitigationAdditive effects are applied at combat time.
     #[serde(skip)]
     pub hostile_mitigation_params: Option<HostileMitigationParams>,
+}
+
+impl Default for Combatant {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            attack: 0.0,
+            mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 0.0,
+            proc_chance: 0.0,
+            proc_multiplier: 0.0,
+            end_of_round_damage: 0.0,
+            hull_health: 0.0,
+            shield_health: 0.0,
+            shield_mitigation: default_shield_mitigation(),
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            weapons: Vec::new(),
+            hostile_mitigation_params: None,
+        }
+    }
 }
 
 fn default_shield_mitigation() -> f64 {
