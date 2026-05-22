@@ -228,6 +228,7 @@ fn harrison_sabotage_increases_outbound_hull_damage_vs_high_shield_mitigation() 
         pierce: 0.0,
         crit_chance: 0.0,
         crit_multiplier: 1.0,
+        crit_damage_floor: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,

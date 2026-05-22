@@ -377,6 +377,7 @@ impl FixtureCombatant {
             pierce: self.pierce,
             crit_chance: self.crit_chance,
             crit_multiplier: self.crit_multiplier,
+            crit_damage_floor: 0.0,
             proc_chance: self.proc_chance,
             proc_multiplier: self.proc_multiplier,
             end_of_round_damage: self.end_of_round_damage,

@@ -131,6 +131,10 @@
     "operator": "add",
     "attacker_faction": "klingon"
   },
+  "1159541276": {
+    "stat": "crit_damage_floor",
+    "operator": "add"
+  },
   "1255158479": [
     "armor",
     "shield_deflection",
@@ -140,6 +144,10 @@
     "stat": "shield_hp",
     "operator": "add",
     "attacker_faction": "federation"
+  },
+  "1418272511": {
+    "stat": "crit_damage_floor",
+    "operator": "add"
   },
   "1419846647": {
     "stat": "hull_hp",
@@ -343,6 +351,10 @@
     "operator": "add",
     "attacker_faction": "romulan"
   },
+  "3521100624": {
+    "stat": "crit_damage_floor",
+    "operator": "add"
+  },
   "3524208914": {
     "stat": "crit_damage",
     "operator": "add",
@@ -383,6 +395,10 @@
     "stat": "shield_hp",
     "operator": "add",
     "attacker_faction": "klingon"
+  },
+  "4116462206": {
+    "stat": "crit_damage_floor",
+    "operator": "add"
   },
   "4155256588": {
     "stat": "crit_damage",
