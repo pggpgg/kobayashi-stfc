@@ -161,3 +161,80 @@ export async function runMorris(
   }
   return (await res.json()) as MorrisResponse;
 }
+
+// ---------------------------------------------------------------------------
+// Sobol variance-based sensitivity (`POST /api/sensitivity/sobol`)
+// ---------------------------------------------------------------------------
+
+export interface SobolRequest {
+  ship: string;
+  hostile: string;
+  ship_tier?: number;
+  ship_level?: number;
+  captain?: string;
+  bridge: string[];
+  below_decks?: string[];
+  support_buffs?: string[];
+  profile_id?: string;
+  n_samples?: number;
+  seed?: number;
+  rounds?: number;
+  metric?: OutcomeMetric;
+  deltas?: Record<string, number>;
+}
+
+export interface SobolRow {
+  stat: string;
+  base_delta: number;
+  /** First-order Sobol index — main effect alone. */
+  s1: number;
+  /** Total-order Sobol index — main + all interactions involving this stat. */
+  st: number;
+  /** S_T_i − S_i: fraction of variance from interactions. */
+  interaction: number;
+  s1_ci95_low: number;
+  s1_ci95_high: number;
+  st_ci95_low: number;
+  st_ci95_high: number;
+}
+
+export interface SobolResponse {
+  metric: string;
+  n_samples: number;
+  k_stats: number;
+  base_seed: number;
+  total_sims: number;
+  output_variance: number;
+  rows: SobolRow[];
+}
+
+export interface SobolDefaultsResponse {
+  deltas: SensitivityDefaultRow[];
+  n_samples_default: number;
+  n_samples_max: number;
+}
+
+export async function fetchSobolDefaults(): Promise<SobolDefaultsResponse> {
+  const res = await fetch(`${API_BASE}/api/sensitivity/sobol/defaults`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw await parseApiError(res, body);
+  }
+  return (await res.json()) as SobolDefaultsResponse;
+}
+
+export async function runSobol(
+  request: SobolRequest,
+  profileId?: string | null,
+): Promise<SobolResponse> {
+  const res = await fetch(`${API_BASE}/api/sensitivity/sobol`, {
+    method: "POST",
+    headers: profileHeaders(profileId),
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw await parseApiError(res, body);
+  }
+  return (await res.json()) as SobolResponse;
+}

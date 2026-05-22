@@ -781,6 +781,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/MorrisSensitivityDefaultsResponse"
 
+  /api/sensitivity/sobol:
+    post:
+      tags: [sensitivity]
+      summary: Sobol variance-based sensitivity (Saltelli design, Jansen estimators)
+      description: |
+        Decomposes the variance of the outcome metric into per-stat contributions.
+        Reports **S_i** (first-order: main effect alone), **S_T_i** (total-order:
+        main + all interactions involving i), and **interaction strength** (S_T_i − S_i).
+        v1 ships first-order and total-order indices; per-pair S_ij is planned (Sobol
+        pairwise needs `N × k(k−1)/2` more evaluations).
+        Synchronous — gated by the CPU admission semaphore.
+        Compute is `N × (k + 2)` engine calls (`N=512`, `k=18` → ~10k sims by default).
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SobolSensitivityRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SobolSensitivityResponse"
+        "400":
+          description: Validation or parse error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/sensitivity/sobol/defaults:
+    get:
+      tags: [sensitivity]
+      summary: Sobol defaults (δ catalog + N defaults & caps)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SobolSensitivityDefaultsResponse"
+
   /api/optimize:
     post:
       tags: [optimize]
@@ -1685,6 +1734,146 @@ components:
         num_sims_default:
           type: integer
         num_sims_max:
+          type: integer
+
+    SobolSensitivityRequest:
+      type: object
+      required: [ship, hostile]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        captain:
+          type: string
+        bridge:
+          type: array
+          items: { type: string }
+        below_decks:
+          type: array
+          items: { type: string }
+        support_buffs:
+          type: array
+          items: { type: string }
+        profile_id:
+          type: string
+        n_samples:
+          type: integer
+          minimum: 8
+          maximum: 8192
+          description: Samples per Saltelli matrix. Clamped server-side.
+        seed:
+          type: integer
+          format: int64
+        rounds:
+          type: integer
+        metric:
+          type: string
+          enum: [hull_remaining, win_rate, rounds_to_kill, defender_hull_remaining]
+        deltas:
+          type: object
+          additionalProperties:
+            type: number
+          description: |
+            Per-stat **base δ** overrides. Each u_i ∈ [0, 1] from the Saltelli matrix
+            is mapped to a perturbation δ_i ∈ [0, 2 · base_δ_i]. A `0.0` override
+            drops the stat from the analysis entirely.
+
+    SobolSensitivityRow:
+      type: object
+      required:
+        [
+          stat,
+          base_delta,
+          s1,
+          st,
+          interaction,
+          s1_ci95_low,
+          s1_ci95_high,
+          st_ci95_low,
+          st_ci95_high,
+        ]
+      properties:
+        stat:
+          type: string
+        base_delta:
+          type: number
+        s1:
+          type: number
+          description: First-order Sobol index (main effect alone).
+        st:
+          type: number
+          description: Total-order Sobol index (main + all interactions involving this stat).
+        interaction:
+          type: number
+          description: |
+            `S_T_i − S_i` — fraction of variance from interactions between this stat
+            and any other. Per-pair S_ij is not estimated in v1.
+        s1_ci95_low:
+          type: number
+        s1_ci95_high:
+          type: number
+        st_ci95_low:
+          type: number
+        st_ci95_high:
+          type: number
+
+    SobolSensitivityResponse:
+      type: object
+      required:
+        [
+          metric,
+          n_samples,
+          k_stats,
+          base_seed,
+          total_sims,
+          output_variance,
+          rows,
+        ]
+      properties:
+        metric:
+          type: string
+        n_samples:
+          type: integer
+        k_stats:
+          type: integer
+        base_seed:
+          type: integer
+          format: int64
+        total_sims:
+          type: integer
+          format: int64
+        output_variance:
+          type: number
+          description: Estimated Var(Y) for the run (sanity check).
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/SobolSensitivityRow"
+
+    SobolSensitivityDefaultsResponse:
+      type: object
+      required: [deltas, n_samples_default, n_samples_max]
+      properties:
+        deltas:
+          type: array
+          items:
+            type: object
+            required: [stat, delta, multiplicative]
+            properties:
+              stat:
+                type: string
+              delta:
+                type: number
+              multiplicative:
+                type: boolean
+        n_samples_default:
+          type: integer
+        n_samples_max:
           type: integer
 
     CompareCrewsRequest:

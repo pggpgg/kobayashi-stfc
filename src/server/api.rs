@@ -1187,6 +1187,74 @@ pub fn sensitivity_morris_defaults_payload() -> String {
     .expect("serialize sensitivity morris defaults")
 }
 
+/// POST `/api/sensitivity/sobol` — Sobol variance-based sensitivity (Saltelli design, Jansen
+/// estimators). Synchronous; gated by the CPU admission semaphore.
+pub fn sensitivity_sobol_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, SensitivityError> {
+    use crate::optimizer::sensitivity_sobol::{run_sobol, SobolRequest};
+
+    let mut req: SobolRequest = serde_json::from_str(body).map_err(SensitivityError::Parse)?;
+    if req.ship.trim().is_empty() {
+        return Err(SensitivityError::Validation(
+            "ship must not be empty".into(),
+        ));
+    }
+    if req.hostile.trim().is_empty() {
+        return Err(SensitivityError::Validation(
+            "hostile must not be empty".into(),
+        ));
+    }
+    if req.profile_id.is_none() {
+        if let Some(pid) = profile_id {
+            if !pid.is_empty() {
+                req.profile_id = Some(pid.to_string());
+            }
+        }
+    }
+
+    let response = run_sobol(registry, &req).map_err(SensitivityError::Run)?;
+    serde_json::to_string(&response)
+        .map_err(|e| SensitivityError::Validation(format!("serialize response: {e}")))
+}
+
+/// GET `/api/sensitivity/sobol/defaults` — δ catalog + default / max sample count.
+pub fn sensitivity_sobol_defaults_payload() -> String {
+    use crate::optimizer::sensitivity_sobol::{DEFAULT_N_SAMPLES, MAX_N_SAMPLES};
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct Row {
+        stat: &'static str,
+        delta: f64,
+        multiplicative: bool,
+    }
+
+    #[derive(Serialize)]
+    struct Resp {
+        deltas: Vec<Row>,
+        n_samples_default: u32,
+        n_samples_max: u32,
+    }
+
+    let deltas = crate::optimizer::sensitivity::default_deltas()
+        .into_iter()
+        .map(|(s, d)| Row {
+            stat: s.as_str(),
+            delta: d,
+            multiplicative: s.is_multiplicative(),
+        })
+        .collect();
+    serde_json::to_string(&Resp {
+        deltas,
+        n_samples_default: DEFAULT_N_SAMPLES,
+        n_samples_max: MAX_N_SAMPLES,
+    })
+    .expect("serialize sensitivity sobol defaults")
+}
+
 const DEFAULT_REPLAY_MAX_TRACE_EVENTS: u32 = 500;
 const MAX_REPLAY_MAX_TRACE_EVENTS_CAP: u32 = 2000;
 

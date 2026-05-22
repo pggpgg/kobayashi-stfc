@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import HostilePicker from "../components/HostilePicker";
 import MorrisResults from "../components/MorrisResults";
 import SensitivityResults from "../components/SensitivityResults";
+import SobolResults from "../components/SobolResults";
 import { useProfile } from "../contexts/ProfileContext";
 import {
   ApiError,
@@ -13,15 +14,18 @@ import {
 import {
   fetchMorrisDefaults,
   fetchSensitivityDefaults,
+  fetchSobolDefaults,
   type MorrisResponse,
   type OutcomeMetric,
   runMorris,
   runSensitivity,
+  runSobol,
   type SensitivityDefaultRow,
   type SensitivityResponse,
+  type SobolResponse,
 } from "../lib/sensitivityApi";
 
-type AnalysisMethod = "oat" | "morris";
+type AnalysisMethod = "oat" | "morris" | "sobol";
 
 const METRICS: { value: OutcomeMetric; label: string; hint: string }[] = [
   {
@@ -77,6 +81,10 @@ export default function Sensitivity() {
   const [morrisResponse, setMorrisResponse] = useState<MorrisResponse | null>(
     null,
   );
+  const [sobolNSamples, setSobolNSamples] = useState<number>(512);
+  const [sobolResponse, setSobolResponse] = useState<SobolResponse | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +122,14 @@ export default function Sensitivity() {
       })
       .catch(() => {
         // Non-fatal: server defaults will be applied if user submits without changing.
+      });
+    fetchSobolDefaults()
+      .then((resp) => {
+        if (cancelled) return;
+        setSobolNSamples(resp.n_samples_default);
+      })
+      .catch(() => {
+        // Non-fatal.
       });
     return () => {
       cancelled = true;
@@ -172,7 +188,8 @@ export default function Sensitivity() {
         );
         setResponse(result);
         setMorrisResponse(null);
-      } else {
+        setSobolResponse(null);
+      } else if (method === "morris") {
         const result = await runMorris(
           {
             ...sharedScenario,
@@ -183,6 +200,15 @@ export default function Sensitivity() {
         );
         setMorrisResponse(result);
         setResponse(null);
+        setSobolResponse(null);
+      } else {
+        const result = await runSobol(
+          { ...sharedScenario, n_samples: sobolNSamples },
+          activeProfileId,
+        );
+        setSobolResponse(result);
+        setResponse(null);
+        setMorrisResponse(null);
       }
     } catch (e: unknown) {
       if (e instanceof ApiError) {
@@ -316,7 +342,7 @@ export default function Sensitivity() {
           >
             Method:&nbsp;
           </label>
-          {(["oat", "morris"] as const).map((m) => (
+          {(["oat", "morris", "sobol"] as const).map((m) => (
             <label
               key={m}
               style={{
@@ -335,7 +361,9 @@ export default function Sensitivity() {
               />
               {m === "oat"
                 ? "OAT (per-stat Δ vs baseline)"
-                : "Morris screening (μ*/σ across trajectories)"}
+                : m === "morris"
+                  ? "Morris screening (μ*/σ across trajectories)"
+                  : "Sobol variance decomposition (S₁ / S_T)"}
             </label>
           ))}
           <p
@@ -348,7 +376,9 @@ export default function Sensitivity() {
           >
             {method === "oat"
               ? "Perturb one stat at a time from the same baseline. Tight CI per stat; doesn't capture interactions."
-              : "Walk r random trajectories through stat space. μ* ranks importance; σ flags stats that interact with others."}
+              : method === "morris"
+                ? "Walk r random trajectories through stat space. μ* ranks importance; σ flags stats that interact with others."
+                : "Decompose Var(Y) via Saltelli design. S₁ = main effect alone; S_T = main + all interactions. Most rigorous; cost is N × (k+2) sims."}
           </p>
         </div>
         <div
@@ -376,7 +406,7 @@ export default function Sensitivity() {
               {METRICS.find((m) => m.value === metric)?.hint}
             </span>
           </label>
-          {method === "oat" ? (
+          {method === "oat" && (
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 Paired sims per stat
@@ -389,7 +419,8 @@ export default function Sensitivity() {
                 onChange={(e) => setNumSims(Number(e.target.value))}
               />
             </label>
-          ) : (
+          )}
+          {method === "morris" && (
             <>
               <label
                 style={{ display: "flex", flexDirection: "column", gap: 4 }}
@@ -435,6 +466,24 @@ export default function Sensitivity() {
                 </span>
               </label>
             </>
+          )}
+          {method === "sobol" && (
+            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                N samples per Saltelli matrix
+              </span>
+              <input
+                type="number"
+                min={8}
+                max={8192}
+                value={sobolNSamples}
+                onChange={(e) => setSobolNSamples(Number(e.target.value))}
+              />
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                Total sims = N × (k + 2). N=512 is a reasonable default; raise
+                to 2048 for tighter CIs.
+              </span>
+            </label>
           )}
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
@@ -592,6 +641,20 @@ export default function Sensitivity() {
             numSimsPerPoint={morrisResponse.num_sims_per_point}
             totalSims={morrisResponse.total_sims}
             baseSeed={morrisResponse.base_seed}
+          />
+        </section>
+      )}
+
+      {sobolResponse && (
+        <section style={{ marginTop: "1.5rem" }}>
+          <h3>Results (Sobol variance decomposition)</h3>
+          <SobolResults
+            rows={sobolResponse.rows}
+            metric={sobolResponse.metric}
+            nSamples={sobolResponse.n_samples}
+            totalSims={sobolResponse.total_sims}
+            outputVariance={sobolResponse.output_variance}
+            baseSeed={sobolResponse.base_seed}
           />
         </section>
       )}

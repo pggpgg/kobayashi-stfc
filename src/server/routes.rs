@@ -224,6 +224,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             "/api/sensitivity/morris/defaults",
             get(handle_sensitivity_morris_defaults),
         )
+        .route(
+            "/api/sensitivity/sobol/defaults",
+            get(handle_sensitivity_sobol_defaults),
+        )
         .with_state(state.clone());
 
     let api_large_ingest = Router::new()
@@ -248,6 +252,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/optimize/start", post(handle_optimize_start))
         .route("/api/sensitivity", post(handle_sensitivity))
         .route("/api/sensitivity/morris", post(handle_sensitivity_morris))
+        .route("/api/sensitivity/sobol", post(handle_sensitivity_sobol))
         .layer(DefaultBodyLimit::max(BODY_LIMIT_CPU_JSON))
         .with_state(state.clone());
 
@@ -944,6 +949,51 @@ async fn handle_sensitivity_morris(
 /// GET /api/sensitivity/morris/defaults — Morris defaults (δ catalog + r/sims defaults & caps).
 async fn handle_sensitivity_morris_defaults(State(_state): State<AppState>) -> impl IntoResponse {
     ok_json(api::sensitivity_morris_defaults_payload())
+}
+
+/// POST /api/sensitivity/sobol — Sobol variance-based sensitivity (Saltelli design,
+/// Jansen estimators). Synchronous; gated by the CPU admission semaphore.
+async fn handle_sensitivity_sobol(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let permit = match acquire_cpu_or_response(&state).await {
+        Ok(p) => p,
+        Err(resp) => return resp,
+    };
+    let profile_id = profile_id_from_request(&headers, &params);
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        api::sensitivity_sobol_payload(registry.as_ref(), &body, profile_id.as_deref())
+    })
+    .await;
+    match result {
+        Ok(Ok(payload)) => ok_json(payload).into_response(),
+        Ok(Err(api::SensitivityError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
+        Ok(Err(api::SensitivityError::Validation(msg))) => {
+            error_json(StatusCode::BAD_REQUEST, &msg).into_response()
+        }
+        Ok(Err(api::SensitivityError::Run(msg))) => {
+            error_json(StatusCode::INTERNAL_SERVER_ERROR, &msg).into_response()
+        }
+        Err(e) => error_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!("Task panicked: {e}"),
+        )
+        .into_response(),
+    }
+}
+
+/// GET /api/sensitivity/sobol/defaults — Sobol defaults (δ catalog + N defaults & caps).
+async fn handle_sensitivity_sobol_defaults(State(_state): State<AppState>) -> impl IntoResponse {
+    ok_json(api::sensitivity_sobol_defaults_payload())
 }
 
 /// POST /api/optimize — long-running synchronous optimization; runs on blocking pool.
