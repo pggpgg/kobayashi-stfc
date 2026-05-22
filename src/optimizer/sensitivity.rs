@@ -68,7 +68,7 @@ impl OutcomeMetric {
     /// "better for the attacker" — for [`Self::RoundsToKill`] we negate, and for
     /// [`Self::DefenderHullRemaining`] we use `1 - frac` so a larger value means more damage
     /// dealt.
-    fn extract(
+    pub(crate) fn extract(
         self,
         result: &CombatSimResult,
         attacker_max_hull: f64,
@@ -277,6 +277,17 @@ fn run_one_sim(
     stat: StatKey,
     delta: f64,
 ) -> CombatSimResult {
+    run_one_sim_with_perturbations(shared, input, iteration_seed, &[(stat, delta)])
+}
+
+/// Like [`run_one_sim`] but accepts a slice of `(stat, delta)` pairs that are applied in order
+/// (cumulative perturbation, used by Morris trajectories). Empty slice = baseline.
+pub(crate) fn run_one_sim_with_perturbations(
+    shared: &SharedScenarioData,
+    input: &CombatSimulationInput,
+    iteration_seed: u64,
+    perturbations: &[(StatKey, f64)],
+) -> CombatSimResult {
     let mut attacker = input.attacker.clone();
     let mut defender = input.defender.clone();
     let mut config = SimulationConfig {
@@ -302,7 +313,9 @@ fn run_one_sim(
         crit_damage_reduction_perturb: 0.0,
     };
 
-    apply_perturbation(&mut attacker, &mut defender, &mut config, stat, delta);
+    for (stat, delta) in perturbations {
+        apply_perturbation(&mut attacker, &mut defender, &mut config, *stat, *delta);
+    }
 
     let defender_faction = shared
         .hostile_rec

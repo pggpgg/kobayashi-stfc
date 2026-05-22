@@ -31,6 +31,7 @@ enum Command {
     GenerateLcars,
     MitigationSensitivity,
     Sensitivity,
+    MorrisSensitivity,
     Battlelogs,
 }
 
@@ -70,6 +71,7 @@ fn parse_command() -> Option<Command> {
         Some("generate-lcars") => Some(Command::GenerateLcars),
         Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
         Some("sensitivity") => Some(Command::Sensitivity),
+        Some("morris-sensitivity") => Some(Command::MorrisSensitivity),
         Some("battlelogs") => Some(Command::Battlelogs),
         _ => None,
     }
@@ -821,9 +823,98 @@ fn sensitivity_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+fn morris_sensitivity_command(args: &[String]) -> Result<(), String> {
+    use kobayashi::data::data_registry::DataRegistry;
+    use kobayashi::optimizer::sensitivity::OutcomeMetric;
+    use kobayashi::optimizer::sensitivity_morris::{run_morris, MorrisRequest};
+
+    let ship = parse_named_string_arg_main(args, "--ship")
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "--ship <id> required".to_string())?;
+    let hostile = parse_named_string_arg_main(args, "--hostile")
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "--hostile <id> required".to_string())?;
+    let captain = parse_named_string_arg_main(args, "--captain");
+    let bridge = parse_csv_string_arg_main(args, "--bridge");
+    let below_decks = parse_csv_string_arg_main(args, "--below-decks");
+    let ship_tier =
+        parse_named_string_arg_main(args, "--ship-tier").and_then(|s| s.parse::<u32>().ok());
+    let ship_level =
+        parse_named_string_arg_main(args, "--ship-level").and_then(|s| s.parse::<u32>().ok());
+    let num_sims = parse_named_string_arg_main(args, "--sims").and_then(|s| s.parse::<u32>().ok());
+    let r_traj = parse_named_string_arg_main(args, "--r").and_then(|s| s.parse::<u32>().ok());
+    let seed = parse_named_string_arg_main(args, "--seed")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+    let metric = match parse_named_string_arg_main(args, "--metric").as_deref() {
+        Some("win") | Some("win_rate") => OutcomeMetric::WinRate,
+        Some("rounds") | Some("rounds_to_kill") => OutcomeMetric::RoundsToKill,
+        Some("defender_hull") | Some("defender_hull_remaining") => {
+            OutcomeMetric::DefenderHullRemaining
+        }
+        _ => OutcomeMetric::HullRemaining,
+    };
+    let profile_id = parse_profile_arg(args);
+
+    let request = MorrisRequest {
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        captain,
+        bridge,
+        below_decks,
+        support_buffs: None,
+        profile_id,
+        num_sims,
+        r_trajectories: r_traj,
+        seed: Some(seed),
+        rounds: None,
+        metric: Some(metric),
+        deltas: None,
+    };
+
+    let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
+    let response = run_morris(&registry, &request).map_err(|e| format!("run: {e}"))?;
+
+    let mut rows = response.rows.clone();
+    rows.sort_by(|a, b| {
+        b.mu_star
+            .partial_cmp(&a.mu_star)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    println!(
+        "# morris-sensitivity metric={} r={} sims_per_point={} k={} base_seed={} total_sims={}",
+        response.metric,
+        response.r_trajectories,
+        response.num_sims_per_point,
+        response.k_stats,
+        response.base_seed,
+        response.total_sims
+    );
+    println!(
+        "stat\tdelta_applied\tmu_star\tmu\tsigma\tn_samples\tmu_star_ci95_low\tmu_star_ci95_high"
+    );
+    for row in rows {
+        println!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            row.stat,
+            row.delta_applied,
+            row.mu_star,
+            row.mu,
+            row.sigma,
+            row.n_samples,
+            row.mu_star_ci95_low,
+            row.mu_star_ci95_high
+        );
+    }
+    Ok(())
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|battlelogs> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|morris-sensitivity|battlelogs> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
@@ -832,6 +923,7 @@ import: kobayashi import <path> [--profile <id>]\n\
 validate-log: kobayashi validate-log <path.json>\n\
 mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]\n\
 sensitivity: kobayashi sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--sims <n>] [--seed <n>] [--profile <id>]\n\
+morris-sensitivity: kobayashi morris-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--sims <n>] [--r <trajectories>] [--seed <n>] [--profile <id>]\n\
 battlelogs: kobayashi battlelogs [--profile <id>] [--sample]"
     );
 }
@@ -894,6 +986,13 @@ fn main() {
         Some(Command::Sensitivity) => {
             if let Err(err) = sensitivity_command(&command_args) {
                 eprintln!("sensitivity error: {err}");
+                print_usage();
+                exit_code = 2;
+            }
+        }
+        Some(Command::MorrisSensitivity) => {
+            if let Err(err) = morris_sensitivity_command(&command_args) {
+                eprintln!("morris-sensitivity error: {err}");
                 print_usage();
                 exit_code = 2;
             }

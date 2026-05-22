@@ -733,7 +733,35 @@ Builds a probabilistic model of which crew configurations are likely to score we
 - `armor`, `shield_deflection`, `dodge`, `damage_reduction` collapse into one `Combatant.mitigation` scalar in `apply_profile_to_attacker`, so the v1 sensitivity catalog exposes a single aggregated `mitigation` row instead of four separate ones.
 - Critical Damage Floor research feeds the same `crit_damage` engine field as headline crit damage; no separate floor clamp is modeled.
 
-**Future work.** Sobol / Morris variance decomposition for first-order, total-order, and pairwise interactions (best **pair** to invest in together). Cost: `r × (k+1)` sims for Morris screening, `N × (2k+2)` sims for Sobol with `N ≥ 1024`. Build on top of the v1 OAT runner.
+### 6.9.1 Morris-method screening (random trajectories, μ\* / σ)
+
+**Implemented.** Where v1 OAT perturbs one stat at a time from a fixed baseline, Morris draws `r` random **trajectories** through stat space and reports interaction-aware statistics. Surfaced as `POST /api/sensitivity/morris`, CLI `kobayashi morris-sensitivity`, and a method toggle on the `/sensitivity` SPA page. Engine: [`src/optimizer/sensitivity_morris.rs`](../src/optimizer/sensitivity_morris.rs).
+
+**Trajectory definition.** For each trajectory r ∈ [0, R):
+
+1. Derive a permutation π of the `k` stats from `trajectory_seed = base_seed ⊕ r·golden64` via SplitMix64-driven Fisher-Yates.
+2. Visit `k + 1` points by **cumulatively** applying perturbations in the order π[0], π[1], …, π[k−1]. Point 0 is the baseline; point j is the state with the first `j` perturbations applied (the same `apply_perturbation` hook used by OAT, called repeatedly — additive deltas accumulate, multiplicative deltas compound, clamped stats clamp at each step).
+3. At each point, run `num_sims` paired-CRN sims using seeds `crn_base + i` (same `crn_base` for all k+1 points → strong pairing within the trajectory; different trajectories use disjoint seed ranges so they are independent samples).
+4. The elementary effect for the stat introduced at step j is `EE = (ȳ_j − ȳ_{j−1}) / δ_{π[j−1]}`, where `ȳ_j` is the mean metric value at point j.
+
+Across `r` trajectories each stat collects exactly `r` EE samples.
+
+**Aggregation.** Per stat:
+
+- **μ\*** = `mean(|EE|)` — importance, robust to sign cancellation.
+- **μ** = `mean(EE)` — signed direction (positive ⇒ increasing the stat helps the attacker, under the same sign convention as v1).
+- **σ** = sample std of `EE` (denominator `r − 1`) — interaction signal. High σ relative to μ\* means the stat's effect depends on the values of previously-perturbed stats.
+- A 95% normal CI on μ\* is reported using the std of `|EE|` and `n = r`.
+
+**Compute budget.** `r × (k + 1) × num_sims` engine calls. Defaults `r = 10`, `num_sims = 200`, `k = 15` → ~32k sims, comparable to the v1 OAT default of `(k+1) × 2000`.
+
+**Caveats and limits.**
+
+- Morris is a **screening** method. σ flags stats whose effect depends on other stats but does **not** identify which specific pairs interact; the SPA UI surfaces a heuristic "Interacts?" dot when `σ > 0.5 × μ\*`. Pairwise variance decomposition requires Sobol indices — tracked under Planned in [ROADMAP.md](ROADMAP.md).
+- Same engine limitations as v1 OAT apply (collapsed mitigation components, no critical-damage-floor clamp, universal `crit_damage_reduction` plumbed via `SimulationConfig`).
+- Cumulative perturbation on clamped stats (e.g. `Mitigation` clamps to `[0, 1]`, `CritDamageReduction` clamps to `[−0.95, 0.95]`) is mildly order-dependent if an intermediate step hits the clamp. With default per-stat δs (≤ 0.10 on a [0, 1] scale) this is rare and treated as part of the model's inherent variance — the determinism property is preserved per seed.
+
+**Future work.** Sobol variance decomposition for first-order, total-order, and pairwise interactions (`N × (2k + 2)` sims at `N ≥ 1024`) on top of the same perturbation hook and shared scenario builder.
 
 ---
 

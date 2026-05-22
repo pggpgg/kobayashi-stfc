@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import HostilePicker from "../components/HostilePicker";
+import MorrisResults from "../components/MorrisResults";
 import SensitivityResults from "../components/SensitivityResults";
 import { useProfile } from "../contexts/ProfileContext";
 import {
@@ -10,12 +11,17 @@ import {
   type ShipListItem,
 } from "../lib/api";
 import {
+  fetchMorrisDefaults,
   fetchSensitivityDefaults,
+  type MorrisResponse,
   type OutcomeMetric,
+  runMorris,
   runSensitivity,
   type SensitivityDefaultRow,
   type SensitivityResponse,
 } from "../lib/sensitivityApi";
+
+type AnalysisMethod = "oat" | "morris";
 
 const METRICS: { value: OutcomeMetric; label: string; hint: string }[] = [
   {
@@ -65,6 +71,12 @@ export default function Sensitivity() {
   const [running, setRunning] = useState<boolean>(false);
   const [response, setResponse] = useState<SensitivityResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [method, setMethod] = useState<AnalysisMethod>("oat");
+  const [morrisNumSims, setMorrisNumSims] = useState<number>(200);
+  const [rTrajectories, setRTrajectories] = useState<number>(10);
+  const [morrisResponse, setMorrisResponse] = useState<MorrisResponse | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +105,15 @@ export default function Sensitivity() {
               ? `Failed to load default deltas: ${e.message}`
               : "Failed to load default deltas",
           );
+      });
+    fetchMorrisDefaults()
+      .then((resp) => {
+        if (cancelled) return;
+        setMorrisNumSims(resp.num_sims_default);
+        setRTrajectories(resp.r_trajectories_default);
+      })
+      .catch(() => {
+        // Non-fatal: server defaults will be applied if user submits without changing.
       });
     return () => {
       cancelled = true;
@@ -131,24 +152,38 @@ export default function Sensitivity() {
           deltasMap[row.stat] = row.delta;
         }
       }
-      const result = await runSensitivity(
-        {
-          ship: shipId,
-          hostile: scenarioId,
-          ship_tier: shipTier,
-          ship_level: shipLevel,
-          captain: captain || undefined,
-          bridge: parsedBridge,
-          below_decks: parsedBelowDecks,
-          metric,
-          num_sims: numSims,
-          seed,
-          deltas: deltasMap,
-          profile_id: activeProfileId ?? undefined,
-        },
-        activeProfileId,
-      );
-      setResponse(result);
+      const sharedScenario = {
+        ship: shipId,
+        hostile: scenarioId,
+        ship_tier: shipTier,
+        ship_level: shipLevel,
+        captain: captain || undefined,
+        bridge: parsedBridge,
+        below_decks: parsedBelowDecks,
+        metric,
+        seed,
+        deltas: deltasMap,
+        profile_id: activeProfileId ?? undefined,
+      };
+      if (method === "oat") {
+        const result = await runSensitivity(
+          { ...sharedScenario, num_sims: numSims },
+          activeProfileId,
+        );
+        setResponse(result);
+        setMorrisResponse(null);
+      } else {
+        const result = await runMorris(
+          {
+            ...sharedScenario,
+            num_sims: morrisNumSims,
+            r_trajectories: rTrajectories,
+          },
+          activeProfileId,
+        );
+        setMorrisResponse(result);
+        setResponse(null);
+      }
     } catch (e: unknown) {
       if (e instanceof ApiError) {
         setError(`${e.code}: ${e.message}`);
@@ -274,6 +309,48 @@ export default function Sensitivity() {
 
       <section style={{ marginTop: "1.5rem" }}>
         <h3 style={{ marginBottom: "0.5rem" }}>Run parameters</h3>
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label
+            style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+            htmlFor="sensitivity-method"
+          >
+            Method:&nbsp;
+          </label>
+          {(["oat", "morris"] as const).map((m) => (
+            <label
+              key={m}
+              style={{
+                marginRight: "1rem",
+                fontSize: "0.9rem",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="radio"
+                name="sensitivity-method"
+                value={m}
+                checked={method === m}
+                onChange={() => setMethod(m)}
+                style={{ marginRight: 4 }}
+              />
+              {m === "oat"
+                ? "OAT (per-stat Δ vs baseline)"
+                : "Morris screening (μ*/σ across trajectories)"}
+            </label>
+          ))}
+          <p
+            style={{
+              marginTop: "0.4rem",
+              marginBottom: 0,
+              fontSize: "0.78rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            {method === "oat"
+              ? "Perturb one stat at a time from the same baseline. Tight CI per stat; doesn't capture interactions."
+              : "Walk r random trajectories through stat space. μ* ranks importance; σ flags stats that interact with others."}
+          </p>
+        </div>
         <div
           style={{
             display: "grid",
@@ -299,18 +376,66 @@ export default function Sensitivity() {
               {METRICS.find((m) => m.value === metric)?.hint}
             </span>
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Paired sims per stat
-            </span>
-            <input
-              type="number"
-              min={50}
-              max={50000}
-              value={numSims}
-              onChange={(e) => setNumSims(Number(e.target.value))}
-            />
-          </label>
+          {method === "oat" ? (
+            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                Paired sims per stat
+              </span>
+              <input
+                type="number"
+                min={50}
+                max={50000}
+                value={numSims}
+                onChange={(e) => setNumSims(Number(e.target.value))}
+              />
+            </label>
+          ) : (
+            <>
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+                >
+                  r trajectories
+                </span>
+                <input
+                  type="number"
+                  min={2}
+                  max={200}
+                  value={rTrajectories}
+                  onChange={(e) => setRTrajectories(Number(e.target.value))}
+                />
+                <span
+                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
+                >
+                  10 is a conservative default; 20–50 tightens μ* / σ at
+                  proportional cost.
+                </span>
+              </label>
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+                >
+                  Sims per trajectory point
+                </span>
+                <input
+                  type="number"
+                  min={2}
+                  max={10000}
+                  value={morrisNumSims}
+                  onChange={(e) => setMorrisNumSims(Number(e.target.value))}
+                />
+                <span
+                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
+                >
+                  Total sims ≈ r × (k+1) × this.
+                </span>
+              </label>
+            </>
+          )}
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Base seed
@@ -453,6 +578,20 @@ export default function Sensitivity() {
             baselineMean={response.baseline_mean}
             metric={response.metric}
             numSims={response.num_sims}
+          />
+        </section>
+      )}
+
+      {morrisResponse && (
+        <section style={{ marginTop: "1.5rem" }}>
+          <h3>Results (Morris screening)</h3>
+          <MorrisResults
+            rows={morrisResponse.rows}
+            metric={morrisResponse.metric}
+            rTrajectories={morrisResponse.r_trajectories}
+            numSimsPerPoint={morrisResponse.num_sims_per_point}
+            totalSims={morrisResponse.total_sims}
+            baseSeed={morrisResponse.base_seed}
           />
         </section>
       )}
