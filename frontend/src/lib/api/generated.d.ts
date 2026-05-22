@@ -1533,6 +1533,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sensitivity/morris": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Morris-method screening sensitivity (random trajectories, μ\*\/σ)
+         * @description Walks `r` random trajectories through stat space (cumulative perturbations applied in
+         *     random order). Each trajectory yields one elementary effect (EE) per stat via paired
+         *     CRN Monte Carlo at each `k+1` step. Aggregates across trajectories into per-stat
+         *     **μ\*** (importance, mean of `|EE|`), **μ** (signed direction), and **σ** (interaction
+         *     signal — high σ relative to μ\* means the stat's effect depends on other stats).
+         *     Screening method: σ flags interactions but does not identify specific pairs.
+         *     Synchronous — gated by the CPU admission semaphore. Compute is `r × (k+1) × num_sims`.
+         */
+        post: {
+            parameters: {
+                query?: {
+                    /** @description Profile id (alternative to X-Profile-Id) */
+                    profile?: components["parameters"]["QueryProfile"];
+                };
+                header?: {
+                    "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MorrisSensitivityRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MorrisSensitivityResponse"];
+                    };
+                };
+                /** @description Validation or parse error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/morris/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Morris defaults (δ catalog + r/sims defaults & caps) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MorrisSensitivityDefaultsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/optimize": {
         parameters: {
             query?: never;
@@ -2005,6 +2108,71 @@ export interface components {
                 delta: number;
                 multiplicative: boolean;
             }[];
+        };
+        MorrisSensitivityRequest: {
+            ship: string;
+            hostile: string;
+            ship_tier?: number;
+            ship_level?: number;
+            captain?: string;
+            bridge?: string[];
+            below_decks?: string[];
+            support_buffs?: string[];
+            profile_id?: string;
+            /** @description Paired sims per trajectory point. Clamped server-side. */
+            num_sims?: number;
+            /** @description Number of Morris trajectories. Clamped server-side. */
+            r_trajectories?: number;
+            /** Format: int64 */
+            seed?: number;
+            rounds?: number;
+            /** @enum {string} */
+            metric?: "hull_remaining" | "win_rate" | "rounds_to_kill" | "defender_hull_remaining";
+            /**
+             * @description Per-stat δ overrides. Keys are stat names (snake_case). A value of `0.0`
+             *     drops the stat from the trajectory entirely. Missing keys use defaults.
+             */
+            deltas?: {
+                [key: string]: number;
+            };
+        };
+        MorrisSensitivityRow: {
+            stat: string;
+            delta_applied: number;
+            /** @description Mean of `|EE|` across trajectories. Importance. */
+            mu_star: number;
+            /** @description Mean signed EE. Direction. */
+            mu: number;
+            /**
+             * @description Sample std of EE across trajectories. High σ relative to μ\* indicates the
+             *     stat's effect depends on other previously-perturbed stats (interaction).
+             */
+            sigma: number;
+            n_samples: number;
+            mu_star_ci95_low: number;
+            mu_star_ci95_high: number;
+        };
+        MorrisSensitivityResponse: {
+            metric: string;
+            num_sims_per_point: number;
+            r_trajectories: number;
+            k_stats: number;
+            /** Format: int64 */
+            base_seed: number;
+            /** Format: int64 */
+            total_sims: number;
+            rows: components["schemas"]["MorrisSensitivityRow"][];
+        };
+        MorrisSensitivityDefaultsResponse: {
+            deltas: {
+                stat: string;
+                delta: number;
+                multiplicative: boolean;
+            }[];
+            r_trajectories_default: number;
+            r_trajectories_max: number;
+            num_sims_default: number;
+            num_sims_max: number;
         };
         CompareCrewsRequest: {
             ship: string;

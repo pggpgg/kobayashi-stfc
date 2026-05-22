@@ -732,6 +732,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/SensitivityDefaultsResponse"
 
+  /api/sensitivity/morris:
+    post:
+      tags: [sensitivity]
+      summary: Morris-method screening sensitivity (random trajectories, μ\*/σ)
+      description: |
+        Walks `r` random trajectories through stat space (cumulative perturbations applied in
+        random order). Each trajectory yields one elementary effect (EE) per stat via paired
+        CRN Monte Carlo at each `k+1` step. Aggregates across trajectories into per-stat
+        **μ\*** (importance, mean of `|EE|`), **μ** (signed direction), and **σ** (interaction
+        signal — high σ relative to μ\* means the stat's effect depends on other stats).
+        Screening method: σ flags interactions but does not identify specific pairs.
+        Synchronous — gated by the CPU admission semaphore. Compute is `r × (k+1) × num_sims`.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MorrisSensitivityRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MorrisSensitivityResponse"
+        "400":
+          description: Validation or parse error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/sensitivity/morris/defaults:
+    get:
+      tags: [sensitivity]
+      summary: Morris defaults (δ catalog + r/sims defaults & caps)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MorrisSensitivityDefaultsResponse"
+
   /api/optimize:
     post:
       tags: [optimize]
@@ -1486,6 +1535,157 @@ components:
                 type: number
               multiplicative:
                 type: boolean
+
+    MorrisSensitivityRequest:
+      type: object
+      required: [ship, hostile]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        captain:
+          type: string
+        bridge:
+          type: array
+          items: { type: string }
+        below_decks:
+          type: array
+          items: { type: string }
+        support_buffs:
+          type: array
+          items: { type: string }
+        profile_id:
+          type: string
+        num_sims:
+          type: integer
+          minimum: 2
+          maximum: 10000
+          description: Paired sims per trajectory point. Clamped server-side.
+        r_trajectories:
+          type: integer
+          minimum: 2
+          maximum: 200
+          description: Number of Morris trajectories. Clamped server-side.
+        seed:
+          type: integer
+          format: int64
+        rounds:
+          type: integer
+        metric:
+          type: string
+          enum: [hull_remaining, win_rate, rounds_to_kill, defender_hull_remaining]
+        deltas:
+          type: object
+          additionalProperties:
+            type: number
+          description: |
+            Per-stat δ overrides. Keys are stat names (snake_case). A value of `0.0`
+            drops the stat from the trajectory entirely. Missing keys use defaults.
+
+    MorrisSensitivityRow:
+      type: object
+      required:
+        [
+          stat,
+          delta_applied,
+          mu_star,
+          mu,
+          sigma,
+          n_samples,
+          mu_star_ci95_low,
+          mu_star_ci95_high,
+        ]
+      properties:
+        stat:
+          type: string
+        delta_applied:
+          type: number
+        mu_star:
+          type: number
+          description: Mean of `|EE|` across trajectories. Importance.
+        mu:
+          type: number
+          description: Mean signed EE. Direction.
+        sigma:
+          type: number
+          description: |
+            Sample std of EE across trajectories. High σ relative to μ\* indicates the
+            stat's effect depends on other previously-perturbed stats (interaction).
+        n_samples:
+          type: integer
+        mu_star_ci95_low:
+          type: number
+        mu_star_ci95_high:
+          type: number
+
+    MorrisSensitivityResponse:
+      type: object
+      required:
+        [
+          metric,
+          num_sims_per_point,
+          r_trajectories,
+          k_stats,
+          base_seed,
+          total_sims,
+          rows,
+        ]
+      properties:
+        metric:
+          type: string
+        num_sims_per_point:
+          type: integer
+        r_trajectories:
+          type: integer
+        k_stats:
+          type: integer
+        base_seed:
+          type: integer
+          format: int64
+        total_sims:
+          type: integer
+          format: int64
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/MorrisSensitivityRow"
+
+    MorrisSensitivityDefaultsResponse:
+      type: object
+      required:
+        [
+          deltas,
+          r_trajectories_default,
+          r_trajectories_max,
+          num_sims_default,
+          num_sims_max,
+        ]
+      properties:
+        deltas:
+          type: array
+          items:
+            type: object
+            required: [stat, delta, multiplicative]
+            properties:
+              stat:
+                type: string
+              delta:
+                type: number
+              multiplicative:
+                type: boolean
+        r_trajectories_default:
+          type: integer
+        r_trajectories_max:
+          type: integer
+        num_sims_default:
+          type: integer
+        num_sims_max:
+          type: integer
 
     CompareCrewsRequest:
       type: object

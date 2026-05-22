@@ -1111,6 +1111,82 @@ pub fn sensitivity_defaults_payload() -> String {
     serde_json::to_string(&Resp { deltas }).expect("serialize sensitivity defaults")
 }
 
+/// POST `/api/sensitivity/morris` — Morris-method screening (random trajectories, μ\*/σ).
+/// Synchronous; gated by the CPU admission semaphore.
+pub fn sensitivity_morris_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, SensitivityError> {
+    use crate::optimizer::sensitivity_morris::{run_morris, MorrisRequest};
+
+    let mut req: MorrisRequest = serde_json::from_str(body).map_err(SensitivityError::Parse)?;
+    if req.ship.trim().is_empty() {
+        return Err(SensitivityError::Validation(
+            "ship must not be empty".into(),
+        ));
+    }
+    if req.hostile.trim().is_empty() {
+        return Err(SensitivityError::Validation(
+            "hostile must not be empty".into(),
+        ));
+    }
+    if req.profile_id.is_none() {
+        if let Some(pid) = profile_id {
+            if !pid.is_empty() {
+                req.profile_id = Some(pid.to_string());
+            }
+        }
+    }
+
+    let response = run_morris(registry, &req).map_err(SensitivityError::Run)?;
+    serde_json::to_string(&response)
+        .map_err(|e| SensitivityError::Validation(format!("serialize response: {e}")))
+}
+
+/// GET `/api/sensitivity/morris/defaults` — defaults for the Morris UI: per-stat δ catalog
+/// plus default trajectory count and sims-per-point.
+pub fn sensitivity_morris_defaults_payload() -> String {
+    use crate::optimizer::sensitivity_morris::{
+        DEFAULT_NUM_SIMS_PER_POINT, DEFAULT_R_TRAJECTORIES, MAX_NUM_SIMS_PER_POINT,
+        MAX_R_TRAJECTORIES,
+    };
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct Row {
+        stat: &'static str,
+        delta: f64,
+        multiplicative: bool,
+    }
+
+    #[derive(Serialize)]
+    struct Resp {
+        deltas: Vec<Row>,
+        r_trajectories_default: u32,
+        r_trajectories_max: u32,
+        num_sims_default: u32,
+        num_sims_max: u32,
+    }
+
+    let deltas = crate::optimizer::sensitivity::default_deltas()
+        .into_iter()
+        .map(|(s, d)| Row {
+            stat: s.as_str(),
+            delta: d,
+            multiplicative: s.is_multiplicative(),
+        })
+        .collect();
+    serde_json::to_string(&Resp {
+        deltas,
+        r_trajectories_default: DEFAULT_R_TRAJECTORIES,
+        r_trajectories_max: MAX_R_TRAJECTORIES,
+        num_sims_default: DEFAULT_NUM_SIMS_PER_POINT,
+        num_sims_max: MAX_NUM_SIMS_PER_POINT,
+    })
+    .expect("serialize sensitivity morris defaults")
+}
+
 const DEFAULT_REPLAY_MAX_TRACE_EVENTS: u32 = 500;
 const MAX_REPLAY_MAX_TRACE_EVENTS_CAP: u32 = 2000;
 
