@@ -1636,6 +1636,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sensitivity/sobol": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sobol variance-based sensitivity (Saltelli design, Jansen estimators)
+         * @description Decomposes the variance of the outcome metric into per-stat contributions.
+         *     Reports **S_i** (first-order: main effect alone), **S_T_i** (total-order:
+         *     main + all interactions involving i), and **interaction strength** (S_T_i − S_i).
+         *     v1 ships first-order and total-order indices; per-pair S_ij is planned (Sobol
+         *     pairwise needs `N × k(k−1)/2` more evaluations).
+         *     Synchronous — gated by the CPU admission semaphore.
+         *     Compute is `N × (k + 2)` engine calls (`N=512`, `k=18` → ~10k sims by default).
+         */
+        post: {
+            parameters: {
+                query?: {
+                    /** @description Profile id (alternative to X-Profile-Id) */
+                    profile?: components["parameters"]["QueryProfile"];
+                };
+                header?: {
+                    "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SobolSensitivityRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SobolSensitivityResponse"];
+                    };
+                };
+                /** @description Validation or parse error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/sobol/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sobol defaults (δ catalog + N defaults & caps) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SobolSensitivityDefaultsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/optimize": {
         parameters: {
             query?: never;
@@ -2173,6 +2276,70 @@ export interface components {
             r_trajectories_max: number;
             num_sims_default: number;
             num_sims_max: number;
+        };
+        SobolSensitivityRequest: {
+            ship: string;
+            hostile: string;
+            ship_tier?: number;
+            ship_level?: number;
+            captain?: string;
+            bridge?: string[];
+            below_decks?: string[];
+            support_buffs?: string[];
+            profile_id?: string;
+            /** @description Samples per Saltelli matrix. Clamped server-side. */
+            n_samples?: number;
+            /** Format: int64 */
+            seed?: number;
+            rounds?: number;
+            /** @enum {string} */
+            metric?: "hull_remaining" | "win_rate" | "rounds_to_kill" | "defender_hull_remaining";
+            /**
+             * @description Per-stat **base δ** overrides. Each u_i ∈ [0, 1] from the Saltelli matrix
+             *     is mapped to a perturbation δ_i ∈ [0, 2 · base_δ_i]. A `0.0` override
+             *     drops the stat from the analysis entirely.
+             */
+            deltas?: {
+                [key: string]: number;
+            };
+        };
+        SobolSensitivityRow: {
+            stat: string;
+            base_delta: number;
+            /** @description First-order Sobol index (main effect alone). */
+            s1: number;
+            /** @description Total-order Sobol index (main + all interactions involving this stat). */
+            st: number;
+            /**
+             * @description `S_T_i − S_i` — fraction of variance from interactions between this stat
+             *     and any other. Per-pair S_ij is not estimated in v1.
+             */
+            interaction: number;
+            s1_ci95_low: number;
+            s1_ci95_high: number;
+            st_ci95_low: number;
+            st_ci95_high: number;
+        };
+        SobolSensitivityResponse: {
+            metric: string;
+            n_samples: number;
+            k_stats: number;
+            /** Format: int64 */
+            base_seed: number;
+            /** Format: int64 */
+            total_sims: number;
+            /** @description Estimated Var(Y) for the run (sanity check). */
+            output_variance: number;
+            rows: components["schemas"]["SobolSensitivityRow"][];
+        };
+        SobolSensitivityDefaultsResponse: {
+            deltas: {
+                stat: string;
+                delta: number;
+                multiplicative: boolean;
+            }[];
+            n_samples_default: number;
+            n_samples_max: number;
         };
         CompareCrewsRequest: {
             ship: string;

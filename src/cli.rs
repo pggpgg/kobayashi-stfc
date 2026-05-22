@@ -34,6 +34,7 @@ pub enum Command {
     MitigationSensitivity,
     Sensitivity,
     MorrisSensitivity,
+    SobolSensitivity,
 }
 
 pub fn parse_command(args: &[String]) -> Option<Command> {
@@ -47,6 +48,7 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
         Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
         Some("sensitivity") => Some(Command::Sensitivity),
         Some("morris-sensitivity") => Some(Command::MorrisSensitivity),
+        Some("sobol-sensitivity") => Some(Command::SobolSensitivity),
         _ => None,
     }
 }
@@ -68,9 +70,10 @@ pub fn run_with_args(args: &[String]) -> i32 {
         Some(Command::MitigationSensitivity) => handle_mitigation_sensitivity(args),
         Some(Command::Sensitivity) => handle_sensitivity(args),
         Some(Command::MorrisSensitivity) => handle_morris_sensitivity(args),
+        Some(Command::SobolSensitivity) => handle_sobol_sensitivity(args),
         None => {
             eprintln!(
-                "usage: kobayashi <serve|simulate|optimize|import|validate|resolve|mitigation-sensitivity|sensitivity|morris-sensitivity>"
+                "usage: kobayashi <serve|simulate|optimize|import|validate|resolve|mitigation-sensitivity|sensitivity|morris-sensitivity|sobol-sensitivity>"
             );
             2
         }
@@ -582,6 +585,114 @@ fn handle_morris_sensitivity(args: &[String]) -> i32 {
             row.n_samples,
             row.mu_star_ci95_low,
             row.mu_star_ci95_high
+        );
+    }
+    0
+}
+
+fn handle_sobol_sensitivity(args: &[String]) -> i32 {
+    use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::sensitivity::OutcomeMetric;
+    use crate::optimizer::sensitivity_sobol::{run_sobol, SobolRequest};
+
+    let ship = match parse_named_string_arg(args, "--ship") {
+        Some(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!(
+                "usage: kobayashi sobol-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> \
+                 [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] \
+                 [--metric hull|win|rounds|defender_hull] [--n <samples>] [--seed <n>] [--profile <id>]"
+            );
+            return 2;
+        }
+    };
+    let hostile = match parse_named_string_arg(args, "--hostile") {
+        Some(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!("--hostile <id> required");
+            return 2;
+        }
+    };
+    let captain = parse_named_string_arg(args, "--captain");
+    let bridge = parse_csv_string_arg(args, "--bridge");
+    let below_decks = parse_csv_string_arg(args, "--below-decks");
+    let ship_tier = parse_named_string_arg(args, "--ship-tier").and_then(|s| s.parse::<u32>().ok());
+    let ship_level =
+        parse_named_string_arg(args, "--ship-level").and_then(|s| s.parse::<u32>().ok());
+    let n_samples = parse_named_string_arg(args, "--n").and_then(|s| s.parse::<u32>().ok());
+    let seed = parse_named_string_arg(args, "--seed")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+    let metric = match parse_named_string_arg(args, "--metric").as_deref() {
+        Some("win") | Some("win_rate") => OutcomeMetric::WinRate,
+        Some("rounds") | Some("rounds_to_kill") => OutcomeMetric::RoundsToKill,
+        Some("defender_hull") | Some("defender_hull_remaining") => {
+            OutcomeMetric::DefenderHullRemaining
+        }
+        _ => OutcomeMetric::HullRemaining,
+    };
+    let profile_id = parse_profile_arg(args);
+
+    let request = SobolRequest {
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        captain,
+        bridge,
+        below_decks,
+        support_buffs: None,
+        profile_id,
+        n_samples,
+        seed: Some(seed),
+        rounds: None,
+        metric: Some(metric),
+        deltas: None,
+    };
+
+    let registry = match DataRegistry::load() {
+        Ok(r) => r,
+        Err(err) => {
+            eprintln!("DataRegistry::load failed: {err}");
+            return 1;
+        }
+    };
+
+    let response = match run_sobol(&registry, &request) {
+        Ok(r) => r,
+        Err(err) => {
+            eprintln!("run_sobol failed: {err}");
+            return 1;
+        }
+    };
+
+    let mut rows = response.rows.clone();
+    rows.sort_by(|a, b| b.st.partial_cmp(&a.st).unwrap_or(std::cmp::Ordering::Equal));
+
+    println!(
+        "# sobol-sensitivity metric={} n_samples={} k={} base_seed={} total_sims={} output_variance={}",
+        response.metric,
+        response.n_samples,
+        response.k_stats,
+        response.base_seed,
+        response.total_sims,
+        response.output_variance
+    );
+    println!(
+        "stat\tbase_delta\ts1\ts1_ci95_low\ts1_ci95_high\tst\tst_ci95_low\tst_ci95_high\tinteraction"
+    );
+    for row in rows {
+        println!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            row.stat,
+            row.base_delta,
+            row.s1,
+            row.s1_ci95_low,
+            row.s1_ci95_high,
+            row.st,
+            row.st_ci95_low,
+            row.st_ci95_high,
+            row.interaction
         );
     }
     0

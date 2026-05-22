@@ -12,6 +12,7 @@ pub mod officer_learning;
 pub mod ranking;
 pub mod sensitivity;
 pub mod sensitivity_morris;
+pub mod sensitivity_sobol;
 pub mod tiered;
 
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
