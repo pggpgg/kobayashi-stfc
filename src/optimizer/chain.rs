@@ -98,6 +98,7 @@ pub(crate) fn run_chain_trial(
             incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
             incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
             emit_state_snapshots: false,
+            crit_damage_reduction_perturb: 0.0,
         };
 
         let result = simulate_combat_with_defender_faction_and_defender_crew(

@@ -71,6 +71,7 @@ fn weapon_intrinsic_proc_triggers_once_per_outbound_hit() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
+            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );

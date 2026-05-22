@@ -30,6 +30,7 @@ enum Command {
     ValidateLog,
     GenerateLcars,
     MitigationSensitivity,
+    Sensitivity,
     Battlelogs,
 }
 
@@ -68,6 +69,7 @@ fn parse_command() -> Option<Command> {
         Some("validate-log") => Some(Command::ValidateLog),
         Some("generate-lcars") => Some(Command::GenerateLcars),
         Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
+        Some("sensitivity") => Some(Command::Sensitivity),
         Some("battlelogs") => Some(Command::Battlelogs),
         _ => None,
     }
@@ -380,6 +382,7 @@ fn simulate_command(args: &[String]) -> Result<(), String> {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
+        crit_damage_reduction_perturb: 0.0,
     };
 
     let defender_faction = defender_faction_for_cli_simulate(
@@ -708,9 +711,119 @@ fn battlelogs_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+fn parse_named_string_arg_main(args: &[String], name: &str) -> Option<String> {
+    let mut idx = 0;
+    while idx < args.len() {
+        if args[idx] == name {
+            return args.get(idx + 1).cloned();
+        }
+        idx += 1;
+    }
+    None
+}
+
+fn parse_csv_string_arg_main(args: &[String], name: &str) -> Vec<String> {
+    parse_named_string_arg_main(args, name)
+        .map(|s| {
+            s.split(',')
+                .map(|p| p.trim().to_string())
+                .filter(|p| !p.is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn sensitivity_command(args: &[String]) -> Result<(), String> {
+    use kobayashi::data::data_registry::DataRegistry;
+    use kobayashi::optimizer::sensitivity::{run_sensitivity, OutcomeMetric, SensitivityRequest};
+
+    let ship = parse_named_string_arg_main(args, "--ship")
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "--ship <id> required".to_string())?;
+    let hostile = parse_named_string_arg_main(args, "--hostile")
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "--hostile <id> required".to_string())?;
+    let captain = parse_named_string_arg_main(args, "--captain");
+    let bridge = parse_csv_string_arg_main(args, "--bridge");
+    let below_decks = parse_csv_string_arg_main(args, "--below-decks");
+    let ship_tier =
+        parse_named_string_arg_main(args, "--ship-tier").and_then(|s| s.parse::<u32>().ok());
+    let ship_level =
+        parse_named_string_arg_main(args, "--ship-level").and_then(|s| s.parse::<u32>().ok());
+    let num_sims = parse_named_string_arg_main(args, "--sims")
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(2000);
+    let seed = parse_named_string_arg_main(args, "--seed")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+    let metric = match parse_named_string_arg_main(args, "--metric").as_deref() {
+        Some("win") | Some("win_rate") => OutcomeMetric::WinRate,
+        Some("rounds") | Some("rounds_to_kill") => OutcomeMetric::RoundsToKill,
+        Some("defender_hull") | Some("defender_hull_remaining") => {
+            OutcomeMetric::DefenderHullRemaining
+        }
+        _ => OutcomeMetric::HullRemaining,
+    };
+    let profile_id = parse_profile_arg(args);
+
+    let request = SensitivityRequest {
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        captain,
+        bridge,
+        below_decks,
+        support_buffs: None,
+        profile_id,
+        num_sims: Some(num_sims),
+        seed: Some(seed),
+        rounds: None,
+        metric: Some(metric),
+        deltas: None,
+    };
+
+    let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
+    let response = run_sensitivity(&registry, &request).map_err(|e| format!("run: {e}"))?;
+
+    let mut rows = response.rows.clone();
+    rows.sort_by(|a, b| {
+        b.mean_diff_relative
+            .unwrap_or(0.0)
+            .abs()
+            .partial_cmp(&a.mean_diff_relative.unwrap_or(0.0).abs())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    println!(
+        "# sensitivity metric={} baseline_mean={} num_sims={} base_seed={}",
+        response.metric, response.baseline_mean, response.num_sims, response.base_seed
+    );
+    println!(
+        "stat\tdelta_applied\tmean_diff\tmean_diff_relative\tci95_low\tci95_high\tsignificant"
+    );
+    for row in rows {
+        let rel = match row.mean_diff_relative {
+            Some(v) => format!("{v}"),
+            None => String::from("NaN"),
+        };
+        println!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            row.stat,
+            row.delta_applied,
+            row.mean_diff,
+            rel,
+            row.ci95_low,
+            row.ci95_high,
+            row.significant
+        );
+    }
+    Ok(())
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|battlelogs> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|battlelogs> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
@@ -718,6 +831,7 @@ optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
 import: kobayashi import <path> [--profile <id>]\n\
 validate-log: kobayashi validate-log <path.json>\n\
 mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--delta-pct <f64>]\n\
+sensitivity: kobayashi sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--sims <n>] [--seed <n>] [--profile <id>]\n\
 battlelogs: kobayashi battlelogs [--profile <id>] [--sample]"
     );
 }
@@ -773,6 +887,13 @@ fn main() {
         Some(Command::MitigationSensitivity) => {
             if let Err(err) = mitigation_sensitivity_command(&command_args) {
                 eprintln!("mitigation-sensitivity error: {err}");
+                print_usage();
+                exit_code = 2;
+            }
+        }
+        Some(Command::Sensitivity) => {
+            if let Err(err) = sensitivity_command(&command_args) {
+                eprintln!("sensitivity error: {err}");
                 print_usage();
                 exit_code = 2;
             }

@@ -6,6 +6,7 @@ import ProfileSwitcher from "./ProfileSwitcher";
 const NAV_ITEMS = [
   { path: "/", label: "Workspace" },
   { path: "/pvp", label: "PvP" },
+  { path: "/sensitivity", label: "Sensitivity" },
   { path: "/results", label: "Results Library" },
   { path: "/roster", label: "Roster & Profile" },
   { path: "/data", label: "Data & Mechanics" },

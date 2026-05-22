@@ -32,6 +32,7 @@ pub enum Command {
     Validate,
     Resolve,
     MitigationSensitivity,
+    Sensitivity,
 }
 
 pub fn parse_command(args: &[String]) -> Option<Command> {
@@ -43,6 +44,7 @@ pub fn parse_command(args: &[String]) -> Option<Command> {
         Some("validate") => Some(Command::Validate),
         Some("resolve") => Some(Command::Resolve),
         Some("mitigation-sensitivity") => Some(Command::MitigationSensitivity),
+        Some("sensitivity") => Some(Command::Sensitivity),
         _ => None,
     }
 }
@@ -62,9 +64,10 @@ pub fn run_with_args(args: &[String]) -> i32 {
         Some(Command::Validate) => handle_validate(args),
         Some(Command::Resolve) => handle_resolve(args),
         Some(Command::MitigationSensitivity) => handle_mitigation_sensitivity(args),
+        Some(Command::Sensitivity) => handle_sensitivity(args),
         None => {
             eprintln!(
-                "usage: kobayashi <serve|simulate|optimize|import|validate|resolve|mitigation-sensitivity>"
+                "usage: kobayashi <serve|simulate|optimize|import|validate|resolve|mitigation-sensitivity|sensitivity>"
             );
             2
         }
@@ -279,6 +282,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
+            crit_damage_reduction_perturb: 0.0,
         },
         &CrewConfiguration::default(),
         defender_faction,
@@ -323,6 +327,140 @@ fn handle_optimize(args: &[String]) -> i32 {
             1
         }
     }
+}
+
+fn parse_named_string_arg(args: &[String], name: &str) -> Option<String> {
+    let mut idx = 0;
+    while idx < args.len() {
+        if args[idx] == name {
+            return args.get(idx + 1).cloned();
+        }
+        idx += 1;
+    }
+    None
+}
+
+fn parse_csv_string_arg(args: &[String], name: &str) -> Vec<String> {
+    parse_named_string_arg(args, name)
+        .map(|s| {
+            s.split(',')
+                .map(|p| p.trim().to_string())
+                .filter(|p| !p.is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn handle_sensitivity(args: &[String]) -> i32 {
+    use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::sensitivity::{run_sensitivity, OutcomeMetric, SensitivityRequest};
+
+    let ship = match parse_named_string_arg(args, "--ship") {
+        Some(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!(
+                "usage: kobayashi sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> \
+                 [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] \
+                 [--metric hull|win|rounds|defender_hull] [--sims <n>] [--seed <n>] [--profile <id>]"
+            );
+            return 2;
+        }
+    };
+    let hostile = match parse_named_string_arg(args, "--hostile") {
+        Some(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!("--hostile <id> required");
+            return 2;
+        }
+    };
+    let captain = parse_named_string_arg(args, "--captain");
+    let bridge = parse_csv_string_arg(args, "--bridge");
+    let below_decks = parse_csv_string_arg(args, "--below-decks");
+    let ship_tier = parse_named_string_arg(args, "--ship-tier").and_then(|s| s.parse::<u32>().ok());
+    let ship_level =
+        parse_named_string_arg(args, "--ship-level").and_then(|s| s.parse::<u32>().ok());
+    let num_sims = parse_named_string_arg(args, "--sims")
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(2000);
+    let seed = parse_named_string_arg(args, "--seed")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+    let metric = match parse_named_string_arg(args, "--metric").as_deref() {
+        Some("win") | Some("win_rate") => OutcomeMetric::WinRate,
+        Some("rounds") | Some("rounds_to_kill") => OutcomeMetric::RoundsToKill,
+        Some("defender_hull") | Some("defender_hull_remaining") => {
+            OutcomeMetric::DefenderHullRemaining
+        }
+        _ => OutcomeMetric::HullRemaining,
+    };
+    let profile_id = parse_profile_arg(args);
+
+    let request = SensitivityRequest {
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        captain,
+        bridge,
+        below_decks,
+        support_buffs: None,
+        profile_id,
+        num_sims: Some(num_sims),
+        seed: Some(seed),
+        rounds: None,
+        metric: Some(metric),
+        deltas: None,
+    };
+
+    let registry = match DataRegistry::load() {
+        Ok(r) => r,
+        Err(err) => {
+            eprintln!("DataRegistry::load failed: {err}");
+            return 1;
+        }
+    };
+
+    let response = match run_sensitivity(&registry, &request) {
+        Ok(r) => r,
+        Err(err) => {
+            eprintln!("run_sensitivity failed: {err}");
+            return 1;
+        }
+    };
+
+    let mut rows = response.rows.clone();
+    rows.sort_by(|a, b| {
+        b.mean_diff_relative
+            .unwrap_or(0.0)
+            .abs()
+            .partial_cmp(&a.mean_diff_relative.unwrap_or(0.0).abs())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    println!(
+        "# sensitivity metric={} baseline_mean={} num_sims={} base_seed={}",
+        response.metric, response.baseline_mean, response.num_sims, response.base_seed
+    );
+    println!(
+        "stat\tdelta_applied\tmean_diff\tmean_diff_relative\tci95_low\tci95_high\tsignificant"
+    );
+    for row in rows {
+        let rel = match row.mean_diff_relative {
+            Some(v) => format!("{v}"),
+            None => String::from("NaN"),
+        };
+        println!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            row.stat,
+            row.delta_applied,
+            row.mean_diff,
+            rel,
+            row.ci95_low,
+            row.ci95_high,
+            row.significant
+        );
+    }
+    0
 }
 
 fn handle_import(args: &[String]) -> i32 {

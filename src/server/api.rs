@@ -1025,6 +1025,92 @@ impl fmt::Display for SimulateError {
 
 impl std::error::Error for SimulateError {}
 
+#[derive(Debug)]
+pub enum SensitivityError {
+    Parse(serde_json::Error),
+    Validation(String),
+    Run(String),
+}
+
+impl fmt::Display for SensitivityError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Validation(m) => write!(f, "{m}"),
+            Self::Run(m) => write!(f, "{m}"),
+        }
+    }
+}
+
+impl std::error::Error for SensitivityError {}
+
+/// POST `/api/sensitivity` — stat-level Δ-on-outcome analysis (paired CRN Monte Carlo).
+/// Synchronous v1; long runs are gated by the process-wide CPU admission semaphore.
+pub fn sensitivity_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, SensitivityError> {
+    use crate::optimizer::sensitivity::{run_sensitivity, SensitivityRequest};
+
+    let mut req: SensitivityRequest =
+        serde_json::from_str(body).map_err(SensitivityError::Parse)?;
+    if req.ship.trim().is_empty() {
+        return Err(SensitivityError::Validation(
+            "ship must not be empty".into(),
+        ));
+    }
+    if req.hostile.trim().is_empty() {
+        return Err(SensitivityError::Validation(
+            "hostile must not be empty".into(),
+        ));
+    }
+    // Header / query profile id wins when the body did not supply one (matches /api/simulate).
+    if req.profile_id.is_none() {
+        if let Some(pid) = profile_id {
+            if !pid.is_empty() {
+                req.profile_id = Some(pid.to_string());
+            }
+        }
+    }
+    // Bound the sim count so a single request can't monopolise the CPU pool indefinitely.
+    if let Some(n) = req.num_sims {
+        req.num_sims = Some(n.clamp(2, 50_000));
+    }
+
+    let response = run_sensitivity(registry, &req).map_err(SensitivityError::Run)?;
+    serde_json::to_string(&response)
+        .map_err(|e| SensitivityError::Validation(format!("serialize response: {e}")))
+}
+
+/// GET `/api/sensitivity/defaults` — per-stat default delta catalog. Frontend uses this to
+/// pre-fill the override table. Body is `{"deltas":[{"stat":"weapon_damage","delta":0.05}, ...]}`.
+pub fn sensitivity_defaults_payload() -> String {
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct Row {
+        stat: &'static str,
+        delta: f64,
+        multiplicative: bool,
+    }
+
+    #[derive(Serialize)]
+    struct Resp {
+        deltas: Vec<Row>,
+    }
+
+    let deltas = crate::optimizer::sensitivity::default_deltas()
+        .into_iter()
+        .map(|(s, d)| Row {
+            stat: s.as_str(),
+            delta: d,
+            multiplicative: s.is_multiplicative(),
+        })
+        .collect();
+    serde_json::to_string(&Resp { deltas }).expect("serialize sensitivity defaults")
+}
+
 const DEFAULT_REPLAY_MAX_TRACE_EVENTS: u32 = 500;
 const MAX_REPLAY_MAX_TRACE_EVENTS_CAP: u32 = 2000;
 

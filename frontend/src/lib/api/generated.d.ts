@@ -1425,6 +1425,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sensitivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stat-level Δ-on-outcome sensitivity analysis (paired CRN Monte Carlo)
+         * @description For a fixed scenario (crew + ship + research + hostile + profile + support buffs),
+         *     perturbs each stat in the catalog by a per-stat δ and measures how the outcome
+         *     metric changes. Uses paired Common Random Numbers (same seed sequence for baseline
+         *     and perturbed runs) so per-seed differences cancel most of the variance. Returns one
+         *     row per stat with a 95% confidence interval on the paired mean difference; rows
+         *     whose CI excludes zero are flagged `significant: true`.
+         *     Synchronous v1 — long runs are gated by the process-wide CPU admission semaphore.
+         */
+        post: {
+            parameters: {
+                query?: {
+                    /** @description Profile id (alternative to X-Profile-Id) */
+                    profile?: components["parameters"]["QueryProfile"];
+                };
+                header?: {
+                    "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SensitivityRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensitivityResponse"];
+                    };
+                };
+                /** @description Validation or parse error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Default per-stat δ catalog (15 stats)
+         * @description Returns the default δ each stat is perturbed by when the request body omits an override.
+         *     `multiplicative: true` means the engine applies `value *= 1 + δ`; `false` means
+         *     `value += δ`. UI uses this to format the override input appropriately.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensitivityDefaultsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/optimize": {
         parameters: {
             query?: never;
@@ -1839,6 +1947,64 @@ export interface components {
             /** Format: int64 */
             seed: number;
             warnings?: string[];
+        };
+        SensitivityRequest: {
+            /** @description Ship id (e.g. `uss_enterprise_d`). */
+            ship: string;
+            /** @description Hostile id or normalized name+level. */
+            hostile: string;
+            ship_tier?: number;
+            ship_level?: number;
+            captain?: string;
+            bridge?: string[];
+            below_decks?: string[];
+            support_buffs?: string[];
+            /** @description Profile id (header / query also accepted). */
+            profile_id?: string;
+            /** @description Paired sims per stat (also used for the baseline). Clamped server-side. */
+            num_sims?: number;
+            /** Format: int64 */
+            seed?: number;
+            rounds?: number;
+            /**
+             * @description Outcome scalar each stat's Δ is measured against. Default `hull_remaining`.
+             * @enum {string}
+             */
+            metric?: "hull_remaining" | "win_rate" | "rounds_to_kill" | "defender_hull_remaining";
+            /**
+             * @description Per-stat δ overrides. Keys are stat names (snake_case). A value of `0.0`
+             *     skips that stat from the report. Missing keys use the default δ catalog.
+             */
+            deltas?: {
+                [key: string]: number;
+            };
+        };
+        SensitivityRow: {
+            stat: string;
+            delta_applied: number;
+            /** @description Mean of `(perturbed - baseline)` per-seed metric values. */
+            mean_diff: number;
+            /** @description mean_diff / baseline_mean. Null when baseline is zero or non-finite. */
+            mean_diff_relative?: number | null;
+            ci95_low: number;
+            ci95_high: number;
+            /** @description True iff the 95% CI excludes zero. */
+            significant: boolean;
+        };
+        SensitivityResponse: {
+            metric: string;
+            baseline_mean: number;
+            num_sims: number;
+            /** Format: int64 */
+            base_seed: number;
+            rows: components["schemas"]["SensitivityRow"][];
+        };
+        SensitivityDefaultsResponse: {
+            deltas: {
+                stat: string;
+                delta: number;
+                multiplicative: boolean;
+            }[];
         };
         CompareCrewsRequest: {
             ship: string;

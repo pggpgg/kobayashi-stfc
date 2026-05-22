@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kobayashi-server",
+      "runtimeExecutable": "./target/release/kobayashi",
+      "runtimeArgs": ["serve"],
+      "env": {
+        "KOBAYASHI_BIND": "127.0.0.1:3480"
+      },
+      "port": 3480
+    }
+  ]
+}

@@ -15,6 +15,7 @@ pub mod log_ingest;
 pub mod log_validate;
 pub mod mitigation;
 pub mod mitigation_sensitivity;
+pub mod perturb;
 pub mod proc;
 pub mod rng;
 pub mod simd_damage_kernel;
@@ -67,6 +68,7 @@ pub use mitigation_sensitivity::{
     default_percent_sensitivity_rows, direct_scalar_row, format_sensitivity_tsv,
     HostileMitigationBaseline, MitigationSensitivityRow,
 };
+pub use perturb::{apply_perturbation, StatKey};
 pub use snapshot::{
     state_snapshot_as_combat_event, CombatSnapshotFlags, CombatStateSnapshot,
     CombatantSnapshotResources, SnapshotAnchor,

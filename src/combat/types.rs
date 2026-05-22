@@ -315,6 +315,13 @@ pub struct SimulationConfig {
     /// ([`crate::combat::snapshot::CombatStateSnapshot`]). Ignored when tracing is off.
     #[serde(default)]
     pub emit_state_snapshots: bool,
+    /// Additive perturbation applied to the resolved crew-derived crit damage reduction
+    /// at the engine call site (sensitivity analysis: [`crate::combat::perturb::StatKey::CritDamageReduction`]).
+    /// Added to the value returned by
+    /// [`crate::combat::abilities::hostile_crit_damage_reduction_from_crew`] before its `[0, 0.95]`
+    /// clamp. Default `0.0` (no perturbation). Universal across PvE and PvP paths.
+    #[serde(default)]
+    pub crit_damage_reduction_perturb: f64,
 }
 
 impl Default for SimulationConfig {
@@ -335,6 +342,7 @@ impl Default for SimulationConfig {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
+            crit_damage_reduction_perturb: 0.0,
         }
     }
 }

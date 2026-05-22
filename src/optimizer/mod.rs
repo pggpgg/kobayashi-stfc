@@ -10,6 +10,7 @@ pub mod matchup_priors;
 pub mod monte_carlo;
 pub mod officer_learning;
 pub mod ranking;
+pub mod sensitivity;
 pub mod tiered;
 
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
