@@ -589,8 +589,6 @@ export async function getOptimizeEstimate(
     sims?: number;
     max_candidates?: number | null;
     below_decks_pool_mode?: import("./optimizeWarmStart").BelowDecksPoolMode;
-    /** @deprecated use below_decks_pool_mode */
-    allow_below_decks_without_combat_ability?: boolean;
     ship_tier?: number | null;
     ship_level?: number | null;
     below_decks_slots?: number | null;
@@ -611,8 +609,6 @@ export async function getOptimizeEstimate(
     params.below_decks_pool_mode !== "strict"
   ) {
     search.set("below_decks_pool_mode", params.below_decks_pool_mode);
-  } else if (params.allow_below_decks_without_combat_ability === true) {
-    search.set("allow_below_decks_without_combat_ability", "true");
   }
   if (params.ship_tier != null && params.ship_tier > 0) {
     search.set("ship_tier", String(params.ship_tier));
@@ -734,8 +730,6 @@ export async function optimizeStart(
     max_candidates?: number | null;
     strategy?: OptimizerStrategyType;
     below_decks_pool_mode?: import("./optimizeWarmStart").BelowDecksPoolMode;
-    /** @deprecated use below_decks_pool_mode */
-    allow_below_decks_without_combat_ability?: boolean;
     heuristics_seeds?: string[];
     heuristics_only?: boolean;
     below_decks_strategy?: "ordered" | "exploration";
@@ -774,8 +768,6 @@ export async function optimizeStart(
     params.below_decks_pool_mode !== "strict"
   ) {
     body.below_decks_pool_mode = params.below_decks_pool_mode;
-  } else if (params.allow_below_decks_without_combat_ability === true) {
-    body.allow_below_decks_without_combat_ability = true;
   }
   if (params.heuristics_seeds && params.heuristics_seeds.length > 0) {
     body.heuristics_seeds = params.heuristics_seeds;

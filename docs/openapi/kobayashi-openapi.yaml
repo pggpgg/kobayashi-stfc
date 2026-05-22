@@ -459,21 +459,12 @@ paths:
           in: query
           schema:
             type: integer
-        - name: allow_below_decks_without_combat_ability
-          in: query
-          description: >
-            Legacy field. When "true"/"1", relaxed below-decks search (wide BD pools; heuristic seeds keep officers
-            without combat-only below-decks-slot abilities). Omitted or false = strict default.
-            When `below_decks_pool_mode` is set, that takes precedence over this field.
-          schema:
-            type: string
         - name: below_decks_pool_mode
           in: query
           description: >
             Below-decks pool tier — `strict` (combat modifier only — default), `scored` (all
             below-decks-ability officers ranked by combat relevance with officer power as tiebreaker),
-            or `relaxed` (all officers, ranked by power). Takes precedence over the legacy
-            `allow_below_decks_without_combat_ability` query parameter when set.
+            or `relaxed` (all officers, ranked by power). Unknown values fall back to strict.
           schema:
             type: string
             enum: [strict, scored, relaxed]
@@ -2028,12 +2019,6 @@ components:
           type: integer
         strategy:
           type: string
-        allow_below_decks_without_combat_ability:
-          type: boolean
-          description: >
-            Legacy field. When true, relaxed below-decks behavior (wide BD officer pools; heuristic seeds do not strip
-            economy-only below-decks-slot picks). Omitted or false = strict default (narrow pools;
-            combat heuristic on heuristic seeds). Superseded by `below_decks_pool_mode` when both are present.
         below_decks_pool_mode:
           type: string
           enum: [strict, scored, relaxed]
@@ -2041,7 +2026,7 @@ components:
             Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers.
             `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only)
             with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power.
-            Takes precedence over `allow_below_decks_without_combat_ability` when set.
+            Unknown values fall back to strict.
         heuristics_seeds:
           type: array
           items:

@@ -61,10 +61,6 @@ name = "benchmark_parallel_speedup"
 path = "src/bin/benchmark_parallel_speedup.rs"
 
 [[bin]]
-name = "merge_lcars"
-path = "src/bin/merge_lcars.rs"
-
-[[bin]]
 name = "generate_officer_scorecard"
 path = "src/bin/generate_officer_scorecard.rs"
 
