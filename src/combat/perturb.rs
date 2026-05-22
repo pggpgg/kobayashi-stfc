@@ -17,12 +17,13 @@
 //!
 //! Engine limitations documented in `docs/ROADMAP.md` (Stat modeling improvements):
 //!
-//! - The four profile keys `armor`, `shield_deflection`, `dodge`, `damage_reduction`
-//!   collapse into a single `Combatant.mitigation` scalar in
-//!   [`crate::data::profile::apply_profile_to_attacker`]. They cannot be perturbed
-//!   independently post-resolution; we expose one [`StatKey::Mitigation`] row instead.
 //! - "Critical Damage Floor" research nodes feed the same `crit_damage` field as
 //!   headline crit damage; no separate floor clamp is modeled.
+//!
+//! The four mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`)
+//! are now tracked separately on [`Combatant`] post-resolution and weighted by ship-type
+//! coefficients in the engine's inbound counter-fire path. Each is exposed as its own
+//! `StatKey` variant; the aggregated [`StatKey::Mitigation`] is no longer surfaced.
 
 use serde::{Deserialize, Serialize};
 
@@ -41,7 +42,10 @@ pub enum StatKey {
     Accuracy,
     ApexShred,
     IsolyticDamage,
-    Mitigation,
+    Armor,
+    ShieldDeflection,
+    Dodge,
+    DamageReduction,
     ApexBarrier,
     IsolyticDefense,
     CritDamageReduction,
@@ -51,7 +55,7 @@ pub enum StatKey {
 }
 
 impl StatKey {
-    /// Every stat key in the v1 sensitivity set. Stable iteration order — UI surfaces
+    /// Every stat key in the sensitivity set. Stable iteration order — UI surfaces
     /// follow this order until they sort by measured Δ.
     pub const ALL: &'static [StatKey] = &[
         StatKey::WeaponDamage,
@@ -62,7 +66,10 @@ impl StatKey {
         StatKey::Accuracy,
         StatKey::ApexShred,
         StatKey::IsolyticDamage,
-        StatKey::Mitigation,
+        StatKey::Armor,
+        StatKey::ShieldDeflection,
+        StatKey::Dodge,
+        StatKey::DamageReduction,
         StatKey::ApexBarrier,
         StatKey::IsolyticDefense,
         StatKey::CritDamageReduction,
@@ -81,7 +88,10 @@ impl StatKey {
             StatKey::Accuracy => "accuracy",
             StatKey::ApexShred => "apex_shred",
             StatKey::IsolyticDamage => "isolytic_damage",
-            StatKey::Mitigation => "mitigation",
+            StatKey::Armor => "armor",
+            StatKey::ShieldDeflection => "shield_deflection",
+            StatKey::Dodge => "dodge",
+            StatKey::DamageReduction => "damage_reduction",
             StatKey::ApexBarrier => "apex_barrier",
             StatKey::IsolyticDefense => "isolytic_defense",
             StatKey::CritDamageReduction => "crit_damage_reduction",
@@ -111,7 +121,10 @@ impl StatKey {
             StatKey::Accuracy => 0.01,
             StatKey::ApexShred => 0.01,
             StatKey::IsolyticDamage => 0.01,
-            StatKey::Mitigation => 0.01,
+            StatKey::Armor => 0.01,
+            StatKey::ShieldDeflection => 0.01,
+            StatKey::Dodge => 0.01,
+            StatKey::DamageReduction => 0.01,
             StatKey::ApexBarrier => 0.01,
             StatKey::IsolyticDefense => 0.05,
             StatKey::CritDamageReduction => 0.01,
@@ -133,6 +146,14 @@ impl StatKey {
                 | StatKey::ShieldHp
         )
     }
+}
+
+/// Rebuild the aggregated `mitigation` scalar from the four components, clamped to [0, 1].
+/// Used by the per-component `StatKey` arms to keep the back-compat scalar in sync after
+/// a perturbation; the engine's inbound counter-fire path consults the components first.
+#[inline]
+fn sum_mitigation_components(c: &Combatant) -> f64 {
+    (c.armor + c.shield_deflection + c.dodge + c.damage_reduction).clamp(0.0, 1.0)
 }
 
 /// Apply a per-stat perturbation to resolved combat state.
@@ -186,8 +207,21 @@ pub fn apply_perturbation(
         StatKey::IsolyticDamage => {
             attacker.isolytic_damage = (attacker.isolytic_damage + delta).max(0.0);
         }
-        StatKey::Mitigation => {
-            attacker.mitigation = (attacker.mitigation + delta).clamp(0.0, 1.0);
+        StatKey::Armor => {
+            attacker.armor = (attacker.armor + delta).max(0.0);
+            attacker.mitigation = sum_mitigation_components(attacker);
+        }
+        StatKey::ShieldDeflection => {
+            attacker.shield_deflection = (attacker.shield_deflection + delta).max(0.0);
+            attacker.mitigation = sum_mitigation_components(attacker);
+        }
+        StatKey::Dodge => {
+            attacker.dodge = (attacker.dodge + delta).max(0.0);
+            attacker.mitigation = sum_mitigation_components(attacker);
+        }
+        StatKey::DamageReduction => {
+            attacker.damage_reduction = (attacker.damage_reduction + delta).max(0.0);
+            attacker.mitigation = sum_mitigation_components(attacker);
         }
         StatKey::ApexBarrier => {
             attacker.apex_barrier = (attacker.apex_barrier + delta).max(0.0);
@@ -221,6 +255,10 @@ mod tests {
             id: "test".into(),
             attack: 100.0,
             mitigation: 0.3,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
             pierce: 0.0,
             crit_chance: 0.5,
             crit_multiplier: 2.0,

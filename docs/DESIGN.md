@@ -722,7 +722,7 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 **Perturbation model.** A stat is perturbed by mutating one or more of three pieces of resolved state immediately before `build_combat_setup` / `simulate_combat_from_setup`:
 
-- `Combatant` (attacker) for HP, crit, isolytic, apex, shield mitigation, and the aggregated `mitigation` scalar.
+- `Combatant` (attacker) for HP, crit, isolytic, apex, shield mitigation, and the four mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`). The aggregated `mitigation` scalar is kept in sync as a back-compat fallback.
 - `HostileMitigationParams::base_attacker_stats` embedded in the defender's `Combatant` for armor piercing, shield piercing, and accuracy (these feed the component-based mitigation calc in [`mitigation_breakdown`](../src/combat/mitigation.rs)).
 - `SimulationConfig::crit_damage_reduction_perturb` for the universal `crit_damage_reduction` stat — the engine adds this value to whatever crew-derived crit damage reduction is resolved at combat time, applied for the configured rounds (or the full fight when the crew has no base reduction).
 
@@ -730,7 +730,7 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 **Engine limitations** (tracked in [ROADMAP.md § Stat modeling improvements](ROADMAP.md)):
 
-- `armor`, `shield_deflection`, `dodge`, `damage_reduction` collapse into one `Combatant.mitigation` scalar in `apply_profile_to_attacker`, so the v1 sensitivity catalog exposes a single aggregated `mitigation` row instead of four separate ones.
+- ~~`armor`, `shield_deflection`, `dodge`, `damage_reduction` collapse into one `Combatant.mitigation` scalar in `apply_profile_to_attacker`, so the v1 sensitivity catalog exposes a single aggregated `mitigation` row instead of four separate ones.~~ **Resolved.** Each component is tracked as its own `Combatant` field; the inbound counter-fire path in `engine.rs` applies ship-type coefficients (`c_armor·armor + c_shield·shield_deflection + c_dodge·(dodge + dodge_bonus) + damage_reduction + mitigation_additive`). Sensitivity catalog exposes four `StatKey` variants (`Armor`, `ShieldDeflection`, `Dodge`, `DamageReduction`).
 - Critical Damage Floor research feeds the same `crit_damage` engine field as headline crit damage; no separate floor clamp is modeled.
 
 **Future work.** Sobol / Morris variance decomposition for first-order, total-order, and pairwise interactions (best **pair** to invest in together). Cost: `r × (k+1)` sims for Morris screening, `N × (2k+2)` sims for Sobol with `N ≥ 1024`. Build on top of the v1 OAT runner.
