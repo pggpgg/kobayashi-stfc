@@ -695,19 +695,16 @@ pub(crate) struct SharedScenarioData {
     pub lcars_data: Option<LcarsOfficerData>,
     pub resolve_options: ResolveOptions,
     pub ship_rec: Option<ShipRecord>,
-    #[allow(dead_code)]
     pub hostile_rec: Option<HostileRecord>,
     pub cached_defender: Option<Combatant>,
     pub cached_rounds: Option<u32>,
     pub cached_defender_hull: Option<f64>,
     pub cached_pierce: Option<f64>,
-    #[allow(dead_code)]
     pub cached_defender_mitigation: Option<f64>,
     /// True when ship or hostile did not resolve from data and [`scenario_to_combat_input_from_shared`]
     /// uses hashed placeholder combatants instead of registry-backed stats.
     pub using_placeholder_combatants: bool,
     /// Resolved support buff ids (after exclusive-group rules).
-    #[allow(dead_code)]
     pub resolved_support_buffs: Vec<String>,
     /// Display/debug metadata for resolved support buffs, included in trace replay output.
     pub applied_support_buffs: Vec<AppliedSupportBuffTrace>,
@@ -716,7 +713,6 @@ pub(crate) struct SharedScenarioData {
     /// Support buff `static_bonuses` that apply to the defender only when [`Self::defender_opponent`] is [`DefenderOpponent::Player`].
     pub support_defender_static_buffs: HashMap<String, f64>,
     /// Request ids not present in the support buff catalog (for API warnings).
-    #[allow(dead_code)]
     pub unknown_support_buff_ids: Vec<String>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
@@ -1685,7 +1681,7 @@ fn resolve_player_defender_officer_bundle(
     )
 }
 
-#[allow(dead_code)] // used by unit tests (computed_mitigation_is_deterministic_for_same_inputs)
+#[cfg(test)]
 pub(crate) fn scenario_to_combat_input(
     ship: &str,
     hostile: &str,

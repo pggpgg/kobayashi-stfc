@@ -19,7 +19,7 @@
 //! (`OfficerAbility.slot == "below_decks"`) whose canonical `modifier` is not classified as economy /
 //! non-combat for seeds (aligned with `generate_lcars` `:non_combat` modifier arms plus common loot
 //! and exploration modifiers). Missing `modifier` is treated as ambiguous and kept. Pass `false` when
-//! the user allows non-combat below-decks picks (`allow_below_decks_without_combat_ability`).
+//! the user allows non-combat below-decks picks (`below_decks_pool_mode = "relaxed"`).
 
 use std::collections::HashMap;
 use std::fs;
@@ -336,8 +336,7 @@ pub enum BelowDecksPoolMode {
     /// All officers with a below-decks-slot ability, ranked by combat relevance
     /// (combat → ambiguous/missing → economy-only) with officer power as a tiebreaker.
     Scored,
-    /// All eligible below-decks officers, ranked by officer power. Mirrors the legacy
-    /// `allow_below_decks_without_combat_ability` behavior.
+    /// All eligible below-decks officers, ranked by officer power (no combat heuristic).
     Relaxed,
 }
 
@@ -351,7 +350,7 @@ impl BelowDecksPoolMode {
     }
 
     /// Parse a case-insensitive API string. Returns `None` for unrecognized values
-    /// so callers can fall back to legacy fields or defaults.
+    /// so callers can fall back to defaults.
     pub fn parse_api_str(s: &str) -> Option<Self> {
         match s.trim().to_ascii_lowercase().as_str() {
             "strict" => Some(Self::Strict),

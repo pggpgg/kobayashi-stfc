@@ -114,8 +114,6 @@ Or the standalone binary:
 cargo run --bin generate_lcars -- data/officers/officers.canonical.json --output data/officers
 ```
 
-**Legacy:** If you still have per-faction `*.lcars.yaml` shards, [`merge_lcars`](../src/bin/merge_lcars.rs) can combine them into one file and delete shards (see source for behavior).
-
 ## Using LCARS in Simulation
 
 Set the environment variable to use LCARS as the officer source:

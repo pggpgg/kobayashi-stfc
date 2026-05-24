@@ -1001,9 +1001,7 @@ export interface paths {
                     hostile: string;
                     sims?: number;
                     max_candidates?: number;
-                    /** @description Legacy field. When "true"/"1", relaxed below-decks search (wide BD pools; heuristic seeds keep officers without combat-only below-decks-slot abilities). Omitted or false = strict default. When `below_decks_pool_mode` is set, that takes precedence over this field. */
-                    allow_below_decks_without_combat_ability?: string;
-                    /** @description Below-decks pool tier — `strict` (combat modifier only — default), `scored` (all below-decks-ability officers ranked by combat relevance with officer power as tiebreaker), or `relaxed` (all officers, ranked by power). Takes precedence over the legacy `allow_below_decks_without_combat_ability` query parameter when set. */
+                    /** @description Below-decks pool tier — `strict` (combat modifier only — default), `scored` (all below-decks-ability officers ranked by combat relevance with officer power as tiebreaker), or `relaxed` (all officers, ranked by power). Unknown values fall back to strict. */
                     below_decks_pool_mode?: "strict" | "scored" | "relaxed";
                     ship_tier?: number;
                     ship_level?: number;
@@ -2049,13 +2047,13 @@ export interface components {
                 name: string;
                 ship: string;
                 scenario: string;
-                schema_version?: number;
+                schema_version: number;
             } & {
                 [key: string]: unknown;
             })[];
         };
         Preset: {
-            schema_version?: number;
+            schema_version: number;
             id: string;
             name: string;
             ship: string;
@@ -2063,7 +2061,7 @@ export interface components {
             crew: {
                 [key: string]: unknown;
             };
-            provenance?: {
+            provenance: {
                 [key: string]: unknown;
             };
         };
@@ -2402,10 +2400,8 @@ export interface components {
             seed?: number;
             max_candidates?: number;
             strategy?: string;
-            /** @description Legacy field. When true, relaxed below-decks behavior (wide BD officer pools; heuristic seeds do not strip economy-only below-decks-slot picks). Omitted or false = strict default (narrow pools; combat heuristic on heuristic seeds). Superseded by `below_decks_pool_mode` when both are present. */
-            allow_below_decks_without_combat_ability?: boolean;
             /**
-             * @description Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers. `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power. Takes precedence over `allow_below_decks_without_combat_ability` when set.
+             * @description Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers. `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power. Unknown values fall back to strict.
              * @enum {string}
              */
             below_decks_pool_mode?: "strict" | "scored" | "relaxed";

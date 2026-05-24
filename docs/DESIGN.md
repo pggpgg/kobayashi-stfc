@@ -914,7 +914,7 @@ Accepted source formats can include exported data from community tools such as S
 Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:
 
 ```
-1. Edit LCARS under `data/officers/` (`officers.lcars.yaml`, or any `*.lcars.yaml` / `*.lcars.yml` if using a multi-file layout). Regenerate the monolith from canonical with `generate_lcars`; `merge_lcars` remains for legacy shard merges only.
+1. Edit LCARS under `data/officers/` (`officers.lcars.yaml`, or any `*.lcars.yaml` / `*.lcars.yml` if using a multi-file layout). Regenerate the monolith from canonical with `generate_lcars`.
 2. Validate with `kobayashi validate data/officers` (and regenerate `officers.canonical.json` when that is part of your workflow).
 3. Run simulation/regression checks to confirm no unintended balance drift.
 4. Commit reviewed changes in small, auditable batches.

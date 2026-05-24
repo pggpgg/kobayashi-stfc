@@ -11,6 +11,11 @@ const presetPayload: Preset = {
   ship: "saladin",
   scenario: "2918121098",
   crew: { captain: "c1", bridge: [], below_deck: [] },
+  schema_version: 2,
+  provenance: {
+    saved_at: "2026-01-01T00:00:00Z",
+    kobayashi_version: "test",
+  },
 };
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -72,7 +77,13 @@ describe("ResultsLibrary", () => {
 
   it("lists presets and navigates to workspace with preset state", async () => {
     vi.mocked(api.fetchPresets).mockResolvedValue([
-      { id: "a1", name: "Fleet", ship: "enterprise", scenario: "hostile-1" },
+      {
+        id: "a1",
+        name: "Fleet",
+        ship: "enterprise",
+        scenario: "hostile-1",
+        schema_version: 2,
+      },
     ]);
     vi.mocked(api.fetchPreset).mockResolvedValue(presetPayload);
 

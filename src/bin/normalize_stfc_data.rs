@@ -8,8 +8,6 @@ use std::fs;
 use serde::Deserialize;
 
 const UPSTREAM_HOSTILES_SUFFIX: &str = "data/upstream/stfccommunity-data";
-#[allow(dead_code)]
-const UPSTREAM_SHIPS_SUFFIX: &str = "data/upstream/stfccommunity-data/ships";
 const UPSTREAM_BUILDINGS_SUFFIX: &str = "data/upstream/stfccommunity-data/buildings";
 const UPSTREAM_FACTION_REP_SUFFIX: &str = "data/upstream/stfccommunity-data/faction_reputation";
 const OUT_HOSTILES_SUFFIX: &str = "data/hostiles";
@@ -64,85 +62,8 @@ struct RawHostile {
     stats: RawHostileStats,
 }
 
-// ----- Raw STFCcommunity ship (partial: first tier, components) -----
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawWeaponsInfo {
-    #[serde(default)]
-    accuracy: f64,
-    #[serde(default)]
-    armor_pierce: f64,
-    #[serde(default)]
-    shield_pierce: f64,
-    #[serde(default)]
-    crit_chance: f64,
-    #[serde(default)]
-    crit_damage: f64,
-    #[serde(default)]
-    max_damage: f64,
-    #[serde(default)]
-    min_damage: f64,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawShieldInfo {
-    #[serde(default)]
-    shield_deflection: f64,
-    #[serde(default)]
-    shield_health: f64,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawImpulseInfo {
-    #[serde(default)]
-    dodge: f64,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawComponentAdditionalInfo {
-    #[serde(default)]
-    weapons_info: Option<RawWeaponsInfo>,
-    #[serde(default)]
-    shield_info: Option<RawShieldInfo>,
-    #[serde(default)]
-    impulse_info: Option<RawImpulseInfo>,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawComponent {
-    #[serde(default)]
-    name: String,
-    #[serde(default)]
-    additional_info: Option<RawComponentAdditionalInfo>,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawTier {
-    #[serde(default)]
-    tier: u32,
-    #[serde(default)]
-    components: Vec<RawComponent>,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct RawShip {
-    #[serde(default)]
-    ship_name: String,
-    #[serde(default)]
-    ship_class: String,
-    #[serde(default)]
-    tiers: Vec<RawTier>,
-}
-
 // ----- Raw STFCcommunity building (partial) -----
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
 struct RawBuildingBonusMeta {
     #[serde(default)]
     name: String,
@@ -313,8 +234,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         out_hostiles.join("index.json"),
         serde_json::to_string_pretty(&hostile_index)?,
     )?;
-
-    // Ships: no longer written here; use data/ships_extended from normalize_data_stfc_space.
 
     // ----- Buildings (optional: upstream may not have been fetched) -----
     let mut building_index_entries: Vec<kobayashi::data::building::BuildingIndexEntry> = Vec::new();
@@ -563,89 +482,4 @@ fn raw_to_building_record(
         source_note: None,
         levels,
     }
-}
-
-#[allow(dead_code)]
-fn raw_to_ship_record(id: &str, raw: &RawShip) -> Option<kobayashi::data::ship::ShipRecord> {
-    let tier = raw.tiers.first()?;
-    let mut armor_piercing = 0.0f64;
-    let mut shield_piercing = 0.0f64;
-    let mut accuracy = 0.0f64;
-    let mut attack = 0.0f64;
-    let mut crit_chance = 0.1f64;
-    let mut crit_damage = 1.5f64;
-    let mut shield_health = 0.0f64;
-    let mut weapon_count = 0u32;
-    let mut weapon_rows: Vec<kobayashi::data::ship::WeaponRecord> = Vec::new();
-
-    for comp in &tier.components {
-        if let Some(ref info) = comp.additional_info {
-            if let Some(ref w) = info.weapons_info {
-                weapon_count += 1;
-                armor_piercing += w.armor_pierce;
-                shield_piercing += w.shield_pierce;
-                accuracy += w.accuracy;
-                let per_weapon = (w.max_damage + w.min_damage) * 0.5;
-                attack += per_weapon;
-                crit_chance = w.crit_chance;
-                crit_damage = w.crit_damage;
-                weapon_rows.push(kobayashi::data::ship::WeaponRecord {
-                    attack: per_weapon,
-                    shots: None,
-                    armor_piercing: Some(w.armor_pierce),
-                    shield_piercing: Some(w.shield_pierce),
-                    accuracy: Some(w.accuracy),
-                    crit_chance: Some(w.crit_chance),
-                    crit_multiplier: Some(w.crit_damage),
-                    ..Default::default()
-                });
-            }
-            if let Some(ref s) = info.shield_info {
-                shield_health += s.shield_health;
-            }
-        }
-    }
-    if weapon_count > 0 {
-        armor_piercing /= weapon_count as f64;
-        shield_piercing /= weapon_count as f64;
-        accuracy /= weapon_count as f64;
-        attack *= weapon_count as f64;
-    }
-    if attack <= 0.0 {
-        attack = 100.0;
-    }
-    if shield_health <= 0.0 {
-        shield_health = 1000.0;
-    }
-    let hull_health = shield_health * 2.0;
-
-    let weapons = if weapon_rows.is_empty() {
-        None
-    } else {
-        Some(weapon_rows)
-    };
-
-    Some(kobayashi::data::ship::ShipRecord {
-        id: id.to_string(),
-        ship_name: raw.ship_name.clone(),
-        ship_class: raw.ship_class.clone(),
-        faction: None,
-        armor_piercing,
-        shield_piercing,
-        accuracy,
-        armor: 0.0,
-        shield_deflection: 0.0,
-        dodge: 0.0,
-        attack,
-        crit_chance,
-        crit_damage,
-        hull_health,
-        shield_health,
-        shield_mitigation: None,
-        apex_shred: 0.0,
-        isolytic_damage: 0.0,
-        weapons,
-        abilities: None,
-        ..Default::default()
-    })
 }

@@ -4,7 +4,6 @@
 //!   [--translations data/upstream/data-stfc-space/translations-officer_buffs.json]
 //!   [--officer-data-dir data/upstream/data-stfc-space/officers]
 //! Output: `<output_dir>/officers.lcars.yaml` (all officers, sorted by id).
-//! For legacy per-faction shards, see `merge_lcars` + cached `*.lcars.yaml` workflows in docs.
 //!
 //! When `--summary` and `--translations` point at data-stfc-space exports, ability block names are
 //! resolved from `officer_ability_name` rows (`loca_id` in summary matches `id` in translations).

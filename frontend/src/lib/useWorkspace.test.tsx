@@ -280,6 +280,11 @@ describe("useWorkspace", () => {
         bridge: ["br1", "br2"],
         below_deck: [null, null, null, null],
       },
+      schema_version: 2,
+      provenance: {
+        saved_at: "2026-01-01T00:00:00Z",
+        kobayashi_version: "test",
+      },
     };
 
     const { result } = renderHook(() => useWorkspace(), {

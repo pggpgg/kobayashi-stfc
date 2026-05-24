@@ -112,7 +112,6 @@ npm run test     # Vitest tests
 ```bash
 cargo run --bin normalize_stfc_data
 cargo run --bin validate_data
-cargo run --bin merge_lcars   # optional: merge legacy per-faction *.lcars.yaml shards only
 cargo run --bin import_forbidden_chaos
 cargo run --bin import_syndicate_reputation
 cargo run --bin generate_officer_scorecard   # docs/OFFICER_MODELING_SCORECARD.md — edit fidelity in data/officers/officer_modeling_fidelity.yaml

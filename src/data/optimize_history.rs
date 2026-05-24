@@ -18,7 +18,9 @@ use crate::optimizer::monte_carlo::{crew_candidate_stable_hash, SimulationResult
 use crate::optimizer::officer_learning::OfficerPerformanceScores;
 use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
 
-pub const OPTIMIZE_HISTORY_SCHEMA: u32 = 1;
+/// Top-level cache file schema. Bumped to invalidate all stored entries when on-disk
+/// fields change shape; [`load_history_file`] wipes the entries map on mismatch.
+pub const OPTIMIZE_HISTORY_SCHEMA: u32 = 2;
 pub const MAX_OPTIMIZE_CACHE_KEYS: usize = 200;
 pub const MAX_OPTIMIZE_HISTORY_CREWS: usize = 24;
 pub const MAX_OPTIMIZE_CACHE_KEY_BYTES: usize = 512;
@@ -26,12 +28,13 @@ pub const MAX_OPTIMIZE_CACHE_KEY_BYTES: usize = 512;
 /// Max persisted-history crews merged into analytical **matchup priors** only (not prepended as candidates).
 pub const MAX_PRIOR_REFERENCE_CREWS_FROM_HISTORY: usize = 16;
 
-/// Entries without [`OptimizeHistoryEntry::tiered_budget_policy`] deserialize as this value.
-pub const TIERED_BUDGET_POLICY_LEGACY: u8 = 0;
+/// Sentinel for [`OptimizeHistoryEntry::tiered_budget_policy`] on non-tiered entries
+/// (e.g. exhaustive two-phase rows that do not consume a tiered budget allocator).
+pub const TIERED_BUDGET_POLICY_NA: u8 = 0;
 /// Current tiered Monte Carlo budget allocator (adaptive coarse fraction, ranking-aligned confirm widths, optional confirm cap).
 pub const TIERED_BUDGET_POLICY_V2: u8 = 2;
 
-/// [`OptimizeHistoryEntry::optimize_history_kind`] — tiered cache row (default for legacy JSON).
+/// [`OptimizeHistoryEntry::optimize_history_kind`] — tiered cache row.
 pub const OPTIMIZE_HISTORY_KIND_TIERED: u8 = 0;
 /// Exhaustive two-phase scout→confirm cache row.
 pub const OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE: u8 = 1;
@@ -55,13 +58,11 @@ pub struct OptimizeHistoryEntry {
     pub tiered_top_k: usize,
     pub n_candidates: usize,
     /// [`OPTIMIZE_HISTORY_KIND_TIERED`] vs [`OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE`].
-    #[serde(default)]
     pub optimize_history_kind: u8,
     /// `0` = uniform single-pass scout; `1` = adaptive coarse→refine scout (must match current run).
-    #[serde(default)]
     pub tiered_scout_allocator: u8,
-    /// `0` = legacy (missing field on disk); [`TIERED_BUDGET_POLICY_V2`] = current confirm/scout budget semantics.
-    #[serde(default)]
+    /// [`TIERED_BUDGET_POLICY_V2`] for tiered entries; [`TIERED_BUDGET_POLICY_NA`] on
+    /// non-tiered (e.g. exhaustive two-phase) entries.
     pub tiered_budget_policy: u8,
     /// When set, must match the optimize request `tiered_confirm_budget_cap_mult` (global confirm shrink).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -72,7 +73,6 @@ pub struct OptimizeHistoryEntry {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exhaustive_scout_top_keep: Option<usize>,
     /// [`EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1`] for current exhaustive confirm allocator.
-    #[serde(default)]
     pub exhaustive_confirm_policy: u8,
     /// Same encoding as the SPA warm-start key chain segment (`0` vs `1:kt:secondary`).
     pub chain_fingerprint: String,
@@ -640,7 +640,7 @@ pub fn build_entry_from_ranked_exhaustive_two_phase(
         n_candidates,
         optimize_history_kind: OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE,
         tiered_scout_allocator: 0,
-        tiered_budget_policy: TIERED_BUDGET_POLICY_LEGACY,
+        tiered_budget_policy: TIERED_BUDGET_POLICY_NA,
         tiered_confirm_cap_mult,
         exhaustive_scout_sims: Some(exhaustive_scout_sims),
         exhaustive_scout_top_keep: Some(exhaustive_top_keep),
@@ -665,7 +665,7 @@ mod tests {
             n_candidates: 60,
             optimize_history_kind: OPTIMIZE_HISTORY_KIND_EXHAUSTIVE_TWO_PHASE,
             tiered_scout_allocator: 0,
-            tiered_budget_policy: TIERED_BUDGET_POLICY_LEGACY,
+            tiered_budget_policy: TIERED_BUDGET_POLICY_NA,
             tiered_confirm_cap_mult: None,
             exhaustive_scout_sims: Some(12),
             exhaustive_scout_top_keep: Some(4),
