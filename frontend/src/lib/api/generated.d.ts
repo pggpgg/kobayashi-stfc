@@ -1913,6 +1913,316 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sensitivity/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start async OAT sensitivity job (same JSON as /api/sensitivity)
+         * @description Returns a `job_id` immediately. Poll `GET /api/sensitivity/jobs/{job_id}/status`
+         *     or subscribe to the SSE stream at `GET /api/sensitivity/jobs/{job_id}/stream`
+         *     for live progress and the final result.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SensitivityRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensitivityStartResponse"];
+                    };
+                };
+                /** @description Invalid request body */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/morris/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start async Morris-screening job (same JSON as /api/sensitivity/morris) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MorrisSensitivityRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensitivityStartResponse"];
+                    };
+                };
+                /** @description Invalid request body */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/sobol/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start async Sobol variance-decomposition job (same JSON as /api/sensitivity/sobol)
+         * @description Especially useful with `include_pairwise: true` — the pairwise compute budget is
+         *     `N × k(k − 1)/2` extra sims (≈ 8.6× at defaults), which is meaningfully slow
+         *     synchronously. Async + SSE lets the UI stream progress and offer cancel.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SobolSensitivityRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensitivityStartResponse"];
+                    };
+                };
+                /** @description Invalid request body */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/jobs/{job_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One-shot status snapshot of a sensitivity job */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SensitivityStatusResponse"];
+                    };
+                };
+                /** @description Job not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/jobs/{job_id}/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SSE stream of sensitivity job progress until done or error
+         * @description Emits a JSON-encoded `SensitivityStatusResponse` every ~300ms. The final event
+         *     carries `status: "done"` (or `status: "error"`) and a full `result` payload
+         *     whose shape matches the method-specific response (`SensitivityResponse`,
+         *     `MorrisSensitivityResponse`, or `SobolSensitivityResponse`) — discriminate via
+         *     the `method` field on the wrapper.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description SSE event stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sensitivity/jobs/{job_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request cancellation of a running sensitivity job
+         * @description Idempotent. The worker checks the cancel flag at phase boundaries (e.g. between
+         *     the A and B sample matrices, between first-order and pairwise) and returns
+         *     early. In-flight Rayon work in the current phase still completes — Rayon doesn't
+         *     natively support early termination of in-flight parallel iterators.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancel requested */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Job not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2075,6 +2385,48 @@ export interface components {
         };
         OptimizeStartResponse: {
             job_id: string;
+        };
+        SensitivityStartResponse: {
+            /**
+             * @description Job id with shape `sens_<method>_<millis>_<counter>` where `<method>` is
+             *     `oat`, `morris`, or `sobol`. Use it to poll status or subscribe to the SSE
+             *     stream.
+             */
+            job_id: string;
+        };
+        SensitivityStatusResponse: {
+            /** @enum {string} */
+            status: "running" | "done" | "error";
+            /**
+             * @description Which sensitivity engine produced this job.
+             * @enum {string}
+             */
+            method: "oat" | "morris" | "sobol";
+            /** @description 0–100. Computed from sims_done / total_sims. */
+            progress?: number;
+            /** @description Atomic counter of completed sims. Updates throttled to one per 64 sims to limit registry-lock contention. */
+            sims_done?: number;
+            /** @description Total sim budget for the job (resolved at engine start once k / N / r are known). */
+            total_sims?: number;
+            /**
+             * @description Current engine phase. OAT — `baseline` then `per_stat_perturbation`. Morris —
+             *     `trajectories`. Sobol — `sample_a`, `sample_b`, `first_order`, optionally
+             *     `pairwise`.
+             */
+            phase?: string;
+            /** @description Best-effort sims/sec from sims_done and elapsed wall time. Null when sims_done is 0 or status is not running. */
+            throughput_sims_per_sec?: number;
+            /** @description Estimated remaining seconds; null when throughput cannot be computed. */
+            eta_seconds?: number;
+            /**
+             * @description Full method-specific result on completion. Tagged by `method` (`oat`,
+             *     `morris`, `sobol`) so clients can route to `SensitivityResponse`,
+             *     `MorrisSensitivityResponse`, or `SobolSensitivityResponse` respectively.
+             */
+            result?: {
+                [key: string]: unknown;
+            };
+            error?: string;
         };
         OptimizeStatusResponse: {
             status: string;

@@ -39,6 +39,7 @@ use crate::server::api_key;
 use crate::server::cpu_admission;
 use crate::server::openapi;
 use crate::server::profile_backup;
+use crate::server::sensitivity_jobs;
 use crate::server::sync;
 
 /// Application state shared by all handlers.
@@ -228,6 +229,14 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             "/api/sensitivity/sobol/defaults",
             get(handle_sensitivity_sobol_defaults),
         )
+        .route(
+            "/api/sensitivity/jobs/:job_id/status",
+            get(handle_sensitivity_job_status),
+        )
+        .route(
+            "/api/sensitivity/jobs/:job_id/stream",
+            get(handle_sensitivity_job_stream),
+        )
         .with_state(state.clone());
 
     let api_large_ingest = Router::new()
@@ -253,6 +262,15 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/sensitivity", post(handle_sensitivity))
         .route("/api/sensitivity/morris", post(handle_sensitivity_morris))
         .route("/api/sensitivity/sobol", post(handle_sensitivity_sobol))
+        .route("/api/sensitivity/start", post(handle_sensitivity_oat_start))
+        .route(
+            "/api/sensitivity/morris/start",
+            post(handle_sensitivity_morris_start),
+        )
+        .route(
+            "/api/sensitivity/sobol/start",
+            post(handle_sensitivity_sobol_start),
+        )
         .layer(DefaultBodyLimit::max(BODY_LIMIT_CPU_JSON))
         .with_state(state.clone());
 
@@ -262,6 +280,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route(
             "/api/optimize/jobs/:job_id/cancel",
             post(handle_optimize_job_cancel),
+        )
+        .route(
+            "/api/sensitivity/jobs/:job_id/cancel",
+            post(handle_sensitivity_job_cancel),
         )
         .layer(DefaultBodyLimit::max(BODY_LIMIT_SMALL_JSON))
         .with_state(state.clone());
@@ -1182,6 +1204,165 @@ async fn handle_optimize_job_cancel(Path(job_id): Path<String>) -> impl IntoResp
             error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
         }
         Err(api::OptimizeStatusError::Serialize(e)) => {
+            error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response()
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Sensitivity async-job handlers (start / status / stream / cancel)
+// ---------------------------------------------------------------------------
+
+/// Shared body of the three `*_start` handlers: parse the JSON request, acquire a CPU
+/// permit, kick off the worker thread via [`sensitivity_jobs::start_sensitivity_job`].
+async fn handle_sensitivity_start_inner<T, F>(
+    state: AppState,
+    body: String,
+    kind: sensitivity_jobs::SensitivityJobKind,
+    request_factory: F,
+) -> Response
+where
+    T: serde::de::DeserializeOwned,
+    F: FnOnce(T) -> sensitivity_jobs::SensitivityJobRequest,
+{
+    let req: T = match serde_json::from_str(&body) {
+        Ok(r) => r,
+        Err(e) => {
+            return error_json(
+                StatusCode::BAD_REQUEST,
+                &format!("Invalid request body: {e}"),
+            )
+            .into_response();
+        }
+    };
+    let permit = match acquire_cpu_or_response(&state).await {
+        Ok(p) => p,
+        Err(resp) => return resp,
+    };
+    let response = sensitivity_jobs::start_sensitivity_job(
+        state.registry.clone(),
+        kind,
+        request_factory(req),
+        permit,
+    );
+    match serde_json::to_string(&response) {
+        Ok(s) => ok_json(s).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+/// POST /api/sensitivity/start — async OAT sensitivity job.
+async fn handle_sensitivity_oat_start(
+    State(state): State<AppState>,
+    body: String,
+) -> impl IntoResponse {
+    handle_sensitivity_start_inner::<crate::optimizer::sensitivity::SensitivityRequest, _>(
+        state,
+        body,
+        sensitivity_jobs::SensitivityJobKind::Oat,
+        sensitivity_jobs::SensitivityJobRequest::Oat,
+    )
+    .await
+}
+
+/// POST /api/sensitivity/morris/start — async Morris-screening job.
+async fn handle_sensitivity_morris_start(
+    State(state): State<AppState>,
+    body: String,
+) -> impl IntoResponse {
+    handle_sensitivity_start_inner::<crate::optimizer::sensitivity_morris::MorrisRequest, _>(
+        state,
+        body,
+        sensitivity_jobs::SensitivityJobKind::Morris,
+        sensitivity_jobs::SensitivityJobRequest::Morris,
+    )
+    .await
+}
+
+/// POST /api/sensitivity/sobol/start — async Sobol variance-decomposition job.
+async fn handle_sensitivity_sobol_start(
+    State(state): State<AppState>,
+    body: String,
+) -> impl IntoResponse {
+    handle_sensitivity_start_inner::<crate::optimizer::sensitivity_sobol::SobolRequest, _>(
+        state,
+        body,
+        sensitivity_jobs::SensitivityJobKind::Sobol,
+        sensitivity_jobs::SensitivityJobRequest::Sobol,
+    )
+    .await
+}
+
+/// GET /api/sensitivity/jobs/:job_id/status — one-shot status snapshot.
+async fn handle_sensitivity_job_status(Path(job_id): Path<String>) -> impl IntoResponse {
+    match sensitivity_jobs::get_job_status(&job_id) {
+        Ok(response) => match serde_json::to_string_pretty(&response) {
+            Ok(payload) => ok_json(payload).into_response(),
+            Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+        },
+        Err(sensitivity_jobs::SensitivityJobError::NotFound) => {
+            error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
+        }
+        Err(sensitivity_jobs::SensitivityJobError::Serialize(e)) => {
+            error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response()
+        }
+    }
+}
+
+/// GET /api/sensitivity/jobs/:job_id/stream — SSE stream of job progress until done/error.
+async fn handle_sensitivity_job_stream(Path(job_id): Path<String>) -> impl IntoResponse {
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(16);
+    tokio::spawn(async move {
+        let job_id = job_id.clone();
+        loop {
+            match sensitivity_jobs::get_job_status(&job_id) {
+                Ok(response) => {
+                    let done = response.status == "done" || response.status == "error";
+                    let payload = match serde_json::to_string(&response) {
+                        Ok(s) => s,
+                        Err(_) => {
+                            let event = Event::default()
+                                .data(r#"{"status":"error","error":"Serialization error"}"#);
+                            let _ = tx.send(Ok(event)).await;
+                            break;
+                        }
+                    };
+                    let event = Event::default().data(payload);
+                    if tx.send(Ok(event)).await.is_err() {
+                        break;
+                    }
+                    if done {
+                        break;
+                    }
+                }
+                Err(sensitivity_jobs::SensitivityJobError::NotFound) => {
+                    let event =
+                        Event::default().data(r#"{"status":"error","error":"Job not found"}"#);
+                    let _ = tx.send(Ok(event)).await;
+                    break;
+                }
+                Err(sensitivity_jobs::SensitivityJobError::Serialize(_)) => {
+                    let event = Event::default()
+                        .data(r#"{"status":"error","error":"Serialization error"}"#);
+                    let _ = tx.send(Ok(event)).await;
+                    break;
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(300)).await;
+        }
+    });
+    let stream = ReceiverStream::new(rx);
+    Sse::new(stream)
+}
+
+/// POST /api/sensitivity/jobs/:job_id/cancel — request cancellation of a running sensitivity job.
+async fn handle_sensitivity_job_cancel(Path(job_id): Path<String>) -> impl IntoResponse {
+    match sensitivity_jobs::cancel_job(&job_id) {
+        Ok(()) => ok_json(r#"{"status":"ok","message":"Cancelled"}"#.to_string()).into_response(),
+        Err(sensitivity_jobs::SensitivityJobError::NotFound) => {
+            error_json(StatusCode::NOT_FOUND, "Job not found").into_response()
+        }
+        Err(sensitivity_jobs::SensitivityJobError::Serialize(e)) => {
             error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response()
         }
     }

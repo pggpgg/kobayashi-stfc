@@ -34,6 +34,7 @@ use crate::optimizer::monte_carlo::scenario::{
     DefenderOpponent,
 };
 use crate::optimizer::sensitivity::{run_one_sim_with_perturbations, OutcomeMetric};
+use crate::server::sensitivity_jobs::SensitivityJobProgress;
 
 /// Default number of Morris trajectories. r=10 yields a conservative μ\* / σ estimate;
 /// users can override to 20–50 for tighter CIs at proportional cost.
@@ -124,6 +125,16 @@ pub fn run_morris(
     registry: &DataRegistry,
     request: &MorrisRequest,
 ) -> Result<MorrisResponse, String> {
+    run_morris_with_progress(registry, request, &SensitivityJobProgress::no_op())
+}
+
+/// Morris run that reports progress + checks cancellation through a sink. The sync
+/// [`run_morris`] entry above wraps this with a no-op sink.
+pub fn run_morris_with_progress(
+    registry: &DataRegistry,
+    request: &MorrisRequest,
+    progress: &SensitivityJobProgress,
+) -> Result<MorrisResponse, String> {
     let num_sims = request
         .num_sims
         .unwrap_or(DEFAULT_NUM_SIMS_PER_POINT)
@@ -190,6 +201,9 @@ pub fn run_morris(
         });
     }
 
+    progress.set_total_sims((r_traj as u64) * ((k as u64) + 1) * (num_sims as u64));
+    progress.set_phase("trajectories");
+
     // Per trajectory, collect EE samples keyed by StatKey index in `stat_deltas`.
     // `ee_samples[stat_idx]` accumulates the r elementary-effect values.
     let trajectory_ee: Vec<Vec<(usize, f64)>> = (0..r_traj)
@@ -217,7 +231,9 @@ pub fn run_morris(
                         let sim_seed = crn_base.wrapping_add(i as u64);
                         let result =
                             run_one_sim_with_perturbations(&shared, &input, sim_seed, &cumulative);
-                        metric.extract(&result, attacker_max_hull, defender_max_hull)
+                        let v = metric.extract(&result, attacker_max_hull, defender_max_hull);
+                        progress.record_sims(1);
+                        v
                     })
                     .sum::<f64>()
                     / num_sims as f64;
@@ -239,6 +255,10 @@ pub fn run_morris(
             ees
         })
         .collect();
+
+    if progress.cancelled() {
+        return Err("Cancelled".to_string());
+    }
 
     // Aggregate per-stat EE samples.
     let mut per_stat_samples: Vec<Vec<f64>> = vec![Vec::with_capacity(r_traj as usize); k];
