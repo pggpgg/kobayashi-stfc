@@ -438,8 +438,9 @@ pub struct Combatant {
     pub crit_damage_floor: f64,
     /// Additive perturbation applied to the resolved crew-derived crit damage reduction
     /// at the engine call site (sensitivity analysis only:
-    /// [`crate::combat::perturb::StatKey::CritDamageReduction`]). Added to the value
-    /// returned by [`crate::combat::abilities::hostile_crit_damage_reduction_from_crew`]
+    /// [`crate::combat::perturb::StatKey::CritDamageReduction`]). Added to the per-round
+    /// value returned by
+    /// [`crate::combat::abilities::hostile_crit_damage_reduction_active_at_round`]
     /// before its `[0, 0.95]` clamp. Default `0.0` (no perturbation). Universal across
     /// PvE and PvP paths; modeled on `Combatant` (rather than `SimulationConfig`) to
     /// keep the engine call signature stable and to parallel `crit_damage_floor`.

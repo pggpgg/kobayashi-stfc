@@ -20,10 +20,11 @@ use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
-    hostile_crit_damage_reduction_from_crew, opponent_captain_maneuver_multiplier_from_effects,
-    scale_crew_captain_maneuver_effects, sum_accuracy_bonus, sum_dodge_bonus,
-    sum_hostile_engagement_defensive_bonus, sum_mitigation_additive, AbilityEffect,
-    ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
+    hostile_crit_damage_reduction_active_at_round,
+    opponent_captain_maneuver_multiplier_from_effects, scale_crew_captain_maneuver_effects,
+    sum_accuracy_bonus, sum_dodge_bonus, sum_hostile_engagement_defensive_bonus,
+    sum_mitigation_additive, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
+    TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -701,17 +702,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         // defender's crew (in PvP, the opponent's `player_crit_damage_reduction` profile
         // bonus is wired in as a `HostileCritDamageReduction` seat in scenario.rs). The
         // floor clamp at the per-shot crit resolution site limits how low this can drive
-        // the multiplier. Gated by `round_in_inclusive_first_n` so duration-limited
-        // debuffs honor their round budget.
-        let (attacker_crit_reduction, attacker_crit_reduction_rounds) =
-            hostile_crit_damage_reduction_from_crew(defender_crew, &combat_ctx);
-        let attacker_crit_reduction_active_this_round = attacker_crit_reduction > 0.0
-            && round_in_inclusive_first_n(round_index, attacker_crit_reduction_rounds);
-        let effective_attacker_crit_reduction = if attacker_crit_reduction_active_this_round {
-            attacker_crit_reduction
-        } else {
-            0.0
-        };
+        // the multiplier. The resolver folds in the per-round duration gate, so each
+        // seat contributes only when `round_index` is within its `1..=duration_rounds`
+        // window; overlapping sources stack additively (capped at 0.95).
+        let effective_attacker_crit_reduction =
+            hostile_crit_damage_reduction_active_at_round(defender_crew, &combat_ctx, round_index);
 
         let mut phase_effects = EffectAccumulator::default();
         let combat_begin_this_round =
@@ -2133,21 +2128,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 let defender_defense_filtered =
                     filter_effects_by_condition(defender_defense_phase_effects, &defender_ctx);
 
-                let (hostile_crit_reduction, hostile_crit_reduction_rounds) = {
-                    let (r, d) =
-                        hostile_crit_damage_reduction_from_crew(attacker_crew, &defender_ctx);
-                    let perturb = attacker.crit_damage_reduction_bonus;
-                    if perturb == 0.0 {
-                        (r, d)
-                    } else {
-                        // Sensitivity perturbation: add the universal crit-damage-reduction delta
-                        // and re-clamp. When the crew has no base reduction (`d == 0`), the
-                        // perturbation needs an active window to take effect — apply it for the
-                        // whole fight so the stat is meaningful regardless of crew composition.
-                        let perturbed = (r + perturb).clamp(0.0, 0.95);
-                        let rounds = if d == 0 { config.rounds } else { d };
-                        (perturbed, rounds)
-                    }
+                // Crew-derived CDR (per-round sum of active seats, clamped to 0.95) plus the
+                // universal sensitivity perturbation from `attacker.crit_damage_reduction_bonus`.
+                // The resolver already gates each seat by its own duration window; the perturb
+                // is added unconditionally and re-clamped.
+                let hostile_crit_reduction = {
+                    let r = hostile_crit_damage_reduction_active_at_round(
+                        attacker_crew,
+                        &defender_ctx,
+                        round_index,
+                    );
+                    (r + attacker.crit_damage_reduction_bonus).clamp(0.0, 0.95)
                 };
                 let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
                     hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
@@ -2369,11 +2360,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     );
                     let def_is_crit = def_crit.is_crit;
                     let mut def_crit_mult = def_crit.multiplier;
-                    // U.S.S. Crozier "Gunboat Diplomacy": reduce hostile crit damage for the first N rounds.
-                    if def_is_crit
-                        && hostile_crit_reduction > 0.0
-                        && round_in_inclusive_first_n(round_index, hostile_crit_reduction_rounds)
-                    {
+                    // Hostile crit-damage reduction (U.S.S. Crozier "Gunboat Diplomacy", Borg
+                    // Operating Table tech, profile `player_crit_damage_reduction`, …). The
+                    // per-round duration gate already lives inside the resolver; here we just
+                    // apply the resolved fraction.
+                    if def_is_crit && hostile_crit_reduction > 0.0 {
                         def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
                     }
                     trace.record_if(|| CombatEvent {

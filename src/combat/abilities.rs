@@ -1,3 +1,4 @@
+use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::types::{EnemyType, EnemyTypes, OpponentFactionTag, ShipType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -815,15 +816,23 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
     }
 }
 
-/// Hostile crit damage reduction from ship hull abilities (e.g. U.S.S. Crozier) and gated forbidden-tech
-/// seats (e.g. Borg Operating Table vs Conqueror Borg). When multiple seats match **for the same
-/// [`CombatContext`]**, uses the maximum `reduction` and maximum `duration_rounds`.
-pub fn hostile_crit_damage_reduction_from_crew(
+/// Effective hostile crit damage reduction for `round_index` (1-based) from ship hull abilities
+/// (e.g. U.S.S. Crozier) and gated forbidden-tech seats (e.g. Borg Operating Table vs Conqueror
+/// Borg). In-game, CDR sources stack additively per-round, each gated by its own duration window.
+///
+/// This function sums `reduction` across every `HostileCritDamageReduction` seat that
+/// 1. passes its [`AbilityCondition`] against `ctx`, and
+/// 2. has `round_index` within `1..=duration_rounds`.
+///
+/// The folded duration gate replaces the previous tuple `(reduction, duration_rounds)` API; the
+/// engine no longer needs to call [`round_in_inclusive_first_n`] after the resolver. Sum is
+/// clamped to `[0.0, 0.95]`.
+pub fn hostile_crit_damage_reduction_active_at_round(
     crew: &CrewConfiguration,
     ctx: &CombatContext,
-) -> (f64, u32) {
-    let mut reduction = 0.0_f64;
-    let mut rounds = 0_u32;
+    round_index: u32,
+) -> f64 {
+    let mut total = 0.0_f64;
     for s in &crew.seats {
         if let AbilityEffect::HostileCritDamageReduction {
             reduction: r,
@@ -837,11 +846,13 @@ pub fn hostile_crit_damage_reduction_from_crew(
             {
                 continue;
             }
-            reduction = reduction.max(r);
-            rounds = rounds.max(d);
+            if !round_in_inclusive_first_n(round_index, d) {
+                continue;
+            }
+            total += r;
         }
     }
-    (reduction.clamp(0.0, 0.95), rounds)
+    total.clamp(0.0, 0.95)
 }
 
 /// Hostile pierce/accuracy debuff from player ship hull abilities (Quv'Sompek, B'Rel).
@@ -1822,64 +1833,80 @@ mod tests {
         assert!((sum_mitigation_additive(&effects) - 0.05).abs() < 1e-12);
     }
 
-    // ── hostile_crit_damage_reduction_from_crew ──
+    // ── hostile_crit_damage_reduction_active_at_round ──
+
+    fn cdr_ability(reduction: f64, duration_rounds: u32) -> Ability {
+        make_ability(
+            "cdr",
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileCritDamageReduction {
+                reduction,
+                duration_rounds,
+            },
+        )
+    }
 
     #[test]
-    fn hostile_crit_reduction_returns_max_reduction_and_duration() {
-        let ab1 = {
-            let mut ab = make_ability(
-                "a",
-                AbilityClass::ShipAbility,
-                TimingWindow::CombatBegin,
-                AbilityEffect::HostileCritDamageReduction {
-                    reduction: 0.05,
-                    duration_rounds: 3,
-                },
-            );
-            ab.condition = None;
-            ab
-        };
-        let ab2 = {
-            let mut ab = make_ability(
-                "b",
-                AbilityClass::ShipAbility,
-                TimingWindow::CombatBegin,
-                AbilityEffect::HostileCritDamageReduction {
-                    reduction: 0.08,
-                    duration_rounds: 5,
-                },
-            );
-            ab.condition = None;
-            ab
-        };
+    fn hostile_crit_reduction_sums_active_seats_within_window() {
+        // Both seats active for round 1: result is the sum 0.05 + 0.08 = 0.13.
         let crew = CrewConfiguration {
             seats: vec![
-                make_seat(CrewSeat::Ship, ab1, None),
-                make_seat(CrewSeat::Ship, ab2, None),
+                make_seat(CrewSeat::Ship, cdr_ability(0.05, 3), None),
+                make_seat(CrewSeat::Ship, cdr_ability(0.08, 5), None),
             ],
         };
-        let (reduction, rounds) = hostile_crit_damage_reduction_from_crew(&crew, &ctx_default());
-        assert!((reduction - 0.08).abs() < 1e-12);
-        assert_eq!(rounds, 5);
+        let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
+        assert!((r - 0.13).abs() < 1e-12, "expected 0.13, got {r}");
+    }
+
+    #[test]
+    fn hostile_crit_reduction_skips_seats_outside_duration_window() {
+        // Seat A expires after round 2; at round 3 only seat B (full fight) contributes.
+        let crew = CrewConfiguration {
+            seats: vec![
+                make_seat(CrewSeat::Ship, cdr_ability(0.05, 2), None),
+                make_seat(CrewSeat::Ship, cdr_ability(0.08, 99), None),
+            ],
+        };
+        let r_round_1 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
+        let r_round_3 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 3);
+        assert!((r_round_1 - 0.13).abs() < 1e-12);
+        assert!((r_round_3 - 0.08).abs() < 1e-12);
     }
 
     #[test]
     fn hostile_crit_reduction_respects_condition_gating() {
-        let mut ab = make_ability(
-            "a",
-            AbilityClass::ShipAbility,
-            TimingWindow::CombatBegin,
-            AbilityEffect::HostileCritDamageReduction {
-                reduction: 0.05,
-                duration_rounds: 3,
-            },
-        );
+        let mut ab = cdr_ability(0.05, 3);
         ab.condition = Some(AbilityCondition::LiteralBool(false));
         let crew = CrewConfiguration {
             seats: vec![make_seat(CrewSeat::Ship, ab, None)],
         };
-        let (reduction, rounds) = hostile_crit_damage_reduction_from_crew(&crew, &ctx_default());
-        assert!((reduction - 0.0).abs() < 1e-12);
-        assert_eq!(rounds, 0);
+        let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
+        assert!(r.abs() < 1e-12);
+    }
+
+    #[test]
+    fn hostile_crit_reduction_clamps_sum_to_ceiling() {
+        // Three seats summing to 1.10; result clamps at the documented 0.95 ceiling.
+        let crew = CrewConfiguration {
+            seats: vec![
+                make_seat(CrewSeat::Ship, cdr_ability(0.5, 99), None),
+                make_seat(CrewSeat::Ship, cdr_ability(0.4, 99), None),
+                make_seat(CrewSeat::Ship, cdr_ability(0.2, 99), None),
+            ],
+        };
+        let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
+        assert!((r - 0.95).abs() < 1e-12, "expected 0.95, got {r}");
+    }
+
+    #[test]
+    fn hostile_crit_reduction_zero_duration_seat_is_inactive() {
+        // A seat with duration_rounds: 0 never activates (matches round_in_inclusive_first_n contract).
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(CrewSeat::Ship, cdr_ability(0.5, 0), None)],
+        };
+        let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
+        assert!(r.abs() < 1e-12);
     }
 }
