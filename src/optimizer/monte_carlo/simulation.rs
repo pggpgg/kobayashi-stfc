@@ -364,7 +364,6 @@ fn run_candidate_monte_carlo(
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     // Precompute values that don't change per trial
@@ -1061,7 +1060,6 @@ pub fn replay_optimize_iteration_with_registry(
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(

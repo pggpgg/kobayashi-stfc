@@ -57,7 +57,6 @@ fn defender_counter_respects_weapon_base_shots() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let player = Combatant {
         id: "player".into(),
@@ -71,6 +70,7 @@ fn defender_counter_respects_weapon_base_shots() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -96,6 +96,7 @@ fn defender_counter_respects_weapon_base_shots() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -148,7 +149,6 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let player = Combatant {
         id: "player".into(),
@@ -162,6 +162,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -191,6 +192,7 @@ fn attack_trace_includes_hit_index_per_weapon_shot() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -414,6 +416,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -439,6 +442,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -493,7 +497,6 @@ fn defender_crew_can_modify_counter_fire_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -543,6 +546,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -572,6 +576,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -623,7 +628,6 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
@@ -676,6 +680,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -712,6 +717,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -745,7 +751,6 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let baseline = simulate_combat(
         &attacker,
@@ -870,6 +875,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -895,6 +901,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -920,6 +927,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -949,7 +957,6 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration::default();
 
@@ -971,6 +978,7 @@ fn apex_barrier_reduces_damage_and_apex_shred_weakens_barrier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1010,6 +1018,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1036,6 +1045,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1065,7 +1075,6 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     // 200 damage: 80% = 160 to shield, 20% = 40 to hull.
@@ -1088,6 +1097,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1114,6 +1124,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1143,7 +1154,6 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.total_damage, 1000.0, 1e-12);
@@ -1165,6 +1175,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1190,6 +1201,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1219,7 +1231,6 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
@@ -1242,6 +1253,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1267,6 +1279,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1296,7 +1309,6 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_shred = CrewConfiguration {
@@ -1346,6 +1358,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1371,6 +1384,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1400,7 +1414,6 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew_no_apex = CrewConfiguration::default();
     let crew_with_apex_barrier = CrewConfiguration {
@@ -1451,6 +1464,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1476,6 +1490,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1505,7 +1520,6 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew_no_ship_ability = CrewConfiguration::default();
     let crew_with_ship_ability = CrewConfiguration {
@@ -1547,6 +1561,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1576,6 +1591,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1605,7 +1621,6 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -1661,6 +1676,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1690,6 +1706,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1737,7 +1754,6 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let cfg_tagged = SimulationConfig {
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
@@ -1768,6 +1784,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1793,6 +1810,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1840,7 +1858,6 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let cfg_tagged = SimulationConfig {
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
@@ -1870,6 +1887,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1895,6 +1913,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -1942,7 +1961,6 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let cfg_tagged = SimulationConfig {
         defender_hostile_tag_mask: HOSTILE_TAG_MASK_CONQUEROR_BORG,
@@ -1972,6 +1990,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2001,6 +2020,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2033,7 +2053,6 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let r_kill = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -2100,6 +2119,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2129,6 +2149,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2158,7 +2179,6 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2221,6 +2241,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2250,6 +2271,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2279,7 +2301,6 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2343,6 +2364,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2372,6 +2394,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2401,7 +2424,6 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2466,6 +2488,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2495,6 +2518,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2524,7 +2548,6 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2616,6 +2639,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2645,6 +2669,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2674,7 +2699,6 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let uncapped = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -2753,6 +2777,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2782,6 +2807,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         crit_chance: 1.0,
         crit_multiplier: 2.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2815,7 +2841,6 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew_plain = CrewConfiguration::default();
     let crew_crozier_style = CrewConfiguration {
@@ -2862,6 +2887,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2891,6 +2917,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -2943,7 +2970,6 @@ fn ship_ability_receive_damage_timing_emits_trace() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -2976,6 +3002,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3001,6 +3028,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3049,7 +3077,6 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, &config, &no_morale);
@@ -3079,6 +3106,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3104,6 +3132,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3171,7 +3200,6 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let never_morale =
@@ -3199,6 +3227,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3224,6 +3253,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3307,7 +3337,6 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, &config, &baseline_crew);
@@ -3349,6 +3378,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3374,6 +3404,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3427,7 +3458,6 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -3459,6 +3489,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         crit_chance: 1.0,
         crit_multiplier: 2.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3484,6 +3515,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3538,7 +3570,6 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -3575,6 +3606,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
         crit_chance: 0.0,
         crit_multiplier: 2.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3600,6 +3632,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3650,7 +3683,6 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -3685,6 +3717,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
         crit_chance: 1.0,
         crit_multiplier: 2.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3710,6 +3743,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3760,7 +3794,6 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -3782,6 +3815,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         crit_chance: 1.0,
         crit_multiplier: 1.5,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3807,6 +3841,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3861,7 +3896,6 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -3892,6 +3926,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         crit_chance: 0.5,
         crit_multiplier: 1.8,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.4,
         proc_multiplier: 1.25,
         end_of_round_damage: 3.0,
@@ -3917,6 +3952,7 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -3946,7 +3982,6 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let crew = CrewConfiguration::default();
@@ -4039,6 +4074,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4084,6 +4120,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4117,7 +4154,6 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration::default();
     let result = simulate_combat(&attacker, &defender, &config, &crew);
@@ -4257,7 +4293,6 @@ fn counter_fire_inbound_uses_ship_type_weighted_components_when_set() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         };
         let crew = CrewConfiguration::default();
         let result = simulate_combat(&a, &d, &config, &crew);
@@ -4281,6 +4316,7 @@ fn counter_fire_inbound_uses_ship_type_weighted_components_when_set() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4317,6 +4353,7 @@ fn counter_fire_inbound_uses_ship_type_weighted_components_when_set() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4358,6 +4395,7 @@ fn crit_damage_floor_clamps_attacker_outbound_reduction() {
         crit_chance: 1.0, // guaranteed crit
         crit_multiplier: 2.0,
         crit_damage_floor: 1.5,
+        crit_damage_reduction_bonus: 0.0,
         hull_health: 10_000.0,
         weapons: vec![WeaponStats {
             attack: 100.0,
@@ -4454,6 +4492,7 @@ fn crit_damage_floor_dormant_when_no_attacker_outbound_reduction() {
         crit_chance: 1.0,
         crit_multiplier: 2.0,
         crit_damage_floor: 1.5,
+        crit_damage_reduction_bonus: 0.0,
         hull_health: 10_000.0,
         weapons: vec![WeaponStats {
             attack: 100.0,
@@ -4627,6 +4666,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4652,6 +4692,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4681,7 +4722,6 @@ fn crew_slot_gating_matrix_controls_activation() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let valid_crew = CrewConfiguration {
@@ -4753,6 +4793,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4778,6 +4819,7 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4807,7 +4849,6 @@ fn boosted_non_boostable_abilities_are_filtered_out() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let boosted = CrewConfiguration {
@@ -4861,6 +4902,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4886,6 +4928,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -4915,7 +4958,6 @@ fn timing_windows_materially_change_damage_outcomes() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let attack_phase_crew = CrewConfiguration {
@@ -4992,6 +5034,7 @@ fn burning_deals_one_percent_hull_per_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5017,6 +5060,7 @@ fn burning_deals_one_percent_hull_per_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5070,7 +5114,6 @@ fn burning_deals_one_percent_hull_per_round() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_crew,
     );
@@ -5137,6 +5180,7 @@ fn burning_triggers_on_combat_begin() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5162,6 +5206,7 @@ fn burning_triggers_on_combat_begin() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5194,7 +5239,6 @@ fn burning_triggers_on_combat_begin() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::CombatBegin),
     );
@@ -5215,6 +5259,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5240,6 +5285,7 @@ fn burning_triggers_on_defense_phase_per_shot() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5272,7 +5318,6 @@ fn burning_triggers_on_defense_phase_per_shot() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::DefensePhase),
     );
@@ -5293,6 +5338,7 @@ fn burning_triggers_on_round_end_before_tick() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5318,6 +5364,7 @@ fn burning_triggers_on_round_end_before_tick() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5350,7 +5397,6 @@ fn burning_triggers_on_round_end_before_tick() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::RoundEnd),
     );
@@ -5378,6 +5424,7 @@ fn burning_triggers_on_shield_break() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5403,6 +5450,7 @@ fn burning_triggers_on_shield_break() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5435,7 +5483,6 @@ fn burning_triggers_on_shield_break() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::ShieldBreak),
     );
@@ -5456,6 +5503,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5481,6 +5529,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5553,7 +5602,6 @@ fn burning_triggers_on_hull_breach_state_entry() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -5574,6 +5622,7 @@ fn burning_triggers_on_receive_damage_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5599,6 +5648,7 @@ fn burning_triggers_on_receive_damage_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5631,7 +5681,6 @@ fn burning_triggers_on_receive_damage_hull() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::ReceiveDamage),
     );
@@ -5652,6 +5701,7 @@ fn burning_triggers_on_kill() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5677,6 +5727,7 @@ fn burning_triggers_on_kill() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5709,7 +5760,6 @@ fn burning_triggers_on_kill() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::Kill),
     );
@@ -5730,6 +5780,7 @@ fn burning_triggers_on_after_subround() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5755,6 +5806,7 @@ fn burning_triggers_on_after_subround() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5787,7 +5839,6 @@ fn burning_triggers_on_after_subround() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &burning_only_crew(TimingWindow::AfterSubround),
     );
@@ -5808,6 +5859,7 @@ fn emits_ability_activation_for_each_timing_window() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 1.0,
@@ -5833,6 +5885,7 @@ fn emits_ability_activation_for_each_timing_window() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -5955,7 +6008,6 @@ fn emits_ability_activation_for_each_timing_window() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -5989,6 +6041,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6014,6 +6067,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6093,7 +6147,6 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let summed = simulate_combat(&attacker, &defender, &config, &two_ten_percent);
@@ -6117,6 +6170,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6142,6 +6196,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6191,7 +6246,6 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &decay_crew);
     assert!(result.total_damage > 0.0);
@@ -6212,6 +6266,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6237,6 +6292,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6286,7 +6342,6 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &accumulate_crew);
     assert!(result.total_damage > 0.0);
@@ -6307,6 +6362,7 @@ fn combat_rounds_are_capped_at_100() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6332,6 +6388,7 @@ fn combat_rounds_are_capped_at_100() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6365,7 +6422,6 @@ fn combat_rounds_are_capped_at_100() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &CrewConfiguration::default(),
     );
@@ -6388,6 +6444,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6413,6 +6470,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6478,7 +6536,6 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew_no_regen,
     );
@@ -6501,7 +6558,6 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew_with_regen,
     );
@@ -6529,6 +6585,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6554,6 +6611,7 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6587,7 +6645,6 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &CrewConfiguration::default(),
     );
@@ -6618,6 +6675,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6643,6 +6701,7 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6674,7 +6733,6 @@ fn isolytic_on_combatant_increases_damage_defense_reduces_it() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew = CrewConfiguration::default();
     let result_no_iso = simulate_combat(&attacker_no_iso, &defender, &config, &crew);
@@ -6706,6 +6764,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6731,6 +6790,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6760,7 +6820,6 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew_empty = CrewConfiguration::default();
     let crew_with_iso = CrewConfiguration {
@@ -6801,6 +6860,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6826,6 +6886,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6855,7 +6916,6 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let crew_base_iso = CrewConfiguration {
         seats: vec![CrewSeatContext {
@@ -6927,6 +6987,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6963,6 +7024,7 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -6992,7 +7054,6 @@ fn two_weapon_combatant_produces_two_damage_events_per_round() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -7033,6 +7094,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7069,6 +7131,7 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7098,7 +7161,6 @@ fn sub_round_ordering_weapon_one_damage_after_shield_break() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let damage_events: Vec<_> = result
@@ -7137,6 +7199,7 @@ fn shots_bonus_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7166,6 +7229,7 @@ fn shots_bonus_increases_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7195,7 +7259,6 @@ fn shots_bonus_increases_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let no_bonus = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
@@ -7243,6 +7306,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7268,6 +7332,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7333,7 +7398,6 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -7364,6 +7428,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7389,6 +7454,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7438,7 +7504,6 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew_with_regen,
     );
@@ -7461,7 +7526,6 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &CrewConfiguration::default(),
     );
@@ -7491,6 +7555,7 @@ fn combat_end_window_respects_condition_filtering() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7516,6 +7581,7 @@ fn combat_end_window_respects_condition_filtering() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7587,7 +7653,6 @@ fn combat_end_window_respects_condition_filtering() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -7617,6 +7682,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7646,6 +7712,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7696,7 +7763,6 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -7778,6 +7844,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7803,6 +7870,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7848,7 +7916,6 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let res = simulate_combat(&attacker, &defender, &config, &crew);
     // Round 1–3 each heal 100 at round start: 400 − 300 = 100 net hull damage.
@@ -7869,6 +7936,7 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7894,6 +7962,7 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7939,7 +8008,6 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let res = simulate_combat(&attacker, &defender, &config, &crew);
     // Round 1-3 each heal 10% of max hull: 400 - 3 * 100 = 100 net hull damage.
@@ -7961,6 +8029,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -7990,6 +8059,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8035,7 +8105,6 @@ fn defender_round_start_hull_regen_heals_defender() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let without = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -8087,6 +8156,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8116,6 +8186,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8165,7 +8236,6 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -8216,6 +8286,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8245,6 +8316,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8296,7 +8368,6 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let cfg_group = SimulationConfig {
         engagement_enemy_types: EnemyTypes::single(EnemyType::GroupArmadas),
@@ -8335,6 +8406,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8364,6 +8436,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8413,7 +8486,6 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let baseline_armada = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
@@ -8478,6 +8550,7 @@ fn defender_inbound_defense_phase_reduces_incoming_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8507,6 +8580,7 @@ fn defender_inbound_defense_phase_reduces_incoming_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -8554,7 +8628,6 @@ fn defender_inbound_defense_phase_reduces_incoming_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let baseline = simulate_combat_with_defender_faction_and_defender_crew(

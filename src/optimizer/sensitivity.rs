@@ -290,7 +290,7 @@ pub(crate) fn run_one_sim_with_perturbations(
 ) -> CombatSimResult {
     let mut attacker = input.attacker.clone();
     let mut defender = input.defender.clone();
-    let mut config = SimulationConfig {
+    let config = SimulationConfig {
         rounds: input.rounds,
         seed: iteration_seed,
         trace_mode: TraceMode::Off,
@@ -310,11 +310,10 @@ pub(crate) fn run_one_sim_with_perturbations(
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     for (stat, delta) in perturbations {
-        apply_perturbation(&mut attacker, &mut defender, &mut config, *stat, *delta);
+        apply_perturbation(&mut attacker, &mut defender, *stat, *delta);
     }
 
     let defender_faction = shared

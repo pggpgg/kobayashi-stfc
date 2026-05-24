@@ -30,6 +30,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -55,6 +56,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -84,7 +86,6 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
@@ -149,6 +150,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -185,6 +187,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -214,7 +217,6 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let after_sub = CrewConfiguration {
@@ -256,6 +258,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -296,6 +299,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -325,7 +329,6 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let r = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     // Weapon0: high pierce + guaranteed crit x2 + proc x3 vs weapon1: no pierce, no crit, no proc.
@@ -351,6 +354,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -380,6 +384,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -413,7 +418,6 @@ fn defender_counter_attack_matches_helper_pipeline() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
