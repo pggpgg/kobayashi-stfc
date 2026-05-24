@@ -1,4 +1,10 @@
-import { API_BASE, parseApiError } from "./api";
+import {
+  API_BASE,
+  type CpuBusyWaitInfo,
+  type FetchCpuBusyOptions,
+  fetchWithCpuBusyRetries,
+  parseApiError,
+} from "./api";
 
 export type OutcomeMetric =
   | "hull_remaining"
@@ -253,3 +259,121 @@ export async function runSobol(
   }
   return (await res.json()) as SobolResponse;
 }
+
+// ---------------------------------------------------------------------------
+// Async job runner (`POST /api/sensitivity/*/start`, SSE, status, cancel)
+// ---------------------------------------------------------------------------
+
+/** Discriminator that mirrors `SensitivityJobKind` on the server. */
+export type SensitivityMethod = "oat" | "morris" | "sobol";
+
+export interface SensitivityStartResponse {
+  job_id: string;
+}
+
+/** Tagged-union result mirroring the server's `SensitivityJobResult`. */
+export type SensitivityJobResultPayload =
+  | { method: "oat"; [K: string]: unknown }
+  | { method: "morris"; [K: string]: unknown }
+  | { method: "sobol"; [K: string]: unknown };
+
+export interface SensitivityStatusResponse {
+  status: "running" | "done" | "error";
+  method: SensitivityMethod;
+  progress?: number;
+  sims_done?: number;
+  total_sims?: number;
+  /** Engine-phase string (see `docs/openapi/kobayashi-openapi.yaml` for the per-method enum). */
+  phase?: string;
+  throughput_sims_per_sec?: number;
+  eta_seconds?: number;
+  /** Same shape as the synchronous run's response, tagged with the `method` discriminator. */
+  result?: SensitivityJobResultPayload;
+  error?: string;
+}
+
+/** Human-readable label for the `phase` field on `SensitivityStatusResponse`. */
+export function formatSensitivityPhaseLabel(
+  phase: string | null | undefined,
+): string {
+  if (!phase) return "";
+  const map: Record<string, string> = {
+    baseline: "Baseline",
+    per_stat_perturbation: "Per-stat perturbation",
+    trajectories: "Trajectories",
+    sample_a: "Sample A",
+    sample_b: "Sample B",
+    first_order: "First-order indices",
+    pairwise: "Pairwise (S_ij)",
+  };
+  return map[phase] ?? phase.replace(/_/g, " ");
+}
+
+function startUrl(method: SensitivityMethod): string {
+  switch (method) {
+    case "oat":
+      return `${API_BASE}/api/sensitivity/start`;
+    case "morris":
+      return `${API_BASE}/api/sensitivity/morris/start`;
+    case "sobol":
+      return `${API_BASE}/api/sensitivity/sobol/start`;
+  }
+}
+
+/**
+ * Start an async sensitivity job. Returns the job id immediately; subscribe to the SSE
+ * stream at {@link getSensitivityStreamUrl} or poll {@link getSensitivityStatus} to
+ * follow progress.
+ *
+ * `onCpuBusyWait` mirrors the optimize-start contract — when the CPU semaphore is
+ * saturated the server returns 503 cpu_busy and this client transparently retries with
+ * bounded backoff, calling the callback so the UI can show a "queued" indicator.
+ */
+export async function sensitivityStart<TRequest>(
+  method: SensitivityMethod,
+  request: TRequest,
+  profileId?: string | null,
+  options?: FetchCpuBusyOptions,
+): Promise<SensitivityStartResponse> {
+  const res = await fetchWithCpuBusyRetries(
+    startUrl(method),
+    {
+      method: "POST",
+      headers: profileHeaders(profileId),
+      body: JSON.stringify(request),
+    },
+    options,
+  );
+  return (await res.json()) as SensitivityStartResponse;
+}
+
+export function getSensitivityStreamUrl(jobId: string): string {
+  return `${API_BASE}/api/sensitivity/jobs/${encodeURIComponent(jobId)}/stream`;
+}
+
+export async function getSensitivityStatus(
+  jobId: string,
+): Promise<SensitivityStatusResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/sensitivity/jobs/${encodeURIComponent(jobId)}/status`,
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw await parseApiError(res, body);
+  }
+  return (await res.json()) as SensitivityStatusResponse;
+}
+
+export async function cancelSensitivityJob(jobId: string): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/api/sensitivity/jobs/${encodeURIComponent(jobId)}/cancel`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw await parseApiError(res, body);
+  }
+}
+
+/** Re-exported so consumers don't need to import directly from `./api`. */
+export type { CpuBusyWaitInfo };

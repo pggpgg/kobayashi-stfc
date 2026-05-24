@@ -25,6 +25,7 @@ use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
     CombatSimulationInput, DefenderOpponent, SharedScenarioData,
 };
+use crate::server::sensitivity_jobs::SensitivityJobProgress;
 
 /// User-chosen outcome scalar that each stat's Δ is measured against.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -173,6 +174,16 @@ pub fn run_sensitivity(
     registry: &DataRegistry,
     request: &SensitivityRequest,
 ) -> Result<SensitivityResponse, String> {
+    run_sensitivity_with_progress(registry, request, &SensitivityJobProgress::no_op())
+}
+
+/// OAT sensitivity run that reports progress + checks cancellation through a sink. The
+/// sync [`run_sensitivity`] entry above wraps this with a no-op sink.
+pub fn run_sensitivity_with_progress(
+    registry: &DataRegistry,
+    request: &SensitivityRequest,
+    progress: &SensitivityJobProgress,
+) -> Result<SensitivityResponse, String> {
     let num_sims = request.num_sims.unwrap_or(2000).max(2);
     let base_seed = request.seed.unwrap_or(0);
     let metric = request.metric.unwrap_or_default();
@@ -203,9 +214,13 @@ pub fn run_sensitivity(
         // We adjust via a local clone below.
         let mut input2 = input.clone();
         input2.rounds = r;
-        return run_with_input(&shared, input2, metric, num_sims, base_seed, request);
+        return run_with_input(
+            &shared, input2, metric, num_sims, base_seed, request, progress,
+        );
     }
-    run_with_input(&shared, input, metric, num_sims, base_seed, request)
+    run_with_input(
+        &shared, input, metric, num_sims, base_seed, request, progress,
+    )
 }
 
 fn run_with_input(
@@ -215,20 +230,13 @@ fn run_with_input(
     num_sims: u32,
     base_seed: u64,
     request: &SensitivityRequest,
+    progress: &SensitivityJobProgress,
 ) -> Result<SensitivityResponse, String> {
     let attacker_max_hull = input.attacker.hull_health.max(1.0);
     let defender_max_hull = input.defender.hull_health.max(1.0);
 
-    let baseline: Vec<f64> = (0..num_sims)
-        .into_par_iter()
-        .map(|i| {
-            let seed = base_seed.wrapping_add(i as u64);
-            let r = run_one_sim(shared, &input, seed, StatKey::WeaponDamage, 0.0);
-            metric.extract(&r, attacker_max_hull, defender_max_hull)
-        })
-        .collect();
-    let baseline_mean = mean(&baseline);
-
+    // Compute total sim budget up-front so the progress %% has a denominator. OAT runs
+    // `num_sims` baseline sims plus `num_sims × k_effective` perturbation sims.
     let overrides = request.deltas.clone().unwrap_or_default();
     let stat_deltas: Vec<(StatKey, f64)> = StatKey::ALL
         .iter()
@@ -241,7 +249,25 @@ fn run_with_input(
             Some((*stat, delta))
         })
         .collect();
+    progress.set_total_sims((num_sims as u64) * (1 + stat_deltas.len() as u64));
 
+    progress.set_phase("baseline");
+    let baseline: Vec<f64> = (0..num_sims)
+        .into_par_iter()
+        .map(|i| {
+            let seed = base_seed.wrapping_add(i as u64);
+            let r = run_one_sim(shared, &input, seed, StatKey::WeaponDamage, 0.0);
+            let v = metric.extract(&r, attacker_max_hull, defender_max_hull);
+            progress.record_sims(1);
+            v
+        })
+        .collect();
+    if progress.cancelled() {
+        return Err("Cancelled".to_string());
+    }
+    let baseline_mean = mean(&baseline);
+
+    progress.set_phase("per_stat_perturbation");
     let rows: Vec<SensitivityRow> = stat_deltas
         .par_iter()
         .map(|(stat, delta)| {
@@ -251,12 +277,16 @@ fn run_with_input(
                     let seed = base_seed.wrapping_add(i as u64);
                     let r = run_one_sim(shared, &input, seed, *stat, *delta);
                     let perturbed = metric.extract(&r, attacker_max_hull, defender_max_hull);
+                    progress.record_sims(1);
                     perturbed - baseline[i as usize]
                 })
                 .collect();
             row_from_diffs(*stat, *delta, &diffs, baseline_mean)
         })
         .collect();
+    if progress.cancelled() {
+        return Err("Cancelled".to_string());
+    }
 
     Ok(SensitivityResponse {
         metric: metric.as_str(),

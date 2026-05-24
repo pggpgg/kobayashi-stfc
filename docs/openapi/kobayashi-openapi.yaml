@@ -915,6 +915,168 @@ paths:
               schema:
                 $ref: "#/components/schemas/CpuBusyError"
 
+  /api/sensitivity/start:
+    post:
+      tags: [sensitivity]
+      summary: Start async OAT sensitivity job (same JSON as /api/sensitivity)
+      description: |
+        Returns a `job_id` immediately. Poll `GET /api/sensitivity/jobs/{job_id}/status`
+        or subscribe to the SSE stream at `GET /api/sensitivity/jobs/{job_id}/stream`
+        for live progress and the final result.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SensitivityRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitivityStartResponse"
+        "400":
+          description: Invalid request body
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/sensitivity/morris/start:
+    post:
+      tags: [sensitivity]
+      summary: Start async Morris-screening job (same JSON as /api/sensitivity/morris)
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MorrisSensitivityRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitivityStartResponse"
+        "400":
+          description: Invalid request body
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/sensitivity/sobol/start:
+    post:
+      tags: [sensitivity]
+      summary: Start async Sobol variance-decomposition job (same JSON as /api/sensitivity/sobol)
+      description: |
+        Especially useful with `include_pairwise: true` — the pairwise compute budget is
+        `N × k(k − 1)/2` extra sims (≈ 8.6× at defaults), which is meaningfully slow
+        synchronously. Async + SSE lets the UI stream progress and offer cancel.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SobolSensitivityRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitivityStartResponse"
+        "400":
+          description: Invalid request body
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/sensitivity/jobs/{job_id}/status:
+    get:
+      tags: [sensitivity]
+      summary: One-shot status snapshot of a sensitivity job
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitivityStatusResponse"
+        "404":
+          description: Job not found
+
+  /api/sensitivity/jobs/{job_id}/stream:
+    get:
+      tags: [sensitivity]
+      summary: SSE stream of sensitivity job progress until done or error
+      description: |
+        Emits a JSON-encoded `SensitivityStatusResponse` every ~300ms. The final event
+        carries `status: "done"` (or `status: "error"`) and a full `result` payload
+        whose shape matches the method-specific response (`SensitivityResponse`,
+        `MorrisSensitivityResponse`, or `SobolSensitivityResponse`) — discriminate via
+        the `method` field on the wrapper.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/sensitivity/jobs/{job_id}/cancel:
+    post:
+      tags: [sensitivity]
+      summary: Request cancellation of a running sensitivity job
+      description: |
+        Idempotent. The worker checks the cancel flag at phase boundaries (e.g. between
+        the A and B sample matrices, between first-order and pairwise) and returns
+        early. In-flight Rayon work in the current phase still completes — Rayon doesn't
+        natively support early termination of in-flight parallel iterators.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancel requested
+        "404":
+          description: Job not found
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -1286,6 +1448,59 @@ components:
       required: [job_id]
       properties:
         job_id:
+          type: string
+
+    SensitivityStartResponse:
+      type: object
+      required: [job_id]
+      properties:
+        job_id:
+          type: string
+          description: |
+            Job id with shape `sens_<method>_<millis>_<counter>` where `<method>` is
+            `oat`, `morris`, or `sobol`. Use it to poll status or subscribe to the SSE
+            stream.
+
+    SensitivityStatusResponse:
+      type: object
+      required: [status, method]
+      properties:
+        status:
+          type: string
+          enum: [running, done, error]
+        method:
+          type: string
+          enum: [oat, morris, sobol]
+          description: Which sensitivity engine produced this job.
+        progress:
+          type: integer
+          description: 0–100. Computed from sims_done / total_sims.
+        sims_done:
+          type: integer
+          description: Atomic counter of completed sims. Updates throttled to one per 64 sims to limit registry-lock contention.
+        total_sims:
+          type: integer
+          description: Total sim budget for the job (resolved at engine start once k / N / r are known).
+        phase:
+          type: string
+          description: |
+            Current engine phase. OAT — `baseline` then `per_stat_perturbation`. Morris —
+            `trajectories`. Sobol — `sample_a`, `sample_b`, `first_order`, optionally
+            `pairwise`.
+        throughput_sims_per_sec:
+          type: number
+          description: Best-effort sims/sec from sims_done and elapsed wall time. Null when sims_done is 0 or status is not running.
+        eta_seconds:
+          type: integer
+          description: Estimated remaining seconds; null when throughput cannot be computed.
+        result:
+          description: |
+            Full method-specific result on completion. Tagged by `method` (`oat`,
+            `morris`, `sobol`) so clients can route to `SensitivityResponse`,
+            `MorrisSensitivityResponse`, or `SobolSensitivityResponse` respectively.
+          type: object
+          additionalProperties: true
+        error:
           type: string
 
     OptimizeStatusResponse:

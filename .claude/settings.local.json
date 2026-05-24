@@ -20,7 +20,8 @@
       "Bash(cargo fmt *)",
       "Bash(echo \"fmt_exit=$?\")",
       "Bash(echo \"ok exit=$?\")",
-      "Bash(echo \"tsc=$?\")"
+      "Bash(echo \"tsc=$?\")",
+      "Bash(awk '{ passed += $4; failed += $6 } END { print passed \" passed, \" failed \" failed\" }')"
     ]
   }
 }

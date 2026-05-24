@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import HostilePicker from "../components/HostilePicker";
 import MorrisResults from "../components/MorrisResults";
 import SensitivityResults from "../components/SensitivityResults";
@@ -6,23 +6,26 @@ import SobolResults from "../components/SobolResults";
 import { useProfile } from "../contexts/ProfileContext";
 import {
   ApiError,
+  type CpuBusyWaitInfo,
   fetchHostiles,
   fetchShips,
   type HostileListItem,
   type ShipListItem,
 } from "../lib/api";
 import {
+  cancelSensitivityJob,
   fetchMorrisDefaults,
   fetchSensitivityDefaults,
   fetchSobolDefaults,
+  formatSensitivityPhaseLabel,
+  getSensitivityStreamUrl,
   type MorrisResponse,
   type OutcomeMetric,
-  runMorris,
-  runSensitivity,
-  runSobol,
   type SensitivityDefaultRow,
   type SensitivityResponse,
+  type SensitivityStatusResponse,
   type SobolResponse,
+  sensitivityStart,
 } from "../lib/sensitivityApi";
 
 type AnalysisMethod = "oat" | "morris" | "sobol";
@@ -87,6 +90,19 @@ export default function Sensitivity() {
   const [sobolResponse, setSobolResponse] = useState<SobolResponse | null>(
     null,
   );
+
+  // Async-job state: jobId is set as soon as the server replies to POST .../start;
+  // jobProgress / phase / sims / throughput / eta are updated by SSE events on every
+  // ~300ms tick. cpuBusyInfo is shown in a banner when fetchWithCpuBusyRetries waits.
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobProgress, setJobProgress] = useState<number | null>(null);
+  const [jobPhase, setJobPhase] = useState<string | null>(null);
+  const [jobSimsDone, setJobSimsDone] = useState<number | null>(null);
+  const [jobTotalSims, setJobTotalSims] = useState<number | null>(null);
+  const [jobThroughput, setJobThroughput] = useState<number | null>(null);
+  const [jobEtaSeconds, setJobEtaSeconds] = useState<number | null>(null);
+  const [cpuBusyInfo, setCpuBusyInfo] = useState<CpuBusyWaitInfo | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,10 +173,36 @@ export default function Sensitivity() {
 
   const canRun = shipId !== "" && scenarioId !== "";
 
+  /** Reset all live-progress state. Called when starting a new run or after a job ends. */
+  function resetJobState() {
+    setJobId(null);
+    setJobProgress(null);
+    setJobPhase(null);
+    setJobSimsDone(null);
+    setJobTotalSims(null);
+    setJobThroughput(null);
+    setJobEtaSeconds(null);
+    setCpuBusyInfo(null);
+  }
+
+  /** Apply one SSE status snapshot to the live-progress state. */
+  function applyStatus(status: SensitivityStatusResponse) {
+    setJobProgress(status.progress ?? null);
+    setJobPhase(status.phase ?? null);
+    setJobSimsDone(status.sims_done ?? null);
+    setJobTotalSims(status.total_sims ?? null);
+    setJobThroughput(status.throughput_sims_per_sec ?? null);
+    setJobEtaSeconds(status.eta_seconds ?? null);
+  }
+
   async function handleRun() {
     if (!canRun) return;
     setRunning(true);
     setError(null);
+    setResponse(null);
+    setMorrisResponse(null);
+    setSobolResponse(null);
+    resetJobState();
     try {
       const deltasMap: Record<string, number> = {};
       for (const row of defaults) {
@@ -183,39 +225,73 @@ export default function Sensitivity() {
         deltas: deltasMap,
         profile_id: activeProfileId ?? undefined,
       };
-      if (method === "oat") {
-        const result = await runSensitivity(
-          { ...sharedScenario, num_sims: numSims },
-          activeProfileId,
-        );
-        setResponse(result);
-        setMorrisResponse(null);
-        setSobolResponse(null);
-      } else if (method === "morris") {
-        const result = await runMorris(
-          {
-            ...sharedScenario,
-            num_sims: morrisNumSims,
-            r_trajectories: rTrajectories,
-          },
-          activeProfileId,
-        );
-        setMorrisResponse(result);
-        setResponse(null);
-        setSobolResponse(null);
-      } else {
-        const result = await runSobol(
-          {
-            ...sharedScenario,
-            n_samples: sobolNSamples,
-            include_pairwise: sobolIncludePairwise,
-          },
-          activeProfileId,
-        );
-        setSobolResponse(result);
-        setResponse(null);
-        setMorrisResponse(null);
-      }
+
+      const requestBody =
+        method === "oat"
+          ? { ...sharedScenario, num_sims: numSims }
+          : method === "morris"
+            ? {
+                ...sharedScenario,
+                num_sims: morrisNumSims,
+                r_trajectories: rTrajectories,
+              }
+            : {
+                ...sharedScenario,
+                n_samples: sobolNSamples,
+                include_pairwise: sobolIncludePairwise,
+              };
+
+      const startResp = await sensitivityStart(
+        method,
+        requestBody,
+        activeProfileId,
+        {
+          onCpuBusyWait: (info) => setCpuBusyInfo(info),
+        },
+      );
+      setCpuBusyInfo(null);
+      setJobId(startResp.job_id);
+
+      // Subscribe to the SSE stream. The server emits one status snapshot every
+      // ~300ms until the job hits done / error; the final event carries the full
+      // result payload. Fallback: if the stream errors out, we let the UI show the
+      // error so the user can retry — no polling fallback wired here (different
+      // tradeoff from optimize, where the page is much longer-running).
+      const url = getSensitivityStreamUrl(startResp.job_id);
+      const es = new EventSource(url);
+      eventSourceRef.current = es;
+      es.onmessage = (event) => {
+        try {
+          const status = JSON.parse(event.data) as SensitivityStatusResponse;
+          applyStatus(status);
+          if (status.status === "done" && status.result) {
+            if (status.method === "oat") {
+              setResponse(status.result as unknown as SensitivityResponse);
+            } else if (status.method === "morris") {
+              setMorrisResponse(status.result as unknown as MorrisResponse);
+            } else if (status.method === "sobol") {
+              setSobolResponse(status.result as unknown as SobolResponse);
+            }
+            es.close();
+            eventSourceRef.current = null;
+            setRunning(false);
+          } else if (status.status === "error") {
+            setError(status.error ?? "Job failed");
+            es.close();
+            eventSourceRef.current = null;
+            setRunning(false);
+          }
+        } catch (parseErr) {
+          // Ignore malformed SSE frames; the next tick should recover.
+          console.warn("sensitivity SSE parse error", parseErr);
+        }
+      };
+      es.onerror = () => {
+        // EventSource auto-retries on transient errors; if the connection is
+        // permanently broken the next status snapshot won't arrive and the user
+        // can cancel. Surface a soft hint in the phase label.
+        setJobPhase("(reconnecting…)");
+      };
     } catch (e: unknown) {
       if (e instanceof ApiError) {
         setError(`${e.code}: ${e.message}`);
@@ -224,10 +300,34 @@ export default function Sensitivity() {
       } else {
         setError("Unknown error");
       }
-    } finally {
       setRunning(false);
     }
   }
+
+  async function handleCancel() {
+    if (!jobId) return;
+    try {
+      await cancelSensitivityJob(jobId);
+    } catch (e) {
+      console.warn("cancel sensitivity job failed", e);
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    setRunning(false);
+    setError("Cancelled");
+  }
+
+  // Cleanup: close any open SSE on unmount.
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div style={{ padding: "1.5rem", maxWidth: 1100 }}>
@@ -632,22 +732,123 @@ export default function Sensitivity() {
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>
-        <button
-          type="button"
-          onClick={handleRun}
-          disabled={!canRun || running}
-          style={{
-            padding: "0.6rem 1.25rem",
-            background: "var(--accent)",
-            color: "var(--bg)",
-            border: "none",
-            borderRadius: 4,
-            cursor: canRun && !running ? "pointer" : "not-allowed",
-            opacity: canRun && !running ? 1 : 0.5,
-          }}
-        >
-          {running ? "Running…" : "Run sensitivity analysis"}
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={handleRun}
+            disabled={!canRun || running}
+            style={{
+              padding: "0.6rem 1.25rem",
+              background: "var(--accent)",
+              color: "var(--bg)",
+              border: "none",
+              borderRadius: 4,
+              cursor: canRun && !running ? "pointer" : "not-allowed",
+              opacity: canRun && !running ? 1 : 0.5,
+            }}
+          >
+            {running ? "Running…" : "Run sensitivity analysis"}
+          </button>
+          {running && jobId && (
+            <button
+              type="button"
+              onClick={handleCancel}
+              style={{
+                padding: "0.55rem 1rem",
+                background: "transparent",
+                color: "var(--text)",
+                border: "1px solid var(--border)",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
+        {/* CPU-busy queue indicator: shown while sensitivityStart is waiting for a CPU
+            permit (server returned 503 cpu_busy and is retrying with backoff). */}
+        {cpuBusyInfo && (
+          <div
+            style={{
+              marginTop: "0.75rem",
+              padding: "0.5rem 0.75rem",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid var(--border)",
+              borderRadius: 4,
+              fontSize: "0.85rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            Server CPU is busy (another sim is running). Retrying in ≈
+            {Math.max(1, Math.round(cpuBusyInfo.waitMs / 1000))}s (attempt{" "}
+            {cpuBusyInfo.attempt})…
+          </div>
+        )}
+
+        {/* Live progress while a job is running. Hidden once the job hits done/error. */}
+        {running && jobId && (
+          <div
+            style={{
+              marginTop: "0.75rem",
+              padding: "0.6rem 0.85rem",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.02)",
+              fontSize: "0.88rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "1rem",
+                color: "var(--text-muted)",
+              }}
+            >
+              <span>
+                <strong>
+                  {formatSensitivityPhaseLabel(jobPhase) || "Starting…"}
+                </strong>
+                {jobSimsDone != null &&
+                  jobTotalSims != null &&
+                  jobTotalSims > 0 && (
+                    <>
+                      {" · "}
+                      {jobSimsDone.toLocaleString()} /{" "}
+                      {jobTotalSims.toLocaleString()} sims
+                    </>
+                  )}
+              </span>
+              <span>
+                {jobThroughput != null && (
+                  <>~{jobThroughput.toFixed(0)} sims/s</>
+                )}
+                {jobEtaSeconds != null && <> · ETA ~{jobEtaSeconds}s</>}
+              </span>
+            </div>
+            <div
+              style={{
+                marginTop: "0.4rem",
+                height: 6,
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: 3,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.max(2, Math.min(100, jobProgress ?? 0))}%`,
+                  height: "100%",
+                  background: "var(--accent)",
+                  transition: "width 200ms ease-out",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {error && (
           <div
             style={{

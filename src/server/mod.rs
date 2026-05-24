@@ -4,6 +4,7 @@ pub(crate) mod cpu_admission;
 pub mod openapi;
 pub mod profile_backup;
 pub mod routes;
+pub mod sensitivity_jobs;
 pub mod static_files;
 pub mod sync;
 

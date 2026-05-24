@@ -59,6 +59,7 @@ use crate::optimizer::monte_carlo::scenario::{
     DefenderOpponent,
 };
 use crate::optimizer::sensitivity::{run_one_sim_with_perturbations, OutcomeMetric};
+use crate::server::sensitivity_jobs::SensitivityJobProgress;
 
 /// Default number of Saltelli samples per matrix. N=512 gives reasonably stable S_i / S_T_i
 /// for the 18-stat catalog; users can push to N=2048 for tighter CIs at proportional cost.
@@ -184,7 +185,21 @@ pub struct SobolResponse {
 /// End-to-end Sobol run. Generates Saltelli matrices, evaluates the combat metric across
 /// `A`, `B`, and the `k` swapped matrices, then computes Jansen estimators with bootstrap
 /// CIs.
+///
+/// This is the no-progress entry point used by the CLI and by callers that don't need
+/// streaming updates; it delegates to [`run_sobol_with_progress`] with a no-op sink.
 pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<SobolResponse, String> {
+    run_sobol_with_progress(registry, request, &SensitivityJobProgress::no_op())
+}
+
+/// Sobol run that reports progress + checks cancellation through a
+/// [`SensitivityJobProgress`] sink. Use this when serving the async job route; the sync
+/// [`run_sobol`] entry above wraps this with a no-op sink.
+pub fn run_sobol_with_progress(
+    registry: &DataRegistry,
+    request: &SobolRequest,
+    progress: &SensitivityJobProgress,
+) -> Result<SobolResponse, String> {
     let n_samples = request
         .n_samples
         .unwrap_or(DEFAULT_N_SAMPLES)
@@ -250,6 +265,17 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
 
     let include_pairwise = request.include_pairwise.unwrap_or(false) && k >= 2;
 
+    // Resolve the total sim budget once so the async job's progress % has a denominator
+    // from the first SSE poll. `N × (k + 2)` for first/total-order; `+ N × k(k − 1) / 2`
+    // if pairwise is enabled.
+    let baseline_sims = (n_samples as u64) * (k as u64 + 2);
+    let pair_sims = if include_pairwise {
+        (n_samples as u64) * (k as u64) * (k as u64 - 1) / 2
+    } else {
+        0
+    };
+    progress.set_total_sims(baseline_sims + pair_sims);
+
     // Sample matrices A (N×k) and B (N×k) from independent uniform [0, 1]^k.
     // Sampling RNG seeded distinctly from per-row combat seeds.
     let sample_seed = base_seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 0xDEADBEEF_CAFEBABE;
@@ -259,10 +285,11 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
 
     // Evaluate A and B in parallel. Each row j of A uses combat seed (base_seed + j); B
     // rows use (base_seed + N + j). The k swapped matrices reuse A's seeds for CRN pairing.
+    progress.set_phase("sample_a");
     let f_a: Vec<f64> = (0..n_samples as usize)
         .into_par_iter()
         .map(|j| {
-            evaluate_row(
+            let v = evaluate_row(
                 &shared,
                 &input,
                 metric,
@@ -271,13 +298,19 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
                 &stat_deltas,
                 &mat_a[j],
                 base_seed.wrapping_add(j as u64),
-            )
+            );
+            progress.record_sims(1);
+            v
         })
         .collect();
+    if progress.cancelled() {
+        return Err("Cancelled".to_string());
+    }
+    progress.set_phase("sample_b");
     let f_b: Vec<f64> = (0..n_samples as usize)
         .into_par_iter()
         .map(|j| {
-            evaluate_row(
+            let v = evaluate_row(
                 &shared,
                 &input,
                 metric,
@@ -288,9 +321,14 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
                 base_seed
                     .wrapping_add(n_samples as u64)
                     .wrapping_add(j as u64),
-            )
+            );
+            progress.record_sims(1);
+            v
         })
         .collect();
+    if progress.cancelled() {
+        return Err("Cancelled".to_string());
+    }
 
     // V(Y) estimated from the combined A∪B sample.
     let v_y = variance(&f_a, &f_b);
@@ -298,6 +336,7 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
     // For each stat i, build A_B^(i) on the fly (only column i differs from A) and evaluate.
     // Cache the per-stat f_AB^(i) vectors so the pairwise step can reuse them when
     // `include_pairwise` is set (they're needed for the V_i / V_j subtractions in V_ij).
+    progress.set_phase("first_order");
     let f_ab_per_stat: Vec<Vec<f64>> = (0..k)
         .into_par_iter()
         .map(|i| {
@@ -306,7 +345,7 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
                 .map(|j| {
                     let mut row = mat_a[j].clone();
                     row[i] = mat_b[j][i];
-                    evaluate_row(
+                    let v = evaluate_row(
                         &shared,
                         &input,
                         metric,
@@ -315,11 +354,16 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
                         &stat_deltas,
                         &row,
                         base_seed.wrapping_add(j as u64), // CRN with A_j
-                    )
+                    );
+                    progress.record_sims(1);
+                    v
                 })
                 .collect()
         })
         .collect();
+    if progress.cancelled() {
+        return Err("Cancelled".to_string());
+    }
 
     let rows: Vec<SobolRow> = (0..k)
         .into_par_iter()
@@ -336,7 +380,8 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
         .collect();
 
     let pairs = if include_pairwise {
-        Some(compute_pair_rows(
+        progress.set_phase("pairwise");
+        let p = compute_pair_rows(
             &shared,
             &input,
             metric,
@@ -351,16 +396,14 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
             v_y,
             base_seed,
             n_samples as usize,
-        ))
+            progress,
+        );
+        if progress.cancelled() {
+            return Err("Cancelled".to_string());
+        }
+        Some(p)
     } else {
         None
-    };
-
-    let baseline_sims = (n_samples as u64) * (k as u64 + 2);
-    let pair_sims = if include_pairwise {
-        (n_samples as u64) * (k as u64) * (k as u64 - 1) / 2
-    } else {
-        0
     };
 
     Ok(SobolResponse {
@@ -394,6 +437,7 @@ fn compute_pair_rows(
     v_y: f64,
     base_seed: u64,
     n_samples: usize,
+    progress: &SensitivityJobProgress,
 ) -> Vec<SobolPairRow> {
     let k = stat_deltas.len();
     let mut pair_indices: Vec<(usize, usize)> = Vec::with_capacity(k * (k - 1) / 2);
@@ -415,7 +459,7 @@ fn compute_pair_rows(
                     let mut row = mat_a[r].clone();
                     row[i] = mat_b[r][i];
                     row[j] = mat_b[r][j];
-                    evaluate_row(
+                    let v = evaluate_row(
                         shared,
                         input,
                         metric,
@@ -424,7 +468,9 @@ fn compute_pair_rows(
                         stat_deltas,
                         &row,
                         base_seed.wrapping_add(r as u64),
-                    )
+                    );
+                    progress.record_sims(1);
+                    v
                 })
                 .collect();
 

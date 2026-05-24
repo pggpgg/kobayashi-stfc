@@ -127,7 +127,7 @@ const CPU_BUSY_DEFAULT_BACKOFF_MS = 1_500;
 /** Passed to {@link fetchWithCpuBusyRetries} when the client waits for a CPU slot. */
 export type CpuBusyWaitInfo = { waitMs: number; attempt: number };
 
-type FetchCpuBusyOptions = {
+export type FetchCpuBusyOptions = {
   onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
 };
 
@@ -139,7 +139,7 @@ function sleepMs(ms: number): Promise<void> {
  * Repeated `fetch` with bounded waits when the server returns 503 `cpu_busy`
  * (CPU admission). Caps per-wait, total wait, and number of rounds.
  */
-async function fetchWithCpuBusyRetries(
+export async function fetchWithCpuBusyRetries(
   url: string,
   init: RequestInit,
   options?: FetchCpuBusyOptions,
