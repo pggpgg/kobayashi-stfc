@@ -10,8 +10,11 @@
 //!   interactions. High S_T_i with low S_i → "this stat matters mostly through interactions."
 //! - **Interaction strength** (S_T_i − S_i): the share of variance from interactions
 //!   between `i` and any other stat. The sum of these over all stats gives a "total
-//!   interaction budget"; individual pairwise indices S_ij (which pair of stats interacts)
-//!   are deferred to a follow-up — see [docs/ROADMAP.md](../../docs/ROADMAP.md).
+//!   interaction budget".
+//! - **S_ij** (second-order index, opt-in via `include_pairwise`): the share of variance
+//!   attributable to the *pure* interaction between stats `i` and `j` — i.e. what stats
+//!   `i` and `j` produce together beyond what each does alone. Surfaces which specific
+//!   pairs interact (e.g. `armor × accuracy`, `crit_chance × crit_damage`).
 //!
 //! ## Method (Saltelli–Jansen)
 //!
@@ -38,8 +41,9 @@
 //!
 //! ## Compute budget
 //!
-//! Total engine calls: `N × (k + 2)`. Defaults (`N = 512`, `k = 18` after the mitigation
-//! split) ≈ 10k sims, comparable to or cheaper than Morris/OAT.
+//! Total engine calls: `N × (k + 2)` for first-/total-order, plus `N × k(k − 1)/2` extra
+//! when `include_pairwise` is set. Defaults (`N = 512`, `k = 18` after the mitigation
+//! split) ≈ 10k sims first-order, ≈ 78k extra for pairwise (so ≈ 88k all-in).
 
 use std::collections::HashMap;
 
@@ -98,6 +102,11 @@ pub struct SobolRequest {
     /// stat from the analysis entirely.
     #[serde(default)]
     pub deltas: Option<HashMap<String, f64>>,
+    /// When `true`, also compute second-order Sobol indices `S_ij` for every distinct pair
+    /// of stats (k(k−1)/2 pairs at the same N). Off by default — the extra cost is
+    /// `N × k(k−1)/2` engine calls on top of the `N × (k + 2)` baseline.
+    #[serde(default)]
+    pub include_pairwise: Option<bool>,
 }
 
 /// One stat's variance-decomposition row.
@@ -125,13 +134,39 @@ pub struct SobolRow {
     pub st_ci95_high: f64,
 }
 
+/// One pair's second-order Sobol index (the "pure" pairwise interaction strength —
+/// excludes the individual main effects, which appear in [`SobolRow::s1`] for each stat).
+#[derive(Debug, Clone, Serialize)]
+pub struct SobolPairRow {
+    /// Stat key for the first member of the pair (matches [`StatKey::as_str`]).
+    pub stat_a: String,
+    /// Stat key for the second member. Pairs are reported once with `stat_a < stat_b`
+    /// in `StatKey::ALL` order; the indices are symmetric, so this is purely
+    /// for compact serialization.
+    pub stat_b: String,
+    /// Base δ used for stat A's range mapping (mirrors [`SobolRow::base_delta`]).
+    pub base_delta_a: f64,
+    /// Base δ used for stat B's range mapping.
+    pub base_delta_b: f64,
+    /// Pure second-order Sobol index `S_ij = V_ij / V(Y)`. `V_ij` is the
+    /// "closed" pairwise variance minus the two main-effect variances `V_i` and `V_j`
+    /// (so it captures only the interaction between the two stats, not the marginal
+    /// effects of each on its own). Clamped to `[0, 1]` for display; finite-sample
+    /// noise can drive small negative raw values to zero.
+    pub s_ij: f64,
+    /// 95% bootstrap CI on S_ij (resampled rows; no extra engine calls).
+    pub s_ij_ci95_low: f64,
+    pub s_ij_ci95_high: f64,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct SobolResponse {
     pub metric: &'static str,
     pub n_samples: u32,
     pub k_stats: u32,
     pub base_seed: u64,
-    /// Total engine calls performed (`N × (k + 2)`).
+    /// Total engine calls performed: `N × (k + 2)` baseline, plus `N × k(k − 1)/2`
+    /// when [`SobolRequest::include_pairwise`] is set.
     pub total_sims: u64,
     /// Estimated output variance V(Y) for the run. Useful as a sanity check (rows with
     /// V_i / V_T_i divided by this).
@@ -139,6 +174,11 @@ pub struct SobolResponse {
     /// One row per stat, **unsorted** — clients sort by S_T (importance with interactions),
     /// S_1 (pure main effect), or interaction strength.
     pub rows: Vec<SobolRow>,
+    /// Pairwise second-order indices. `None` when [`SobolRequest::include_pairwise`] is
+    /// off; otherwise one row per `(stat_a, stat_b)` with `stat_a < stat_b` ordered by
+    /// position in [`StatKey::ALL`]. Unsorted — clients sort by `s_ij` descending.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pairs: Option<Vec<SobolPairRow>>,
 }
 
 /// End-to-end Sobol run. Generates Saltelli matrices, evaluates the combat metric across
@@ -204,8 +244,11 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
             total_sims: 0,
             output_variance: 0.0,
             rows: Vec::new(),
+            pairs: None,
         });
     }
+
+    let include_pairwise = request.include_pairwise.unwrap_or(false) && k >= 2;
 
     // Sample matrices A (N×k) and B (N×k) from independent uniform [0, 1]^k.
     // Sampling RNG seeded distinctly from per-row combat seeds.
@@ -253,11 +296,12 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
     let v_y = variance(&f_a, &f_b);
 
     // For each stat i, build A_B^(i) on the fly (only column i differs from A) and evaluate.
-    // Then compute V_i and V_T_i via the Jansen estimators.
-    let rows: Vec<SobolRow> = (0..k)
+    // Cache the per-stat f_AB^(i) vectors so the pairwise step can reuse them when
+    // `include_pairwise` is set (they're needed for the V_i / V_j subtractions in V_ij).
+    let f_ab_per_stat: Vec<Vec<f64>> = (0..k)
         .into_par_iter()
         .map(|i| {
-            let f_ab_i: Vec<f64> = (0..n_samples as usize)
+            (0..n_samples as usize)
                 .into_par_iter()
                 .map(|j| {
                     let mut row = mat_a[j].clone();
@@ -273,22 +317,129 @@ pub fn run_sobol(registry: &DataRegistry, request: &SobolRequest) -> Result<Sobo
                         base_seed.wrapping_add(j as u64), // CRN with A_j
                     )
                 })
-                .collect();
-            row_from_estimators(stat_deltas[i], &f_a, &f_b, &f_ab_i, v_y, base_seed)
+                .collect()
         })
         .collect();
 
-    let total_sims = (n_samples as u64) * (k as u64 + 2);
+    let rows: Vec<SobolRow> = (0..k)
+        .into_par_iter()
+        .map(|i| {
+            row_from_estimators(
+                stat_deltas[i],
+                &f_a,
+                &f_b,
+                &f_ab_per_stat[i],
+                v_y,
+                base_seed,
+            )
+        })
+        .collect();
+
+    let pairs = if include_pairwise {
+        Some(compute_pair_rows(
+            &shared,
+            &input,
+            metric,
+            attacker_max_hull,
+            defender_max_hull,
+            &stat_deltas,
+            &mat_a,
+            &mat_b,
+            &f_a,
+            &f_b,
+            &f_ab_per_stat,
+            v_y,
+            base_seed,
+            n_samples as usize,
+        ))
+    } else {
+        None
+    };
+
+    let baseline_sims = (n_samples as u64) * (k as u64 + 2);
+    let pair_sims = if include_pairwise {
+        (n_samples as u64) * (k as u64) * (k as u64 - 1) / 2
+    } else {
+        0
+    };
 
     Ok(SobolResponse {
         metric: metric.as_str(),
         n_samples,
         k_stats,
         base_seed,
-        total_sims,
+        total_sims: baseline_sims + pair_sims,
         output_variance: v_y,
         rows,
+        pairs,
     })
+}
+
+/// Per-pair S_ij computation. Builds A_B^(ij) (A with columns i AND j taken from B) for
+/// each unique pair `(i, j)` with `i < j`, evaluates the model, and applies the Jansen
+/// closed-pairwise estimator then subtracts the cached main-effect variances.
+#[allow(clippy::too_many_arguments)]
+fn compute_pair_rows(
+    shared: &crate::optimizer::monte_carlo::scenario::SharedScenarioData,
+    input: &crate::optimizer::monte_carlo::scenario::CombatSimulationInput,
+    metric: OutcomeMetric,
+    attacker_max_hull: f64,
+    defender_max_hull: f64,
+    stat_deltas: &[(StatKey, f64)],
+    mat_a: &[Vec<f64>],
+    mat_b: &[Vec<f64>],
+    f_a: &[f64],
+    f_b: &[f64],
+    f_ab_per_stat: &[Vec<f64>],
+    v_y: f64,
+    base_seed: u64,
+    n_samples: usize,
+) -> Vec<SobolPairRow> {
+    let k = stat_deltas.len();
+    let mut pair_indices: Vec<(usize, usize)> = Vec::with_capacity(k * (k - 1) / 2);
+    for i in 0..k {
+        for j in (i + 1)..k {
+            pair_indices.push((i, j));
+        }
+    }
+
+    pair_indices
+        .into_par_iter()
+        .map(|(i, j)| {
+            // f_AB^(ij): A with both column i and column j replaced by B's columns.
+            // Reuses CRN with A_j on each row (same combat seed as f_A_j) so the only
+            // difference between f_A[r] and f_AB_ij[r] is the parameter swap.
+            let f_ab_ij: Vec<f64> = (0..n_samples)
+                .into_par_iter()
+                .map(|r| {
+                    let mut row = mat_a[r].clone();
+                    row[i] = mat_b[r][i];
+                    row[j] = mat_b[r][j];
+                    evaluate_row(
+                        shared,
+                        input,
+                        metric,
+                        attacker_max_hull,
+                        defender_max_hull,
+                        stat_deltas,
+                        &row,
+                        base_seed.wrapping_add(r as u64),
+                    )
+                })
+                .collect();
+
+            pair_row_from_estimators(
+                (stat_deltas[i], stat_deltas[j]),
+                f_a,
+                f_b,
+                &f_ab_per_stat[i],
+                &f_ab_per_stat[j],
+                &f_ab_ij,
+                v_y,
+                base_seed,
+            )
+        })
+        .collect()
 }
 
 /// Generate an N×k uniform [0, 1] matrix using SplitMix64. The next-u64 output is mapped
@@ -406,6 +557,113 @@ fn row_from_estimators(
         st_ci95_low: st_lo,
         st_ci95_high: st_hi,
     }
+}
+
+/// Compute one [`SobolPairRow`] from cached per-row vectors. The closed-pairwise variance
+/// `V_c_ij` includes both main effects and the interaction; subtracting `V_i` and `V_j`
+/// (re-estimated from the cached `f_ab_i` / `f_ab_j` to keep the bootstrap consistent)
+/// yields the pure interaction `V_ij`. Bootstrap CIs share row indices across all five
+/// cached vectors so resamples stay coherent.
+#[allow(clippy::too_many_arguments)]
+fn pair_row_from_estimators(
+    stats: ((StatKey, f64), (StatKey, f64)),
+    f_a: &[f64],
+    f_b: &[f64],
+    f_ab_i: &[f64],
+    f_ab_j: &[f64],
+    f_ab_ij: &[f64],
+    v_y: f64,
+    bootstrap_seed: u64,
+) -> SobolPairRow {
+    let ((stat_a, base_delta_a), (stat_b, base_delta_b)) = stats;
+    let n = f_a.len();
+
+    let s_ij_point = if v_y > 0.0 {
+        (closed_pairwise_minus_mains(f_a, f_b, f_ab_i, f_ab_j, f_ab_ij) / v_y).max(0.0)
+    } else {
+        0.0
+    };
+
+    // Bootstrap 95% CI: resample row indices, slice all five cached vectors at the same
+    // indices, recompute V(Y) + V_ij_pure. Distinct seed per pair so the resamples are
+    // independent across pairs (helps with parallel determinism reporting).
+    let mut rng = Rng::new(
+        bootstrap_seed
+            .wrapping_add(stat_a.as_str().len() as u64)
+            .wrapping_add((stat_b.as_str().len() as u64) << 32)
+            .wrapping_mul(0xBF58_476D_1CE4_E5B9),
+    );
+    let mut samples = Vec::with_capacity(BOOTSTRAP_RESAMPLES);
+    let mut buf_a = vec![0.0; n];
+    let mut buf_b = vec![0.0; n];
+    let mut buf_ab_i = vec![0.0; n];
+    let mut buf_ab_j = vec![0.0; n];
+    let mut buf_ab_ij = vec![0.0; n];
+    for _ in 0..BOOTSTRAP_RESAMPLES {
+        for slot in 0..n {
+            let idx = (rng.next_u64() as usize) % n;
+            buf_a[slot] = f_a[idx];
+            buf_b[slot] = f_b[idx];
+            buf_ab_i[slot] = f_ab_i[idx];
+            buf_ab_j[slot] = f_ab_j[idx];
+            buf_ab_ij[slot] = f_ab_ij[idx];
+        }
+        let v_boot = variance(&buf_a, &buf_b);
+        if v_boot <= 0.0 {
+            continue;
+        }
+        let s_ij_boot =
+            (closed_pairwise_minus_mains(&buf_a, &buf_b, &buf_ab_i, &buf_ab_j, &buf_ab_ij)
+                / v_boot)
+                .max(0.0);
+        samples.push(s_ij_boot);
+    }
+    let (s_ij_lo, s_ij_hi) = ci95(&mut samples);
+
+    SobolPairRow {
+        stat_a: stat_a.as_str().to_string(),
+        stat_b: stat_b.as_str().to_string(),
+        base_delta_a,
+        base_delta_b,
+        s_ij: s_ij_point,
+        s_ij_ci95_low: s_ij_lo,
+        s_ij_ci95_high: s_ij_hi,
+    }
+}
+
+/// Pure pairwise variance: `V_ij = V_c_ij − V_i − V_j`, where `V_c_ij` is the Jansen
+/// "closed" pairwise estimator (`E[f_B · (f_AB_ij − f_A)] / N`) and `V_i`, `V_j` reuse the
+/// same Jansen first-order shape with the cached single-stat vectors.
+fn closed_pairwise_minus_mains(
+    f_a: &[f64],
+    f_b: &[f64],
+    f_ab_i: &[f64],
+    f_ab_j: &[f64],
+    f_ab_ij: &[f64],
+) -> f64 {
+    let n = f_a.len() as f64;
+    let v_closed: f64 = f_a
+        .iter()
+        .zip(f_b.iter())
+        .zip(f_ab_ij.iter())
+        .map(|((a, b), ab)| b * (ab - a))
+        .sum::<f64>()
+        / n;
+    let v_i: f64 = f_a
+        .iter()
+        .zip(f_b.iter())
+        .zip(f_ab_i.iter())
+        .map(|((a, b), ab)| b * (ab - a))
+        .sum::<f64>()
+        / n;
+    let v_j: f64 = f_a
+        .iter()
+        .zip(f_b.iter())
+        .zip(f_ab_j.iter())
+        .map(|((a, b), ab)| b * (ab - a))
+        .sum::<f64>()
+        / n;
+    v_closed - v_i - v_j
 }
 
 /// Jansen 1999 estimators for V_i (first-order) and V_T_i (total-order).
@@ -557,5 +815,93 @@ mod tests {
         // 2.5% ≈ 0.025, 97.5% ≈ 0.975.
         assert!((lo - 0.025).abs() < 0.05);
         assert!((hi - 0.975).abs() < 0.05);
+    }
+
+    /// Analytical S_ij check on the same multiplicative model Y = X1·X2 used above.
+    /// Closed-form: Var(Y) = 1/9 − 1/16 ≈ 0.0486. V_1 = V_2 = Var(0.5·X_i) = 1/48 ≈ 0.0208.
+    /// V_12 = Var(Y) − V_1 − V_2 ≈ 0.0070, so S_12 ≈ 0.0070 / 0.0486 ≈ 0.144.
+    /// Estimator should land within ±0.04 of this at N=4096.
+    #[test]
+    fn pairwise_estimator_recovers_known_s_ij_for_multiplicative_model() {
+        let n = 4096usize;
+        let mut rng = Rng::new(789);
+        let mat_a = sample_matrix(&mut rng, n, 2);
+        let mat_b = sample_matrix(&mut rng, n, 2);
+        let f = |row: &[f64]| row[0] * row[1];
+        let f_a: Vec<f64> = mat_a.iter().map(|r| f(r)).collect();
+        let f_b: Vec<f64> = mat_b.iter().map(|r| f(r)).collect();
+        let v_y = variance(&f_a, &f_b);
+        let f_ab_0: Vec<f64> = (0..n)
+            .map(|j| {
+                let mut r = mat_a[j].clone();
+                r[0] = mat_b[j][0];
+                f(&r)
+            })
+            .collect();
+        let f_ab_1: Vec<f64> = (0..n)
+            .map(|j| {
+                let mut r = mat_a[j].clone();
+                r[1] = mat_b[j][1];
+                f(&r)
+            })
+            .collect();
+        let f_ab_01: Vec<f64> = (0..n)
+            .map(|j| {
+                let mut r = mat_a[j].clone();
+                r[0] = mat_b[j][0];
+                r[1] = mat_b[j][1];
+                f(&r)
+            })
+            .collect();
+        let v_ij = closed_pairwise_minus_mains(&f_a, &f_b, &f_ab_0, &f_ab_1, &f_ab_01);
+        let s_ij = (v_ij / v_y).max(0.0);
+        // Theory: ≈0.144. Allow ±0.04 for finite-sample noise at N=4096.
+        assert!(
+            (s_ij - 0.144).abs() < 0.04,
+            "S_12 estimator off: expected ≈0.144, got {s_ij}"
+        );
+    }
+
+    /// Linear-additive Y = 2·X1 + 3·X2 has zero pure pairwise interaction: closed-pairwise
+    /// equals V_1 + V_2 exactly in expectation, so S_ij should be ≈ 0.
+    #[test]
+    fn pairwise_estimator_returns_near_zero_for_linear_model() {
+        let n = 4096usize;
+        let mut rng = Rng::new(101112);
+        let mat_a = sample_matrix(&mut rng, n, 2);
+        let mat_b = sample_matrix(&mut rng, n, 2);
+        let f = |row: &[f64]| 2.0 * row[0] + 3.0 * row[1];
+        let f_a: Vec<f64> = mat_a.iter().map(|r| f(r)).collect();
+        let f_b: Vec<f64> = mat_b.iter().map(|r| f(r)).collect();
+        let v_y = variance(&f_a, &f_b);
+        let f_ab_0: Vec<f64> = (0..n)
+            .map(|j| {
+                let mut r = mat_a[j].clone();
+                r[0] = mat_b[j][0];
+                f(&r)
+            })
+            .collect();
+        let f_ab_1: Vec<f64> = (0..n)
+            .map(|j| {
+                let mut r = mat_a[j].clone();
+                r[1] = mat_b[j][1];
+                f(&r)
+            })
+            .collect();
+        let f_ab_01: Vec<f64> = (0..n)
+            .map(|j| {
+                let mut r = mat_a[j].clone();
+                r[0] = mat_b[j][0];
+                r[1] = mat_b[j][1];
+                f(&r)
+            })
+            .collect();
+        let v_ij = closed_pairwise_minus_mains(&f_a, &f_b, &f_ab_0, &f_ab_1, &f_ab_01);
+        let s_ij = (v_ij / v_y).max(0.0);
+        // Linear model has no interaction. Allow ≤0.05 for finite-sample noise.
+        assert!(
+            s_ij.abs() < 0.05,
+            "linear model S_12 should be ≈0; got {s_ij}"
+        );
     }
 }

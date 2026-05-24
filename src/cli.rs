@@ -604,7 +604,7 @@ fn handle_sobol_sensitivity(args: &[String]) -> i32 {
             eprintln!(
                 "usage: kobayashi sobol-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> \
                  [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] \
-                 [--metric hull|win|rounds|defender_hull] [--n <samples>] [--seed <n>] [--profile <id>]"
+                 [--metric hull|win|rounds|defender_hull] [--n <samples>] [--seed <n>] [--profile <id>] [--pairwise]"
             );
             return 2;
         }
@@ -635,6 +635,7 @@ fn handle_sobol_sensitivity(args: &[String]) -> i32 {
         _ => OutcomeMetric::HullRemaining,
     };
     let profile_id = parse_profile_arg(args);
+    let include_pairwise = args.iter().any(|a| a == "--pairwise");
 
     let request = SobolRequest {
         ship,
@@ -651,6 +652,7 @@ fn handle_sobol_sensitivity(args: &[String]) -> i32 {
         rounds: None,
         metric: Some(metric),
         deltas: None,
+        include_pairwise: Some(include_pairwise),
     };
 
     let registry = match DataRegistry::load() {
@@ -697,6 +699,28 @@ fn handle_sobol_sensitivity(args: &[String]) -> i32 {
             row.st_ci95_high,
             row.interaction
         );
+    }
+    if let Some(pairs) = response.pairs {
+        let mut pairs_sorted = pairs;
+        pairs_sorted.sort_by(|a, b| {
+            b.s_ij
+                .partial_cmp(&a.s_ij)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        println!("# pairs (sorted by s_ij desc):");
+        println!("stat_a\tstat_b\tbase_delta_a\tbase_delta_b\ts_ij\ts_ij_ci95_low\ts_ij_ci95_high");
+        for pair in pairs_sorted {
+            println!(
+                "{}\t{}\t{}\t{}\t{}\t{}\t{}",
+                pair.stat_a,
+                pair.stat_b,
+                pair.base_delta_a,
+                pair.base_delta_b,
+                pair.s_ij,
+                pair.s_ij_ci95_low,
+                pair.s_ij_ci95_high
+            );
+        }
     }
     0
 }

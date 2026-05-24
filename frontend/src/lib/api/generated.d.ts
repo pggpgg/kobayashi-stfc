@@ -2300,6 +2300,31 @@ export interface components {
             deltas?: {
                 [key: string]: number;
             };
+            /**
+             * @description When true, also compute second-order Sobol indices `S_ij` for every distinct
+             *     pair of stats. Off by default — the extra cost is `N × k(k−1)/2` engine calls
+             *     on top of the `N × (k + 2)` baseline (≈ 8.6× at default `N = 512`, `k = 18`).
+             */
+            include_pairwise?: boolean;
+        };
+        SobolSensitivityPairRow: {
+            stat_a: string;
+            /**
+             * @description Pairs are reported once with `stat_a < stat_b` in `StatKey::ALL` order. The
+             *     second-order index is symmetric so this is purely compact serialization.
+             */
+            stat_b: string;
+            base_delta_a: number;
+            base_delta_b: number;
+            /**
+             * @description Pure second-order Sobol index. The fraction of Var(Y) explained by the
+             *     interaction between stats A and B *beyond* their individual main effects
+             *     (which appear in the per-stat rows under `s1`). Clamped to `[0, 1]` for
+             *     display.
+             */
+            s_ij: number;
+            s_ij_ci95_low: number;
+            s_ij_ci95_high: number;
         };
         SobolSensitivityRow: {
             stat: string;
@@ -2310,7 +2335,8 @@ export interface components {
             st: number;
             /**
              * @description `S_T_i − S_i` — fraction of variance from interactions between this stat
-             *     and any other. Per-pair S_ij is not estimated in v1.
+             *     and any other. For which specific pair(s), set `include_pairwise: true` in
+             *     the request and inspect `pairs`.
              */
             interaction: number;
             s1_ci95_low: number;
@@ -2329,6 +2355,11 @@ export interface components {
             /** @description Estimated Var(Y) for the run (sanity check). */
             output_variance: number;
             rows: components["schemas"]["SobolSensitivityRow"][];
+            /**
+             * @description Pairwise second-order indices. Omitted when `include_pairwise` is false.
+             *     Otherwise one entry per `(stat_a, stat_b)` pair with `k(k−1)/2` total.
+             */
+            pairs?: components["schemas"]["SobolSensitivityPairRow"][];
         };
         SobolSensitivityDefaultsResponse: {
             deltas: {

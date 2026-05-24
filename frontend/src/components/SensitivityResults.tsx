@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { SensitivityRow } from "../lib/sensitivityApi";
+import ExplainerPanel from "./ExplainerPanel";
 
 interface Props {
   rows: SensitivityRow[];
@@ -45,6 +46,49 @@ export default function SensitivityResults({
 
   return (
     <div>
+      <ExplainerPanel storageKey="oat" title="How to read this (one-at-a-time)">
+        <p>
+          <strong>What's the question?</strong> "If I bump exactly one stat by a
+          small amount, how much does the outcome shift?"
+        </p>
+        <p>
+          <strong>Reading a row:</strong>
+        </p>
+        <ul style={{ marginTop: 0 }}>
+          <li>
+            <strong>δ applied</strong> — the size of the bump for that stat (a
+            "one realistic step of investment").
+          </li>
+          <li>
+            <strong>Δ metric</strong> — how much the outcome changed in raw
+            units (e.g. hull remaining).
+          </li>
+          <li>
+            <strong>Δ relative</strong> — same change as a percentage of the
+            baseline. Easier to compare across stats with different units.
+          </li>
+          <li>
+            <strong>95% CI</strong> — the confidence interval on Δ. If it
+            includes zero, the change might just be noise.
+          </li>
+          <li>
+            <strong>Significant ✓</strong> — the CI doesn't cross zero, so this
+            stat measurably moves the outcome at this sample size. Rows that
+            aren't significant are dimmed.
+          </li>
+        </ul>
+        <p>
+          <strong>What this method does well:</strong> tight, easy-to-interpret
+          numbers per stat. Good first look at "which stats matter at all in
+          this scenario."
+        </p>
+        <p style={{ marginBottom: 0 }}>
+          <strong>What it misses:</strong> it changes <em>one</em> stat at a
+          time. If two stats only matter when invested together (e.g. armor +
+          accuracy), this method underestimates them. For that, switch to Morris
+          or Sobol.
+        </p>
+      </ExplainerPanel>
       <div
         style={{
           marginBottom: "0.75rem",
@@ -71,19 +115,34 @@ export default function SensitivityResults({
             <th style={{ textAlign: "left", padding: "0.45rem 0.5rem" }}>
               Stat
             </th>
-            <th style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
+            <th
+              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
+              title="The size of the perturbation applied to this stat — 'one realistic step of investment'."
+            >
               δ applied
             </th>
-            <th style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
+            <th
+              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
+              title="How much the outcome metric changed in raw units (e.g. hull remaining)."
+            >
               Δ metric
             </th>
-            <th style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
+            <th
+              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
+              title="Same change as a percentage of the baseline. Easier to compare across stats."
+            >
               Δ relative
             </th>
-            <th style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
+            <th
+              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
+              title="95% confidence interval on Δ. If it includes zero, the change might just be noise."
+            >
               95% CI
             </th>
-            <th style={{ textAlign: "center", padding: "0.45rem 0.5rem" }}>
+            <th
+              style={{ textAlign: "center", padding: "0.45rem 0.5rem" }}
+              title="✓ means the CI doesn't cross zero — this stat measurably moves the outcome at this sample size."
+            >
               Significant
             </th>
           </tr>

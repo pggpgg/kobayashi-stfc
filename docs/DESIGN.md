@@ -761,11 +761,11 @@ Across `r` trajectories each stat collects exactly `r` EE samples.
 - Same engine limitations as v1 OAT apply (collapsed mitigation components, no critical-damage-floor clamp, universal `crit_damage_reduction` plumbed via `SimulationConfig`).
 - Cumulative perturbation on clamped stats (e.g. `Mitigation` clamps to `[0, 1]`, `CritDamageReduction` clamps to `[−0.95, 0.95]`) is mildly order-dependent if an intermediate step hits the clamp. With default per-stat δs (≤ 0.10 on a [0, 1] scale) this is rare and treated as part of the model's inherent variance — the determinism property is preserved per seed.
 
-**Future work.** Sobol pairwise indices (S_ij) for specific interacting stat pairs — see § 6.9.2 below for what shipped.
+**Future work.** Sobol indices shipped — see § 6.9.2 for first/total/pairwise.
 
-### 6.9.2 Sobol variance decomposition (Saltelli design, S_i / S_T_i)
+### 6.9.2 Sobol variance decomposition (Saltelli design, S_i / S_T_i / S_ij)
 
-**Implemented.** Where Morris reports interaction-aware heuristics (μ\* / σ), Sobol decomposes the variance of the outcome metric into per-stat contributions and reports first-order and total-order indices. Surfaced as `POST /api/sensitivity/sobol`, CLI `kobayashi sobol-sensitivity`, and a method toggle on the `/sensitivity` SPA page. Engine: [`src/optimizer/sensitivity_sobol.rs`](../src/optimizer/sensitivity_sobol.rs).
+**Implemented.** Where Morris reports interaction-aware heuristics (μ\* / σ), Sobol decomposes the variance of the outcome metric into per-stat contributions and reports first-order, total-order, and (opt-in) pairwise indices. Surfaced as `POST /api/sensitivity/sobol`, CLI `kobayashi sobol-sensitivity`, and a method toggle on the `/sensitivity` SPA page. Engine: [`src/optimizer/sensitivity_sobol.rs`](../src/optimizer/sensitivity_sobol.rs).
 
 **Saltelli sample design.** Two independent N×k uniform sample matrices `A` and `B` are drawn from `[0, 1]^k` via SplitMix64. For each input `i`, the swapped matrix `A_B^(i)` is `A` with column `i` replaced by B's column `i`. The combat model is evaluated on every row of `A`, `B`, and each `A_B^(i)`. The `[0, 1]` coordinate `u_i` is mapped to a perturbation `δ_i ∈ [0, 2 · base_δ_i]` (uniform; expected δ = base_δ_i). The same `apply_perturbation` hook used by OAT and Morris applies the perturbations cumulatively.
 
@@ -783,14 +783,22 @@ The Jansen total-order estimator is the recommended robust choice — positive b
 
 **CRN pairing.** Row `j` of `A` and row `j` of `A_B^(i)` differ only in column `i`. The combat sim uses the **same** seed for both — any noise unrelated to the parameter swap cancels in the estimator. Rows of `B` use a disjoint seed range so they sample independent combat outcomes.
 
-**Bootstrap CIs.** 95% confidence intervals on S_i and S_T_i are produced by resampling rows with replacement and recomputing the estimators (default 200 resamples). No additional engine calls.
+**Bootstrap CIs.** 95% confidence intervals on every reported index are produced by resampling rows with replacement and recomputing the estimators (default 200 resamples). No additional engine calls.
 
-**Compute budget.** `N × (k + 2)` engine calls. Defaults `N = 512`, `k = 18` ≈ 10k sims, **cheaper** than Morris (~32k) and OAT (~32k) at their respective defaults.
+**Pairwise indices (opt-in via `include_pairwise: true`).** For every distinct pair `(i, j)` with `i < j` in `StatKey::ALL` order, build a third swapped matrix `A_B^(ij)` (A with columns `i` *and* `j` replaced from B) and evaluate the model on its N rows. The "closed" second-order variance `V_c_ij ≈ (1/N) Σ f(B)_r · (f(A_B^(ij))_r − f(A)_r)` includes both main effects and the interaction; subtracting the cached single-stat estimators yields the **pure** pairwise contribution:
+
+```text
+V_ij = V_c_ij − V_i − V_j
+S_ij = V_ij / V(Y)         (clamped to [0, 1] for display)
+```
+
+CRN seed for row `r` of `A_B^(ij)` matches row `r` of `A` and of every `A_B^(*)` matrix, so all five vectors (A, B, A_B^(i), A_B^(j), A_B^(ij)) share the same combat seed per row and the bootstrap can resample row indices coherently across them.
+
+**Compute budget.** `N × (k + 2)` engine calls for first/total-order, plus `N × k(k − 1)/2` extra when `include_pairwise` is set. Defaults `N = 512`, `k = 18` → ~10k sims first-order (~88k all-in with pairwise; ~8.6× multiplier). Still **cheaper** than Morris (~32k) and OAT (~32k) for the first-order-only mode; pairwise is opt-in for users who specifically want to find interacting stat pairs.
 
 **Caveats and limits.**
 
-- **First-order + total-order only in v1.** Per-pair S_ij (which two stats specifically interact, e.g. `armor × accuracy`) is not estimated yet — it requires `N × k(k − 1)/2` additional evaluations and is tracked under Planned in [ROADMAP.md](ROADMAP.md). Interaction strength `S_T_i − S_i` per stat is reported as a partial substitute: it sums all interactions involving stat `i` but does not identify the partner.
-- **Finite-sample noise.** Both estimators can return small negative values when V(Y) is tiny or the parameter has essentially no effect; we clamp to 0 for display. The bootstrap CIs reflect the actual estimator variance.
+- **Finite-sample noise.** All three estimators (S_1, S_T, S_ij) can return small negative values when V(Y) is tiny or the parameter has essentially no effect; we clamp to 0 for display. The bootstrap CIs reflect the actual estimator variance.
 - **Input-distribution dependence.** S_i / S_T_i are defined relative to the chosen input distribution; here that's uniform δ ∈ [0, 2 · base_δ]. Rankings are robust to this choice; absolute values shift if you widen or narrow the per-stat range via the `deltas` override.
 
 ---
