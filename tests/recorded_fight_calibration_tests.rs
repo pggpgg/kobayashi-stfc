@@ -37,6 +37,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -62,6 +63,7 @@ fn calibration_scenario_outcome_within_tolerance() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -91,7 +93,6 @@ fn calibration_scenario_outcome_within_tolerance() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
 
@@ -128,6 +129,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -153,6 +155,7 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -186,7 +189,6 @@ fn bidirectional_counter_fire_reduces_attacker_hull() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     assert!(
@@ -252,7 +254,6 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let result = simulate_combat(&attacker, &defender, &config, &crew);
 
@@ -299,6 +300,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -324,6 +326,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -369,7 +372,6 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
     let baseline = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     let with_regen = simulate_combat(&attacker, &defender, &config, &with_kill_regen);

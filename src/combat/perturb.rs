@@ -4,16 +4,14 @@
 //! [`crate::combat::build_combat_setup`] / [`crate::combat::simulate_combat_from_setup`]
 //! so the engine sees the perturbed values for the entire fight.
 //!
-//! Three pieces of state are touched depending on the stat:
+//! Two pieces of state are touched depending on the stat:
 //!
 //! - [`Combatant`] (attacker) for HP, crit, the aggregated mitigation scalar, isolytic,
-//!   apex, shield_mitigation, etc.
+//!   apex, shield_mitigation, the universal `crit_damage_reduction_bonus` (additive on
+//!   top of the crew-derived reduction at engine call time), etc.
 //! - [`crate::combat::types::HostileMitigationParams::base_attacker_stats`] inside the
 //!   defender's `Combatant` for piercing / accuracy (these feed the component-based
 //!   mitigation calc in [`crate::combat::mitigation::mitigation_breakdown`]).
-//! - [`SimulationConfig::crit_damage_reduction_perturb`] for the universal crit-damage-
-//!   reduction stat. The engine adds this perturb value to whatever crew-derived crit
-//!   damage reduction is resolved at combat time.
 //!
 //! The four mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`)
 //! are tracked separately on [`Combatant`] post-resolution and weighted by ship-type
@@ -26,7 +24,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::{Combatant, SimulationConfig};
+use crate::combat::Combatant;
 
 /// Identifier for a player-facing combat stat that can be perturbed by the sensitivity
 /// analyzer. Serialized as snake_case for JSON / API compatibility.
@@ -171,7 +169,6 @@ fn sum_mitigation_components(c: &Combatant) -> f64 {
 pub fn apply_perturbation(
     attacker: &mut Combatant,
     defender: &mut Combatant,
-    config: &mut SimulationConfig,
     stat: StatKey,
     delta: f64,
 ) {
@@ -236,8 +233,8 @@ pub fn apply_perturbation(
             attacker.isolytic_defense = (attacker.isolytic_defense + delta).max(0.0);
         }
         StatKey::CritDamageReduction => {
-            config.crit_damage_reduction_perturb =
-                (config.crit_damage_reduction_perturb + delta).clamp(-0.95, 0.95);
+            attacker.crit_damage_reduction_bonus =
+                (attacker.crit_damage_reduction_bonus + delta).clamp(-0.95, 0.95);
         }
         StatKey::CritDamageFloor => {
             attacker.crit_damage_floor = (attacker.crit_damage_floor + delta).max(0.0);
@@ -257,7 +254,7 @@ pub fn apply_perturbation(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::combat::{Combatant, SimulationConfig};
+    use crate::combat::Combatant;
 
     fn mk_combatant() -> Combatant {
         Combatant {
@@ -272,6 +269,7 @@ mod tests {
             crit_chance: 0.5,
             crit_multiplier: 2.0,
             crit_damage_floor: 0.0,
+            crit_damage_reduction_bonus: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 0.0,
             end_of_round_damage: 0.0,
@@ -292,20 +290,17 @@ mod tests {
         let baseline = mk_combatant();
         let mut a = baseline.clone();
         let mut d = baseline.clone();
-        let mut cfg = SimulationConfig::default();
         for stat in StatKey::ALL {
-            apply_perturbation(&mut a, &mut d, &mut cfg, *stat, 0.0);
+            apply_perturbation(&mut a, &mut d, *stat, 0.0);
         }
         assert_eq!(a, baseline);
         assert_eq!(d, baseline);
-        assert_eq!(cfg.crit_damage_reduction_perturb, 0.0);
     }
 
     #[test]
     fn weapon_damage_scales_attack_and_weapons() {
         let mut a = mk_combatant();
         let mut d = mk_combatant();
-        let mut cfg = SimulationConfig::default();
         a.weapons.push(crate::combat::WeaponStats {
             attack: 50.0,
             shots: Some(1),
@@ -315,7 +310,7 @@ mod tests {
             proc_chance: None,
             proc_multiplier: None,
         });
-        apply_perturbation(&mut a, &mut d, &mut cfg, StatKey::WeaponDamage, 0.05);
+        apply_perturbation(&mut a, &mut d, StatKey::WeaponDamage, 0.05);
         assert!((a.attack - 105.0).abs() < 1e-9);
         assert!((a.weapons[0].attack - 52.5).abs() < 1e-9);
     }
@@ -324,9 +319,8 @@ mod tests {
     fn crit_chance_clamps_to_one() {
         let mut a = mk_combatant();
         let mut d = mk_combatant();
-        let mut cfg = SimulationConfig::default();
         a.crit_chance = 0.99;
-        apply_perturbation(&mut a, &mut d, &mut cfg, StatKey::CritChance, 0.05);
+        apply_perturbation(&mut a, &mut d, StatKey::CritChance, 0.05);
         assert!((a.crit_chance - 1.0).abs() < 1e-9);
     }
 
@@ -351,20 +345,35 @@ mod tests {
     fn crit_damage_floor_perturbation_is_additive_and_clamped_at_zero() {
         let mut a = mk_combatant();
         let mut d = mk_combatant();
-        let mut cfg = SimulationConfig::default();
         a.crit_damage_floor = 0.5;
-        apply_perturbation(&mut a, &mut d, &mut cfg, StatKey::CritDamageFloor, 0.25);
+        apply_perturbation(&mut a, &mut d, StatKey::CritDamageFloor, 0.25);
         assert!(
             (a.crit_damage_floor - 0.75).abs() < 1e-9,
             "expected 0.75, got {}",
             a.crit_damage_floor
         );
-        // Defender + config are untouched.
+        // Defender is untouched.
         assert!(d.crit_damage_floor == 0.0);
-        assert!(cfg.crit_damage_reduction_perturb == 0.0);
         // Negative delta clamps the field at zero.
-        apply_perturbation(&mut a, &mut d, &mut cfg, StatKey::CritDamageFloor, -10.0);
+        apply_perturbation(&mut a, &mut d, StatKey::CritDamageFloor, -10.0);
         assert!(a.crit_damage_floor == 0.0);
+    }
+
+    #[test]
+    fn crit_damage_reduction_perturbation_writes_to_attacker_bonus() {
+        let mut a = mk_combatant();
+        let mut d = mk_combatant();
+        apply_perturbation(&mut a, &mut d, StatKey::CritDamageReduction, 0.10);
+        assert!((a.crit_damage_reduction_bonus - 0.10).abs() < 1e-9);
+        // Negative delta also lands on the attacker, clamped.
+        apply_perturbation(&mut a, &mut d, StatKey::CritDamageReduction, -1.5);
+        assert!(
+            (a.crit_damage_reduction_bonus + 0.95).abs() < 1e-9,
+            "expected -0.95, got {}",
+            a.crit_damage_reduction_bonus
+        );
+        // Defender is untouched.
+        assert_eq!(d.crit_damage_reduction_bonus, 0.0);
     }
 
     #[test]

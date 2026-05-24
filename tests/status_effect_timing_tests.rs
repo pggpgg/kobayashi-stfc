@@ -23,6 +23,7 @@ fn passive_attacker() -> Combatant {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -51,6 +52,7 @@ fn huge_defender() -> Combatant {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -112,7 +114,6 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -192,7 +193,6 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -256,6 +256,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -288,7 +289,6 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -362,6 +362,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -394,7 +395,6 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );
@@ -454,6 +454,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -483,7 +484,6 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     };
 
     let mut chosen = None;
@@ -558,6 +558,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -590,7 +591,6 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             emit_state_snapshots: false,
-            crit_damage_reduction_perturb: 0.0,
         },
         &crew,
     );

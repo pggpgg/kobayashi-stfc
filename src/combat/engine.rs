@@ -2136,7 +2136,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 let (hostile_crit_reduction, hostile_crit_reduction_rounds) = {
                     let (r, d) =
                         hostile_crit_damage_reduction_from_crew(attacker_crew, &defender_ctx);
-                    let perturb = config.crit_damage_reduction_perturb;
+                    let perturb = attacker.crit_damage_reduction_bonus;
                     if perturb == 0.0 {
                         (r, d)
                     } else {

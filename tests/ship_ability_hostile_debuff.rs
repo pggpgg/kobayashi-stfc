@@ -18,6 +18,7 @@ fn high_crit_defender() -> Combatant {
         crit_chance: 1.0,
         crit_multiplier: 2.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -50,6 +51,7 @@ fn weak_attacker() -> Combatant {
         crit_chance: 0.0,
         crit_multiplier: 1.0,
         crit_damage_floor: 0.0,
+        crit_damage_reduction_bonus: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
@@ -86,7 +88,6 @@ fn default_config(rounds: u32) -> SimulationConfig {
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
-        crit_damage_reduction_perturb: 0.0,
     }
 }
 
