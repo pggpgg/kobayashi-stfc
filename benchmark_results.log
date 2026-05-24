@@ -3,11 +3,11 @@
 # Refresh: see docs/PERFORMANCE.md § Regression gate.
 # baseline_env=CI=true KOBAYASHI_RAYON_THREADS=2 cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
 # runner_hint=ubuntu-24.04 (.github/workflows/bench-refresh-baseline.yml)
-# generated unix_1779083453
-# refresh_source=workflow_dispatch_run_26015915508 (post-#171 SIMD outbound-damage fix; prior baseline reflected the bug where combat returned 0 damage and benches ran to the full round limit)
-monte_carlo/parallel 527192870
-monte_carlo/sequential 1029123876
-simulator/combat_100_rounds 8795
-simulator/combat_100_rounds_prev_round_hull_crew 9177
-simulator/combat_20_rounds 8810
-simulator/combat_3_rounds 8719
+# generated unix_1779650949
+# refresh_source=workflow_dispatch_run_26370587365 (post-#188; prior baseline at unix_1779083453 was stale across the #181–#188 series — the gate was reporting consistent -42% to -78% wins on every PR, regression detection had effectively become a no-op until refreshed)
+monte_carlo/parallel 297887020
+monte_carlo/sequential 577973775
+simulator/combat_100_rounds 1926
+simulator/combat_100_rounds_prev_round_hull_crew 2407
+simulator/combat_20_rounds 1934
+simulator/combat_3_rounds 1889
