@@ -26,6 +26,7 @@ fn known_scenario(n_samples: Option<u32>, metric: OutcomeMetric) -> SobolRequest
         rounds: Some(5),
         metric: Some(metric),
         deltas: None,
+        include_pairwise: None,
     }
 }
 
@@ -111,4 +112,87 @@ fn server_defaults_apply_when_none_passed() {
     let resp = run_sobol(&registry, &req).expect("run_sobol");
     use kobayashi::optimizer::sensitivity_sobol::DEFAULT_N_SAMPLES;
     assert_eq!(resp.n_samples, DEFAULT_N_SAMPLES);
+}
+
+/// `include_pairwise: false` (default) returns `pairs: None` and the baseline `N × (k+2)`
+/// sim budget. `include_pairwise: true` returns `Some(pairs)` with `k(k−1)/2` entries
+/// and the extended sim budget.
+#[test]
+fn pairwise_opt_in_toggles_pairs_payload_and_sim_count() {
+    let registry = DataRegistry::load().expect("DataRegistry::load");
+    let mut req = known_scenario(Some(16), OutcomeMetric::HullRemaining);
+    req.include_pairwise = Some(false);
+    let resp_baseline = run_sobol(&registry, &req).expect("baseline run");
+    assert!(resp_baseline.pairs.is_none());
+    let k = resp_baseline.k_stats as u64;
+    let n = resp_baseline.n_samples as u64;
+    assert_eq!(resp_baseline.total_sims, n * (k + 2));
+
+    req.include_pairwise = Some(true);
+    let resp_pairs = run_sobol(&registry, &req).expect("pairwise run");
+    let pairs = resp_pairs
+        .pairs
+        .as_ref()
+        .expect("pairwise run yields pairs");
+    let expected_pair_count = (k as usize) * (k as usize - 1) / 2;
+    assert_eq!(
+        pairs.len(),
+        expected_pair_count,
+        "expected k(k-1)/2 = {expected_pair_count} pairs, got {}",
+        pairs.len()
+    );
+    assert_eq!(
+        resp_pairs.total_sims,
+        n * (k + 2) + n * k * (k - 1) / 2,
+        "total_sims should include pairwise cost"
+    );
+    // All s_ij values must be finite and within the documented [0, 1] display clamp.
+    for p in pairs {
+        assert!(
+            p.s_ij.is_finite() && (0.0..=1.0).contains(&p.s_ij),
+            "s_ij out of bounds: {p:?}"
+        );
+        assert!(p.s_ij_ci95_low <= p.s_ij_ci95_high, "CI low > high: {p:?}");
+    }
+    // Pairs reported only once per unordered combination (stat_a < stat_b in StatKey::ALL order).
+    let mut seen: std::collections::HashSet<(String, String)> = std::collections::HashSet::new();
+    for p in pairs {
+        assert!(
+            seen.insert((p.stat_a.clone(), p.stat_b.clone())),
+            "duplicate pair {} × {}",
+            p.stat_a,
+            p.stat_b,
+        );
+        assert!(
+            !seen.contains(&(p.stat_b.clone(), p.stat_a.clone())),
+            "both orderings present: {} × {}",
+            p.stat_a,
+            p.stat_b,
+        );
+    }
+}
+
+/// Determinism: same seed + same include_pairwise=true → bitwise-identical pair s_ij values.
+#[test]
+fn pairwise_determinism_same_seed() {
+    let registry = DataRegistry::load().expect("DataRegistry::load");
+    let mut req = known_scenario(Some(16), OutcomeMetric::HullRemaining);
+    req.include_pairwise = Some(true);
+    let a = run_sobol(&registry, &req).expect("first run");
+    let b = run_sobol(&registry, &req).expect("second run");
+    let pa = a.pairs.as_ref().expect("first pairs");
+    let pb = b.pairs.as_ref().expect("second pairs");
+    assert_eq!(pa.len(), pb.len());
+    for (ra, rb) in pa.iter().zip(pb.iter()) {
+        assert_eq!(ra.stat_a, rb.stat_a);
+        assert_eq!(ra.stat_b, rb.stat_b);
+        assert!(
+            (ra.s_ij - rb.s_ij).abs() < 1e-9,
+            "{} × {}: s_ij diverged: {} vs {}",
+            ra.stat_a,
+            ra.stat_b,
+            ra.s_ij,
+            rb.s_ij,
+        );
+    }
 }

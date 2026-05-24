@@ -82,6 +82,8 @@ export default function Sensitivity() {
     null,
   );
   const [sobolNSamples, setSobolNSamples] = useState<number>(512);
+  const [sobolIncludePairwise, setSobolIncludePairwise] =
+    useState<boolean>(false);
   const [sobolResponse, setSobolResponse] = useState<SobolResponse | null>(
     null,
   );
@@ -203,7 +205,11 @@ export default function Sensitivity() {
         setSobolResponse(null);
       } else {
         const result = await runSobol(
-          { ...sharedScenario, n_samples: sobolNSamples },
+          {
+            ...sharedScenario,
+            n_samples: sobolNSamples,
+            include_pairwise: sobolIncludePairwise,
+          },
           activeProfileId,
         );
         setSobolResponse(result);
@@ -468,22 +474,61 @@ export default function Sensitivity() {
             </>
           )}
           {method === "sobol" && (
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                N samples per Saltelli matrix
-              </span>
-              <input
-                type="number"
-                min={8}
-                max={8192}
-                value={sobolNSamples}
-                onChange={(e) => setSobolNSamples(Number(e.target.value))}
-              />
-              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                Total sims = N × (k + 2). N=512 is a reasonable default; raise
-                to 2048 for tighter CIs.
-              </span>
-            </label>
+            <>
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+                >
+                  N samples per Saltelli matrix
+                </span>
+                <input
+                  type="number"
+                  min={8}
+                  max={8192}
+                  value={sobolNSamples}
+                  onChange={(e) => setSobolNSamples(Number(e.target.value))}
+                />
+                <span
+                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
+                >
+                  Total sims = N × (k + 2). N=512 is a reasonable default; raise
+                  to 2048 for tighter CIs.
+                </span>
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  alignSelf: "flex-end",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={sobolIncludePairwise}
+                    onChange={(e) => setSobolIncludePairwise(e.target.checked)}
+                  />
+                  Also compute pairwise interactions (S
+                  <sub>ij</sub>)
+                </span>
+                <span
+                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
+                >
+                  Adds N × k(k−1)/2 extra sims (≈ 8× more at defaults). Reveals
+                  which specific pairs of stats produce value together.
+                </span>
+              </label>
+            </>
           )}
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
@@ -655,6 +700,7 @@ export default function Sensitivity() {
             totalSims={sobolResponse.total_sims}
             outputVariance={sobolResponse.output_variance}
             baseSeed={sobolResponse.base_seed}
+            pairs={sobolResponse.pairs}
           />
         </section>
       )}

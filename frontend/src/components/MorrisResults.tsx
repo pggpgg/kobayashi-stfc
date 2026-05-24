@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { MorrisRow } from "../lib/sensitivityApi";
+import ExplainerPanel from "./ExplainerPanel";
 
 interface Props {
   rows: MorrisRow[];
@@ -52,6 +53,54 @@ export default function MorrisResults({
 
   return (
     <div>
+      <ExplainerPanel
+        storageKey="morris"
+        title="How to read this (Morris screening)"
+      >
+        <p>
+          <strong>What's the question?</strong> "Which stats are worth a closer
+          look — and which ones might only matter in combination with others?"
+        </p>
+        <p>
+          <strong>How it works:</strong> instead of bumping one stat at a time,
+          Morris walks <em>r</em> random paths through stat-space, perturbing
+          stats in a different random order on each path. For each path, it
+          measures how much each stat changed the outcome at the moment it was
+          perturbed. That gives <em>r</em> "elementary effects" per stat, which
+          collapse into three numbers:
+        </p>
+        <ul style={{ marginTop: 0 }}>
+          <li>
+            <strong>μ* (importance)</strong> — the average size of each stat's
+            elementary effect, ignoring sign. The headline number: higher means
+            this stat moves the outcome more on average. Sort by this first.
+          </li>
+          <li>
+            <strong>μ (direction)</strong> — average <em>signed</em> effect.
+            Positive means investing in the stat improves the outcome; negative
+            means it hurts. When μ ≈ 0 but μ* is large, the effect is sometimes
+            positive and sometimes negative depending on other stats — a strong
+            interaction hint.
+          </li>
+          <li>
+            <strong>σ (interaction signal)</strong> — how much the elementary
+            effects vary across paths. High σ relative to μ* means the stat's
+            value depends on what other stats are doing.
+          </li>
+        </ul>
+        <p>
+          <strong>Reading the "Interacts?" dot:</strong> a heuristic flag for σ
+          &gt; 0.5 × μ*. A dot means "this stat's effect depends on others" —
+          but Morris won't tell you <em>which</em> others. For that, run Sobol
+          with pairwise interactions enabled.
+        </p>
+        <p style={{ marginBottom: 0 }}>
+          <strong>When to use Morris vs the others:</strong> Morris is the
+          middle-ground choice. Cheaper than Sobol, more informative than OAT.
+          Use it to filter the stat list down to the ones worth a careful Sobol
+          run.
+        </p>
+      </ExplainerPanel>
       <div
         style={{
           marginBottom: "0.75rem",
@@ -113,31 +162,31 @@ export default function MorrisResults({
             </th>
             <th
               style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Mean of |elementary effects| across trajectories. Importance."
+              title="Importance: how much this stat moves the outcome on average, ignoring whether it goes up or down. Sort by this first."
             >
-              μ*
+              μ* (importance)
             </th>
             <th
               style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="μ* 95% CI (normal approx on the |EE| std)."
+              title="95% confidence interval on the importance. Wider = noisier; raise sims per point or trajectory count to tighten."
             >
-              μ* 95% CI
+              95% CI
             </th>
             <th
               style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Mean signed EE. Sign indicates direction."
+              title="Direction: average signed effect. Positive = investing helps; negative = hurts. Small μ but large μ* means 'helps in some setups, hurts in others' — an interaction hint."
             >
-              μ
+              μ (direction)
             </th>
             <th
               style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Std of EE across trajectories. High σ relative to μ* suggests interaction with other stats."
+              title="Interaction signal: how much the effect varies across random paths. High σ vs. μ* means the stat's effect depends on what other stats are doing."
             >
-              σ
+              σ (interaction)
             </th>
             <th
               style={{ textAlign: "center", padding: "0.45rem 0.5rem" }}
-              title="Heuristic: σ > 0.5 × μ* hints the stat's effect varies with other stats. Not a pairwise test — Sobol pairwise indices are tracked separately."
+              title="Quick flag: σ > 0.5 × μ* — this stat probably interacts with others. To find out WHICH others, run Sobol with pairwise interactions enabled."
             >
               Interacts?
             </th>
@@ -195,10 +244,11 @@ export default function MorrisResults({
           color: "var(--text-muted)",
         }}
       >
-        Morris is a <strong>screening</strong> method. σ flags stats whose
-        effect depends on other previously-perturbed stats, but doesn't identify
-        the specific pairs that interact. For pairwise interaction
-        decomposition, see the Sobol entry on the roadmap.
+        Morris is a <strong>screening</strong> method — quick triage to find
+        what's worth a deeper look. σ flags stats whose effect depends on
+        others, but won't tell you which other stat is the partner. Switch to
+        Sobol and enable "Also compute pairwise interactions" to see the
+        specific pairs.
       </p>
     </div>
   );

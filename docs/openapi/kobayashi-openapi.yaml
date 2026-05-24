@@ -1773,6 +1773,40 @@ components:
             Per-stat **base δ** overrides. Each u_i ∈ [0, 1] from the Saltelli matrix
             is mapped to a perturbation δ_i ∈ [0, 2 · base_δ_i]. A `0.0` override
             drops the stat from the analysis entirely.
+        include_pairwise:
+          type: boolean
+          description: |
+            When true, also compute second-order Sobol indices `S_ij` for every distinct
+            pair of stats. Off by default — the extra cost is `N × k(k−1)/2` engine calls
+            on top of the `N × (k + 2)` baseline (≈ 8.6× at default `N = 512`, `k = 18`).
+
+    SobolSensitivityPairRow:
+      type: object
+      required:
+        [stat_a, stat_b, base_delta_a, base_delta_b, s_ij, s_ij_ci95_low, s_ij_ci95_high]
+      properties:
+        stat_a:
+          type: string
+        stat_b:
+          type: string
+          description: |
+            Pairs are reported once with `stat_a < stat_b` in `StatKey::ALL` order. The
+            second-order index is symmetric so this is purely compact serialization.
+        base_delta_a:
+          type: number
+        base_delta_b:
+          type: number
+        s_ij:
+          type: number
+          description: |
+            Pure second-order Sobol index. The fraction of Var(Y) explained by the
+            interaction between stats A and B *beyond* their individual main effects
+            (which appear in the per-stat rows under `s1`). Clamped to `[0, 1]` for
+            display.
+        s_ij_ci95_low:
+          type: number
+        s_ij_ci95_high:
+          type: number
 
     SobolSensitivityRow:
       type: object
@@ -1803,7 +1837,8 @@ components:
           type: number
           description: |
             `S_T_i − S_i` — fraction of variance from interactions between this stat
-            and any other. Per-pair S_ij is not estimated in v1.
+            and any other. For which specific pair(s), set `include_pairwise: true` in
+            the request and inspect `pairs`.
         s1_ci95_low:
           type: number
         s1_ci95_high:
@@ -1845,6 +1880,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SobolSensitivityRow"
+        pairs:
+          type: array
+          description: |
+            Pairwise second-order indices. Omitted when `include_pairwise` is false.
+            Otherwise one entry per `(stat_a, stat_b)` pair with `k(k−1)/2` total.
+          items:
+            $ref: "#/components/schemas/SobolSensitivityPairRow"
 
     SobolSensitivityDefaultsResponse:
       type: object

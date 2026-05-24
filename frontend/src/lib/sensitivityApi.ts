@@ -181,6 +181,8 @@ export interface SobolRequest {
   rounds?: number;
   metric?: OutcomeMetric;
   deltas?: Record<string, number>;
+  /** When true, also compute pairwise S_ij. Costs N × k(k−1)/2 extra sims. */
+  include_pairwise?: boolean;
 }
 
 export interface SobolRow {
@@ -198,6 +200,17 @@ export interface SobolRow {
   st_ci95_high: number;
 }
 
+export interface SobolPairRow {
+  stat_a: string;
+  stat_b: string;
+  base_delta_a: number;
+  base_delta_b: number;
+  /** Pure second-order Sobol index for this pair. Clamped to [0, 1] for display. */
+  s_ij: number;
+  s_ij_ci95_low: number;
+  s_ij_ci95_high: number;
+}
+
 export interface SobolResponse {
   metric: string;
   n_samples: number;
@@ -206,6 +219,8 @@ export interface SobolResponse {
   total_sims: number;
   output_variance: number;
   rows: SobolRow[];
+  /** Only present when request `include_pairwise` was true. */
+  pairs?: SobolPairRow[];
 }
 
 export interface SobolDefaultsResponse {
