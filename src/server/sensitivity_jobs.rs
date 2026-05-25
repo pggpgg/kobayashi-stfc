@@ -25,9 +25,8 @@
 //! The permit is held by the spawned thread for the duration of the job (move-captured),
 //! so the semaphore naturally serializes async sensitivity jobs with optimize/simulate.
 
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::sync::{Arc, Mutex};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
@@ -42,6 +41,7 @@ use crate::optimizer::sensitivity_morris::{
     run_morris_with_progress, MorrisRequest, MorrisResponse,
 };
 use crate::optimizer::sensitivity_sobol::{run_sobol_with_progress, SobolRequest, SobolResponse};
+use crate::server::job_registry::{JobRegistry, JobState};
 
 /// Discriminator for the three sensitivity methods. Used as a job-id prefix and to
 /// route the worker thread to the right engine.
@@ -97,6 +97,20 @@ pub struct SensitivityJobState {
     pub phase: Option<String>,
     pub result: Option<SensitivityJobResult>,
     pub error: Option<String>,
+    /// Unix-millis at insertion. Read by [`JobRegistry`] for oldest-finished eviction.
+    pub started_at_ms: u128,
+}
+
+impl JobState for SensitivityJobState {
+    fn started_at_ms(&self) -> u128 {
+        self.started_at_ms
+    }
+    fn is_terminal(&self) -> bool {
+        matches!(
+            self.status,
+            SensitivityJobStatus::Done | SensitivityJobStatus::Error
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -146,73 +160,17 @@ impl std::fmt::Display for SensitivityJobError {
 
 impl std::error::Error for SensitivityJobError {}
 
-// --- Job registry (mirrors optimize-job pattern) ---
+// --- Job registry (shared with optimize via [`crate::server::job_registry`]) ---
 
 const MAX_SENSITIVITY_JOBS_RETAINED: usize = 64;
 
-static SENSITIVITY_JOB_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
-static SENSITIVITY_JOBS: OnceLock<Mutex<HashMap<String, SensitivityJobState>>> = OnceLock::new();
-static SENSITIVITY_CANCEL_FLAGS: OnceLock<Mutex<HashMap<String, Arc<AtomicBool>>>> =
-    OnceLock::new();
+static REGISTRY: JobRegistry<SensitivityJobState> = JobRegistry::new();
 
-fn jobs() -> &'static Mutex<HashMap<String, SensitivityJobState>> {
-    SENSITIVITY_JOBS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn cancel_flags() -> &'static Mutex<HashMap<String, Arc<AtomicBool>>> {
-    SENSITIVITY_CANCEL_FLAGS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn lock_jobs() -> MutexGuard<'static, HashMap<String, SensitivityJobState>> {
-    jobs().lock().unwrap_or_else(|e| e.into_inner())
-}
-
-fn lock_cancel_flags() -> MutexGuard<'static, HashMap<String, Arc<AtomicBool>>> {
-    cancel_flags().lock().unwrap_or_else(|e| e.into_inner())
-}
-
-fn next_job_id(kind: SensitivityJobKind) -> String {
-    let counter = SENSITIVITY_JOB_COUNTER.get_or_init(|| AtomicU64::new(0));
-    let n = counter.fetch_add(1, Ordering::Relaxed);
-    let ms = SystemTime::now()
+fn now_ms() -> u128 {
+    SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
-        .as_millis();
-    format!("sens_{}_{ms}_{n}", kind.as_str())
-}
-
-/// Parse `sens_<kind>_<millis>_<counter>` for eviction ordering. Unknown shape → 0.
-fn parse_job_timestamp_ms(job_id: &str) -> u128 {
-    job_id
-        .strip_prefix("sens_")
-        .and_then(|rest| rest.split('_').nth(1))
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0)
-}
-
-fn prune_completed_jobs(
-    map: &mut HashMap<String, SensitivityJobState>,
-    flags: &mut HashMap<String, Arc<AtomicBool>>,
-    max_entries: usize,
-) {
-    while map.len() > max_entries {
-        let Some(oldest_id) = map
-            .iter()
-            .filter(|(_, st)| {
-                matches!(
-                    st.status,
-                    SensitivityJobStatus::Done | SensitivityJobStatus::Error
-                )
-            })
-            .map(|(id, _)| (parse_job_timestamp_ms(id), id.clone()))
-            .min_by(|(a_ts, a_id), (b_ts, b_id)| a_ts.cmp(b_ts).then_with(|| a_id.cmp(b_id)))
-            .map(|(_, id)| id)
-        else {
-            break;
-        };
-        map.remove(&oldest_id);
-        flags.remove(&oldest_id);
-    }
+        .as_millis()
 }
 
 // --- Progress sink shared with the engines ---
@@ -253,10 +211,7 @@ impl SensitivityJobProgress {
     pub fn set_total_sims(&self, total: u64) {
         self.total_sims.store(total, Ordering::Relaxed);
         if let Some(job_id) = self.job_id.as_deref() {
-            let mut map = lock_jobs();
-            if let Some(state) = map.get_mut(job_id) {
-                state.total_sims = total;
-            }
+            REGISTRY.with_state_mut(job_id, |state| state.total_sims = total);
         }
     }
 
@@ -273,20 +228,18 @@ impl SensitivityJobProgress {
         // Only flush to the registry once we've crossed a 64-sim boundary (or hit
         // total_sims so the final %=100 lands). The status endpoint reads the atomics
         // for the % anyway via its own elapsed-time calc on the next poll.
-        let should_flush =
-            (prev / 64) != (new / 64) || new >= self.total_sims.load(Ordering::Relaxed);
+        let total = self.total_sims.load(Ordering::Relaxed);
+        let should_flush = (prev / 64) != (new / 64) || new >= total;
         if !should_flush {
             return;
         }
         if let Some(job_id) = self.job_id.as_deref() {
-            let total = self.total_sims.load(Ordering::Relaxed);
-            let mut map = lock_jobs();
-            if let Some(st) = map.get_mut(job_id) {
+            REGISTRY.with_state_mut(job_id, |st| {
                 st.sims_done = new;
                 if let Some(pct) = (new * 100).checked_div(total) {
                     st.progress = pct.min(100) as u8;
                 }
-            }
+            });
         }
     }
 
@@ -294,10 +247,7 @@ impl SensitivityJobProgress {
     pub fn set_phase(&self, phase: &'static str) {
         *self.phase.lock().unwrap_or_else(|e| e.into_inner()) = Some(phase);
         if let Some(job_id) = self.job_id.as_deref() {
-            let mut map = lock_jobs();
-            if let Some(st) = map.get_mut(job_id) {
-                st.phase = Some(phase.to_string());
-            }
+            REGISTRY.with_state_mut(job_id, |st| st.phase = Some(phase.to_string()));
         }
     }
 
@@ -319,30 +269,27 @@ pub fn start_sensitivity_job(
     request: SensitivityJobRequest,
     cpu_permit: OwnedSemaphorePermit,
 ) -> SensitivityStartResponse {
-    let job_id = next_job_id(kind);
+    let job_id = REGISTRY.next_id(&format!("sens_{}", kind.as_str()));
     let cancel_flag = Arc::new(AtomicBool::new(false));
 
     info!(job_id = %job_id, method = kind.as_str(), "sensitivity_job_started");
 
-    {
-        let mut map = lock_jobs();
-        map.insert(
-            job_id.clone(),
-            SensitivityJobState {
-                status: SensitivityJobStatus::Running,
-                kind,
-                progress: 0,
-                sims_done: 0,
-                total_sims: 0,
-                phase: None,
-                result: None,
-                error: None,
-            },
-        );
-        let mut flags = lock_cancel_flags();
-        flags.insert(job_id.clone(), cancel_flag.clone());
-        prune_completed_jobs(&mut map, &mut flags, MAX_SENSITIVITY_JOBS_RETAINED);
-    }
+    REGISTRY.insert(
+        job_id.clone(),
+        SensitivityJobState {
+            status: SensitivityJobStatus::Running,
+            kind,
+            progress: 0,
+            sims_done: 0,
+            total_sims: 0,
+            phase: None,
+            result: None,
+            error: None,
+            started_at_ms: now_ms(),
+        },
+        cancel_flag.clone(),
+        MAX_SENSITIVITY_JOBS_RETAINED,
+    );
 
     let progress = SensitivityJobProgress {
         sims_done: Arc::new(AtomicU64::new(0)),
@@ -384,51 +331,42 @@ pub fn start_sensitivity_job(
             Ok(result) if progress.cancelled() => {
                 warn!(job_id = %job_id_thread, duration_ms, "sensitivity_job_cancelled");
                 drop(result);
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(&job_id_thread) {
+                REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = SensitivityJobStatus::Error;
                     state.error = Some("Cancelled".to_string());
-                }
+                });
             }
             Ok(result) => {
                 info!(job_id = %job_id_thread, duration_ms, "sensitivity_job_completed");
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(&job_id_thread) {
+                REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = SensitivityJobStatus::Done;
                     state.progress = 100;
                     state.phase = None;
                     state.result = Some(result);
-                }
+                });
             }
             Err(err) => {
                 warn!(job_id = %job_id_thread, error = %err, duration_ms, "sensitivity_job_failed");
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(&job_id_thread) {
+                REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = SensitivityJobStatus::Error;
                     state.error = Some(err);
-                }
+                });
             }
         }
-        lock_cancel_flags().remove(&job_id_thread);
+        REGISTRY.remove_cancel(&job_id_thread);
     });
 
     SensitivityStartResponse { job_id }
 }
 
 pub fn get_job_status(job_id: &str) -> Result<SensitivityStatusResponse, SensitivityJobError> {
-    let map = lock_jobs();
-    let state = map.get(job_id).ok_or(SensitivityJobError::NotFound)?;
+    let state = REGISTRY.get(job_id).ok_or(SensitivityJobError::NotFound)?;
     let status_str = match &state.status {
         SensitivityJobStatus::Running => "running",
         SensitivityJobStatus::Done => "done",
         SensitivityJobStatus::Error => "error",
     };
-    let now_ms = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis();
-    let started_ms = parse_job_timestamp_ms(job_id);
-    let elapsed_s = ((now_ms.saturating_sub(started_ms)) as f64) / 1000.0;
+    let elapsed_s = ((now_ms().saturating_sub(state.started_at_ms)) as f64) / 1000.0;
     let (throughput, eta) = if matches!(state.status, SensitivityJobStatus::Running)
         && elapsed_s > 0.05
         && state.sims_done > 0
@@ -460,13 +398,9 @@ pub fn get_job_status(job_id: &str) -> Result<SensitivityStatusResponse, Sensiti
 }
 
 pub fn cancel_job(job_id: &str) -> Result<(), SensitivityJobError> {
-    let flag = {
-        let flags = lock_cancel_flags();
-        flags
-            .get(job_id)
-            .cloned()
-            .ok_or(SensitivityJobError::NotFound)?
-    };
-    flag.store(true, Ordering::Relaxed);
-    Ok(())
+    if REGISTRY.cancel(job_id) {
+        Ok(())
+    } else {
+        Err(SensitivityJobError::NotFound)
+    }
 }

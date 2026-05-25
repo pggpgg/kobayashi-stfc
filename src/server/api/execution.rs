@@ -2,8 +2,8 @@
 
 use serde::Serialize;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use tokio::sync::OwnedSemaphorePermit;
@@ -464,11 +464,10 @@ impl OptimizeProgressSink {
             total_crews = h_total,
             "optimize_phase_started"
         );
-        let mut map = lock_jobs();
-        if let Some(state) = map.get_mut(job_id) {
+        REGISTRY.with_state_mut(job_id, |state| {
             state.total_crews = h_total;
             state.phase = Some("heuristics".to_string());
-        }
+        });
     }
 
     fn on_heuristics_complete(
@@ -489,8 +488,7 @@ impl OptimizeProgressSink {
             top_preview_size = results.len().min(5) as u64,
             "optimize_phase_completed"
         );
-        let mut map = lock_jobs();
-        if let Some(state) = map.get_mut(job_id) {
+        REGISTRY.with_state_mut(job_id, |state| {
             state.crews_done = h_total;
             state.progress = if heuristics_only { 100 } else { 10 };
             let ranked = rank_results(results.to_vec());
@@ -501,7 +499,7 @@ impl OptimizeProgressSink {
                     .map(crew_recommendation_from_ranked)
                     .collect(),
             );
-        }
+        });
     }
 
     fn on_optimize_tick(&mut self, tick: OptimizeProgressTick) -> bool {
@@ -534,8 +532,7 @@ impl OptimizeProgressSink {
                         (crews_done as f64 / total_crews as f64) * (100.0 - base_progress as f64);
                     (base_progress as f64 + pct).round().min(100.0) as u8
                 };
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(job_id) {
+                REGISTRY.with_state_mut(job_id, |state| {
                     state.progress = progress;
                     state.crews_done = crews_done;
                     state.total_crews = total_crews;
@@ -549,7 +546,7 @@ impl OptimizeProgressSink {
                                 .collect(),
                         );
                     }
-                }
+                });
                 info!(
                     job_id = %job_id,
                     phase = tick.phase,
@@ -1438,6 +1435,21 @@ pub struct OptimizeJobState {
     pub progress_preview: Option<Vec<CrewRecommendation>>,
     pub result: Option<OptimizeResponse>,
     pub error: Option<String>,
+    /// Unix-millis at insertion. Read by the shared [`crate::server::job_registry::JobRegistry`]
+    /// for oldest-finished eviction.
+    pub started_at_ms: u128,
+}
+
+impl crate::server::job_registry::JobState for OptimizeJobState {
+    fn started_at_ms(&self) -> u128 {
+        self.started_at_ms
+    }
+    fn is_terminal(&self) -> bool {
+        matches!(
+            self.status,
+            OptimizeJobStatus::Done | OptimizeJobStatus::Error
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1473,74 +1485,17 @@ pub struct OptimizeStatusResponse {
 /// when over limit so the global map cannot grow without bound.
 const MAX_OPTIMIZE_JOBS_RETAINED: usize = 128;
 
-static OPTIMIZE_JOB_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
-static OPTIMIZE_JOBS: OnceLock<Mutex<HashMap<String, OptimizeJobState>>> = OnceLock::new();
-static OPTIMIZE_CANCEL_FLAGS: OnceLock<Mutex<HashMap<String, Arc<AtomicBool>>>> = OnceLock::new();
+/// Process-wide registry of optimize jobs. Plumbing (HashMap + cancel flags + counter +
+/// eviction + poison recovery) is provided by [`crate::server::job_registry::JobRegistry`];
+/// shared with the sensitivity-job module.
+static REGISTRY: crate::server::job_registry::JobRegistry<OptimizeJobState> =
+    crate::server::job_registry::JobRegistry::new();
 
-fn optimize_jobs() -> &'static Mutex<HashMap<String, OptimizeJobState>> {
-    OPTIMIZE_JOBS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn optimize_cancel_flags() -> &'static Mutex<HashMap<String, Arc<AtomicBool>>> {
-    OPTIMIZE_CANCEL_FLAGS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-/// Lock the optimize job map. On a poisoned mutex (peer thread panicked while holding the lock),
-/// recover the guard with `PoisonError::into_inner` so API handlers keep working instead of
-/// panicking the process.
-fn lock_jobs() -> MutexGuard<'static, HashMap<String, OptimizeJobState>> {
-    optimize_jobs().lock().unwrap_or_else(|e| e.into_inner())
-}
-
-fn lock_cancel_flags() -> MutexGuard<'static, HashMap<String, Arc<AtomicBool>>> {
-    optimize_cancel_flags()
-        .lock()
-        .unwrap_or_else(|e| e.into_inner())
-}
-
-fn next_job_id() -> String {
-    let counter = OPTIMIZE_JOB_COUNTER.get_or_init(|| AtomicU64::new(0));
-    let n = counter.fetch_add(1, Ordering::Relaxed);
-    let ms = SystemTime::now()
+fn now_ms() -> u128 {
+    SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
-        .as_millis();
-    format!("opt_{}_{}", ms, n)
-}
-
-/// Parse `opt_<millis>_<counter>` for eviction ordering (unknown shape → 0 = evicted first among ties).
-fn parse_optimize_job_timestamp_ms(job_id: &str) -> u128 {
-    job_id
-        .strip_prefix("opt_")
-        .and_then(|rest| rest.split('_').next())
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0)
-}
-
-/// Drop oldest finished jobs until `map.len() <= max_entries`. Running jobs are never removed.
-fn prune_completed_optimize_jobs_over_cap(
-    map: &mut HashMap<String, OptimizeJobState>,
-    cancel_flags: &mut HashMap<String, Arc<AtomicBool>>,
-    max_entries: usize,
-) {
-    while map.len() > max_entries {
-        let Some(oldest_id) = map
-            .iter()
-            .filter(|(_, st)| {
-                matches!(
-                    st.status,
-                    OptimizeJobStatus::Done | OptimizeJobStatus::Error
-                )
-            })
-            .map(|(id, _)| (parse_optimize_job_timestamp_ms(id), id.clone()))
-            .min_by(|(a_ts, a_id), (b_ts, b_id)| a_ts.cmp(b_ts).then_with(|| a_id.cmp(b_id)))
-            .map(|(_, id)| id)
-        else {
-            break;
-        };
-        map.remove(&oldest_id);
-        cancel_flags.remove(&oldest_id);
-    }
+        .as_millis()
 }
 
 #[derive(Debug)]
@@ -1569,7 +1524,7 @@ pub fn start_optimize_job(
     profile_id: Option<&str>,
     cpu_permit: OwnedSemaphorePermit,
 ) -> Result<OptimizeStartResponse, OptimizePayloadError> {
-    let job_id = next_job_id();
+    let job_id = REGISTRY.next_id("opt");
     let cancel_flag = Arc::new(AtomicBool::new(false));
     let heuristics_seeds_nonempty = request
         .heuristics_seeds
@@ -1586,29 +1541,22 @@ pub fn start_optimize_job(
         "optimize_job_started"
     );
 
-    {
-        let mut map = lock_jobs();
-        map.insert(
-            job_id.clone(),
-            OptimizeJobState {
-                status: OptimizeJobStatus::Running,
-                progress: 0,
-                crews_done: 0,
-                total_crews: 0,
-                phase: None,
-                progress_preview: None,
-                result: None,
-                error: None,
-            },
-        );
-        let mut cancel_flags = lock_cancel_flags();
-        cancel_flags.insert(job_id.clone(), cancel_flag.clone());
-        prune_completed_optimize_jobs_over_cap(
-            &mut map,
-            &mut cancel_flags,
-            MAX_OPTIMIZE_JOBS_RETAINED,
-        );
-    }
+    REGISTRY.insert(
+        job_id.clone(),
+        OptimizeJobState {
+            status: OptimizeJobStatus::Running,
+            progress: 0,
+            crews_done: 0,
+            total_crews: 0,
+            phase: None,
+            progress_preview: None,
+            result: None,
+            error: None,
+            started_at_ms: now_ms(),
+        },
+        cancel_flag.clone(),
+        MAX_OPTIMIZE_JOBS_RETAINED,
+    );
 
     let job_id_thread = job_id.clone();
     let profile_owned = profile_id.map(String::from);
@@ -1658,35 +1606,32 @@ pub fn start_optimize_job(
                     strategy_auto = response.scenario.strategy_auto,
                     "optimize_job_completed"
                 );
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(&job_id_thread) {
+                REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = OptimizeJobStatus::Done;
                     state.progress = 100;
                     state.phase = None;
                     state.progress_preview = None;
                     state.result = Some(response);
-                }
+                });
             }
             Err(OptimizeGatherError::Cancelled) => {
                 warn!(job_id = %job_id_thread, "optimize_job_cancelled");
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(&job_id_thread) {
+                REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = OptimizeJobStatus::Error;
                     state.error = Some("Cancelled".to_string());
-                }
+                });
             }
             Err(OptimizeGatherError::Validation(resp)) => {
                 warn!(job_id = %job_id_thread, ?resp, "optimize_job_validation_failed");
                 let err_json = serde_json::to_string(&resp)
                     .unwrap_or_else(|_| "validation failed".to_string());
-                let mut map = lock_jobs();
-                if let Some(state) = map.get_mut(&job_id_thread) {
+                REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = OptimizeJobStatus::Error;
                     state.error = Some(err_json);
-                }
+                });
             }
         }
-        lock_cancel_flags().remove(&job_id_thread);
+        REGISTRY.remove_cancel(&job_id_thread);
         info!(job_id = %job_id_thread, "optimize_job_cleanup");
     });
 
@@ -1694,19 +1639,13 @@ pub fn start_optimize_job(
 }
 
 pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeStatusError> {
-    let map = lock_jobs();
-    let state = map.get(job_id).ok_or(OptimizeStatusError::NotFound)?;
+    let state = REGISTRY.get(job_id).ok_or(OptimizeStatusError::NotFound)?;
     let status = match &state.status {
         OptimizeJobStatus::Running => "running",
         OptimizeJobStatus::Done => "done",
         OptimizeJobStatus::Error => "error",
     };
-    let now_ms = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis();
-    let started_ms = parse_optimize_job_timestamp_ms(job_id);
-    let elapsed_s = ((now_ms.saturating_sub(started_ms)) as f64) / 1000.0;
+    let elapsed_s = ((now_ms().saturating_sub(state.started_at_ms)) as f64) / 1000.0;
     let crew_like_phase = state.phase.as_deref().is_none_or(|p| {
         matches!(
             p,
@@ -1752,74 +1691,13 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
 }
 
 pub fn cancel_job(job_id: &str) -> Result<(), OptimizeStatusError> {
-    let flag = {
-        let flags = lock_cancel_flags();
-        flags
-            .get(job_id)
-            .cloned()
-            .ok_or(OptimizeStatusError::NotFound)?
-    };
-    flag.store(true, Ordering::Relaxed);
-    Ok(())
-}
-
-#[cfg(test)]
-mod optimize_job_store_tests {
-    use super::*;
-
-    fn done_state() -> OptimizeJobState {
-        OptimizeJobState {
-            status: OptimizeJobStatus::Done,
-            progress: 100,
-            crews_done: 1,
-            total_crews: 1,
-            phase: None,
-            progress_preview: None,
-            result: None,
-            error: None,
-        }
-    }
-
-    #[test]
-    fn parse_job_timestamp_reads_opt_prefix() {
-        assert_eq!(
-            parse_optimize_job_timestamp_ms("opt_1700000000123_0"),
-            1700000000123
-        );
-        assert_eq!(parse_optimize_job_timestamp_ms("opt_99_7"), 99);
-        assert_eq!(parse_optimize_job_timestamp_ms("bad"), 0);
-    }
-
-    #[test]
-    fn prune_drops_oldest_completed_first() {
-        let mut map = HashMap::new();
-        let mut flags = HashMap::new();
-        map.insert("opt_100_0".to_string(), done_state());
-        map.insert("opt_200_1".to_string(), done_state());
-        map.insert("opt_300_2".to_string(), done_state());
-        map.insert(
-            "opt_400_run".to_string(),
-            OptimizeJobState {
-                status: OptimizeJobStatus::Running,
-                progress: 0,
-                crews_done: 0,
-                total_crews: 0,
-                phase: None,
-                progress_preview: None,
-                result: None,
-                error: None,
-            },
-        );
-        flags.insert("opt_100_0".to_string(), Arc::new(AtomicBool::new(false)));
-        flags.insert("opt_200_1".to_string(), Arc::new(AtomicBool::new(false)));
-        flags.insert("opt_300_2".to_string(), Arc::new(AtomicBool::new(false)));
-        flags.insert("opt_400_run".to_string(), Arc::new(AtomicBool::new(false)));
-
-        prune_completed_optimize_jobs_over_cap(&mut map, &mut flags, 2);
-        assert_eq!(map.len(), 2);
-        assert!(!map.contains_key("opt_100_0"));
-        assert!(!map.contains_key("opt_200_1"));
-        assert!(map.contains_key("opt_300_2"));
-        assert!(map.contains_key("opt_400_run"));
+    if REGISTRY.cancel(job_id) {
+        Ok(())
+    } else {
+        Err(OptimizeStatusError::NotFound)
     }
 }
+
+// Note: the previous `parse_job_timestamp_reads_opt_prefix` and
+// `prune_drops_oldest_completed_first` unit tests covered helpers that have moved into
+// the shared `crate::server::job_registry` module; equivalent tests live there.
