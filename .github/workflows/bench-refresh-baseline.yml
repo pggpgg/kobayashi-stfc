@@ -1,20 +1,27 @@
-# On-demand refresh of `benchmark_results.log` from the same Ubuntu x86_64 environment the
-# Criterion regression gate runs in. Trigger via the GitHub UI ("Actions" -> this workflow
-# -> "Run workflow") or `gh workflow run bench-refresh-baseline.yml`. The fresh log is
-# uploaded as the `benchmark-results-log` artifact; download it locally and PR
-# `benchmark_results.log` into the repo root.
+# Refresh `benchmark_results.log` from the same Ubuntu x86_64 environment the Criterion
+# regression gate runs in. Two triggers:
 #
-# This was previously only available via tagging a v* release (see release.yml's
-# "Criterion benchmark baseline log (linux only)" step). Refreshing without cutting a
-# release is the only use case here.
+# - **Scheduled** (1st of each month, 03:17 UTC) — auto-opens a PR against `main` so a
+#   stale baseline can't silently degrade the gate to a no-op (as it did across PRs
+#   #181–#188, where every PR was reporting "-77%" wins until #189 manually refreshed).
+# - **`workflow_dispatch`** — for ad-hoc refreshes after a hot-path change. Run via the
+#   GitHub UI ("Actions" → this workflow → "Run workflow") or
+#   `gh workflow run bench-refresh-baseline.yml`. Uploads the fresh log as the
+#   `benchmark-results-log` artifact (for downloading + manual PR) and also opens a PR
+#   when there's a diff, same as the scheduled path.
 
-name: Bench baseline refresh (manual)
+name: Bench baseline refresh
 
 on:
   workflow_dispatch:
+  schedule:
+    # 1st of the month, 03:17 UTC. Odd minute to avoid contention with round-number
+    # cron jobs elsewhere; off-hour to avoid contention with developer CI traffic.
+    - cron: "17 3 1 * *"
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   refresh:
@@ -40,11 +47,45 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bench-refresh-cargo-
 
+      - name: Capture pre-refresh baseline for comparison
+        run: |
+          set -euo pipefail
+          if [ -f benchmark_results.log ]; then
+            cp benchmark_results.log /tmp/baseline.before
+          else
+            : > /tmp/baseline.before
+          fi
+
       - name: Run benches + write baseline
         run: |
           set -euo pipefail
           cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
           cargo xtask bench-check --write-baseline
+
+      - name: Rewrite metadata header
+        # The xtask writes a minimal header (schema + brief comment + `generated unix_<TS>`).
+        # Rewrite the file with the canonical header so maintainer-facing metadata
+        # (baseline_env, runner_hint, refresh_source) is consistent across manual and
+        # scheduled refreshes. Data lines are preserved verbatim.
+        run: |
+          set -euo pipefail
+          DATA=$(grep -E '^[^#]' benchmark_results.log || true)
+          if [ -z "$DATA" ]; then
+            echo "::error::benchmark_results.log has no data lines after xtask write — aborting."
+            exit 1
+          fi
+          TS=$(date +%s)
+          REFRESH_SOURCE="${{ github.event_name }}_run_${{ github.run_id }}"
+          {
+            echo "# schema=1"
+            echo "# Kobayashi Criterion regression baseline: median time (ns) per benchmark id."
+            echo "# Refresh: see docs/PERFORMANCE.md § Regression gate."
+            echo "# baseline_env=CI=true KOBAYASHI_RAYON_THREADS=2 cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot"
+            echo "# runner_hint=ubuntu-24.04 (.github/workflows/bench-refresh-baseline.yml)"
+            echo "# generated unix_${TS}"
+            echo "# refresh_source=${REFRESH_SOURCE}"
+            echo "$DATA"
+          } > benchmark_results.log
 
       - name: Upload fresh benchmark_results.log
         uses: actions/upload-artifact@v4
@@ -52,3 +93,65 @@ jobs:
           name: benchmark-results-log
           path: benchmark_results.log
           retention-days: 14
+
+      - name: Diff vs prior baseline
+        id: diff
+        run: |
+          set -euo pipefail
+          # Only compare the data lines — header metadata (timestamp, refresh_source) always
+          # differs between runs, but the baseline only deserves a PR when measurements move.
+          grep -E '^[^#]' /tmp/baseline.before | sort > /tmp/before.data || true
+          grep -E '^[^#]' benchmark_results.log | sort > /tmp/after.data
+          if diff -q /tmp/before.data /tmp/after.data > /dev/null 2>&1; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Baseline data lines unchanged; no PR needed."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Summary"
+              echo ""
+              echo "Monthly auto-refresh of the Criterion regression baseline. Measured on the same \`ubuntu-24.04\` / \`KOBAYASHI_RAYON_THREADS=2\` environment the regression gate uses, so the gate has fresh headroom for the next month's PRs."
+              echo ""
+              echo "Triggered by: \`${{ github.event_name }}\` (workflow run [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}))."
+              echo ""
+              echo "## Baseline diff (data lines only)"
+              echo ""
+              echo '```diff'
+              diff -u /tmp/before.data /tmp/after.data | tail -n 80 || true
+              echo '```'
+              echo ""
+              echo "## What if I don't want this baseline?"
+              echo ""
+              echo "Close the PR. The next monthly run will re-evaluate. If the gate is too tight against a particular metric, raise it via the regression-gate workflow rather than holding back the refresh."
+              echo ""
+              echo "🤖 Opened automatically by \`.github/workflows/bench-refresh-baseline.yml\`."
+            } > /tmp/pr_body.md
+          fi
+
+      - name: Open PR with refreshed baseline
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="bot/bench-baseline-refresh-$(date -u +%Y-%m-%d)-${{ github.run_id }}"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add benchmark_results.log
+          git commit -m "Scheduled benchmark baseline refresh (run ${{ github.run_id }})
+
+Monthly auto-refresh from .github/workflows/bench-refresh-baseline.yml.
+Numbers measured on the same ubuntu-24.04 / KOBAYASHI_RAYON_THREADS=2
+environment the regression gate uses, so the gate now has fresh headroom
+for the next month's PRs.
+
+If you'd rather hold a particular baseline (e.g. before a known
+optimization lands), close this PR — the next monthly run will
+re-evaluate."
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Scheduled benchmark baseline refresh ($(date -u +%Y-%m-%d))" \
+            --body-file /tmp/pr_body.md \
+            --base main \
+            --head "$BRANCH"
