@@ -720,11 +720,12 @@ Builds a probabilistic model of which crew configurations are likely to score we
 
 **Implemented.** For a fixed scenario (crew + ship + research + hostile + profile + support buffs), rank in-game stats by their measured Δ on a chosen outcome metric — answering "which stat, if it were higher right now, would matter most." Surfaced as `POST /api/sensitivity`, CLI `kobayashi sensitivity`, and the `/sensitivity` SPA page. Engine: [`src/optimizer/sensitivity.rs`](../src/optimizer/sensitivity.rs); perturbation hook: [`src/combat/perturb.rs`](../src/combat/perturb.rs).
 
-**Perturbation model.** A stat is perturbed by mutating one or more of three pieces of resolved state immediately before `build_combat_setup` / `simulate_combat_from_setup`:
+**Perturbation model.** A stat is perturbed by mutating one of two pieces of resolved state immediately before `build_combat_setup` / `simulate_combat_from_setup`:
 
-- `Combatant` (attacker) for HP, crit, isolytic, apex, shield mitigation, and the four mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`). The aggregated `mitigation` scalar is kept in sync as a back-compat fallback.
+- `Combatant` (attacker) for HP, crit, isolytic, apex, shield mitigation, `crit_damage_floor`, and the four mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`). The aggregated `mitigation` scalar is kept in sync as a back-compat fallback.
 - `HostileMitigationParams::base_attacker_stats` embedded in the defender's `Combatant` for armor piercing, shield piercing, and accuracy (these feed the component-based mitigation calc in [`mitigation_breakdown`](../src/combat/mitigation.rs)).
-- `SimulationConfig::crit_damage_reduction_perturb` for the universal `crit_damage_reduction` stat — the engine adds this value to whatever crew-derived crit damage reduction is resolved at combat time, applied for the configured rounds (or the full fight when the crew has no base reduction).
+
+The catalog covers 18 stats. `crit_damage_reduction` was previously included as a 19th but is no longer perturbable — it had no natural home as a resolved-once `Combatant` scalar (CDR is a per-round-summed value gated by seat duration windows; see [`hostile_crit_damage_reduction_active_at_round`](../src/combat/abilities.rs)), so supporting it required a perturb-only field on `Combatant` plus a special engine branch. The bookkeeping was sensitivity-only infrastructure leaking into the combat engine for a single stat that, in practice, often had a 95% CI crossing zero and produced no actionable answer (CDR investment is discrete: you have Crozier / Borg OT / etc. or you don't, not a continuous knob).
 
 **Method.** One stat at a time (OAT) with paired Common Random Numbers — baseline run uses seeds `s0..s0+N`, each perturbed run uses the *same* seeds. We compute per-seed Δ, then a 95% paired t-interval (large-N normal approximation, `z = 1.959963…`). When a perturbation changes a branch (e.g. extra crit triggers an extra weapon roll), downstream RNG draws *diverge* from the baseline for that seed — pairing still helps because the initial state is shared, but variance reduction is partial. The reported CI reflects whatever variance survives.
 
@@ -758,8 +759,8 @@ Across `r` trajectories each stat collects exactly `r` EE samples.
 **Caveats and limits.**
 
 - Morris is a **screening** method. σ flags stats whose effect depends on other stats but does **not** identify which specific pairs interact; the SPA UI surfaces a heuristic "Interacts?" dot when `σ > 0.5 × μ\*`. Pairwise variance decomposition requires Sobol indices — tracked under Planned in [ROADMAP.md](ROADMAP.md).
-- Same engine limitations as v1 OAT apply (collapsed mitigation components, no critical-damage-floor clamp, universal `crit_damage_reduction` plumbed via `SimulationConfig`).
-- Cumulative perturbation on clamped stats (e.g. `Mitigation` clamps to `[0, 1]`, `CritDamageReduction` clamps to `[−0.95, 0.95]`) is mildly order-dependent if an intermediate step hits the clamp. With default per-stat δs (≤ 0.10 on a [0, 1] scale) this is rare and treated as part of the model's inherent variance — the determinism property is preserved per seed.
+- Same engine limitations as v1 OAT apply (`crit_damage_reduction` is not in the perturbable catalog — see § 6.9 for why).
+- Cumulative perturbation on clamped stats (e.g. `Mitigation` clamps to `[0, 1]`) is mildly order-dependent if an intermediate step hits the clamp. With default per-stat δs (≤ 0.10 on a [0, 1] scale) this is rare and treated as part of the model's inherent variance — the determinism property is preserved per seed.
 
 **Future work.** Sobol indices shipped — see § 6.9.2 for first/total/pairwise.
 

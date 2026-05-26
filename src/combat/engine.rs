@@ -2128,18 +2128,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 let defender_defense_filtered =
                     filter_effects_by_condition(defender_defense_phase_effects, &defender_ctx);
 
-                // Crew-derived CDR (per-round sum of active seats, clamped to 0.95) plus the
-                // universal sensitivity perturbation from `attacker.crit_damage_reduction_bonus`.
-                // The resolver already gates each seat by its own duration window; the perturb
-                // is added unconditionally and re-clamped.
-                let hostile_crit_reduction = {
-                    let r = hostile_crit_damage_reduction_active_at_round(
-                        attacker_crew,
-                        &defender_ctx,
-                        round_index,
-                    );
-                    (r + attacker.crit_damage_reduction_bonus).clamp(0.0, 0.95)
-                };
+                // Crew-derived CDR for this round (per-round sum of active seats, already
+                // clamped to [0, 0.95] inside the resolver — see PR #188).
+                let hostile_crit_reduction = hostile_crit_damage_reduction_active_at_round(
+                    attacker_crew,
+                    &defender_ctx,
+                    round_index,
+                );
                 let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
                     hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
 

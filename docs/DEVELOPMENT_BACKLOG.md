@@ -72,18 +72,23 @@ before-/after comparison in the body. Skip if no diff.
 
 ## Engine accuracy / model fidelity
 
-### 4. Finish `player_crit_damage_reduction` uniform plumbing
+### 4. ~~Finish `player_crit_damage_reduction` uniform plumbing~~ **Resolved by removal.**
 
-The open bullet in [`ROADMAP.md`](ROADMAP.md) under "Stat modeling improvements". PR
-\#187 moved the sensitivity-perturb scalar from `SimulationConfig` to
-`Combatant.crit_damage_reduction_bonus` and deferred the rest because the cleanest
-unification — adding a new `HostileCritDamageReductionBonus` effect variant the
-seat-walk sums on top of `max` — touches the combat engine for a sensitivity-only
-concern (see PR #187's "max-vs-additive note").
+Originally: the cleanest unification was a new `HostileCritDamageReductionBonus`
+effect variant that the seat-walk sums on top of `max`. That would have added
+combat-engine infrastructure for a sensitivity-only concern.
 
-If a second additive-bonus stat surfaces from items #5 or #6 below, do this refactor
-generically — the parallel `*Bonus` effect variant pattern. Otherwise, this stays
-deferred.
+We chose the simpler answer: **drop `crit_damage_reduction` from the sensitivity
+catalog entirely**. The perturb-only `Combatant.crit_damage_reduction_bonus` field and
+the special engine branch that read it are gone. The catalog is now 18 stats (was 19).
+The stat was a poor fit for sensitivity anyway — CDR investment is discrete (Crozier
+hull, Borg OT, etc.) rather than a continuous knob, and the resulting sensitivity row
+often had a 95% CI crossing zero in practice.
+
+If we ever need additive sensitivity perturbations on top of `max`-aggregated
+crew-walk resolvers in the future, the `HostileCritDamageReductionBonus`-style effect
+variant is still the right pattern; the architectural note is preserved in PR notes
+referenced from [`ROADMAP.md`](ROADMAP.md) § Stat modeling improvements.
 
 ---
 
