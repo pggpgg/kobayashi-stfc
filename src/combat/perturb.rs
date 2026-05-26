@@ -45,7 +45,6 @@ pub enum StatKey {
     DamageReduction,
     ApexBarrier,
     IsolyticDefense,
-    CritDamageReduction,
     CritDamageFloor,
     HullHp,
     ShieldHp,
@@ -70,7 +69,6 @@ impl StatKey {
         StatKey::DamageReduction,
         StatKey::ApexBarrier,
         StatKey::IsolyticDefense,
-        StatKey::CritDamageReduction,
         StatKey::CritDamageFloor,
         StatKey::HullHp,
         StatKey::ShieldHp,
@@ -93,7 +91,6 @@ impl StatKey {
             StatKey::DamageReduction => "damage_reduction",
             StatKey::ApexBarrier => "apex_barrier",
             StatKey::IsolyticDefense => "isolytic_defense",
-            StatKey::CritDamageReduction => "crit_damage_reduction",
             StatKey::CritDamageFloor => "crit_damage_floor",
             StatKey::HullHp => "hull_hp",
             StatKey::ShieldHp => "shield_hp",
@@ -127,7 +124,6 @@ impl StatKey {
             StatKey::DamageReduction => 0.01,
             StatKey::ApexBarrier => 0.01,
             StatKey::IsolyticDefense => 0.05,
-            StatKey::CritDamageReduction => 0.01,
             // Same units as crit_damage (raw multiplier). +0.10 = floor moves up by 0.10×
             // damage. The clamp matters only when an attacker-outbound CDR is reducing the
             // crit multiplier below the floor — dormant otherwise.
@@ -232,10 +228,6 @@ pub fn apply_perturbation(
         StatKey::IsolyticDefense => {
             attacker.isolytic_defense = (attacker.isolytic_defense + delta).max(0.0);
         }
-        StatKey::CritDamageReduction => {
-            attacker.crit_damage_reduction_bonus =
-                (attacker.crit_damage_reduction_bonus + delta).clamp(-0.95, 0.95);
-        }
         StatKey::CritDamageFloor => {
             attacker.crit_damage_floor = (attacker.crit_damage_floor + delta).max(0.0);
         }
@@ -269,7 +261,6 @@ mod tests {
             crit_chance: 0.5,
             crit_multiplier: 2.0,
             crit_damage_floor: 0.0,
-            crit_damage_reduction_bonus: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 0.0,
             end_of_round_damage: 0.0,
@@ -360,29 +351,19 @@ mod tests {
     }
 
     #[test]
-    fn crit_damage_reduction_perturbation_writes_to_attacker_bonus() {
-        let mut a = mk_combatant();
-        let mut d = mk_combatant();
-        apply_perturbation(&mut a, &mut d, StatKey::CritDamageReduction, 0.10);
-        assert!((a.crit_damage_reduction_bonus - 0.10).abs() < 1e-9);
-        // Negative delta also lands on the attacker, clamped.
-        apply_perturbation(&mut a, &mut d, StatKey::CritDamageReduction, -1.5);
-        assert!(
-            (a.crit_damage_reduction_bonus + 0.95).abs() < 1e-9,
-            "expected -0.95, got {}",
-            a.crit_damage_reduction_bonus
-        );
-        // Defender is untouched.
-        assert_eq!(d.crit_damage_reduction_bonus, 0.0);
-    }
-
-    #[test]
-    fn stat_key_all_contains_19_entries_after_critical_damage_floor() {
-        assert_eq!(StatKey::ALL.len(), 19);
+    fn stat_key_all_contains_18_entries() {
+        // 18 = 19 (pre-CritDamageReduction-removal) − 1. `crit_damage_reduction` was
+        // dropped from the sensitivity catalog because it had no natural home as a
+        // resolved-once Combatant scalar; the bookkeeping for it (a perturb-only field
+        // on Combatant + a special engine branch) was sensitivity infrastructure
+        // leaking into the combat engine for one stat. See PR notes for the removal.
+        assert_eq!(StatKey::ALL.len(), 18);
         assert!(StatKey::ALL.contains(&StatKey::CritDamageFloor));
         assert_eq!(
             StatKey::parse_str("crit_damage_floor"),
             Some(StatKey::CritDamageFloor)
         );
+        // The removed stat must not round-trip through parse_str.
+        assert_eq!(StatKey::parse_str("crit_damage_reduction"), None);
     }
 }

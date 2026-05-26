@@ -436,16 +436,6 @@ pub struct Combatant {
     /// clamp is a no-op.
     #[serde(default)]
     pub crit_damage_floor: f64,
-    /// Additive perturbation applied to the resolved crew-derived crit damage reduction
-    /// at the engine call site (sensitivity analysis only:
-    /// [`crate::combat::perturb::StatKey::CritDamageReduction`]). Added to the per-round
-    /// value returned by
-    /// [`crate::combat::abilities::hostile_crit_damage_reduction_active_at_round`]
-    /// before its `[0, 0.95]` clamp. Default `0.0` (no perturbation). Universal across
-    /// PvE and PvP paths; modeled on `Combatant` (rather than `SimulationConfig`) to
-    /// keep the engine call signature stable and to parallel `crit_damage_floor`.
-    #[serde(default)]
-    pub crit_damage_reduction_bonus: f64,
     pub proc_chance: f64,
     pub proc_multiplier: f64,
     pub end_of_round_damage: f64,
@@ -484,7 +474,6 @@ impl Default for Combatant {
             crit_chance: 0.0,
             crit_multiplier: 0.0,
             crit_damage_floor: 0.0,
-            crit_damage_reduction_bonus: 0.0,
             proc_chance: 0.0,
             proc_multiplier: 0.0,
             end_of_round_damage: 0.0,
