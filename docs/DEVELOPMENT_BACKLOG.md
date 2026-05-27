@@ -105,20 +105,49 @@ the player's existing `support_buffs` path.
 
 ---
 
-### 6. Per-sub-round vs profile-only timing for forbidden-tech effects
+### 6. Per-sub-round vs profile-only timing for forbidden-tech effects — **calibration-blocked**
 
-Calibration uncertainty flagged in [`data/README.md` § Forbidden tech](../data/README.md).
-Some forbidden-tech bonuses may apply per-sub-round in-game but the engine treats them
-as profile-flat. The right resolution path goes through the calibration harness from
-item #1 — record a trace with the tech equipped, compare engine output, then bind the
-correct timing in the data import.
+Calibration uncertainty flagged in [`data/README.md` § Forbidden tech](../data/README.md):
+some forbidden-tech bonuses *may* apply per-sub-round in-game while the engine treats
+them as profile-flat.
 
-**Endpoint:** `data/forbidden_chaos_tech.json` rows gain an explicit `timing` field
-where calibration shows a per-sub-round pattern; engine reads it; integration test in
-`tests/recorded_fight_calibration_tests.rs` exercises the divergent rows.
+**Architecture finding (investigated, no game data yet).** The flat-vs-timed split
+already exists and is deliberate:
 
-**Soft dependency:** ideally lands after item #1 so it has the calibration harness to
-verify against.
+- **Timed seats** ([`src/data/profile.rs`](../src/data/profile.rs) ~658–937) already
+  handle every effect that genuinely needs per-round or conditional timing — Borg Alcove
+  conditional crit (attack-phase, Voyager-only), Quantum Slipstream's *cumulative*
+  shield-mitigation debuff (round-start), Borg Operating Table (Conqueror-Borg-gated),
+  and the S31 / Control Seeker / Dual Photon torpedo family (ship-class-gated, with
+  per-stat windows).
+- **Profile-flat** handles the rest: passive always-on percentage multipliers (Romulan
+  Mining Laser, Ablative Armor, Transphasic Torpedoes, …). The engine applies the profile
+  bonus on every shot, so flat application already *is* per-shot for these — "per-sub-round"
+  only changes outcomes for effects that accumulate or turn on conditionally, and those are
+  already seats.
+
+So the architecture is likely already correct, and the README note is an un-validated
+hypothesis rather than a known defect.
+
+**Why the literal "add a `timing` field" endpoint is the wrong shape:**
+
+1. **No confirmed consumer.** No currently-flat tech can be shown to need `per_sub_round`
+   without a real game trace — every row would default to `profile`, so the field would
+   be a mechanism with no user.
+2. **A flat enum can't express the model.** The existing seat routing encodes *conditions*
+   (Voyager-only, Conqueror-Borg-only, ship-class match) and *per-stat timing splits*
+   within one tech. A `timing` field on a `BonusEntry` can't represent any of that; it
+   would be a weaker parallel mechanism, not a replacement for the hardcoded logic.
+
+**Blocked on:** item #1 (recorded-fight calibration harness), which is itself blocked on
+real game traces. The only valid resolution path is: capture a trace with a suspect tech
+equipped, compare engine output round-by-round, and *then* decide whether any currently-flat
+tech needs reclassification as a timed seat (not a data-field toggle).
+
+**Doable-now alternative (not yet built):** a timing-coverage diagnostic that enumerates
+every catalog tech's current treatment (flat profile key vs seat + window + gating
+condition), turning the implicit hardcoded routing into a reviewable artifact for the #1
+calibration step.
 
 ---
 
