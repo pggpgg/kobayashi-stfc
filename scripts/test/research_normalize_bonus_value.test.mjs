@@ -28,3 +28,28 @@ test("large percentage points divide by 100 without show_percentage flag", () =>
   const mapping = { stat: "weapon_damage" };
   assert.equal(normalizeBonusValue(buff, mapping, 5), 0.05);
 });
+
+test("hull_hp show_percentage: Quark Scanner tier-1 (1.3 => 0.013)", () => {
+  const buff = { value_is_percentage: true, show_percentage: true };
+  const mapping = { stat: "hull_hp" };
+  assert.ok(Math.abs(normalizeBonusValue(buff, mapping, 1.3) - 0.013) < 1e-9);
+});
+
+test("shield_hp preserves fractional upstream (+20% => 0.2)", () => {
+  const buff = { value_is_percentage: true, show_percentage: true };
+  const mapping = { stat: "shield_hp" };
+  assert.equal(normalizeBonusValue(buff, mapping, 0.2), 0.2);
+});
+
+test("hull_hp large tier percentage points without show_percentage (130 => 1.3)", () => {
+  const buff = { value_is_percentage: true, show_percentage: false };
+  const mapping = { stat: "hull_hp" };
+  assert.equal(normalizeBonusValue(buff, mapping, 130), 1.3);
+});
+
+test("hull_hp non-pct integer percentage points up to 10000", () => {
+  const buff = { value_is_percentage: false };
+  const mapping = { stat: "hull_hp" };
+  assert.equal(normalizeBonusValue(buff, mapping, 500), 5);
+  assert.equal(normalizeBonusValue(buff, mapping, 5000), 50);
+});

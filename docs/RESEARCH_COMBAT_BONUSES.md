@@ -2,7 +2,7 @@
 
 Track progress on research-derived combat bonuses. Sibling docs: [`data/README.md`](../data/README.md) § Research, [`DESIGN.md`](DESIGN.md) §5.4.
 
-**Last reviewed:** 2026-05-27
+**Last reviewed:** 2026-05-27 (Track D conversion rule clarified)
 
 ---
 
@@ -12,7 +12,7 @@ Track progress on research-derived combat bonuses. Sibling docs: [`data/README.m
 Community Mod sync          Maintainer catalog              Combat
 ──────────────────          ──────────────────              ──────
 research.imported.json  →   research_catalog.json      →   profile.bonuses (flat stats)
-(rid + level, all rows)     (935 projects w/ bonuses)       + research_owner_faction_bonuses
+(rid + level, all rows)     (960 projects w/ bonuses)       + research_owner_faction_bonuses
                             + buff_id/loca mappings         + research_derived_attack_phase_seats
                             + research_canonical.json         (conditional crit/wd/isolytic/etc.)
 ```
@@ -39,7 +39,7 @@ research.imported.json  →   research_catalog.json      →   profile.bonuses (
 | Skipped (no mapped combat levels) | 1,370 |
 | Unmapped buff IDs (`--dump-unmapped`) | 1,219 |
 | Conditional bonus rows in catalog | 864+ |
-| Explicit buff-id mappings (`buff_id_to_stat.json`) | 85 keys |
+| Explicit buff-id mappings (`buff_id_to_stat.json`) | 102 keys |
 | Loca-id mappings (`loca_id_to_stat.json`) | 67 |
 | Canonical overrides (`research_canonical.json`) | 11 |
 | Officer `officer_*` bonus rows in catalog | 386 |
@@ -106,14 +106,36 @@ Smaller scope, higher correctness bar for gated research trees.
 
 ---
 
-## Track D — Flat hull/shield HP integers
+## Track D — Hull / shield HP from research (import parity with buildings)
 
-**Blocked on explicit conversion rule + calibration** — do not invent silently.
+**Conversion rule agreed (2026-05-27):** research `hull_hp` / `shield_hp` use the **same combat semantics as buildings** — not absolute flat HP added to the combatant, and not “÷ reference ship hull at tier.”
 
-- [ ] Collect in-game anchors: research row + integer value + resulting hull/shield delta on a known ship/tier
-- [ ] Agree conversion rule (e.g. integer ÷ reference hull at tier/level)
-- [ ] Implement in `normalizeBonusValue` / importer with tests
-- [ ] Re-run `--dump-unmapped` and confirm `value_is_percentage: false` hull/shield rows map
+### Runtime (already implemented)
+
+1. Cumulative **additive fractions** merge into `profile.bonuses["hull_hp"]` / `["shield_hp"]` (and owner-faction slices where gated).
+2. Scenario build applies via [`apply_profile_to_attacker`](../src/data/profile.rs):
+
+   ```text
+   hull_health   × (1 + hull_hp_bonus)
+   shield_health × (1 + shield_hp_bonus)
+   ```
+
+3. **Large stacked totals are normal.** End-game profiles commonly reach **+1,000%** and **+10,000%** combined hull or shield (engine fraction `10.0` → ×11, `100.0` → ×101). Do not cap or “sanity shrink” catalog values for being large.
+
+Buildings already store fractional bonuses (e.g. Parsteel Generator `hull_hp: 0.01` = +1% at level 1). Research should land in the catalog in the **same units**.
+
+### Remaining work (import + mapping only)
+
+- [x] Agree conversion rule — same as buildings: additive fraction → `(1 + bonus)` multiplier (see above)
+- [x] Extend `show_percentage` percentage-point normalization to `hull_hp` / `shield_hp` in [`scripts/lib/research_normalize_bonus_value.mjs`](../scripts/lib/research_normalize_bonus_value.mjs) — tests in [`scripts/test/research_normalize_bonus_value.test.mjs`](../scripts/test/research_normalize_bonus_value.test.mjs); large non-pct integer points (÷100 up to 10,000) for hull/shield only
+- [x] Map shared building hull/shield buff IDs into research map — [`scripts/gen_research_hull_shield_building_buff_patch.mjs`](../scripts/gen_research_hull_shield_building_buff_patch.mjs) (+17 keys); re-import: `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0`
+- [x] Re-run `--dump-unmapped` + [`scripts/triage_research_hull_shield_unmapped.mjs`](../scripts/triage_research_hull_shield_unmapped.mjs) — **0** inferrable hull/shield rows still unmapped (2026-05-27)
+- [x] Merge test: owner-faction hull cumulative fractions — `merge_research_hull_hp_stacks_fractions_like_buildings` in [`tests/research_profile_merge_tests.rs`](../tests/research_profile_merge_tests.rs)
+- [ ] Spot-check synced profile totals vs in-game ship sheet (optional calibration; validates **normalization**, not magnitude ceiling)
+
+**Out of scope for Track D:** inventing a ship-base HP divisor for standard % hull/shield lines. **Conditional** owner-faction / dual-gate hull/shield routing stays in [Track C / research_conditional_routing.md](research_conditional_routing.md).
+
+**Uncertainty:** upstream rows that are truly **absolute integer HP** (not percentage copy) still need a per-row anchor before mapping — most mapped combat hull/shield research uses fractional / percentage-point upstream shapes like buildings.
 
 ---
 
@@ -148,7 +170,7 @@ Smaller scope, higher correctness bar for gated research trees.
 | A — Observability | **Done** | API + Roster & Profile (2026-05-27) |
 | B — Mapping coverage | **Done** (2026-05-27) | +25 projects, officer loca + faction gates; see triage doc |
 | C — Conditional correctness | **Done** (2026-05-27) | Inventory + routing doc, tests, `show_percentage` normalize; morale `apex_barrier` seats fixed |
-| D — Flat hull/shield | Blocked | Needs conversion rule |
+| D — Hull/shield import | **Done** (2026-05-27) | Building-parity normalize + 17 explicit buff ids; optional in-game spot-check remains |
 | E — Validation | Not started | |
 
 Update this table and check boxes as items ship.

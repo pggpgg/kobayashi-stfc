@@ -486,6 +486,67 @@ fn ksg_incoming_shield_mitigation_from_canonical_fixture() {
 }
 
 #[test]
+fn merge_research_hull_hp_stacks_fractions_like_buildings() {
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: 597105669,
+            name: Some("Valor of Starfleet".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![
+                ResearchLevel {
+                    level: 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "hull_hp".into(),
+                        value: 0.08,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            attacker_faction: Some("federation".into()),
+                            ..Default::default()
+                        },
+                    }],
+                },
+                ResearchLevel {
+                    level: 2,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "hull_hp".into(),
+                        value: 0.10,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            attacker_faction: Some("federation".into()),
+                            ..Default::default()
+                        },
+                    }],
+                },
+            ],
+        }],
+    };
+    let imported = vec![ResearchEntry {
+        rid: 597105669,
+        level: 2,
+    }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+
+    let owner = profile
+        .research_owner_faction_bonuses
+        .get("federation")
+        .and_then(|m| m.get("hull_hp"))
+        .copied()
+        .unwrap_or(0.0);
+    assert!(
+        (owner - 0.18).abs() < 1e-9,
+        "expected cumulative owner-faction hull_hp 0.18 at level 2, got {owner}"
+    );
+    assert!(
+        !profile.bonuses.contains_key("hull_hp"),
+        "owner-faction hull_hp must not flat-merge into profile.bonuses"
+    );
+}
+
+#[test]
 fn merge_research_morale_apex_barrier_is_round_start_seat_not_flat_profile() {
     let catalog = ResearchCatalog {
         source: None,

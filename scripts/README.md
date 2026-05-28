@@ -74,6 +74,8 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 
 **Unmapped buff triage:** pipe `--dump-unmapped` JSON to `node scripts/triage_research_unmapped.mjs` (see [docs/research_unmapped_triage.md](../docs/research_unmapped_triage.md)).
 
+**Hull/shield unmapped triage:** same pipe to `node scripts/triage_research_hull_shield_unmapped.mjs`. **Building buff patch:** `node scripts/gen_research_hull_shield_building_buff_patch.mjs` copies shared `hull_hp` / `shield_hp` buff ids from `data/buildings/buff_id_to_stat.json` into `data/research/buff_id_to_stat.json` when they appear in research upstream.
+
 **Orchestrator** (same flags; **`--entities` required** — comma-separated subset):
 
 ```bash

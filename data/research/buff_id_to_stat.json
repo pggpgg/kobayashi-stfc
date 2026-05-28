@@ -33,6 +33,14 @@
     "operator": "add",
     "attacker_faction": "klingon"
   },
+  "370924543": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
+  "415916382": {
+    "stat": "hull_hp",
+    "operator": "add"
+  },
   "422274263": {
     "stat": "weapon_damage",
     "operator": "add",
@@ -42,6 +50,10 @@
     "stat": "weapon_damage",
     "operator": "add",
     "attacker_faction": "federation"
+  },
+  "434613423": {
+    "stat": "hull_hp",
+    "operator": "add"
   },
   "494742696": {
     "stat": "weapon_damage",
@@ -69,6 +81,14 @@
     "operator": "add",
     "attacker_faction": "klingon"
   },
+  "624071840": {
+    "stat": "hull_hp",
+    "operator": "add"
+  },
+  "666938697": {
+    "stat": "hull_hp",
+    "operator": "add"
+  },
   "687745254": {
     "stat": "pierce",
     "operator": "add",
@@ -89,6 +109,10 @@
     "operator": "add",
     "defender_faction": "klingon"
   },
+  "830469930": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
   "844216335": {
     "stat": "dodge",
     "operator": "add",
@@ -108,10 +132,18 @@
     "operator": "add",
     "defender_faction": "federation"
   },
+  "900493433": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
   "929907248": {
     "stat": "crit_damage",
     "operator": "add",
     "defender_faction": "federation"
+  },
+  "936000619": {
+    "stat": "hull_hp",
+    "operator": "add"
   },
   "982655355": {
     "stat": "weapon_damage",
@@ -200,6 +232,10 @@
     "stat": "weapon_damage",
     "requires_defender_burning": true
   },
+  "1907287260": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
   "1960298662": {
     "stat": "pierce",
     "operator": "add",
@@ -230,6 +266,10 @@
     "operator": "add",
     "attacker_faction": "klingon"
   },
+  "2107394739": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
   "2125436240": {
     "stat": "weapon_damage",
     "operator": "add",
@@ -239,6 +279,10 @@
     "stat": "weapon_damage",
     "operator": "add",
     "defender_faction": "federation"
+  },
+  "2227984651": {
+    "stat": "hull_hp",
+    "operator": "add"
   },
   "2264604803": {
     "stat": "weapon_damage",
@@ -259,6 +303,10 @@
     "operator": "add",
     "attacker_faction": "romulan"
   },
+  "2417069255": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
   "2485163858": {
     "stat": "weapon_damage",
     "operator": "add",
@@ -273,6 +321,10 @@
     "stat": "isolytic_damage",
     "operator": "add",
     "attacker_faction": "klingon"
+  },
+  "2733263811": {
+    "stat": "hull_hp",
+    "operator": "add"
   },
   "2782114383": {
     "stat": "weapon_damage",
@@ -330,6 +382,10 @@
     "operator": "add",
     "defender_faction": "klingon",
     "attacker_faction": "klingon"
+  },
+  "3191139620": {
+    "stat": "hull_hp",
+    "operator": "add"
   },
   "3270009347": {
     "stat": "weapon_damage",
@@ -391,6 +447,10 @@
     "operator": "add",
     "attacker_faction": "romulan"
   },
+  "3933504947": {
+    "stat": "shield_hp",
+    "operator": "add"
+  },
   "3957763486": "accuracy",
   "4009387266": {
     "stat": "weapon_damage",
@@ -412,6 +472,10 @@
     "stat": "crit_damage_floor",
     "operator": "add"
   },
+  "4118409286": {
+    "stat": "hull_hp",
+    "operator": "add"
+  },
   "4155256588": {
     "stat": "crit_damage",
     "operator": "add",
@@ -427,6 +491,10 @@
     "operator": "add",
     "defender_faction": "federation",
     "attacker_faction": "federation"
+  },
+  "4191797822": {
+    "stat": "shield_hp",
+    "operator": "add"
   },
   "4206468573": {
     "stat": "isolytic_damage",
