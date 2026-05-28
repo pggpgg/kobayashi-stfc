@@ -1424,6 +1424,11 @@ pub const DEFIANT_REINFORCE_GATED_RESEARCH_RIDS: &[i64] = &[
 /// Titan Wrecker — **Cerritos and Fortified**; merged only when both Cerritos support and Titan Fortify buffs apply.
 pub const TITAN_CERRITOS_FORTIFIED_DUAL_RESEARCH_RID: i64 = 1_212_216_403;
 
+/// True when this research `rid` merges only under an active support buff (Cerritos, Fortify, …).
+pub fn is_support_buff_gated_research_rid(rid: i64) -> bool {
+    is_support_buff_gated_combat_research_rid(rid)
+}
+
 #[inline]
 fn is_support_buff_gated_combat_research_rid(rid: i64) -> bool {
     TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS.contains(&rid)
@@ -1644,6 +1649,64 @@ fn combat_research_owner_faction_bonuses_from_entries_slice(
         }
     }
     out
+}
+
+fn combat_research_conditional_bonuses_from_entries_slice(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+) -> Vec<(crate::data::research::ResearchBonusConditionKey, String, f64)> {
+    use crate::data::research::cumulative_conditional_research_bonuses;
+
+    if imported_research.is_empty() || catalog.items.is_empty() {
+        return Vec::new();
+    }
+
+    let mut levels_by_rid = research_levels_by_rid_from_import(imported_research);
+    if let Some(exc) = exclude_catalog_rids {
+        levels_by_rid.retain(|rid, _| !exc.contains(rid));
+    }
+    if levels_by_rid.is_empty() {
+        return Vec::new();
+    }
+
+    let records: Vec<&crate::data::research::ResearchRecord> = catalog
+        .items
+        .iter()
+        .filter(|r| levels_by_rid.contains_key(&r.rid))
+        .collect();
+    if records.is_empty() {
+        return Vec::new();
+    }
+
+    let merged = cumulative_conditional_research_bonuses(&records, &levels_by_rid);
+    let mut out: Vec<(crate::data::research::ResearchBonusConditionKey, String, f64)> =
+        Vec::with_capacity(merged.len());
+    for ((key, stat), value) in merged {
+        let Some(norm) = normalize_profile_combat_stat(&stat) else {
+            continue;
+        };
+        if value == 0.0 {
+            continue;
+        }
+        out.push((key, norm.to_string(), value));
+    }
+    out.sort_by(|a, b| a.1.cmp(&b.1).then_with(|| a.2.total_cmp(&b.2)));
+    out
+}
+
+/// Conditional research bonuses (attack-phase seats), same import filter as [`combat_research_bonuses_from_import`].
+pub fn combat_research_conditional_bonuses_from_import(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+) -> Vec<(crate::data::research::ResearchBonusConditionKey, String, f64)> {
+    let filtered = research_entries_excluding_support_buff_gated(imported_research);
+    combat_research_conditional_bonuses_from_entries_slice(
+        filtered.as_ref(),
+        catalog,
+        exclude_catalog_rids,
+    )
 }
 
 /// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.

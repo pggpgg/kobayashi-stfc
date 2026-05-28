@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-05-07",
+  "last_updated": "2026-05-27",
   "items": [
     {
       "rid": 2999437,
@@ -5735,6 +5735,114 @@
       ]
     },
     {
+      "rid": 235176140,
+      "name": "Defense Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.27,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 242592436,
       "name": "Vigorous Salvo",
       "data_version": "stfcspace-upstream",
@@ -6730,6 +6838,114 @@
             {
               "stat": "dodge",
               "value": 0.022000000000000002,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 282179003,
+      "name": "Orlop Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.41,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.69,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.79,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.89,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -12394,7 +12610,8 @@
               "stat": "weapon_damage",
               "value": 0.2,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12405,7 +12622,8 @@
               "stat": "weapon_damage",
               "value": 0.3,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12416,7 +12634,8 @@
               "stat": "weapon_damage",
               "value": 0.45,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12427,7 +12646,8 @@
               "stat": "weapon_damage",
               "value": 0.6,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12438,7 +12658,8 @@
               "stat": "weapon_damage",
               "value": 0.75,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12449,7 +12670,8 @@
               "stat": "weapon_damage",
               "value": 0.9,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12460,7 +12682,8 @@
               "stat": "weapon_damage",
               "value": 1.05,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12471,7 +12694,8 @@
               "stat": "weapon_damage",
               "value": 1.2,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12482,7 +12706,8 @@
               "stat": "weapon_damage",
               "value": 1.3,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -12493,7 +12718,8 @@
               "stat": "weapon_damage",
               "value": 1.5,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         }
@@ -15484,6 +15710,214 @@
       ]
     },
     {
+      "rid": 637153598,
+      "name": "Officer Strengthening",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.03,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.03,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.035,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.035,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.035,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.04,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.04,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.045,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.045,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.045,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.06,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.06,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.07,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.07,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.09,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.09,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 641841437,
       "name": "Shield Overcharge",
       "data_version": "stfcspace-upstream",
@@ -16626,6 +17060,114 @@
       ]
     },
     {
+      "rid": 687490486,
+      "name": "<color=#fac710>Priority 1:</color> Tactical Aggression",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 692120260,
       "name": "Rare Apex Barrier vs Players",
       "data_version": "stfcspace-upstream",
@@ -17217,6 +17759,414 @@
             {
               "stat": "weapon_damage",
               "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 713042947,
+      "name": "Officer Stats",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.12,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.12,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.17,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.17,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.17,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.24,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.24,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.24,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.28,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.28,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.42,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.42,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 16,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 17,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 18,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 19,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 20,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.5,
               "operator": "add"
             }
           ]
@@ -17952,7 +18902,8 @@
               "stat": "weapon_damage",
               "value": 0.5,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -17963,7 +18914,8 @@
               "stat": "weapon_damage",
               "value": 0.75,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -17974,7 +18926,8 @@
               "stat": "weapon_damage",
               "value": 1,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -17985,7 +18938,8 @@
               "stat": "weapon_damage",
               "value": 1.5,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -17996,7 +18950,8 @@
               "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -18007,7 +18962,8 @@
               "stat": "weapon_damage",
               "value": 0.0275,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -18018,7 +18974,8 @@
               "stat": "weapon_damage",
               "value": 0.0375,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -18029,7 +18986,8 @@
               "stat": "weapon_damage",
               "value": 0.05,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -18040,7 +18998,8 @@
               "stat": "weapon_damage",
               "value": 0.07,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -18051,7 +19010,8 @@
               "stat": "weapon_damage",
               "value": 0.1,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         }
@@ -19121,6 +20081,64 @@
             {
               "stat": "weapon_damage",
               "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 769955454,
+      "name": "Tactical Aggression",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.45,
               "operator": "add"
             }
           ]
@@ -22788,6 +23806,114 @@
       ]
     },
     {
+      "rid": 964022887,
+      "name": "Jarok's Stratagem",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.36,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 968859563,
       "name": "Korinar Hull Plating",
       "data_version": "stfcspace-upstream",
@@ -23003,6 +24129,114 @@
               "value": 0.3,
               "operator": "add",
               "attacker_faction": "federation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 977982349,
+      "name": "Riker's Parry",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.31,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.52,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.67,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.75,
+              "operator": "add"
             }
           ]
         }
@@ -29285,7 +30519,8 @@
               "stat": "weapon_damage",
               "value": 0.2,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29296,7 +30531,8 @@
               "stat": "weapon_damage",
               "value": 0.3,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29307,7 +30543,8 @@
               "stat": "weapon_damage",
               "value": 0.45,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29318,7 +30555,8 @@
               "stat": "weapon_damage",
               "value": 0.6,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29329,7 +30567,8 @@
               "stat": "weapon_damage",
               "value": 0.75,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29340,7 +30579,8 @@
               "stat": "weapon_damage",
               "value": 0.9,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29351,7 +30591,8 @@
               "stat": "weapon_damage",
               "value": 1.05,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29362,7 +30603,8 @@
               "stat": "weapon_damage",
               "value": 1.2,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29373,7 +30615,8 @@
               "stat": "weapon_damage",
               "value": 1.3,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -29384,7 +30627,8 @@
               "stat": "weapon_damage",
               "value": 1.5,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         }
@@ -29630,6 +30874,114 @@
             {
               "stat": "isolytic_damage",
               "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1259392840,
+      "name": "Infamy and Heroism",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.35,
               "operator": "add"
             }
           ]
@@ -31613,6 +32965,114 @@
       ]
     },
     {
+      "rid": 1353584641,
+      "name": "Immortal Tactical Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.45,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.45,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.75,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.75,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1355104634,
       "name": "Voyager Tactics",
       "data_version": "stfcspace-upstream",
@@ -31870,6 +33330,34 @@
             {
               "stat": "crit_damage",
               "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1369190592,
+      "name": "Prime Survival Skills",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -34800,6 +36288,214 @@
       ]
     },
     {
+      "rid": 1496614022,
+      "name": "Mentorship Sessions",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.65,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.65,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.95,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.95,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.95,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.45,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.45,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.018500000000000003,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.018500000000000003,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.018500000000000003,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1499743846,
       "name": "Battleship Space Critical Resist",
       "data_version": "stfcspace-upstream",
@@ -37663,6 +39359,214 @@
       ]
     },
     {
+      "rid": 1645361232,
+      "name": "Advanced Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.04,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.04,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.06,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.06,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.18,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.18,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.22,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.22,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.27,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.27,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.27,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.32,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.32,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1649219025,
       "name": "Klingon Graviton Shields",
       "data_version": "stfcspace-upstream",
@@ -39338,6 +41242,114 @@
             {
               "stat": "crit_damage",
               "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1700067357,
+      "name": "The Bones Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.36,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.6,
               "operator": "add"
             }
           ]
@@ -42225,6 +44237,64 @@
       ]
     },
     {
+      "rid": 1816718001,
+      "name": "Hypospray Technology",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1816979936,
       "name": "Premium Battleship Apex Barrier vs Players",
       "data_version": "stfcspace-upstream",
@@ -42586,6 +44656,64 @@
             {
               "stat": "weapon_damage",
               "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1844625587,
+      "name": "Rerouting to Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.45,
               "operator": "add"
             }
           ]
@@ -48531,6 +50659,34 @@
       ]
     },
     {
+      "rid": 2086597452,
+      "name": "Prime Officers",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2086985924,
       "name": "Refinery Overhaul: Interceptor",
       "data_version": "stfcspace-upstream",
@@ -52157,7 +54313,8 @@
               "stat": "weapon_damage",
               "value": 0.2,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52168,7 +54325,8 @@
               "stat": "weapon_damage",
               "value": 0.3,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52179,7 +54337,8 @@
               "stat": "weapon_damage",
               "value": 0.45,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52190,7 +54349,8 @@
               "stat": "weapon_damage",
               "value": 0.6,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52201,7 +54361,8 @@
               "stat": "weapon_damage",
               "value": 0.75,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52212,7 +54373,8 @@
               "stat": "weapon_damage",
               "value": 0.9,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52223,7 +54385,8 @@
               "stat": "weapon_damage",
               "value": 1.05,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52234,7 +54397,8 @@
               "stat": "weapon_damage",
               "value": 1.2,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52245,7 +54409,8 @@
               "stat": "weapon_damage",
               "value": 1.3,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -52256,7 +54421,8 @@
               "stat": "weapon_damage",
               "value": 1.5,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         }
@@ -58797,6 +60963,114 @@
       ]
     },
     {
+      "rid": 2510109971,
+      "name": "<color=#fac710>Priority 1:</color> Rerouting to Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2521282635,
       "name": "4★  Battleship Defensive Shields",
       "data_version": "stfcspace-upstream",
@@ -60416,7 +62690,7 @@
           "level": 1,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.15,
               "operator": "add"
             }
@@ -60426,7 +62700,7 @@
           "level": 2,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.19,
               "operator": "add"
             }
@@ -60436,7 +62710,7 @@
           "level": 3,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.25,
               "operator": "add"
             }
@@ -60446,7 +62720,7 @@
           "level": 4,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.31,
               "operator": "add"
             }
@@ -60456,7 +62730,7 @@
           "level": 5,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.38,
               "operator": "add"
             }
@@ -60466,7 +62740,7 @@
           "level": 6,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.45,
               "operator": "add"
             }
@@ -60476,7 +62750,7 @@
           "level": 7,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.52,
               "operator": "add"
             }
@@ -60486,7 +62760,7 @@
           "level": 8,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.59,
               "operator": "add"
             }
@@ -60496,7 +62770,7 @@
           "level": 9,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.67,
               "operator": "add"
             }
@@ -60506,7 +62780,7 @@
           "level": 10,
           "bonuses": [
             {
-              "stat": "weapon_damage",
+              "stat": "officer_attack",
               "value": 0.75,
               "operator": "add"
             }
@@ -60596,6 +62870,114 @@
             {
               "stat": "weapon_damage",
               "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2579790977,
+      "name": "Riker's Fist",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.36,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.6,
               "operator": "add"
             }
           ]
@@ -60704,6 +63086,314 @@
             {
               "stat": "isolytic_damage",
               "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2580915158,
+      "name": "Officer Conditioning",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.19,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.19,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.28,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.28,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.33,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.33,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.38,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.38,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.43,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.43,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.43,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.57,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.57,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.57,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.64,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.64,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.64,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.72,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.72,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.72,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.8,
               "operator": "add"
             }
           ]
@@ -61761,7 +64451,8 @@
               "stat": "weapon_damage",
               "value": 0.3,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61772,7 +64463,8 @@
               "stat": "weapon_damage",
               "value": 0.4,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61783,7 +64475,8 @@
               "stat": "weapon_damage",
               "value": 0.5,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61794,7 +64487,8 @@
               "stat": "weapon_damage",
               "value": 0.65,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61805,7 +64499,8 @@
               "stat": "weapon_damage",
               "value": 0.8,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61816,7 +64511,8 @@
               "stat": "weapon_damage",
               "value": 1,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61827,7 +64523,8 @@
               "stat": "weapon_damage",
               "value": 1.2,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61838,7 +64535,8 @@
               "stat": "weapon_damage",
               "value": 1.45,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61849,7 +64547,8 @@
               "stat": "weapon_damage",
               "value": 0.017,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -61860,7 +64559,8 @@
               "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add",
-              "defender_faction": "romulan"
+              "defender_faction": "romulan",
+              "attacker_faction": "romulan"
             }
           ]
         }
@@ -62784,6 +65484,114 @@
             {
               "stat": "weapon_damage",
               "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2701354891,
+      "name": "Pulaski's Panacea",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.31,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.52,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.67,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.75,
               "operator": "add"
             }
           ]
@@ -66206,6 +69014,114 @@
             {
               "stat": "pierce",
               "value": 0.025,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2848539271,
+      "name": "Orlop Attack",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.41,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.69,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.79,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.89,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -81486,7 +84402,8 @@
             {
               "stat": "crit_chance",
               "value": 0.01,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation"
             }
           ]
         },
@@ -81496,7 +84413,8 @@
             {
               "stat": "crit_chance",
               "value": 0.02,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation"
             }
           ]
         },
@@ -81506,7 +84424,8 @@
             {
               "stat": "crit_chance",
               "value": 0.04,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation"
             }
           ]
         },
@@ -81516,7 +84435,8 @@
             {
               "stat": "crit_chance",
               "value": 0.06,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation"
             }
           ]
         },
@@ -81526,7 +84446,8 @@
             {
               "stat": "crit_chance",
               "value": 0.1,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation"
             }
           ]
         }
@@ -82193,7 +85114,8 @@
               "stat": "weapon_damage",
               "value": 0.3,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82204,7 +85126,8 @@
               "stat": "weapon_damage",
               "value": 0.4,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82215,7 +85138,8 @@
               "stat": "weapon_damage",
               "value": 0.5,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82226,7 +85150,8 @@
               "stat": "weapon_damage",
               "value": 0.65,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82237,7 +85162,8 @@
               "stat": "weapon_damage",
               "value": 0.8,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82248,7 +85174,8 @@
               "stat": "weapon_damage",
               "value": 1,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82259,7 +85186,8 @@
               "stat": "weapon_damage",
               "value": 1.2,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82270,7 +85198,8 @@
               "stat": "weapon_damage",
               "value": 1.45,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82281,7 +85210,8 @@
               "stat": "weapon_damage",
               "value": 0.017,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -82292,7 +85222,8 @@
               "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "klingon"
             }
           ]
         }
@@ -83758,7 +86689,8 @@
               "stat": "weapon_damage",
               "value": 0.5,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83769,7 +86701,8 @@
               "stat": "weapon_damage",
               "value": 0.75,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83780,7 +86713,8 @@
               "stat": "weapon_damage",
               "value": 1,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83791,7 +86725,8 @@
               "stat": "weapon_damage",
               "value": 1.5,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83802,7 +86737,8 @@
               "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83813,7 +86749,8 @@
               "stat": "weapon_damage",
               "value": 0.0275,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83824,7 +86761,8 @@
               "stat": "weapon_damage",
               "value": 0.0375,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83835,7 +86773,8 @@
               "stat": "weapon_damage",
               "value": 0.05,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83846,7 +86785,8 @@
               "stat": "weapon_damage",
               "value": 0.07,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -83857,7 +86797,8 @@
               "stat": "weapon_damage",
               "value": 0.1,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         }
@@ -89699,6 +92640,114 @@
       ]
     },
     {
+      "rid": 3891541983,
+      "name": "<color=#fac710>Priority 1:</color> Hypospray Technology",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3893287491,
       "name": "To the Last",
       "data_version": "stfcspace-upstream",
@@ -93343,6 +96392,114 @@
       ]
     },
     {
+      "rid": 4021387234,
+      "name": "Attack Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.27,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 4034052305,
       "name": "5★ Romulan Armada Defects",
       "data_version": "stfcspace-upstream",
@@ -93544,7 +96701,8 @@
               "stat": "weapon_damage",
               "value": 0.3,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93555,7 +96713,8 @@
               "stat": "weapon_damage",
               "value": 0.4,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93566,7 +96725,8 @@
               "stat": "weapon_damage",
               "value": 0.5,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93577,7 +96737,8 @@
               "stat": "weapon_damage",
               "value": 0.65,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93588,7 +96749,8 @@
               "stat": "weapon_damage",
               "value": 0.8,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93599,7 +96761,8 @@
               "stat": "weapon_damage",
               "value": 1,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93610,7 +96773,8 @@
               "stat": "weapon_damage",
               "value": 1.2,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93621,7 +96785,8 @@
               "stat": "weapon_damage",
               "value": 1.45,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93632,7 +96797,8 @@
               "stat": "weapon_damage",
               "value": 0.017,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -93643,7 +96809,8 @@
               "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add",
-              "defender_faction": "federation"
+              "defender_faction": "federation",
+              "attacker_faction": "federation"
             }
           ]
         }
@@ -96397,6 +99564,114 @@
             {
               "stat": "hull_hp",
               "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4159971023,
+      "name": "Orlop Health",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.41,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.69,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.79,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.89,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1,
               "operator": "add"
             }
           ]

@@ -23,6 +23,7 @@ import path from "node:path";
 import url from "node:url";
 
 import { resolveBuffStatMappings } from "./lib/research_buff_resolve.mjs";
+import { normalizeBonusValue } from "./lib/research_normalize_bonus_value.mjs";
 
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT_PATH = path.join(REPO_ROOT, "data", "research_catalog.json");
@@ -224,61 +225,6 @@ function addUnmapped(unmappedByBuffId, rid, buff) {
     existing.loca_id = buff.loca_id;
   }
   unmappedByBuffId.set(key, existing);
-}
-
-/**
- * Stats that sometimes appear with value_is_percentage false but use fractional bonuses like 0.05.
- */
-const NON_PCT_DECIMAL_STATS = new Set([
-  "armor",
-  "shield_deflection",
-  "weapon_damage",
-  "isolytic_damage",
-  "isolytic_defense",
-  "hull_hp",
-  "shield_hp",
-  "crit_chance",
-  "crit_damage",
-  "crit_damage_floor",
-  "pierce",
-  "shield_mitigation",
-  "damage_reduction",
-  "dodge",
-  "accuracy",
-  "apex_shred",
-  "apex_barrier",
-]);
-
-function normalizeBonusValue(buff, mapping, rawValue) {
-  let value = rawValue;
-  // NS Burning Damage buff: upstream uses percentage points (1 = +1% weapon damage).
-  // The generic branch below would keep 1.0 as literal +100% for `value_is_percentage` rows ≤ 1.5.
-  if (buff?.id === 1898558353 && mapping?.stat === "weapon_damage" && buff.value_is_percentage) {
-    return value / 100;
-  }
-  if (buff.value_is_percentage) {
-    value = value >= 0 && value <= 1.5 ? value : value / 100;
-    return value;
-  }
-  // Apex barrier / shred with value_is_percentage false carry absolute integer values
-  // (e.g. 250, 1000) that map directly to the engine's attacker stats without scaling.
-  if (
-    (mapping.stat === "apex_barrier" || mapping.stat === "apex_shred") &&
-    !buff.value_is_percentage
-  ) {
-    if (value > 0 && Number.isFinite(value)) return value;
-    return null;
-  }
-  if (!NON_PCT_DECIMAL_STATS.has(mapping.stat)) {
-    return null;
-  }
-  if (value >= 0 && value <= 2) {
-    return value;
-  }
-  if (value > 2 && value <= 100 && Number.isInteger(value)) {
-    return value / 100;
-  }
-  return null;
 }
 
 function buildLevelsFromDetail(detail, opts) {

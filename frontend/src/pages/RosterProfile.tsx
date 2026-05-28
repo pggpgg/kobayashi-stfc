@@ -7,6 +7,7 @@ import type {
   ImportReport,
   PlayerProfile,
   ResearchCombatSummary,
+  ResearchConditionalBonusLine,
 } from "../lib/api";
 import {
   fetchBuildingCombatSummary,
@@ -22,6 +23,64 @@ import {
 
 /** Mod sync older than this is shown in red (stale). */
 const MOD_SYNC_STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+function formatResearchBonusMap(m?: Record<string, number>): string {
+  if (!m || Object.keys(m).length === 0) return "—";
+  return Object.entries(m)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
+    .join("; ");
+}
+
+function formatOwnerFactionResearch(
+  m?: Record<string, Record<string, number>>,
+): string {
+  if (!m || Object.keys(m).length === 0) return "—";
+  return Object.entries(m)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([faction, inner]) => {
+      const stats = Object.entries(inner)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
+        .join(", ");
+      return `${faction}: ${stats}`;
+    })
+    .join("; ");
+}
+
+function formatConditionalResearch(
+  lines?: ResearchConditionalBonusLine[],
+): string {
+  if (!lines || lines.length === 0) return "—";
+  return lines
+    .map((line) => {
+      const gate = line.condition_label ?? "conditional";
+      const runtime = line.requires_runtime_state ? " (runtime)" : "";
+      return `${line.stat} +${(line.value * 100).toFixed(2)}% [${gate}]${runtime}`;
+    })
+    .join("; ");
+}
+
+function researchCombatKindLabel(kind: string): string {
+  switch (kind) {
+    case "flat":
+      return "flat";
+    case "owner_faction":
+      return "owner hull";
+    case "conditional":
+      return "conditional";
+    case "mixed":
+      return "mixed";
+    case "support_buff_gated":
+      return "support buff";
+    case "non_combat":
+      return "no combat";
+    case "unmapped":
+      return "unmapped";
+    default:
+      return kind;
+  }
+}
 
 type Tab = "profile" | "roster" | "bonuses";
 
@@ -47,6 +106,9 @@ export default function RosterProfile() {
   const [researchSummaryError, setResearchSummaryError] = useState<
     string | null
   >(null);
+  const [researchScenarioShipId, setResearchScenarioShipId] = useState("");
+  const [researchScenarioHostileId, setResearchScenarioHostileId] =
+    useState("");
   const [modSyncUtc, setModSyncUtc] = useState<string | null | undefined>(
     undefined,
   );
@@ -113,7 +175,10 @@ export default function RosterProfile() {
   useEffect(() => {
     let c = false;
     setResearchSummaryError(null);
-    fetchResearchCombatSummary(activeProfileId)
+    fetchResearchCombatSummary(activeProfileId, {
+      shipId: researchScenarioShipId,
+      hostileId: researchScenarioHostileId,
+    })
       .then((s) => {
         if (!c) setResearchSummary(s);
       })
@@ -126,7 +191,11 @@ export default function RosterProfile() {
     return () => {
       c = true;
     };
-  }, [activeProfileId]);
+  }, [
+    activeProfileId,
+    researchScenarioShipId,
+    researchScenarioHostileId,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -696,18 +765,82 @@ token = "${activeProfile.sync_token}"`}
                   {researchSummary.synced_research_count}
                 </dd>
               </dl>
-              {researchSummary.unmapped_rids.length > 0 && (
-                <p style={{ margin: "0 0 0.5rem", color: "var(--text-muted)" }}>
-                  Unmapped game <code>rid</code> values (no catalog entry):{" "}
-                  {researchSummary.unmapped_rids.join(", ")}
-                </p>
-              )}
+              <div
+                style={{
+                  marginBottom: "0.75rem",
+                  display: "grid",
+                  gap: "0.5rem",
+                  maxWidth: 520,
+                }}
+              >
+                <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                  Scenario lens (optional)
+                </div>
+                <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
+                  <span style={{ color: "var(--text-muted)" }}>ship_id</span>
+                  <input
+                    type="text"
+                    value={researchScenarioShipId}
+                    onChange={(e) => setResearchScenarioShipId(e.target.value)}
+                    placeholder="e.g. uss_voyager"
+                    style={{ padding: "6px 8px", fontSize: "0.85rem" }}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
+                  <span style={{ color: "var(--text-muted)" }}>hostile_id</span>
+                  <input
+                    type="text"
+                    value={researchScenarioHostileId}
+                    onChange={(e) =>
+                      setResearchScenarioHostileId(e.target.value)
+                    }
+                    placeholder="e.g. hostile id or name"
+                    style={{ padding: "6px 8px", fontSize: "0.85rem" }}
+                  />
+                </label>
+                {researchSummary.scenario_context && (
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "var(--text-muted)",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    Effective for {researchSummary.scenario_context.ship_id} vs{" "}
+                    {researchSummary.scenario_context.hostile_id}
+                    {researchSummary.scenario_context.ship_faction
+                      ? ` (${researchSummary.scenario_context.ship_faction} hull vs ${researchSummary.scenario_context.defender_faction} ${researchSummary.scenario_context.defender_ship_class})`
+                      : ""}
+                  </p>
+                )}
+              </div>
+              {researchSummary.unmapped_research &&
+                researchSummary.unmapped_research.length > 0 && (
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      Unmapped research (by level)
+                    </div>
+                    <ul
+                      style={{
+                        margin: 0,
+                        paddingLeft: "1.25rem",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {researchSummary.unmapped_research.map((row) => (
+                        <li key={row.rid}>
+                          <code>{row.rid}</code> @ level {row.level}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               {researchSummary.combat_bonuses_from_research &&
                 Object.keys(researchSummary.combat_bonuses_from_research)
                   .length > 0 && (
                   <div style={{ marginBottom: "0.75rem" }}>
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                      Combat bonuses from research (total)
+                      Flat combat bonuses (global)
                     </div>
                     <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
                       {Object.entries(
@@ -719,6 +852,106 @@ token = "${activeProfile.sync_token}"`}
                             <code>{k}</code>: {(v * 100).toFixed(2)}% additive
                           </li>
                         ))}
+                    </ul>
+                  </div>
+                )}
+              {researchSummary.combat_owner_faction_bonuses_from_research &&
+                Object.keys(
+                  researchSummary.combat_owner_faction_bonuses_from_research,
+                ).length > 0 && (
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      Owner-hull faction bonuses
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                      {Object.entries(
+                        researchSummary.combat_owner_faction_bonuses_from_research,
+                      )
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([faction, inner]) => (
+                          <li key={faction}>
+                            <code>{faction}</code>:{" "}
+                            {Object.entries(inner)
+                              .sort(([a], [b]) => a.localeCompare(b))
+                              .map(
+                                ([k, v]) =>
+                                  `${k} +${(v * 100).toFixed(2)}%`,
+                              )
+                              .join(", ")}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              {researchSummary.combat_conditional_bonuses_from_research &&
+                researchSummary.combat_conditional_bonuses_from_research
+                  .length > 0 && (
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      Conditional bonuses (attack-phase seats)
+                    </div>
+                    <ul
+                      style={{
+                        margin: 0,
+                        paddingLeft: "1.25rem",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {researchSummary.combat_conditional_bonuses_from_research.map(
+                        (line, idx) => (
+                          <li key={`${line.stat}-${idx}`}>
+                            <code>{line.stat}</code> +{(line.value * 100).toFixed(2)}% —{" "}
+                            {line.condition_label ?? "conditional"}
+                            {line.requires_runtime_state ? " (needs morale/burning/HB in fight)" : ""}
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                )}
+              {researchSummary.combat_bonuses_scenario_effective &&
+                Object.keys(researchSummary.combat_bonuses_scenario_effective)
+                  .length > 0 && (
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      Scenario-effective flat totals
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                      {Object.entries(
+                        researchSummary.combat_bonuses_scenario_effective,
+                      )
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([k, v]) => (
+                          <li key={k}>
+                            <code>{k}</code>: {(v * 100).toFixed(2)}% additive
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              {researchSummary.combat_conditional_scenario_active &&
+                researchSummary.combat_conditional_scenario_active.length >
+                  0 && (
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      Conditional active for scenario (static gates)
+                    </div>
+                    <ul
+                      style={{
+                        margin: 0,
+                        paddingLeft: "1.25rem",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {researchSummary.combat_conditional_scenario_active.map(
+                        (line, idx) => (
+                          <li key={`sc-${line.stat}-${idx}`}>
+                            <code>{line.stat}</code> +{(line.value * 100).toFixed(2)}% —{" "}
+                            {line.condition_label ?? "conditional"}
+                            {line.requires_runtime_state ? " (runtime gate)" : ""}
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </div>
                 )}
@@ -749,8 +982,10 @@ token = "${activeProfile.sync_token}"`}
                         <th style={{ padding: "6px 8px" }}>rid</th>
                         <th style={{ padding: "6px 8px" }}>Level</th>
                         <th style={{ padding: "6px 8px" }}>Research</th>
-                        <th style={{ padding: "6px 8px" }}>Catalog</th>
-                        <th style={{ padding: "6px 8px" }}>Combat from row</th>
+                        <th style={{ padding: "6px 8px" }}>Kind</th>
+                        <th style={{ padding: "6px 8px" }}>Flat</th>
+                        <th style={{ padding: "6px 8px" }}>Owner hull</th>
+                        <th style={{ padding: "6px 8px" }}>Conditional</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -772,7 +1007,7 @@ token = "${activeProfile.sync_token}"`}
                             {row.research_name ?? "—"}
                           </td>
                           <td style={{ padding: "6px 8px" }}>
-                            {row.catalog_record_present ? "yes" : "no"}
+                            {researchCombatKindLabel(row.combat_kind)}
                           </td>
                           <td
                             style={{
@@ -781,16 +1016,29 @@ token = "${activeProfile.sync_token}"`}
                               fontSize: "0.75rem",
                             }}
                           >
-                            {row.combat_bonuses_from_row &&
-                            Object.keys(row.combat_bonuses_from_row).length > 0
-                              ? Object.entries(row.combat_bonuses_from_row)
-                                  .sort(([a], [b]) => a.localeCompare(b))
-                                  .map(
-                                    ([k, v]) =>
-                                      `${k} +${(v * 100).toFixed(2)}%`,
-                                  )
-                                  .join("; ")
-                              : "—"}
+                            {formatResearchBonusMap(row.combat_bonuses_from_row)}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 8px",
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {formatOwnerFactionResearch(
+                              row.combat_owner_faction_bonuses_from_row,
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 8px",
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {formatConditionalResearch(
+                              row.combat_conditional_bonuses_from_row,
+                            )}
                           </td>
                         </tr>
                       ))}

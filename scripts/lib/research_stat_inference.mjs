@@ -116,6 +116,34 @@ export function inferCombatStatFromDescription(text) {
   if (/shield health|shield hit points|shield capacity|shield strength|max shield/.test(t)) {
     if (!/defense platform|defensive platform|station/.test(t)) return "shield_hp";
   }
+  // Officer research (profile keys officer_attack / officer_defense / officer_health).
+  if (
+    /attack, defense, and health|attack, defense and health/.test(t) &&
+    /officer/.test(t)
+  ) {
+    return null;
+  }
+  if (
+    /(?:base )?attack(?: stat)? (?:is )?(?:increased|of all officers|for all officers)/.test(t) &&
+    /officer/.test(t) &&
+    !/defense|health/.test(t)
+  ) {
+    return "officer_attack";
+  }
+  if (
+    /(?:base )?defense(?: stat)? (?:is )?(?:increased|of all officers|for all officers)/.test(t) &&
+    /officer/.test(t) &&
+    !/attack|health/.test(t)
+  ) {
+    return "officer_defense";
+  }
+  if (
+    /(?:base )?health(?: stat)? (?:is )?(?:increased|of all officers|for all officers)/.test(t) &&
+    /officer/.test(t) &&
+    !/attack|defense/.test(t)
+  ) {
+    return "officer_health";
+  }
   if (
     /weapon damage|base damage dealt|damage dealt to hostiles|damage dealt to hostile|offensive damage|increases base damage|increases base weapon|bonus to base weapon damage/.test(
       t

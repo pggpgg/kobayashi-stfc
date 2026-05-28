@@ -72,6 +72,8 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 
 **Bulk faction gates on mappings** (experimental; heuristic — review diffs): `npm run gen:research:faction-patch` (same as `node scripts/gen_research_faction_buff_patch.mjs`) merges `attacker_faction` / `defender_faction` into `data/research/buff_id_to_stat.json` for lines emitted by triage (`--skip-economy`). Stats are resolved with the same resolver as `import_stfcspace_research.mjs`. Use `--dry-run` to inspect the patch JSON; `--force-all` regenerates mappings that already declare `attacker_faction`. After substantive mapping edits run `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` so `research_catalog.json` picks them up.
 
+**Unmapped buff triage:** pipe `--dump-unmapped` JSON to `node scripts/triage_research_unmapped.mjs` (see [docs/research_unmapped_triage.md](../docs/research_unmapped_triage.md)).
+
 **Orchestrator** (same flags; **`--entities` required** — comma-separated subset):
 
 ```bash

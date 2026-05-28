@@ -139,6 +139,12 @@ fn is_conditional_attack_seat_research_stat(stat: &str) -> bool {
     is_crit_seat_research_stat(stat) || stat == "weapon_damage"
 }
 
+/// Stats that compile to round-start seats when gated on morale only (excluding `isolytic_damage`,
+/// which uses the broader conditional-isolytic rule below).
+fn research_morale_gated_seat_stat(stat: &str) -> bool {
+    stat == "apex_barrier"
+}
+
 /// Conditional rows that compile to timed/conditional seats (`research_derived_attack_phase_seats_from_spec`)
 /// must not duplicate-merge into unconditional `profile.bonuses`.
 pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry) -> bool {
@@ -157,8 +163,11 @@ pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry
         return research_bonus_is_owner_faction_gated(bonus)
             || defender_context_for_research_attack_seat(&bonus.condition);
     }
-    // Conditional `isolytic_damage` (e.g. `requires_morale`, faction gates) compiles to seats — never flat-merge into
-    // `Combatant.isolytic_damage` (same rule as other gated isolytic rows).
+    // Morale-gated apex_barrier compiles to round-start seats — never flat-merge.
+    if bonus.condition.requires_morale && research_morale_gated_seat_stat(&bonus.stat) {
+        return true;
+    }
+    // Conditional `isolytic_damage` (e.g. `requires_morale`, burning, faction gates) compiles to seats.
     if bonus.stat == "isolytic_damage" && research_bonus_is_conditional(bonus) {
         return true;
     }
@@ -596,6 +605,7 @@ pub fn cumulative_research_level_conditional_bonuses(
             }
             if !(is_conditional_attack_seat_research_stat(&bonus.stat)
                 || bonus.stat == "isolytic_damage"
+                || (bonus.condition.requires_morale && research_morale_gated_seat_stat(&bonus.stat))
                 || (bonus.condition.defender_faction.is_some()
                     && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)))
             {
@@ -921,6 +931,125 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(cond.get(&(key, "crit_chance".into())).copied(), Some(0.05));
+    }
+
+    #[test]
+    fn dual_gate_hull_shield_applies_for_matching_owner_and_defender_faction() {
+        use crate::combat::OpponentFactionTag;
+
+        let r = ResearchRecord {
+            rid: 9001,
+            name: Some("Fed vs Klingon hull".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "hull_hp".into(),
+                    value: 0.12,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        attacker_faction: Some("federation".into()),
+                        defender_faction: Some("klingon".into()),
+                        ..Default::default()
+                    },
+                }],
+            }],
+        };
+        let records: Vec<&ResearchRecord> = vec![&r];
+        let mut levels = HashMap::new();
+        levels.insert(9001_i64, 1_u32);
+        let (hull, shield) = cumulative_dual_gate_hull_shield_research_fractions(
+            &records,
+            &levels,
+            Some("federation"),
+            OpponentFactionTag::Klingon,
+        );
+        assert!((hull - 0.12).abs() < 1e-9, "expected hull 0.12, got {hull}");
+        assert_eq!(shield, 0.0);
+
+        let (hull_rom, _) = cumulative_dual_gate_hull_shield_research_fractions(
+            &records,
+            &levels,
+            Some("federation"),
+            OpponentFactionTag::Romulan,
+        );
+        assert_eq!(hull_rom, 0.0, "wrong defender faction must not apply");
+    }
+
+    #[test]
+    fn dual_gate_hull_shield_skips_rows_with_extra_gates() {
+        use crate::combat::OpponentFactionTag;
+
+        let r = ResearchRecord {
+            rid: 9002,
+            name: None,
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "shield_hp".into(),
+                    value: 0.08,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        attacker_faction: Some("klingon".into()),
+                        defender_faction: Some("federation".into()),
+                        requires_morale: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        };
+        let records: Vec<&ResearchRecord> = vec![&r];
+        let mut levels = HashMap::new();
+        levels.insert(9002_i64, 1_u32);
+        let (_, shield) = cumulative_dual_gate_hull_shield_research_fractions(
+            &records,
+            &levels,
+            Some("klingon"),
+            OpponentFactionTag::Federation,
+        );
+        assert_eq!(
+            shield, 0.0,
+            "morale-gated dual hull/shield must use seats, not scenario dual-gate path"
+        );
+    }
+
+    #[test]
+    fn conditional_morale_apex_barrier_not_in_flat_level_bonuses() {
+        let r = ResearchRecord {
+            rid: 292902554,
+            name: Some("Sarek's Vulcan Necklace".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "apex_barrier".into(),
+                    value: 250.0,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        requires_morale: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        };
+        let flat = cumulative_research_level_bonuses(&r, 1);
+        assert!(
+            !flat.contains_key("apex_barrier"),
+            "morale-gated apex_barrier must not merge into flat level bonuses"
+        );
+        let key = ResearchBonusConditionKey {
+            requires_morale: true,
+            ..Default::default()
+        };
+        let cond = cumulative_research_level_conditional_bonuses(&r, 1);
+        assert_eq!(
+            cond.get(&(key, "apex_barrier".into())).copied(),
+            Some(250.0)
+        );
     }
 
     #[test]

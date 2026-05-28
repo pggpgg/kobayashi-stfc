@@ -1133,17 +1133,47 @@ export async function fetchBuildingCombatSummary(
   return res.json();
 }
 
+export interface ResearchConditionalBonusLine {
+  stat: string;
+  value: number;
+  requires_runtime_state: boolean;
+  condition_label?: string | null;
+  defender_ship_class?: string | null;
+  defender_faction?: string | null;
+  attacker_faction?: string | null;
+  attacker_factions?: string[];
+  requires_morale?: boolean;
+  requires_defender_burning?: boolean;
+  requires_defender_hull_breach?: boolean;
+}
+
+export interface UnmappedResearchEntry {
+  rid: number;
+  level: number;
+}
+
+export interface ResearchSummaryScenarioContext {
+  ship_id: string;
+  hostile_id: string;
+  ship_faction?: string | null;
+  defender_faction: string;
+  defender_ship_class: string;
+}
+
 export interface ResearchSummaryRow {
   rid: number;
   level: number;
   research_name?: string | null;
   catalog_record_present: boolean;
+  /** unmapped | non_combat | flat | owner_faction | conditional | mixed | support_buff_gated */
+  combat_kind: string;
   combat_bonuses_from_row?: Record<string, number>;
   /** Owner-hull faction → stat → value for this synced row (e.g. Modulated Federation). */
   combat_owner_faction_bonuses_from_row?: Record<
     string,
     Record<string, number>
   >;
+  combat_conditional_bonuses_from_row?: ResearchConditionalBonusLine[];
 }
 
 /** Synced research → effective ship-combat bonuses from research only (same rules as simulate/optimize). */
@@ -1152,19 +1182,42 @@ export interface ResearchCombatSummary {
   error?: string | null;
   synced_research_count: number;
   unmapped_rids: number[];
+  unmapped_research?: UnmappedResearchEntry[];
   combat_bonuses_from_research?: Record<string, number>;
   /** Cumulative owner-faction-gated research (faction slug → stat → value). */
   combat_owner_faction_bonuses_from_research?: Record<
     string,
     Record<string, number>
   >;
+  combat_conditional_bonuses_from_research?: ResearchConditionalBonusLine[];
+  scenario_context?: ResearchSummaryScenarioContext | null;
+  combat_bonuses_scenario_effective?: Record<string, number>;
+  combat_conditional_scenario_active?: ResearchConditionalBonusLine[];
   research: ResearchSummaryRow[];
+}
+
+function researchSummaryQuery(
+  profileId?: string | null,
+  shipId?: string | null,
+  hostileId?: string | null,
+): string {
+  const params = new URLSearchParams();
+  if (profileId) params.set("profile", profileId);
+  if (shipId?.trim()) params.set("ship_id", shipId.trim());
+  if (hostileId?.trim()) params.set("hostile_id", hostileId.trim());
+  const q = params.toString();
+  return q ? `?${q}` : "";
 }
 
 export async function fetchResearchCombatSummary(
   profileId?: string | null,
+  options?: { shipId?: string | null; hostileId?: string | null },
 ): Promise<ResearchCombatSummary> {
-  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : "";
+  const q = researchSummaryQuery(
+    profileId,
+    options?.shipId,
+    options?.hostileId,
+  );
   const res = await fetch(`${API_BASE}/api/profile/research-summary${q}`, {
     headers: { ...profileHeaders(profileId) },
   });

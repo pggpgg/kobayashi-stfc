@@ -275,9 +275,24 @@ paths:
     get:
       tags: [profile]
       summary: Synced research and combat bonuses
+      description: |
+        Flat, owner-faction, and conditional research slices plus optional scenario-effective totals
+        when both `ship_id` and `hostile_id` resolve in the data registry.
       parameters:
         - $ref: "#/components/parameters/QueryProfile"
         - $ref: "#/components/parameters/HeaderProfileId"
+        - name: ship_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Attacker ship id or name for scenario-effective totals
+        - name: hostile_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Defender hostile id or name for scenario-effective totals
       responses:
         "200":
           content:

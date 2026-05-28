@@ -212,6 +212,11 @@ async fn profile_research_summary_returns_json() {
     assert!(payload["synced_research_count"].is_number());
     assert!(payload["unmapped_rids"].is_array());
     assert!(payload["research"].is_array());
+    if let Some(rows) = payload["research"].as_array() {
+        if let Some(first) = rows.first() {
+            assert!(first["combat_kind"].is_string());
+        }
+    }
 }
 
 #[serial_test::serial]

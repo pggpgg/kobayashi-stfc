@@ -663,7 +663,14 @@ async fn handle_profile_research_summary(
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::profile_research_summary_payload(state.registry.as_ref(), profile_id.as_deref()) {
+    let ship_id = params.get("ship_id").map(String::as_str);
+    let hostile_id = params.get("hostile_id").map(String::as_str);
+    match api::profile_research_summary_payload(
+        state.registry.as_ref(),
+        profile_id.as_deref(),
+        ship_id,
+        hostile_id,
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

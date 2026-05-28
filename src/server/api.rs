@@ -30,7 +30,7 @@ use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
     FORBIDDEN_TECH_IMPORTED, PRESETS_SUBDIR, PROFILE_JSON, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
-use crate::data::research_summary::research_combat_summary_for_profile;
+use crate::data::research_summary::research_combat_summary_for_profile_with_scenario;
 use crate::data::support_buffs;
 use crate::optimizer::crew_generator::{
     resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate, CrewGenerator,
@@ -1481,12 +1481,39 @@ pub fn profile_buildings_summary_payload(
 }
 
 /// GET /api/profile/research-summary — synced research levels and research-derived combat bonuses.
+/// Optional query: `ship_id`, `hostile_id` for scenario-effective flat totals.
 pub fn profile_research_summary_payload(
     registry: &DataRegistry,
     profile_id: Option<&str>,
+    ship_id: Option<&str>,
+    hostile_id: Option<&str>,
 ) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
-    let summary = research_combat_summary_for_profile(&id, registry.research_catalog());
+    let (ship_faction, defender_faction, defender_ship_class) =
+        match (ship_id, hostile_id) {
+            (Some(ship), Some(hostile)) => {
+                let ship_rec = registry.resolve_ship(ship);
+                let hostile_rec = registry.resolve_hostile(hostile);
+                match (ship_rec, hostile_rec) {
+                    (Some(s), Some(h)) => (
+                        s.faction.clone(),
+                        Some(h.opponent_faction_tag()),
+                        Some(h.ship_class.clone()),
+                    ),
+                    _ => (None, None, None),
+                }
+            }
+            _ => (None, None, None),
+        };
+    let summary = research_combat_summary_for_profile_with_scenario(
+        &id,
+        registry.research_catalog(),
+        ship_id,
+        hostile_id,
+        ship_faction,
+        defender_faction,
+        defender_ship_class.as_deref(),
+    );
     serde_json::to_string_pretty(&summary)
 }
 

@@ -46,7 +46,8 @@
   "494742696": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "romulan"
+    "defender_faction": "romulan",
+    "attacker_faction": "romulan"
   },
   "518203233": {
     "stat": "isolytic_defense",
@@ -115,7 +116,8 @@
   "982655355": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "federation"
+    "defender_faction": "federation",
+    "attacker_faction": "federation"
   },
   "1024053940": {
     "stat": "shield_deflection",
@@ -191,7 +193,8 @@
   "1850738611": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "klingon"
+    "defender_faction": "klingon",
+    "attacker_faction": "klingon"
   },
   "1898558353": {
     "stat": "weapon_damage",
@@ -201,6 +204,11 @@
     "stat": "pierce",
     "operator": "add",
     "defender_faction": "klingon"
+  },
+  "2001583126": {
+    "stat": "crit_chance",
+    "operator": "add",
+    "defender_faction": "federation"
   },
   "2045836712": {
     "stat": "shield_deflection",
@@ -269,7 +277,8 @@
   "2782114383": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "federation"
+    "defender_faction": "federation",
+    "attacker_faction": "federation"
   },
   "2788053878": {
     "stat": "pierce",
@@ -319,7 +328,8 @@
   "3163704244": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "klingon"
+    "defender_faction": "klingon",
+    "attacker_faction": "klingon"
   },
   "3270009347": {
     "stat": "weapon_damage",
@@ -363,7 +373,8 @@
   "3792382293": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "romulan"
+    "defender_faction": "romulan",
+    "attacker_faction": "romulan"
   },
   "3851926967": {
     "stat": "armor",
@@ -384,7 +395,8 @@
   "4009387266": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "romulan"
+    "defender_faction": "romulan",
+    "attacker_faction": "romulan"
   },
   "4058743636": {
     "stat": "hull_hp",
@@ -413,7 +425,8 @@
   "4158261073": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "federation"
+    "defender_faction": "federation",
+    "attacker_faction": "federation"
   },
   "4206468573": {
     "stat": "isolytic_damage",

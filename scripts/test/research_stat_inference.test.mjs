@@ -41,6 +41,27 @@ test("description: morale isolytic offense maps to isolytic_damage + requires_mo
   );
 });
 
+test("description: officer single-axis stats map to officer_* profile keys", () => {
+  assert.equal(
+    inferCombatStatFromDescription("Base Attack is increased for all Officers."),
+    "officer_attack"
+  );
+  assert.equal(
+    inferCombatStatFromDescription("Increases the base defense stat of all officers."),
+    "officer_defense"
+  );
+  assert.equal(
+    inferCombatStatFromDescription("Increases base health of all officers."),
+    "officer_health"
+  );
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Increase base Attack, Defense, and Health for all Officers."
+    ),
+    null
+  );
+});
+
 test("project name: shield deflection before dodge / bare deflection", () => {
   assert.equal(inferCombatStatFromProjectName("Prime Shield Deflection"), "shield_deflection");
   assert.equal(inferCombatStatFromProjectName("Shield Mitigation Bonus"), "shield_mitigation");
