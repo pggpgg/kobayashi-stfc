@@ -605,7 +605,8 @@ pub fn cumulative_research_level_conditional_bonuses(
             }
             if !(is_conditional_attack_seat_research_stat(&bonus.stat)
                 || bonus.stat == "isolytic_damage"
-                || (bonus.condition.requires_morale && research_morale_gated_seat_stat(&bonus.stat))
+                || (bonus.condition.requires_morale
+                    && research_morale_gated_seat_stat(&bonus.stat))
                 || (bonus.condition.defender_faction.is_some()
                     && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)))
             {

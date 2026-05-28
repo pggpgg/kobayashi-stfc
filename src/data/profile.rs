@@ -1655,7 +1655,11 @@ fn combat_research_conditional_bonuses_from_entries_slice(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
     exclude_catalog_rids: Option<&HashSet<i64>>,
-) -> Vec<(crate::data::research::ResearchBonusConditionKey, String, f64)> {
+) -> Vec<(
+    crate::data::research::ResearchBonusConditionKey,
+    String,
+    f64,
+)> {
     use crate::data::research::cumulative_conditional_research_bonuses;
 
     if imported_research.is_empty() || catalog.items.is_empty() {
@@ -1680,8 +1684,11 @@ fn combat_research_conditional_bonuses_from_entries_slice(
     }
 
     let merged = cumulative_conditional_research_bonuses(&records, &levels_by_rid);
-    let mut out: Vec<(crate::data::research::ResearchBonusConditionKey, String, f64)> =
-        Vec::with_capacity(merged.len());
+    let mut out: Vec<(
+        crate::data::research::ResearchBonusConditionKey,
+        String,
+        f64,
+    )> = Vec::with_capacity(merged.len());
     for ((key, stat), value) in merged {
         let Some(norm) = normalize_profile_combat_stat(&stat) else {
             continue;
@@ -1700,7 +1707,11 @@ pub fn combat_research_conditional_bonuses_from_import(
     imported_research: &[ResearchEntry],
     catalog: &ResearchCatalog,
     exclude_catalog_rids: Option<&HashSet<i64>>,
-) -> Vec<(crate::data::research::ResearchBonusConditionKey, String, f64)> {
+) -> Vec<(
+    crate::data::research::ResearchBonusConditionKey,
+    String,
+    f64,
+)> {
     let filtered = research_entries_excluding_support_buff_gated(imported_research);
     combat_research_conditional_bonuses_from_entries_slice(
         filtered.as_ref(),

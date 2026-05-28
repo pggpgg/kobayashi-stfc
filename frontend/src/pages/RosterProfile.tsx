@@ -191,11 +191,7 @@ export default function RosterProfile() {
     return () => {
       c = true;
     };
-  }, [
-    activeProfileId,
-    researchScenarioShipId,
-    researchScenarioHostileId,
-  ]);
+  }, [activeProfileId, researchScenarioShipId, researchScenarioHostileId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -873,10 +869,7 @@ token = "${activeProfile.sync_token}"`}
                             <code>{faction}</code>:{" "}
                             {Object.entries(inner)
                               .sort(([a], [b]) => a.localeCompare(b))
-                              .map(
-                                ([k, v]) =>
-                                  `${k} +${(v * 100).toFixed(2)}%`,
-                              )
+                              .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
                               .join(", ")}
                           </li>
                         ))}
@@ -900,9 +893,12 @@ token = "${activeProfile.sync_token}"`}
                       {researchSummary.combat_conditional_bonuses_from_research.map(
                         (line, idx) => (
                           <li key={`${line.stat}-${idx}`}>
-                            <code>{line.stat}</code> +{(line.value * 100).toFixed(2)}% —{" "}
+                            <code>{line.stat}</code> +
+                            {(line.value * 100).toFixed(2)}% —{" "}
                             {line.condition_label ?? "conditional"}
-                            {line.requires_runtime_state ? " (needs morale/burning/HB in fight)" : ""}
+                            {line.requires_runtime_state
+                              ? " (needs morale/burning/HB in fight)"
+                              : ""}
                           </li>
                         ),
                       )}
@@ -946,9 +942,12 @@ token = "${activeProfile.sync_token}"`}
                       {researchSummary.combat_conditional_scenario_active.map(
                         (line, idx) => (
                           <li key={`sc-${line.stat}-${idx}`}>
-                            <code>{line.stat}</code> +{(line.value * 100).toFixed(2)}% —{" "}
+                            <code>{line.stat}</code> +
+                            {(line.value * 100).toFixed(2)}% —{" "}
                             {line.condition_label ?? "conditional"}
-                            {line.requires_runtime_state ? " (runtime gate)" : ""}
+                            {line.requires_runtime_state
+                              ? " (runtime gate)"
+                              : ""}
                           </li>
                         ),
                       )}
@@ -1016,7 +1015,9 @@ token = "${activeProfile.sync_token}"`}
                               fontSize: "0.75rem",
                             }}
                           >
-                            {formatResearchBonusMap(row.combat_bonuses_from_row)}
+                            {formatResearchBonusMap(
+                              row.combat_bonuses_from_row,
+                            )}
                           </td>
                           <td
                             style={{

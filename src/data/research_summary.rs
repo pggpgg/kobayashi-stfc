@@ -13,9 +13,9 @@ use crate::data::profile::{
 };
 use crate::data::profile_index::{profile_path, RESEARCH_IMPORTED};
 use crate::data::research::{
-    cumulative_dual_gate_hull_shield_research_fractions, cumulative_research_level_conditional_bonuses,
-    load_research_canonical_overrides, ResearchBonusConditionKey, ResearchCatalog, ResearchRecord,
-    DEFAULT_RESEARCH_CANONICAL_PATH,
+    cumulative_dual_gate_hull_shield_research_fractions,
+    cumulative_research_level_conditional_bonuses, load_research_canonical_overrides,
+    ResearchBonusConditionKey, ResearchCatalog, ResearchRecord, DEFAULT_RESEARCH_CANONICAL_PATH,
 };
 
 /// Resolved ship + hostile for scenario-effective research totals (optional query params).
@@ -213,10 +213,7 @@ fn classify_combat_kind(
     }
 }
 
-fn owner_faction_keys_match_slug(
-    key: &ResearchBonusConditionKey,
-    owner_lc: &str,
-) -> bool {
+fn owner_faction_keys_match_slug(key: &ResearchBonusConditionKey, owner_lc: &str) -> bool {
     if !key.attacker_factions.is_empty() {
         return key.attacker_factions.iter().any(|raw| {
             raw.trim()
@@ -355,7 +352,12 @@ pub fn research_combat_summary_for_profile(
     profile_id: &str,
     catalog: Option<&ResearchCatalog>,
 ) -> ResearchCombatSummary {
-    research_combat_summary_for_profile_with_options(profile_id, catalog, &ResearchSummaryOptions::default(), None)
+    research_combat_summary_for_profile_with_options(
+        profile_id,
+        catalog,
+        &ResearchSummaryOptions::default(),
+        None,
+    )
 }
 
 /// Same as [`research_combat_summary_for_profile`] with optional scenario lens from resolved ship + hostile.
@@ -372,16 +374,13 @@ pub fn research_combat_summary_for_profile_with_scenario(
         ship_id: ship_id.map(str::to_string),
         hostile_id: hostile_id.map(str::to_string),
     };
-    let scenario = match (ship_id, hostile_id, defender_faction, defender_ship_class) {
-        (Some(ship), Some(hostile), Some(df), Some(sc)) => Some(resolve_research_summary_scenario(
-            ship,
-            hostile,
-            ship_faction,
-            df,
-            sc,
-        )),
-        _ => None,
-    };
+    let scenario =
+        match (ship_id, hostile_id, defender_faction, defender_ship_class) {
+            (Some(ship), Some(hostile), Some(df), Some(sc)) => Some(
+                resolve_research_summary_scenario(ship, hostile, ship_faction, df, sc),
+            ),
+            _ => None,
+        };
     research_combat_summary_for_profile_with_options(profile_id, catalog, &options, scenario)
 }
 
@@ -422,13 +421,7 @@ fn research_combat_summary_from_imported(
                 combat_owner_faction_bonuses_from_row,
                 combat_conditional_bonuses_from_row,
             ) = match catalog_by_rid.as_ref() {
-                None => (
-                    false,
-                    None,
-                    HashMap::new(),
-                    HashMap::new(),
-                    Vec::new(),
-                ),
+                None => (false, None, HashMap::new(), HashMap::new(), Vec::new()),
                 Some(map) => {
                     let present = map.contains_key(&e.rid);
                     let name = map.get(&e.rid).and_then(|r| r.name.clone());
@@ -552,11 +545,7 @@ fn research_combat_summary_from_imported(
                 &combat_conditional_bonuses_from_research,
                 sc,
             );
-            (
-                Some(sc.context.clone()),
-                eff,
-                active,
-            )
+            (Some(sc.context.clone()), eff, active)
         } else {
             (None, HashMap::new(), Vec::new())
         };
@@ -616,9 +605,7 @@ mod tests {
         merge_research_bonuses_into_profile, PlayerProfile,
         TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS,
     };
-    use crate::data::research::{
-        ResearchBonusEntry, ResearchLevel, ResearchRecord,
-    };
+    use crate::data::research::{ResearchBonusEntry, ResearchLevel, ResearchRecord};
 
     fn tiny_catalog() -> ResearchCatalog {
         ResearchCatalog {
@@ -686,10 +673,7 @@ mod tests {
     fn unmapped_research_sorted_by_level_desc() {
         let cat = tiny_catalog();
         let imported = vec![
-            ResearchEntry {
-                rid: 100,
-                level: 3,
-            },
+            ResearchEntry { rid: 100, level: 3 },
             ResearchEntry {
                 rid: 200,
                 level: 10,
@@ -927,7 +911,10 @@ mod tests {
         );
         assert!(s.combat_bonuses_from_research.is_empty());
         assert_eq!(s.combat_conditional_bonuses_from_research.len(), 1);
-        assert_eq!(s.combat_conditional_bonuses_from_research[0].stat, "crit_chance");
+        assert_eq!(
+            s.combat_conditional_bonuses_from_research[0].stat,
+            "crit_chance"
+        );
         let row = s.research.iter().find(|r| r.rid == 501).unwrap();
         assert_eq!(row.combat_kind, "conditional");
         assert_eq!(row.combat_conditional_bonuses_from_row.len(), 1);
@@ -979,7 +966,9 @@ mod tests {
             Some(scenario),
         );
         assert_eq!(
-            s.combat_bonuses_scenario_effective.get("weapon_damage").copied(),
+            s.combat_bonuses_scenario_effective
+                .get("weapon_damage")
+                .copied(),
             Some(0.04)
         );
         assert!(s.scenario_context.is_some());

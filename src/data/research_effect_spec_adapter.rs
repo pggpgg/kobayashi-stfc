@@ -329,7 +329,8 @@ pub fn research_derived_attack_phase_seats_from_spec(
                     // applied during the isolytic damage leg). Morale-gated catalog `isolytic_damage`
                     // and `apex_barrier` (`requires_morale`) use round-start timing (matches officer seats).
                     let is_cascade = norm == "isolytic_cascade_damage";
-                    let is_morale_gated_round_start = (norm == "isolytic_damage" || norm == "apex_barrier")
+                    let is_morale_gated_round_start = (norm == "isolytic_damage"
+                        || norm == "apex_barrier")
                         && key.requires_morale;
 
                     let condition_specs = if is_morale_gated_round_start {

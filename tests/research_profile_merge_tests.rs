@@ -393,9 +393,7 @@ fn canonical_override_takes_priority_over_catalog_for_ns_burning_damage() {
     use kobayashi::data::combat_effect_spec::{
         AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec,
     };
-    use kobayashi::data::research::{
-        ResearchCanonicalEffectEntry, ResearchCanonicalOverride,
-    };
+    use kobayashi::data::research::{ResearchCanonicalEffectEntry, ResearchCanonicalOverride};
     use kobayashi::data::research_effect_spec_adapter::{
         incoming_shield_mitigation_for_combat, research_derived_attack_phase_seats_from_spec,
     };

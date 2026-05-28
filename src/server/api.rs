@@ -1489,22 +1489,21 @@ pub fn profile_research_summary_payload(
     hostile_id: Option<&str>,
 ) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
-    let (ship_faction, defender_faction, defender_ship_class) =
-        match (ship_id, hostile_id) {
-            (Some(ship), Some(hostile)) => {
-                let ship_rec = registry.resolve_ship(ship);
-                let hostile_rec = registry.resolve_hostile(hostile);
-                match (ship_rec, hostile_rec) {
-                    (Some(s), Some(h)) => (
-                        s.faction.clone(),
-                        Some(h.opponent_faction_tag()),
-                        Some(h.ship_class.clone()),
-                    ),
-                    _ => (None, None, None),
-                }
+    let (ship_faction, defender_faction, defender_ship_class) = match (ship_id, hostile_id) {
+        (Some(ship), Some(hostile)) => {
+            let ship_rec = registry.resolve_ship(ship);
+            let hostile_rec = registry.resolve_hostile(hostile);
+            match (ship_rec, hostile_rec) {
+                (Some(s), Some(h)) => (
+                    s.faction.clone(),
+                    Some(h.opponent_faction_tag()),
+                    Some(h.ship_class.clone()),
+                ),
+                _ => (None, None, None),
             }
-            _ => (None, None, None),
-        };
+        }
+        _ => (None, None, None),
+    };
     let summary = research_combat_summary_for_profile_with_scenario(
         &id,
         registry.research_catalog(),
