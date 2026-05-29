@@ -10,7 +10,8 @@ use crate::data::building::{infer_building_bid, DEFAULT_BUILDINGS_INDEX_PATH};
 use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_forbidden_chaos};
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::mapping_gap_report::{
-    scan_building_bonus_gaps, scan_canonical_officer_conditions, unmapped_canonical_condition_rows,
+    run_research_mapping_gaps_scan, scan_building_bonus_gaps,
+    scan_canonical_officer_conditions, unmapped_canonical_condition_rows,
 };
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::registry::Registry;
@@ -1277,6 +1278,13 @@ fn strict_building_bonus_maps_required() -> bool {
     env_flag_truthy("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS")
 }
 
+/// When `KOBAYASHI_REQUIRE_RESEARCH_MAPS` is set, research mapping gap **regressions** vs
+/// `data/research/mapping_gaps_baseline.json` are validation errors (see
+/// [`validate_research_mapping_gaps`]).
+fn strict_research_mapping_gaps_required() -> bool {
+    env_flag_truthy("KOBAYASHI_REQUIRE_RESEARCH_MAPS")
+}
+
 /// Warnings (or errors when `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS` is set) for canonical
 /// `conditions` tokens not yet mapped for the officer LCARS pipeline.
 pub fn validate_unmapped_canonical_officer_conditions(
@@ -1307,6 +1315,95 @@ pub fn validate_unmapped_canonical_officer_conditions(
             format!("token `{tok}`: {count} occurrence(s); examples: {ex}"),
         );
     }
+    Ok(report)
+}
+
+/// Warnings (or errors when `KOBAYASHI_REQUIRE_RESEARCH_MAPS` is set) for research import mapping
+/// hygiene: unmapped upstream buff id count vs baseline and suspect global-scope catalog rows.
+pub fn validate_research_mapping_gaps(manifest_dir: &Path) -> Result<ValidationReport, String> {
+    let mut report = ValidationReport::default();
+    let catalog = manifest_dir.join("data/research_catalog.json");
+    if !catalog.is_file() {
+        report.push(
+            ValidationSeverity::Info,
+            "research.mapping_gaps",
+            format!(
+                "skipped: missing {} (populate via import_stfcspace_research.mjs)",
+                catalog.display()
+            ),
+        );
+        return Ok(report);
+    }
+
+    let gaps = match run_research_mapping_gaps_scan(manifest_dir) {
+        Ok(g) => g,
+        Err(e) => {
+            report.push(
+                ValidationSeverity::Warning,
+                "research.mapping_gaps",
+                format!("research gap scan failed: {e}"),
+            );
+            return Ok(report);
+        }
+    };
+
+    report.push(
+        ValidationSeverity::Info,
+        "research.mapping_gaps.summary",
+        format!(
+            "unmapped_buff_ids={} suspect_global_scopes={} catalog_projects={}",
+            gaps.summary.unmapped_buff_id_count,
+            gaps.summary.suspect_global_scope_count,
+            gaps.summary.catalog_projects
+        ),
+    );
+
+    let regression_severity = if strict_research_mapping_gaps_required() {
+        ValidationSeverity::Error
+    } else {
+        ValidationSeverity::Warning
+    };
+
+    if gaps.has_regression_vs_baseline() {
+        if let Some(reg) = &gaps.regression {
+            report.push(
+                regression_severity,
+                "research.mapping_gaps.regression",
+                format!(
+                    "mapping gap regression vs baseline: unmapped delta {:+}, suspect global scopes delta {:+}",
+                    reg.unmapped_buff_ids_delta, reg.suspect_global_scopes_delta
+                ),
+            );
+        }
+    }
+
+    const MAX_SUSPECT_SAMPLES: usize = 12;
+    for row in gaps.suspect_global_scopes.iter().take(MAX_SUSPECT_SAMPLES) {
+        let name = row.name.as_deref().unwrap_or("<unnamed>");
+        report.push(
+            ValidationSeverity::Warning,
+            "research.mapping_gaps.suspect_global_scope",
+            format!(
+                "rid {} ({name}): unconditional `{}` at level {} with {} scope — {}",
+                row.rid,
+                row.stat,
+                row.level,
+                row.scope_category,
+                row.description_snippet
+            ),
+        );
+    }
+    if gaps.suspect_global_scopes.len() > MAX_SUSPECT_SAMPLES {
+        report.push(
+            ValidationSeverity::Info,
+            "research.mapping_gaps.suspect_global_scope",
+            format!(
+                "… and {} more suspect global-scope catalog rows (see report_unknown_mappings or node scripts/research_mapping_gaps.mjs)",
+                gaps.suspect_global_scopes.len() - MAX_SUSPECT_SAMPLES
+            ),
+        );
+    }
+
     Ok(report)
 }
 
@@ -1380,6 +1477,11 @@ pub fn all_dataset_validation_reports(manifest_dir: &Path) -> Vec<NamedValidatio
     out.push(named_validation_report(
         "canonical_conditions",
         validate_unmapped_canonical_officer_conditions(&data_root),
+    ));
+
+    out.push(named_validation_report(
+        "research_mapping_gaps",
+        validate_research_mapping_gaps(manifest_dir),
     ));
 
     out

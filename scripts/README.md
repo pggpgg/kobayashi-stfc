@@ -66,7 +66,9 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 | `node scripts/fetch_stfcspace_research.mjs` | `research/` (tracked) | `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` |
 | `node scripts/fetch_stfcspace_forbidden_tech.mjs` | `forbidden_tech/` | Manual / CSV workflows (see `data/README.md` § Forbidden tech) |
 
-**Unknown mappings report:** `cargo run --bin report_unknown_mappings` lists canonical `conditions` tokens that do not map to LCARS yet and hostile `upstream_ship_type` values from `data/hostiles/index.json` (see [docs/CANONICAL_CONDITIONS.md](../docs/CANONICAL_CONDITIONS.md) § Regenerate unknown-mappings report).
+**Unknown mappings report:** `cargo run --bin report_unknown_mappings` lists canonical `conditions` tokens that do not map to LCARS yet, hostile `upstream_ship_type` values from `data/hostiles/index.json`, and research mapping gaps (unmapped buff ids + suspect global scopes via `scripts/research_mapping_gaps.mjs`; see [docs/CANONICAL_CONDITIONS.md](../docs/CANONICAL_CONDITIONS.md) § Regenerate unknown-mappings report, [docs/research_unmapped_triage.md](../docs/research_unmapped_triage.md), and [data/README.md](../data/README.md) § Research).
+
+**Research mapping gaps:** `node scripts/research_mapping_gaps.mjs` (or `--json` for CI/validate). Baseline for regression checks: `data/research/mapping_gaps_baseline.json`. Strict validate: `KOBAYASHI_REQUIRE_RESEARCH_MAPS=1` or `cargo run --bin validate_data -- --strict`.
 
 **Owner-faction triage (human review):** `npm run triage:research:faction` (or `node scripts/triage_research_owner_faction.mjs`) joins `research/*.json`, `translations-research.json` (`research_project_name` / `research_project_description`), and `data/buildings/buff_id_to_semantics.json`, then buckets lines into likely player-hull vs vs-opponent wording. Use `--json` for machine-readable output; `--skip-economy` drops obvious component/repair/tritanium lines so combat candidates surface faster.
 

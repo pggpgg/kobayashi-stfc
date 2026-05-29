@@ -148,6 +148,7 @@ pub fn format_unknown_mappings_markdown(
     hostile_path: &Path,
     token_map: &HashMap<String, CanonicalConditionTokenAgg>,
     ship_map: &BTreeMap<u32, HostileUpstreamTypeAgg>,
+    research_gaps: Option<&ResearchMappingGapsReport>,
 ) -> String {
     let mut distinct = 0usize;
     let mut mapped_tokens = 0usize;
@@ -262,6 +263,10 @@ pub fn format_unknown_mappings_markdown(
             ));
         }
         out.push('\n');
+    }
+
+    if let Some(gaps) = research_gaps {
+        out.push_str(&format_research_mapping_gaps_markdown(gaps));
     }
 
     out
@@ -555,6 +560,209 @@ pub fn format_building_bonus_gaps_markdown(
     out
 }
 
+// --- Research mapping gaps (Track E) ---
+
+/// One unmapped upstream research buff id row (from `scripts/research_mapping_gaps.mjs`).
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ResearchUnmappedBuffRow {
+    pub buff_id: i64,
+    pub count: usize,
+    #[serde(default)]
+    pub example_rids: Vec<i64>,
+    #[serde(default)]
+    pub loca_id: Option<i64>,
+    #[serde(default)]
+    pub category: Option<String>,
+}
+
+/// Catalog row mapped as unconditional global combat despite scoped description text.
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ResearchSuspectGlobalScopeRow {
+    pub rid: i64,
+    #[serde(default)]
+    pub name: Option<String>,
+    pub stat: String,
+    pub level: u32,
+    pub scope_category: String,
+    #[serde(default)]
+    pub description_snippet: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ResearchMappingGapsSummary {
+    #[serde(default)]
+    pub unmapped_buff_id_count: usize,
+    #[serde(default)]
+    pub suspect_global_scope_count: usize,
+    #[serde(default)]
+    pub catalog_projects: usize,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ResearchMappingGapsBaseline {
+    pub unmapped_buff_ids: usize,
+    pub suspect_global_scopes: usize,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ResearchMappingGapsReport {
+    #[serde(default)]
+    pub unmapped_buff_ids: Vec<ResearchUnmappedBuffRow>,
+    #[serde(default)]
+    pub suspect_global_scopes: Vec<ResearchSuspectGlobalScopeRow>,
+    #[serde(default)]
+    pub summary: ResearchMappingGapsSummary,
+    #[serde(default)]
+    pub baseline: Option<ResearchMappingGapsBaseline>,
+    #[serde(default)]
+    pub regression: Option<ResearchMappingGapsRegression>,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ResearchMappingGapsRegression {
+    pub unmapped_buff_ids_delta: i64,
+    pub suspect_global_scopes_delta: i64,
+}
+
+impl ResearchMappingGapsReport {
+    pub fn has_regression_vs_baseline(&self) -> bool {
+        self.regression.as_ref().is_some_and(|r| {
+            r.unmapped_buff_ids_delta > 0 || r.suspect_global_scopes_delta > 0
+        })
+    }
+}
+
+/// Parse JSON emitted by `node scripts/research_mapping_gaps.mjs --json`.
+pub fn parse_research_mapping_gaps_json(raw: &str) -> Result<ResearchMappingGapsReport, String> {
+    serde_json::from_str(raw).map_err(|e| format!("parse research mapping gaps JSON: {e}"))
+}
+
+/// Run the Node research gap scanner (same resolution order as research import).
+pub fn run_research_mapping_gaps_scan(manifest_dir: &Path) -> Result<ResearchMappingGapsReport, String> {
+    use std::process::Command;
+
+    let script = manifest_dir.join("scripts/research_mapping_gaps.mjs");
+    if !script.is_file() {
+        return Err(format!("missing {}", script.display()));
+    }
+
+    let output = Command::new("node")
+        .arg(script.as_os_str())
+        .arg("--json")
+        .current_dir(manifest_dir)
+        .output()
+        .map_err(|e| format!("spawn node scripts/research_mapping_gaps.mjs: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "research_mapping_gaps.mjs exited {:?}: {}",
+            output.status.code(),
+            stderr.trim()
+        ));
+    }
+
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|e| format!("research_mapping_gaps.mjs stdout not UTF-8: {e}"))?;
+    parse_research_mapping_gaps_json(stdout.trim())
+}
+
+const RESEARCH_GAP_REPORT_TOP_N: usize = 25;
+
+/// Markdown section appended to [`format_unknown_mappings_markdown`].
+pub fn format_research_mapping_gaps_markdown(report: &ResearchMappingGapsReport) -> String {
+    let mut out = String::new();
+    out.push_str("## Research mapping gaps\n\n");
+    out.push_str(
+        "Unmapped buff ids use the same resolver as `import_stfcspace_research.mjs`. \
+Suspect global scopes are catalog rows merged unconditionally while project/buff description text \
+suggests armada, PvP, station-defense, or ship-specific scope (see `scripts/lib/research_scope_categorize.mjs`).\n\n",
+    );
+    out.push_str(&format!(
+        "- Unmapped distinct buff ids: **{}**\n- Suspect global scopes: **{}**\n- Catalog projects with combat bonuses: **{}**\n\n",
+        report.summary.unmapped_buff_id_count,
+        report.summary.suspect_global_scope_count,
+        report.summary.catalog_projects
+    ));
+
+    if let Some(base) = &report.baseline {
+        out.push_str(&format!(
+            "- Baseline (`data/research/mapping_gaps_baseline.json`): unmapped **{}**, suspect **{}**\n",
+            base.unmapped_buff_ids, base.suspect_global_scopes
+        ));
+        if let Some(reg) = &report.regression {
+            out.push_str(&format!(
+                "- Delta vs baseline: unmapped {:+}, suspect {:+}\n",
+                reg.unmapped_buff_ids_delta, reg.suspect_global_scopes_delta
+            ));
+        }
+        out.push('\n');
+    }
+
+    out.push_str("### Top unmapped buff ids\n\n");
+    if report.unmapped_buff_ids.is_empty() {
+        out.push_str("None.\n\n");
+    } else {
+        out.push_str("| Buff id | Occurrences | Category | Example rids |\n| --- | ---: | --- | --- |\n");
+        for row in report
+            .unmapped_buff_ids
+            .iter()
+            .take(RESEARCH_GAP_REPORT_TOP_N)
+        {
+            let cat = row.category.as_deref().unwrap_or("—");
+            let examples = row
+                .example_rids
+                .iter()
+                .take(4)
+                .map(|r| format!("`{r}`"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            out.push_str(&format!(
+                "| {} | {} | {} | {} |\n",
+                row.buff_id, row.count, md_escape_cell(cat), examples
+            ));
+        }
+        if report.unmapped_buff_ids.len() > RESEARCH_GAP_REPORT_TOP_N {
+            out.push_str(&format!(
+                "\n_… and {} more distinct unmapped buff ids._\n",
+                report.unmapped_buff_ids.len() - RESEARCH_GAP_REPORT_TOP_N
+            ));
+        }
+        out.push('\n');
+    }
+
+    out.push_str("### Suspect global scopes (sample)\n\n");
+    if report.suspect_global_scopes.is_empty() {
+        out.push_str("None.\n\n");
+    } else {
+        out.push_str("| rid | Name | Stat | Scope | Description |\n| ---: | --- | --- | --- | --- |\n");
+        for row in report
+            .suspect_global_scopes
+            .iter()
+            .take(RESEARCH_GAP_REPORT_TOP_N)
+        {
+            let name = row.name.as_deref().unwrap_or("—");
+            out.push_str(&format!(
+                "| {} | {} | `{}` | {} | {} |\n",
+                row.rid,
+                md_escape_cell(name),
+                md_escape_cell(&row.stat),
+                md_escape_cell(&row.scope_category),
+                md_escape_cell(&row.description_snippet)
+            ));
+        }
+        if report.suspect_global_scopes.len() > RESEARCH_GAP_REPORT_TOP_N {
+            out.push_str(&format!(
+                "\n_… and {} more suspect catalog rows._\n",
+                report.suspect_global_scopes.len() - RESEARCH_GAP_REPORT_TOP_N
+            ));
+        }
+        out.push('\n');
+    }
+
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -701,5 +909,22 @@ mod tests {
         assert!(md.contains("Alpha Building"));
         assert!(md.contains("Beta Building"));
         assert!(md.contains("mystery_condition"));
+    }
+
+    #[test]
+    fn parse_research_mapping_gaps_json_and_regression_flag() {
+        let raw = r#"{
+            "unmapped_buff_ids": [{"buff_id": 1, "count": 2, "category": "economy_meta"}],
+            "suspect_global_scopes": [{"rid": 99, "stat": "weapon_damage", "level": 1, "scope_category": "armada_scope", "description_snippet": "vs Armadas"}],
+            "summary": {"unmapped_buff_id_count": 1, "suspect_global_scope_count": 1, "catalog_projects": 10},
+            "baseline": {"unmapped_buff_ids": 0, "suspect_global_scopes": 0},
+            "regression": {"unmapped_buff_ids_delta": 1, "suspect_global_scopes_delta": 1}
+        }"#;
+        let report = parse_research_mapping_gaps_json(raw).expect("parse");
+        assert_eq!(report.summary.unmapped_buff_id_count, 1);
+        assert!(report.has_regression_vs_baseline());
+        let md = format_research_mapping_gaps_markdown(&report);
+        assert!(md.contains("Research mapping gaps"));
+        assert!(md.contains("armada_scope"));
     }
 }

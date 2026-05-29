@@ -12,6 +12,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { categorizeResearchDescription } from "./lib/research_scope_categorize.mjs";
+
 const REPO_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 function getArg(name, def) {
@@ -19,34 +21,6 @@ function getArg(name, def) {
   if (i === -1) return def;
   const v = process.argv[i + 1];
   return v === undefined ? def : v;
-}
-
-function categorizeDescription(desc) {
-  const d = (desc || "").toLowerCase();
-  if (!d.trim()) return "no_description";
-  if (
-    /construction|mining|cargo|repair speed|research speed|warp|impulse|cost efficiency|unlock|bundle|store|reputation|components|survey|tiering|protected cargo|not_convert|gift|generator|warehouse|production speed|resource protection|points gained|rewards for defeating|parsteel|tritanium|dilithium storage|generation speed/.test(
-      d
-    )
-  ) {
-    return "economy_meta";
-  }
-  if (/station defense|defending the station|defense platform|when defending|against stations|first round of combat when defending/.test(d)) {
-    return "station_defense_scope";
-  }
-  if (/against players|pvp|player ships|opponent player|grade 5\+ opponent/.test(d)) {
-    return "pvp_scope";
-  }
-  if (/armada|when defending an armada/.test(d)) {
-    return "armada_scope";
-  }
-  if (/bonus base.*for the |for the u\.s\.s\.|for the stella|for d'vor|for the botany|for all g4 ships/.test(d)) {
-    return "ship_specific";
-  }
-  if (/officer/.test(d) && /attack|defense|health/.test(d)) {
-    return "officer_stats";
-  }
-  return "other_unmapped";
 }
 
 async function loadTranslations() {
@@ -84,7 +58,7 @@ async function main() {
 
   for (const row of unmapped) {
     const desc = row.loca_id != null ? descById.get(row.loca_id) || "" : "";
-    const cat = categorizeDescription(desc);
+    const cat = categorizeResearchDescription(desc);
     byCategory[cat] = (byCategory[cat] || 0) + 1;
   }
 
@@ -99,7 +73,7 @@ async function main() {
       count: u.count,
       loca_id: u.loca_id,
       value_is_percentage: u.value_is_percentage,
-      category: categorizeDescription(u.loca_id != null ? descById.get(u.loca_id) : ""),
+      category: categorizeResearchDescription(u.loca_id != null ? descById.get(u.loca_id) : ""),
       description_snippet: String(u.loca_id != null ? descById.get(u.loca_id) || "" : "").slice(0, 140),
     })),
   };

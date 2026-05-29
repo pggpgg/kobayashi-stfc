@@ -56,7 +56,14 @@ jobs:
 
       - name: cargo test
         # Includes CombatEffectSpec integration tests (research / LCARS / mixed).
+        env:
+          CI: true
         run: cargo test
+
+      - name: Research catalog integration tests
+        env:
+          CI: true
+        run: cargo test --test scenario_research_integration_tests
 
       - uses: actions/setup-node@v4
         with:

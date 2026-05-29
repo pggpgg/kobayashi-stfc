@@ -10,8 +10,8 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use kobayashi::data::mapping_gap_report::{
-    format_unknown_mappings_markdown, scan_canonical_officer_conditions,
-    scan_hostile_index_upstream_ship_types,
+    format_unknown_mappings_markdown, run_research_mapping_gaps_scan,
+    scan_canonical_officer_conditions, scan_hostile_index_upstream_ship_types,
 };
 
 const DEFAULT_CANONICAL: &str = "data/officers/officers.canonical.json";
@@ -82,8 +82,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|msg| io::Error::new(io::ErrorKind::InvalidData, msg))?;
     let ship_map = scan_hostile_index_upstream_ship_types(&cfg.hostile_index)
         .map_err(|msg| io::Error::new(io::ErrorKind::InvalidData, msg))?;
-    let md =
-        format_unknown_mappings_markdown(&cfg.canonical, &cfg.hostile_index, &token_map, &ship_map);
+    let research_gaps = run_research_mapping_gaps_scan(base).ok();
+    if research_gaps.is_none() {
+        eprintln!(
+            "report_unknown_mappings: research mapping gaps scan skipped (node script failed or upstream cache missing)"
+        );
+    }
+    let md = format_unknown_mappings_markdown(
+        &cfg.canonical,
+        &cfg.hostile_index,
+        &token_map,
+        &ship_map,
+        research_gaps.as_ref(),
+    );
 
     if let Some(out_path) = cfg.output {
         let mut f = fs::File::create(&out_path)?;

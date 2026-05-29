@@ -6,8 +6,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use kobayashi::data::validate::{
     full_validation_report_to_json, hostile_ship_class_is_recognized, validate_all_data_for_report,
-    validate_buildings_dataset, validate_registry_dataset, validate_support_buffs_catalog_data,
-    validate_unmapped_canonical_officer_conditions, ValidationSeverity,
+    validate_buildings_dataset, validate_registry_dataset, validate_research_mapping_gaps,
+    validate_support_buffs_catalog_data, validate_unmapped_canonical_officer_conditions,
+    ValidationSeverity,
 };
 
 static CANONICAL_CONDITION_VALIDATE_TEST_LOCK: Mutex<()> = Mutex::new(());
@@ -267,6 +268,31 @@ fn building_bonus_gaps_strict_env_upgrades_to_error() {
             && d.context == "buildings.bonuses.unknown_condition"
             && d.message.contains("mystery_condition")
     }));
+}
+
+#[test]
+fn research_mapping_gaps_reports_summary_when_catalog_present() {
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let catalog = manifest.join("data/research_catalog.json");
+    if !catalog.is_file() {
+        eprintln!("skipping research_mapping_gaps test: no research_catalog.json");
+        return;
+    }
+
+    let report = validate_research_mapping_gaps(manifest).expect("validate research gaps");
+    assert!(
+        report
+            .diagnostics
+            .iter()
+            .any(|d| d.context == "research.mapping_gaps.summary"),
+        "expected summary diagnostic, got {:?}",
+        report.diagnostics
+    );
+    assert!(
+        !report.has_errors(),
+        "default mode should not error on baseline-matched gaps, got {:?}",
+        report.diagnostics
+    );
 }
 
 #[test]

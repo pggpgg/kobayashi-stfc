@@ -155,6 +155,11 @@ function runStfcSpace() {
       "Research catalog (cached per-rid JSON + summary)",
       "node scripts/import_stfcspace_research.mjs --from-upstream --limit 0",
     );
+    run(
+      "Research mapping gaps (baseline check)",
+      "node scripts/research_mapping_gaps.mjs",
+      { optional: true },
+    );
   } else {
     console.log(
       "\n── Research catalog ──\n(skip: need data/upstream/data-stfc-space/summary-research.json and research/*.json;\n" +
