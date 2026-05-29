@@ -1,6 +1,9 @@
 import supportBuffCatalogJson from "../../../data/support_buffs.json";
 import {
+  isAttackerDebuffWhenPlayerSupportBuff,
+  isDefenderRoutedWhenPlayerSupportBuff,
   normalizeSupportBuffSelection,
+  supportBuffOptionsForSide,
   SUPPORT_BUFF_OPTIONS,
 } from "./supportBuffs";
 
@@ -47,6 +50,24 @@ describe("support buff catalog", () => {
         expect(target.layer).toBe("static_bonuses");
       }
     }
+  });
+});
+
+describe("supportBuffOptionsForSide", () => {
+  it("partitions catalog entries by static_bonus_target", () => {
+    const attacker = supportBuffOptionsForSide("attacker").map((o) => o.id);
+    const defender = supportBuffOptionsForSide("defender").map((o) => o.id);
+    const debuff = supportBuffOptionsForSide("debuff").map((o) => o.id);
+
+    expect(attacker).toEqual(["cerritos_support"]);
+    expect(defender).toEqual([
+      "titan_a_fortification",
+      "titan_a_max_fortification",
+      "defiant_reinforce",
+    ]);
+    expect(debuff).toEqual(["mantis_sting"]);
+    expect(isDefenderRoutedWhenPlayerSupportBuff("mantis_sting")).toBe(false);
+    expect(isAttackerDebuffWhenPlayerSupportBuff("mantis_sting")).toBe(true);
   });
 });
 

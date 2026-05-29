@@ -13,6 +13,7 @@
 
 use crate::combat::rng::Rng;
 use crate::data::data_registry::DataRegistry;
+use crate::data::support_buffs;
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
@@ -58,8 +59,11 @@ fn build_shared_for_genetic(
     config: &GeneticConfig,
     registry: Option<&DataRegistry>,
 ) -> SharedScenarioData {
-    let support_slice =
-        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
+    let support_request = support_buffs::SupportBuffScenarioRequest::from_optional_slices(
+        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice()),
+        config.defender_support_buffs.as_deref(),
+        config.defender_alliance_debuffs.as_deref(),
+    );
 
     let from_registry = |registry: &DataRegistry| {
         build_shared_scenario_data_from_registry(
@@ -69,7 +73,7 @@ fn build_shared_for_genetic(
             config.ship_tier,
             config.ship_level,
             config.roster_profile_id.as_deref(),
-            support_slice,
+            support_request,
             config.defender_opponent,
             None,
             None,
@@ -84,7 +88,7 @@ fn build_shared_for_genetic(
         Err(_) => build_shared_scenario_data_standalone(
             ship,
             hostile,
-            support_slice,
+            support_request,
             config.defender_opponent,
             None,
         ),
@@ -137,6 +141,10 @@ pub struct GeneticConfig {
     /// Optional alliance/ship support buff ids (same as API `support_buffs`).
     #[allow(clippy::struct_field_names)]
     pub support_buffs: Vec<String>,
+    /// PvP: defender alliance support buff ids (`defender_support_buffs` API field).
+    pub defender_support_buffs: Option<Vec<String>>,
+    /// PvP: alliance debuffs on the attacker (`defender_alliance_debuffs` API field).
+    pub defender_alliance_debuffs: Option<Vec<String>>,
 
     pub chain_grind: Option<ChainGrindParams>,
 
@@ -181,6 +189,8 @@ impl Default for GeneticConfig {
             mutation_rate_ceiling: 0.40,
             constraints: None,
             support_buffs: Vec::new(),
+            defender_support_buffs: None,
+            defender_alliance_debuffs: None,
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             roster_profile_id: None,

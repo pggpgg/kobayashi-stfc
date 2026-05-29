@@ -9,6 +9,7 @@ use crate::combat::{
     SimulationResult as CombatSimResult, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
+use crate::data::support_buffs;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::crew_resolution::seeded_variance;
 use crate::optimizer::monte_carlo::scenario::{
@@ -223,7 +224,7 @@ pub fn compare_crews_monte_carlo_with_registry(
     base_seed: u64,
     profile_id: Option<&str>,
     proc_sample_trials: u32,
-    support_buffs: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     defender_opponent: DefenderOpponent,
     pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> CompareCrewsOutcome {

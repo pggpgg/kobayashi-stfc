@@ -3,6 +3,7 @@
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::{load_profile_index, DEMO_PROFILE_ID};
 use kobayashi::optimizer::crew_generator::CrewCandidate;
+use kobayashi::data::support_buffs::SupportBuffScenarioRequest;
 use kobayashi::optimizer::monte_carlo::{
     pvp_scenario_params_from_api_fields, run_monte_carlo_with_registry, DefenderOpponent,
 };
@@ -88,7 +89,7 @@ fn pvp_simulate_resolves_ships_not_placeholder() {
         64,
         42,
         Some(DEMO_PROFILE_ID),
-        None,
+        SupportBuffScenarioRequest::default(),
         None,
         DefenderOpponent::Player,
         None,
@@ -97,5 +98,31 @@ fn pvp_simulate_resolves_ships_not_placeholder() {
     assert!(
         !placeholder,
         "PvP should resolve both ships from ships_extended"
+    );
+}
+
+#[test]
+fn pvp_defender_support_buffs_sidecar_resolves() {
+    use kobayashi::data::support_buffs;
+
+    let registry = DataRegistry::load().expect("registry");
+    let cat = registry.support_buffs_catalog().expect("catalog");
+    let resolution = support_buffs::resolve_pvp_support_sidecars(
+        cat,
+        Some(&["titan_a_fortification".to_string()]),
+        None,
+    );
+    assert_eq!(
+        resolution.resolved_defender_support,
+        vec!["titan_a_fortification"]
+    );
+    assert!(
+        resolution
+            .defender_static
+            .get("crit_damage")
+            .copied()
+            .unwrap_or(1.0)
+            > 1.0,
+        "titan_a_fortification should raise defender crit_damage static bonus"
     );
 }

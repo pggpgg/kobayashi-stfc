@@ -21,6 +21,7 @@ use std::collections::{HashMap, HashSet};
 use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
+use crate::data::support_buffs;
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::chain::ChainSimulationSummary;
 use crate::optimizer::crew_generator::CrewCandidate;
@@ -405,7 +406,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     top_k: usize,
     seed: u64,
     profile_id: Option<&str>,
-    support_buffs: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,

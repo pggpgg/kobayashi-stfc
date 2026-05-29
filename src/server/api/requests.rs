@@ -174,6 +174,12 @@ pub struct OptimizeRequest {
     pub constraints: Option<OptimizeConstraintsDto>,
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    /// PvP: defender alliance support buff ids (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub defender_support_buffs: Option<Vec<String>>,
+    /// PvP: alliance debuffs applied to the attacker (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub defender_alliance_debuffs: Option<Vec<String>>,
     #[serde(default)]
     pub chain: Option<ChainGrindRequest>,
     #[serde(default)]

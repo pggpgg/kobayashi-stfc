@@ -104,10 +104,10 @@
       "description": "Placeholder alliance debuff / sting used in PvP-shaped scenarios; direct combat stats TBD.",
       "source": "Mantis syndicate (TBD)",
       "provenance_notes": [
-        "No static combat keys are modeled yet; catalog entry reserves id and defender routing for future values.",
-        "When stats are known, add static_bonuses + stat_targets and keep static_bonus_target defender_if_player_opponent."
+        "No static combat keys are modeled yet; catalog entry reserves id and attacker debuff routing for future values.",
+        "When stats are known, add static_bonuses + stat_targets and keep static_bonus_target attacker_debuff_if_player_opponent."
       ],
-      "static_bonus_target": "defender_if_player_opponent",
+      "static_bonus_target": "attacker_debuff_if_player_opponent",
       "stat_targets": [],
       "research_levels": [],
       "static_bonuses": {}

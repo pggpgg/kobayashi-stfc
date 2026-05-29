@@ -83,6 +83,25 @@ export function usePvpWorkspace() {
     Boolean(attackerShipId && defenderShipId && opponentProfileId.trim()) &&
     Boolean(attackerCrew.captain);
 
+  const [attackerSupportBuffs, setAttackerSupportBuffs] = useState<
+    SupportBuffId[]
+  >([]);
+  const [defenderSupportBuffs, setDefenderSupportBuffs] = useState<
+    SupportBuffId[]
+  >([]);
+  const [defenderAllianceDebuffs, setDefenderAllianceDebuffs] = useState<
+    SupportBuffId[]
+  >([]);
+  const setValidatedAttackerSupportBuffs = (ids: readonly string[]) => {
+    setAttackerSupportBuffs(normalizeSupportBuffSelection(ids).ids);
+  };
+  const setValidatedDefenderSupportBuffs = (ids: readonly string[]) => {
+    setDefenderSupportBuffs(normalizeSupportBuffSelection(ids).ids);
+  };
+  const setValidatedDefenderAllianceDebuffs = (ids: readonly string[]) => {
+    setDefenderAllianceDebuffs(normalizeSupportBuffSelection(ids).ids);
+  };
+
   const optimizeCacheKey = () =>
     buildOptimizeWarmStartKey({
       profileId: activeProfileId,
@@ -93,6 +112,9 @@ export function usePvpWorkspace() {
         defenderShipLevel,
         opponentProfileId,
         defenderCrew,
+        attackerSupportBuffs,
+        defenderSupportBuffs,
+        defenderAllianceDebuffs,
       })}`,
       shipTier: attackerShipTier,
       shipLevel: attackerShipLevel,
@@ -123,6 +145,9 @@ export function usePvpWorkspace() {
       defenderCrew,
       opponentProfileId,
       simsPerCrew,
+      attackerSupportBuffs,
+      defenderSupportBuffs,
+      defenderAllianceDebuffs,
     });
     if (!params) {
       setError("Invalid PvP simulate parameters.");
@@ -151,6 +176,9 @@ export function usePvpWorkspace() {
     opponentProfileId,
     simsPerCrew,
     activeProfileId,
+    attackerSupportBuffs,
+    defenderSupportBuffs,
+    defenderAllianceDebuffs,
   ]);
 
   const handleRunOptimize = useCallback(async () => {
@@ -183,6 +211,9 @@ export function usePvpWorkspace() {
             attackerShipLevel,
             belowDeckUnlockLevels,
           ),
+          attackerSupportBuffs,
+          defenderSupportBuffs,
+          defenderAllianceDebuffs,
           optimizeCacheKey: cacheKey,
         }),
         ...(warm && warm.length > 0 ? { warm_start_crews: warm } : {}),
@@ -224,14 +255,10 @@ export function usePvpWorkspace() {
     activeProfileId,
     belowDeckUnlockLevels,
     optimizeCacheKey,
+    attackerSupportBuffs,
+    defenderSupportBuffs,
+    defenderAllianceDebuffs,
   ]);
-
-  const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
-    SupportBuffId[]
-  >([]);
-  const setValidatedSelectedSupportBuffs = (ids: readonly string[]) => {
-    setSelectedSupportBuffs(normalizeSupportBuffSelection(ids).ids);
-  };
 
   return {
     activeProfileId,
@@ -271,8 +298,12 @@ export function usePvpWorkspace() {
     canRun,
     handleRunSim,
     handleRunOptimize,
-    selectedSupportBuffs,
-    setSelectedSupportBuffs: setValidatedSelectedSupportBuffs,
+    attackerSupportBuffs,
+    setAttackerSupportBuffs: setValidatedAttackerSupportBuffs,
+    defenderSupportBuffs,
+    setDefenderSupportBuffs: setValidatedDefenderSupportBuffs,
+    defenderAllianceDebuffs,
+    setDefenderAllianceDebuffs: setValidatedDefenderAllianceDebuffs,
     ownedOnly,
   };
 }

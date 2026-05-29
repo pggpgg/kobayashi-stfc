@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
 import {
   normalizeSupportBuffSelection,
+  supportBuffOptionsForSide,
   SUPPORT_BUFF_OPTIONS,
   type SupportBuffId,
   type SupportBuffOption,
+  type SupportBuffSide,
 } from "../lib/supportBuffs";
 
 const summaryStyle: CSSProperties = {
@@ -49,6 +51,11 @@ const rowStyle: CSSProperties = {
 interface SupportBuffSelectProps {
   selected: readonly string[];
   onChange: (ids: SupportBuffId[]) => void;
+  /** When set, only show catalog entries routed to this PvP side. */
+  side?: SupportBuffSide;
+  summaryLabel?: string;
+  panelTitle?: string;
+  helpText?: string;
 }
 
 interface SupportBuffGroup {
@@ -103,10 +110,12 @@ function sourceGroupFor(
   };
 }
 
-function groupSupportBuffOptions(): SupportBuffGroup[] {
+function groupSupportBuffOptions(
+  options: readonly SupportBuffOption[],
+): SupportBuffGroup[] {
   const groups = new Map<string, SupportBuffGroup>();
 
-  for (const option of SUPPORT_BUFF_OPTIONS) {
+  for (const option of options) {
     const group = sourceGroupFor(option);
     const existing = groups.get(group.key);
     if (existing) {
@@ -149,12 +158,19 @@ function formatStatTarget(option: SupportBuffOption): string | null {
     .join(", ");
 }
 
-const groups = groupSupportBuffOptions();
+const defaultHelpText =
+  "Choose active alliance support. Fortify, Cerritos, and Defiant unlock their matching catalog research when selected.";
 
 export default function SupportBuffSelect({
   selected,
   onChange,
+  side,
+  summaryLabel = "Support buffs",
+  panelTitle = "Support Buffs",
+  helpText = defaultHelpText,
 }: SupportBuffSelectProps) {
+  const options = side ? supportBuffOptionsForSide(side) : SUPPORT_BUFF_OPTIONS;
+  const groups = groupSupportBuffOptions(options);
   const validation = normalizeSupportBuffSelection(selected);
   const normalizedSelected = validation.ids;
 
@@ -168,15 +184,15 @@ export default function SupportBuffSelect({
 
   const label =
     normalizedSelected.length === 0
-      ? "Support buffs"
-      : `Support buffs (${normalizedSelected.length})`;
+      ? summaryLabel
+      : `${summaryLabel} (${normalizedSelected.length})`;
 
   return (
     <details style={{ position: "relative" }} className="support-buff-select">
       <summary style={summaryStyle}>{label}</summary>
       <fieldset style={panelStyle}>
         <legend style={{ position: "absolute", left: -10_000, top: "auto" }}>
-          Support buffs
+          {panelTitle}
         </legend>
         <div
           style={{
@@ -187,7 +203,7 @@ export default function SupportBuffSelect({
             marginBottom: "0.35rem",
           }}
         >
-          <strong style={{ fontSize: "0.85rem" }}>Support Buffs</strong>
+          <strong style={{ fontSize: "0.85rem" }}>{panelTitle}</strong>
           <span
             style={{
               border: "1px solid rgba(232,149,46,0.5)",
@@ -211,12 +227,7 @@ export default function SupportBuffSelect({
             lineHeight: 1.35,
           }}
         >
-          Choose active alliance support. Fortify, Cerritos, and Defiant unlock
-          their matching catalog research when selected. Fortify, Max Fortify,
-          Defiant Reinforce, and Mantis sting direct combat statics apply to the
-          defender only when the scenario uses a player-shaped defender
-          (defender_opponent: player, e.g. PvP); vs NPC hostiles the server
-          skips those static slices and may warn.
+          {helpText}
         </div>
         {validation.issues.length > 0 ? (
           <div

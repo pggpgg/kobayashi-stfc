@@ -95,6 +95,8 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
         support_buffs: Vec::new(),
+        defender_support_buffs: None,
+        defender_alliance_debuffs: None,
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
         player_defender_officer_crew: None,

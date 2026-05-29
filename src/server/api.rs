@@ -366,6 +366,12 @@ pub struct SimulateRequest {
     /// Optional alliance/ship support buff ids (see `data/support_buffs.json`).
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    /// PvP: defender alliance support buff ids (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub defender_support_buffs: Option<Vec<String>>,
+    /// PvP: alliance debuffs applied to the attacker (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub defender_alliance_debuffs: Option<Vec<String>>,
     #[serde(default)]
     pub chain: Option<requests::ChainGrindRequest>,
     #[serde(default)]
@@ -433,6 +439,10 @@ pub struct CompareCrewsRequest {
     pub proc_sample_trials: Option<u32>,
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub defender_support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub defender_alliance_debuffs: Option<Vec<String>>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
     #[serde(default)]
@@ -751,6 +761,11 @@ pub fn simulate_payload(
         req.defender_crew.as_ref(),
     )
     .map_err(SimulateError::Validation)?;
+    let support_buff_request = support_buffs::SupportBuffScenarioRequest::from_api_options(
+        req.support_buffs.as_deref(),
+        req.defender_support_buffs.as_deref(),
+        req.defender_alliance_debuffs.as_deref(),
+    );
     let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
         registry,
         &req.ship,
@@ -761,7 +776,7 @@ pub fn simulate_payload(
         num_sims as usize,
         seed,
         profile_id,
-        req.support_buffs.as_deref(),
+        support_buff_request,
         chain_grind,
         defender_opponent,
         player_defender_officer_crew,
@@ -823,6 +838,20 @@ pub fn simulate_payload(
                     "Direct static bonuses for support buff(s) {} apply only vs a player-shaped defender (defender_opponent: player); they are ignored vs NPC hostiles.",
                     inactive.join(", ")
                 ));
+            }
+        }
+    }
+    if let Some(cat) = registry.support_buffs_catalog() {
+        if let Some(sb) = req.defender_support_buffs.as_deref() {
+            let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
+            for u in unk {
+                warnings.push(format!("Unknown defender_support_buff id: {u}"));
+            }
+        }
+        if let Some(sb) = req.defender_alliance_debuffs.as_deref() {
+            let (_, unk) = support_buffs::resolve_selected_support_buff_ids(cat, sb);
+            for u in unk {
+                warnings.push(format!("Unknown defender_alliance_debuff id: {u}"));
             }
         }
     }
@@ -944,6 +973,11 @@ pub fn compare_crews_payload(
         ));
     }
 
+    let support_buff_request = support_buffs::SupportBuffScenarioRequest::from_api_options(
+        req.support_buffs.as_deref(),
+        req.defender_support_buffs.as_deref(),
+        req.defender_alliance_debuffs.as_deref(),
+    );
     let outcome = compare_crews_monte_carlo_with_registry(
         registry,
         &req.ship,
@@ -955,7 +989,7 @@ pub fn compare_crews_payload(
         seed,
         profile_id,
         proc_sample,
-        req.support_buffs.as_deref(),
+        support_buff_request,
         defender_opponent,
         pvp,
     );

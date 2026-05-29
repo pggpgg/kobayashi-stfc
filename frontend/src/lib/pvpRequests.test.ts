@@ -45,6 +45,29 @@ describe("buildPvpSimulateParams", () => {
     expect(body?.defender_profile_id).toBe("demo-opponent");
     expect(body?.defender_opponent).toBe("player");
   });
+
+  it("maps PvP support buff sidecars", () => {
+    const crew = createEmptyCrew(50, [10, 20, 30, 40, 50]);
+    crew.captain = "Picard";
+    const body = buildPvpSimulateParams({
+      attackerShipId: "uss_enterprise_d",
+      attackerShipTier: 5,
+      attackerShipLevel: 50,
+      attackerCrew: crew,
+      defenderShipId: "rotarran",
+      defenderShipTier: 3,
+      defenderShipLevel: 40,
+      defenderCrew: crew,
+      opponentProfileId: "demo-opponent",
+      simsPerCrew: 500,
+      attackerSupportBuffs: ["cerritos_support"],
+      defenderSupportBuffs: ["titan_a_fortification"],
+      defenderAllianceDebuffs: ["mantis_sting"],
+    });
+    expect(body?.support_buffs).toEqual(["cerritos_support"]);
+    expect(body?.defender_support_buffs).toEqual(["titan_a_fortification"]);
+    expect(body?.defender_alliance_debuffs).toEqual(["mantis_sting"]);
+  });
 });
 
 describe("buildPvpDefenderFingerprint", () => {

@@ -10,6 +10,11 @@ function crewToApiBody(crew: CrewState) {
   };
 }
 
+function optionalSupportBuffField(ids: readonly string[] | undefined) {
+  const normalized = normalizeSupportBuffSelection(ids).ids;
+  return normalized.length > 0 ? normalized : undefined;
+}
+
 /** Fingerprint defender setup for optimize warm-start / history keys. */
 export function buildPvpDefenderFingerprint(args: {
   defenderShipId: string;
@@ -17,8 +22,16 @@ export function buildPvpDefenderFingerprint(args: {
   defenderShipLevel: number;
   opponentProfileId: string;
   defenderCrew: CrewState;
+  attackerSupportBuffs?: readonly string[];
+  defenderSupportBuffs?: readonly string[];
+  defenderAllianceDebuffs?: readonly string[];
 }): string {
   const c = args.defenderCrew;
+  const buffKey = [
+    optionalSupportBuffField(args.attackerSupportBuffs)?.join("+") ?? "",
+    optionalSupportBuffField(args.defenderSupportBuffs)?.join("+") ?? "",
+    optionalSupportBuffField(args.defenderAllianceDebuffs)?.join("+") ?? "",
+  ].join(";");
   return [
     args.defenderShipId.trim(),
     String(args.defenderShipTier),
@@ -27,6 +40,7 @@ export function buildPvpDefenderFingerprint(args: {
     c.captain,
     ...c.bridge.map((x) => x ?? ""),
     ...c.belowDeck.map((x) => x ?? ""),
+    buffKey,
   ].join("|");
 }
 
@@ -41,12 +55,20 @@ export function buildPvpSimulateParams(args: {
   defenderCrew: CrewState;
   opponentProfileId: string;
   simsPerCrew: number;
-  supportBuffs?: readonly string[];
+  attackerSupportBuffs?: readonly string[];
+  defenderSupportBuffs?: readonly string[];
+  defenderAllianceDebuffs?: readonly string[];
 }) {
   if (!args.attackerCrew.captain) return null;
   if (!args.opponentProfileId.trim()) return null;
   if (!args.defenderShipId.trim()) return null;
-  const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
+  const support_buffs = optionalSupportBuffField(args.attackerSupportBuffs);
+  const defender_support_buffs = optionalSupportBuffField(
+    args.defenderSupportBuffs,
+  );
+  const defender_alliance_debuffs = optionalSupportBuffField(
+    args.defenderAllianceDebuffs,
+  );
   return {
     ship: args.attackerShipId,
     hostile: "",
@@ -61,7 +83,9 @@ export function buildPvpSimulateParams(args: {
     num_sims: args.simsPerCrew,
     ship_tier: args.attackerShipTier,
     ship_level: args.attackerShipLevel,
-    ...(support_buffs.length > 0 ? { support_buffs } : {}),
+    ...(support_buffs ? { support_buffs } : {}),
+    ...(defender_support_buffs ? { defender_support_buffs } : {}),
+    ...(defender_alliance_debuffs ? { defender_alliance_debuffs } : {}),
   };
 }
 
@@ -78,11 +102,19 @@ export function buildPvpOptimizeStartBody(args: {
   maxCandidates: number | null;
   optimizerStrategy: OptimizerStrategyType;
   belowDecksSlots: number;
-  supportBuffs?: readonly string[];
+  attackerSupportBuffs?: readonly string[];
+  defenderSupportBuffs?: readonly string[];
+  defenderAllianceDebuffs?: readonly string[];
   optimizeCacheKey?: string | null;
   chainGrind?: ChainGrindRequestBody;
 }) {
-  const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
+  const support_buffs = optionalSupportBuffField(args.attackerSupportBuffs);
+  const defender_support_buffs = optionalSupportBuffField(
+    args.defenderSupportBuffs,
+  );
+  const defender_alliance_debuffs = optionalSupportBuffField(
+    args.defenderAllianceDebuffs,
+  );
   return {
     ship: args.attackerShipId,
     hostile: "",
@@ -98,7 +130,9 @@ export function buildPvpOptimizeStartBody(args: {
     ship_tier: args.attackerShipTier,
     ship_level: args.attackerShipLevel,
     below_decks_slots: args.belowDecksSlots,
-    ...(support_buffs.length > 0 ? { support_buffs } : {}),
+    ...(support_buffs ? { support_buffs } : {}),
+    ...(defender_support_buffs ? { defender_support_buffs } : {}),
+    ...(defender_alliance_debuffs ? { defender_alliance_debuffs } : {}),
     ...(args.chainGrind ? { chain: args.chainGrind } : {}),
     ...(args.optimizeCacheKey?.trim()
       ? { optimize_cache_key: args.optimizeCacheKey.trim() }

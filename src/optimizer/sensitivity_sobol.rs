@@ -53,6 +53,7 @@ use serde::{Deserialize, Serialize};
 use crate::combat::perturb::StatKey;
 use crate::combat::rng::Rng;
 use crate::data::data_registry::DataRegistry;
+use crate::data::support_buffs;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
@@ -214,7 +215,7 @@ pub fn run_sobol_with_progress(
         request.ship_tier,
         request.ship_level,
         request.profile_id.as_deref(),
-        request.support_buffs.as_deref(),
+            support_buffs::SupportBuffScenarioRequest::attacker_only(request.support_buffs.as_deref()),
         DefenderOpponent::default(),
         None,
         None,

@@ -10,6 +10,10 @@ interface SupportBuffCatalogEntry {
   exclusive_group?: string;
   priority?: number;
   stat_targets?: SupportBuffStatTarget[];
+  static_bonus_target?:
+    | "attacker"
+    | "defender_if_player_opponent"
+    | "attacker_debuff_if_player_opponent";
 }
 
 interface SupportBuffCatalog {
@@ -58,14 +62,23 @@ export const DEFIANT_REINFORCE_BUFF_ID = "defiant_reinforce" as const;
 export const MANTIS_STING_BUFF_ID = "mantis_sting" as const;
 
 /**
- * Ids whose direct `static_bonuses` merge onto the defender when `defender_opponent` is player (PvP-shaped).
+ * Ids whose direct `static_bonuses` merge onto the defender in PvP-shaped runs.
  * Keep aligned with `static_bonus_target: defender_if_player_opponent` in `data/support_buffs.json`.
  */
 export const SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS = [
   ...TITAN_A_FORTIFY_SUPPORT_BUFF_IDS,
   DEFIANT_REINFORCE_BUFF_ID,
+] as const;
+
+/**
+ * Alliance debuff ids applied to the attacker in PvP (`defender_alliance_debuffs` API field).
+ * Keep aligned with `static_bonus_target: attacker_debuff_if_player_opponent` in `data/support_buffs.json`.
+ */
+export const SUPPORT_BUFF_ATTACKER_DEBUFF_WHEN_PLAYER_IDS = [
   MANTIS_STING_BUFF_ID,
 ] as const;
+
+export type SupportBuffSide = "attacker" | "defender" | "debuff";
 
 export type TitanAFortifySupportBuffId =
   (typeof TITAN_A_FORTIFY_SUPPORT_BUFF_IDS)[number];
@@ -105,6 +118,35 @@ export function isDefenderRoutedWhenPlayerSupportBuff(id: string): boolean {
   return (
     SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS as readonly string[]
   ).includes(id);
+}
+
+export function isAttackerDebuffWhenPlayerSupportBuff(id: string): boolean {
+  return (
+    SUPPORT_BUFF_ATTACKER_DEBUFF_WHEN_PLAYER_IDS as readonly string[]
+  ).includes(id);
+}
+
+function staticBonusTargetFor(id: SupportBuffId): NonNullable<
+  SupportBuffCatalogEntry["static_bonus_target"]
+> {
+  const entry = SUPPORT_BUFF_CATALOG.buffs[id];
+  return entry?.static_bonus_target ?? "attacker";
+}
+
+/** Options for a PvP support-buff side (attacker buffs, defender buffs, or alliance debuffs on attacker). */
+export function supportBuffOptionsForSide(
+  side: SupportBuffSide,
+): readonly SupportBuffOption[] {
+  return SUPPORT_BUFF_OPTIONS.filter((option) => {
+    const target = staticBonusTargetFor(option.id);
+    if (side === "attacker") {
+      return target === "attacker";
+    }
+    if (side === "defender") {
+      return target === "defender_if_player_opponent";
+    }
+    return target === "attacker_debuff_if_player_opponent";
+  });
 }
 
 export const SUPPORT_BUFF_OPTION_IDS = [

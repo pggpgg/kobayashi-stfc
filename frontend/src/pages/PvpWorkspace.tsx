@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import CrewBuilder from "../components/CrewBuilder";
 import ProfileSwitcher from "../components/ProfileSwitcher";
 import SimResults from "../components/SimResults";
+import SupportBuffSelect from "../components/SupportBuffSelect";
 import { useProfile } from "../contexts/ProfileContext";
 import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import type { ShipListItem } from "../lib/api";
@@ -264,6 +265,16 @@ export default function PvpWorkspace() {
               pins={pvp.attackerPins}
               onPinsChange={pvp.setAttackerPins}
             />
+            <div style={{ marginTop: "0.75rem" }}>
+              <SupportBuffSelect
+                side="attacker"
+                summaryLabel="Attacker buffs"
+                panelTitle="Attacker alliance buffs"
+                helpText="Alliance support applied to your attacking ship (e.g. Cerritos)."
+                selected={pvp.attackerSupportBuffs}
+                onChange={pvp.setAttackerSupportBuffs}
+              />
+            </div>
           </section>
 
           <section>
@@ -290,6 +301,31 @@ export default function PvpWorkspace() {
               pins={pvp.defenderPins}
               onPinsChange={pvp.setDefenderPins}
             />
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.75rem",
+                marginTop: "0.75rem",
+              }}
+            >
+              <SupportBuffSelect
+                side="defender"
+                summaryLabel="Defender buffs"
+                panelTitle="Defender alliance buffs"
+                helpText="Fortify and Defiant Reinforce apply to the opponent defender in this PvP scenario."
+                selected={pvp.defenderSupportBuffs}
+                onChange={pvp.setDefenderSupportBuffs}
+              />
+              <SupportBuffSelect
+                side="debuff"
+                summaryLabel="Attacker debuffs"
+                panelTitle="Alliance debuffs on attacker"
+                helpText="Syndicate debuffs applied to your attacking ship (e.g. Mantis sting when modeled)."
+                selected={pvp.defenderAllianceDebuffs}
+                onChange={pvp.setDefenderAllianceDebuffs}
+              />
+            </div>
           </section>
         </main>
 

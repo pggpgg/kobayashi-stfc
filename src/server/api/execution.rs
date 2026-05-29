@@ -869,6 +869,11 @@ fn gather_optimize_simulation_results(
         .as_ref()
         .map(|p| p.defender_ship.clone())
         .unwrap_or_else(|| request.hostile.trim().to_string());
+    let support_buff_request = support_buffs::SupportBuffScenarioRequest::from_api_options(
+        request.support_buffs.as_deref(),
+        request.defender_support_buffs.as_deref(),
+        request.defender_alliance_debuffs.as_deref(),
+    );
     let shared_scenario = build_shared_scenario_data_from_registry(
         registry,
         &request.ship,
@@ -876,7 +881,7 @@ fn gather_optimize_simulation_results(
         request.ship_tier,
         request.ship_level,
         profile_id,
-        request.support_buffs.as_deref(),
+        support_buff_request,
         if pvp.is_some() {
             DefenderOpponent::Player
         } else {
@@ -962,6 +967,8 @@ fn gather_optimize_simulation_results(
             below_decks_slots,
             constraints: crew_constraints.clone(),
             support_buffs: request.support_buffs.clone().unwrap_or_default(),
+            defender_support_buffs: request.defender_support_buffs.clone(),
+            defender_alliance_debuffs: request.defender_alliance_debuffs.clone(),
             chain_grind: chain_grind.clone(),
             defender_opponent: if pvp.is_some() {
                 DefenderOpponent::Player

@@ -92,16 +92,12 @@ referenced from [`ROADMAP.md`](ROADMAP.md) § Stat modeling improvements.
 
 ---
 
-### 5. Defender-side support buffs + alliance debuffs as scenario inputs
+### 5. Defender-side support buffs + alliance debuffs as scenario inputs — **done**
 
-[`ROADMAP.md`](ROADMAP.md) "Planned" — currently *partial*: defender-static support buff
-keys apply in PvP-shaped scenarios, but **alliance debuffs are not yet scenario
-inputs**. Completes the PvP-modeling story so the optimizer can search against an
-opponent's full stack.
-
-**Endpoint:** `SimulateRequest` / `OptimizeRequest` gain a `defender_support_buffs`
-and a `defender_alliance_debuffs` field; scenario builder applies them symmetrically to
-the player's existing `support_buffs` path.
+`SimulateRequest`, `OptimizeRequest`, and `CompareCrewsRequest` expose `defender_support_buffs`
+and `defender_alliance_debuffs`. The PvP workspace UI has separate attacker buffs, defender buffs,
+and alliance debuff selectors. When either sidecar field is present, `support_buffs` is treated as
+attacker-only for static routing (legacy mixed-id behavior preserved when sidecars are omitted).
 
 ---
 

@@ -46,6 +46,8 @@ pub enum SupportBuffStaticBonusTarget {
     Attacker,
     /// Merge only onto the defender [`crate::combat::Combatant`] when [`DefenderOpponent::Player`] (PvP-shaped).
     DefenderIfPlayerOpponent,
+    /// Alliance debuff on the attacker in PvP-shaped scenarios (e.g. Mantis sting placeholder).
+    AttackerDebuffIfPlayerOpponent,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -443,6 +445,113 @@ fn merge_def_static_bonuses_into(out: &mut HashMap<String, f64>, def: &SupportBu
     }
 }
 
+/// Optional PvP sidecar fields on simulate/optimize requests.
+#[derive(Debug, Clone, Default)]
+pub struct SupportBuffSidecarRequest {
+    pub defender_support_buffs: Option<Vec<String>>,
+    pub defender_alliance_debuffs: Option<Vec<String>>,
+}
+
+impl SupportBuffSidecarRequest {
+    pub fn fields_present(&self) -> bool {
+        self.defender_support_buffs.is_some() || self.defender_alliance_debuffs.is_some()
+    }
+}
+
+/// Request-scoped support buff ids for scenario build (attacker + optional PvP sidecars).
+#[derive(Clone, Copy, Default)]
+pub struct SupportBuffScenarioRequest<'a> {
+    pub attacker: Option<&'a [String]>,
+    pub defender_support: Option<&'a [String]>,
+    pub defender_alliance_debuffs: Option<&'a [String]>,
+}
+
+impl<'a> SupportBuffScenarioRequest<'a> {
+    pub fn attacker_only(attacker: Option<&'a [String]>) -> Self {
+        Self {
+            attacker,
+            ..Default::default()
+        }
+    }
+
+    pub fn sidecar_fields_present(&self) -> bool {
+        self.defender_support.is_some() || self.defender_alliance_debuffs.is_some()
+    }
+
+    pub fn from_optional_slices(
+        attacker: Option<&'a [String]>,
+        defender_support: Option<&'a [String]>,
+        defender_alliance_debuffs: Option<&'a [String]>,
+    ) -> Self {
+        Self {
+            attacker,
+            defender_support,
+            defender_alliance_debuffs,
+        }
+    }
+
+    pub fn from_api_options(
+        support_buffs: Option<&'a [String]>,
+        defender_support_buffs: Option<&'a [String]>,
+        defender_alliance_debuffs: Option<&'a [String]>,
+    ) -> Self {
+        Self::from_optional_slices(
+            support_buffs.filter(|ids| !ids.is_empty()),
+            defender_support_buffs,
+            defender_alliance_debuffs,
+        )
+    }
+}
+
+/// Resolved PvP sidecar support buff / debuff selections.
+#[derive(Debug, Clone, Default)]
+pub struct SupportBuffPvpSidecarResolution {
+    pub resolved_defender_support: Vec<String>,
+    pub unknown_defender_support: Vec<String>,
+    pub resolved_alliance_debuffs: Vec<String>,
+    pub unknown_alliance_debuffs: Vec<String>,
+    pub defender_static: HashMap<String, f64>,
+    pub attacker_debuff_static: HashMap<String, f64>,
+    pub applied_defender_support: Vec<AppliedSupportBuffTrace>,
+    pub applied_alliance_debuffs: Vec<AppliedSupportBuffTrace>,
+}
+
+pub fn resolve_pvp_support_sidecars(
+    catalog: &SupportBuffCatalog,
+    defender_support: Option<&[String]>,
+    alliance_debuffs: Option<&[String]>,
+) -> SupportBuffPvpSidecarResolution {
+    let (resolved_defender_support, unknown_defender_support) =
+        match defender_support.filter(|r| !r.is_empty()) {
+            Some(req) => resolve_selected_support_buff_ids(catalog, req),
+            None => (Vec::new(), Vec::new()),
+        };
+    let (resolved_alliance_debuffs, unknown_alliance_debuffs) =
+        match alliance_debuffs.filter(|r| !r.is_empty()) {
+            Some(req) => resolve_selected_support_buff_ids(catalog, req),
+            None => (Vec::new(), Vec::new()),
+        };
+    SupportBuffPvpSidecarResolution {
+        defender_static: aggregate_support_static_for_defender(catalog, &resolved_defender_support),
+        attacker_debuff_static: aggregate_support_static_debuffs_on_attacker(
+            catalog,
+            &resolved_alliance_debuffs,
+        ),
+        applied_defender_support: describe_resolved_support_buffs(
+            catalog,
+            &resolved_defender_support,
+        ),
+        applied_alliance_debuffs: describe_resolved_support_buffs(
+            catalog,
+            &resolved_alliance_debuffs,
+        ),
+        resolved_defender_support,
+        unknown_defender_support,
+        resolved_alliance_debuffs,
+        unknown_alliance_debuffs,
+    }
+}
+
 /// Split `static_bonuses` by [`SupportBuffDef::static_bonus_target_effective`] for attacker vs PvP defender merge paths.
 pub fn aggregate_support_static_bonuses_split(
     catalog: &SupportBuffCatalog,
@@ -461,9 +570,70 @@ pub fn aggregate_support_static_bonuses_split(
             SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent => {
                 merge_def_static_bonuses_into(&mut defender_player, def);
             }
+            SupportBuffStaticBonusTarget::AttackerDebuffIfPlayerOpponent => {}
         }
     }
     (attacker, defender_player)
+}
+
+fn aggregate_support_static_for_target(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+    target: SupportBuffStaticBonusTarget,
+) -> HashMap<String, f64> {
+    let mut out: HashMap<String, f64> = HashMap::new();
+    for id in resolved_ids {
+        let Some(def) = catalog.get(id) else {
+            continue;
+        };
+        if def.static_bonus_target_effective() == target {
+            merge_def_static_bonuses_into(&mut out, def);
+        }
+    }
+    out
+}
+
+/// Attacker-routed static bonuses only (used when PvP sidecar fields split attacker vs defender selections).
+pub fn aggregate_support_static_for_attacker(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+) -> HashMap<String, f64> {
+    aggregate_support_static_for_target(
+        catalog,
+        resolved_ids,
+        SupportBuffStaticBonusTarget::Attacker,
+    )
+}
+
+/// Defender-routed static bonuses for PvP (`defender_support_buffs`).
+pub fn aggregate_support_static_for_defender(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+) -> HashMap<String, f64> {
+    aggregate_support_static_for_target(
+        catalog,
+        resolved_ids,
+        SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent,
+    )
+}
+
+/// Alliance debuffs on the attacker in PvP (`defender_alliance_debuffs`).
+pub fn aggregate_support_static_debuffs_on_attacker(
+    catalog: &SupportBuffCatalog,
+    resolved_ids: &[String],
+) -> HashMap<String, f64> {
+    aggregate_support_static_for_target(
+        catalog,
+        resolved_ids,
+        SupportBuffStaticBonusTarget::AttackerDebuffIfPlayerOpponent,
+    )
+}
+
+fn merge_static_maps_in_place(dest: &mut HashMap<String, f64>, src: &HashMap<String, f64>) {
+    if src.is_empty() {
+        return;
+    }
+    *dest = merge_static_buff_maps(dest, src);
 }
 
 /// Aggregate attacker-routed `static_bonuses` only (same as split `.0`).
@@ -681,6 +851,31 @@ mod tests {
             aggregate_support_static_bonuses_split(&c, &["titan_a_fortification".to_string()]);
         assert!(!att.contains_key("crit_damage"));
         assert!((def.get("crit_damage").copied().unwrap_or(0.0) - 1.25).abs() < 1e-9);
+    }
+
+    #[test]
+    fn aggregate_debuff_routes_mantis_to_attacker_debuff_map() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let debuffs =
+            aggregate_support_static_debuffs_on_attacker(&c, &["mantis_sting".to_string()]);
+        assert!(debuffs.is_empty());
+        let (att, def) =
+            aggregate_support_static_bonuses_split(&c, &["mantis_sting".to_string()]);
+        assert!(att.is_empty());
+        assert!(def.is_empty());
+    }
+
+    #[test]
+    fn resolve_pvp_sidecars_splits_defender_support_and_debuffs() {
+        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        let out = resolve_pvp_support_sidecars(
+            &c,
+            Some(&["titan_a_fortification".to_string()]),
+            Some(&["mantis_sting".to_string()]),
+        );
+        assert_eq!(out.resolved_defender_support, vec!["titan_a_fortification"]);
+        assert_eq!(out.resolved_alliance_debuffs, vec!["mantis_sting"]);
+        assert!((out.defender_static.get("crit_damage").copied().unwrap_or(0.0) - 1.25).abs() < 1e-9);
     }
 
     #[test]

@@ -6,6 +6,7 @@ use crate::combat::{
     SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
+use crate::data::support_buffs;
 use crate::optimizer::chain::{
     run_chain_trial, secondary_draw, ChainGrindParams, ChainSimulationSummary,
 };
@@ -575,7 +576,7 @@ pub fn run_monte_carlo(
         iterations,
         seed,
         false,
-        support_buffs,
+        support_buffs::SupportBuffScenarioRequest::attacker_only(support_buffs),
         chain_grind,
         defender_opponent,
     )
@@ -601,7 +602,7 @@ pub fn run_monte_carlo_parallel(
         iterations,
         seed,
         true,
-        support_buffs,
+        support_buffs::SupportBuffScenarioRequest::attacker_only(support_buffs),
         chain_grind,
         defender_opponent,
     )
@@ -887,7 +888,7 @@ pub fn run_monte_carlo_parallel_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
-    support_buffs: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
@@ -925,7 +926,7 @@ pub fn run_monte_carlo_with_registry(
     iterations: usize,
     seed: u64,
     profile_id: Option<&str>,
-    support_buffs: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
@@ -985,6 +986,11 @@ fn external_buffs_trace_payload(shared: &SharedScenarioData) -> Value {
         .iter()
         .map(|(stat, value)| (stat.clone(), *value))
         .collect();
+    let attacker_debuff_static_bonuses: BTreeMap<String, f64> = shared
+        .support_attacker_debuff_static_buffs
+        .iter()
+        .map(|(stat, value)| (stat.clone(), *value))
+        .collect();
 
     json!({
         "support_buffs": {
@@ -994,7 +1000,18 @@ fn external_buffs_trace_payload(shared: &SharedScenarioData) -> Value {
             "aggregate_static_bonuses": aggregate_static_bonuses,
             "aggregate_static_bonuses_note": "Attacker merge: selected support buff static_bonuses routed to attacker plus support-gated imported research bonuses when present.",
             "defender_static_bonuses_vs_player": defender_static_bonuses,
-            "defender_static_bonuses_note": "Applied to the defender Combatant only when defender_opponent is player (PvP-shaped)."
+            "defender_static_bonuses_note": "Applied to the defender Combatant only when defender_opponent is player (PvP-shaped).",
+            "defender_support_buffs": {
+                "resolved_ids": &shared.resolved_defender_support_buffs,
+                "unknown_ids": &shared.unknown_defender_support_buff_ids,
+                "applied": &shared.applied_defender_support_buffs,
+            },
+            "defender_alliance_debuffs": {
+                "resolved_ids": &shared.resolved_defender_alliance_debuffs,
+                "unknown_ids": &shared.unknown_defender_alliance_debuffs_ids,
+                "applied": &shared.applied_defender_alliance_debuffs,
+                "aggregate_static_bonuses_on_attacker": attacker_debuff_static_bonuses,
+            },
         }
     })
 }
@@ -1022,7 +1039,7 @@ pub fn replay_optimize_iteration_with_registry(
         ship_tier,
         ship_level,
         profile_id,
-        support_buffs,
+        support_buffs::SupportBuffScenarioRequest::attacker_only(support_buffs),
         defender_opponent,
         None,
         None,
@@ -1118,7 +1135,7 @@ fn run_monte_carlo_with_parallelism(
     iterations: usize,
     seed: u64,
     parallel: bool,
-    support_buffs: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     chain_grind: Option<ChainGrindParams>,
     defender_opponent: DefenderOpponent,
 ) -> Vec<SimulationResult> {

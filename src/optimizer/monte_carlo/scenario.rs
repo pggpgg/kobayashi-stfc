@@ -712,8 +712,16 @@ pub(crate) struct SharedScenarioData {
     pub support_static_buffs: HashMap<String, f64>,
     /// Support buff `static_bonuses` that apply to the defender only when [`Self::defender_opponent`] is [`DefenderOpponent::Player`].
     pub support_defender_static_buffs: HashMap<String, f64>,
+    /// Alliance debuffs on the attacker in PvP (`defender_alliance_debuffs` request field).
+    pub support_attacker_debuff_static_buffs: HashMap<String, f64>,
     /// Request ids not present in the support buff catalog (for API warnings).
     pub unknown_support_buff_ids: Vec<String>,
+    pub resolved_defender_support_buffs: Vec<String>,
+    pub resolved_defender_alliance_debuffs: Vec<String>,
+    pub unknown_defender_support_buff_ids: Vec<String>,
+    pub unknown_defender_alliance_debuffs_ids: Vec<String>,
+    pub applied_defender_support_buffs: Vec<AppliedSupportBuffTrace>,
+    pub applied_defender_alliance_debuffs: Vec<AppliedSupportBuffTrace>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
     /// Borg Alcove attack-phase crit seats, Quantum Slipstream round-start debuff, ship-class torpedo family
@@ -982,6 +990,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     );
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
+    if !shared.support_attacker_debuff_static_buffs.is_empty() {
+        merged_static = support_buffs::merge_static_buff_maps(
+            &merged_static,
+            &shared.support_attacker_debuff_static_buffs,
+        );
+    }
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&CrewConfiguration {
@@ -2000,7 +2014,7 @@ pub(crate) fn stable_seed(
 pub(crate) fn build_shared_scenario_data_standalone(
     ship: &str,
     hostile: &str,
-    support_buffs_request: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> SharedScenarioData {
@@ -2074,12 +2088,16 @@ pub(crate) fn build_shared_scenario_data_standalone(
     let support_cat =
         SupportBuffCatalog::load(manifest.join(support_buffs::DEFAULT_SUPPORT_BUFFS_PATH)).ok();
     let (resolved_support_buffs, unknown_support_buff_ids) =
-        match (support_cat.as_ref(), support_buffs_request) {
-            (Some(cat), Some(req)) if !req.is_empty() => {
+        match (
+            support_cat.as_ref(),
+            support_buffs.attacker.filter(|r| !r.is_empty()),
+        ) {
+            (Some(cat), Some(req)) => {
                 support_buffs::resolve_selected_support_buff_ids(cat, req)
             }
             _ => (Vec::new(), Vec::new()),
         };
+    let sidecar_active = support_buffs.sidecar_fields_present();
     let support_research_gates =
         SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
 
@@ -2116,9 +2134,11 @@ pub(crate) fn build_shared_scenario_data_standalone(
         None
     };
     let (mut support_static_buffs, support_defender_static_buffs) = match support_cat.as_ref() {
-        Some(c) => {
-            support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs)
-        }
+        Some(c) if sidecar_active => (
+            support_buffs::aggregate_support_static_for_attacker(c, &resolved_support_buffs),
+            HashMap::new(),
+        ),
+        Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
         None => (HashMap::new(), HashMap::new()),
     };
     if let Some(ref cat) = shared_research_catalog {
@@ -2312,7 +2332,14 @@ pub(crate) fn build_shared_scenario_data_standalone(
         applied_support_buffs,
         support_static_buffs,
         support_defender_static_buffs,
+        support_attacker_debuff_static_buffs: HashMap::new(),
         unknown_support_buff_ids,
+        resolved_defender_support_buffs: vec![],
+        resolved_defender_alliance_debuffs: vec![],
+        unknown_defender_support_buff_ids: vec![],
+        unknown_defender_alliance_debuffs_ids: vec![],
+        applied_defender_support_buffs: vec![],
+        applied_defender_alliance_debuffs: vec![],
         research_derived_seats,
         forbidden_tech_derived_seats,
         borg_alcove_hull_hp_bonus,
@@ -2445,7 +2472,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     ship_tier: Option<u32>,
     ship_level: Option<u32>,
     profile_id: Option<&str>,
-    support_buffs_request: Option<&[String]>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     pvp: Option<PvpScenarioParams>,
@@ -2573,12 +2600,16 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     }
 
     let (resolved_support_buffs, unknown_support_buff_ids) =
-        match (registry.support_buffs_catalog(), support_buffs_request) {
-            (Some(cat), Some(req)) if !req.is_empty() => {
+        match (
+            registry.support_buffs_catalog(),
+            support_buffs.attacker.filter(|r| !r.is_empty()),
+        ) {
+            (Some(cat), Some(req)) => {
                 support_buffs::resolve_selected_support_buff_ids(cat, req)
             }
             _ => (Vec::new(), Vec::new()),
         };
+    let sidecar_active = support_buffs.sidecar_fields_present();
     let support_research_gates =
         SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
 
@@ -2613,11 +2644,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     } else {
         None
     };
-    let (mut support_static_buffs, support_defender_static_buffs) =
+    let (mut support_static_buffs, mut support_defender_static_buffs) =
         match registry.support_buffs_catalog() {
-            Some(c) => {
-                support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs)
-            }
+            Some(c) if sidecar_active => (
+                support_buffs::aggregate_support_static_for_attacker(c, &resolved_support_buffs),
+                HashMap::new(),
+            ),
+            Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
             None => (HashMap::new(), HashMap::new()),
         };
     if let Some(cat) = registry.research_catalog() {
@@ -2673,7 +2706,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     };
     let (
         defender_ship_rec,
-        defender_profile,
+        mut defender_profile,
         defender_incoming_shield_mitigation_bonus,
         defender_incoming_shield_mitigation_bonus_rounds,
     ) = if let Some(ref pvp_cfg) = pvp {
@@ -2691,6 +2724,41 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     } else {
         (None, None, 0.0, 0)
     };
+
+    let mut pvp_sidecar = support_buffs::SupportBuffPvpSidecarResolution::default();
+    if pvp.is_some() {
+        if let Some(cat) = registry.support_buffs_catalog() {
+            pvp_sidecar = support_buffs::resolve_pvp_support_sidecars(
+                cat,
+                support_buffs.defender_support,
+                support_buffs.defender_alliance_debuffs,
+            );
+            if !pvp_sidecar.defender_static.is_empty() {
+                support_defender_static_buffs = support_buffs::merge_static_buff_maps(
+                    &support_defender_static_buffs,
+                    &pvp_sidecar.defender_static,
+                );
+            }
+            if let Some(def_prof) = defender_profile.as_mut() {
+                if !pvp_sidecar.resolved_defender_support.is_empty() {
+                    support_buffs::apply_support_buff_research_to_profile(
+                        def_prof,
+                        cat,
+                        &pvp_sidecar.resolved_defender_support,
+                        registry.research_catalog(),
+                    );
+                }
+            }
+            if !pvp_sidecar.resolved_alliance_debuffs.is_empty() {
+                support_buffs::apply_support_buff_research_to_profile(
+                    &mut profile,
+                    cat,
+                    &pvp_sidecar.resolved_alliance_debuffs,
+                    registry.research_catalog(),
+                );
+            }
+        }
+    }
 
     let class_gated_tp_hull = registry.forbidden_chaos_catalog().and_then(|cat| {
         if effective_fids.is_empty() {
@@ -2875,7 +2943,14 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         applied_support_buffs,
         support_static_buffs,
         support_defender_static_buffs,
+        support_attacker_debuff_static_buffs: pvp_sidecar.attacker_debuff_static,
         unknown_support_buff_ids,
+        resolved_defender_support_buffs: pvp_sidecar.resolved_defender_support,
+        resolved_defender_alliance_debuffs: pvp_sidecar.resolved_alliance_debuffs,
+        unknown_defender_support_buff_ids: pvp_sidecar.unknown_defender_support,
+        unknown_defender_alliance_debuffs_ids: pvp_sidecar.unknown_alliance_debuffs,
+        applied_defender_support_buffs: pvp_sidecar.applied_defender_support,
+        applied_defender_alliance_debuffs: pvp_sidecar.applied_alliance_debuffs,
         research_derived_seats,
         forbidden_tech_derived_seats,
         borg_alcove_hull_hp_bonus,
@@ -3186,7 +3261,7 @@ mod tests {
             Some(1),
             Some(1),
             None,
-            None,
+            support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
             None,
@@ -3457,7 +3532,14 @@ mod tests {
             applied_support_buffs: vec![],
             support_static_buffs: HashMap::new(),
             support_defender_static_buffs: HashMap::new(),
+            support_attacker_debuff_static_buffs: HashMap::new(),
             unknown_support_buff_ids: vec![],
+            resolved_defender_support_buffs: vec![],
+            resolved_defender_alliance_debuffs: vec![],
+            unknown_defender_support_buff_ids: vec![],
+            unknown_defender_alliance_debuffs_ids: vec![],
+            applied_defender_support_buffs: vec![],
+            applied_defender_alliance_debuffs: vec![],
             research_derived_seats: vec![],
             forbidden_tech_derived_seats: vec![],
             borg_alcove_hull_hp_bonus: None,
@@ -3641,7 +3723,7 @@ mod tests {
             None,
             None,
             Some(&entry.id),
-            None,
+            support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
             None,

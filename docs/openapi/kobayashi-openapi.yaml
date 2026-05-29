@@ -1628,6 +1628,19 @@ components:
           type: array
           items:
             type: string
+        defender_support_buffs:
+          type: array
+          items:
+            type: string
+          description: >
+            PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present,
+            `support_buffs` is treated as attacker-only for static routing.
+        defender_alliance_debuffs:
+          type: array
+          items:
+            type: string
+          description: >
+            PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled).
         chain:
           $ref: "#/components/schemas/ChainGrindRequestDto"
         defender_opponent:
@@ -2170,6 +2183,14 @@ components:
           type: array
           items:
             type: string
+        defender_support_buffs:
+          type: array
+          items:
+            type: string
+        defender_alliance_debuffs:
+          type: array
+          items:
+            type: string
         defender_opponent:
           type: string
         defender_crew:
@@ -2351,6 +2372,19 @@ components:
           type: array
           items:
             type: string
+        defender_support_buffs:
+          type: array
+          items:
+            type: string
+          description: >
+            PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present,
+            `support_buffs` is treated as attacker-only for static routing.
+        defender_alliance_debuffs:
+          type: array
+          items:
+            type: string
+          description: >
+            PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled).
         chain:
           $ref: "#/components/schemas/ChainGrindRequestDto"
         defender_opponent:

@@ -629,12 +629,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Synced research and combat bonuses */
+        /**
+         * Synced research and combat bonuses
+         * @description Flat, owner-faction, and conditional research slices plus optional scenario-effective totals
+         *     when both `ship_id` and `hostile_id` resolve in the data registry.
+         */
         get: {
             parameters: {
                 query?: {
                     /** @description Profile id (alternative to X-Profile-Id) */
                     profile?: components["parameters"]["QueryProfile"];
+                    /** @description Attacker ship id or name for scenario-effective totals */
+                    ship_id?: string;
+                    /** @description Defender hostile id or name for scenario-effective totals */
+                    hostile_id?: string;
                 };
                 header?: {
                     "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
@@ -2477,6 +2485,10 @@ export interface components {
             seed?: number;
             below_decks_slots?: number;
             support_buffs?: string[];
+            /** @description PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present, `support_buffs` is treated as attacker-only for static routing. */
+            defender_support_buffs?: string[];
+            /** @description PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled). */
+            defender_alliance_debuffs?: string[];
             chain?: components["schemas"]["ChainGrindRequestDto"];
             defender_opponent?: string;
             /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities in PvE). Same shape as `crew`. Non-empty `captain` required when any bridge or below_deck slot is set; omitted or empty = defender officers from hostile data only. */
@@ -2734,6 +2746,8 @@ export interface components {
             below_decks_slots?: number;
             proc_sample_trials?: number;
             support_buffs?: string[];
+            defender_support_buffs?: string[];
+            defender_alliance_debuffs?: string[];
             defender_opponent?: string;
             defender_crew?: components["schemas"]["SimulateCrew"];
             defender_ship?: string;
@@ -2806,6 +2820,10 @@ export interface components {
             below_decks_slots?: number;
             constraints?: components["schemas"]["OptimizeConstraintsDto"];
             support_buffs?: string[];
+            /** @description PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present, `support_buffs` is treated as attacker-only for static routing. */
+            defender_support_buffs?: string[];
+            /** @description PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled). */
+            defender_alliance_debuffs?: string[];
             chain?: components["schemas"]["ChainGrindRequestDto"];
             defender_opponent?: string;
             /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities). Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation). */

@@ -6,6 +6,7 @@ use kobayashi::optimizer::chain::{
     ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary,
 };
 use kobayashi::optimizer::crew_generator::CrewCandidate;
+use kobayashi::data::support_buffs::SupportBuffScenarioRequest;
 use kobayashi::optimizer::monte_carlo::{
     run_monte_carlo_with_registry, DefenderOpponent, SimulationResult,
 };
@@ -35,7 +36,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
         iters,
         seed,
         Some(DEMO_PROFILE_ID),
-        None,
+        SupportBuffScenarioRequest::default(),
         None,
         DefenderOpponent::Hostile,
         None,
@@ -51,7 +52,7 @@ fn chain_n1_primary_rate_matches_single_fight_win_rate() {
         iters,
         seed,
         Some(DEMO_PROFILE_ID),
-        None,
+        SupportBuffScenarioRequest::default(),
         Some(ChainGrindParams {
             kills_target: 1,
             secondary: ChainSecondaryObjective::MinHullDamage,

@@ -87,12 +87,24 @@ fn scale_keep_for_per_crew_sims(keep: usize, ref_sims: usize, actual_sims: usize
     keep.saturating_mul(numer) / denom
 }
 
-fn scenario_support_slice<'a>(scenario: &'a OptimizationScenario<'_>) -> Option<&'a [String]> {
-    if scenario.support_buffs.is_empty() {
-        None
-    } else {
-        Some(scenario.support_buffs.as_slice())
-    }
+fn scenario_support_buff_request<'a>(
+    scenario: &'a OptimizationScenario<'a>,
+) -> crate::data::support_buffs::SupportBuffScenarioRequest<'a> {
+    crate::data::support_buffs::SupportBuffScenarioRequest::from_optional_slices(
+        if scenario.support_buffs.is_empty() {
+            None
+        } else {
+            Some(scenario.support_buffs.as_slice())
+        },
+        scenario
+            .defender_support_buffs
+            .as_deref()
+            .filter(|s| !s.is_empty()),
+        scenario
+            .defender_alliance_debuffs
+            .as_deref()
+            .filter(|s| !s.is_empty()),
+    )
 }
 use crate::parallel::batch_ranges;
 
@@ -408,6 +420,10 @@ pub struct OptimizationScenario<'a> {
     pub constraints: Option<CrewSearchConstraints>,
     /// Support buff ids (lower decks) applied when building scenario profile; empty = none.
     pub support_buffs: Vec<String>,
+    /// PvP: defender alliance support buff ids (`defender_support_buffs` API field).
+    pub defender_support_buffs: Option<Vec<String>>,
+    /// PvP: alliance debuffs on the attacker (`defender_alliance_debuffs` API field).
+    pub defender_alliance_debuffs: Option<Vec<String>>,
     /// Sequential chain grind (HHP carry-over, full SHP each link). When set, analytical prefilter is skipped.
     pub chain_grind: Option<ChainGrindParams>,
     /// Defender is NPC hostile vs player ship for canonical opponent-category conditions.
@@ -462,6 +478,8 @@ impl Default for OptimizationScenario<'_> {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            defender_support_buffs: None,
+            defender_alliance_debuffs: None,
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
@@ -709,7 +727,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.ship_tier,
         scenario.ship_level,
         scenario.profile_id,
-        scenario_support_slice(scenario),
+        scenario_support_buff_request(scenario),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
@@ -755,7 +773,7 @@ fn optimize_scenario_tiered_with_registry(
         top_k,
         scenario.seed,
         scenario.profile_id,
-        scenario_support_slice(scenario),
+        scenario_support_buff_request(scenario),
         scenario.chain_grind.clone(),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
@@ -811,7 +829,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.ship_tier,
         scenario.ship_level,
         scenario.profile_id,
-        scenario_support_slice(scenario),
+        scenario_support_buff_request(scenario),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
@@ -880,7 +898,7 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
     let shared = build_shared_scenario_data_standalone(
         scenario.ship,
         scenario.hostile,
-        scenario_support_slice(scenario),
+        scenario_support_buff_request(scenario),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
     );
@@ -942,6 +960,8 @@ where
             below_decks_slots: scenario.below_decks_slots,
             constraints: scenario.constraints.clone(),
             support_buffs: scenario.support_buffs.clone(),
+            defender_support_buffs: scenario.defender_support_buffs.clone(),
+            defender_alliance_debuffs: scenario.defender_alliance_debuffs.clone(),
             chain_grind: scenario.chain_grind.clone(),
             defender_opponent: scenario.defender_opponent,
             roster_profile_id: scenario.profile_id.map(String::from),
@@ -955,6 +975,8 @@ where
         cfg.below_decks_slots = scenario.below_decks_slots;
         cfg.constraints = scenario.constraints.clone();
         cfg.support_buffs = scenario.support_buffs.clone();
+        cfg.defender_support_buffs = scenario.defender_support_buffs.clone();
+        cfg.defender_alliance_debuffs = scenario.defender_alliance_debuffs.clone();
         cfg.chain_grind = scenario.chain_grind.clone();
         cfg.defender_opponent = scenario.defender_opponent;
         cfg.roster_profile_id = scenario.profile_id.map(String::from);
@@ -1015,6 +1037,8 @@ where
                 below_decks_slots: scenario.below_decks_slots,
                 constraints: scenario.constraints.clone(),
                 support_buffs: scenario.support_buffs.clone(),
+                defender_support_buffs: scenario.defender_support_buffs.clone(),
+                defender_alliance_debuffs: scenario.defender_alliance_debuffs.clone(),
                 chain_grind: scenario.chain_grind.clone(),
                 defender_opponent: scenario.defender_opponent,
                 player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
@@ -1037,7 +1061,7 @@ where
             let shared = build_shared_scenario_data_standalone(
                 scenario.ship,
                 scenario.hostile,
-                scenario_support_slice(scenario),
+                scenario_support_buff_request(scenario),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
             );
@@ -1170,7 +1194,7 @@ where
                 scenario.ship_tier,
                 scenario.ship_level,
                 scenario.profile_id,
-                scenario_support_slice(scenario),
+                scenario_support_buff_request(scenario),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
                 scenario.pvp.clone(),
@@ -1278,7 +1302,7 @@ where
                 top_k,
                 scenario.seed,
                 scenario.profile_id,
-                scenario_support_slice(scenario),
+                scenario_support_buff_request(scenario),
                 scenario.chain_grind.clone(),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
@@ -1321,7 +1345,7 @@ where
                 scenario.ship_tier,
                 scenario.ship_level,
                 scenario.profile_id,
-                scenario_support_slice(scenario),
+                scenario_support_buff_request(scenario),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
                 scenario.pvp.clone(),
@@ -1590,6 +1614,8 @@ pub fn optimize_crew(
         below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
         constraints: None,
         support_buffs: Vec::new(),
+        defender_support_buffs: None,
+        defender_alliance_debuffs: None,
         chain_grind: None,
         defender_opponent: DefenderOpponent::Hostile,
         player_defender_officer_crew: None,
@@ -1631,7 +1657,7 @@ mod tests {
             None,
             None,
             None,
-            None,
+            crate::data::support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
             None,
@@ -1732,7 +1758,7 @@ mod tests {
             None,
             None,
             None,
-            None,
+            crate::data::support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
             None,
@@ -1811,6 +1837,8 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            defender_support_buffs: None,
+            defender_alliance_debuffs: None,
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
@@ -1964,6 +1992,8 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            defender_support_buffs: None,
+            defender_alliance_debuffs: None,
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
@@ -2036,6 +2066,8 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            defender_support_buffs: None,
+            defender_alliance_debuffs: None,
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
@@ -2102,6 +2134,8 @@ mod tests {
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             support_buffs: Vec::new(),
+            defender_support_buffs: None,
+            defender_alliance_debuffs: None,
             chain_grind: None,
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
@@ -2153,7 +2187,7 @@ mod tests {
             Some(1),
             Some(1),
             None,
-            None,
+            crate::data::support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
             None,
@@ -2165,7 +2199,7 @@ mod tests {
             Some(5),
             Some(1),
             None,
-            None,
+            crate::data::support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
             None,
