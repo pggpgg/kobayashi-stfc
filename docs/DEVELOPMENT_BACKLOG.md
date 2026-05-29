@@ -1,6 +1,6 @@
 # Development backlog
 
-Six engineering tasks for the next chunk of work on kobayashi, ordered by logical
+Five engineering tasks for the next chunk of work on kobayashi, ordered by logical
 dependency rather than priority. Item numbering is referenced by PR titles and commit
 messages.
 
@@ -11,13 +11,14 @@ Sibling docs:
   and each has a defined endpoint.
 - [`NOT_ROADMAP.md`](NOT_ROADMAP.md) — explicit non-goals.
 
-Item 1 is the calibration foundation; item 2 is blocked on it. Items 3–5 are largely
-independent and can be reordered. Item 6 needs a design doc before code.
+Item 1 is the calibration foundation; item 2 is blocked on it. Items 3–4 are largely
+independent and can be reordered. Item 5 needs a design doc before code.
 
 Recently shipped (removed from this queue; see [`ROADMAP.md`](ROADMAP.md)): shared
 async job registry (#194), monthly benchmark baseline refresh (#195), sensitivity async
 + SSE (#192), defender/alliance debuff scenario inputs (340c5b0c), sensitivity
-`crit_damage_reduction` removal (#196).
+`crit_damage_reduction` removal (#196), buildings sync → combat observability
+(`GET /api/profile/buildings-summary`, Roster & Profile UI; f53ddd17).
 
 ---
 
@@ -93,21 +94,7 @@ calibration step.
 
 ## New features
 
-### 3. Building catalog API + UI panel
-
-[`ROADMAP.md` § Buildings](ROADMAP.md). The building catalog is consumed silently during
-scenario load — there's no way for users to inspect what combat bonuses they're
-actually getting from their synced buildings. Surface it.
-
-**Endpoint:** new `GET /api/buildings/catalog` returning per-building stats + the
-user's synced levels + the contribution to their effective profile bonuses. New
-"Buildings" panel in the React SPA renders the catalog with the synced levels
-highlighted. This is also the foundation for the deferred station-defense work in
-`NOT_ROADMAP.md`.
-
----
-
-### 4. Strict validation report for opaque `buff_*` stats
+### 3. Strict validation report for opaque `buff_*` stats
 
 [`ROADMAP.md` § Buildings](ROADMAP.md). The data-normalization pipeline silently skips
 `buff_*` keys it doesn't know how to map. Extend `report_unknown_mappings` (already
@@ -118,9 +105,13 @@ each, explicitly opt-out via an allowlist, or fail loudly.
 **Endpoint:** existing `report_unknown_mappings` binary gains two new sections.
 `docs/CANONICAL_CONDITIONS.md`-style "Still unmapped: 0" goal applies to both.
 
+**Why now:** the Roster & Profile buildings panel already surfaces unmapped game `bid`
+values (e.g. bids with no catalog entry); this task closes the loop on opaque
+`buff_*` keys inside mapped buildings — see [`building_gaps.md`](building_gaps.md).
+
 ---
 
-### 5. Synergy learning from simulation results
+### 4. Synergy learning from simulation results
 
 [`ROADMAP.md` "Planned"](ROADMAP.md). Use the accumulated `optimize_history.json` cache
 (`MAX_OPTIMIZE_HISTORY_CREWS = 24` per cache key, `MAX_OPTIMIZE_CACHE_KEYS = 200`) to
@@ -138,7 +129,7 @@ start with lift since it's the most interpretable.
 
 ## Long-horizon
 
-### 6. Armada mode (multi-ship combat)
+### 5. Armada mode (multi-ship combat)
 
 [`ROADMAP.md` "Planned"](ROADMAP.md). Major feature — multiple ships per side, target
 selection, fire-distribution rules, hull-breach propagation. Not a single PR; needs a
@@ -146,7 +137,7 @@ design pass first to decide which in-game armada mechanics are in scope and whic
 deferred (e.g. armada commendation timers, multiple armada types).
 
 **Note:** this is the only item on the backlog that isn't well-scoped today.
-Everything else has a defined endpoint; #6 needs a design doc before code.
+Everything else has a defined endpoint; #5 needs a design doc before code.
 
 ---
 
@@ -155,9 +146,13 @@ Everything else has a defined endpoint; #6 needs a design doc before code.
 - **Full LCARS coverage of 280+ officers** — on `ROADMAP.md` but is incremental data
   work, not a discrete PR. Tracked via the fidelity score in
   [`OFFICER_MODELING_SCORECARD.md`](OFFICER_MODELING_SCORECARD.md).
+- **Buildings drill-down (optional)** — per-module combat-stat contribution breakdown
+  and/or a global catalog browse API. Core observability (synced levels, aggregate
+  combat bonuses, unmapped `bid` callouts) already ships via
+  [`GET /api/profile/buildings-summary`](../src/server/api.rs) and the Roster & Profile
+  panel. Revisit only if users need row-level attribution or offline catalog inspection.
 - **Station-defense mode in the optimizer** — currently in
-  [`NOT_ROADMAP.md`](NOT_ROADMAP.md) pending broader station-defense scope. Becomes a
-  follow-up to #3 if station defense moves in-scope.
+  [`NOT_ROADMAP.md`](NOT_ROADMAP.md) pending broader station-defense scope.
 
 ---
 

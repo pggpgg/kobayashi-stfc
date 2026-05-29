@@ -21,6 +21,12 @@ import {
   updateProfile,
 } from "../lib/api";
 
+import {
+  formatProfileCombatBonusDelta,
+  formatProfileCombatBonusEntry,
+  formatProfileCombatBonusListValue,
+} from "../lib/profileCombatBonusDisplay";
+
 /** Mod sync older than this is shown in red (stale). */
 const MOD_SYNC_STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
@@ -28,7 +34,7 @@ function formatResearchBonusMap(m?: Record<string, number>): string {
   if (!m || Object.keys(m).length === 0) return "—";
   return Object.entries(m)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
+    .map(([k, v]) => formatProfileCombatBonusEntry(k, v))
     .join("; ");
 }
 
@@ -41,7 +47,7 @@ function formatOwnerFactionResearch(
     .map(([faction, inner]) => {
       const stats = Object.entries(inner)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
+        .map(([k, v]) => formatProfileCombatBonusEntry(k, v))
         .join(", ");
       return `${faction}: ${stats}`;
     })
@@ -56,7 +62,7 @@ function formatConditionalResearch(
     .map((line) => {
       const gate = line.condition_label ?? "conditional";
       const runtime = line.requires_runtime_state ? " (runtime)" : "";
-      return `${line.stat} +${(line.value * 100).toFixed(2)}% [${gate}]${runtime}`;
+      return `${line.stat} ${formatProfileCombatBonusDelta(line.stat, line.value)} [${gate}]${runtime}`;
     })
     .join("; ");
 }
@@ -637,7 +643,8 @@ token = "${activeProfile.sync_token}"`}
                         .sort(([a], [b]) => a.localeCompare(b))
                         .map(([k, v]) => (
                           <li key={k}>
-                            <code>{k}</code>: {(v * 100).toFixed(2)}% additive
+                            <code>{k}</code>:{" "}
+                            {formatProfileCombatBonusListValue(k, v)}
                           </li>
                         ))}
                     </ul>
@@ -845,7 +852,8 @@ token = "${activeProfile.sync_token}"`}
                         .sort(([a], [b]) => a.localeCompare(b))
                         .map(([k, v]) => (
                           <li key={k}>
-                            <code>{k}</code>: {(v * 100).toFixed(2)}% additive
+                            <code>{k}</code>:{" "}
+                            {formatProfileCombatBonusListValue(k, v)}
                           </li>
                         ))}
                     </ul>
@@ -869,7 +877,7 @@ token = "${activeProfile.sync_token}"`}
                             <code>{faction}</code>:{" "}
                             {Object.entries(inner)
                               .sort(([a], [b]) => a.localeCompare(b))
-                              .map(([k, v]) => `${k} +${(v * 100).toFixed(2)}%`)
+                              .map(([k, v]) => formatProfileCombatBonusEntry(k, v))
                               .join(", ")}
                           </li>
                         ))}
@@ -893,8 +901,8 @@ token = "${activeProfile.sync_token}"`}
                       {researchSummary.combat_conditional_bonuses_from_research.map(
                         (line, idx) => (
                           <li key={`${line.stat}-${idx}`}>
-                            <code>{line.stat}</code> +
-                            {(line.value * 100).toFixed(2)}% —{" "}
+                            <code>{line.stat}</code>{" "}
+                            {formatProfileCombatBonusDelta(line.stat, line.value)} —{" "}
                             {line.condition_label ?? "conditional"}
                             {line.requires_runtime_state
                               ? " (needs morale/burning/HB in fight)"
@@ -919,7 +927,8 @@ token = "${activeProfile.sync_token}"`}
                         .sort(([a], [b]) => a.localeCompare(b))
                         .map(([k, v]) => (
                           <li key={k}>
-                            <code>{k}</code>: {(v * 100).toFixed(2)}% additive
+                            <code>{k}</code>:{" "}
+                            {formatProfileCombatBonusListValue(k, v)}
                           </li>
                         ))}
                     </ul>
@@ -942,8 +951,8 @@ token = "${activeProfile.sync_token}"`}
                       {researchSummary.combat_conditional_scenario_active.map(
                         (line, idx) => (
                           <li key={`sc-${line.stat}-${idx}`}>
-                            <code>{line.stat}</code> +
-                            {(line.value * 100).toFixed(2)}% —{" "}
+                            <code>{line.stat}</code>{" "}
+                            {formatProfileCombatBonusDelta(line.stat, line.value)} —{" "}
                             {line.condition_label ?? "conditional"}
                             {line.requires_runtime_state
                               ? " (runtime gate)"
