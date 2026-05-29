@@ -1,6 +1,6 @@
 # Development backlog
 
-Ten engineering tasks for the next chunk of work on kobayashi, ordered by logical
+Six engineering tasks for the next chunk of work on kobayashi, ordered by logical
 dependency rather than priority. Item numbering is referenced by PR titles and commit
 messages.
 
@@ -11,9 +11,13 @@ Sibling docs:
   and each has a defined endpoint.
 - [`NOT_ROADMAP.md`](NOT_ROADMAP.md) — explicit non-goals.
 
-The ordering has a soft dependency chain in the first half (1 → 2 → 3 are foundation;
-4 → 5/6 → 7 has a paving-the-way relationship). Items 8–10 are largely independent and
-can be reordered.
+Item 1 is the calibration foundation; item 2 is blocked on it. Items 3–5 are largely
+independent and can be reordered. Item 6 needs a design doc before code.
+
+Recently shipped (removed from this queue; see [`ROADMAP.md`](ROADMAP.md)): shared
+async job registry (#194), monthly benchmark baseline refresh (#195), sensitivity async
++ SSE (#192), defender/alliance debuff scenario inputs (340c5b0c), sensitivity
+`crit_damage_reduction` removal (#196).
 
 ---
 
@@ -39,69 +43,9 @@ produce. The user has to capture them.
 
 ---
 
-### 2. Extract shared async-job runner
-
-`src/server/api/execution.rs` (optimize jobs) and `src/server/sensitivity_jobs.rs` (PR
-\#192) share ~250 lines of structural plumbing: in-memory `HashMap<String, JobState>`
-registry, `Arc<AtomicBool>` cancel flags, oldest-finished eviction, `lock_*` helpers
-with poison recovery, deterministic job-id generation. Refactor into a generic
-`JobRegistry<S: JobState>` module so the third async route doesn't accumulate a third
-copy of the same pattern.
-
-**Endpoint:** new `src/server/job_registry.rs` providing `JobRegistry<S>` + the
-`JobState` trait. Both optimize and sensitivity migrate to use it. Existing tests pass
-unchanged.
-
-**Why now:** doing it **before** a third async route appears is much cheaper than after.
-Two copies are tolerable; three start to drift.
-
----
-
-### 3. Automate the benchmark baseline refresh
-
-`bench-refresh-baseline.yml` is `workflow_dispatch`-only. Across PRs #181–#188 the
-baseline went stale and the regression gate silently became a no-op (every PR reported
-"-77%" wins). PR #189 refreshed it manually. Add a monthly cron schedule and an
-auto-open-PR step so the baseline can't drift unattended again.
-
-**Endpoint:** workflow runs on `schedule: cron: …` the 1st of each month, runs the
-benches, and opens a PR against main with the updated `benchmark_results.log` and a
-before-/after comparison in the body. Skip if no diff.
-
----
-
 ## Engine accuracy / model fidelity
 
-### 4. ~~Finish `player_crit_damage_reduction` uniform plumbing~~ **Resolved by removal.**
-
-Originally: the cleanest unification was a new `HostileCritDamageReductionBonus`
-effect variant that the seat-walk sums on top of `max`. That would have added
-combat-engine infrastructure for a sensitivity-only concern.
-
-We chose the simpler answer: **drop `crit_damage_reduction` from the sensitivity
-catalog entirely**. The perturb-only `Combatant.crit_damage_reduction_bonus` field and
-the special engine branch that read it are gone. The catalog is now 18 stats (was 19).
-The stat was a poor fit for sensitivity anyway — CDR investment is discrete (Crozier
-hull, Borg OT, etc.) rather than a continuous knob, and the resulting sensitivity row
-often had a 95% CI crossing zero in practice.
-
-If we ever need additive sensitivity perturbations on top of `max`-aggregated
-crew-walk resolvers in the future, the `HostileCritDamageReductionBonus`-style effect
-variant is still the right pattern; the architectural note is preserved in PR notes
-referenced from [`ROADMAP.md`](ROADMAP.md) § Stat modeling improvements.
-
----
-
-### 5. Defender-side support buffs + alliance debuffs as scenario inputs — **done**
-
-`SimulateRequest`, `OptimizeRequest`, and `CompareCrewsRequest` expose `defender_support_buffs`
-and `defender_alliance_debuffs`. The PvP workspace UI has separate attacker buffs, defender buffs,
-and alliance debuff selectors. When either sidecar field is present, `support_buffs` is treated as
-attacker-only for static routing (legacy mixed-id behavior preserved when sidecars are omitted).
-
----
-
-### 6. Per-sub-round vs profile-only timing for forbidden-tech effects — **calibration-blocked**
+### 2. Per-sub-round vs profile-only timing for forbidden-tech effects — **calibration-blocked**
 
 Calibration uncertainty flagged in [`data/README.md` § Forbidden tech](../data/README.md):
 some forbidden-tech bonuses *may* apply per-sub-round in-game while the engine treats
@@ -149,7 +93,7 @@ calibration step.
 
 ## New features
 
-### 7. Building catalog API + UI panel
+### 3. Building catalog API + UI panel
 
 [`ROADMAP.md` § Buildings](ROADMAP.md). The building catalog is consumed silently during
 scenario load — there's no way for users to inspect what combat bonuses they're
@@ -163,7 +107,7 @@ highlighted. This is also the foundation for the deferred station-defense work i
 
 ---
 
-### 8. Strict validation report for opaque `buff_*` stats
+### 4. Strict validation report for opaque `buff_*` stats
 
 [`ROADMAP.md` § Buildings](ROADMAP.md). The data-normalization pipeline silently skips
 `buff_*` keys it doesn't know how to map. Extend `report_unknown_mappings` (already
@@ -176,7 +120,7 @@ each, explicitly opt-out via an allowlist, or fail loudly.
 
 ---
 
-### 9. Synergy learning from simulation results
+### 5. Synergy learning from simulation results
 
 [`ROADMAP.md` "Planned"](ROADMAP.md). Use the accumulated `optimize_history.json` cache
 (`MAX_OPTIMIZE_HISTORY_CREWS = 24` per cache key, `MAX_OPTIMIZE_CACHE_KEYS = 200`) to
@@ -194,7 +138,7 @@ start with lift since it's the most interpretable.
 
 ## Long-horizon
 
-### 10. Armada mode (multi-ship combat)
+### 6. Armada mode (multi-ship combat)
 
 [`ROADMAP.md` "Planned"](ROADMAP.md). Major feature — multiple ships per side, target
 selection, fire-distribution rules, hull-breach propagation. Not a single PR; needs a
@@ -202,7 +146,7 @@ design pass first to decide which in-game armada mechanics are in scope and whic
 deferred (e.g. armada commendation timers, multiple armada types).
 
 **Note:** this is the only item on the backlog that isn't well-scoped today.
-Everything else has a defined endpoint; #10 needs a design doc before code.
+Everything else has a defined endpoint; #6 needs a design doc before code.
 
 ---
 
@@ -213,13 +157,14 @@ Everything else has a defined endpoint; #10 needs a design doc before code.
   [`OFFICER_MODELING_SCORECARD.md`](OFFICER_MODELING_SCORECARD.md).
 - **Station-defense mode in the optimizer** — currently in
   [`NOT_ROADMAP.md`](NOT_ROADMAP.md) pending broader station-defense scope. Becomes a
-  follow-up to #7 if station defense moves in-scope.
+  follow-up to #3 if station defense moves in-scope.
 
 ---
 
 ## Maintenance notes
 
-- This document should be updated when items ship (mark them shipped + link the PR) or
-  when new items emerge that fit the "well-scoped engineering task" profile.
+- This document should be updated when items ship (remove them; link the PR in
+  [`ROADMAP.md`](ROADMAP.md)) or when new items emerge that fit the "well-scoped
+  engineering task" profile.
 - Items shipped should be removed (not struck out) — the corresponding ROADMAP.md
   bullets are the durable record of "what shipped." This file is the working queue.

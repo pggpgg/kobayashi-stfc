@@ -24,14 +24,15 @@ What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](N
 - **Sensitivity analysis** (`/sensitivity`, `POST /api/sensitivity`, CLI `sensitivity`): for a fixed scenario, perturb each in-game stat by one realistic step of investment and rank stats by their measured Δ on a user-chosen outcome metric, with a 95% paired-CRN confidence interval. Catalog covers 18 stats — `weapon_damage`, `crit_chance`, `crit_damage`, `armor_piercing`, `shield_piercing`, `accuracy`, `apex_shred`, `isolytic_damage`, four split-mitigation components (`armor`, `shield_deflection`, `dodge`, `damage_reduction`), `apex_barrier`, `isolytic_defense`, `crit_damage_floor`, `hull_hp`, `shield_hp`, `shield_mitigation`. (Earlier versions also exposed `crit_damage_reduction`; removed in favour of cleaner internals — see § Stat modeling improvements.)
 - **Morris screening** (`/sensitivity` method toggle, `POST /api/sensitivity/morris`, CLI `morris-sensitivity`): walks `r` random trajectories through stat space (cumulative perturbations applied in random order); each trajectory yields one elementary effect (EE) per stat via paired-CRN MC at each `k+1` step. Aggregates per-stat into **μ\*** (importance — mean of `|EE|`), **μ** (signed direction), and **σ** (interaction signal — high σ relative to μ\* indicates the stat's effect depends on other previously-perturbed stats). Compute is `r × (k+1) × num_sims`; defaults `r=10`, `num_sims=200` sum to ~32k sims, comparable to v1 OAT. Reuses the v1 perturbation hook ([src/combat/perturb.rs](../src/combat/perturb.rs)) and the shared scenario builder. Screening method only — σ flags interactive stats but does **not** identify which specific pairs interact; Sobol pairwise indices are still planned.
 - **Sobol variance decomposition** (`/sensitivity` method toggle, `POST /api/sensitivity/sobol`, CLI `sobol-sensitivity`): Saltelli sample design with Jansen-1999 estimators. Reports **S_i** (first-order index — fraction of Var(Y) from stat `i` alone), **S_T_i** (total-order — main + all interactions involving `i`), **interaction strength** `S_T_i − S_i` per stat, and (opt-in via `include_pairwise`) per-pair **S_ij** for every distinct stat pair. Compute is `N × (k + 2)` engine calls for first/total order plus `N × k(k − 1)/2` extra when pairwise is enabled. Defaults `N=512`, `k=18` → ~10k sims first-order (~88k all-in with pairwise). Bootstrap 95% CIs on every index (resampled rows, no extra engine calls). CRN pairing across A and A_B^(i) / A_B^(ij) rows reduces estimator variance.
+- **Async sensitivity jobs** (`POST /api/sensitivity/start`, `/morris/start`, `/sobol/start`; `GET /api/sensitivity/jobs/:job_id/status`, `…/stream`, `POST …/cancel`; #192): long-running OAT, Morris, and Sobol runs detach to background worker threads with SSE progress, same admission-control pattern as optimize jobs. Synchronous `POST /api/sensitivity*` routes remain for quick runs. Shared job plumbing lives in [`src/server/job_registry.rs`](../src/server/job_registry.rs) (#194).
+- **Defender support buffs + alliance debuffs as scenario inputs** (`defender_support_buffs`, `defender_alliance_debuffs` on simulate/optimize/compare; PvP workspace UI with separate attacker buffs, defender buffs, and alliance debuff selectors): when either sidecar is present, `support_buffs` is attacker-only; legacy mixed-id routing preserved when sidecars are omitted.
+- **Criterion baseline auto-refresh** (`.github/workflows/bench-refresh-baseline.yml`, #195): monthly cron on the 1st opens a PR with refreshed `benchmark_results.log` when measurements drift, preventing the regression gate from silently going stale.
 
 ## Planned
 
 - Synergy learning from simulation results (co-occurrence matrix → bias future searches)
 - Armada mode (multi-ship combat)
 - Full LCARS coverage of all 280+ officers (incremental; see [OFFICER_MODELING_SCORECARD.md](OFFICER_MODELING_SCORECARD.md) for fidelity gaps)
-- Defender-side support buffs and alliance debuffs as scenario inputs (partial: defender-static support buff keys apply in PvP-shaped scenarios; alliance debuffs not yet scenario inputs)
-- Async + SSE for `/api/sensitivity` (v1 is synchronous; long runs are gated by the CPU semaphore).
 
 ## Stat modeling improvements
 
@@ -53,5 +54,9 @@ Buildings are fully modeled for ship combat. Backlog items tracked here so cross
 
 ## Forbidden tech
 
-- Per-sub-round vs profile-only timing for forbidden-tech effects (calibration uncertainty; see [data/README.md § Forbidden tech](../data/README.md#forbidden-tech-catalog-and-partial-status)).
+- Per-sub-round vs profile-only timing for forbidden-tech effects — **calibration-blocked** (architecture likely correct; see [DEVELOPMENT_BACKLOG.md](DEVELOPMENT_BACKLOG.md) #2 and [data/README.md § Forbidden tech](../data/README.md#forbidden-tech-catalog-and-partial-status)).
 - Flat hull/shield HP from research/forbidden-tech rows (no agreed conversion to fractional profile multipliers; currently skipped).
+
+## Calibration (blocked on game traces)
+
+- Multi-source CDR recorded-fight calibration — no fixture yet with overlapping CDR sources (Crozier hull + profile CDR + Borg OT vs Conqueror Borg); see [DEVELOPMENT_BACKLOG.md](DEVELOPMENT_BACKLOG.md) #1.
