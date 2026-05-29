@@ -6,7 +6,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use kobayashi::data::validate::{
     full_validation_report_to_json, hostile_ship_class_is_recognized, validate_all_data_for_report,
-    validate_buildings_dataset, validate_registry_dataset, validate_research_mapping_gaps,
+    validate_buildings_dataset, validate_forbidden_tech_bonus_gaps, validate_registry_dataset,
+    validate_research_mapping_gaps,
     validate_support_buffs_catalog_data, validate_unmapped_canonical_officer_conditions,
     ValidationSeverity,
 };
@@ -268,6 +269,35 @@ fn building_bonus_gaps_strict_env_upgrades_to_error() {
             && d.context == "buildings.bonuses.unknown_condition"
             && d.message.contains("mystery_condition")
     }));
+}
+
+#[test]
+fn forbidden_tech_bonus_routing_reports_summary_when_catalog_present() {
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let data_root = manifest.join("data");
+    let catalog = data_root.join("forbidden_chaos_tech.json");
+    if !catalog.is_file() {
+        eprintln!("skipping forbidden_tech_bonus_routing test: no forbidden_chaos_tech.json");
+        return;
+    }
+
+    let report = validate_forbidden_tech_bonus_gaps(&data_root).expect("validate ft gaps");
+    assert!(
+        report
+            .diagnostics
+            .iter()
+            .any(|d| d.context == "forbidden_tech.bonus_routing.summary"),
+        "expected summary diagnostic, got {:?}",
+        report.diagnostics
+    );
+    assert!(
+        !report
+            .diagnostics
+            .iter()
+            .any(|d| d.context == "forbidden_tech.bonus_routing.gap"),
+        "repo catalog should have zero actionable FT routing gaps, got {:?}",
+        report.diagnostics
+    );
 }
 
 #[test]

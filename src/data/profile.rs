@@ -591,6 +591,65 @@ fn skip_forbidden_tech_profile_bonus_for_fid(fid: i64, stat: &str) -> bool {
     stat == "shield_mitigation" && is_quantum_slipstream_forbidden_tech_fid(fid)
 }
 
+/// How a forbidden/chaos catalog bonus row reaches combat (profile merge, timed seats, or scalars).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ForbiddenTechBonusCombatRoute {
+    /// Unconditional [`merge_tech_fids_into_profile`] when the fid is equipped.
+    ProfileFlat,
+    /// Attack/round-start seats from dedicated builders (Borg, Quantum, torpedo family, …).
+    TimedSeat,
+    /// Hull HP or hostile-accuracy scalars applied in scenario build (torpedo family, Borg Alcove hull).
+    HullOrAccuracyScalar,
+    /// Catalog row exists for sync/scaling but is intentionally not a flat profile modifier.
+    SkippedIntentionally,
+}
+
+/// Returns `None` when the catalog `(fid, stat)` pair has no modeled combat consumer (mapping gap).
+pub fn forbidden_tech_bonus_combat_route(fid: i64, stat: &str) -> Option<ForbiddenTechBonusCombatRoute> {
+    if is_borg_alcove_forbidden_tech_fid(fid) {
+        return match stat {
+            "crit_chance" | "crit_damage" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
+            "hull_hp" => Some(ForbiddenTechBonusCombatRoute::HullOrAccuracyScalar),
+            _ => None,
+        };
+    }
+    if is_borg_operating_table_forbidden_tech_fid(fid) {
+        return match stat {
+            "crit_damage" | "apex_shred" | "hostile_crit_damage_reduction" => {
+                Some(ForbiddenTechBonusCombatRoute::TimedSeat)
+            }
+            _ => None,
+        };
+    }
+    if is_quantum_slipstream_forbidden_tech_fid(fid) {
+        return match stat {
+            "shield_mitigation" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
+            _ if normalize_profile_combat_stat(stat).is_some() => {
+                Some(ForbiddenTechBonusCombatRoute::ProfileFlat)
+            }
+            _ => None,
+        };
+    }
+    if is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid) {
+        return match stat {
+            "armor" | "dodge" | "pierce" | "weapon_damage" => {
+                Some(ForbiddenTechBonusCombatRoute::TimedSeat)
+            }
+            "hull_hp" | "shield_mitigation" | "accuracy" => {
+                Some(ForbiddenTechBonusCombatRoute::HullOrAccuracyScalar)
+            }
+            _ => None,
+        };
+    }
+    if skip_forbidden_tech_profile_bonus_for_fid(fid, stat) {
+        return Some(ForbiddenTechBonusCombatRoute::SkippedIntentionally);
+    }
+    if normalize_profile_combat_stat(stat).is_some() {
+        return Some(ForbiddenTechBonusCombatRoute::ProfileFlat);
+    }
+    None
+}
+
 fn forbidden_tech_bonus_value_for_imported_entry(
     bonus: &crate::data::forbidden_chaos::BonusEntry,
     record: &crate::data::forbidden_chaos::ForbiddenChaosRecord,
@@ -2494,6 +2553,40 @@ mod tests {
             ]
         );
         assert_eq!(reloaded.bonuses.get("weapon_damage"), Some(&0.1));
+    }
+
+    #[test]
+    fn forbidden_tech_bonus_combat_route_classifies_known_fids() {
+        use ForbiddenTechBonusCombatRoute as R;
+
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(BORG_ALCOVE_FORBIDDEN_TECH_FID, "crit_chance"),
+            Some(R::TimedSeat)
+        );
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID, "hostile_crit_damage_reduction"),
+            Some(R::TimedSeat)
+        );
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID, "shield_mitigation"),
+            Some(R::TimedSeat)
+        );
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(S31_TORPEDO_PODS_FORBIDDEN_TECH_FID, "weapon_damage"),
+            Some(R::TimedSeat)
+        );
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(S31_TORPEDO_PODS_FORBIDDEN_TECH_FID, "hull_hp"),
+            Some(R::HullOrAccuracyScalar)
+        );
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(999_999_999, "weapon_damage"),
+            Some(R::ProfileFlat)
+        );
+        assert_eq!(
+            forbidden_tech_bonus_combat_route(BORG_ALCOVE_FORBIDDEN_TECH_FID, "weapon_damage"),
+            None
+        );
     }
 
     #[test]

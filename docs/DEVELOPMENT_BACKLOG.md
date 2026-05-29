@@ -11,14 +11,16 @@ Sibling docs:
   and each has a defined endpoint.
 - [`NOT_ROADMAP.md`](NOT_ROADMAP.md) — explicit non-goals.
 
-Item 1 is the calibration foundation; item 2 is blocked on it. Items 3–4 are largely
-independent and can be reordered. Item 5 needs a design doc before code.
+Item 1 is the calibration foundation; item 2 is blocked on it. Item 3 is largely
+independent. Item 4 needs a design doc before code.
 
 Recently shipped (removed from this queue; see [`ROADMAP.md`](ROADMAP.md)): shared
 async job registry (#194), monthly benchmark baseline refresh (#195), sensitivity async
 + SSE (#192), defender/alliance debuff scenario inputs (340c5b0c), sensitivity
 `crit_damage_reduction` removal (#196), buildings sync → combat observability
-(`GET /api/profile/buildings-summary`, Roster & Profile UI; f53ddd17).
+(`GET /api/profile/buildings-summary`, Roster & Profile UI; f53ddd17), strict opaque
+`buff_*` + forbidden-tech bonus routing validation (`opaque_buff_allowlist.json`,
+`report_unknown_mappings` building/FT sections, `forbidden_tech_bonus_combat_route`).
 
 ---
 
@@ -94,24 +96,7 @@ calibration step.
 
 ## New features
 
-### 3. Strict validation report for opaque `buff_*` stats
-
-[`ROADMAP.md` § Buildings](ROADMAP.md). The data-normalization pipeline silently skips
-`buff_*` keys it doesn't know how to map. Extend `report_unknown_mappings` (already
-wired into `cargo xtask` and the data-refresh workflow) to also enumerate unmapped
-building buff IDs and forbidden-tech bonus keys. Forces the data import to either map
-each, explicitly opt-out via an allowlist, or fail loudly.
-
-**Endpoint:** existing `report_unknown_mappings` binary gains two new sections.
-`docs/CANONICAL_CONDITIONS.md`-style "Still unmapped: 0" goal applies to both.
-
-**Why now:** the Roster & Profile buildings panel already surfaces unmapped game `bid`
-values (e.g. bids with no catalog entry); this task closes the loop on opaque
-`buff_*` keys inside mapped buildings — see [`building_gaps.md`](building_gaps.md).
-
----
-
-### 4. Synergy learning from simulation results
+### 3. Synergy learning from simulation results
 
 [`ROADMAP.md` "Planned"](ROADMAP.md). Use the accumulated `optimize_history.json` cache
 (`MAX_OPTIMIZE_HISTORY_CREWS = 24` per cache key, `MAX_OPTIMIZE_CACHE_KEYS = 200`) to
@@ -129,7 +114,7 @@ start with lift since it's the most interpretable.
 
 ## Long-horizon
 
-### 5. Armada mode (multi-ship combat)
+### 4. Armada mode (multi-ship combat)
 
 [`ROADMAP.md` "Planned"](ROADMAP.md). Major feature — multiple ships per side, target
 selection, fire-distribution rules, hull-breach propagation. Not a single PR; needs a
@@ -137,7 +122,7 @@ design pass first to decide which in-game armada mechanics are in scope and whic
 deferred (e.g. armada commendation timers, multiple armada types).
 
 **Note:** this is the only item on the backlog that isn't well-scoped today.
-Everything else has a defined endpoint; #5 needs a design doc before code.
+Everything else has a defined endpoint; #4 needs a design doc before code.
 
 ---
 

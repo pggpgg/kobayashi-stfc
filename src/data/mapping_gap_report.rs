@@ -15,11 +15,64 @@ use crate::data::upstream_hostile_ship_type::{
     upstream_hostile_ship_type_profile, upstream_ship_type_deferral_reason,
     upstream_ship_type_is_explicitly_mapped, upstream_ship_type_is_known_category,
 };
+use crate::data::forbidden_chaos::{load_forbidden_chaos, ForbiddenChaosList};
+use crate::data::profile::forbidden_tech_bonus_combat_route;
 use crate::data::validate::is_known_building_condition;
 use crate::lcars::is_canonical_officer_condition_resolved;
 
+pub const DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH: &str = "data/buildings/opaque_buff_allowlist.json";
+pub const DEFAULT_BUILDING_MAPPING_GAPS_BASELINE_PATH: &str =
+    "data/buildings/mapping_gaps_baseline.json";
+pub const DEFAULT_FORBIDDEN_CHAOS_CATALOG_PATH: &str = "data/forbidden_chaos_tech.json";
+
 /// Cap on sample building/officer ids retained per gap row in maintainer reports.
 const MAX_GAP_SAMPLES: usize = 4;
+
+/// One allowlisted opaque `buff_*` stat intentionally not merged into the combat profile.
+#[derive(Debug, Clone, Deserialize)]
+pub struct OpaqueBuffAllowlistEntry {
+    pub category: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct OpaqueBuffAllowlist {
+    #[serde(default)]
+    pub version: u32,
+    #[serde(default)]
+    pub entries: BTreeMap<String, OpaqueBuffAllowlistEntry>,
+}
+
+impl OpaqueBuffAllowlist {
+    pub fn is_allowlisted(&self, stat: &str) -> bool {
+        self.entries.contains_key(stat)
+    }
+
+    pub fn get(&self, stat: &str) -> Option<&OpaqueBuffAllowlistEntry> {
+        self.entries.get(stat)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct BuildingMappingGapsBaseline {
+    pub actionable_opaque_buff_stats: usize,
+    #[serde(default)]
+    pub note: Option<String>,
+}
+
+/// Load `data/buildings/opaque_buff_allowlist.json` (empty map when missing or invalid).
+pub fn load_opaque_buff_allowlist(path: &Path) -> OpaqueBuffAllowlist {
+    let raw = match fs::read_to_string(path) {
+        Ok(s) => s,
+        Err(_) => return OpaqueBuffAllowlist::default(),
+    };
+    serde_json::from_str(&raw).unwrap_or_default()
+}
+
+pub fn load_building_mapping_gaps_baseline(path: &Path) -> Option<BuildingMappingGapsBaseline> {
+    let raw = fs::read_to_string(path).ok()?;
+    serde_json::from_str(&raw).ok()
+}
 
 #[derive(Debug, Deserialize)]
 struct CanonicalFile {
@@ -149,6 +202,10 @@ pub fn format_unknown_mappings_markdown(
     token_map: &HashMap<String, CanonicalConditionTokenAgg>,
     ship_map: &BTreeMap<u32, HostileUpstreamTypeAgg>,
     research_gaps: Option<&ResearchMappingGapsReport>,
+    building_gaps: Option<&BuildingBonusGapsReport>,
+    buildings_dir: Option<&Path>,
+    building_allowlist: Option<&OpaqueBuffAllowlist>,
+    forbidden_tech_gaps: Option<&ForbiddenTechBonusGapsReport>,
 ) -> String {
     let mut distinct = 0usize;
     let mut mapped_tokens = 0usize;
@@ -269,6 +326,16 @@ pub fn format_unknown_mappings_markdown(
         out.push_str(&format_research_mapping_gaps_markdown(gaps));
     }
 
+    if let (Some(gaps), Some(dir), Some(list)) =
+        (building_gaps, buildings_dir, building_allowlist)
+    {
+        out.push_str(&format_building_bonus_gaps_section_markdown(gaps, dir, list));
+    }
+
+    if let Some(gaps) = forbidden_tech_gaps {
+        out.push_str(&format_forbidden_tech_bonus_gaps_markdown(gaps));
+    }
+
     out
 }
 
@@ -373,6 +440,30 @@ pub struct BuildingBonusGapsReport {
 impl BuildingBonusGapsReport {
     pub fn is_empty(&self) -> bool {
         self.opaque_buff_stats.is_empty() && self.unknown_conditions.is_empty()
+    }
+
+    /// Opaque `buff_*` stats not present in the maintainer allowlist.
+    pub fn actionable_opaque_buff_stats(
+        &self,
+        allowlist: &OpaqueBuffAllowlist,
+    ) -> BTreeMap<String, BuildingGapAgg> {
+        self.opaque_buff_stats
+            .iter()
+            .filter(|(stat, _)| !allowlist.is_allowlisted(stat))
+            .map(|(stat, agg)| (stat.clone(), agg.clone()))
+            .collect()
+    }
+
+    /// Allowlisted opaque stats (audit / summary counts).
+    pub fn allowlisted_opaque_buff_stats(
+        &self,
+        allowlist: &OpaqueBuffAllowlist,
+    ) -> BTreeMap<String, BuildingGapAgg> {
+        self.opaque_buff_stats
+            .iter()
+            .filter(|(stat, _)| allowlist.is_allowlisted(stat))
+            .map(|(stat, agg)| (stat.clone(), agg.clone()))
+            .collect()
     }
 }
 
@@ -485,12 +576,12 @@ pub fn scan_building_bonus_gaps(buildings_dir: &Path) -> Result<BuildingBonusGap
 
 /// Maintainer Markdown for the building bonus mapping gap tables.
 ///
-/// Descriptions are resolved from `../upstream/data-stfc-space/translations-starbase_modules.json`
-/// (relative to `buildings_dir`) using `loca_id` in bonus `notes`. Building display names use
-/// `index.json`’s `building_name` (with samples capped at [`MAX_GAP_SAMPLES`], same as ids).
+/// When `allowlist` is provided, only **actionable** opaque stats are listed in the main table;
+/// summary counts include allowlisted rows.
 pub fn format_building_bonus_gaps_markdown(
     report: &BuildingBonusGapsReport,
     buildings_dir: &Path,
+    allowlist: Option<&OpaqueBuffAllowlist>,
 ) -> String {
     fn display_building_names(report: &BuildingBonusGapsReport, sample_ids: &[String]) -> String {
         sample_ids
@@ -518,8 +609,23 @@ pub fn format_building_bonus_gaps_markdown(
     out.push_str(
         "These keys are not merged into the player combat profile (see `merge_building_bonuses_into_profile` / `normalize_profile_combat_stat` in `src/data/profile.rs`). Descriptions are from stfc.space / game translations (`starbase_module_buff_description`) matched via `loca_id` in each bonus’s `notes` field.\n\n",
     );
-    if report.opaque_buff_stats.is_empty() {
-        out.push_str("None.\n\n");
+
+    let table_stats = if let Some(list) = allowlist {
+        let actionable = report.actionable_opaque_buff_stats(list);
+        let allowlisted = report.allowlisted_opaque_buff_stats(list);
+        out.push_str(&format!(
+            "- Distinct opaque: **{}**\n- Allowlisted: **{}**\n- Still actionable: **{}**\n\n",
+            report.opaque_buff_stats.len(),
+            allowlisted.len(),
+            actionable.len()
+        ));
+        actionable
+    } else {
+        report.opaque_buff_stats.clone()
+    };
+
+    if table_stats.is_empty() {
+        out.push_str("No actionable opaque `buff_*` stats.\n\n");
     } else {
         if !trans_path.is_file() {
             out.push_str(&format!(
@@ -529,7 +635,7 @@ pub fn format_building_bonus_gaps_markdown(
         }
         out.push_str("| Stat | Description | Building name(s) |\n");
         out.push_str("| --- | --- | --- |\n");
-        for (k, v) in &report.opaque_buff_stats {
+        for (k, v) in &table_stats {
             let desc = v
                 .first_loca_id
                 .and_then(|id| desc_by_loca.get(&id).map(|s| s.as_str()))
@@ -557,6 +663,115 @@ pub fn format_building_bonus_gaps_markdown(
         out.push('\n');
     }
 
+    out
+}
+
+// --- Forbidden tech bonus routing gaps ---
+
+/// One catalog bonus row with no modeled combat consumer.
+#[derive(Debug, Clone)]
+pub struct ForbiddenTechBonusGapRow {
+    pub fid: i64,
+    pub tech_name: String,
+    pub stat: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ForbiddenTechBonusGapsReport {
+    pub catalog_items: usize,
+    pub routed_bonus_rows: usize,
+    pub actionable: Vec<ForbiddenTechBonusGapRow>,
+}
+
+impl ForbiddenTechBonusGapsReport {
+    pub fn actionable_count(&self) -> usize {
+        self.actionable.len()
+    }
+}
+
+/// Scan forbidden/chaos catalog for bonus stats with no combat routing (see
+/// [`crate::data::profile::forbidden_tech_bonus_combat_route`]).
+pub fn scan_forbidden_tech_bonus_gaps(catalog_path: &Path) -> Result<ForbiddenTechBonusGapsReport, String> {
+    let Some(list) = load_forbidden_chaos(
+        catalog_path
+            .to_str()
+            .unwrap_or(DEFAULT_FORBIDDEN_CHAOS_CATALOG_PATH),
+    ) else {
+        return Err(format!("unable to load {}", catalog_path.display()));
+    };
+    Ok(scan_forbidden_tech_bonus_gaps_from_catalog(&list))
+}
+
+pub fn scan_forbidden_tech_bonus_gaps_from_catalog(
+    list: &ForbiddenChaosList,
+) -> ForbiddenTechBonusGapsReport {
+    let mut report = ForbiddenTechBonusGapsReport {
+        catalog_items: list.items.len(),
+        ..Default::default()
+    };
+    for item in &list.items {
+        let Some(fid) = item.fid else {
+            continue;
+        };
+        for bonus in &item.bonuses {
+            if forbidden_tech_bonus_combat_route(fid, &bonus.stat).is_some() {
+                report.routed_bonus_rows += 1;
+            } else {
+                report.actionable.push(ForbiddenTechBonusGapRow {
+                    fid,
+                    tech_name: item.name.clone(),
+                    stat: bonus.stat.clone(),
+                });
+            }
+        }
+    }
+    report
+}
+
+pub fn format_forbidden_tech_bonus_gaps_markdown(report: &ForbiddenTechBonusGapsReport) -> String {
+    let mut out = String::new();
+    out.push_str("## Forbidden-tech bonus routing\n\n");
+    out.push_str(
+        "Catalog bonus rows must reach combat via profile merge or a timed seat builder in `src/data/profile.rs` \
+(see `forbidden_tech_bonus_combat_route`).\n\n",
+    );
+    out.push_str(&format!(
+        "- Catalog items: **{}**\n- Routed bonus rows: **{}**\n- Still actionable: **{}**\n\n",
+        report.catalog_items,
+        report.routed_bonus_rows,
+        report.actionable_count()
+    ));
+    if report.actionable.is_empty() {
+        out.push_str("No actionable forbidden-tech bonus routing gaps.\n\n");
+    } else {
+        out.push_str("| fid | Tech | Stat |\n| ---: | --- | --- |\n");
+        for row in &report.actionable {
+            out.push_str(&format!(
+                "| {} | {} | `{}` |\n",
+                row.fid,
+                md_escape_cell(&row.tech_name),
+                md_escape_cell(&row.stat)
+            ));
+        }
+        out.push('\n');
+    }
+    out
+}
+
+pub fn format_building_bonus_gaps_section_markdown(
+    report: &BuildingBonusGapsReport,
+    buildings_dir: &Path,
+    allowlist: &OpaqueBuffAllowlist,
+) -> String {
+    let mut out = String::new();
+    out.push_str("## Building opaque `buff_*` stats\n\n");
+    out.push_str(&format!("Directory: `{}`\n\n", buildings_dir.display()));
+    let body = format_building_bonus_gaps_markdown(report, buildings_dir, Some(allowlist));
+    if let Some(rest) = body.split_once("## Opaque `buff_*` stats\n\n") {
+        out.push_str(rest.1);
+    } else {
+        out.push_str(&body);
+    }
     out
 }
 
@@ -903,12 +1118,60 @@ mod tests {
             },
         );
 
-        let md = format_building_bonus_gaps_markdown(&report, Path::new("data/buildings"));
+        let md = format_building_bonus_gaps_markdown(&report, Path::new("data/buildings"), None);
         assert!(md.contains("# Building bonus mapping gaps"));
         assert!(md.contains("| Stat | Description | Building name(s) |"));
         assert!(md.contains("Alpha Building"));
         assert!(md.contains("Beta Building"));
         assert!(md.contains("mystery_condition"));
+    }
+
+    #[test]
+    fn actionable_opaque_buff_stats_respects_allowlist() {
+        let mut report = BuildingBonusGapsReport::default();
+        report.opaque_buff_stats.insert(
+            "buff_known_skip".to_string(),
+            BuildingGapAgg {
+                count: 1,
+                samples: vec!["alpha".to_string()],
+                first_loca_id: None,
+            },
+        );
+        report.opaque_buff_stats.insert(
+            "buff_actionable".to_string(),
+            BuildingGapAgg {
+                count: 1,
+                samples: vec!["beta".to_string()],
+                first_loca_id: None,
+            },
+        );
+        let mut allowlist = OpaqueBuffAllowlist::default();
+        allowlist.entries.insert(
+            "buff_known_skip".to_string(),
+            OpaqueBuffAllowlistEntry {
+                category: "economy_meta".to_string(),
+                reason: "test".to_string(),
+            },
+        );
+        let actionable = report.actionable_opaque_buff_stats(&allowlist);
+        assert_eq!(actionable.len(), 1);
+        assert!(actionable.contains_key("buff_actionable"));
+    }
+
+    #[test]
+    fn scan_forbidden_tech_bonus_gaps_repo_catalog_has_no_actionable_rows() {
+        let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let catalog = manifest.join("data/forbidden_chaos_tech.json");
+        if !catalog.is_file() {
+            return;
+        }
+        let report = scan_forbidden_tech_bonus_gaps(&catalog).expect("scan");
+        assert_eq!(
+            report.actionable_count(),
+            0,
+            "repo forbidden-tech catalog should route every bonus row: {:?}",
+            report.actionable
+        );
     }
 
     #[test]

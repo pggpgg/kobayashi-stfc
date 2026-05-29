@@ -9,7 +9,8 @@
 use std::path::{Path, PathBuf};
 
 use kobayashi::data::mapping_gap_report::{
-    format_building_bonus_gaps_markdown, scan_building_bonus_gaps,
+    format_building_bonus_gaps_markdown, load_opaque_buff_allowlist,
+    scan_building_bonus_gaps, DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH,
 };
 
 fn usage() -> ! {
@@ -46,7 +47,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let report = scan_building_bonus_gaps(&dir)
         .map_err(|e| format!("scan {} (is --buildings-dir correct?): {e}", dir.display()))?;
-    print!("{}", format_building_bonus_gaps_markdown(&report, &dir));
+    let allowlist_path = Path::new(&manifest_dir).join(DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH);
+    let allowlist = load_opaque_buff_allowlist(&allowlist_path);
+    print!(
+        "{}",
+        format_building_bonus_gaps_markdown(&report, &dir, Some(&allowlist))
+    );
 
     Ok(())
 }

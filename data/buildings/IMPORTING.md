@@ -119,17 +119,24 @@ For stfc.space, building data is imported via the public JSON API:
 ### 4. Mapping coverage (validation report)
 
 Building bonus stats and `conditions` tags only affect simulation when they are recognized by the
-combat profile and condition allowlists. Two checks surface gaps:
+combat profile and condition allowlists. Maintainer tooling:
 
-- `cargo run --bin report_building_mapping_gaps` prints a Markdown table of every distinct opaque
-  `buff_*` stat (not lowered into a combat key by `normalize_profile_combat_stat` in
-  `src/data/profile.rs`) and every `conditions` token not in `is_known_building_condition`
-  (`src/data/validate.rs`), with sample building ids per row. Same shape as the `validate_data`
-  diagnostics, just rendered for human triage.
-- `cargo run --bin validate_data` emits one `Warning` diagnostic per gap row by default; pass
-  `--strict` (or set `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) to upgrade them to `Error` and
-  exit `1`. Use this as a gate while extending `normalize_profile_combat_stat` or
-  `is_known_building_condition`; leave it off for routine runs until the catalog is clean.
+- **`data/buildings/opaque_buff_allowlist.json`** — explicit opt-out for opaque `buff_*` stats that
+  are intentionally not merged (economy, alliance starbase, station defense, etc.). Each entry has a
+  `category` and `reason`.
+- **`data/buildings/mapping_gaps_baseline.json`** — regression baseline for **actionable** opaque buff
+  count (distinct `buff_*` rows not in the allowlist). Strict validate fails when the count increases.
+- `cargo run --bin report_building_mapping_gaps` — Markdown report with summary counts and **actionable**
+  opaque stats only (regenerate `docs/building_gaps.md` after import or allowlist edits).
+- `cargo run --bin report_unknown_mappings` — unified report: canonical conditions, hostile ship types,
+  research gaps, building opaque buffs, and forbidden-tech bonus routing (see `scripts/README.md`).
+- `cargo run --bin validate_data` — per-actionable-row warnings by default for building gaps; pass
+  `--strict` (or set `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`) to upgrade actionable gaps and baseline
+  regressions to `Error`. Same strict run sets `KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS=1` for
+  forbidden-tech catalog bonus routing gaps.
+
+Goal: **Still actionable: 0** for building opaque buffs (allowlist or map each distinct `buff_*`).
+Forbidden-tech catalog bonus rows must route via `forbidden_tech_bonus_combat_route` in `profile.rs`.
 
 The strict flag also upgrades unmapped canonical officer `conditions`
 (`KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS`) so a single `--strict` run is uniform across

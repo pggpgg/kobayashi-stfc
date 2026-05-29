@@ -36,7 +36,7 @@ Reference and design docs for KOBAYASHI. The main [README](../README.md) is the 
 - [client_combat_log_mapping.md](client_combat_log_mapping.md) — in-game combat log ↔ simulator format mapping.
 - [combat_log_format.md](combat_log_format.md) — detailed combat log parsing notes.
 - [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) — ships whose modelled abilities currently have no combat impact (intentional or open work).
-- [building_gaps.md](building_gaps.md) — opaque `buff_*` building stats not yet mapped into the combat profile; regenerated via `cargo run --bin report_building_mapping_gaps`.
+- [building_gaps.md](building_gaps.md) — actionable opaque `buff_*` building stats (allowlisted economy/alliance rows excluded); regenerated via `cargo run --bin report_building_mapping_gaps` → see also `data/buildings/opaque_buff_allowlist.json`.
 
 ## Process
 

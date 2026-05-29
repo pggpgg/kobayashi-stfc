@@ -28,6 +28,7 @@ What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](N
 - **Defender support buffs + alliance debuffs as scenario inputs** (`defender_support_buffs`, `defender_alliance_debuffs` on simulate/optimize/compare; PvP workspace UI with separate attacker buffs, defender buffs, and alliance debuff selectors): when either sidecar is present, `support_buffs` is attacker-only; legacy mixed-id routing preserved when sidecars are omitted.
 - **Criterion baseline auto-refresh** (`.github/workflows/bench-refresh-baseline.yml`, #195): monthly cron on the 1st opens a PR with refreshed `benchmark_results.log` when measurements drift, preventing the regression gate from silently going stale.
 - **Buildings sync → combat observability** (`GET /api/profile/buildings-summary`, Roster & Profile **Buildings (sync → combat)** section; [`src/data/building_summary.rs`](../src/data/building_summary.rs)): synced starbase module levels from `buildings.imported.json`, ops level (profile override / inferred / effective), **aggregate** ship-combat bonuses from buildings (same merge as simulate/optimize), per-row catalog resolution (bid, level, name, catalog present), and unmapped game `bid` callouts.
+- **Strict `buff_*` / forbidden-tech mapping validation** (`report_unknown_mappings`, `report_building_mapping_gaps`, `validate_data`): building opaque `buff_*` gaps filtered through [`data/buildings/opaque_buff_allowlist.json`](../data/buildings/opaque_buff_allowlist.json) with baseline regression ([`mapping_gaps_baseline.json`](../data/buildings/mapping_gaps_baseline.json)); forbidden-tech catalog bonus routing via [`forbidden_tech_bonus_combat_route`](../src/data/profile.rs). Actionable building gaps target **0** ([`building_gaps.md`](building_gaps.md)).
 
 ## Planned
 
@@ -49,7 +50,6 @@ Engine work that would unlock more granular sensitivity analysis (and remove cav
 
 Buildings are fully modeled for ship combat. Synced levels and aggregate combat bonuses are visible in Roster & Profile (see Shipped). Remaining items:
 
-- Strict validation report for opaque `buff_*` stats not yet mapped into the combat profile; see [building_gaps.md](building_gaps.md), `data/buildings/buff_id_to_stat.json`, and [DEVELOPMENT_BACKLOG.md](DEVELOPMENT_BACKLOG.md) #3.
 - **Optional drill-down:** per-building combat-stat contribution (today only profile-wide totals) and/or global catalog browse — not on the active backlog unless needed.
 - Station-defense mode in the optimizer (`BuildingMode::StationDefense`), gated on `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) populated from import or mapping. Currently parked in [NOT_ROADMAP.md](NOT_ROADMAP.md) until station defense is in scope.
 

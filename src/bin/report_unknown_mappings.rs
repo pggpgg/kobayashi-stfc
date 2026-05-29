@@ -10,12 +10,16 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use kobayashi::data::mapping_gap_report::{
-    format_unknown_mappings_markdown, run_research_mapping_gaps_scan,
-    scan_canonical_officer_conditions, scan_hostile_index_upstream_ship_types,
+    format_unknown_mappings_markdown, load_opaque_buff_allowlist,
+    run_research_mapping_gaps_scan, scan_building_bonus_gaps,
+    scan_canonical_officer_conditions, scan_forbidden_tech_bonus_gaps,
+    scan_hostile_index_upstream_ship_types, DEFAULT_FORBIDDEN_CHAOS_CATALOG_PATH,
+    DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH,
 };
 
 const DEFAULT_CANONICAL: &str = "data/officers/officers.canonical.json";
 const DEFAULT_HOSTILE_INDEX: &str = "data/hostiles/index.json";
+const DEFAULT_BUILDINGS_DIR: &str = "data/buildings";
 
 struct Args {
     canonical: PathBuf,
@@ -88,12 +92,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "report_unknown_mappings: research mapping gaps scan skipped (node script failed or upstream cache missing)"
         );
     }
+
+    let buildings_dir = base.join(DEFAULT_BUILDINGS_DIR);
+    let building_allowlist_path = base.join(DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH);
+    let building_allowlist = load_opaque_buff_allowlist(&building_allowlist_path);
+    let building_gaps = scan_building_bonus_gaps(&buildings_dir).ok();
+    if building_gaps.is_none() {
+        eprintln!(
+            "report_unknown_mappings: building bonus gaps scan skipped (missing or invalid {})",
+            buildings_dir.display()
+        );
+    }
+
+    let forbidden_catalog = base.join(DEFAULT_FORBIDDEN_CHAOS_CATALOG_PATH);
+    let forbidden_tech_gaps = scan_forbidden_tech_bonus_gaps(&forbidden_catalog).ok();
+    if forbidden_tech_gaps.is_none() {
+        eprintln!(
+            "report_unknown_mappings: forbidden-tech bonus gaps scan skipped (missing {})",
+            forbidden_catalog.display()
+        );
+    }
+
     let md = format_unknown_mappings_markdown(
         &cfg.canonical,
         &cfg.hostile_index,
         &token_map,
         &ship_map,
         research_gaps.as_ref(),
+        building_gaps.as_ref(),
+        Some(buildings_dir.as_path()),
+        Some(&building_allowlist),
+        forbidden_tech_gaps.as_ref(),
     );
 
     if let Some(out_path) = cfg.output {

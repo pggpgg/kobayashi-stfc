@@ -148,6 +148,12 @@ function runStfcSpace() {
     run("Buildings import (fetch from data.stfc.space)", "node scripts/import_stfcspace_buildings.mjs");
   }
 
+  run(
+    "Building opaque buff gap report (docs/building_gaps.md)",
+    "cargo run --bin report_building_mapping_gaps > docs/building_gaps.md",
+    { optional: true },
+  );
+
   const researchDir = path.join(UPSTREAM, "research");
   const summaryResearch = path.join(UPSTREAM, "summary-research.json");
   if (countJsonFiles(researchDir) > 0 && fs.existsSync(summaryResearch)) {

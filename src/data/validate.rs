@@ -10,8 +10,10 @@ use crate::data::building::{infer_building_bid, DEFAULT_BUILDINGS_INDEX_PATH};
 use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_forbidden_chaos};
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::mapping_gap_report::{
+    load_building_mapping_gaps_baseline, load_opaque_buff_allowlist,
     run_research_mapping_gaps_scan, scan_building_bonus_gaps,
-    scan_canonical_officer_conditions, unmapped_canonical_condition_rows,
+    scan_canonical_officer_conditions, scan_forbidden_tech_bonus_gaps,
+    unmapped_canonical_condition_rows,
 };
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::registry::Registry;
@@ -1278,6 +1280,12 @@ fn strict_building_bonus_maps_required() -> bool {
     env_flag_truthy("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS")
 }
 
+/// When `KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS` is set, forbidden-tech bonus routing gaps are
+/// validation **errors** instead of warnings.
+fn strict_forbidden_tech_bonus_maps_required() -> bool {
+    env_flag_truthy("KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS")
+}
+
 /// When `KOBAYASHI_REQUIRE_RESEARCH_MAPS` is set, research mapping gap **regressions** vs
 /// `data/research/mapping_gaps_baseline.json` are validation errors (see
 /// [`validate_research_mapping_gaps`]).
@@ -1407,6 +1415,52 @@ pub fn validate_research_mapping_gaps(manifest_dir: &Path) -> Result<ValidationR
     Ok(report)
 }
 
+/// Warnings (or errors when `KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS` is set) for forbidden-tech
+/// catalog bonus rows with no combat routing.
+pub fn validate_forbidden_tech_bonus_gaps(data_root: &Path) -> Result<ValidationReport, String> {
+    let mut report = ValidationReport::default();
+    let catalog_path = data_root.join("forbidden_chaos_tech.json");
+    if !catalog_path.is_file() {
+        report.push(
+            ValidationSeverity::Info,
+            "forbidden_tech.bonus_routing",
+            format!("skipped: missing {}", catalog_path.display()),
+        );
+        return Ok(report);
+    }
+
+    let gaps = scan_forbidden_tech_bonus_gaps(&catalog_path)?;
+    report.push(
+        ValidationSeverity::Info,
+        "forbidden_tech.bonus_routing.summary",
+        format!(
+            "catalog_items={} routed_bonus_rows={} actionable={}",
+            gaps.catalog_items,
+            gaps.routed_bonus_rows,
+            gaps.actionable_count()
+        ),
+    );
+
+    let severity = if strict_forbidden_tech_bonus_maps_required() {
+        ValidationSeverity::Error
+    } else {
+        ValidationSeverity::Warning
+    };
+    for row in &gaps.actionable {
+        report.push(
+            severity,
+            "forbidden_tech.bonus_routing.gap",
+            format!(
+                "fid {} ({}) stat `{}` has no combat route (see forbidden_tech_bonus_combat_route in profile.rs)",
+                row.fid,
+                row.tech_name,
+                row.stat
+            ),
+        );
+    }
+    Ok(report)
+}
+
 /// All validation categories for strict reports / CI (paths relative to `manifest_dir`).
 pub fn all_dataset_validation_reports(manifest_dir: &Path) -> Vec<NamedValidationReport> {
     let data_root = manifest_dir.join("data");
@@ -1467,6 +1521,11 @@ pub fn all_dataset_validation_reports(manifest_dir: &Path) -> Vec<NamedValidatio
     out.push(named_validation_report(
         "forbidden_chaos",
         validate_forbidden_chaos_catalog_data(&data_root),
+    ));
+
+    out.push(named_validation_report(
+        "forbidden_tech_bonus_routing",
+        validate_forbidden_tech_bonus_gaps(&data_root),
     ));
 
     out.push(named_validation_report(
@@ -1830,12 +1889,45 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
     }
 
     let gaps = scan_building_bonus_gaps(base)?;
+    let allowlist_path = base.join("opaque_buff_allowlist.json");
+    let allowlist = load_opaque_buff_allowlist(&allowlist_path);
+    let actionable = gaps.actionable_opaque_buff_stats(&allowlist);
+    let actionable_count = actionable.len();
+
+    report.push(
+        ValidationSeverity::Info,
+        "buildings.bonuses.opaque_buff.summary",
+        format!(
+            "opaque_distinct={} allowlisted={} actionable={}",
+            gaps.opaque_buff_stats.len(),
+            gaps.allowlisted_opaque_buff_stats(&allowlist).len(),
+            actionable_count
+        ),
+    );
+
+    if strict_building_bonus_maps_required() {
+        if let Some(baseline) =
+            load_building_mapping_gaps_baseline(&base.join("mapping_gaps_baseline.json"))
+        {
+            if actionable_count > baseline.actionable_opaque_buff_stats {
+                report.push(
+                    ValidationSeverity::Error,
+                    "buildings.bonuses.opaque_buff.regression",
+                    format!(
+                        "actionable opaque buff count {actionable_count} exceeds baseline {} — extend allowlist, map stat, or refresh baseline",
+                        baseline.actionable_opaque_buff_stats
+                    ),
+                );
+            }
+        }
+    }
+
     let severity = if strict_building_bonus_maps_required() {
         ValidationSeverity::Error
     } else {
         ValidationSeverity::Warning
     };
-    for (stat, agg) in &gaps.opaque_buff_stats {
+    for (stat, agg) in &actionable {
         let samples = if agg.samples.is_empty() {
             "<none>".to_string()
         } else {

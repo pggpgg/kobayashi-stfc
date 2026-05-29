@@ -14,6 +14,8 @@
 //!   `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS=1` (see `validate_unmapped_canonical_officer_conditions`).
 //! - Research mapping gap **regressions** vs `data/research/mapping_gaps_baseline.json`, via
 //!   `KOBAYASHI_REQUIRE_RESEARCH_MAPS=1` (see `validate_research_mapping_gaps`).
+//! - Forbidden-tech bonus routing gaps, via `KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS=1`
+//!   (see `validate_forbidden_tech_bonus_gaps`).
 //!
 //! Strict mode therefore causes exit code `1` until the relevant catalog or mapping table is
 //! extended; use it as an opt-in gate while iterating on coverage.
@@ -48,8 +50,9 @@ struct Args {
     manifest_dir: Option<PathBuf>,
 
     /// Promote mapping-coverage warnings (building bonus gaps, unmapped canonical conditions,
-    /// research mapping gap regressions) to errors. Sets `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`,
-    /// `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS=1`, and `KOBAYASHI_REQUIRE_RESEARCH_MAPS=1`
+    /// research mapping gap regressions, forbidden-tech bonus routing gaps) to errors. Sets
+    /// `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`, `KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS=1`,
+    /// `KOBAYASHI_REQUIRE_RESEARCH_MAPS=1`, and `KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS=1`
     /// for this process.
     #[arg(long)]
     strict: bool,
@@ -83,6 +86,7 @@ fn main() {
         std::env::set_var("KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS", "1");
         std::env::set_var("KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS", "1");
         std::env::set_var("KOBAYASHI_REQUIRE_RESEARCH_MAPS", "1");
+        std::env::set_var("KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS", "1");
     }
 
     let report = validate_all_data_for_report(&manifest_dir);
