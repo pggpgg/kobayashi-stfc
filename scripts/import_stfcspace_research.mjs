@@ -24,6 +24,11 @@ import url from "node:url";
 
 import { resolveBuffStatMappings } from "./lib/research_buff_resolve.mjs";
 import { normalizeBonusValue } from "./lib/research_normalize_bonus_value.mjs";
+import {
+  descriptionForScopeCheck,
+  mappingHasCombatConditions,
+  shouldExcludeUnconditionalGlobalMerge,
+} from "./lib/research_scope_categorize.mjs";
 
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT_PATH = path.join(REPO_ROOT, "data", "research_catalog.json");
@@ -260,6 +265,16 @@ function buildLevelsFromDetail(detail, opts) {
       const mappings = resolveBuffStatMappings(buffResolveCtx, buff, projectLocaId);
       for (const mapping of mappings) {
         if (!ALLOWED_COMBAT_STATS.has(mapping.stat)) {
+          continue;
+        }
+        if (
+          shouldExcludeUnconditionalGlobalMerge({
+            mapping,
+            buff,
+            projectLocaId,
+            descriptionByLocaId,
+          })
+        ) {
           continue;
         }
         const values = Array.isArray(buff.values) ? buff.values : [];

@@ -1,5 +1,5 @@
 {
-  "unmapped_buff_ids": 1219,
-  "suspect_global_scopes": 261,
+  "unmapped_buff_ids": 1357,
+  "suspect_global_scopes": 0,
   "note": "Track E regression baseline. Regenerate after intentional mapping changes: node scripts/research_mapping_gaps.mjs --json"
 }

@@ -4,6 +4,11 @@
  * Used by import_stfcspace_research.mjs and node:test regressions.
  */
 
+import {
+  categorizeResearchDescription,
+  isSuspectGlobalScopeCategory,
+} from "./research_scope_categorize.mjs";
+
 /**
  * When a combat description mentions a ship class constraint (e.g. "Explorers battling Interceptors"),
  * extract the defender ship class slug (explorer, interceptor, battleship, survey).
@@ -37,6 +42,9 @@ export function inferShipClassConditional(text, stat) {
  */
 export function inferCombatStatFromDescription(text) {
   if (!text || typeof text !== "string") return null;
+  if (isSuspectGlobalScopeCategory(categorizeResearchDescription(text))) {
+    return null;
+  }
   const t = text.toLowerCase();
   if (
     /construction speed|build speed|repair speed|research speed|mining\b|cargo |cargo\.|cost efficiency|unlock|blueprint|dilithium protection|parsteel|tritanium|for components|foundry|lab building|module upgrade|resource generation|away team|away teams|warp speed|tiering up|protected cargo|rewards for defeating|not_convert|get more from hostiles in these systems/.test(
@@ -176,6 +184,9 @@ export function inferCombatStatFromDescription(text) {
  */
 export function inferCombatStatFromProjectName(name) {
   if (!name || typeof name !== "string") return null;
+  if (isSuspectGlobalScopeCategory(categorizeResearchDescription(name))) {
+    return null;
+  }
   const t = name.toLowerCase();
   if (
     /construction|mining|cargo\b|repair speed|research speed|warp speed|cost efficiency|unlock|dilithium|parsteel|tritanium|survey|protected cargo|tiering|blueprint|building|module|resource|components\b/.test(

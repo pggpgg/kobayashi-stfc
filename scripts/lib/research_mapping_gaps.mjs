@@ -9,7 +9,9 @@ import path from "node:path";
 import { resolveBuffStatMappings } from "./research_buff_resolve.mjs";
 import {
   categorizeResearchDescription,
+  descriptionForScopeCheck,
   isSuspectGlobalScopeCategory,
+  mappingHasCombatConditions,
 } from "./research_scope_categorize.mjs";
 
 /**
@@ -104,26 +106,7 @@ function addUnmapped(unmappedByBuffId, rid, buff) {
 }
 
 function bonusIsConditional(bonus) {
-  return !!(
-    bonus.defender_ship_class ||
-    bonus.defender_faction ||
-    bonus.attacker_faction ||
-    (bonus.attacker_factions || []).length ||
-    bonus.requires_morale ||
-    bonus.requires_defender_burning ||
-    bonus.requires_defender_hull_breach
-  );
-}
-
-function descriptionForScopeCheck({ projectLocaId, buffLocaId, descriptionByLocaId }) {
-  if (typeof buffLocaId === "number") {
-    const t = descriptionByLocaId.get(buffLocaId);
-    if (t && t.trim()) return t;
-  }
-  if (typeof projectLocaId === "number") {
-    return descriptionByLocaId.get(projectLocaId) || "";
-  }
-  return "";
+  return mappingHasCombatConditions(bonus);
 }
 
 /**

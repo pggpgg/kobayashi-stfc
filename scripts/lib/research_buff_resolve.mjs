@@ -22,6 +22,7 @@ export function statEntryFromJsonValue(v, defaultOp) {
     if (Array.isArray(v.attacker_factions) && v.attacker_factions.length) {
       out.attacker_factions = v.attacker_factions.map(String).filter(Boolean);
     }
+    if (v.exclude_global_merge === true) out.exclude_global_merge = true;
     return out;
   }
   return null;
