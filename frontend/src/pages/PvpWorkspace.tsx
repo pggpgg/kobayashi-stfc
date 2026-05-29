@@ -200,13 +200,11 @@ export default function PvpWorkspace() {
               style={{ ...selectStyle, minWidth: 160 }}
             >
               <option value="">Select…</option>
-              {pvp.profiles
-                .filter((p) => p.id !== pvp.activeProfileId)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name ?? p.id}
-                  </option>
-                ))}
+              {pvp.profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name ?? p.id}
+                </option>
+              ))}
             </select>
           </label>
           <label>

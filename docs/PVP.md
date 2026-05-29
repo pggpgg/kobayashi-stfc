@@ -7,7 +7,7 @@ Kobayashi supports **ship-vs-ship** fights for finding attacker crews that beat 
 Open **PvP** in the left navigation (`/pvp`).
 
 - **Attacker**: your ship, tier, level, and crew. Uses the active profile from **ProfileSwitcher** (buildings, research, forbidden tech, roster tiers).
-- **Defender**: opponent ship, tier, level, and crew. Requires a separate **Opponent profile** (another saved profile id — not your active profile).
+- **Defender**: opponent ship, tier, level, and crew. Requires an **Opponent profile** (saved profile id for defender bonuses/roster). May match your active profile when you only have one profile or want a mirror setup (same account bonuses, different ship/crew).
 - **Run sim**: Monte Carlo for the current attacker crew vs the fixed defender.
 - **Run optimize**: searches **attacker crews only**; defender setup stays fixed for the request.
 

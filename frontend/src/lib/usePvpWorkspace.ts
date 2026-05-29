@@ -70,9 +70,12 @@ export function usePvpWorkspace() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!opponentProfileId && profiles.length > 0 && activeProfileId) {
-      const other = profiles.find((p) => p.id !== activeProfileId);
-      if (other) setOpponentProfileId(other.id);
+    if (!opponentProfileId && profiles.length > 0) {
+      const preferred =
+        (activeProfileId
+          ? profiles.find((p) => p.id !== activeProfileId)
+          : undefined) ?? profiles[0];
+      if (preferred) setOpponentProfileId(preferred.id);
     }
   }, [profiles, activeProfileId, opponentProfileId]);
 
