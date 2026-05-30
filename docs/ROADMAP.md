@@ -55,9 +55,5 @@ Buildings are fully modeled for ship combat. Synced levels and aggregate combat 
 
 ## Forbidden tech
 
-- Per-sub-round vs profile-only timing for forbidden-tech effects — **calibration-blocked** (architecture likely correct; see [DEVELOPMENT_BACKLOG.md](DEVELOPMENT_BACKLOG.md) #2 and [data/README.md § Forbidden tech](../data/README.md#forbidden-tech-catalog-and-partial-status)).
+- Per-sub-round vs profile-only timing for forbidden-tech effects — **calibration-blocked** (architecture likely correct; see [data/README.md § Forbidden tech](../data/README.md#forbidden-tech-catalog-and-partial-status)).
 - Flat hull/shield HP from research/forbidden-tech rows (no agreed conversion to fractional profile multipliers; currently skipped).
-
-## Calibration (blocked on game traces)
-
-- Multi-source CDR recorded-fight calibration — no fixture yet with overlapping CDR sources (Crozier hull + profile CDR + Borg OT vs Conqueror Borg); see [DEVELOPMENT_BACKLOG.md](DEVELOPMENT_BACKLOG.md) #1.

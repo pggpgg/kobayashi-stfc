@@ -15,9 +15,7 @@
 //!
 //! `src/server/api/execution.rs` (optimize jobs) and `src/server/sensitivity_jobs.rs`
 //! (PR #192) each carried ~80 lines of this plumbing. Two copies were tolerable; a
-//! third copy was the trigger to consolidate. See [`DEVELOPMENT_BACKLOG.md` § 2].
-//!
-//! [`DEVELOPMENT_BACKLOG.md` § 2]: ../../docs/DEVELOPMENT_BACKLOG.md
+//! third copy was the trigger to consolidate (#194).
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
