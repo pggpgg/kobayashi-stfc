@@ -9,8 +9,8 @@
 use std::path::{Path, PathBuf};
 
 use kobayashi::data::mapping_gap_report::{
-    format_building_bonus_gaps_markdown, load_opaque_buff_allowlist,
-    scan_building_bonus_gaps, DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH,
+    format_building_bonus_gaps_markdown, load_opaque_buff_allowlist, scan_building_bonus_gaps,
+    DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH,
 };
 
 fn usage() -> ! {

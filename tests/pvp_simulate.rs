@@ -2,8 +2,8 @@
 
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::{load_profile_index, DEMO_PROFILE_ID};
-use kobayashi::optimizer::crew_generator::CrewCandidate;
 use kobayashi::data::support_buffs::SupportBuffScenarioRequest;
+use kobayashi::optimizer::crew_generator::CrewCandidate;
 use kobayashi::optimizer::monte_carlo::{
     pvp_scenario_params_from_api_fields, run_monte_carlo_with_registry, DefenderOpponent,
 };

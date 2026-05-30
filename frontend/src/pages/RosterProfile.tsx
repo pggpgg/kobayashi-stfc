@@ -877,7 +877,9 @@ token = "${activeProfile.sync_token}"`}
                             <code>{faction}</code>:{" "}
                             {Object.entries(inner)
                               .sort(([a], [b]) => a.localeCompare(b))
-                              .map(([k, v]) => formatProfileCombatBonusEntry(k, v))
+                              .map(([k, v]) =>
+                                formatProfileCombatBonusEntry(k, v),
+                              )
                               .join(", ")}
                           </li>
                         ))}
@@ -902,8 +904,11 @@ token = "${activeProfile.sync_token}"`}
                         (line, idx) => (
                           <li key={`${line.stat}-${idx}`}>
                             <code>{line.stat}</code>{" "}
-                            {formatProfileCombatBonusDelta(line.stat, line.value)} —{" "}
-                            {line.condition_label ?? "conditional"}
+                            {formatProfileCombatBonusDelta(
+                              line.stat,
+                              line.value,
+                            )}{" "}
+                            — {line.condition_label ?? "conditional"}
                             {line.requires_runtime_state
                               ? " (needs morale/burning/HB in fight)"
                               : ""}
@@ -952,8 +957,11 @@ token = "${activeProfile.sync_token}"`}
                         (line, idx) => (
                           <li key={`sc-${line.stat}-${idx}`}>
                             <code>{line.stat}</code>{" "}
-                            {formatProfileCombatBonusDelta(line.stat, line.value)} —{" "}
-                            {line.condition_label ?? "conditional"}
+                            {formatProfileCombatBonusDelta(
+                              line.stat,
+                              line.value,
+                            )}{" "}
+                            — {line.condition_label ?? "conditional"}
                             {line.requires_runtime_state
                               ? " (runtime gate)"
                               : ""}

@@ -7,9 +7,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use kobayashi::data::validate::{
     full_validation_report_to_json, hostile_ship_class_is_recognized, validate_all_data_for_report,
     validate_buildings_dataset, validate_forbidden_tech_bonus_gaps, validate_registry_dataset,
-    validate_research_mapping_gaps,
-    validate_support_buffs_catalog_data, validate_unmapped_canonical_officer_conditions,
-    ValidationSeverity,
+    validate_research_mapping_gaps, validate_support_buffs_catalog_data,
+    validate_unmapped_canonical_officer_conditions, ValidationSeverity,
 };
 
 static CANONICAL_CONDITION_VALIDATE_TEST_LOCK: Mutex<()> = Mutex::new(());

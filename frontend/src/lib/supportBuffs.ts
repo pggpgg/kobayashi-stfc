@@ -126,9 +126,9 @@ export function isAttackerDebuffWhenPlayerSupportBuff(id: string): boolean {
   ).includes(id);
 }
 
-function staticBonusTargetFor(id: SupportBuffId): NonNullable<
-  SupportBuffCatalogEntry["static_bonus_target"]
-> {
+function staticBonusTargetFor(
+  id: SupportBuffId,
+): NonNullable<SupportBuffCatalogEntry["static_bonus_target"]> {
   const entry = SUPPORT_BUFF_CATALOG.buffs[id];
   return entry?.static_bonus_target ?? "attacker";
 }

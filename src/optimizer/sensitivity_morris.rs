@@ -154,7 +154,7 @@ pub fn run_morris_with_progress(
         request.ship_tier,
         request.ship_level,
         request.profile_id.as_deref(),
-            support_buffs::SupportBuffScenarioRequest::attacker_only(request.support_buffs.as_deref()),
+        support_buffs::SupportBuffScenarioRequest::attacker_only(request.support_buffs.as_deref()),
         DefenderOpponent::default(),
         None,
         None,

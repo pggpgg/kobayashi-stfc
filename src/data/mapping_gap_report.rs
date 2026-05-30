@@ -11,12 +11,12 @@ use std::path::Path;
 use serde::Deserialize;
 use serde_json::Value;
 
+use crate::data::forbidden_chaos::{load_forbidden_chaos, ForbiddenChaosList};
+use crate::data::profile::forbidden_tech_bonus_combat_route;
 use crate::data::upstream_hostile_ship_type::{
     upstream_hostile_ship_type_profile, upstream_ship_type_deferral_reason,
     upstream_ship_type_is_explicitly_mapped, upstream_ship_type_is_known_category,
 };
-use crate::data::forbidden_chaos::{load_forbidden_chaos, ForbiddenChaosList};
-use crate::data::profile::forbidden_tech_bonus_combat_route;
 use crate::data::validate::is_known_building_condition;
 use crate::lcars::is_canonical_officer_condition_resolved;
 
@@ -196,6 +196,7 @@ pub fn unmapped_canonical_condition_rows(
 }
 
 /// Maintainer Markdown (same shape as the historical `report_unknown_mappings` output).
+#[allow(clippy::too_many_arguments)]
 pub fn format_unknown_mappings_markdown(
     canonical_path: &Path,
     hostile_path: &Path,
@@ -326,10 +327,11 @@ pub fn format_unknown_mappings_markdown(
         out.push_str(&format_research_mapping_gaps_markdown(gaps));
     }
 
-    if let (Some(gaps), Some(dir), Some(list)) =
-        (building_gaps, buildings_dir, building_allowlist)
+    if let (Some(gaps), Some(dir), Some(list)) = (building_gaps, buildings_dir, building_allowlist)
     {
-        out.push_str(&format_building_bonus_gaps_section_markdown(gaps, dir, list));
+        out.push_str(&format_building_bonus_gaps_section_markdown(
+            gaps, dir, list,
+        ));
     }
 
     if let Some(gaps) = forbidden_tech_gaps {
@@ -691,7 +693,9 @@ impl ForbiddenTechBonusGapsReport {
 
 /// Scan forbidden/chaos catalog for bonus stats with no combat routing (see
 /// [`crate::data::profile::forbidden_tech_bonus_combat_route`]).
-pub fn scan_forbidden_tech_bonus_gaps(catalog_path: &Path) -> Result<ForbiddenTechBonusGapsReport, String> {
+pub fn scan_forbidden_tech_bonus_gaps(
+    catalog_path: &Path,
+) -> Result<ForbiddenTechBonusGapsReport, String> {
     let Some(list) = load_forbidden_chaos(
         catalog_path
             .to_str()
@@ -841,9 +845,9 @@ pub struct ResearchMappingGapsRegression {
 
 impl ResearchMappingGapsReport {
     pub fn has_regression_vs_baseline(&self) -> bool {
-        self.regression.as_ref().is_some_and(|r| {
-            r.unmapped_buff_ids_delta > 0 || r.suspect_global_scopes_delta > 0
-        })
+        self.regression
+            .as_ref()
+            .is_some_and(|r| r.unmapped_buff_ids_delta > 0 || r.suspect_global_scopes_delta > 0)
     }
 }
 
@@ -853,7 +857,9 @@ pub fn parse_research_mapping_gaps_json(raw: &str) -> Result<ResearchMappingGaps
 }
 
 /// Run the Node research gap scanner (same resolution order as research import).
-pub fn run_research_mapping_gaps_scan(manifest_dir: &Path) -> Result<ResearchMappingGapsReport, String> {
+pub fn run_research_mapping_gaps_scan(
+    manifest_dir: &Path,
+) -> Result<ResearchMappingGapsReport, String> {
     use std::process::Command;
 
     let script = manifest_dir.join("scripts/research_mapping_gaps.mjs");
@@ -918,7 +924,9 @@ suggests armada, PvP, station-defense, or ship-specific scope (see `scripts/lib/
     if report.unmapped_buff_ids.is_empty() {
         out.push_str("None.\n\n");
     } else {
-        out.push_str("| Buff id | Occurrences | Category | Example rids |\n| --- | ---: | --- | --- |\n");
+        out.push_str(
+            "| Buff id | Occurrences | Category | Example rids |\n| --- | ---: | --- | --- |\n",
+        );
         for row in report
             .unmapped_buff_ids
             .iter()
@@ -934,7 +942,10 @@ suggests armada, PvP, station-defense, or ship-specific scope (see `scripts/lib/
                 .join(", ");
             out.push_str(&format!(
                 "| {} | {} | {} | {} |\n",
-                row.buff_id, row.count, md_escape_cell(cat), examples
+                row.buff_id,
+                row.count,
+                md_escape_cell(cat),
+                examples
             ));
         }
         if report.unmapped_buff_ids.len() > RESEARCH_GAP_REPORT_TOP_N {
@@ -950,7 +961,9 @@ suggests armada, PvP, station-defense, or ship-specific scope (see `scripts/lib/
     if report.suspect_global_scopes.is_empty() {
         out.push_str("None.\n\n");
     } else {
-        out.push_str("| rid | Name | Stat | Scope | Description |\n| ---: | --- | --- | --- | --- |\n");
+        out.push_str(
+            "| rid | Name | Stat | Scope | Description |\n| ---: | --- | --- | --- | --- |\n",
+        );
         for row in report
             .suspect_global_scopes
             .iter()

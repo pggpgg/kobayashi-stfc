@@ -605,7 +605,10 @@ pub enum ForbiddenTechBonusCombatRoute {
 }
 
 /// Returns `None` when the catalog `(fid, stat)` pair has no modeled combat consumer (mapping gap).
-pub fn forbidden_tech_bonus_combat_route(fid: i64, stat: &str) -> Option<ForbiddenTechBonusCombatRoute> {
+pub fn forbidden_tech_bonus_combat_route(
+    fid: i64,
+    stat: &str,
+) -> Option<ForbiddenTechBonusCombatRoute> {
     if is_borg_alcove_forbidden_tech_fid(fid) {
         return match stat {
             "crit_chance" | "crit_damage" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
@@ -2564,11 +2567,17 @@ mod tests {
             Some(R::TimedSeat)
         );
         assert_eq!(
-            forbidden_tech_bonus_combat_route(BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID, "hostile_crit_damage_reduction"),
+            forbidden_tech_bonus_combat_route(
+                BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID,
+                "hostile_crit_damage_reduction"
+            ),
             Some(R::TimedSeat)
         );
         assert_eq!(
-            forbidden_tech_bonus_combat_route(QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID, "shield_mitigation"),
+            forbidden_tech_bonus_combat_route(
+                QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID,
+                "shield_mitigation"
+            ),
             Some(R::TimedSeat)
         );
         assert_eq!(

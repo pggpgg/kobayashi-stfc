@@ -11,9 +11,8 @@ use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_f
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::mapping_gap_report::{
     load_building_mapping_gaps_baseline, load_opaque_buff_allowlist,
-    run_research_mapping_gaps_scan, scan_building_bonus_gaps,
-    scan_canonical_officer_conditions, scan_forbidden_tech_bonus_gaps,
-    unmapped_canonical_condition_rows,
+    run_research_mapping_gaps_scan, scan_building_bonus_gaps, scan_canonical_officer_conditions,
+    scan_forbidden_tech_bonus_gaps, unmapped_canonical_condition_rows,
 };
 use crate::data::officer::DEFAULT_CANONICAL_OFFICERS_PATH;
 use crate::data::registry::Registry;
@@ -1393,11 +1392,7 @@ pub fn validate_research_mapping_gaps(manifest_dir: &Path) -> Result<ValidationR
             "research.mapping_gaps.suspect_global_scope",
             format!(
                 "rid {} ({name}): unconditional `{}` at level {} with {} scope — {}",
-                row.rid,
-                row.stat,
-                row.level,
-                row.scope_category,
-                row.description_snippet
+                row.rid, row.stat, row.level, row.scope_category, row.description_snippet
             ),
         );
     }

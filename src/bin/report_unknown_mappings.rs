@@ -10,9 +10,8 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use kobayashi::data::mapping_gap_report::{
-    format_unknown_mappings_markdown, load_opaque_buff_allowlist,
-    run_research_mapping_gaps_scan, scan_building_bonus_gaps,
-    scan_canonical_officer_conditions, scan_forbidden_tech_bonus_gaps,
+    format_unknown_mappings_markdown, load_opaque_buff_allowlist, run_research_mapping_gaps_scan,
+    scan_building_bonus_gaps, scan_canonical_officer_conditions, scan_forbidden_tech_bonus_gaps,
     scan_hostile_index_upstream_ship_types, DEFAULT_FORBIDDEN_CHAOS_CATALOG_PATH,
     DEFAULT_OPAQUE_BUFF_ALLOWLIST_PATH,
 };

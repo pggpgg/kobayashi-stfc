@@ -2,11 +2,11 @@
 
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::profile_index::DEMO_PROFILE_ID;
+use kobayashi::data::support_buffs::SupportBuffScenarioRequest;
 use kobayashi::optimizer::chain::{
     ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary,
 };
 use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::data::support_buffs::SupportBuffScenarioRequest;
 use kobayashi::optimizer::monte_carlo::{
     run_monte_carlo_with_registry, DefenderOpponent, SimulationResult,
 };

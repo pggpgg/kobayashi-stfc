@@ -629,13 +629,6 @@ pub fn aggregate_support_static_debuffs_on_attacker(
     )
 }
 
-fn merge_static_maps_in_place(dest: &mut HashMap<String, f64>, src: &HashMap<String, f64>) {
-    if src.is_empty() {
-        return;
-    }
-    *dest = merge_static_buff_maps(dest, src);
-}
-
 /// Aggregate attacker-routed `static_bonuses` only (same as split `.0`).
 pub fn aggregate_support_static_bonuses(
     catalog: &SupportBuffCatalog,
@@ -859,8 +852,7 @@ mod tests {
         let debuffs =
             aggregate_support_static_debuffs_on_attacker(&c, &["mantis_sting".to_string()]);
         assert!(debuffs.is_empty());
-        let (att, def) =
-            aggregate_support_static_bonuses_split(&c, &["mantis_sting".to_string()]);
+        let (att, def) = aggregate_support_static_bonuses_split(&c, &["mantis_sting".to_string()]);
         assert!(att.is_empty());
         assert!(def.is_empty());
     }
@@ -875,7 +867,15 @@ mod tests {
         );
         assert_eq!(out.resolved_defender_support, vec!["titan_a_fortification"]);
         assert_eq!(out.resolved_alliance_debuffs, vec!["mantis_sting"]);
-        assert!((out.defender_static.get("crit_damage").copied().unwrap_or(0.0) - 1.25).abs() < 1e-9);
+        assert!(
+            (out.defender_static
+                .get("crit_damage")
+                .copied()
+                .unwrap_or(0.0)
+                - 1.25)
+                .abs()
+                < 1e-9
+        );
     }
 
     #[test]
