@@ -70,6 +70,7 @@ pub async fn run_server_async(bind_addr: &str) -> std::io::Result<()> {
     }
     if static_files::static_files_available() {
         info!("serving SPA from frontend/dist");
+        static_files::warn_if_spa_assets_missing();
     } else {
         info!(
             "SPA not found (API-only); build the UI with: cd frontend && npm install && npm run build"

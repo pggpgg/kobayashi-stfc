@@ -376,10 +376,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
 }
 
 fn locate_dist_dir() -> Option<std::path::PathBuf> {
-    let base = std::env::current_dir().ok()?;
-    [base.join("frontend/dist"), base.join("dist")]
-        .into_iter()
-        .find(|p| p.is_dir())
+    crate::server::static_files::locate_dist_dir()
 }
 
 // ---------------------------------------------------------------------------
@@ -432,8 +429,17 @@ async fn serve_spa_static_fallback(OriginalUri(uri): OriginalUri) -> Response {
             }
             Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "Read error").into_response(),
         },
-        _ => serve_index_html(&dir),
+        _ => spa_fallback_for_missing(rel, &dir),
     }
+}
+
+/// React Router deep-links fall back to `index.html`; missing Vite chunks must 404 instead
+/// (serving HTML for `/assets/*.js` makes the browser fail module load → blank UI).
+fn spa_fallback_for_missing(rel: &str, dir: &std::path::Path) -> Response {
+    if rel.starts_with("assets/") {
+        return error_json(StatusCode::NOT_FOUND, "Asset not found").into_response();
+    }
+    serve_index_html(dir)
 }
 
 fn serve_index_html(dir: &std::path::Path) -> Response {
@@ -1525,7 +1531,31 @@ fn legacy_console_html() -> String {
 
 #[cfg(test)]
 mod spa_cache_control_tests {
-    use super::spa_asset_cache_control;
+    use super::{spa_asset_cache_control, spa_fallback_for_missing};
+    use axum::http::StatusCode;
+
+    #[test]
+    fn missing_vite_asset_returns_404_not_index_html() {
+        let dir = std::env::temp_dir().join(format!(
+            "kobayashi_spa_fallback_test_{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("index.html"),
+            "<!DOCTYPE html><html><body>ok</body></html>",
+        )
+        .unwrap();
+
+        let resp = spa_fallback_for_missing("assets/missing-chunk.js", &dir);
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+
+        let resp = spa_fallback_for_missing("workspace/deep-link", &dir);
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn index_and_root_are_no_cache() {
