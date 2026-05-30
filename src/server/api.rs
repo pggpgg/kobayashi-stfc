@@ -24,7 +24,7 @@ use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_forbidden_tech,
     load_imported_roster_ids_unlocked_only, roster_import_fallback_warning_message,
 };
-use crate::data::loader::ship_tiers_levels_and_crew_slots;
+
 use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
@@ -75,7 +75,7 @@ pub fn health_payload(
         .unwrap_or(serde_json::Value::Null);
     let officer_count = registry.officers().len();
 
-    serde_json::to_string_pretty(&serde_json::json!({
+    serde_json::to_string(&serde_json::json!({
         "status": "ok",
         "service": "kobayashi-api",
         "build": {
@@ -146,7 +146,7 @@ pub fn officers_payload(
             slot: o.slot.clone(),
         })
         .collect();
-    serde_json::to_string_pretty(&serde_json::json!({ "officers": list }))
+    serde_json::to_string(&serde_json::json!({ "officers": list }))
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -206,7 +206,7 @@ pub fn ships_payload(
     let idx = match registry.ship_index() {
         Some(i) => i,
         None => {
-            return serde_json::to_string_pretty(&serde_json::json!({ "ships": [] }));
+            return serde_json::to_string(&serde_json::json!({ "ships": [] }));
         }
     };
 
@@ -280,15 +280,19 @@ pub fn ships_payload(
         })
         .collect();
 
-    serde_json::to_string_pretty(&serde_json::json!({ "ships": list }))
+    serde_json::to_string(&serde_json::json!({ "ships": list }))
 }
 
 /// Default tier/level options when extended ship data is missing (e.g. no data/ships_extended).
 const DEFAULT_TIERS: &[u32] = &[1];
 const DEFAULT_LEVELS: &[u32] = &[1, 10, 20, 30, 40, 50, 60];
 
-pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Error> {
-    let (mut tiers, mut levels, crew_slots) = ship_tiers_levels_and_crew_slots(ship_id)
+pub fn ship_tiers_levels_payload(
+    ship_id: &str,
+    registry: &DataRegistry,
+) -> Result<String, serde_json::Error> {
+    let (mut tiers, mut levels, crew_slots) = registry
+        .ship_tiers_levels_and_crew_slots(ship_id)
         .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec(), vec![]));
     if tiers.is_empty() {
         tiers = DEFAULT_TIERS.to_vec();
@@ -296,7 +300,7 @@ pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Er
     if levels.is_empty() {
         levels = DEFAULT_LEVELS.to_vec();
     }
-    serde_json::to_string_pretty(
+    serde_json::to_string(
         &serde_json::json!({ "tiers": tiers, "levels": levels, "crew_slots": crew_slots }),
     )
 }
@@ -333,7 +337,7 @@ pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::E
                 .collect()
         })
         .unwrap_or_default();
-    serde_json::to_string_pretty(&serde_json::json!({ "hostiles": list }))
+    serde_json::to_string(&serde_json::json!({ "hostiles": list }))
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -879,7 +883,7 @@ pub fn simulate_payload(
         seed,
         warnings,
     };
-    serde_json::to_string_pretty(&response).map_err(SimulateError::Parse)
+    serde_json::to_string(&response).map_err(SimulateError::Parse)
 }
 
 pub fn compare_crews_payload(
@@ -1039,7 +1043,7 @@ pub fn compare_crews_payload(
         using_placeholder_combatants: outcome.using_placeholder_combatants,
         warnings,
     };
-    serde_json::to_string_pretty(&response).map_err(CompareCrewsError::Parse)
+    serde_json::to_string(&response).map_err(CompareCrewsError::Parse)
 }
 
 #[derive(Debug)]
@@ -1445,7 +1449,7 @@ pub fn replay_optimize_seed_payload(
         "warnings": warnings,
     });
 
-    serde_json::to_string_pretty(&response_json).map_err(ReplaySeedError::Parse)
+    serde_json::to_string(&response_json).map_err(ReplaySeedError::Parse)
 }
 
 /// Resolve profile id from optional param; falls back to index default.
@@ -1466,7 +1470,7 @@ pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_jso
     } else {
         PlayerProfile::default()
     };
-    serde_json::to_string_pretty(&profile)
+    serde_json::to_string(&profile)
 }
 
 pub fn profile_put_payload(
@@ -1487,9 +1491,9 @@ pub fn profile_put_payload(
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    let body = serde_json::to_string_pretty(&profile)?;
+    let body = serde_json::to_string(&profile)?;
     fs::write(&path, body).map_err(serde_json::Error::io)?;
-    serde_json::to_string_pretty(&serde_json::json!({ "status": "ok" }))
+    serde_json::to_string(&serde_json::json!({ "status": "ok" }))
 }
 
 /// GET /api/profile/forbidden-tech-imported — stfc-mod `forbidden_tech.imported.json` rows for equip UI.
@@ -1499,7 +1503,7 @@ pub fn profile_forbidden_tech_imported_payload(
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, FORBIDDEN_TECH_IMPORTED);
     let entries = load_imported_forbidden_tech(&path.to_string_lossy()).unwrap_or_default();
-    serde_json::to_string_pretty(&serde_json::json!({
+    serde_json::to_string(&serde_json::json!({
         "profile_id": id,
         "forbidden_tech": entries,
     }))
@@ -1511,7 +1515,7 @@ pub fn profile_buildings_summary_payload(
 ) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
     let summary = building_combat_summary_for_profile(&id);
-    serde_json::to_string_pretty(&summary)
+    serde_json::to_string(&summary)
 }
 
 /// GET /api/profile/research-summary — synced research levels and research-derived combat bonuses.
@@ -1547,12 +1551,12 @@ pub fn profile_research_summary_payload(
         defender_faction,
         defender_ship_class.as_deref(),
     );
-    serde_json::to_string_pretty(&summary)
+    serde_json::to_string(&summary)
 }
 
 pub fn profiles_list_payload() -> Result<String, serde_json::Error> {
     let index = load_profile_index();
-    serde_json::to_string_pretty(&serde_json::json!({
+    serde_json::to_string(&serde_json::json!({
         "profiles": index.profiles,
         "default_id": index.default_id
     }))
@@ -1585,7 +1589,7 @@ pub fn profiles_create_payload(body: &str) -> Result<String, ProfileApiError> {
     let mut index = load_profile_index();
     let entry = create_profile(&mut index, in_.id.as_deref(), &in_.name)
         .map_err(ProfileApiError::Create)?;
-    serde_json::to_string_pretty(&entry).map_err(ProfileApiError::Parse)
+    serde_json::to_string(&entry).map_err(ProfileApiError::Parse)
 }
 
 pub fn profiles_delete_payload(id: &str) -> Result<(), String> {
@@ -1622,7 +1626,7 @@ pub fn officers_import_payload(
         let _ = fs::remove_file(&p);
         out
     };
-    serde_json::to_string_pretty(&report).map_err(ImportError::Serialize)
+    serde_json::to_string(&report).map_err(ImportError::Serialize)
 }
 
 #[derive(Debug)]
@@ -1723,7 +1727,7 @@ pub fn officer_resolved_payload(
         proc_multiplier: buff_set.proc_multiplier,
     };
 
-    serde_json::to_string_pretty(&response).map_err(OfficerResolveError::Serialize)
+    serde_json::to_string(&response).map_err(OfficerResolveError::Serialize)
 }
 
 #[derive(Debug)]
@@ -1855,7 +1859,7 @@ pub fn combat_effect_spec_debug_officer_payload(
         abilities,
     };
 
-    serde_json::to_string_pretty(&payload).map_err(CombatEffectSpecDebugError::Serialize)
+    serde_json::to_string(&payload).map_err(CombatEffectSpecDebugError::Serialize)
 }
 
 fn presets_dir_for_profile(profile_id: &str) -> std::path::PathBuf {
@@ -1977,7 +1981,7 @@ pub fn presets_list_payload(profile_id: Option<&str>) -> Result<String, serde_js
         }
     }
     list.sort_by(|a, b| a.name.cmp(&b.name));
-    serde_json::to_string_pretty(&serde_json::json!({ "presets": list }))
+    serde_json::to_string(&serde_json::json!({ "presets": list }))
 }
 
 pub fn preset_get_payload(id: &str, profile_id: Option<&str>) -> Result<String, PresetError> {
@@ -1988,7 +1992,7 @@ pub fn preset_get_payload(id: &str, profile_id: Option<&str>) -> Result<String, 
     }
     let raw = fs::read_to_string(&path).map_err(PresetError::Io)?;
     let preset: Preset = serde_json::from_str(&raw).map_err(PresetError::Serialize)?;
-    serde_json::to_string_pretty(&preset).map_err(PresetError::Serialize)
+    serde_json::to_string(&preset).map_err(PresetError::Serialize)
 }
 
 fn sanitize_preset_id(id: &str) -> String {
@@ -2049,9 +2053,9 @@ pub fn preset_post_payload(
         crew: in_.crew,
         provenance: build_preset_provenance(registry),
     };
-    let raw = serde_json::to_string_pretty(&preset).map_err(PresetError::Serialize)?;
+    let raw = serde_json::to_string(&preset).map_err(PresetError::Serialize)?;
     fs::write(&path, raw).map_err(PresetError::Io)?;
-    serde_json::to_string_pretty(&preset).map_err(PresetError::Serialize)
+    serde_json::to_string(&preset).map_err(PresetError::Serialize)
 }
 
 pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
@@ -2097,12 +2101,12 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
         ship_version: ship_index.and_then(|i| i.data_version.clone()),
         mechanics,
     };
-    serde_json::to_string_pretty(&response)
+    serde_json::to_string(&response)
 }
 
 pub fn heuristics_list_payload() -> Result<String, serde_json::Error> {
     let seeds = list_heuristics_seeds(DEFAULT_HEURISTICS_DIR);
-    serde_json::to_string_pretty(&serde_json::json!({ "seeds": seeds }))
+    serde_json::to_string(&serde_json::json!({ "seeds": seeds }))
 }
 
 /// GET /api/forbidden-tech: returns the forbidden/chaos tech catalog for UI dropdown.
@@ -2110,8 +2114,8 @@ pub fn forbidden_tech_catalog_payload(
     registry: &DataRegistry,
 ) -> Result<String, serde_json::Error> {
     let body = match registry.forbidden_chaos_catalog() {
-        Some(c) => serde_json::to_string_pretty(&serde_json::json!({ "items": c.items }))?,
-        None => serde_json::to_string_pretty(&serde_json::json!({ "items": [] }))?,
+        Some(c) => serde_json::to_string(&serde_json::json!({ "items": c.items }))?,
+        None => serde_json::to_string(&serde_json::json!({ "items": [] }))?,
     };
     Ok(body)
 }
@@ -2128,7 +2132,7 @@ pub fn optimize_payload(
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
     let response = execution::run_optimize(registry, &request, profile_id)?;
-    serde_json::to_string_pretty(&response).map_err(OptimizePayloadError::Parse)
+    serde_json::to_string(&response).map_err(OptimizePayloadError::Parse)
 }
 
 pub fn optimize_start_payload(
@@ -2141,7 +2145,7 @@ pub fn optimize_start_payload(
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     validate_request(&request, sims)?;
     let start_response = execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
-    serde_json::to_string_pretty(&start_response).map_err(OptimizePayloadError::Parse)
+    serde_json::to_string(&start_response).map_err(OptimizePayloadError::Parse)
 }
 
 /// Request cancellation of a running optimize job. Idempotent if already done/cancelled.
@@ -2149,18 +2153,18 @@ pub fn optimize_cancel_payload(job_id: &str) -> Result<String, OptimizeStatusErr
     if let Ok(status) = execution::get_job_status(job_id) {
         if status.status == "done" || status.status == "error" {
             let body = serde_json::json!({ "status": "ok", "message": "Job already finished" });
-            return serde_json::to_string_pretty(&body).map_err(OptimizeStatusError::Serialize);
+            return serde_json::to_string(&body).map_err(OptimizeStatusError::Serialize);
         }
     }
     execution::cancel_job(job_id)?;
     let body = serde_json::json!({ "status": "ok", "message": "Cancelled" });
-    serde_json::to_string_pretty(&body).map_err(OptimizeStatusError::Serialize)
+    serde_json::to_string(&body).map_err(OptimizeStatusError::Serialize)
 }
 
 /// Return current status (and result when done) for an optimize job.
 pub fn optimize_status_payload(job_id: &str) -> Result<String, OptimizeStatusError> {
     let response = execution::get_job_status(job_id)?;
-    serde_json::to_string_pretty(&response).map_err(OptimizeStatusError::Serialize)
+    serde_json::to_string(&response).map_err(OptimizeStatusError::Serialize)
 }
 
 pub fn optimize_estimate_payload(
@@ -2231,7 +2235,7 @@ pub fn optimize_estimate_payload(
         "sims_per_crew": sims,
         "estimated_seconds": (estimated_seconds * 10.0).round() / 10.0,
     });
-    serde_json::to_string_pretty(&payload).map_err(OptimizePayloadError::Parse)
+    serde_json::to_string(&payload).map_err(OptimizePayloadError::Parse)
 }
 
 #[cfg(test)]

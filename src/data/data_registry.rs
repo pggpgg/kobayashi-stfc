@@ -12,7 +12,10 @@ use crate::data::hostile::{
     load_hostile_index, HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH,
 };
 use crate::data::hostile_loca::load_hostile_loca_display_names;
-use crate::data::loader::{resolve_hostile_with_index, resolve_ship_with_tier_level};
+use crate::data::loader::{
+    resolve_hostile_with_index, resolve_ship_with_tier_level_from_index,
+    ship_tiers_levels_and_crew_slots_from_index,
+};
 use crate::data::officer::{
     load_canonical_officers, normalize_officer_lookup_key, Officer, DEFAULT_CANONICAL_OFFICERS_PATH,
 };
@@ -20,7 +23,8 @@ use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
 use crate::data::ship::{
-    load_extended_ship_index, ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
+    load_extended_ship_index, CrewSlotUnlock, ExtendedShipIndex, ShipRecord,
+    DEFAULT_SHIPS_EXTENDED_DIR,
 };
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
@@ -159,18 +163,35 @@ impl DataRegistry {
     }
 
     /// Resolve ship by id or name. Uses data/ships_extended with tier=1, level=1 when not specified.
+    /// Uses cached ship index (loaded once at startup) to avoid re-reading index.json.
     pub fn resolve_ship(&self, name_or_id: &str) -> Option<ShipRecord> {
-        resolve_ship_with_tier_level(name_or_id, None, None)
+        let index = self.ship_index.as_ref()?;
+        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+        resolve_ship_with_tier_level_from_index(index, extended_dir, name_or_id, None, None)
     }
 
     /// Resolve ship with optional tier and level (1-based). Uses data/ships_extended only.
+    /// Uses cached ship index (loaded once at startup) to avoid re-reading index.json.
     pub fn resolve_ship_with_tier_level(
         &self,
         name_or_id: &str,
         tier: Option<u32>,
         level: Option<u32>,
     ) -> Option<ShipRecord> {
-        resolve_ship_with_tier_level(name_or_id, tier, level)
+        let index = self.ship_index.as_ref()?;
+        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+        resolve_ship_with_tier_level_from_index(index, extended_dir, name_or_id, tier, level)
+    }
+
+    /// Return available tier/level numbers plus below-decks unlock schedule for a ship.
+    /// Uses cached ship index to avoid re-reading index.json from disk.
+    pub fn ship_tiers_levels_and_crew_slots(
+        &self,
+        name_or_id: &str,
+    ) -> Option<(Vec<u32>, Vec<u32>, Vec<CrewSlotUnlock>)> {
+        let index = self.ship_index.as_ref()?;
+        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+        ship_tiers_levels_and_crew_slots_from_index(index, extended_dir, name_or_id)
     }
 
     /// Resolve hostile by id or name/level using cached index. Per-record file still read from disk.

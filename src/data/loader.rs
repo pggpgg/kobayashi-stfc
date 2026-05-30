@@ -9,8 +9,8 @@ use crate::data::hostile::{
     DEFAULT_HOSTILES_INDEX_PATH,
 };
 use crate::data::ship::{
-    load_extended_ship_index, load_extended_ship_record, CrewSlotUnlock, ShipRecord,
-    DEFAULT_SHIPS_EXTENDED_DIR,
+    load_extended_ship_index, load_extended_ship_record, CrewSlotUnlock, ExtendedShipIndex,
+    ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
 
 /// Normalize a string for lookup: lowercase, collapse runs of whitespace/underscore into a single
@@ -119,6 +119,27 @@ pub fn resolve_ship_with_tier_level(
     extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
 }
 
+/// Resolve a ship using a pre-loaded index (avoids re-reading index.json from disk).
+/// Returns None if the ship id is not found or the individual record file is missing.
+pub fn resolve_ship_with_tier_level_from_index(
+    index: &ExtendedShipIndex,
+    extended_dir: &Path,
+    name_or_id: &str,
+    tier: Option<u32>,
+    level: Option<u32>,
+) -> Option<ShipRecord> {
+    let normalized = normalize_lookup(name_or_id);
+    let id = index
+        .ships
+        .iter()
+        .find(|e| {
+            normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized
+        })
+        .map(|e| e.id.as_str())?;
+    let extended = load_extended_ship_record(extended_dir, id)?;
+    extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
+}
+
 /// Return available tier and level numbers plus below-decks unlock schedule. From `data/ships_extended`.
 /// Returns None if no extended ship file.
 pub fn ship_tiers_levels_and_crew_slots(
@@ -131,6 +152,26 @@ pub fn ship_tiers_levels_and_crew_slots(
     }
     let ext_index = load_extended_ship_index(extended_dir)?;
     let id = ext_index
+        .ships
+        .iter()
+        .find(|e| {
+            normalize_lookup(&e.id) == normalized || normalize_lookup(&e.ship_name) == normalized
+        })
+        .map(|e| e.id.as_str())?;
+    let extended = load_extended_ship_record(extended_dir, id)?;
+    let tiers: Vec<u32> = extended.tiers.iter().map(|t| t.tier).collect();
+    let levels: Vec<u32> = extended.levels.iter().map(|l| l.level).collect();
+    Some((tiers, levels, extended.crew_slots))
+}
+
+/// Like [`ship_tiers_levels_and_crew_slots`] but uses a pre-loaded index to avoid re-reading index.json.
+pub fn ship_tiers_levels_and_crew_slots_from_index(
+    index: &ExtendedShipIndex,
+    extended_dir: &Path,
+    name_or_id: &str,
+) -> Option<(Vec<u32>, Vec<u32>, Vec<CrewSlotUnlock>)> {
+    let normalized = normalize_lookup(name_or_id);
+    let id = index
         .ships
         .iter()
         .find(|e| {
