@@ -2,20 +2,21 @@
 //! Load once at startup, pass via Arc to handlers and optimizer to avoid reloading on every request.
 
 use std::collections::HashMap;
+use std::num::NonZeroUsize;
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+
+use lru::LruCache;
 
 use crate::data::forbidden_chaos::{
     load_forbidden_chaos, ForbiddenChaosList, DEFAULT_FORBIDDEN_CHAOS_PATH,
 };
 use crate::data::hostile::{
-    load_hostile_index, HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH,
+    load_hostile_index, load_hostile_record, HostileIndex, HostileRecord,
+    DEFAULT_HOSTILES_INDEX_PATH,
 };
 use crate::data::hostile_loca::load_hostile_loca_display_names;
-use crate::data::loader::{
-    resolve_hostile_with_index, resolve_ship_with_tier_level_from_index,
-    ship_tiers_levels_and_crew_slots_from_index,
-};
+use crate::data::loader::normalize_lookup;
 use crate::data::officer::{
     load_canonical_officers, normalize_officer_lookup_key, Officer, DEFAULT_CANONICAL_OFFICERS_PATH,
 };
@@ -23,13 +24,15 @@ use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
 use crate::data::ship::{
-    load_extended_ship_index, CrewSlotUnlock, ExtendedShipIndex, ShipRecord,
-    DEFAULT_SHIPS_EXTENDED_DIR,
+    load_extended_ship_index, load_extended_ship_record, CrewSlotUnlock, ExtendedShipIndex,
+    ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
 };
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
 };
 use crate::lcars::{load_lcars_dir, LcarsOfficer};
+
+use super::ship::ExtendedShipRecord;
 
 /// Cached officer list and name-index for fast lookup. Built at startup.
 #[derive(Debug, Clone)]
@@ -67,6 +70,10 @@ pub struct DataRegistry {
     pub research_catalog: Option<ResearchCatalog>,
     /// Support buff definitions (alliance / ship toggles from API); optional if file missing.
     pub support_buffs_catalog: Option<Arc<SupportBuffCatalog>>,
+    /// LRU cache for per-hostile record JSON files to avoid repeated disk I/O.
+    hostile_record_cache: Mutex<LruCache<String, HostileRecord>>,
+    /// LRU cache for per-ship extended record JSON files to avoid repeated disk I/O.
+    ship_record_cache: Mutex<LruCache<String, ExtendedShipRecord>>,
 }
 
 impl DataRegistry {
@@ -108,6 +115,12 @@ impl DataRegistry {
             forbidden_chaos_catalog,
             research_catalog,
             support_buffs_catalog,
+            hostile_record_cache: Mutex::new(LruCache::new(
+                NonZeroUsize::new(256).expect("256 > 0"),
+            )),
+            ship_record_cache: Mutex::new(LruCache::new(
+                NonZeroUsize::new(128).expect("128 > 0"),
+            )),
         }))
     }
 
@@ -162,16 +175,52 @@ impl DataRegistry {
         &self.hostile_loca_display
     }
 
+    /// Load a hostile record from disk, caching in the LRU to avoid repeated I/O.
+    fn load_hostile_record_cached(&self, data_dir: &Path, id: &str) -> Option<HostileRecord> {
+        let mut cache = self.hostile_record_cache.lock().unwrap();
+        if let Some(record) = cache.get(id) {
+            return Some(record.clone());
+        }
+        let record = load_hostile_record(data_dir, id)?;
+        cache.put(id.to_string(), record.clone());
+        Some(record)
+    }
+
+    /// Load an extended ship record from disk, caching in the LRU to avoid repeated I/O.
+    fn load_extended_ship_record_cached(
+        &self,
+        extended_dir: &Path,
+        id: &str,
+    ) -> Option<ExtendedShipRecord> {
+        let mut cache = self.ship_record_cache.lock().unwrap();
+        if let Some(record) = cache.get(id) {
+            return Some(record.clone());
+        }
+        let record = load_extended_ship_record(extended_dir, id)?;
+        cache.put(id.to_string(), record.clone());
+        Some(record)
+    }
+
     /// Resolve ship by id or name. Uses data/ships_extended with tier=1, level=1 when not specified.
-    /// Uses cached ship index (loaded once at startup) to avoid re-reading index.json.
+    /// Uses cached ship index and per-record LRU cache to avoid re-reading index.json or record files.
     pub fn resolve_ship(&self, name_or_id: &str) -> Option<ShipRecord> {
         let index = self.ship_index.as_ref()?;
         let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
-        resolve_ship_with_tier_level_from_index(index, extended_dir, name_or_id, None, None)
+        let normalized = normalize_lookup(name_or_id);
+        let id = index
+            .ships
+            .iter()
+            .find(|e| {
+                normalize_lookup(&e.id) == normalized
+                    || normalize_lookup(&e.ship_name) == normalized
+            })
+            .map(|e| e.id.as_str())?;
+        let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
+        extended.to_ship_record(Some(1), Some(1))
     }
 
     /// Resolve ship with optional tier and level (1-based). Uses data/ships_extended only.
-    /// Uses cached ship index (loaded once at startup) to avoid re-reading index.json.
+    /// Uses cached ship index and per-record LRU cache to avoid re-reading index.json or record files.
     pub fn resolve_ship_with_tier_level(
         &self,
         name_or_id: &str,
@@ -180,24 +229,76 @@ impl DataRegistry {
     ) -> Option<ShipRecord> {
         let index = self.ship_index.as_ref()?;
         let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
-        resolve_ship_with_tier_level_from_index(index, extended_dir, name_or_id, tier, level)
+        let normalized = normalize_lookup(name_or_id);
+        let id = index
+            .ships
+            .iter()
+            .find(|e| {
+                normalize_lookup(&e.id) == normalized
+                    || normalize_lookup(&e.ship_name) == normalized
+            })
+            .map(|e| e.id.as_str())?;
+        let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
+        extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
     }
 
     /// Return available tier/level numbers plus below-decks unlock schedule for a ship.
-    /// Uses cached ship index to avoid re-reading index.json from disk.
+    /// Uses cached ship index and per-record LRU cache to avoid re-reading index.json or record files.
     pub fn ship_tiers_levels_and_crew_slots(
         &self,
         name_or_id: &str,
     ) -> Option<(Vec<u32>, Vec<u32>, Vec<CrewSlotUnlock>)> {
         let index = self.ship_index.as_ref()?;
         let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
-        ship_tiers_levels_and_crew_slots_from_index(index, extended_dir, name_or_id)
+        let normalized = normalize_lookup(name_or_id);
+        let id = index
+            .ships
+            .iter()
+            .find(|e| {
+                normalize_lookup(&e.id) == normalized
+                    || normalize_lookup(&e.ship_name) == normalized
+            })
+            .map(|e| e.id.as_str())?;
+        let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
+        let tiers: Vec<u32> = extended.tiers.iter().map(|t| t.tier).collect();
+        let levels: Vec<u32> = extended.levels.iter().map(|l| l.level).collect();
+        Some((tiers, levels, extended.crew_slots))
     }
 
-    /// Resolve hostile by id or name/level using cached index. Per-record file still read from disk.
+    /// Resolve hostile by id or name/level using cached index and per-record LRU cache.
     pub fn resolve_hostile(&self, name_or_id: &str) -> Option<HostileRecord> {
         let index = self.hostile_index.as_ref()?;
         let data_dir = Path::new(DEFAULT_HOSTILES_INDEX_PATH).parent()?;
-        resolve_hostile_with_index(index, data_dir, name_or_id)
+
+        let normalized = normalize_lookup(name_or_id);
+
+        if let Some(entry) = index
+            .hostiles
+            .iter()
+            .find(|e| normalize_lookup(&e.id) == normalized)
+        {
+            return self.load_hostile_record_cached(data_dir, &entry.id);
+        }
+        for entry in &index.hostiles {
+            let name_level =
+                format!("{}_{}", normalize_lookup(&entry.hostile_name), entry.level);
+            if name_level == normalized {
+                return self.load_hostile_record_cached(data_dir, &entry.id);
+            }
+            let name_space_level =
+                format!("{} {}", normalize_lookup(&entry.hostile_name), entry.level);
+            if normalize_lookup(&name_space_level) == normalized {
+                return self.load_hostile_record_cached(data_dir, &entry.id);
+            }
+        }
+        let by_name: Vec<_> = index
+            .hostiles
+            .iter()
+            .filter(|e| normalize_lookup(&e.hostile_name) == normalized)
+            .collect();
+        if by_name.len() == 1 {
+            return self.load_hostile_record_cached(data_dir, &by_name[0].id);
+        }
+        None
     }
 }

@@ -21,7 +21,7 @@ use crate::data::ship::{
 /// showed as the dominant `String::FromIterator<char>` source in profiling. Hot path: called by
 /// `resolve_hostile_with_index` and `resolve_ship_with_tier_level` once per index entry per
 /// scenario build (so up to O(ships + hostiles) String allocs per GA run on the old version).
-fn normalize_lookup(s: &str) -> String {
+pub fn normalize_lookup(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     // Suppresses a leading `_` by treating the start of input as if the previous char were a
     // separator. Also collapses runs.
