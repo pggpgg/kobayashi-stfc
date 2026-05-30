@@ -24,7 +24,7 @@ use crate::data::import::{
     import_roster_csv_to, import_spocks_export_to, load_imported_forbidden_tech,
     load_imported_roster_ids_unlocked_only, roster_import_fallback_warning_message,
 };
-use crate::data::loader::ship_tiers_levels_and_crew_slots;
+
 use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
@@ -287,8 +287,12 @@ pub fn ships_payload(
 const DEFAULT_TIERS: &[u32] = &[1];
 const DEFAULT_LEVELS: &[u32] = &[1, 10, 20, 30, 40, 50, 60];
 
-pub fn ship_tiers_levels_payload(ship_id: &str) -> Result<String, serde_json::Error> {
-    let (mut tiers, mut levels, crew_slots) = ship_tiers_levels_and_crew_slots(ship_id)
+pub fn ship_tiers_levels_payload(
+    ship_id: &str,
+    registry: &DataRegistry,
+) -> Result<String, serde_json::Error> {
+    let (mut tiers, mut levels, crew_slots) = registry
+        .ship_tiers_levels_and_crew_slots(ship_id)
         .unwrap_or_else(|| (DEFAULT_TIERS.to_vec(), DEFAULT_LEVELS.to_vec(), vec![]));
     if tiers.is_empty() {
         tiers = DEFAULT_TIERS.to_vec();

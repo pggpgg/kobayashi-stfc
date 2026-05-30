@@ -576,8 +576,11 @@ async fn handle_ships(
     }
 }
 
-async fn handle_ship_tiers_levels(Path(id): Path<String>) -> impl IntoResponse {
-    match api::ship_tiers_levels_payload(&id) {
+async fn handle_ship_tiers_levels(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    match api::ship_tiers_levels_payload(&id, state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
