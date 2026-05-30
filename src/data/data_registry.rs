@@ -118,9 +118,7 @@ impl DataRegistry {
             hostile_record_cache: Mutex::new(LruCache::new(
                 NonZeroUsize::new(256).expect("256 > 0"),
             )),
-            ship_record_cache: Mutex::new(LruCache::new(
-                NonZeroUsize::new(128).expect("128 > 0"),
-            )),
+            ship_record_cache: Mutex::new(LruCache::new(NonZeroUsize::new(128).expect("128 > 0"))),
         }))
     }
 
@@ -280,8 +278,7 @@ impl DataRegistry {
             return self.load_hostile_record_cached(data_dir, &entry.id);
         }
         for entry in &index.hostiles {
-            let name_level =
-                format!("{}_{}", normalize_lookup(&entry.hostile_name), entry.level);
+            let name_level = format!("{}_{}", normalize_lookup(&entry.hostile_name), entry.level);
             if name_level == normalized {
                 return self.load_hostile_record_cached(data_dir, &entry.id);
             }

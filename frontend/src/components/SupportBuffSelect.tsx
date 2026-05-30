@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type CSSProperties } from "react";
+import { type CSSProperties, memo, useCallback, useMemo } from "react";
 import {
   normalizeSupportBuffSelection,
   SUPPORT_BUFF_OPTIONS,

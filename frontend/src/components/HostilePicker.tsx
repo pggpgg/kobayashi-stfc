@@ -1,8 +1,8 @@
 import {
-  memo,
-  useCallback,
   type CSSProperties,
   type KeyboardEvent,
+  memo,
+  useCallback,
   useEffect,
   useId,
   useMemo,

@@ -333,9 +333,7 @@ function TypeAheadSlot({
 
   const selectedName = useMemo(
     () =>
-      value
-        ? (officers.find((o) => o.id === value)?.name ?? value)
-        : null,
+      value ? (officers.find((o) => o.id === value)?.name ?? value) : null,
     [officers, value],
   );
   const displayValue = open ? query : (selectedName ?? "");

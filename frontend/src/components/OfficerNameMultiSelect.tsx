@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode, useId, useState } from "react";
+import { memo, type ReactNode, useId, useMemo, useState } from "react";
 import type { OfficerListItem } from "../lib/api";
 import { joinOfficerList, splitOfficerList } from "../lib/workspaceRequests";
 

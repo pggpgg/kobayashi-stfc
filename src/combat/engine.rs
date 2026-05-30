@@ -10,9 +10,8 @@ pub use crate::combat::types::{
     effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
     CrewOfficerStatTotals, DefenderStats, EnemyTypes, EventSource, HostileMitigationParams,
     OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
-    WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
-    INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS,
-    SURVEY_COEFFICIENTS,
+    WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
+    MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -3399,7 +3398,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         defender_hull_faction_id: config.defender_hull_faction_id,
         defender_ship_type,
         attacker_ship_type,
-                    attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
+        attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,

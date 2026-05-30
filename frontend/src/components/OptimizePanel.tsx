@@ -1,4 +1,4 @@
-import { memo, useCallback, type CSSProperties, type ReactNode } from "react";
+import { type CSSProperties, memo, type ReactNode, useCallback } from "react";
 import { formatOptimizePhaseLabel, type OfficerListItem } from "../lib/api";
 import OfficerNameMultiSelect from "./OfficerNameMultiSelect";
 
@@ -208,6 +208,17 @@ export default memo(function OptimizePanel({
   onChainSecondaryChange,
   cachedWarmStartBadge = false,
 }: OptimizePanelProps) {
+  const toggleSeed = useCallback(
+    (seed: string) => {
+      if (selectedSeeds.includes(seed)) {
+        onSelectedSeedsChange(selectedSeeds.filter((s) => s !== seed));
+      } else {
+        onSelectedSeedsChange([...selectedSeeds, seed]);
+      }
+    },
+    [selectedSeeds, onSelectedSeedsChange],
+  );
+
   if (collapsed) {
     return (
       <aside
@@ -243,17 +254,6 @@ export default memo(function OptimizePanel({
       </aside>
     );
   }
-
-  const toggleSeed = useCallback(
-    (seed: string) => {
-      if (selectedSeeds.includes(seed)) {
-        onSelectedSeedsChange(selectedSeeds.filter((s) => s !== seed));
-      } else {
-        onSelectedSeedsChange([...selectedSeeds, seed]);
-      }
-    },
-    [selectedSeeds, onSelectedSeedsChange],
-  );
 
   return (
     <aside
