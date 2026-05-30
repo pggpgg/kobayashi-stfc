@@ -38,7 +38,7 @@ kang-55e67a: "Cap on_combat_start hull_breach; bridge Accuracy tag at combat sta
 kathryn-janeway-bd4a19: "Cap ShieldMitigation 1R vs NPC hostiles; bridge isolytic_cascade_damage at combat start."
 kerla-6cdf45: "Cap ShipDodge on_shield_break; bridge crit_damage at combat start."
 kira-nerys-a5253a: "Bridge enemy ShieldMitigation (literal_false gate — verify); BD crit_chance at combat start."
-kirk-1323b6: "Cap OfficerStatAll on_round_start when Morale active (1R); bridge on_round_start Morale proc."
+kirk-1323b6: "Cap OfficerStatAll on_round_start when Morale active (1R) — Phase 4d attack-axis v1: synthetic weapon_damage AttackMultiplier (+40% rank 1); Defense/Health not modeled mid-fight. Bridge on_round_start Morale proc separate."
 kumak-c5b0db: "Cap OfficerStatAll on_round_start; bridge armor on_round_start."
 l-nar-ae14f4: "Cap passive OfficerStatHealth; bridge weapon_damage at combat start."
 mara-bd3ca6: "Cap weapon_damage at combat start; bridge enemy ShipDodge on_round_end."

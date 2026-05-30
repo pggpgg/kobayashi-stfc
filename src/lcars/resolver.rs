@@ -1400,6 +1400,53 @@ mod tests {
     }
 
     #[test]
+    fn phase4d_production_kirk_resolves_attack_multiplier_without_pending_duplicate() {
+        let path = Path::new("data/officers/officers.lcars.yaml");
+        if !path.exists() {
+            return;
+        }
+        let file = load_lcars_file(path).expect("officers.lcars.yaml");
+        let officers = index_lcars_officers_by_id(file.officers);
+        let buff = resolve_crew_to_buff_set(
+            "kirk-1323b6",
+            &[],
+            &[],
+            &officers,
+            &ResolveOptions {
+                tier: Some(1),
+                ..ResolveOptions::default()
+            },
+        );
+        let attack_seats: Vec<_> = buff
+            .crew
+            .seats
+            .iter()
+            .filter(|s| {
+                s.ability.timing == TimingWindow::RoundStart
+                    && matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_))
+            })
+            .collect();
+        assert_eq!(
+            attack_seats.len(),
+            1,
+            "production Kirk should emit one Leader AttackMultiplier seat"
+        );
+        assert!(
+            matches!(
+                attack_seats[0].ability.condition,
+                Some(crate::combat::AbilityCondition::MoraleActive)
+                    | Some(crate::combat::AbilityCondition::And(_))
+            ),
+            "Leader seat must gate on MoraleActive; got {:?}",
+            attack_seats[0].ability.condition
+        );
+        assert!(
+            buff.pending_officer_stat_contributions.is_empty(),
+            "dynamic officer-stat must not also land in pending_officer_stat_contributions"
+        );
+    }
+
+    #[test]
     fn phase4d_static_condition_does_not_emit_synthetic_seats() {
         // TOS McCoy pattern: passive + attacker_ship_type_is(explorer). Static condition →
         // Phase 4b path → pending_officer_stat_contributions only; the dynamic expansion

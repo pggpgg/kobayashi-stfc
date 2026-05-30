@@ -275,3 +275,21 @@ Phase 2b can now proceed with the simpler model:
 - `defense_bonus` → additive to ship-class-primary mitigation stat (already confirmed in §2c)
 - `health_bonus` → multiplier on hull AND shield HP (already confirmed in §2d)
 - No `bonus_damage_per_shot` field, no per-shot raw damage in the engine.
+
+---
+
+## Phase 4d — dynamic officer-stat conditions (attack-axis v1)
+
+Officer-stat tags (`officerstatall`, `officer_attack`, …) whose LCARS `condition` depends on **round state** (morale, hull breach, burning, `round_range`, …) cannot be evaluated at fight setup. Phase 4b pending contributions only handle static setup gates.
+
+**Resolver path** ([`expand_dynamic_officer_stat_effects`](../src/lcars/resolver.rs)): dynamic `officerstat*` rows are expanded into synthetic `stat_modify` seats that compile to per-round engine effects. **Attack axis only** in v1:
+
+- `officer_attack` / `officer_stat_all` → synthetic `weapon_damage` → [`AbilityEffect::AttackMultiplier`](../src/combat/abilities.rs) at the LCARS trigger (typically `on_round_start`), with the original dynamic condition AND any finite `duration.rounds` merged as `RoundRange`.
+- **Approximation:** in-game +X% officer A/D/H flows through breakpoint lookup; v1 maps the attack portion to a direct `weapon_damage` multiplier for the gated round(s). Magnitude diverges near breakpoint tier boundaries.
+- **Defense and Health axes are not modeled** mid-fight (no per-round engine hook for class-routed mitigation adds or max hull/shield recomputation).
+
+**Production data (2026-05):** only [`kirk-1323b6`](../data/officers/officers.lcars.yaml) captain "Leader" — `officerstatall` +40%, `morale_active`, `on_round_start`, duration 1 round. Bridge "Inspirational" morale proc is separate (standard `Morale` seat).
+
+**Tests:** [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs); resolver unit tests `phase4d_*` in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs).
+
+**Deferred:** full per-round `compute_officer_stat_runtime_bonus()` in the combat loop (proper 3-axis breakpoint path); PvP defender-side dynamic `target: enemy` officer-stat debuffs (no prod LCARS cases today).
