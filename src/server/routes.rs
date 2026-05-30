@@ -98,7 +98,7 @@ fn cpu_busy_response(retry_after_ms: u64) -> Response {
         "message": "Server CPU capacity is saturated; retry later.",
         "retry_after_ms": retry_after_ms,
     });
-    let body_str = serde_json::to_string_pretty(&body)
+    let body_str = serde_json::to_string(&body)
         .unwrap_or_else(|_| "{\"status\":\"error\",\"code\":\"cpu_busy\"}".to_string());
     let secs = retry_after_ms.div_ceil(1000).max(1);
     let retry =
@@ -143,7 +143,7 @@ fn validation_json(payload: api::ValidationErrorResponse) -> JsonResponse {
         "{\n  \"status\": \"error\",\n  \"message\": \"Validation failed\"\n}".to_string();
     JsonResponse {
         status: StatusCode::BAD_REQUEST,
-        body: serde_json::to_string_pretty(&payload).unwrap_or(fallback),
+        body: serde_json::to_string(&payload).unwrap_or(fallback),
     }
 }
 
@@ -1144,7 +1144,7 @@ async fn handle_optimize_start(
 /// GET /api/optimize/status/:job_id
 async fn handle_optimize_status(Path(job_id): Path<String>) -> impl IntoResponse {
     match api::get_job_status(&job_id) {
-        Ok(response) => match serde_json::to_string_pretty(&response) {
+        Ok(response) => match serde_json::to_string(&response) {
             Ok(payload) => ok_json(payload).into_response(),
             Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
         },
@@ -1303,7 +1303,7 @@ async fn handle_sensitivity_sobol_start(
 /// GET /api/sensitivity/jobs/:job_id/status — one-shot status snapshot.
 async fn handle_sensitivity_job_status(Path(job_id): Path<String>) -> impl IntoResponse {
     match sensitivity_jobs::get_job_status(&job_id) {
-        Ok(response) => match serde_json::to_string_pretty(&response) {
+        Ok(response) => match serde_json::to_string(&response) {
             Ok(payload) => ok_json(payload).into_response(),
             Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
         },
