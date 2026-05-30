@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { memo, useCallback, useMemo, type CSSProperties } from "react";
 import {
   normalizeSupportBuffSelection,
   SUPPORT_BUFF_OPTIONS,
@@ -161,7 +161,7 @@ function formatStatTarget(option: SupportBuffOption): string | null {
 const defaultHelpText =
   "Choose active alliance support. Fortify, Cerritos, and Defiant unlock their matching catalog research when selected.";
 
-export default function SupportBuffSelect({
+export default memo(function SupportBuffSelect({
   selected,
   onChange,
   side,
@@ -170,17 +170,22 @@ export default function SupportBuffSelect({
   helpText = defaultHelpText,
 }: SupportBuffSelectProps) {
   const options = side ? supportBuffOptionsForSide(side) : SUPPORT_BUFF_OPTIONS;
-  const groups = groupSupportBuffOptions(options);
+  const groups = useMemo(() => groupSupportBuffOptions(options), [options]);
   const validation = normalizeSupportBuffSelection(selected);
   const normalizedSelected = validation.ids;
 
-  function toggle(id: SupportBuffId) {
-    if (normalizedSelected.includes(id)) {
-      onChange(normalizedSelected.filter((x) => x !== id));
-    } else {
-      onChange(normalizeSupportBuffSelection([...normalizedSelected, id]).ids);
-    }
-  }
+  const toggle = useCallback(
+    (id: SupportBuffId) => {
+      if (normalizedSelected.includes(id)) {
+        onChange(normalizedSelected.filter((x) => x !== id));
+      } else {
+        onChange(
+          normalizeSupportBuffSelection([...normalizedSelected, id]).ids,
+        );
+      }
+    },
+    [normalizedSelected, onChange],
+  );
 
   const label =
     normalizedSelected.length === 0
@@ -374,4 +379,4 @@ export default function SupportBuffSelect({
       </fieldset>
     </details>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { WorkspaceModeProvider } from "../contexts/WorkspaceModeContext";
@@ -30,10 +30,6 @@ describe("CrewBuilder", () => {
       profiles: [{ id: "p1", name: "Test", sync_token: "t" }],
       default_id: "p1",
     });
-    vi.mocked(api.fetchOfficers).mockResolvedValue([
-      { id: "kirk", name: "Kirk" },
-      { id: "spock", name: "Spock" },
-    ]);
   });
 
   function renderBuilder() {
@@ -46,15 +42,18 @@ describe("CrewBuilder", () => {
             pins={{ captain: false, bridge: [false, false], belowDeck: [] }}
             onCrewChange={vi.fn()}
             onPinsChange={vi.fn()}
+            officerOptions={[
+              { id: "kirk", name: "Kirk" },
+              { id: "spock", name: "Spock" },
+            ]}
           />
         </WorkspaceModeProvider>
       </ProfileProvider>,
     );
   }
 
-  it("loads officers and shows captain slot label", async () => {
+  it("renders captain slot label", () => {
     renderBuilder();
-    await waitFor(() => expect(api.fetchOfficers).toHaveBeenCalled());
     expect(screen.getByText(/captain/i)).toBeTruthy();
   });
 });

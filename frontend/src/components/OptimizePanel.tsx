@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { memo, useCallback, type CSSProperties, type ReactNode } from "react";
 import { formatOptimizePhaseLabel, type OfficerListItem } from "../lib/api";
 import OfficerNameMultiSelect from "./OfficerNameMultiSelect";
 
@@ -149,7 +149,7 @@ function FieldLabelWithHint({
   );
 }
 
-export default function OptimizePanel({
+export default memo(function OptimizePanel({
   collapsed,
   onToggleCollapsed,
   officerOptions,
@@ -244,13 +244,16 @@ export default function OptimizePanel({
     );
   }
 
-  function toggleSeed(seed: string) {
-    if (selectedSeeds.includes(seed)) {
-      onSelectedSeedsChange(selectedSeeds.filter((s) => s !== seed));
-    } else {
-      onSelectedSeedsChange([...selectedSeeds, seed]);
-    }
-  }
+  const toggleSeed = useCallback(
+    (seed: string) => {
+      if (selectedSeeds.includes(seed)) {
+        onSelectedSeedsChange(selectedSeeds.filter((s) => s !== seed));
+      } else {
+        onSelectedSeedsChange([...selectedSeeds, seed]);
+      }
+    },
+    [selectedSeeds, onSelectedSeedsChange],
+  );
 
   return (
     <aside
@@ -909,4 +912,4 @@ export default function OptimizePanel({
       ) : null}
     </aside>
   );
-}
+});

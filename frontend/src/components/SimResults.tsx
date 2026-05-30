@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   type CompareCrewDistribution,
   type CrewRecommendation,
@@ -137,7 +137,7 @@ interface SimResultsProps {
   compareWorkspace?: CompareWorkspaceParams | null;
 }
 
-export default function SimResults({
+export default memo(function SimResults({
   simResult,
   recommendations,
   loadingSim,
@@ -162,7 +162,11 @@ export default function SimResults({
   const [compareDistErr, setCompareDistErr] = useState<string | null>(null);
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
-  const chainMeta = recommendations.find((r) => r.chain)?.chain;
+
+  const chainMeta = useMemo(
+    () => recommendations.find((r) => r.chain)?.chain,
+    [recommendations],
+  );
   const chainMode = chainMeta != null;
   const chainWinHeader = chainMode
     ? `P(${chainMeta.kills_target}-kill)`
@@ -174,23 +178,29 @@ export default function SimResults({
         ? "Hull %*|hit"
         : "Your hull %";
   const chainR1Header = chainMode ? "R1 (1st link)" : "R1 %";
-  const numericTableHeaders = chainMode
-    ? [
-        chainWinHeader,
-        "Stall %",
-        "Loss %",
-        chainR1Header,
-        chainHullHeader,
-        "Enemy hull %",
-      ]
-    : ["Win %", "Stall %", "Loss %", "R1 %", "Your hull %", "Enemy hull %"];
-  const totalSelected = selected.size;
+  const numericTableHeaders = useMemo(
+    () =>
+      chainMode
+        ? [
+            chainWinHeader,
+            "Stall %",
+            "Loss %",
+            chainR1Header,
+            chainHullHeader,
+            "Enemy hull %",
+          ]
+        : ["Win %", "Stall %", "Loss %", "R1 %", "Your hull %", "Enemy hull %"],
+    [chainMode, chainWinHeader, chainR1Header, chainHullHeader],
+  );
 
   const total = recommendations.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * perPage;
-  const pageRecs = recommendations.slice(start, start + perPage);
+  const pageRecs = useMemo(
+    () => recommendations.slice(start, start + perPage),
+    [recommendations, start, perPage],
+  );
 
   // Reset to page 1 when recommendations change (e.g. new optimize run) or when current page is out of range
   useEffect(() => {
@@ -203,19 +213,23 @@ export default function SimResults({
     setCompareDistErr(null);
   }, [recommendations]);
 
-  const toggleSelect = (i: number) => {
+  const toggleSelect = useCallback((i: number) => {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(i)) next.delete(i);
       else if (next.size < 5) next.add(i);
       return next;
     });
-  };
+  }, []);
 
-  const selectedList = Array.from(selected).sort((a, b) => a - b);
+  const selectedList = useMemo(
+    () => Array.from(selected).sort((a, b) => a - b),
+    [selected],
+  );
+  const totalSelected = selected.size;
   const showCompare = selectedList.length >= 2 && selectedList.length <= 5;
 
-  const runCompareDistributions = async () => {
+  const runCompareDistributions = useCallback(async () => {
     if (!compareWorkspace || !showCompare) return;
     setCompareDistErr(null);
     setLoadingCompareDist(true);
@@ -249,7 +263,7 @@ export default function SimResults({
     } finally {
       setLoadingCompareDist(false);
     }
-  };
+  }, [compareWorkspace, recommendations, selectedList, showCompare]);
 
   return (
     <section
@@ -1020,4 +1034,4 @@ export default function SimResults({
       )}
     </section>
   );
-}
+});

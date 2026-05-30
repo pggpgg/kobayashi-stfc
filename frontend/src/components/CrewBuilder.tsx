@@ -1,8 +1,13 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { useProfile } from "../contexts/ProfileContext";
-import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { OfficerListItem } from "../lib/api";
-import { fetchOfficers } from "../lib/api";
 import type { CrewState, PinsState } from "../lib/types";
 
 interface CrewBuilderProps {
@@ -12,105 +17,107 @@ interface CrewBuilderProps {
   pins: PinsState;
   onCrewChange: (crew: CrewState) => void;
   onPinsChange: (pins: PinsState) => void;
+  officerOptions?: OfficerListItem[];
 }
 
-export default function CrewBuilder({
+const slotStyleBase = {
+  flex: 1,
+  minWidth: 100,
+  display: "flex",
+  flexDirection: "column" as const,
+  alignItems: "center",
+  gap: 4,
+};
+
+const boxStyleBase = {
+  width: "100%",
+  padding: "0.5rem",
+  background: "var(--bg)",
+  borderRadius: 8,
+};
+
+export default memo(function CrewBuilder({
   belowDecksSlots,
   crew,
   pins,
   onCrewChange,
   onPinsChange,
+  officerOptions = [],
 }: CrewBuilderProps) {
-  const { activeProfileId } = useProfile();
-  const { ownedOnly } = useWorkspaceMode();
-  const [officers, setOfficers] = useState<OfficerListItem[]>([]);
-
   const belowN = belowDecksSlots;
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchOfficers(ownedOnly, activeProfileId).then((list) => {
-      if (!cancelled) setOfficers(list);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [ownedOnly, activeProfileId]);
-
-  /** When placing an officer in one slot, clear them from all other slots so they only appear once. */
-  const clearIdFromOtherSlots = (id: string | null): Partial<CrewState> => {
-    if (!id) return {};
-    return {
-      captain: crew.captain === id ? null : crew.captain,
-      bridge: [
-        crew.bridge[0] === id ? null : crew.bridge[0],
-        crew.bridge[1] === id ? null : crew.bridge[1],
-      ] as [string | null, string | null],
-      belowDeck: crew.belowDeck.map((o) => (o === id ? null : o)),
-    };
-  };
-
-  const setCaptain = (id: string | null) => {
-    const cleared = clearIdFromOtherSlots(id);
-    onCrewChange({ ...crew, ...cleared, captain: id });
-  };
-  const setBridge = (index: number, id: string | null) => {
-    const cleared = clearIdFromOtherSlots(id);
-    const bridge = [...(cleared.bridge ?? crew.bridge)] as [
-      string | null,
-      string | null,
-    ];
-    bridge[index] = id;
-    onCrewChange({ ...crew, ...cleared, bridge });
-  };
-  const setBelowDeck = (index: number, id: string | null) => {
-    const cleared = clearIdFromOtherSlots(id);
-    const belowDeck = [...(cleared.belowDeck ?? crew.belowDeck)];
-    belowDeck[index] = id;
-    onCrewChange({ ...crew, ...cleared, belowDeck });
-  };
-
-  const togglePin = (
-    kind: "captain" | "bridge" | "belowDeck",
-    index?: number,
-  ) => {
-    if (kind === "captain") {
-      onPinsChange({ ...pins, captain: !pins.captain });
-    } else if (kind === "bridge" && index !== undefined) {
-      const next = [...pins.bridge] as [boolean, boolean];
-      next[index] = !next[index];
-      onPinsChange({ ...pins, bridge: next });
-    } else if (kind === "belowDeck" && index !== undefined) {
-      const next = [...pins.belowDeck];
-      next[index] = !next[index];
-      onPinsChange({ ...pins, belowDeck: next });
-    }
-  };
-
-  const selectedIds = new Set(
-    [crew.captain, ...crew.bridge, ...crew.belowDeck].filter(
-      Boolean,
-    ) as string[],
+  const selectedIds = useMemo(
+    () =>
+      new Set(
+        [crew.captain, ...crew.bridge, ...crew.belowDeck].filter(
+          Boolean,
+        ) as string[],
+      ),
+    [crew.captain, crew.bridge, crew.belowDeck],
   );
 
-  const slotStyle = (isCaptain?: boolean) => ({
-    flex: 1,
-    minWidth: 100,
-    maxWidth: isCaptain ? 160 : 140,
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    gap: 4,
-  });
+  const clearIdFromOtherSlots = useCallback(
+    (id: string | null): Partial<CrewState> => {
+      if (!id) return {};
+      return {
+        captain: crew.captain === id ? null : crew.captain,
+        bridge: [
+          crew.bridge[0] === id ? null : crew.bridge[0],
+          crew.bridge[1] === id ? null : crew.bridge[1],
+        ] as [string | null, string | null],
+        belowDeck: crew.belowDeck.map((o) => (o === id ? null : o)),
+      };
+    },
+    [crew.captain, crew.bridge, crew.belowDeck],
+  );
 
-  const boxStyle = (isCaptain?: boolean) => ({
-    width: "100%",
-    padding: "0.5rem",
-    background: "var(--bg)",
-    border: `1px solid ${isCaptain ? "var(--accent)" : "var(--border)"}`,
-    borderRadius: 8,
-    boxShadow: isCaptain ? "0 0 0 1px var(--accent)" : undefined,
-  });
+  const setCaptain = useCallback(
+    (id: string | null) => {
+      const cleared = clearIdFromOtherSlots(id);
+      onCrewChange({ ...crew, ...cleared, captain: id });
+    },
+    [crew, onCrewChange, clearIdFromOtherSlots],
+  );
+
+  const setBridge = useCallback(
+    (index: number, id: string | null) => {
+      const cleared = clearIdFromOtherSlots(id);
+      const bridge = [...(cleared.bridge ?? crew.bridge)] as [
+        string | null,
+        string | null,
+      ];
+      bridge[index] = id;
+      onCrewChange({ ...crew, ...cleared, bridge });
+    },
+    [crew, onCrewChange, clearIdFromOtherSlots],
+  );
+
+  const setBelowDeck = useCallback(
+    (index: number, id: string | null) => {
+      const cleared = clearIdFromOtherSlots(id);
+      const belowDeck = [...(cleared.belowDeck ?? crew.belowDeck)];
+      belowDeck[index] = id;
+      onCrewChange({ ...crew, ...cleared, belowDeck });
+    },
+    [crew, onCrewChange, clearIdFromOtherSlots],
+  );
+
+  const togglePin = useCallback(
+    (kind: "captain" | "bridge" | "belowDeck", index?: number) => {
+      if (kind === "captain") {
+        onPinsChange({ ...pins, captain: !pins.captain });
+      } else if (kind === "bridge" && index !== undefined) {
+        const next = [...pins.bridge] as [boolean, boolean];
+        next[index] = !next[index];
+        onPinsChange({ ...pins, bridge: next });
+      } else if (kind === "belowDeck" && index !== undefined) {
+        const next = [...pins.belowDeck];
+        next[index] = !next[index];
+        onPinsChange({ ...pins, belowDeck: next });
+      }
+    },
+    [pins, onPinsChange],
+  );
 
   return (
     <section
@@ -143,13 +150,18 @@ export default function CrewBuilder({
           marginBottom: "1rem",
         }}
       >
-        <div style={slotStyle(false)}>
+        <div style={{ ...slotStyleBase, maxWidth: 140 }}>
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
             Bridge 1
           </span>
-          <div style={boxStyle(false)}>
+          <div
+            style={{
+              ...boxStyleBase,
+              border: "1px solid var(--border)",
+            }}
+          >
             <TypeAheadSlot
-              officers={officers}
+              officers={officerOptions}
               value={crew.bridge[0]}
               selectedIds={selectedIds}
               onChange={(id) => setBridge(0, id)}
@@ -169,13 +181,19 @@ export default function CrewBuilder({
           </button>
         </div>
 
-        <div style={slotStyle(true)}>
+        <div style={{ ...slotStyleBase, maxWidth: 160 }}>
           <span style={{ fontSize: "0.75rem", color: "var(--accent)" }}>
             Captain
           </span>
-          <div style={boxStyle(true)}>
+          <div
+            style={{
+              ...boxStyleBase,
+              border: "1px solid var(--accent)",
+              boxShadow: "0 0 0 1px var(--accent)",
+            }}
+          >
             <TypeAheadSlot
-              officers={officers}
+              officers={officerOptions}
               value={crew.captain}
               selectedIds={selectedIds}
               onChange={setCaptain}
@@ -195,13 +213,18 @@ export default function CrewBuilder({
           </button>
         </div>
 
-        <div style={slotStyle(false)}>
+        <div style={{ ...slotStyleBase, maxWidth: 140 }}>
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
             Bridge 2
           </span>
-          <div style={boxStyle(false)}>
+          <div
+            style={{
+              ...boxStyleBase,
+              border: "1px solid var(--border)",
+            }}
+          >
             <TypeAheadSlot
-              officers={officers}
+              officers={officerOptions}
               value={crew.bridge[1]}
               selectedIds={selectedIds}
               onChange={(id) => setBridge(1, id)}
@@ -242,14 +265,19 @@ export default function CrewBuilder({
         {crew.belowDeck.slice(0, belowN).map((id, i) => (
           <div
             key={i}
-            style={{ ...slotStyle(false), minWidth: 120, maxWidth: 140 }}
+            style={{ ...slotStyleBase, minWidth: 120, maxWidth: 140 }}
           >
             <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
               Below {i + 1}
             </span>
-            <div style={boxStyle(false)}>
+            <div
+              style={{
+                ...boxStyleBase,
+                border: "1px solid var(--border)",
+              }}
+            >
               <TypeAheadSlot
-                officers={officers}
+                officers={officerOptions}
                 value={id}
                 selectedIds={selectedIds}
                 onChange={(oId) => setBelowDeck(i, oId)}
@@ -282,7 +310,7 @@ export default function CrewBuilder({
       </p>
     </section>
   );
-}
+});
 
 function TypeAheadSlot({
   officers,
@@ -303,15 +331,25 @@ function TypeAheadSlot({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedName = value
-    ? (officers.find((o) => o.id === value)?.name ?? value)
-    : null;
+  const selectedName = useMemo(
+    () =>
+      value
+        ? (officers.find((o) => o.id === value)?.name ?? value)
+        : null,
+    [officers, value],
+  );
   const displayValue = open ? query : (selectedName ?? "");
 
-  const filtered = query.trim()
-    ? officers.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
-    : officers;
-  const limited = filtered.slice(0, 200);
+  const filtered = useMemo(
+    () =>
+      query.trim()
+        ? officers.filter((o) =>
+            o.name.toLowerCase().includes(query.toLowerCase()),
+          )
+        : officers,
+    [officers, query],
+  );
+  const limited = useMemo(() => filtered.slice(0, 200), [filtered]);
 
   useEffect(() => {
     if (!open) setQuery("");
@@ -321,15 +359,18 @@ function TypeAheadSlot({
     if (open && inputRef.current) inputRef.current.focus();
   }, [open]);
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     setTimeout(() => setOpen(false), 150);
-  };
+  }, []);
 
-  const handleSelect = (id: string | null) => {
-    onChange(id);
-    setOpen(false);
-    setQuery("");
-  };
+  const handleSelect = useCallback(
+    (id: string | null) => {
+      onChange(id);
+      setOpen(false);
+      setQuery("");
+    },
+    [onChange],
+  );
 
   return (
     <div style={{ position: "relative", width: "100%" }}>

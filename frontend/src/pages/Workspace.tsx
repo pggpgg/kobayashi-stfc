@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CrewBuilder from "../components/CrewBuilder";
 import OptimizePanel from "../components/OptimizePanel";
 import SavePresetModal from "../components/SavePresetModal";
@@ -26,24 +26,36 @@ export default function Workspace() {
       cancelled = true;
     };
   }, [ownedOnly, activeProfileId]);
-  const compareWorkspace =
-    ws.shipId && ws.scenarioId
-      ? {
-          ship: ws.shipId,
-          hostile: ws.scenarioId,
-          shipTier: ws.shipTier,
-          shipLevel: ws.shipLevel,
-          numSims: ws.simsPerCrew,
-          belowDecksSlots: belowDeckSlotCount(
-            ws.shipLevel,
-            ws.belowDeckUnlockLevels,
-          ),
-          profileId: ws.activeProfileId,
-          ...(ws.selectedSupportBuffs.length > 0
-            ? { supportBuffs: ws.selectedSupportBuffs }
-            : {}),
-        }
-      : null;
+  const compareWorkspace = useMemo(
+    () =>
+      ws.shipId && ws.scenarioId
+        ? {
+            ship: ws.shipId,
+            hostile: ws.scenarioId,
+            shipTier: ws.shipTier,
+            shipLevel: ws.shipLevel,
+            numSims: ws.simsPerCrew,
+            belowDecksSlots: belowDeckSlotCount(
+              ws.shipLevel,
+              ws.belowDeckUnlockLevels,
+            ),
+            profileId: ws.activeProfileId,
+            ...(ws.selectedSupportBuffs.length > 0
+              ? { supportBuffs: ws.selectedSupportBuffs }
+              : {}),
+          }
+        : null,
+    [
+      ws.shipId,
+      ws.scenarioId,
+      ws.shipTier,
+      ws.shipLevel,
+      ws.simsPerCrew,
+      ws.belowDeckUnlockLevels,
+      ws.activeProfileId,
+      ws.selectedSupportBuffs,
+    ],
+  );
 
   return (
     <div
@@ -175,6 +187,7 @@ export default function Workspace() {
             pins={ws.pins}
             onCrewChange={ws.setCrew}
             onPinsChange={ws.setPins}
+            officerOptions={officerOptions}
           />
           <div style={{ flex: 1, minHeight: 200 }}>
             <SimResults

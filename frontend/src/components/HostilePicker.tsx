@@ -1,4 +1,6 @@
 import {
+  memo,
+  useCallback,
   type CSSProperties,
   type KeyboardEvent,
   useEffect,
@@ -24,7 +26,7 @@ interface HostilePickerProps {
   style?: CSSProperties;
 }
 
-export default function HostilePicker({
+export default memo(function HostilePicker({
   hostiles,
   value,
   onChange,
@@ -88,15 +90,18 @@ export default function HostilePicker({
       ?.scrollIntoView({ block: "nearest" });
   }, [highlightedIndex, open, limited, listId]);
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     setTimeout(() => setOpen(false), 150);
-  };
+  }, []);
 
-  const handleSelect = (id: string) => {
-    onChange(id);
-    setOpen(false);
-    setQuery("");
-  };
+  const handleSelect = useCallback(
+    (id: string) => {
+      onChange(id);
+      setOpen(false);
+      setQuery("");
+    },
+    [onChange],
+  );
 
   const highlightedHostile =
     highlightedIndex >= 0 && highlightedIndex < limited.length
@@ -246,4 +251,4 @@ export default function HostilePicker({
       )}
     </div>
   );
-}
+});

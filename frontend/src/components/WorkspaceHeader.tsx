@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useProfile } from "../contexts/ProfileContext";
 import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import type {
@@ -62,7 +62,7 @@ interface WorkspaceHeaderProps {
   onSelectedSupportBuffsChange: (ids: SupportBuffId[]) => void;
 }
 
-export default function WorkspaceHeader({
+export default memo(function WorkspaceHeader({
   shipId,
   scenarioId,
   onShipIdChange,
@@ -101,7 +101,10 @@ export default function WorkspaceHeader({
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [tiers, setTiers] = useState<number[]>([1]);
   const [levels, setLevels] = useState<number[]>([1, 10, 20, 30, 40, 50, 60]);
-  const selectedRosterShip = ships.find((s) => s.id === shipId);
+  const selectedRosterShip = useMemo(
+    () => ships.find((s) => s.id === shipId),
+    [ships, shipId],
+  );
   const rosterLocksShipProgress =
     ownedOnly &&
     selectedRosterShip != null &&
@@ -573,4 +576,4 @@ export default function WorkspaceHeader({
       </button>
     </header>
   );
-}
+});

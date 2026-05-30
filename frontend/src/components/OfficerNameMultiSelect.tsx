@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useState } from "react";
+import { memo, useMemo, type ReactNode, useId, useState } from "react";
 import type { OfficerListItem } from "../lib/api";
 import { joinOfficerList, splitOfficerList } from "../lib/workspaceRequests";
 
@@ -17,7 +17,7 @@ interface OfficerNameMultiSelectProps {
   placeholder?: string;
 }
 
-export default function OfficerNameMultiSelect({
+export default memo(function OfficerNameMultiSelect({
   label,
   valueComma,
   onChangeComma,
@@ -28,17 +28,21 @@ export default function OfficerNameMultiSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const selected = splitOfficerList(valueComma);
+  const selected = useMemo(() => splitOfficerList(valueComma), [valueComma]);
   const q = query.trim().toLowerCase();
 
-  const suggestions = officers
-    .filter((o) => {
-      if (selected.some((s) => s.toLowerCase() === o.name.toLowerCase()))
-        return false;
-      if (!q) return true;
-      return o.name.toLowerCase().includes(q);
-    })
-    .slice(0, 120);
+  const suggestions = useMemo(
+    () =>
+      officers
+        .filter((o) => {
+          if (selected.some((s) => s.toLowerCase() === o.name.toLowerCase()))
+            return false;
+          if (!q) return true;
+          return o.name.toLowerCase().includes(q);
+        })
+        .slice(0, 120),
+    [officers, selected, q],
+  );
 
   function addName(name: string) {
     const c = canonName(name, officers);
@@ -193,4 +197,4 @@ export default function OfficerNameMultiSelect({
       </div>
     </div>
   );
-}
+});
