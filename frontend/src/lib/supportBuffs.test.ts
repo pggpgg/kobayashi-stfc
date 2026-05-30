@@ -3,8 +3,8 @@ import {
   isAttackerDebuffWhenPlayerSupportBuff,
   isDefenderRoutedWhenPlayerSupportBuff,
   normalizeSupportBuffSelection,
-  supportBuffOptionsForSide,
   SUPPORT_BUFF_OPTIONS,
+  supportBuffOptionsForSide,
 } from "./supportBuffs";
 
 interface SupportBuffCatalogEntry {

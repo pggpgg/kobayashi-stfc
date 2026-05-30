@@ -2087,16 +2087,13 @@ pub(crate) fn build_shared_scenario_data_standalone(
     let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
     let support_cat =
         SupportBuffCatalog::load(manifest.join(support_buffs::DEFAULT_SUPPORT_BUFFS_PATH)).ok();
-    let (resolved_support_buffs, unknown_support_buff_ids) =
-        match (
-            support_cat.as_ref(),
-            support_buffs.attacker.filter(|r| !r.is_empty()),
-        ) {
-            (Some(cat), Some(req)) => {
-                support_buffs::resolve_selected_support_buff_ids(cat, req)
-            }
-            _ => (Vec::new(), Vec::new()),
-        };
+    let (resolved_support_buffs, unknown_support_buff_ids) = match (
+        support_cat.as_ref(),
+        support_buffs.attacker.filter(|r| !r.is_empty()),
+    ) {
+        (Some(cat), Some(req)) => support_buffs::resolve_selected_support_buff_ids(cat, req),
+        _ => (Vec::new(), Vec::new()),
+    };
     let sidecar_active = support_buffs.sidecar_fields_present();
     let support_research_gates =
         SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
@@ -2138,7 +2135,9 @@ pub(crate) fn build_shared_scenario_data_standalone(
             support_buffs::aggregate_support_static_for_attacker(c, &resolved_support_buffs),
             HashMap::new(),
         ),
-        Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
+        Some(c) => {
+            support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs)
+        }
         None => (HashMap::new(), HashMap::new()),
     };
     if let Some(ref cat) = shared_research_catalog {
@@ -2599,16 +2598,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         }
     }
 
-    let (resolved_support_buffs, unknown_support_buff_ids) =
-        match (
-            registry.support_buffs_catalog(),
-            support_buffs.attacker.filter(|r| !r.is_empty()),
-        ) {
-            (Some(cat), Some(req)) => {
-                support_buffs::resolve_selected_support_buff_ids(cat, req)
-            }
-            _ => (Vec::new(), Vec::new()),
-        };
+    let (resolved_support_buffs, unknown_support_buff_ids) = match (
+        registry.support_buffs_catalog(),
+        support_buffs.attacker.filter(|r| !r.is_empty()),
+    ) {
+        (Some(cat), Some(req)) => support_buffs::resolve_selected_support_buff_ids(cat, req),
+        _ => (Vec::new(), Vec::new()),
+    };
     let sidecar_active = support_buffs.sidecar_fields_present();
     let support_research_gates =
         SupportBuffResearchGateState::from_resolved_support_buff_ids(&resolved_support_buffs);
@@ -2650,7 +2646,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 support_buffs::aggregate_support_static_for_attacker(c, &resolved_support_buffs),
                 HashMap::new(),
             ),
-            Some(c) => support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs),
+            Some(c) => {
+                support_buffs::aggregate_support_static_bonuses_split(c, &resolved_support_buffs)
+            }
             None => (HashMap::new(), HashMap::new()),
         };
     if let Some(cat) = registry.research_catalog() {

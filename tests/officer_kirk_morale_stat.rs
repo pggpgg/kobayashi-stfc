@@ -46,9 +46,7 @@ fn resolve_kirk_buff_set() -> Option<kobayashi::lcars::BuffSet> {
     ))
 }
 
-fn kirk_leader_attack_seats(
-    buff: &kobayashi::lcars::BuffSet,
-) -> Vec<&CrewSeatContext> {
+fn kirk_leader_attack_seats(buff: &kobayashi::lcars::BuffSet) -> Vec<&CrewSeatContext> {
     buff.crew
         .seats
         .iter()
@@ -150,7 +148,9 @@ fn crew_leader_with_guaranteed_morale(buff: &kobayashi::lcars::BuffSet) -> CrewC
     CrewConfiguration { seats }
 }
 
-fn active_leader_effects(buff: &kobayashi::lcars::BuffSet) -> Vec<kobayashi::combat::ActiveAbilityEffect> {
+fn active_leader_effects(
+    buff: &kobayashi::lcars::BuffSet,
+) -> Vec<kobayashi::combat::ActiveAbilityEffect> {
     kirk_leader_attack_seats(buff)
         .into_iter()
         .map(|s| kobayashi::combat::ActiveAbilityEffect {
@@ -185,8 +185,7 @@ fn kirk_production_phase4d_emits_single_attack_multiplier_seat() {
     assert!(
         matches!(
             seat.ability.condition,
-            Some(AbilityCondition::MoraleActive)
-                | Some(AbilityCondition::And(_))
+            Some(AbilityCondition::MoraleActive) | Some(AbilityCondition::And(_))
         ),
         "Leader seat should gate on MoraleActive (possibly AND RoundRange); got {:?}",
         seat.ability.condition

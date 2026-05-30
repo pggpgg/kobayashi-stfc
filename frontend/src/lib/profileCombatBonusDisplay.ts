@@ -1,5 +1,8 @@
 /** How merged profile combat bonus values should be shown in the UI. */
-export type ProfileCombatBonusDisplayMode = "fractional" | "flat" | "multiplier";
+export type ProfileCombatBonusDisplayMode =
+  | "fractional"
+  | "flat"
+  | "multiplier";
 
 /**
  * Engine storage units for profile bonuses (see `apply_profile_to_attacker` in

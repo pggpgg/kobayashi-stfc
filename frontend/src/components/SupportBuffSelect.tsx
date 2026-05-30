@@ -1,11 +1,11 @@
 import type { CSSProperties } from "react";
 import {
   normalizeSupportBuffSelection,
-  supportBuffOptionsForSide,
   SUPPORT_BUFF_OPTIONS,
   type SupportBuffId,
   type SupportBuffOption,
   type SupportBuffSide,
+  supportBuffOptionsForSide,
 } from "../lib/supportBuffs";
 
 const summaryStyle: CSSProperties = {
