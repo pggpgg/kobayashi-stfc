@@ -351,7 +351,8 @@ pub struct CombatContext {
     /// Hull class of the attacking [`crate::combat::Combatant`] (player ship in PvE).
     pub attacker_ship_type: ShipType,
     /// Attacking ship id slug (same as [`crate::combat::Combatant::id`], e.g. `uss_voyager`).
-    pub attacker_ship_id: String,
+    /// `Arc<str>` avoids a heap allocation on every clone during the hot loop.
+    pub attacker_ship_id: std::sync::Arc<str>,
     /// True when the defending side is an **NPC hostile** (canonical `EnemyHostile` / ship-vs-hostile optimizer).
     pub defender_is_npc_hostile: bool,
     /// True when the defending side is a **player ship** (PvP-shaped scenarios; canonical `EnemyPlayer`).
@@ -361,7 +362,8 @@ pub struct CombatContext {
     /// Bitmask of tags on the defending NPC hostile (from [`crate::combat::SimulationConfig::defender_hostile_tag_mask`]).
     pub defender_hostile_tag_mask: u32,
     /// Engagement category tags from [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, etc.).
-    pub engagement_enemy_types: EnemyTypes,
+    /// `Arc<EnemyTypes>` avoids a heap allocation on every clone during the hot loop.
+    pub engagement_enemy_types: std::sync::Arc<EnemyTypes>,
     /// Optional upstream STFC combat battle-type id for canonical `CombatBattleType` gating.
     /// `None` means unknown/unset for this scenario.
     pub combat_battle_type_id: Option<u32>,
@@ -948,12 +950,12 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Battleship,
-            attacker_ship_id: String::new(),
+            attacker_ship_id: std::sync::Arc::from(""),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
             defender_hostile_tag_mask: 0,
-            engagement_enemy_types: EnemyTypes::default(),
+            engagement_enemy_types: std::sync::Arc::new(EnemyTypes::default()),
             combat_battle_type_id: None,
             defender_level: None,
         }

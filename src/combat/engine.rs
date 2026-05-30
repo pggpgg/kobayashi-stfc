@@ -8,10 +8,11 @@ pub use crate::combat::mitigation::{
 };
 pub use crate::combat::types::{
     effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
-    CrewOfficerStatTotals, DefenderStats, EventSource, HostileMitigationParams, OpponentFactionTag,
-    ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode, WeaponStats,
-    BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
-    MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
+    CrewOfficerStatTotals, DefenderStats, EnemyTypes, EventSource, HostileMitigationParams,
+    OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
+    WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
+    INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS,
+    SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -165,6 +166,10 @@ pub struct PreCombatSetup {
     pub effective_conqueror_borg_beam_suppression: bool,
     pub quantum_beam_instant_loss: bool,
     pub evo_assim_instant_loss: bool,
+    /// Pre-allocated Arc for attacker ship id slug — avoids String clone per construction.
+    pub attacker_ship_id_arc: std::sync::Arc<str>,
+    /// Pre-allocated Arc for engagement enemy types — avoids EnemyTypes clone per construction.
+    pub engagement_enemy_types_arc: std::sync::Arc<EnemyTypes>,
 }
 
 impl PreCombatSetup {
@@ -194,6 +199,10 @@ pub fn build_combat_setup(
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&attacker_crew);
 
+    let attacker_ship_id_arc: std::sync::Arc<str> = attacker.id.clone().into();
+    let engagement_enemy_types_arc: std::sync::Arc<EnemyTypes> =
+        std::sync::Arc::new(config.engagement_enemy_types.clone());
+
     let combat_begin_pre_scale =
         active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     // RoundRange gates on finite-duration combat-begin effects use min: 1 (see Harrison Sabotage).
@@ -215,12 +224,12 @@ pub fn build_combat_setup(
         defender_hull_faction_id: config.defender_hull_faction_id,
         defender_ship_type,
         attacker_ship_type,
-        attacker_ship_id: attacker.id.clone(),
+        attacker_ship_id: std::sync::Arc::clone(&attacker_ship_id_arc),
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-        engagement_enemy_types: config.engagement_enemy_types.clone(),
+        engagement_enemy_types: std::sync::Arc::clone(&engagement_enemy_types_arc),
         combat_battle_type_id: None,
         defender_level: config.defender_level,
     };
@@ -339,6 +348,8 @@ pub fn build_combat_setup(
         defender_shield_break_effects,
         defender_round_end_effects,
         defender_receive_damage_effects,
+        attacker_ship_id_arc,
+        engagement_enemy_types_arc,
     }
 }
 
@@ -356,6 +367,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let defender_is_npc_hostile = setup.defender_is_npc_hostile;
     let defender_is_player_ship = setup.defender_is_player_ship;
     let attacker_tal_assigned_captain_or_bridge = setup.attacker_tal_assigned_captain_or_bridge;
+    let attacker_ship_id_arc = &setup.attacker_ship_id_arc;
+    let engagement_enemy_types_arc = &setup.engagement_enemy_types_arc;
 
     let mut rng = Rng::new(seed);
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
@@ -564,12 +577,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defender_hull_faction_id: config.defender_hull_faction_id,
             defender_ship_type,
             attacker_ship_type,
-            attacker_ship_id: attacker.id.clone(),
+            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: config.engagement_enemy_types.clone(),
+            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
             combat_battle_type_id: None,
             defender_level: config.defender_level,
         };
@@ -643,12 +656,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defender_hull_faction_id: config.defender_hull_faction_id,
             defender_ship_type,
             attacker_ship_type,
-            attacker_ship_id: attacker.id.clone(),
+            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: config.engagement_enemy_types.clone(),
+            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
             combat_battle_type_id: None,
             defender_level: config.defender_level,
         };
@@ -688,12 +701,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defender_hull_faction_id: config.defender_hull_faction_id,
             defender_ship_type,
             attacker_ship_type,
-            attacker_ship_id: attacker.id.clone(),
+            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: config.engagement_enemy_types.clone(),
+            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
             combat_battle_type_id: None,
             defender_level: config.defender_level,
         };
@@ -2109,13 +2122,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     defender_hull_faction_id: config.defender_hull_faction_id,
                     defender_ship_type,
                     attacker_ship_type,
-                    attacker_ship_id: attacker.id.clone(),
+                    attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
                     defender_is_npc_hostile,
                     defender_is_player_ship,
                     attacker_tal_assigned_captain_or_bridge: combat_ctx
                         .attacker_tal_assigned_captain_or_bridge,
                     defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-                    engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+                    engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
                     combat_battle_type_id: combat_ctx.combat_battle_type_id,
                     defender_level: combat_ctx.defender_level,
                 };
@@ -3003,13 +3016,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_hull_faction_id: config.defender_hull_faction_id,
                 defender_ship_type,
                 attacker_ship_type,
-                attacker_ship_id: attacker.id.clone(),
+                attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
                 defender_is_npc_hostile,
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
                     .attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-                engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+                engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
                 combat_battle_type_id: combat_ctx.combat_battle_type_id,
                 defender_level: combat_ctx.defender_level,
             };
@@ -3091,13 +3104,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defender_hull_faction_id: config.defender_hull_faction_id,
             defender_ship_type,
             attacker_ship_type,
-            attacker_ship_id: attacker.id.clone(),
+            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
             defender_is_npc_hostile,
             defender_is_player_ship,
             attacker_tal_assigned_captain_or_bridge: combat_ctx
                 .attacker_tal_assigned_captain_or_bridge,
             defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
             combat_battle_type_id: combat_ctx.combat_battle_type_id,
             defender_level: combat_ctx.defender_level,
         };
@@ -3251,12 +3264,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_hull_faction_id: config.defender_hull_faction_id,
                 defender_ship_type,
                 attacker_ship_type,
-                attacker_ship_id: attacker.id.clone(),
+                attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
                 defender_is_npc_hostile,
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-                engagement_enemy_types: config.engagement_enemy_types.clone(),
+                engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
                 combat_battle_type_id: None,
                 defender_level: config.defender_level,
             };
@@ -3310,13 +3323,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_hull_faction_id: config.defender_hull_faction_id,
                 defender_ship_type,
                 attacker_ship_type,
-                attacker_ship_id: attacker.id.clone(),
+                attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
                 defender_is_npc_hostile,
                 defender_is_player_ship,
                 attacker_tal_assigned_captain_or_bridge: combat_ctx
                     .attacker_tal_assigned_captain_or_bridge,
                 defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-                engagement_enemy_types: combat_ctx.engagement_enemy_types.clone(),
+                engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
                 combat_battle_type_id: combat_ctx.combat_battle_type_id,
                 defender_level: combat_ctx.defender_level,
             };
@@ -3386,12 +3399,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         defender_hull_faction_id: config.defender_hull_faction_id,
         defender_ship_type,
         attacker_ship_type,
-        attacker_ship_id: attacker.id.clone(),
+                    attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
         defender_is_npc_hostile,
         defender_is_player_ship,
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-        engagement_enemy_types: config.engagement_enemy_types.clone(),
+        engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
         combat_battle_type_id: None,
         defender_level: config.defender_level,
     };

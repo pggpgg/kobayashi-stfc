@@ -74,7 +74,7 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         }
         AbilityCondition::DefenderShipTypeIs(expected) => ctx.defender_ship_type == *expected,
         AbilityCondition::AttackerShipTypeIs(expected) => ctx.attacker_ship_type == *expected,
-        AbilityCondition::AttackerShipIdIs(expected) => ctx.attacker_ship_id == *expected,
+        AbilityCondition::AttackerShipIdIs(expected) => *ctx.attacker_ship_id == *expected,
         AbilityCondition::DefenderIsNpcHostile => ctx.defender_is_npc_hostile,
         AbilityCondition::DefenderIsPlayerShip => ctx.defender_is_player_ship,
         AbilityCondition::AttackerOfficerTalNotOnBridge => {
@@ -224,12 +224,12 @@ mod tests {
             defender_hull_faction_id: 0,
             defender_ship_type: ShipType::Battleship,
             attacker_ship_type: ShipType::Explorer,
-            attacker_ship_id: "test_ship".to_string(),
+            attacker_ship_id: std::sync::Arc::from("test_ship"),
             defender_is_npc_hostile: true,
             defender_is_player_ship: false,
             attacker_tal_assigned_captain_or_bridge: false,
             defender_hostile_tag_mask: 0,
-            engagement_enemy_types: EnemyTypes::default(),
+            engagement_enemy_types: std::sync::Arc::new(EnemyTypes::default()),
             combat_battle_type_id: None,
             defender_level: None,
         }
