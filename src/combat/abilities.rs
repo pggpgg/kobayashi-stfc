@@ -606,11 +606,25 @@ pub fn filter_effects_by_condition(
     effects: &[ActiveAbilityEffect],
     ctx: &CombatContext,
 ) -> Vec<ActiveAbilityEffect> {
-    effects
-        .iter()
-        .filter(|e| e.condition.as_ref().is_none_or(|c| c.evaluate(ctx)))
-        .cloned()
-        .collect()
+    if effects.is_empty() {
+        return Vec::new();
+    }
+    // Fast path: no effect has any condition — clone the whole slice directly.
+    // This avoids the per-element condition evaluation overhead for the common case
+    // where most timing windows have exclusively unconditional effects.
+    if effects.iter().all(|e| e.condition.is_none()) {
+        return effects.to_vec();
+    }
+    let mut out = Vec::with_capacity(effects.len());
+    for e in effects {
+        if e.condition
+            .as_ref()
+            .is_none_or(|c| c.evaluate(ctx))
+        {
+            out.push(e.clone());
+        }
+    }
+    out
 }
 
 /// Sum [`AbilityEffect::MitigationAdditive`] from combat-begin (or similar) filtered rows.
