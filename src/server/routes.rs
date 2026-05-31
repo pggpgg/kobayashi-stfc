@@ -1181,6 +1181,7 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(16);
     tokio::spawn(async move {
         let job_id = job_id.clone();
+        let mut last_payload = String::new();
         loop {
             match api::get_job_status(&job_id) {
                 Ok(response) => {
@@ -1194,6 +1195,15 @@ async fn handle_optimize_job_stream(Path(job_id): Path<String>) -> impl IntoResp
                             break;
                         }
                     };
+                    // Skip sending if nothing changed — for long-running optimize
+                    // jobs this avoids ~95% of serde passes and network writes.
+                    // Always send terminal (done/error) events so the client
+                    // receives the final state even when polled at start.
+                    if !done && payload == last_payload {
+                        tokio::time::sleep(Duration::from_millis(300)).await;
+                        continue;
+                    }
+                    last_payload = payload.clone();
                     let event = Event::default().data(payload);
                     if tx.send(Ok(event)).await.is_err() {
                         break;
@@ -1340,6 +1350,7 @@ async fn handle_sensitivity_job_stream(Path(job_id): Path<String>) -> impl IntoR
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(16);
     tokio::spawn(async move {
         let job_id = job_id.clone();
+        let mut last_payload = String::new();
         loop {
             match sensitivity_jobs::get_job_status(&job_id) {
                 Ok(response) => {
@@ -1353,6 +1364,11 @@ async fn handle_sensitivity_job_stream(Path(job_id): Path<String>) -> impl IntoR
                             break;
                         }
                     };
+                    if !done && payload == last_payload {
+                        tokio::time::sleep(Duration::from_millis(300)).await;
+                        continue;
+                    }
+                    last_payload = payload.clone();
                     let event = Event::default().data(payload);
                     if tx.send(Ok(event)).await.is_err() {
                         break;
