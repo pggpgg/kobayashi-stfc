@@ -35,6 +35,7 @@ use tracing::Span;
 use crate::data::data_registry::DataRegistry;
 use crate::mechanics::coverage::mechanics_coverage_json;
 use crate::server::api;
+use crate::server::api::load_hull_id_registry;
 use crate::server::api_key;
 use crate::server::cpu_admission;
 use crate::server::openapi;
@@ -54,6 +55,8 @@ pub struct AppState {
     pub cpu_job_queue_wait_env_present: bool,
     /// Wall-clock time when this server process built router state (after data validation).
     pub started_at_utc: chrono::DateTime<chrono::Utc>,
+    /// Mapping from upstream hull IDs to Kobayashi ship IDs, loaded once at startup.
+    pub hull_id_registry: Arc<HashMap<i64, String>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +168,7 @@ const BODY_LIMIT_PROFILE_BACKUP: usize = 32 * 1024 * 1024;
 pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let (cpu_job_queue_wait, cpu_job_queue_wait_env_present) =
         cpu_admission::cpu_job_queue_wait_config_from_env();
+    let hull_id_registry = Arc::new(load_hull_id_registry());
     let state = AppState {
         registry,
         cpu_jobs: Arc::new(Semaphore::new(
@@ -173,6 +177,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         cpu_job_queue_wait,
         cpu_job_queue_wait_env_present,
         started_at_utc: chrono::Utc::now(),
+        hull_id_registry,
     };
 
     let api_read = Router::new()
@@ -576,7 +581,12 @@ async fn handle_ships(
         .map(|s| s == "1" || s.eq_ignore_ascii_case("true"))
         .unwrap_or(false);
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::ships_payload(state.registry.as_ref(), owned_only, profile_id.as_deref()) {
+    match api::ships_payload(
+        state.registry.as_ref(),
+        owned_only,
+        profile_id.as_deref(),
+        &state.hull_id_registry,
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

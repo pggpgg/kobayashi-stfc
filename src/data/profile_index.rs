@@ -5,6 +5,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 use tracing::info;
@@ -88,8 +89,15 @@ fn sanitize_profile_id(id: &str) -> String {
         .collect()
 }
 
+/// Process-wide cache to avoid re-reading profiles/index.json on every request.
+static PROFILE_INDEX_CACHE: OnceLock<Mutex<ProfileIndex>> = OnceLock::new();
+
+fn get_profile_index_cache() -> &'static Mutex<ProfileIndex> {
+    PROFILE_INDEX_CACHE.get_or_init(|| Mutex::new(load_profile_index_from_disk()))
+}
+
 /// Load the profile index from disk. Returns default (empty) if missing or invalid.
-pub fn load_profile_index() -> ProfileIndex {
+fn load_profile_index_from_disk() -> ProfileIndex {
     let path = Path::new(PROFILE_INDEX_PATH);
     if !path.exists() {
         return ProfileIndex::default();
@@ -101,7 +109,12 @@ pub fn load_profile_index() -> ProfileIndex {
     serde_json::from_str(&raw).unwrap_or_default()
 }
 
-/// Save the profile index to disk.
+/// Load the profile index, using the process-wide cache.
+pub fn load_profile_index() -> ProfileIndex {
+    get_profile_index_cache().lock().unwrap().clone()
+}
+
+/// Save the profile index to disk and update the in-memory cache.
 pub fn save_profile_index(index: &ProfileIndex) -> std::io::Result<()> {
     if let Some(parent) = Path::new(PROFILE_INDEX_PATH).parent() {
         fs::create_dir_all(parent)?;
@@ -109,7 +122,12 @@ pub fn save_profile_index(index: &ProfileIndex) -> std::io::Result<()> {
     fs::write(
         PROFILE_INDEX_PATH,
         serde_json::to_string_pretty(index).unwrap(),
-    )
+    )?;
+    // Update the process-wide cache so subsequent reads don't hit disk.
+    if let Some(cache) = PROFILE_INDEX_CACHE.get() {
+        *cache.lock().unwrap() = index.clone();
+    }
+    Ok(())
 }
 
 /// Get the effective profile id to use (from index default or fallback).
