@@ -239,6 +239,9 @@ export function useWorkspace() {
   const [rosterLoadState, setRosterLoadState] = useState<
     "idle" | "loading" | "done" | "error"
   >("idle");
+  const estimateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const setError = (message: string | null) => {
     setErrorState(message);
@@ -302,7 +305,8 @@ export function useWorkspace() {
     };
   }, []);
 
-  // Fetch optimize estimate when parameters change
+  // Fetch optimize estimate when parameters change (debounced 350ms to avoid
+  // firing on every keystroke while typing sims/tier values).
   useEffect(() => {
     const ship = shipId || "Saladin";
     const hostile = scenarioId || "2918121098";
@@ -310,28 +314,35 @@ export function useWorkspace() {
       setEstimate(null);
       return;
     }
-    let cancelled = false;
-    getOptimizeEstimate(
-      {
-        ship,
-        hostile,
-        sims: simsPerCrew,
-        max_candidates: maxCandidates ?? undefined,
-        below_decks_pool_mode:
-          belowDecksPoolMode !== "strict" ? belowDecksPoolMode : undefined,
-        ship_tier: shipTier > 0 ? shipTier : undefined,
-        ship_level: shipLevel > 0 ? shipLevel : undefined,
-      },
-      activeProfileId,
-    )
-      .then((data) => {
-        if (!cancelled) setEstimate(data);
-      })
-      .catch(() => {
-        if (!cancelled) setEstimate(null);
-      });
+
+    if (estimateDebounceRef.current) {
+      clearTimeout(estimateDebounceRef.current);
+    }
+
+    estimateDebounceRef.current = setTimeout(() => {
+      estimateDebounceRef.current = null;
+      getOptimizeEstimate(
+        {
+          ship,
+          hostile,
+          sims: simsPerCrew,
+          max_candidates: maxCandidates ?? undefined,
+          below_decks_pool_mode:
+            belowDecksPoolMode !== "strict" ? belowDecksPoolMode : undefined,
+          ship_tier: shipTier > 0 ? shipTier : undefined,
+          ship_level: shipLevel > 0 ? shipLevel : undefined,
+        },
+        activeProfileId,
+      )
+        .then((data) => setEstimate(data))
+        .catch(() => setEstimate(null));
+    }, 350);
+
     return () => {
-      cancelled = true;
+      if (estimateDebounceRef.current) {
+        clearTimeout(estimateDebounceRef.current);
+        estimateDebounceRef.current = null;
+      }
     };
   }, [
     shipId,
@@ -383,11 +394,17 @@ export function useWorkspace() {
   useEffect(() => {
     if (optimizerStrategy === "genetic" && fastDiscovery)
       setFastDiscovery(false);
-  }, [optimizerStrategy, fastDiscovery]);
+    // Deliberately omit fastDiscovery from deps to avoid self-referencing
+    // re-trigger when the effect itself sets fastDiscovery to false.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optimizerStrategy]);
 
   useEffect(() => {
     if (heuristicsOnly && fastDiscovery) setFastDiscovery(false);
-  }, [heuristicsOnly, fastDiscovery]);
+    // Deliberately omit fastDiscovery from deps to avoid self-referencing
+    // re-trigger when the effect itself sets fastDiscovery to false.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heuristicsOnly]);
 
   // Sync crew/pins with ship level and per-ship below-decks unlock schedule
   useEffect(() => {

@@ -246,6 +246,19 @@ impl RngExt for Rng {
 }
 
 /// Build one random valid crew from pools with distinct officers in every seat.
+/// Pick a random element from an iterator of filtered pool members, using a
+/// double-pass (count then nth) to avoid a Vec allocation.
+fn pick_from_pool<'a, I>(mut iter: I, rng: &mut Rng) -> Option<&'a String>
+where
+    I: Iterator<Item = &'a String> + Clone,
+{
+    let count = iter.clone().count();
+    if count == 0 {
+        return None;
+    }
+    iter.nth(rng.index(count))
+}
+
 fn random_crew(
     rng: &mut Rng,
     pools: &OfficerPools,
@@ -264,26 +277,26 @@ fn random_crew(
 
     let mut bridge = Vec::with_capacity(BRIDGE_SLOTS);
     for _ in 0..BRIDGE_SLOTS {
-        let available: Vec<&String> = pools.bridge.iter().filter(|s| !used.contains(*s)).collect();
-        if available.is_empty() {
-            return None;
-        }
-        let name = available[rng.index(available.len())].clone();
+        let name = match pick_from_pool(
+            pools.bridge.iter().filter(|s| !used.contains(*s)),
+            rng,
+        ) {
+            Some(n) => n.clone(),
+            None => return None,
+        };
         bridge.push(name.clone());
         used.insert(name);
     }
 
     let mut below_decks = Vec::with_capacity(below_decks_slots);
     for _ in 0..below_decks_slots {
-        let available: Vec<&String> = pools
-            .below_decks
-            .iter()
-            .filter(|s| !used.contains(*s))
-            .collect();
-        if available.is_empty() {
-            return None;
-        }
-        let name = available[rng.index(available.len())].clone();
+        let name = match pick_from_pool(
+            pools.below_decks.iter().filter(|s| !used.contains(*s)),
+            rng,
+        ) {
+            Some(n) => n.clone(),
+            None => return None,
+        };
         below_decks.push(name.clone());
         used.insert(name);
     }
@@ -433,27 +446,27 @@ fn crossover(
     let mut used: HashSet<String> = HashSet::new();
     used.insert(captain.clone());
 
-    // Dedup-preserving-order: HashSet::into_iter().collect() reorders non-deterministically
-    // (RandomState hashing), which leaks into the crossover output and breaks
-    // `ga_run_is_deterministic_for_same_seed`. Walk the union once and keep first-seen.
-    let mut bridge_seen: HashSet<String> = HashSet::new();
-    let mut bridge_vec: Vec<String> = Vec::new();
+    // Dedup-preserving-order using a small Vec instead of HashSet (max 6 elements per crew).
+    // A linear scan is faster than hashing for these tiny sets and avoids two HashSet allocations.
+    let mut bridge_seen: Vec<String> = Vec::with_capacity(4);
+    let mut bridge_vec: Vec<String> = Vec::with_capacity(BRIDGE_SLOTS);
     for s in a.bridge.iter().chain(b.bridge.iter()) {
-        if used.contains(s) {
+        if used.contains(s) || bridge_seen.iter().any(|x| x == s) {
             continue;
         }
-        if bridge_seen.insert(s.clone()) {
-            bridge_vec.push(s.clone());
-        }
+        bridge_seen.push(s.clone());
+        bridge_vec.push(s.clone());
     }
     while bridge_vec.len() < BRIDGE_SLOTS {
-        let available: Vec<&String> = pools.bridge.iter().filter(|s| !used.contains(*s)).collect();
-        if available.is_empty() {
-            break;
-        }
-        let pick = available[rng.index(available.len())].clone();
-        bridge_vec.push(pick.clone());
-        used.insert(pick);
+        let name = match pick_from_pool(
+            pools.bridge.iter().filter(|s| !used.contains(*s)),
+            rng,
+        ) {
+            Some(n) => n.clone(),
+            None => break,
+        };
+        bridge_vec.push(name.clone());
+        used.insert(name);
     }
     if bridge_vec.len() > BRIDGE_SLOTS {
         bridge_vec.truncate(BRIDGE_SLOTS);
@@ -462,29 +475,25 @@ fn crossover(
         used.insert(s.clone());
     }
 
-    // Same HashSet-iter non-determinism fix as the bridge block above.
-    let mut below_seen: HashSet<String> = HashSet::new();
-    let mut below_vec: Vec<String> = Vec::new();
+    let mut below_seen: Vec<String> = Vec::with_capacity(6);
+    let mut below_vec: Vec<String> = Vec::with_capacity(below_decks_slots);
     for s in a.below_decks.iter().chain(b.below_decks.iter()) {
-        if used.contains(s) {
+        if used.contains(s) || below_seen.iter().any(|x| x == s) {
             continue;
         }
-        if below_seen.insert(s.clone()) {
-            below_vec.push(s.clone());
-        }
+        below_seen.push(s.clone());
+        below_vec.push(s.clone());
     }
     while below_vec.len() < below_decks_slots {
-        let available: Vec<&String> = pools
-            .below_decks
-            .iter()
-            .filter(|s| !used.contains(*s))
-            .collect();
-        if available.is_empty() {
-            break;
-        }
-        let pick = available[rng.index(available.len())].clone();
-        below_vec.push(pick.clone());
-        used.insert(pick);
+        let name = match pick_from_pool(
+            pools.below_decks.iter().filter(|s| !used.contains(*s)),
+            rng,
+        ) {
+            Some(n) => n.clone(),
+            None => break,
+        };
+        below_vec.push(name.clone());
+        used.insert(name);
     }
     if below_vec.len() > below_decks_slots {
         below_vec.truncate(below_decks_slots);
@@ -524,28 +533,28 @@ fn repair_crew(
     }
 
     while crew.bridge.len() < BRIDGE_SLOTS {
-        let available: Vec<&String> = pools.bridge.iter().filter(|s| !used.contains(*s)).collect();
-        if available.is_empty() {
-            break;
-        }
-        let pick = available[rng.index(available.len())].clone();
-        crew.bridge.push(pick.clone());
-        used.insert(pick.clone());
+        let name = match pick_from_pool(
+            pools.bridge.iter().filter(|s| !used.contains(*s)),
+            rng,
+        ) {
+            Some(n) => n.clone(),
+            None => break,
+        };
+        crew.bridge.push(name.clone());
+        used.insert(name);
     }
     crew.bridge.truncate(BRIDGE_SLOTS);
 
     while crew.below_decks.len() < below_decks_slots {
-        let available: Vec<&String> = pools
-            .below_decks
-            .iter()
-            .filter(|s| !used.contains(*s))
-            .collect();
-        if available.is_empty() {
-            break;
-        }
-        let pick = available[rng.index(available.len())].clone();
-        crew.below_decks.push(pick.clone());
-        used.insert(pick.clone());
+        let name = match pick_from_pool(
+            pools.below_decks.iter().filter(|s| !used.contains(*s)),
+            rng,
+        ) {
+            Some(n) => n.clone(),
+            None => break,
+        };
+        crew.below_decks.push(name.clone());
+        used.insert(name);
     }
     crew.below_decks.truncate(below_decks_slots);
     // Canonical ordering — see comment in `crossover`.

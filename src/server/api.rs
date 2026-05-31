@@ -175,7 +175,7 @@ fn merge_roster_tier_level(existing: (u32, u32), incoming: (u32, u32)) -> (u32, 
 }
 
 /// Load hull_id -> ship_id mapping. Returns empty map if file missing or invalid.
-fn load_hull_id_registry() -> HashMap<i64, String> {
+pub(crate) fn load_hull_id_registry() -> HashMap<i64, String> {
     let raw = match fs::read_to_string(HULL_ID_REGISTRY_PATH) {
         Ok(s) => s,
         _ => return HashMap::new(),
@@ -202,6 +202,7 @@ pub fn ships_payload(
     registry: &DataRegistry,
     owned_only: bool,
     profile_id: Option<&str>,
+    hull_id_registry: &HashMap<i64, String>,
 ) -> Result<String, serde_json::Error> {
     let idx = match registry.ship_index() {
         Some(i) => i,
@@ -219,12 +220,11 @@ pub fn ships_payload(
             .to_string_lossy()
             .to_string();
         let imported = load_imported_ships(&ships_path);
-        let hull_registry = load_hull_id_registry();
 
         let mut roster_tier_level = std::collections::HashMap::new();
         if let Some(ships) = &imported {
             for entry in ships {
-                if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                if let Some(sid) = hull_id_registry.get(&entry.hull_id) {
                     let t = entry.tier.max(0) as u32;
                     let l = entry.level.max(0) as u32;
                     roster_tier_level
@@ -235,12 +235,12 @@ pub fn ships_payload(
             }
         }
 
-        if hull_registry.is_empty() {
+        if hull_id_registry.is_empty() {
             (None, roster_tier_level)
         } else if let Some(ships) = imported {
             let mut ids = std::collections::HashSet::new();
             for entry in &ships {
-                if let Some(sid) = hull_registry.get(&entry.hull_id) {
+                if let Some(sid) = hull_id_registry.get(&entry.hull_id) {
                     ids.insert(sid.clone());
                 }
             }
