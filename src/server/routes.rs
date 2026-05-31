@@ -169,6 +169,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let (cpu_job_queue_wait, cpu_job_queue_wait_env_present) =
         cpu_admission::cpu_job_queue_wait_config_from_env();
     let hull_id_registry = Arc::new(load_hull_id_registry());
+    let dist_dir = locate_dist_dir();
     let state = AppState {
         registry,
         cpu_jobs: Arc::new(Semaphore::new(
@@ -320,11 +321,19 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     // When dist does not exist:
     //   - "/" serves the legacy API console HTML.
     //   - All other paths return 404.
-    let app = match locate_dist_dir() {
-        Some(_dir) => {
+    let app = match &dist_dir {
+        Some(dir) => {
             // Fallback handler: serve static files from dist; if the path doesn't
             // exist, serve index.html (200) so React Router deep-links work.
-            api_routes.fallback(serve_spa_static_fallback)
+            // Capture dist_dir in the closure to avoid blocking locate_dist_dir()
+            // on every request.
+            let dist = dir.clone();
+            api_routes.fallback(move |uri| {
+                let dist = dist.clone();
+                async move {
+                    serve_spa_static_fallback_with_dir(uri, dist).await
+                }
+            })
         }
         None => {
             // No built SPA — serve the legacy API console on "/" only and 404
@@ -399,15 +408,14 @@ fn spa_asset_cache_control(rel: &str) -> &'static str {
     }
 }
 
-async fn serve_spa_static_fallback(OriginalUri(uri): OriginalUri) -> Response {
-    let dir = match locate_dist_dir() {
-        Some(d) => d,
-        None => return error_json(StatusCode::NOT_FOUND, "Not found").into_response(),
-    };
+async fn serve_spa_static_fallback_with_dir(
+    OriginalUri(uri): OriginalUri,
+    dir: std::path::PathBuf,
+) -> Response {
     let path = uri.path();
     let rel = path.trim_start_matches('/');
     if rel.is_empty() {
-        return serve_index_html(&dir);
+        return serve_index_html(&dir).await;
     }
     let path = PathBuf::from(rel);
     if path
@@ -434,22 +442,22 @@ async fn serve_spa_static_fallback(OriginalUri(uri): OriginalUri) -> Response {
             }
             Err(_) => error_json(StatusCode::INTERNAL_SERVER_ERROR, "Read error").into_response(),
         },
-        _ => spa_fallback_for_missing(rel, &dir),
+        _ => spa_fallback_for_missing(rel, &dir).await,
     }
 }
 
 /// React Router deep-links fall back to `index.html`; missing Vite chunks must 404 instead
 /// (serving HTML for `/assets/*.js` makes the browser fail module load → blank UI).
-fn spa_fallback_for_missing(rel: &str, dir: &std::path::Path) -> Response {
+async fn spa_fallback_for_missing(rel: &str, dir: &std::path::Path) -> Response {
     if rel.starts_with("assets/") {
         return error_json(StatusCode::NOT_FOUND, "Asset not found").into_response();
     }
-    serve_index_html(dir)
+    serve_index_html(dir).await
 }
 
-fn serve_index_html(dir: &std::path::Path) -> Response {
+async fn serve_index_html(dir: &std::path::Path) -> Response {
     let index = dir.join("index.html");
-    match std::fs::read(&index) {
+    match tokio::fs::read(&index).await {
         Ok(body) => (
             StatusCode::OK,
             [
@@ -1560,8 +1568,8 @@ mod spa_cache_control_tests {
     use super::{spa_asset_cache_control, spa_fallback_for_missing};
     use axum::http::StatusCode;
 
-    #[test]
-    fn missing_vite_asset_returns_404_not_index_html() {
+    #[tokio::test]
+    async fn missing_vite_asset_returns_404_not_index_html() {
         let dir = std::env::temp_dir().join(format!(
             "kobayashi_spa_fallback_test_{}",
             std::process::id()
@@ -1574,10 +1582,10 @@ mod spa_cache_control_tests {
         )
         .unwrap();
 
-        let resp = spa_fallback_for_missing("assets/missing-chunk.js", &dir);
+        let resp = spa_fallback_for_missing("assets/missing-chunk.js", &dir).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 
-        let resp = spa_fallback_for_missing("workspace/deep-link", &dir);
+        let resp = spa_fallback_for_missing("workspace/deep-link", &dir).await;
         assert_eq!(resp.status(), StatusCode::OK);
 
         let _ = std::fs::remove_dir_all(&dir);
