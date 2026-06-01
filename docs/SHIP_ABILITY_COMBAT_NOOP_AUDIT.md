@@ -92,7 +92,7 @@ When adding new ships from upstream:
 
 ## 6. Track D shard audit (2026-05-19)
 
-Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, `translations-ship_buffs.json`, and the live catalog. Per-id tables: [`docs/audit_shards/ship_ability_noop_shard_1.md`](audit_shards/ship_ability_noop_shard_1.md) … `_8.md`. Supervisor assignments: [`docs/TRACK_D_SUPERVISOR.md`](TRACK_D_SUPERVISOR.md).
+Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, `translations-ship_buffs.json`, and the live catalog. Per-id tables: [`docs/audit_shards/ship_ability_noop_shard_1.md`](audit_shards/ship_ability_noop_shard_1.md) … `_8.md`.
 
 **Summary:** 64 `keep_noop`, 4 modeled in Track D2 (§6.1), 2 `reclassify_catalog` (earlier), 2 proc chains review-only.
 
