@@ -277,10 +277,7 @@ fn random_crew(
 
     let mut bridge = Vec::with_capacity(BRIDGE_SLOTS);
     for _ in 0..BRIDGE_SLOTS {
-        let name = match pick_from_pool(
-            pools.bridge.iter().filter(|s| !used.contains(*s)),
-            rng,
-        ) {
+        let name = match pick_from_pool(pools.bridge.iter().filter(|s| !used.contains(*s)), rng) {
             Some(n) => n.clone(),
             None => return None,
         };
@@ -290,13 +287,11 @@ fn random_crew(
 
     let mut below_decks = Vec::with_capacity(below_decks_slots);
     for _ in 0..below_decks_slots {
-        let name = match pick_from_pool(
-            pools.below_decks.iter().filter(|s| !used.contains(*s)),
-            rng,
-        ) {
-            Some(n) => n.clone(),
-            None => return None,
-        };
+        let name =
+            match pick_from_pool(pools.below_decks.iter().filter(|s| !used.contains(*s)), rng) {
+                Some(n) => n.clone(),
+                None => return None,
+            };
         below_decks.push(name.clone());
         used.insert(name);
     }
@@ -458,10 +453,7 @@ fn crossover(
         bridge_vec.push(s.clone());
     }
     while bridge_vec.len() < BRIDGE_SLOTS {
-        let name = match pick_from_pool(
-            pools.bridge.iter().filter(|s| !used.contains(*s)),
-            rng,
-        ) {
+        let name = match pick_from_pool(pools.bridge.iter().filter(|s| !used.contains(*s)), rng) {
             Some(n) => n.clone(),
             None => break,
         };
@@ -485,13 +477,11 @@ fn crossover(
         below_vec.push(s.clone());
     }
     while below_vec.len() < below_decks_slots {
-        let name = match pick_from_pool(
-            pools.below_decks.iter().filter(|s| !used.contains(*s)),
-            rng,
-        ) {
-            Some(n) => n.clone(),
-            None => break,
-        };
+        let name =
+            match pick_from_pool(pools.below_decks.iter().filter(|s| !used.contains(*s)), rng) {
+                Some(n) => n.clone(),
+                None => break,
+            };
         below_vec.push(name.clone());
         used.insert(name);
     }
@@ -533,10 +523,7 @@ fn repair_crew(
     }
 
     while crew.bridge.len() < BRIDGE_SLOTS {
-        let name = match pick_from_pool(
-            pools.bridge.iter().filter(|s| !used.contains(*s)),
-            rng,
-        ) {
+        let name = match pick_from_pool(pools.bridge.iter().filter(|s| !used.contains(*s)), rng) {
             Some(n) => n.clone(),
             None => break,
         };
@@ -546,13 +533,11 @@ fn repair_crew(
     crew.bridge.truncate(BRIDGE_SLOTS);
 
     while crew.below_decks.len() < below_decks_slots {
-        let name = match pick_from_pool(
-            pools.below_decks.iter().filter(|s| !used.contains(*s)),
-            rng,
-        ) {
-            Some(n) => n.clone(),
-            None => break,
-        };
+        let name =
+            match pick_from_pool(pools.below_decks.iter().filter(|s| !used.contains(*s)), rng) {
+                Some(n) => n.clone(),
+                None => break,
+            };
         crew.below_decks.push(name.clone());
         used.insert(name);
     }
