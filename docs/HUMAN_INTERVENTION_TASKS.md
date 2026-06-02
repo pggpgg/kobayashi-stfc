@@ -14,8 +14,10 @@ Work the simulator or data pipeline cannot complete automatically: judgment, ups
 
 ## Recorded fights and CLI
 
-1. **Defender faction for imports / calibration**
-  `simulate_combat` still uses `OpponentFactionTag::Unknown`. If recorded fights or CLI runs should honor faction-gated hull abilities, a human must decide how to supply faction (export metadata, hostile id lookup, or explicit flag) and wire it to `simulate_combat_with_defender_faction`.
+1. **Defender faction for imports** — **CLI and calibration are wired; recorded-fight import remains the open item.**
+  - **CLI `simulate`:** supply faction explicitly with `--defender-faction <slug>`, or let `--hostile <id|name level>` derive it. Resolved by `defender_faction_for_cli_simulate` (`src/data/loader.rs`) and passed to `simulate_combat_with_defender_faction`.
+  - **Calibration drift fixtures:** set `simulation.defender_faction` (slug) — and optionally `simulation.defender_hull_faction_id` — in a `drift_*.json` fixture. Validated at load and threaded through `src/calibration/drift.rs` so `AbilityCondition::DefenderFactionIs` gating fires (see `drift_faction_gated_attack_multiplier.json`).
+  - **Recorded-fight import (still open):** TSV fight exports (`FightExport`, `src/combat/export_csv.rs`) carry no faction field, so `simulate_combat` defaults to `OpponentFactionTag::Unknown`. Honoring faction-gated hull abilities for imported fights needs a human decision on how to supply faction (enemy ship-name → hostile id → faction lookup, or an explicit import flag).
 
 ## Research / CI environment
 
