@@ -330,9 +330,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
             let dist = dir.clone();
             api_routes.fallback(move |uri| {
                 let dist = dist.clone();
-                async move {
-                    serve_spa_static_fallback_with_dir(uri, dist).await
-                }
+                async move { serve_spa_static_fallback_with_dir(uri, dist).await }
             })
         }
         None => {

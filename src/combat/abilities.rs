@@ -617,10 +617,7 @@ pub fn filter_effects_by_condition(
     }
     let mut out = Vec::with_capacity(effects.len());
     for e in effects {
-        if e.condition
-            .as_ref()
-            .is_none_or(|c| c.evaluate(ctx))
-        {
+        if e.condition.as_ref().is_none_or(|c| c.evaluate(ctx)) {
             out.push(e.clone());
         }
     }
