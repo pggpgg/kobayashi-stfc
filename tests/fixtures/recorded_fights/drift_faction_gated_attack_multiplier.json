@@ -1,0 +1,35 @@
+{
+  "id": "drift_faction_gated_attack_multiplier",
+  "source": "mathematical invariant",
+  "description": "Faction-gated combat in the calibration path: a synthetic Captain AttackMultiplier (+50%) gated on AbilityCondition::DefenderFactionIs(Klingon) via simulation.defender_faction. The defender's faction is supplied explicitly (mirrors the CLI --defender-faction flag), so the multiplier fires and boosts outgoing weapon damage. Single deterministic round (seed 7), defender hull large enough to survive so total_damage measures one round of boosted output. With defender_faction unset (Unknown) the condition would fail and the multiplier would not apply; see the drift.rs unit tests for that comparison.",
+  "attacker": {
+    "id": "faction_gate_attacker",
+    "attack": 1000,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 100000,
+    "shield_health": 0,
+    "weapons": [{ "attack": 1000, "shots": 1 }]
+  },
+  "defender": {
+    "id": "klingon_target",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 1000000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 1,
+    "seed": 7,
+    "defender_faction": "klingon"
+  },
+  "synthetic_crew": {
+    "faction_gated_attack_multiplier": 0.5
+  },
+  "bands": {
+    "total_damage": [1500, 1500],
+    "rounds_simulated": [1, 1]
+  },
+  "expect_attacker_won": false
+}

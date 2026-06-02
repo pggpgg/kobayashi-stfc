@@ -7,9 +7,9 @@ use std::path::Path;
 use serde::Deserialize;
 
 use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass, AbilityEffect,
-    Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag, ShipType,
-    SimulationConfig, TimingWindow, TraceMode, WeaponStats,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass,
+    AbilityCondition, AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
+    OpponentFactionTag, ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -67,6 +67,14 @@ pub struct DriftSyntheticCrew {
     /// targeting the **attacker**. Exercises hostile-applied Burning damage ticks on the player.
     #[serde(default)]
     pub attacker_burning_rounds: Option<u32>,
+    /// Apply [`AbilityEffect::AttackMultiplier`] at RoundStart **gated on
+    /// [`AbilityCondition::DefenderFactionIs`]`(Klingon)`** (a fixed representative target).
+    /// Fires only when the fixture's `simulation.defender_faction` resolves to `Klingon`;
+    /// any other faction (or unset → `Unknown`) fails the condition and the multiplier does
+    /// not apply. Exercises that `simulation.defender_faction` is threaded into
+    /// `CombatContext::defender_faction` and gates combat in the calibration path.
+    #[serde(default)]
+    pub faction_gated_attack_multiplier: Option<f64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -87,6 +95,15 @@ pub struct FixtureSimulation {
     /// Passed through to [`SimulationConfig::defender_hostile_tag_mask`]. Default 0.
     #[serde(default)]
     pub defender_hostile_tag_mask: u32,
+    /// Defender faction slug (e.g. `"klingon"`, `"romulan"`), parsed via
+    /// [`OpponentFactionTag::from_data_slug`]. Drives [`crate::combat::abilities::AbilityCondition::DefenderFactionIs`]
+    /// gating in the engine. Validated at load time ([`load_drift_fixture`]); `None` → [`OpponentFactionTag::Unknown`].
+    #[serde(default)]
+    pub defender_faction: Option<String>,
+    /// Upstream defender hostile `faction.id` for [`SimulationConfig::defender_hull_faction_id`]
+    /// (hull-faction-gated abilities). `None` → `0` (unknown). Mirrors the CLI `--hostile` path.
+    #[serde(default)]
+    pub defender_hull_faction_id: Option<i64>,
 }
 
 fn default_seed() -> u64 {
@@ -268,6 +285,25 @@ fn crew_for_drift(
         }
     }
 
+    if let Some(mult) = c.faction_gated_attack_multiplier {
+        if mult.is_finite() && mult != 0.0 {
+            attacker_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Captain,
+                Ability {
+                    name: "drift_synthetic_faction_gated_attack_mult".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::AttackMultiplier(mult),
+                    condition: Some(AbilityCondition::DefenderFactionIs(
+                        OpponentFactionTag::Klingon,
+                    )),
+                },
+                false,
+            ));
+        }
+    }
+
     // Attacker-targeted status effects: defender crew abilities that apply Burning/HullBreach
     // to the attacker during counter-fire. Wired as defender AttackPhase abilities so they
     // fire in the counter-fire processing path (defender shoots attacker). Chance 1.0 ensures
@@ -330,6 +366,18 @@ fn crew_for_drift(
     (attacker_crew, defender_crew)
 }
 
+/// Resolve the fixture's defender faction to an [`OpponentFactionTag`].
+///
+/// Returns [`OpponentFactionTag::Unknown`] when `defender_faction` is unset. The slug is
+/// validated at load time by [`load_drift_fixture`], so an unknown slug never reaches here;
+/// as a defensive fallback an unrecognized slug also maps to `Unknown`.
+fn resolved_defender_faction(sim: &FixtureSimulation) -> OpponentFactionTag {
+    sim.defender_faction
+        .as_deref()
+        .and_then(OpponentFactionTag::from_data_slug)
+        .unwrap_or(OpponentFactionTag::Unknown)
+}
+
 fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> SimulationConfig {
     SimulationConfig {
         rounds: spec.simulation.rounds,
@@ -338,7 +386,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         initial_attacker_hull_damage: spec.simulation.initial_attacker_hull_damage,
         weapon_damage_profile_additive_pool: spec.simulation.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: spec.simulation.profile_weapon_damage_fraction,
-        defender_hull_faction_id: 0,
+        defender_hull_faction_id: spec.simulation.defender_hull_faction_id.unwrap_or(0),
         defender_hostile_tag_mask: spec.simulation.defender_hostile_tag_mask,
         attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: crate::combat::EnemyTypes::default(),
@@ -422,7 +470,17 @@ pub struct DriftRunReport {
 /// Load a drift fixture JSON from disk.
 pub fn load_drift_fixture(path: &Path) -> Result<DriftFixtureFile, String> {
     let raw = fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
-    serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", path.display()))
+    let spec: DriftFixtureFile =
+        serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", path.display()))?;
+    if let Some(slug) = spec.simulation.defender_faction.as_deref() {
+        if OpponentFactionTag::from_data_slug(slug).is_none() {
+            return Err(format!(
+                "{}: unknown simulation.defender_faction {slug:?}; expected a slug such as klingon, romulan, federation, borg, swarm, or unknown",
+                path.display()
+            ));
+        }
+    }
+    Ok(spec)
 }
 
 /// Run the simulator for a loaded fixture (default empty crew unless `synthetic_crew` is set).
@@ -432,6 +490,7 @@ pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::Simulat
     let attacker = spec.attacker.to_combatant("drift_attacker");
     let defender = spec.defender.to_combatant("drift_defender");
     let config = simulation_config_for_drift(spec, TraceMode::Off);
+    let defender_faction = resolved_defender_faction(&spec.simulation);
     let (attacker_crew, defender_crew) = crew_for_drift(&spec.synthetic_crew);
     let defender_is_npc_hostile = spec.simulation.defender_hostile_tag_mask != 0;
     simulate_combat_with_defender_faction_and_defender_crew(
@@ -439,7 +498,7 @@ pub fn simulate_drift_fixture(spec: &DriftFixtureFile) -> crate::combat::Simulat
         &defender,
         &config,
         &attacker_crew,
-        OpponentFactionTag::Unknown,
+        defender_faction,
         ShipType::Battleship,
         ShipType::Battleship,
         defender_is_npc_hostile,
@@ -453,6 +512,7 @@ pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::
     let attacker = spec.attacker.to_combatant("drift_attacker");
     let defender = spec.defender.to_combatant("drift_defender");
     let config = simulation_config_for_drift(spec, TraceMode::Events);
+    let defender_faction = resolved_defender_faction(&spec.simulation);
     let (attacker_crew, defender_crew) = crew_for_drift(&spec.synthetic_crew);
     let defender_is_npc_hostile = spec.simulation.defender_hostile_tag_mask != 0;
     simulate_combat_with_defender_faction_and_defender_crew(
@@ -460,7 +520,7 @@ pub fn simulate_drift_fixture_traced(spec: &DriftFixtureFile) -> crate::combat::
         &defender,
         &config,
         &attacker_crew,
-        OpponentFactionTag::Unknown,
+        defender_faction,
         ShipType::Battleship,
         ShipType::Battleship,
         defender_is_npc_hostile,
@@ -654,4 +714,77 @@ pub fn list_drift_fixture_paths(dir: &Path) -> Result<Vec<std::path::PathBuf>, s
         .collect();
     paths.sort();
     Ok(paths)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Drift fixture JSON with a faction-gated attack multiplier. `faction` is injected verbatim
+    /// into `simulation.defender_faction` (use `"null"` for the unset case).
+    fn gated_fixture_json(faction: &str) -> String {
+        format!(
+            r#"{{
+                "id": "test_faction_gate",
+                "attacker": {{
+                    "attack": 100.0, "mitigation": 0.0, "hull_health": 5000.0,
+                    "weapons": [{{ "attack": 100.0, "shots": 1 }}]
+                }},
+                "defender": {{
+                    "attack": 0.0, "mitigation": 0.0, "hull_health": 1000000.0, "shield_health": 0.0
+                }},
+                "simulation": {{ "rounds": 1, "seed": 7, "defender_faction": {faction} }},
+                "synthetic_crew": {{ "faction_gated_attack_multiplier": 0.5 }},
+                "bands": {{}}
+            }}"#
+        )
+    }
+
+    fn total_damage_for(faction: &str) -> f64 {
+        let spec: DriftFixtureFile =
+            serde_json::from_str(&gated_fixture_json(faction)).expect("parse fixture");
+        simulate_drift_fixture(&spec).total_damage
+    }
+
+    #[test]
+    fn resolved_defender_faction_maps_slug_and_defaults_unknown() {
+        let spec: DriftFixtureFile =
+            serde_json::from_str(&gated_fixture_json("\"klingon\"")).unwrap();
+        assert_eq!(
+            resolved_defender_faction(&spec.simulation),
+            OpponentFactionTag::Klingon
+        );
+        let spec_none: DriftFixtureFile =
+            serde_json::from_str(&gated_fixture_json("null")).unwrap();
+        assert_eq!(
+            resolved_defender_faction(&spec_none.simulation),
+            OpponentFactionTag::Unknown
+        );
+    }
+
+    #[test]
+    fn faction_gated_multiplier_increases_total_damage_only_when_faction_matches() {
+        let with_faction = total_damage_for("\"klingon\"");
+        let without_faction = total_damage_for("null");
+        assert!(
+            with_faction > without_faction,
+            "faction-gated AttackMultiplier should boost damage when defender_faction matches: \
+             with={with_faction} without={without_faction}"
+        );
+        // Sanity: the unset case still deals its baseline (gate filtered the multiplier, not all fire).
+        assert!(without_faction > 0.0, "baseline damage should be positive");
+    }
+
+    #[test]
+    fn load_drift_fixture_rejects_unknown_faction_slug() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("kobayashi_drift_bad_faction_slug_test.json");
+        fs::write(&path, gated_fixture_json("\"not_a_real_faction\"")).expect("write temp fixture");
+        let err = load_drift_fixture(&path).expect_err("unknown slug should be rejected");
+        let _ = fs::remove_file(&path);
+        assert!(
+            err.contains("defender_faction") && err.contains("not_a_real_faction"),
+            "error should name the bad slug: {err}"
+        );
+    }
 }
