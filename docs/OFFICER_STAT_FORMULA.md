@@ -2,7 +2,7 @@
 
 Canonical reference for how per-officer Attack / Defense / Health stats sum across a crew and feed into a ship's effective combat stats. Authored by the maintainer; consumed by the engine extension that adds first-class officer A/D/H runtime support (see `/Users/pgagnong/.claude/plans/what-should-we-work-recursive-lobster.md`).
 
-Status: **draft — awaiting maintainer input**. Engine implementation (Phase 1+) is blocked on this file.
+Status: **specified and implemented**. The formula below is locked from in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and the Phase 4d dynamic attack-axis). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs) and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). The one remaining gap is the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
 
 ---
 
@@ -256,13 +256,23 @@ health_rating  = Σ officer.effective_health    // then feeds the §2d channels
 
 ## Examples to validate the spec against
 
-Once the four sections above are filled in, the engine should reproduce these in-game observations:
+These three anchors are tied to their real production officers and exercised by
+[`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs). That
+test currently asserts the **LCARS→engine routing and the direction** of each effect (and records
+the engine's predicted bonus in its assertion messages). The **expected in-game damage delta** for
+each is still `_TBD_` — supply observed numbers (plus the exact ship + crew used) to upgrade these
+from direction/routing checks to exact-magnitude calibration.
 
-- Cadet Kirk captain "Motivational" +8% all stats, default crew, vs a fixed hostile: expected damage delta = _TBD_.
-- Marla "Let Me Help You" +50% all stats (bridge), captained: expected damage delta = _TBD_.
-- Kras "Know Your Enemy" -20% all stats on enemy: expected damage delta = _TBD_.
+- Cadet Kirk `cadet-kirk-a80563` captain "Motivational" +8% all stats (crew-wide, `target: self`),
+  vs a fixed hostile: expected damage delta = _TBD_. *(Routing locked: `officer_stat_all += 0.08`.)*
+- Marla `marla-9732c7` "Let Me Help You" +50% all stats (bridge, crew-wide, `target: self`),
+  captained: expected damage delta = _TBD_. *(Routing locked: `officer_stat_all += 0.50`.)*
+- Kras `kras-a47042` "Know your Enemy" -20% all stats on the enemy bridge
+  (`target: enemy_bridge`, gated on `DefenderIsPlayerShip` → no-op vs NPC hostiles, active in PvP):
+  expected damage delta = _TBD_. *(Routing locked: enemy-bridge pending contribution, value 0.20.)*
 
-These are the calibration anchors. Without at least one such example, Phase 2 has no way to know the formula is right.
+These are the calibration anchors. The formula is empirically pinned (Cerritos / Realta+Ghrush) and
+implemented; the anchors above are what convert "implemented" into "confirmed against the live game."
 
 ---
 
