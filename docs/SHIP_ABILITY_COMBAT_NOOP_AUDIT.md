@@ -100,14 +100,25 @@ Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, 
 
 **Summary:** 64 `keep_noop`, 4 modeled in Track D2 (§6.1), 2 `reclassify_catalog` (earlier), 2 proc chains review-only.
 
-### 6.1 Track D2 — implemented (2026-05-19)
+### 6.1 Track D2 — implemented (2026-05-19; **data activated 2026-06-07**)
 
-| id | Ship | Catalog `effect_type` | Engine effect | Assumption |
-| --- | --- | --- | --- | --- |
-| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Uniform pierce multiplier on counter-fire (proxy for armor/shield pierce + accuracy debuff). |
-| `1379978713` | Sanctus | `defender_shield_drain_per_round` | [`DefenderShieldDrainPerRound`](../src/combat/abilities.rs) — `round_start`, 5 rounds | Drains `fraction × max_shield` at round start. |
-| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | First-round-only pierce debuff (same proxy as Quv’Sompek). |
-| `1463338054` | U.S.S. Intrepid | `hostile_engagement_defensive` | [`HostileEngagementDefensiveBonus`](../src/combat/abilities.rs) | Same % added to counter-fire mitigation + dodge sums. |
+| id | Ship | Catalog `effect_type` | Engine effect | Assumption | Value |
+| --- | --- | --- | --- | --- | --- |
+| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Uniform pierce multiplier on counter-fire (proxy for armor/shield pierce + accuracy debuff). | 0.12 |
+| `1379978713` | Sanctus | `defender_shield_drain_per_round` | [`DefenderShieldDrainPerRound`](../src/combat/abilities.rs) — `round_start`, 5 rounds | Drains `fraction × max_shield` at round start. | 0.10 |
+| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | First-round-only pierce debuff (same proxy as Quv’Sompek). | 0.15 |
+| `1463338054` | U.S.S. Intrepid | `hostile_engagement_defensive` | [`HostileEngagementDefensiveBonus`](../src/combat/abilities.rs) | Same % added to counter-fire mitigation + dodge sums. | 0.40 |
+
+> **Data activation fix (2026-06-07).** Track D2 mapped the catalog/overrides in 2026-05-19 but the
+> abilities were **dormant in the simulator** until now, for two reasons: (1) `data/ships_extended`
+> was never regenerated (the four rows stayed `combat_noop` / `value 0.0`), and (2) the catalog rows
+> set `value_is_percentage: true` while the upstream values are already fractional (e.g. `0.15` =
+> 15%), so a regeneration alone would have baked them **100× too small** (`0.0015`). Both are fixed:
+> the rows now carry `value_is_percentage: false` + `ignore_upstream_value_is_percentage: true` (the
+> documented "upstream marks small decimals as %" case — see [`normalize_data_stfc_space.rs`](../src/bin/normalize_data_stfc_space.rs)),
+> and `ships_extended` is regenerated. The **Value** column shows the resolved per-ability fraction
+> (first-tier `values[]` entry; these rows are not level-scaled). Re-run after catalog edits:
+> `cargo run --bin normalize_data_stfc_space`.
 
 Tests: [`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_debuff.rs). Regenerate `ships_extended` after catalog change: `cargo run --bin normalize_data_stfc_space` (or full data refresh).
 

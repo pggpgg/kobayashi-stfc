@@ -15,24 +15,28 @@
     "701705952": {
       "timing": "combat_begin",
       "effect_type": "hostile_counter_stat_debuff",
-      "value_is_percentage": true,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 5
     },
     "1379978713": {
       "timing": "round_start",
       "effect_type": "defender_shield_drain_per_round",
-      "value_is_percentage": true,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 5
     },
     "1463338054": {
       "timing": "combat_begin",
       "effect_type": "hostile_engagement_defensive",
-      "value_is_percentage": true
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "2441576367": {
       "timing": "combat_begin",
       "effect_type": "hostile_counter_stat_debuff",
-      "value_is_percentage": true,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 1
     },
     "2195955652": {

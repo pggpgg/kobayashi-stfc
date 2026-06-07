@@ -146,8 +146,8 @@
     "701705952": {
       "timing": "combat_begin",
       "effect_type": "hostile_counter_stat_debuff",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 5
     },
     "711428193": {
@@ -338,8 +338,8 @@
     "1379978713": {
       "timing": "round_start",
       "effect_type": "defender_shield_drain_per_round",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 5
     },
     "1428543762": {
@@ -365,8 +365,8 @@
     "1463338054": {
       "timing": "combat_begin",
       "effect_type": "hostile_engagement_defensive",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "1465044910": {
       "timing": "receive_damage",
@@ -597,8 +597,8 @@
     "2441576367": {
       "timing": "combat_begin",
       "effect_type": "hostile_counter_stat_debuff",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 1
     },
     "2468986074": {
