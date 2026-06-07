@@ -895,6 +895,8 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
+                | AbilityEffect::BreachCumulativeCritChancePerHit(_)
+                | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1070,6 +1072,8 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
+                | AbilityEffect::BreachCumulativeCritChancePerHit(_)
+                | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1216,6 +1220,8 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
+                | AbilityEffect::BreachCumulativeCritChancePerHit(_)
+                | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1364,6 +1370,8 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
+                | AbilityEffect::BreachCumulativeCritChancePerHit(_)
+                | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1518,6 +1526,8 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
+                | AbilityEffect::BreachCumulativeCritChancePerHit(_)
+                | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1699,6 +1709,8 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
+                | AbilityEffect::BreachCumulativeCritChancePerHit(_)
+                | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1930,6 +1942,8 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::HostileCounterStatDebuff { .. } => effect,
         AbilityEffect::DefenderShieldDrainPerRound { .. } => effect,
         AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,
+        AbilityEffect::BreachCumulativeCritChancePerHit(_)
+        | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
         AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,

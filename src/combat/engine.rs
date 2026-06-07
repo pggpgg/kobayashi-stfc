@@ -22,9 +22,10 @@ use crate::combat::abilities::{
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
     hostile_crit_damage_reduction_active_at_round,
     opponent_captain_maneuver_multiplier_from_effects, scale_crew_captain_maneuver_effects,
-    sum_accuracy_bonus, sum_dodge_bonus, sum_hostile_engagement_defensive_bonus,
-    sum_mitigation_additive, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
-    TimingWindow,
+    sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
+    sum_breach_cumulative_crit_damage_per_crit, sum_dodge_bonus,
+    sum_hostile_engagement_defensive_bonus, sum_mitigation_additive, AbilityEffect,
+    ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -385,6 +386,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let mut attacker_shield_gross_damage_this_round: f64 = 0.0;
     let mut attacker_shield_gross_damage_last_round: f64 = 0.0;
     let mut defender_hull_breach_rounds = 0_u32;
+    // Breach-gated cumulative crit hull abilities (Hegh'ta "Open the Wound", Rotarran "Bird of
+    // Prey"): while the opponent is hull breached, each weapon hit grows crit chance and each crit
+    // grows crit damage, cumulative for the rest of the fight. `breach_hits` / `breach_crits` count
+    // the qualifying events so far; the bonus applied to a shot reflects all *prior* such events.
+    let breach_crit_chance_per_hit =
+        sum_breach_cumulative_crit_chance_per_hit(&setup.attack_phase_effects);
+    let breach_crit_damage_per_crit =
+        sum_breach_cumulative_crit_damage_per_crit(&setup.attack_phase_effects);
+    let mut breach_hits: u64 = 0;
+    let mut breach_crits: u64 = 0;
     let mut defender_burning_rounds = 0_u32;
     let mut attacker_hull_breach_rounds = 0_u32;
     let mut attacker_burning_rounds = 0_u32;
@@ -1512,11 +1523,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     });
 
                     let hull_breach_active = defender_hull_breach_rounds > 0;
+                    // Breach-gated cumulative crit growth (Hegh'ta / Rotarran). The bonus reflects
+                    // only events that occurred *before* this shot; the counters grow afterwards.
+                    // Crit chance grows additively (clamps to [0,1] in the roll); crit damage grows
+                    // as additive percentage points on the crit multiplier (per-crit stat bonus).
+                    let breach_crit_chance_add = breach_crit_chance_per_hit * breach_hits as f64;
+                    let breach_crit_damage_add = breach_crit_damage_per_crit * breach_crits as f64;
                     let crit = resolve_vehicle_weapon_crit(
                         attacker.weapon_crit_chance(weapon_index),
-                        phase_effects.crit_chance_bonus(),
+                        phase_effects.crit_chance_bonus() + breach_crit_chance_add,
                         attacker.weapon_crit_multiplier(weapon_index),
                         phase_effects.crit_damage_multiplier(),
+                        breach_crit_damage_add,
                         effective_attacker_crit_reduction,
                         attacker.crit_damage_floor,
                         hull_breach_active,
@@ -1524,6 +1542,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     );
                     let crit_multiplier = crit.multiplier;
                     let is_crit = crit.is_crit;
+                    // Grow the cumulative breach crit counters after this shot resolves, so the
+                    // bonus benefits subsequent hits/crits (not the current one).
+                    if hull_breach_active {
+                        if breach_crit_chance_per_hit > 0.0 {
+                            breach_hits += 1;
+                        }
+                        if is_crit && breach_crit_damage_per_crit > 0.0 {
+                            breach_crits += 1;
+                        }
+                    }
                     trace.record_if(|| CombatEvent {
                         event_type: "crit_resolution".to_string(),
                         round_index,
@@ -2360,6 +2388,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         defender_phase_effects.crit_chance_bonus(),
                         defender.weapon_crit_multiplier(weapon_index),
                         defender_phase_effects.crit_damage_multiplier(),
+                        // No breach-cumulative crit-damage source on the counter-fire path today.
+                        0.0,
                         0.0,
                         0.0,
                         attacker_hull_breach_active_for_crit,
