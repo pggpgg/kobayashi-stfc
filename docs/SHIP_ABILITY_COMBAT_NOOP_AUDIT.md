@@ -4,6 +4,8 @@ This document expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `c
 
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
+**Track E update (2026-06-07):** The two breach-gated cumulative crit proc chains — Hegh'ta "Open the Wound" (`3432906971`) and Rotarran "Bird of Prey" (`2195955652`) — are now **modeled** (see §6.5), dropping the noop inventory from **67 → 65**. An earlier revision of §6.2 mislabeled these proc chains with the ids `2520552521` / `3014221215`; those two ids are in fact economy abilities (transogen loot / tritanium mining) and remain `combat_noop`.
+
 **Inventory drift vs prior audits:** Six ids left the noop list: `509252162` (`attack_multiplier`), `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Shard detail: [docs/audit_shards/](audit_shards/).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).
@@ -12,9 +14,11 @@ Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_des
 
 ## 1. Inventory
 
-All `combat_noop` ability ids (sorted; regen-safe; **67** ids):
+All `combat_noop` ability ids (sorted; regen-safe; **65** ids):
 
-`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `673187302`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1428543762`, `1439253182`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2195955652`, `2254702328`, `2302150828`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3432906971`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
+`34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `673187302`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1428543762`, `1439253182`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2254702328`, `2302150828`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
+
+Modeled out of the noop list in Track E (2026-06-07): `2195955652` (Rotarran), `3432906971` (Hegh'ta) — see §6.5.
 
 Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc` text (empty string).
 
@@ -35,7 +39,7 @@ Two ids (`953555085`, `4214885989`) share a `loca_id` with no `ship_ability_desc
 | Opponent ship class | **0** (remaining) | Class-gated hull rows use `condition_opponent_ship_class` + [`AbilityCondition::DefenderShipTypeIs`](../src/combat/abilities.rs). |
 | Opponent tag / special faction | 5 | `[DQ]`, `[DAL]`, Krenim Invading Entities, Apex Raiders (Solo Wave Defense), etc. — keep noop until stable hostile metadata slugs. |
 | Hostile debuffs / shield drain | 0 | Modeled in D2: Quv’Sompek, Sanctus, B’Rel (§6.1). |
-| Proc chains | 2 | Rotarran `2520552521`, Hegh’ta `3014221215` — **keep noop** per [DESIGN.md](DESIGN.md) §3.6 unless simplified proxy approved. |
+| Proc chains | **0** (remaining) | Rotarran `2195955652` and Hegh’ta `3432906971` are now modeled with an approved per-hit/per-crit proxy (§6.5). (`2520552521` / `3014221215` were never proc chains — they are economy loot/mining ids and stay noop.) |
 | Out-of-combat / overworld | 0 | (Borg cutting beam counted under Scope — armada.) |
 | Weapon / mechanic disable | 1 | Collective’s Bane vs Borg Type 03 / Polygon armadas. |
 | Self defensive stats vs hostiles | 0 | Intrepid `1463338054` modeled in D2 (§6.1). |
@@ -107,12 +111,17 @@ Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, 
 
 Tests: [`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_debuff.rs). Regenerate `ships_extended` after catalog change: `cargo run --bin normalize_data_stfc_space` (or full data refresh).
 
-### 6.2 Proc chains (review-only; keep noop)
+### 6.2 Proc chains (modeled in Track E — see §6.5)
 
-| id | Ship | Notes |
-| --- | --- | --- |
-| `2520552521` | Rotarran | Hull breach + crit → cumulative crit damage; multi-condition proc chain |
-| `3014221215` | Hegh’ta | Hull breach + weapon hit → crit chance increase |
+The proc chains are the two breach-gated cumulative crit abilities below. An earlier revision of
+this section listed them under the ids `2520552521` / `3014221215`; that was wrong — those ids are
+economy abilities (transogen loot / tritanium mining) and remain `combat_noop`. The real proc-chain
+ids and ships:
+
+| id | Ship | Ability | Behaviour |
+| --- | --- | --- | --- |
+| `2195955652` | Rotarran | Bird of Prey | While opponent **Hull Breached**, every **critical** hit adds cumulative crit **damage**. |
+| `3432906971` | Hegh’ta | Open the Wound | While opponent **Hull Breached**, every weapon **hit** adds cumulative crit **chance**. |
 
 ### 6.3 In-game verification (HiggsBozo)
 
@@ -127,3 +136,45 @@ Tests: [`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_de
 | --- | --- |
 | `509252162` | `attack_multiplier` |
 | `2425475474` | `conqueror_borg_beam_suppression` |
+
+### 6.5 Track E — breach-gated cumulative crit proc chains (2026-06-07)
+
+The two proc chains from §6.2 are now modeled. Both are passive ship hull abilities ("always
+active") that only do anything **while the opponent has Hull Breach**:
+
+| id | Ship | Catalog `effect_type` | Engine effect | Per-tier value |
+| --- | --- | --- | --- | --- |
+| `3432906971` | Hegh'ta — Open the Wound | `cumulative_breach_crit_chance` | [`AbilityEffect::BreachCumulativeCritChancePerHit`](../src/combat/abilities.rs) | +2% → +20% crit chance per hit |
+| `2195955652` | Rotarran — Bird of Prey | `cumulative_breach_crit_damage` | [`AbilityEffect::BreachCumulativeCritDamagePerCrit`](../src/combat/abilities.rs) | +10% → +20% crit damage per crit |
+
+**Model.** The game text is "every hit / every crit, cumulative." The engine applies the per-hit
+(Hegh'ta) and per-crit (Rotarran) increments **per shot** at the crit-resolution site
+([`src/combat/engine.rs`](../src/combat/engine.rs)) — i.e. true per-event, not a round-granular
+approximation — counting only events while the defender is hull breached so mid-round breach onset
+is honored. The bonus on a given shot reflects all *prior* qualifying events (it benefits subsequent
+shots, not the one that triggered it):
+
+- Hegh'ta: `crit_chance += per_hit × (breached hits so far)`. **Uncapped**; the crit-chance roll
+  itself clamps to `[0, 1]`, so this saturates to near-guaranteed crits within a round or two.
+- Rotarran: `crit_mult = weapon_crit × officer_crit + per_crit × (breached crits so far)`.
+  **Additive percentage points** on the crit multiplier (a `+X%` crit-damage stat bonus), threaded
+  through [`resolve_vehicle_weapon_crit`](../src/combat/crit.rs) as a dedicated additive term rather
+  than a multiplicative chain factor — so a +11% increment is +0.11 on the multiplier, not ×1.11.
+  **Uncapped** (a deliberate snowball); only grows on rounds where crits land while breached.
+
+The per-tier value is taken from the upstream `values[]` curve and level-scaled at ship resolution
+([`ship_ability_value_for_level`](../src/data/ship.rs)). Catalog mapping lives in
+[`ship_ability_resolve.rs`](../src/data/ship_ability_resolve.rs); durable overrides in
+`ship_ability_catalog_overrides.json`. Tests:
+[`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_debuff.rs) (engine, incl. an
+inert-without-breach gate), [`src/combat/crit.rs`](../src/combat/crit.rs) (additive crit-damage
+unit tests), and [`tests/ship_ability_breach_crit_data.rs`](../tests/ship_ability_breach_crit_data.rs)
+(data-driven resolution). Regenerate `ships_extended` after catalog edits: `cargo run --bin
+normalize_data_stfc_space`.
+
+**Open questions for in-game verification (HiggsBozo)** — empirical, not modeling choices:
+1. "Every hit/crit" granularity — per shot (current) vs per weapon-volley.
+2. Whether the accumulated buff **persists** when the breach lapses (current: persists, only grows
+   while breached) or resets.
+3. Confirm the crit-damage bonus is additive to the crit-damage stat (current model) and not
+   multiplicative — this is the one place STFC's convention is debated.

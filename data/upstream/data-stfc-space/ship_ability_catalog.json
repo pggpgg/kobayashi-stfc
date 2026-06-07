@@ -553,11 +553,11 @@
       "ignore_upstream_value_is_percentage": true
     },
     "2195955652": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "attack_phase",
+      "effect_type": "cumulative_breach_crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "values_scale_with_ship_level": true
     },
     "2254702328": {
       "timing": "combat_begin",
@@ -839,11 +839,11 @@
       "ignore_upstream_value_is_percentage": true
     },
     "3432906971": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "attack_phase",
+      "effect_type": "cumulative_breach_crit_chance",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "values_scale_with_ship_level": true
     },
     "3459465041": {
       "timing": "round_start",

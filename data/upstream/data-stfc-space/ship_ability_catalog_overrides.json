@@ -34,6 +34,20 @@
       "effect_type": "hostile_counter_stat_debuff",
       "value_is_percentage": true,
       "duration_rounds": 1
+    },
+    "2195955652": {
+      "timing": "attack_phase",
+      "effect_type": "cumulative_breach_crit_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true
+    },
+    "3432906971": {
+      "timing": "attack_phase",
+      "effect_type": "cumulative_breach_crit_chance",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true
     }
   }
 }
