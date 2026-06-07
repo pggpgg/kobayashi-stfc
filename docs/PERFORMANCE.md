@@ -70,3 +70,12 @@ Yes, the sim runs faster with these fixes. Criterion reported significant improv
 - `**KOBAYASHI_EXPERIMENTAL_SIMD_DAMAGE_KERNEL=1**`: when AVX2 is available and combat trace is off, batches per-hit `damage_after_apex` math (4-wide) for outbound shots and defender counter-fire in `src/combat/engine.rs` via `simd_damage_kernel` (experimental; keep off by default while measuring).
 
 Tiered optimization reuses one `SharedScenarioData` build per phase (`src/optimizer/monte_carlo/scenario.rs`), uses adaptive batch counts via `monte_carlo_batch_count_for_candidates` (`src/parallel/batch.rs`), and runs the scout pass with Wilson-bound early stopping where safe (confirmation pass unchanged).
+
+## Tier 5: resolve-cache fix for the analytical prefilter (2026-06)
+
+Profiling a real `optimize --ship saladin --hostile 2918121098` run (macOS `sample` on a `[profile.profiling]` build) showed **~85% of samples in JSON file loading + serde deserialization**, not the combat loop. Root cause: the **analytical prefilter** sorts ~10^5 candidates, and the fallback scenario-build path (`scenario_to_combat_input_from_shared` → `computed_defender_mitigation`) called the free `resolve_hostile` / `resolve_ship`, each of which **re-read and re-parsed the ~1 MB `data/hostiles/index.json` from disk on every call** (the per-record LRU in `data_registry.rs` does not cover these free functions).
+
+Fix: process-wide memoization of `resolve_hostile` and `resolve_ship_with_tier_level` keyed by lookup args (`src/data/loader.rs`, `RwLock<HashMap<…>>`, same static-data assumption as the record LRU). The first call for a key parses the index once; subsequent calls are an O(1) lookup + a small record clone.
+
+- **Profile:** data-load/serde self-time **85.4% → 4.2%** of samples.
+- **End-to-end wall clock** (same `optimize`, `--sims 4000`, profiling build): **~723 s → ~15.7 s** (~46× on this workload, which is prefilter-dominated). Steady-state per-combat throughput (the Criterion `simulator/*` and `monte_carlo/*` gate) is unaffected — this was wasted setup work, not inner-loop cost.

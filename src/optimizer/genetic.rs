@@ -30,8 +30,6 @@ use crate::optimizer::monte_carlo::{
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::{HashMap, HashSet};
-#[cfg(test)]
-use std::sync::atomic::AtomicUsize;
 
 /// Summary statistics produced by one GA run. Useful for measuring exploration throughput
 /// (how many distinct crew compositions the optimizer actually visited).
@@ -43,6 +41,10 @@ pub struct GeneticRunStats {
     /// Number of generations whose population was actually scored. May be less than `config.generations`
     /// when stagnation triggers early stop or a callback aborts the run.
     pub generations_completed: usize,
+    /// True iff the final full-sim Monte Carlo pass ran. It runs only when the GA produced a
+    /// non-empty top set and was not aborted; an abort (or empty result) short-circuits it. Lets
+    /// callers/tests confirm the expensive final pass was skipped without a process-global counter.
+    pub ran_final_full_mc: bool,
 }
 
 /// Build the shared scenario data used by every Monte Carlo call inside the GA loop.
@@ -991,7 +993,7 @@ pub fn run_genetic_optimizer_ranked_with_stats(
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
     mut eval_should_continue: impl FnMut() -> bool,
 ) -> (Vec<RankedCrewResult>, GeneticRunStats) {
-    let (top, aborted, stats) = run_genetic_optimizer(
+    let (top, aborted, mut stats) = run_genetic_optimizer(
         ship,
         hostile,
         config,
@@ -1003,8 +1005,7 @@ pub fn run_genetic_optimizer_ranked_with_stats(
     if top.is_empty() || aborted {
         return (Vec::new(), stats);
     }
-    #[cfg(test)]
-    FINAL_GENETIC_FULL_MC_CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    stats.ran_final_full_mc = true;
     let support_slice =
         (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
     let final_results = run_monte_carlo_parallel(
@@ -1021,9 +1022,6 @@ pub fn run_genetic_optimizer_ranked_with_stats(
 }
 
 #[cfg(test)]
-pub(crate) static FINAL_GENETIC_FULL_MC_CALLS: AtomicUsize = AtomicUsize::new(0);
-
-#[cfg(test)]
 mod tests {
     use super::{
         crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig,
@@ -1032,7 +1030,6 @@ mod tests {
     use crate::optimizer::crew_generator::{
         CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
     };
-    use std::sync::atomic::Ordering;
 
     fn small_pools() -> OfficerPools {
         OfficerPools {
@@ -1206,8 +1203,9 @@ mod tests {
             sims_per_eval: 4,
             ..GeneticConfig::default()
         };
-        super::FINAL_GENETIC_FULL_MC_CALLS.store(0, Ordering::Relaxed);
-        let _ = super::run_genetic_optimizer_ranked(
+        // Per-run stats (no process-global counter) so this test is isolated from any other
+        // genetic test running concurrently under `cargo test`.
+        let (_, stats) = super::run_genetic_optimizer_ranked_with_stats(
             "enterprise",
             "swarm",
             &config,
@@ -1217,9 +1215,8 @@ mod tests {
             |gen, _, _| gen < 1,
             || true,
         );
-        assert_eq!(
-            super::FINAL_GENETIC_FULL_MC_CALLS.load(Ordering::Relaxed),
-            0,
+        assert!(
+            !stats.ran_final_full_mc,
             "final full-sim MC must not run when progress callback aborts"
         );
     }

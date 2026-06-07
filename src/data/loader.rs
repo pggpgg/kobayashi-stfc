@@ -1,7 +1,9 @@
 //! Load and resolve hostiles and ships by name/id. Graceful fallback when data missing.
 //! Ships: data/ships_extended/ (extended schema with tiers/levels). Flat data/ships/ removed.
 
+use std::collections::HashMap;
 use std::path::Path;
+use std::sync::{OnceLock, RwLock};
 
 use crate::combat::OpponentFactionTag;
 use crate::data::hostile::{
@@ -81,8 +83,38 @@ pub fn resolve_hostile_with_index(
     None
 }
 
+/// Process-wide memoization for [`resolve_hostile`]. The bundled hostile index is ~1 MB of JSON;
+/// re-reading + re-parsing it (and scanning every entry with [`normalize_lookup`]) on each call is
+/// the dominant cost when the analytical prefilter sorts ~10^5 candidates, all resolving the same
+/// hostile. Data files are static for a process lifetime (same assumption as the record-level LRU
+/// in `data_registry.rs`), so caching the resolved record by lookup key is sound. Negative results
+/// are cached too, to avoid re-scanning the index on repeated misses.
+static HOSTILE_RESOLVE_CACHE: OnceLock<RwLock<HashMap<String, Option<HostileRecord>>>> =
+    OnceLock::new();
+
 /// Resolve a hostile by id or by "name level" / "name_level". Returns None if index missing or no match.
+///
+/// Memoized process-wide (see [`HOSTILE_RESOLVE_CACHE`]). The first call for a given key parses the
+/// hostile index once; subsequent calls are an O(1) lookup + a small record clone.
 pub fn resolve_hostile(name_or_id: &str) -> Option<HostileRecord> {
+    let cache = HOSTILE_RESOLVE_CACHE.get_or_init(|| RwLock::new(HashMap::new()));
+    if let Some(hit) = cache
+        .read()
+        .expect("hostile cache poisoned")
+        .get(name_or_id)
+    {
+        return hit.clone();
+    }
+    let resolved = resolve_hostile_uncached(name_or_id);
+    cache
+        .write()
+        .expect("hostile cache poisoned")
+        .insert(name_or_id.to_string(), resolved.clone());
+    resolved
+}
+
+/// Uncached resolution body for [`resolve_hostile`].
+fn resolve_hostile_uncached(name_or_id: &str) -> Option<HostileRecord> {
     let index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH)?;
     let data_dir = Path::new(DEFAULT_HOSTILES_INDEX_PATH).parent()?;
     resolve_hostile_with_index(&index, data_dir, name_or_id)
@@ -96,7 +128,35 @@ pub fn resolve_ship(name_or_id: &str) -> Option<ShipRecord> {
 /// Resolve a ship by id or ship_name, with optional tier and level (1-based).
 /// Uses data/ships_extended only (Option B: extended schema with tiers/levels, resolved at request time).
 /// Defaults to tier=1, level=1 when tier/level not specified.
+/// Process-wide memoization for [`resolve_ship_with_tier_level`], keyed by (name/id, tier, level).
+/// Same rationale as [`HOSTILE_RESOLVE_CACHE`]: the fallback scenario path re-resolves the attacker
+/// ship per candidate during the analytical prefilter sort. The ship index is small (~12 KB) but
+/// the per-call parse + `to_ship_record` tier/level resolution still adds up across ~10^5 calls.
+#[allow(clippy::type_complexity)]
+static SHIP_RESOLVE_CACHE: OnceLock<
+    RwLock<HashMap<(String, Option<u32>, Option<u32>), Option<ShipRecord>>>,
+> = OnceLock::new();
+
 pub fn resolve_ship_with_tier_level(
+    name_or_id: &str,
+    tier: Option<u32>,
+    level: Option<u32>,
+) -> Option<ShipRecord> {
+    let cache = SHIP_RESOLVE_CACHE.get_or_init(|| RwLock::new(HashMap::new()));
+    let key = (name_or_id.to_string(), tier, level);
+    if let Some(hit) = cache.read().expect("ship cache poisoned").get(&key) {
+        return hit.clone();
+    }
+    let resolved = resolve_ship_with_tier_level_uncached(name_or_id, tier, level);
+    cache
+        .write()
+        .expect("ship cache poisoned")
+        .insert(key, resolved.clone());
+    resolved
+}
+
+/// Uncached resolution body for [`resolve_ship_with_tier_level`].
+fn resolve_ship_with_tier_level_uncached(
     name_or_id: &str,
     tier: Option<u32>,
     level: Option<u32>,
