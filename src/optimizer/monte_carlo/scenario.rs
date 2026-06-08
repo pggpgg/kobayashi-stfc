@@ -661,10 +661,12 @@ fn defender_combatant_from_hostile_record(
     }
 }
 
+/// Standalone-path twin of [`DataRegistry::use_lcars_officer_source`]: defaults to the LCARS
+/// resolver; `KOBAYASHI_OFFICER_SOURCE=stub` opts into the legacy hash-placeholder path.
 fn use_lcars_officer_source_standalone() -> bool {
     std::env::var("KOBAYASHI_OFFICER_SOURCE")
-        .map(|v| v.eq_ignore_ascii_case("lcars"))
-        .unwrap_or(false)
+        .map(|v| !v.eq_ignore_ascii_case("stub"))
+        .unwrap_or(true)
 }
 
 #[derive(Debug, Clone)]
