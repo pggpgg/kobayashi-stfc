@@ -833,7 +833,7 @@ async fn handle_combat_effect_spec_debug_officer(
         .into_response(),
         Err(api::CombatEffectSpecDebugError::LcarsOfficersNotLoaded) => error_json(
             StatusCode::NOT_FOUND,
-            "LCARS officers not loaded (officer data failed to load, or KOBAYASHI_OFFICER_SOURCE=stub)",
+            "LCARS officers not loaded (officer data failed to load)",
         )
         .into_response(),
         Err(api::CombatEffectSpecDebugError::NotFound) => {

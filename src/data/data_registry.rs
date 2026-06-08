@@ -62,8 +62,8 @@ pub struct DataRegistry {
     pub hostile_index: Option<HostileIndex>,
     /// `loca_id` → display name from data.stfc.space translation exports (for API / UI).
     pub hostile_loca_display: HashMap<u64, String>,
-    /// LCARS officers — loaded by default (the full-fidelity ability source); `None` only when
-    /// `KOBAYASHI_OFFICER_SOURCE=stub` or the load failed. Used by monte_carlo to resolve abilities.
+    /// LCARS officers — the sole ability source; `None` only if the data failed to load.
+    /// Used by monte_carlo to resolve abilities.
     pub lcars_officers: Option<Vec<LcarsOfficer>>,
     /// Forbidden/chaos tech catalog for merging into profile with imported player tech.
     pub forbidden_chaos_catalog: Option<ForbiddenChaosList>,
@@ -94,11 +94,8 @@ impl DataRegistry {
         let hostile_loca_display =
             load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
 
-        let lcars_officers = if Self::use_lcars_officer_source() {
-            load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).ok()
-        } else {
-            None
-        };
+        // LCARS is the sole officer ability source; `None` only if the data fails to load.
+        let lcars_officers = load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).ok();
 
         let forbidden_chaos_catalog = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH);
         let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
@@ -123,18 +120,8 @@ impl DataRegistry {
         }))
     }
 
-    /// Officer ability source. **Defaults to the full-fidelity LCARS resolver.** Set
-    /// `KOBAYASHI_OFFICER_SOURCE=stub` to opt into the legacy hash-placeholder path — a temporary
-    /// escape hatch pending its removal (see the officer-resolution-unify migration). Any other
-    /// value (incl. `lcars`, unset) selects LCARS.
-    fn use_lcars_officer_source() -> bool {
-        std::env::var("KOBAYASHI_OFFICER_SOURCE")
-            .map(|v| !v.eq_ignore_ascii_case("stub"))
-            .unwrap_or(true)
-    }
-
-    /// LCARS officers (loaded by default; `None` only under `KOBAYASHI_OFFICER_SOURCE=stub` or on
-    /// load failure). Monte Carlo builds by_id/name_to_id from this.
+    /// LCARS officers (the sole ability source; `None` only on load failure). Monte Carlo builds
+    /// by_id/name_to_id from this.
     pub fn lcars_officers(&self) -> Option<&[LcarsOfficer]> {
         self.lcars_officers.as_deref()
     }
