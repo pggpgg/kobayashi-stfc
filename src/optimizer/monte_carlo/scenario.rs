@@ -1463,61 +1463,44 @@ fn build_crew_and_buffs(
     Vec<crate::lcars::PendingOfficerStatContribution>,
 ) {
     if let Some(lcars) = lcars_data {
-        let captain_id = lcars
-            .name_to_id
-            .get(&normalize_lookup_key(
-                &split_name_and_tier(&candidate.captain).0,
-            ))
-            .cloned();
+        let resolve_id = |name: &str| {
+            lcars
+                .name_to_id
+                .get(&normalize_lookup_key(&split_name_and_tier(name).0))
+                .cloned()
+        };
+        let captain_id = resolve_id(&candidate.captain);
         let bridge_ids: Vec<String> = candidate
             .bridge
             .iter()
-            .filter_map(|n| {
-                lcars
-                    .name_to_id
-                    .get(&normalize_lookup_key(&split_name_and_tier(n).0))
-                    .cloned()
-            })
+            .filter_map(|n| resolve_id(n))
             .collect();
         let below_ids: Vec<String> = candidate
             .below_decks
             .iter()
-            .filter_map(|n| {
-                lcars
-                    .name_to_id
-                    .get(&normalize_lookup_key(&split_name_and_tier(n).0))
-                    .cloned()
-            })
+            .filter_map(|n| resolve_id(n))
             .collect();
 
-        if let Some(cap_id) = captain_id {
-            let buff_set = resolve_crew_to_buff_set(
-                &cap_id,
-                &bridge_ids,
-                &below_ids,
-                &lcars.by_id,
-                resolve_options,
-            );
-            (
-                buff_set.to_crew_config().seats.clone(),
-                buff_set.static_buffs,
-                buff_set.proc_chance,
-                buff_set.proc_multiplier,
-                buff_set.officer_stat_totals,
-                buff_set.bridge_officer_stat_totals,
-                buff_set.pending_officer_stat_contributions,
-            )
-        } else {
-            (
-                build_crew_seats(candidate, officers_by_name),
-                HashMap::new(),
-                0.0,
-                1.0,
-                crate::combat::CrewOfficerStatTotals::default(),
-                crate::combat::CrewOfficerStatTotals::default(),
-                Vec::new(),
-            )
-        }
+        // Resolve per seat. Any officer that doesn't map to an LCARS id simply contributes nothing:
+        // `resolve_crew_to_buff_set` skips ids absent from `by_id`, including an empty captain id.
+        // (Previously an unresolved *captain* dropped the entire crew — bridge and below decks too —
+        // to the placeholder stub; that all-or-nothing fallback is gone.)
+        let buff_set = resolve_crew_to_buff_set(
+            captain_id.as_deref().unwrap_or(""),
+            &bridge_ids,
+            &below_ids,
+            &lcars.by_id,
+            resolve_options,
+        );
+        (
+            buff_set.to_crew_config().seats.clone(),
+            buff_set.static_buffs,
+            buff_set.proc_chance,
+            buff_set.proc_multiplier,
+            buff_set.officer_stat_totals,
+            buff_set.bridge_officer_stat_totals,
+            buff_set.pending_officer_stat_contributions,
+        )
     } else {
         (
             build_crew_seats(candidate, officers_by_name),

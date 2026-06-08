@@ -83,6 +83,27 @@ fn replay_under_source(value: Option<&str>) -> (bool, f64, u32) {
     (lcars_loaded, replay.total_damage, replay.rounds_simulated)
 }
 
+/// Replay an arbitrary candidate under the given officer source; returns total damage.
+fn replay_damage_for(candidate: &CrewCandidate, value: Option<&str>) -> f64 {
+    let _guard = OfficerSourceGuard::apply(value);
+    let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
+    replay_optimize_iteration_with_registry(
+        registry.as_ref(),
+        "uss_enterprise_d",
+        "kobayashi_theoretical_damage_sponge",
+        Some(5),
+        Some(7),
+        candidate,
+        42,
+        0,
+        Some(kobayashi::data::profile_index::DEMO_PROFILE_ID),
+        0,
+        None,
+        DefenderOpponent::Hostile,
+    )
+    .total_damage
+}
+
 #[test]
 #[serial]
 fn default_loads_lcars_officers() {
@@ -141,5 +162,30 @@ fn default_matches_lcars_and_differs_from_stub() {
         stub_rel > 1e-3,
         "LCARS default ({default_dmg}) should differ materially from the legacy stub ({stub_dmg}); \
          a near-identical total would mean the flip changed nothing. rounds={default_rounds}"
+    );
+}
+
+/// Per-seat resolution: an unresolved *captain* must not collapse the whole crew to the stub.
+/// With a bogus captain but real bridge/below, the LCARS default still resolves the remaining
+/// seats — so its damage differs from the all-stub run. (Before the per-seat fix, the bogus
+/// captain dropped the entire crew to the placeholder path, making the two runs identical.)
+#[test]
+#[serial]
+fn bogus_captain_still_resolves_remaining_crew_via_lcars() {
+    let candidate = CrewCandidate {
+        captain: "totally-bogus-officer-xyz-000000".to_string(),
+        bridge: vec![
+            "ent-e-data-871245".to_string(),
+            "five-of-eleven-d9aa11".to_string(),
+        ],
+        below_decks: vec!["harry-kim-a79fdf (T5)".to_string()],
+    };
+    let default_dmg = replay_damage_for(&candidate, None);
+    let stub_dmg = replay_damage_for(&candidate, Some("stub"));
+    let rel = (default_dmg - stub_dmg).abs() / default_dmg.abs().max(1.0);
+    assert!(
+        rel > 1e-3,
+        "a bogus captain must not collapse the crew to the stub — the real bridge/below should \
+         still resolve via LCARS (rel diff {rel:e}). default={default_dmg} stub={stub_dmg}"
     );
 }
