@@ -1,50 +1,17 @@
-//! Characterization harness for the officer ability source (LCARS vs the legacy hash-stub).
-//!
-//! Background: officer abilities resolve via two front-ends selected by `KOBAYASHI_OFFICER_SOURCE`.
-//! The LCARS resolver is full-fidelity; the legacy `build_crew_seats` path fabricates hash-derived
-//! placeholder buffs for non-state officers. As of the officer-resolution-unify work the **default
-//! is LCARS**, and `KOBAYASHI_OFFICER_SOURCE=stub` is a temporary escape hatch into the old path.
-//!
-//! These tests pin that contract and provide the per-scenario damage baseline that later migration
-//! stages (delete the stub; retire the yaml monolith) compare against. Serialized because they
-//! mutate the process-global env var around `DataRegistry::load`.
+//! Officer-resolution sanity checks. Officer abilities resolve **solely** through LCARS
+//! (`resolve_crew_to_buff_set`) — there is no placeholder/stub path (`KOBAYASHI_OFFICER_SOURCE` is
+//! no longer consulted). These pin that the default registry loads LCARS, that the reference crew
+//! resolves end to end, and that resolution is **per seat** (an unresolved captain doesn't drop the
+//! rest of the crew).
 
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::optimizer::crew_generator::CrewCandidate;
 use kobayashi::optimizer::monte_carlo::{
     replay_optimize_iteration_with_registry, DefenderOpponent,
 };
-use serial_test::serial;
 use std::sync::Arc;
 
-/// Save/restore `KOBAYASHI_OFFICER_SOURCE`; `Some(v)` sets it, `None` removes it (the default).
-struct OfficerSourceGuard {
-    previous: Option<String>,
-}
-
-impl OfficerSourceGuard {
-    const KEY: &'static str = "KOBAYASHI_OFFICER_SOURCE";
-
-    fn apply(value: Option<&str>) -> Self {
-        let previous = std::env::var(Self::KEY).ok();
-        match value {
-            Some(v) => std::env::set_var(Self::KEY, v),
-            None => std::env::remove_var(Self::KEY),
-        }
-        Self { previous }
-    }
-}
-
-impl Drop for OfficerSourceGuard {
-    fn drop(&mut self) {
-        match &self.previous {
-            Some(p) => std::env::set_var(Self::KEY, p),
-            None => std::env::remove_var(Self::KEY),
-        }
-    }
-}
-
-/// A fixed, real reference roster (the Enterprise-D crew also used by the calibration trace).
+/// The Enterprise-D reference crew (also used by the calibration trace).
 fn reference_candidate() -> CrewCandidate {
     CrewCandidate {
         captain: "ent-e-picard-556227".to_string(),
@@ -56,38 +23,11 @@ fn reference_candidate() -> CrewCandidate {
     }
 }
 
-/// Load a registry under the given officer source and replay the reference scenario once.
-/// `value`: `None` = default (unset env), `Some("lcars")`, `Some("stub")`.
-fn replay_under_source(value: Option<&str>) -> (bool, f64, u32) {
-    let _guard = OfficerSourceGuard::apply(value);
+/// Replay one fixed scenario for `candidate`; returns (lcars_loaded, total_damage).
+fn replay_damage_for(candidate: &CrewCandidate) -> (bool, f64) {
     let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
     let lcars_loaded = registry.lcars_officers.is_some();
     let replay = replay_optimize_iteration_with_registry(
-        registry.as_ref(),
-        "uss_enterprise_d",
-        "kobayashi_theoretical_damage_sponge",
-        Some(5),
-        Some(7),
-        &reference_candidate(),
-        42,
-        0,
-        Some(kobayashi::data::profile_index::DEMO_PROFILE_ID),
-        0, // no trace events needed; we only compare totals
-        None,
-        DefenderOpponent::Hostile,
-    );
-    assert!(
-        !replay.using_placeholder_combatants,
-        "ship/hostile must resolve from data (source={value:?})"
-    );
-    (lcars_loaded, replay.total_damage, replay.rounds_simulated)
-}
-
-/// Replay an arbitrary candidate under the given officer source; returns total damage.
-fn replay_damage_for(candidate: &CrewCandidate, value: Option<&str>) -> f64 {
-    let _guard = OfficerSourceGuard::apply(value);
-    let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
-    replay_optimize_iteration_with_registry(
         registry.as_ref(),
         "uss_enterprise_d",
         "kobayashi_theoretical_damage_sponge",
@@ -97,24 +37,24 @@ fn replay_damage_for(candidate: &CrewCandidate, value: Option<&str>) -> f64 {
         42,
         0,
         Some(kobayashi::data::profile_index::DEMO_PROFILE_ID),
-        0,
+        0, // no trace events needed; we only compare totals
         None,
         DefenderOpponent::Hostile,
-    )
-    .total_damage
+    );
+    assert!(
+        !replay.using_placeholder_combatants,
+        "ship/hostile must resolve from data"
+    );
+    (lcars_loaded, replay.total_damage)
 }
 
 #[test]
-#[serial]
 fn default_loads_lcars_officers() {
-    let registry = {
-        let _guard = OfficerSourceGuard::apply(None);
-        Arc::new(DataRegistry::load().expect("DataRegistry::load"))
-    };
+    let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
     let officers = registry
         .lcars_officers
         .as_ref()
-        .expect("default officer source must load LCARS officers (the full-fidelity path)");
+        .expect("LCARS officers must load (the sole ability source)");
     assert!(
         officers.len() > 100,
         "expected the full LCARS officer set, got {}",
@@ -123,69 +63,38 @@ fn default_loads_lcars_officers() {
 }
 
 #[test]
-#[serial]
-fn stub_escape_hatch_disables_lcars() {
-    let _guard = OfficerSourceGuard::apply(Some("stub"));
-    let registry = Arc::new(DataRegistry::load().expect("DataRegistry::load"));
-    assert!(
-        registry.lcars_officers.is_none(),
-        "KOBAYASHI_OFFICER_SOURCE=stub must disable LCARS (legacy placeholder path)"
-    );
+fn reference_crew_resolves_via_lcars() {
+    let (lcars_loaded, dmg) = replay_damage_for(&reference_candidate());
+    assert!(lcars_loaded, "registry must load LCARS officers");
+    assert!(dmg > 0.0, "reference crew should deal damage; got {dmg}");
 }
 
-/// The core characterization: the default path now resolves through LCARS (matching an explicit
-/// `=lcars`), and that is materially different from the legacy stub — proving the default flip
-/// moved real officers off the hash-placeholder path.
-///
-/// `default` and `=lcars` use the *same* resolution, but the totals are not bit-identical: float
-/// summation order during resolution/combat depends on per-`HashMap` random seeds, which differ
-/// between two `DataRegistry::load()` calls. So compare with a relative tolerance — tiny for the
-/// same-path pair, large for the stub.
+/// Per-seat resolution: an unresolved **captain** must not drop the rest of the crew. A crew with a
+/// bogus captain but a real bridge/below resolves those seats via LCARS, so its damage differs
+/// materially from an all-bogus crew (which resolves no officers at all).
 #[test]
-#[serial]
-fn default_matches_lcars_and_differs_from_stub() {
-    let (default_lcars_loaded, default_dmg, default_rounds) = replay_under_source(None);
-    let (explicit_lcars_loaded, lcars_dmg, _) = replay_under_source(Some("lcars"));
-    let (stub_lcars_loaded, stub_dmg, _) = replay_under_source(Some("stub"));
-
-    assert!(default_lcars_loaded && explicit_lcars_loaded);
-    assert!(!stub_lcars_loaded);
-
-    let lcars_rel = (default_dmg - lcars_dmg).abs() / lcars_dmg.abs().max(1.0);
-    assert!(
-        lcars_rel < 1e-6,
-        "default (env unset) must resolve through LCARS like =lcars (rel diff {lcars_rel:e}): \
-         default={default_dmg} lcars={lcars_dmg}"
-    );
-    let stub_rel = (default_dmg - stub_dmg).abs() / default_dmg.abs().max(1.0);
-    assert!(
-        stub_rel > 1e-3,
-        "LCARS default ({default_dmg}) should differ materially from the legacy stub ({stub_dmg}); \
-         a near-identical total would mean the flip changed nothing. rounds={default_rounds}"
-    );
-}
-
-/// Per-seat resolution: an unresolved *captain* must not collapse the whole crew to the stub.
-/// With a bogus captain but real bridge/below, the LCARS default still resolves the remaining
-/// seats — so its damage differs from the all-stub run. (Before the per-seat fix, the bogus
-/// captain dropped the entire crew to the placeholder path, making the two runs identical.)
-#[test]
-#[serial]
-fn bogus_captain_still_resolves_remaining_crew_via_lcars() {
-    let candidate = CrewCandidate {
-        captain: "totally-bogus-officer-xyz-000000".to_string(),
+fn unresolved_captain_still_resolves_remaining_crew() {
+    let bogus = "totally-bogus-officer-xyz-000000".to_string();
+    let real_bridge = CrewCandidate {
+        captain: bogus.clone(),
         bridge: vec![
             "ent-e-data-871245".to_string(),
             "five-of-eleven-d9aa11".to_string(),
         ],
         below_decks: vec!["harry-kim-a79fdf (T5)".to_string()],
     };
-    let default_dmg = replay_damage_for(&candidate, None);
-    let stub_dmg = replay_damage_for(&candidate, Some("stub"));
-    let rel = (default_dmg - stub_dmg).abs() / default_dmg.abs().max(1.0);
+    let all_bogus = CrewCandidate {
+        captain: bogus.clone(),
+        bridge: vec![format!("{bogus}-a"), format!("{bogus}-b")],
+        below_decks: vec![format!("{bogus}-c")],
+    };
+
+    let (_, with_bridge) = replay_damage_for(&real_bridge);
+    let (_, no_officers) = replay_damage_for(&all_bogus);
+    let rel = (with_bridge - no_officers).abs() / with_bridge.abs().max(1.0);
     assert!(
         rel > 1e-3,
-        "a bogus captain must not collapse the crew to the stub — the real bridge/below should \
-         still resolve via LCARS (rel diff {rel:e}). default={default_dmg} stub={stub_dmg}"
+        "a real bridge/below must resolve via LCARS even when the captain doesn't \
+         (rel diff {rel:e}): with_bridge={with_bridge} no_officers={no_officers}"
     );
 }

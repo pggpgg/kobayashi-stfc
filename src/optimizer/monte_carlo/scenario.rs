@@ -61,7 +61,7 @@ use crate::optimizer::crew_generator::{
 use std::path::Path;
 
 use super::crew_resolution::{
-    build_crew_seats, hash_identifier, index_officers_by_name, normalize_lookup_key,
+    hash_identifier, index_officers_by_name, normalize_lookup_key,
     roster_officer_ids_from_candidate, split_name_and_tier,
 };
 
@@ -661,14 +661,6 @@ fn defender_combatant_from_hostile_record(
     }
 }
 
-/// Standalone-path twin of [`DataRegistry::use_lcars_officer_source`]: defaults to the LCARS
-/// resolver; `KOBAYASHI_OFFICER_SOURCE=stub` opts into the legacy hash-placeholder path.
-fn use_lcars_officer_source_standalone() -> bool {
-    std::env::var("KOBAYASHI_OFFICER_SOURCE")
-        .map(|v| !v.eq_ignore_ascii_case("stub"))
-        .unwrap_or(true)
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct LcarsOfficerData {
     pub by_id: HashMap<String, crate::lcars::LcarsOfficer>,
@@ -984,12 +976,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_officer_stat_contributions,
-    ) = build_crew_and_buffs(
-        candidate,
-        &shared.officer_index,
-        shared.lcars_data.as_ref(),
-        &resolve_opts,
-    );
+    ) = build_crew_and_buffs(candidate, shared.lcars_data.as_ref(), &resolve_opts);
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
     if !shared.support_attacker_debuff_static_buffs.is_empty() {
@@ -1450,7 +1437,6 @@ fn resolve_options_with_candidate_tiers(
 #[allow(clippy::type_complexity)]
 fn build_crew_and_buffs(
     candidate: &CrewCandidate,
-    officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
 ) -> (
@@ -1502,8 +1488,11 @@ fn build_crew_and_buffs(
             buff_set.pending_officer_stat_contributions,
         )
     } else {
+        // No LCARS data (officer data failed to load). There is no placeholder fallback: resolve
+        // nothing rather than fabricate effects. A genuinely missing data file shows up as an empty
+        // crew with no officer contributions — visibly broken, not silently wrong.
         (
-            build_crew_seats(candidate, officers_by_name),
+            Vec::new(),
             HashMap::new(),
             0.0,
             1.0,
@@ -1670,7 +1659,7 @@ fn resolve_player_defender_officer_bundle(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_contribs,
-    ) = build_crew_and_buffs(&candidate, officers_by_name, lcars_data, resolve_options);
+    ) = build_crew_and_buffs(&candidate, lcars_data, resolve_options);
     (
         seats,
         static_buffs,
@@ -1710,7 +1699,7 @@ pub(crate) fn scenario_to_combat_input(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_officer_stat_contributions,
-    ) = build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
+    ) = build_crew_and_buffs(candidate, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
@@ -2148,13 +2137,10 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .map(|cat| support_buffs::describe_resolved_support_buffs(cat, &resolved_support_buffs))
         .unwrap_or_default();
 
-    let lcars_data = if use_lcars_officer_source_standalone() {
-        load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
-            .ok()
-            .map(lcars_officer_data_from_officers)
-    } else {
-        None
-    };
+    // LCARS is the sole officer source; `None` only if the data fails to load.
+    let lcars_data = load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
+        .ok()
+        .map(lcars_officer_data_from_officers);
 
     let roster_path = profile_path(&pid, ROSTER_IMPORTED)
         .to_string_lossy()

@@ -1746,10 +1746,9 @@ impl fmt::Display for CombatEffectSpecDebugError {
                 f,
                 "CombatEffectSpec HTTP debug disabled (set KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1)"
             ),
-            Self::LcarsOfficersNotLoaded => write!(
-                f,
-                "LCARS officers not loaded (officer data failed to load, or KOBAYASHI_OFFICER_SOURCE=stub)"
-            ),
+            Self::LcarsOfficersNotLoaded => {
+                write!(f, "LCARS officers not loaded (officer data failed to load)")
+            }
             Self::NotFound => write!(f, "Officer not found"),
             Self::Serialize(e) => write!(f, "{e}"),
         }
