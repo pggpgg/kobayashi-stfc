@@ -112,9 +112,14 @@ fn stub_escape_hatch_disables_lcars() {
     );
 }
 
-/// The core characterization: the default path now resolves through LCARS (identical to an explicit
-/// `=lcars`), and that is genuinely different from the legacy stub — proving the default flip moved
-/// real officers off the hash-placeholder path. Deterministic (fixed seed) so equality is exact.
+/// The core characterization: the default path now resolves through LCARS (matching an explicit
+/// `=lcars`), and that is materially different from the legacy stub — proving the default flip
+/// moved real officers off the hash-placeholder path.
+///
+/// `default` and `=lcars` use the *same* resolution, but the totals are not bit-identical: float
+/// summation order during resolution/combat depends on per-`HashMap` random seeds, which differ
+/// between two `DataRegistry::load()` calls. So compare with a relative tolerance — tiny for the
+/// same-path pair, large for the stub.
 #[test]
 #[serial]
 fn default_matches_lcars_and_differs_from_stub() {
@@ -125,13 +130,16 @@ fn default_matches_lcars_and_differs_from_stub() {
     assert!(default_lcars_loaded && explicit_lcars_loaded);
     assert!(!stub_lcars_loaded);
 
-    assert_eq!(
-        default_dmg, lcars_dmg,
-        "default (env unset) must resolve through LCARS identically to KOBAYASHI_OFFICER_SOURCE=lcars"
-    );
+    let lcars_rel = (default_dmg - lcars_dmg).abs() / lcars_dmg.abs().max(1.0);
     assert!(
-        (default_dmg - stub_dmg).abs() > 1.0,
-        "LCARS default ({default_dmg}) should differ from the legacy stub ({stub_dmg}); \
-         identical totals would mean the flip changed nothing. rounds={default_rounds}"
+        lcars_rel < 1e-6,
+        "default (env unset) must resolve through LCARS like =lcars (rel diff {lcars_rel:e}): \
+         default={default_dmg} lcars={lcars_dmg}"
+    );
+    let stub_rel = (default_dmg - stub_dmg).abs() / default_dmg.abs().max(1.0);
+    assert!(
+        stub_rel > 1e-3,
+        "LCARS default ({default_dmg}) should differ materially from the legacy stub ({stub_dmg}); \
+         a near-identical total would mean the flip changed nothing. rounds={default_rounds}"
     );
 }
