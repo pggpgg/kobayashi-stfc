@@ -1748,7 +1748,7 @@ impl fmt::Display for CombatEffectSpecDebugError {
             ),
             Self::LcarsOfficersNotLoaded => write!(
                 f,
-                "LCARS officers not loaded (set KOBAYASHI_OFFICER_SOURCE=lcars before starting the server)"
+                "LCARS officers not loaded (officer data failed to load, or KOBAYASHI_OFFICER_SOURCE=stub)"
             ),
             Self::NotFound => write!(f, "Officer not found"),
             Self::Serialize(e) => write!(f, "{e}"),
