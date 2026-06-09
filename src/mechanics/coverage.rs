@@ -16,11 +16,8 @@ use crate::data::ship_ability_resolve::{
     parse_ship_ability_timing, ship_ability_effect_from_catalog,
 };
 use crate::lcars::{
-    lcars_effect_coverage, load_lcars_dir, LcarsEffectCoverage, MechanicCoverageTier,
-    ResolveOptions,
+    lcars_effect_coverage, LcarsEffectCoverage, MechanicCoverageTier, ResolveOptions,
 };
-
-const DEFAULT_LCARS_DIR: &str = "data/officers";
 const DEFAULT_SHIPS_EXTENDED_DIR: &str = "data/ships_extended";
 
 #[derive(Debug, Default, Clone, Serialize)]
@@ -285,14 +282,23 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
     let mut lcars_ignored_samples: Vec<String> = Vec::new();
     const IGNORE_SAMPLE_CAP: usize = 40;
 
-    let lcars_path = root_dir().join(DEFAULT_LCARS_DIR);
-    let officers = load_lcars_dir(&lcars_path).unwrap_or_default();
+    // Built in-process from canonical (+ upstream stats/names) — no committed monolith. Paths are
+    // manifest-relative so the report works regardless of CWD.
+    let root = root_dir();
+    let officers = crate::lcars::build_officer_model(
+        &root.join(crate::lcars::DEFAULT_INPUT),
+        &root.join(crate::lcars::DEFAULT_SUMMARY),
+        &root.join(crate::lcars::DEFAULT_TRANSLATIONS),
+        &root.join(crate::lcars::DEFAULT_OFFICER_DATA_DIR),
+        false,
+    )
+    .unwrap_or_default();
     let lcars_officers_files = officers.len() as u32;
     if officers.is_empty() {
-        notes.push(format!(
-            "No LCARS YAML loaded from {}; directory missing or empty.",
-            lcars_path.display()
-        ));
+        notes.push(
+            "No LCARS officers built from canonical source; source data missing or unreadable."
+                .to_string(),
+        );
     }
 
     let opts = ResolveOptions {

@@ -1,7 +1,5 @@
 //! T'Ana / Zeph `AddRandomState` → weighted defender Morale / Hull Breach / Burning.
 
-use std::path::Path;
-
 use kobayashi::combat::abilities::{
     defender_morale_adjusted_pierce, pick_weighted_state_id, AbilityCondition, AbilityEffect,
 };
@@ -12,8 +10,8 @@ use kobayashi::combat::{
 };
 use kobayashi::data::combat_effect_spec::AbilityModifierSpec;
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, lcars_effect_to_combat_effect_spec, load_lcars_file,
-    resolve_crew_to_buff_set, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id,
+    lcars_effect_to_combat_effect_spec, resolve_crew_to_buff_set, ResolveOptions,
 };
 const TANA_WEIGHTS: &[(u32, u32)] = &[(8, 8), (4, 4), (2, 2)];
 
@@ -127,11 +125,9 @@ fn defender_morale_adjusted_pierce_boosts_battleship_primary_channel() {
 
 #[test]
 fn zeph_bridge_compiles_random_defender_state_with_weights_and_rank_chance() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let zeph = file
         .officers
         .iter()
@@ -182,11 +178,9 @@ fn zeph_bridge_compiles_random_defender_state_with_weights_and_rank_chance() {
 
 #[test]
 fn zeph_fires_random_defender_state_vs_npc_hostile() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(5),
@@ -236,11 +230,9 @@ fn zeph_fires_random_defender_state_vs_npc_hostile() {
 
 #[test]
 fn tana_fires_random_defender_state_vs_player_defender_only() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(5),

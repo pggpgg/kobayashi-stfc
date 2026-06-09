@@ -30,7 +30,7 @@ use crate::data::ship::{
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
 };
-use crate::lcars::{load_lcars_dir, LcarsOfficer};
+use crate::lcars::LcarsOfficer;
 
 use super::ship::ExtendedShipRecord;
 
@@ -81,8 +81,6 @@ impl DataRegistry {
     /// Load all static data from disk. Returns an Arc so it can be shared across handlers and threads.
     /// Officer load failure returns Err; missing ship/hostile indices are allowed (None).
     pub fn load() -> Result<Arc<DataRegistry>, std::io::Error> {
-        const DEFAULT_LCARS_OFFICERS_DIR: &str = "data/officers";
-
         let officers = load_canonical_officers(Path::new(DEFAULT_CANONICAL_OFFICERS_PATH))?;
         let officers = OfficerCache::from_officers(officers);
 
@@ -94,8 +92,9 @@ impl DataRegistry {
         let hostile_loca_display =
             load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
 
-        // LCARS is the sole officer ability source; `None` only if the data fails to load.
-        let lcars_officers = load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).ok();
+        // LCARS is the sole officer ability source, built in-process from canonical (no committed
+        // monolith); `None` only if the source data fails to load.
+        let lcars_officers = crate::lcars::build_officer_model_default().ok();
 
         let forbidden_chaos_catalog = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH);
         let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);

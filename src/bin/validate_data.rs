@@ -162,11 +162,18 @@ fn write_lcars_coverage(
     write_json: bool,
     write_md: bool,
 ) -> Result<(), String> {
-    let yaml_path = manifest_dir.join("data/officers/officers.lcars.yaml");
-    let file = kobayashi::lcars::load_lcars_file(&yaml_path)
-        .map_err(|e| format!("load {}: {e}", yaml_path.display()))?;
-    let officer_count = file.officers.len();
-    let drops = collect_lcars_drops(&file.officers);
+    // Built in-process from canonical (+ upstream stats/names); no committed monolith.
+    let upstream = manifest_dir.join("data/upstream/data-stfc-space");
+    let officers = kobayashi::lcars::build_officer_model(
+        &manifest_dir.join("data/officers/officers.canonical.json"),
+        &upstream.join("summary-officer.json"),
+        &upstream.join("translations-officer_buffs.json"),
+        &upstream.join("officers"),
+        false,
+    )
+    .map_err(|e| format!("build LCARS officer model: {e}"))?;
+    let officer_count = officers.len();
+    let drops = collect_lcars_drops(&officers);
 
     println!(
         "LCARS coverage: {} drop(s) across {} officer(s) ({} categories)",

@@ -878,10 +878,10 @@ fn handle_resolve(args: &[String]) -> i32 {
         return 2;
     }
 
-    let lcars_officers = match crate::lcars::load_lcars_dir("data/officers") {
+    let lcars_officers = match crate::lcars::build_officer_model_default() {
         Ok(officers) => officers,
         Err(err) => {
-            eprintln!("failed to load LCARS officers: {err}");
+            eprintln!("failed to build LCARS officer model: {err}");
             return 1;
         }
     };

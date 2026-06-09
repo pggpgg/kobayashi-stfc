@@ -1041,9 +1041,8 @@ mod tests {
     use super::*;
     use crate::combat::{AbilityClass, AbilityEffect, TimingWindow};
     use crate::lcars::parser::{
-        load_lcars_file, LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
+        LcarsAbility, LcarsDuration, LcarsEffect, LcarsOfficer, LcarsScaling,
     };
-    use std::path::Path;
 
     fn officer_with_stats(
         id: &str,
@@ -1413,11 +1412,9 @@ mod tests {
 
     #[test]
     fn phase4d_production_kirk_resolves_attack_multiplier_without_pending_duplicate() {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        if !path.exists() {
+        let Ok(file) = super::super::build_officer_model_file_default() else {
             return;
-        }
-        let file = load_lcars_file(path).expect("officers.lcars.yaml");
+        };
         let officers = index_lcars_officers_by_id(file.officers);
         let buff = resolve_crew_to_buff_set(
             "kirk-1323b6",
@@ -1879,11 +1876,9 @@ mod tests {
 
     #[test]
     fn resolve_bundled_lcars_yaml_discrete_scaling_smoke() {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        if !path.exists() {
-            return; // skip if data not present (e.g. in minimal checkouts)
-        }
-        let file = load_lcars_file(path).unwrap();
+        let Ok(file) = super::super::build_officer_model_file_default() else {
+            return; // skip if source data not present (e.g. in minimal checkouts)
+        };
         let officers = index_lcars_officers_by_id(file.officers);
         let options = ResolveOptions {
             tier: Some(5),
@@ -2468,11 +2463,9 @@ mod tests {
 
     #[test]
     fn production_on_shield_break_effects_all_resolve_to_target_specific_timing() {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        if !path.exists() {
+        let Ok(file) = super::super::build_officer_model_file_default() else {
             return; // skip in minimal checkouts (mirrors resolve_bundled_lcars_yaml_*)
-        }
-        let file = load_lcars_file(path).unwrap();
+        };
         let mut total = 0usize;
         let mut self_count = 0usize;
         let mut enemy_count = 0usize;

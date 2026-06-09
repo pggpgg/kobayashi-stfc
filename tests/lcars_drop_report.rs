@@ -1,14 +1,13 @@
 //! Unit + integration tests for [`kobayashi::lcars::LcarsDropReport`].
 //!
 //! Synthetic cases pin each drop category to its expected reason discriminator. The
-//! `production_yaml_drop_baseline` test walks the bundled `officers.lcars.yaml` so the
+//! `production_yaml_drop_baseline` test walks the in-process officer model so the
 //! coverage report doesn't silently regress when officers/triggers/tags change.
 
-use std::path::Path;
-
 use kobayashi::lcars::{
-    collect_lcars_drops, lcars_effect_to_combat_effect_spec_with_report, load_lcars_file,
-    LcarsCondition, LcarsDropReport, LcarsDuration, LcarsEffect,
+    build_officer_model_file_default, collect_lcars_drops,
+    lcars_effect_to_combat_effect_spec_with_report, LcarsCondition, LcarsDropReport, LcarsDuration,
+    LcarsEffect,
 };
 
 fn lcars_effect_stat_modify(stat: &str, value: f64, trigger: &str) -> LcarsEffect {
@@ -351,11 +350,10 @@ fn reasons_with_officer_samples_groups_distinct_and_caps_samples() {
 /// should drop).
 #[test]
 fn production_yaml_drop_baseline() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
-        return; // minimal checkouts skip — matches resolver_bundled_lcars_yaml_* convention
-    }
-    let file = load_lcars_file(path).unwrap();
+    // skip in minimal checkouts — matches resolver_bundled_lcars_yaml_* convention
+    let Ok(file) = build_officer_model_file_default() else {
+        return;
+    };
     let drops = collect_lcars_drops(&file.officers);
 
     // Baseline recorded 2026-05-17. Update with intent: a *drop* in count is good news (new

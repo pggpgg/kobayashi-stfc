@@ -14,20 +14,17 @@
 //! 5 officers in the bundled YAML use this pattern as of writing: SNW Pike, Harry Mudd,
 //! Kathryn Janeway, One of Eleven, WOK Carol.
 
-use std::path::Path;
-
 use kobayashi::combat::abilities::AbilityEffect;
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::data::combat_effect_spec::{AbilityModifierSpec, AbilityTargetSpec};
-use kobayashi::lcars::{lcars_effect_to_combat_effect_spec, load_lcars_file};
+use kobayashi::lcars::{build_officer_model_file_default, lcars_effect_to_combat_effect_spec};
 
 #[test]
 fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
-        return; // minimal checkouts — matches `resolve_bundled_lcars_yaml_*` convention
-    }
-    let file = load_lcars_file(path).unwrap();
+    // skip in minimal checkouts — matches `resolve_bundled_lcars_yaml_*` convention
+    let Ok(file) = build_officer_model_file_default() else {
+        return;
+    };
     let pike = file
         .officers
         .iter()
@@ -90,11 +87,9 @@ fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
 /// instead of regressing silently.
 #[test]
 fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
 
     let mut checked = 0usize;
     let mut leaked: Vec<String> = Vec::new();

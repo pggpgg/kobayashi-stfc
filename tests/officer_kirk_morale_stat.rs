@@ -3,8 +3,6 @@
 //! Production sole case: `kirk-1323b6` captain "Leader" → synthetic `AttackMultiplier`
 //! seat via [`expand_dynamic_officer_stat_effects`]. Defense/Health axes are not modeled.
 
-use std::path::Path;
-
 use kobayashi::combat::abilities::{
     filter_effects_by_condition, Ability, AbilityClass, AbilityCondition, AbilityEffect,
     CombatContext, CrewSeat, CrewSeatContext, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
@@ -14,18 +12,15 @@ use kobayashi::combat::{
     OpponentFactionTag, ShipType, SimulationConfig, TraceMode, WeaponStats,
 };
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, load_lcars_file, resolve_crew_to_buff_set, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
+    ResolveOptions,
 };
 
 fn bundled_officers() -> Option<(
     std::collections::HashMap<String, kobayashi::lcars::LcarsOfficer>,
     ResolveOptions,
 )> {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
-        return None;
-    }
-    let file = load_lcars_file(path).ok()?;
+    let file = build_officer_model_file_default().ok()?;
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(1),

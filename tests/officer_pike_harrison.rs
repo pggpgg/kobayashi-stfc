@@ -1,8 +1,6 @@
 //! Pike captain `OffAbilityEffect` scales bridge officer ability magnitudes:
 //! `effective = min(1.0, base × (1 + pike_bonus))` (e.g. Harrison Sabotage 60% × 1.4 = 84%).
 
-use std::path::Path;
-
 use kobayashi::combat::abilities::{
     scale_bridge_officer_ability_effect, scale_crew_bridge_ability_effects,
     sum_bridge_ability_effectiveness_add, Ability, AbilityClass, AbilityEffect,
@@ -12,7 +10,8 @@ use kobayashi::combat::{
     build_combat_setup, Combatant, OpponentFactionTag, ShipType, SimulationConfig,
 };
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, load_lcars_file, resolve_crew_to_buff_set, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
+    ResolveOptions,
 };
 
 #[test]
@@ -47,11 +46,9 @@ fn scale_bridge_officer_effect_caps_at_one() {
 
 #[test]
 fn pike_captain_harrison_bridge_resolves_sabotage_at_eighty_four_percent() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(1),
@@ -137,11 +134,9 @@ fn dummy_combatant() -> Combatant {
 
 #[test]
 fn pike_boost_inactive_when_hostile_level_above_seventy() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(1),
