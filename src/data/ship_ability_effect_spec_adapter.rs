@@ -6,7 +6,7 @@
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
     AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, EffectCategory, EffectConfidence,
-    EffectSource, ValueSpec,
+    EffectSource, OfficerSpecAttrs, ValueSpec,
 };
 use crate::data::ship::ShipAbility;
 
@@ -158,6 +158,7 @@ pub fn ship_ability_to_combat_effect_spec(ability: &ShipAbility) -> Option<Comba
         accumulate: None,
         conditions,
         attributes: serde_json::Map::new(),
+        officer: OfficerSpecAttrs::default(),
         stacking: None,
         category: Some(EffectCategory::Combat),
         confidence: Some(EffectConfidence::Authoritative),

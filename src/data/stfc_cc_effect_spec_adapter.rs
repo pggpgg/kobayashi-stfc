@@ -6,7 +6,8 @@ use std::collections::HashMap;
 
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, CombatEffectSpec, EffectCategory, EffectSource, ValueSpec,
+    AbilityTriggerSpec, CombatEffectSpec, EffectCategory, EffectSource, OfficerSpecAttrs,
+    ValueSpec,
 };
 
 /// Upstream cheat-sheet tokens with no resolved [`AbilityConditionSpec`] / engine mapping yet;
@@ -514,6 +515,7 @@ pub fn try_stfc_cc_string_record_to_spec(
         accumulate: None,
         conditions,
         attributes,
+        officer: OfficerSpecAttrs::default(),
         stacking: None,
         category: Some(EffectCategory::Combat),
         confidence: None,

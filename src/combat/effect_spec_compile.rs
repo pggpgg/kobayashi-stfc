@@ -13,42 +13,16 @@ use crate::data::combat_effect_spec::{
 };
 use crate::data::ship_ability_resolve;
 
-/// Raw LCARS operator string after dash/underscore normalization (matches resolver `normalize_operator`).
-/// Set by [`crate::lcars::effect_spec_adapter`] so the compiler can preserve multiply-family
-/// variants (`mul_add`, etc.) that the coarser `spec.operation` enum collapses into `Add`.
-pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
-/// When true, the effect only procs on critical hits (Chang bridge reload delay).
-pub const OFFICER_SPEC_ATTR_REQUIRES_CRITICAL: &str = "requires_critical";
-/// JSON array of STFC state ids from canonical `multi_state=[…]` (each id is also its weight).
-pub const OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS: &str = "random_state_weights";
-
 /// Default T'Ana / Zeph style weights when LCARS omits `multi_state`.
 pub const DEFAULT_RANDOM_STATE_WEIGHTS: &[(u32, u32)] = &[(8, 8), (4, 4), (2, 2)];
 
-/// `(state_id, weight)` pairs for [`crate::combat::AbilityEffect::RandomDefenderState`].
-pub fn random_state_weighted_outcomes_from_spec(
-    attributes: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<(u32, u32)> {
-    let Some(arr) = attributes
-        .get(OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS)
-        .and_then(|v| v.as_array())
-    else {
+/// `(state_id, weight)` pairs for [`crate::combat::AbilityEffect::RandomDefenderState`], built from
+/// the typed `officer.random_state_weights` (each id is also its own weight). Empty → defaults.
+pub fn random_state_weighted_outcomes(weights: &[u32]) -> Vec<(u32, u32)> {
+    if weights.is_empty() {
         return DEFAULT_RANDOM_STATE_WEIGHTS.to_vec();
-    };
-    let parsed: Vec<(u32, u32)> = arr
-        .iter()
-        .filter_map(|v| {
-            let id = v
-                .as_u64()
-                .or_else(|| v.as_f64().map(|f| f.round() as u64))? as u32;
-            Some((id, id))
-        })
-        .collect();
-    if parsed.is_empty() {
-        DEFAULT_RANDOM_STATE_WEIGHTS.to_vec()
-    } else {
-        parsed
     }
+    weights.iter().map(|&id| (id, id)).collect()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -291,10 +265,9 @@ fn merge_duration_round_condition(
 }
 
 fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
-    spec.attributes
-        .get(OFFICER_SPEC_ATTR_LCARS_OP)
-        .and_then(|v| v.as_str())
-        .map(std::string::ToString::to_string)
+    spec.officer
+        .lcars_op
+        .clone()
         .unwrap_or_else(|| match spec.operation {
             AbilityOperationSpec::Multiply => "multiply".to_string(),
             AbilityOperationSpec::Set => "set".to_string(),
@@ -927,11 +900,7 @@ fn compile_officer_combat_spec_impl(
                 .filter(|c| c.is_finite())
                 .unwrap_or(1.0)
                 .clamp(0.0, 1.0);
-            let requires_critical = spec
-                .attributes
-                .get(OFFICER_SPEC_ATTR_REQUIRES_CRITICAL)
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
+            let requires_critical = spec.officer.requires_critical;
             Ok((
                 timing,
                 AbilityEffect::DefenderFireDelay {
@@ -970,7 +939,7 @@ fn compile_officer_combat_spec_impl(
                 .unwrap_or(1.0)
                 .clamp(0.0, 1.0);
             let duration_rounds = officer_spec_duration_rounds(spec, 3);
-            let pairs = random_state_weighted_outcomes_from_spec(&spec.attributes);
+            let pairs = random_state_weighted_outcomes(&spec.officer.random_state_weights);
             let (state_outcome_count, state_outcomes) =
                 crate::combat::abilities::pack_random_defender_state_outcomes(&pairs);
             Ok((
@@ -1101,8 +1070,8 @@ pub fn static_buff_op_from_lcars_op(normalized_op: &str) -> StaticBuffOp {
 /// [`StaticBuffContribution`]. Returns `None` when the spec has no resolvable scalar value.
 ///
 /// The op classification reads the raw normalized LCARS op stashed by the adapter in
-/// `attributes[OFFICER_SPEC_ATTR_LCARS_OP]` so multiply-family variants (`mul_add` etc.) are
-/// honoured — the coarser `spec.operation` enum collapses them all into `Add`.
+/// `spec.officer.lcars_op` so multiply-family variants (`mul_add` etc.) are honoured — the coarser
+/// `spec.operation` enum collapses them all into `Add`.
 ///
 /// `stat_key` is the LCARS-side stat string the caller uses as the
 /// [`crate::combat::types::BuffSet::static_buffs`] hash-map key.
@@ -1247,7 +1216,7 @@ mod tests {
     use super::*;
     use crate::combat::abilities::AbilityCondition;
     use crate::data::combat_effect_spec::{
-        CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource,
+        CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource, OfficerSpecAttrs,
     };
 
     #[test]
@@ -1307,6 +1276,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1352,6 +1322,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1481,10 +1452,11 @@ mod tests {
             decay: None,
             accumulate: None,
             conditions: vec![],
-            attributes: serde_json::Map::from_iter([(
-                OFFICER_SPEC_ATTR_LCARS_OP.into(),
-                serde_json::Value::String("sub".into()),
-            )]),
+            attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs {
+                lcars_op: Some("sub".into()),
+                ..Default::default()
+            },
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1525,6 +1497,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1566,6 +1539,7 @@ mod tests {
             accumulate: None,
             conditions: vec![AbilityConditionSpec::DefenderBurning],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),

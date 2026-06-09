@@ -405,6 +405,38 @@ pub enum EffectConfidence {
     Heuristic,
 }
 
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+/// Typed officer-specific carry that previously lived untyped in [`CombatEffectSpec::attributes`].
+/// Only the LCARS officer adapter populates these; every other producer leaves them at default,
+/// and `skip_serializing_if` keeps them out of the serialized form when empty (so non-officer
+/// specs serialize unchanged). Promoting them to typed fields makes officer specs self-describing
+/// and lets the spec validator reason about them.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct OfficerSpecAttrs {
+    /// Raw LCARS operator string after dash/underscore normalization (resolver `normalize_operator`).
+    /// Preserves multiply-family variants (`mul_add`, `multiply_base_sub`, …) that the coarser
+    /// [`AbilityOperationSpec`] collapses into `Add`. `None` → the compiler derives it from `operation`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lcars_op: Option<String>,
+    /// When true, the effect only procs on critical hits (e.g. Chang's bridge reload delay).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub requires_critical: bool,
+    /// STFC state ids from canonical `multi_state=[…]` (each id is also its own weight). Empty →
+    /// the compiler falls back to `DEFAULT_RANDOM_STATE_WEIGHTS`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub random_state_weights: Vec<u32>,
+}
+
+impl OfficerSpecAttrs {
+    /// True when no officer-specific carry is set (used to skip serialization).
+    pub fn is_empty(&self) -> bool {
+        self.lcars_op.is_none() && !self.requires_critical && self.random_state_weights.is_empty()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CombatEffectSpec {
     pub id: String,
@@ -435,6 +467,9 @@ pub struct CombatEffectSpec {
     pub conditions: Vec<AbilityConditionSpec>,
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
     pub attributes: serde_json::Map<String, serde_json::Value>,
+    /// Typed officer-specific carry (formerly stuffed into `attributes`). See [`OfficerSpecAttrs`].
+    #[serde(default, skip_serializing_if = "OfficerSpecAttrs::is_empty")]
+    pub officer: OfficerSpecAttrs,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stacking: Option<StackingPolicySpec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -483,6 +518,7 @@ mod tests {
             accumulate: None,
             conditions: vec![AbilityConditionSpec::DefenderBurning],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
