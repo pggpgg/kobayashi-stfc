@@ -66,7 +66,9 @@ fn harrison_sabotage_compiles_to_shield_mitigation_bypass_fraction() {
     )
     .expect("Harrison shield_mitigation effect should produce a CombatEffectSpec");
 
-    assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigation);
+    // Opponent-targeted shield mitigation is the explicit multiplicative-bypass modifier (the
+    // adapter remaps ShieldMitigation+DefenderOpponent → ShieldMitigationBypass).
+    assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigationBypass);
     assert_eq!(spec.target, AbilityTargetSpec::DefenderOpponent);
 
     let (_, effect, condition) =

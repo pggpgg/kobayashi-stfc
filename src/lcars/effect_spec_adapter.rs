@@ -974,6 +974,16 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 return None;
             }
         };
+        // Opponent-targeted shield mitigation is the **multiplicative bypass** semantic
+        // ("ignore X% of the opponent's shield"). Emit the explicit `ShieldMitigationBypass`
+        // modifier here rather than leaving the compiler to infer bypass from `target`.
+        let modifier = if modifier == AbilityModifierSpec::ShieldMitigation
+            && target == AbilityTargetSpec::DefenderOpponent
+        {
+            AbilityModifierSpec::ShieldMitigationBypass
+        } else {
+            modifier
+        };
         if stat == "random_defender_state" {
             if let Some(ids) = effect
                 .scaling

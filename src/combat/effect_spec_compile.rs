@@ -649,35 +649,38 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::ShieldMitigationBypass => {
+            // **Multiplicative** bypass of the opponent's shield mitigation (Harrison-style "ignores
+            // X% of opponent shield", canonical `op: MultiplySub`). Engine applies as
+            // `mitigation × (1 - bypass)` (see `engine.rs` shield_mitigation_bypass clamp). A single
+            // source may exceed 100% (clamped at consume); we clamp to [0, 1] here as a guard. The
+            // producer picks this modifier explicitly — the compiler no longer infers bypass from
+            // `target` (see the LCARS adapter's ShieldMitigation→ShieldMitigationBypass remap).
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let bypass = v.clamp(0.0, 1.0);
+            Ok((
+                timing,
+                AbilityEffect::ShieldMitigationBypassFraction(bypass),
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::ShieldMitigation => {
             let v = scalar_fraction(
                 spec.value
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            // target=DefenderOpponent → **multiplicative** bypass on defender (Harrison-style
-            // "ignores X% of opponent shield" — canonical `op: MultiplySub`). Engine applies as
-            // `mitigation × (1 - bypass)` (see `engine.rs` shield_mitigation_bypass clamp).
-            // The generator drops `MultiplySub` when ShieldMitigation falls through the
-            // `:unmapped` tag path (YAML lands with `operator: null, value: 0.7`), so the
-            // target field is what flags the multiplicative semantic. A single source may
-            // exceed 100% (clamped at consume); we clamp to [0, 1] here as a guard.
-            if matches!(spec.target, AbilityTargetSpec::DefenderOpponent) {
-                let bypass = v.clamp(0.0, 1.0);
-                return Ok((
-                    timing,
-                    AbilityEffect::ShieldMitigationBypassFraction(bypass),
-                    compiled_condition.clone(),
-                ));
-            }
             let add = fold_operator_to_additive(op, v);
             // target=AttackerSelf: buff the *attacker's* mitigation on counter-fire (engine
             // adds via `effective_incoming_shield_mitigation`). Without this routing the
             // bonus leaks into the `ShieldMitigationBonus` accumulator that the outbound
             // path adds to `defender.shield_mitigation` — i.e. it would buff the **defender**
-            // and hurt the attacker. target=DefenderOpponent (and the default) keep emitting
-            // additive `ShieldMitigationBonus`; multiplicative bypass for the opponent path
-            // is handled separately (see `ShieldMitigationBypassFraction`).
+            // and hurt the attacker. The default keeps emitting additive `ShieldMitigationBonus`;
+            // multiplicative bypass is the separate `ShieldMitigationBypass` modifier above.
             if matches!(spec.target, AbilityTargetSpec::AttackerSelf) {
                 return Ok((
                     timing,
@@ -1352,6 +1355,7 @@ mod tests {
         // into the accumulator for the rest of the fight. Regression test for the Harrison
         // Sabotage `ShieldMitigationBypassFraction` first-round-only semantic.
         let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.modifier = AbilityModifierSpec::ShieldMitigationBypass;
         spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
         spec.trigger = AbilityTriggerSpec::CombatBegin;
         let (_, _, condition) =
@@ -1363,11 +1367,13 @@ mod tests {
     }
 
     #[test]
-    fn shield_mitigation_compile_defender_opponent_emits_bypass_fraction() {
+    fn shield_mitigation_bypass_emits_bypass_fraction() {
         // Harrison's "Sabotage": canonical `op: MultiplySub, value 0.7 (rank 2), target EnemyShip`
-        // → multiplicative bypass of defender's shield_mitigation. Engine math:
-        // `mitigation × (1 - 0.7)`. Regression test for the `harrison-56cc6c` fidelity gap.
+        // → the LCARS adapter emits the explicit `ShieldMitigationBypass` modifier, which compiles
+        // to multiplicative bypass `mitigation × (1 - 0.7)`. Regression test for the
+        // `harrison-56cc6c` fidelity gap.
         let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.modifier = AbilityModifierSpec::ShieldMitigationBypass;
         spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
         let (_, effect, condition) =
             compile_officer_combat_spec(&spec).expect("defender shield mitigation");
@@ -1418,12 +1424,13 @@ mod tests {
     }
 
     #[test]
-    fn shield_mitigation_compile_defender_opponent_clamps_bypass_at_100pct() {
+    fn shield_mitigation_bypass_clamps_at_100pct() {
         // Belt-and-suspenders clamp: a single source with value > 1.0 must not bypass more than
         // 100% of the defender's mitigation. (The engine also clamps the *total* across sources.)
-        let spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 1.4);
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 1.4);
+        spec.modifier = AbilityModifierSpec::ShieldMitigationBypass;
         let (_, effect, _) =
-            compile_officer_combat_spec(&spec).expect("defender shield mitigation > 100%");
+            compile_officer_combat_spec(&spec).expect("shield mitigation bypass > 100%");
         assert!(
             matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 1.0).abs() < 1e-12),
             "Bypass > 100% must clamp to 1.0; got {effect:?}"

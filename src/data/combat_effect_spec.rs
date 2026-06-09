@@ -131,7 +131,16 @@ pub enum AbilityModifierSpec {
     CritChance,
     CritDamage,
     Pierce,
+    /// Additive shield-mitigation bonus. `target=AttackerSelf` buffs the attacker's own mitigation
+    /// on counter-fire; otherwise it buffs the defender's mitigation. The *multiplicative* "ignore X%
+    /// of the opponent's shield" semantic is the distinct [`ShieldMitigationBypass`](AbilityModifierSpec::ShieldMitigationBypass)
+    /// variant — producers choose it explicitly rather than the compiler inferring bypass from `target`.
     ShieldMitigation,
+    /// Multiplicative shield-mitigation **bypass** (Harrison-style "ignores X% of opponent shield",
+    /// canonical `op: MultiplySub`). Compiles to [`crate::combat::abilities::AbilityEffect::ShieldMitigationBypassFraction`]
+    /// — engine applies `mitigation × (1 - bypass)`. Distinct from additive [`ShieldMitigation`](AbilityModifierSpec::ShieldMitigation)
+    /// so the bypass semantic is explicit in the IR.
+    ShieldMitigationBypass,
     /// LCARS `armor`; serde wire remains `"armor"` for existing combat specs.
     #[serde(rename = "armor")]
     MitigationAdditive,
