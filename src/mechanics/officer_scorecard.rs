@@ -5,8 +5,8 @@ use std::fs;
 use std::path::Path;
 
 use crate::lcars::{
-    lcars_effect_coverage, lcars_effect_to_combat_effect_spec_with_report, load_lcars_dir,
-    LcarsAbility, LcarsDropReport, LcarsEffect, LcarsOfficer, MechanicCoverageTier, ResolveOptions,
+    lcars_effect_coverage, lcars_effect_to_combat_effect_spec_with_report, LcarsAbility,
+    LcarsDropReport, LcarsEffect, LcarsOfficer, MechanicCoverageTier, ResolveOptions,
 };
 
 use super::coverage::TierCounts;
@@ -375,12 +375,23 @@ pub fn load_officer_fidelity_map(path: &Path) -> Result<HashMap<String, String>,
     serde_yaml::from_str::<HashMap<String, String>>(&raw).map_err(|e| e.to_string())
 }
 
-/// Build rows for all officers in `dir`, merge fidelity, warn on unknown fidelity keys.
+/// Build rows for all officers, merge fidelity, warn on unknown fidelity keys.
+/// `officers_dir` is the directory holding `officers.canonical.json` (e.g. `data/officers`); the
+/// model is built in-process from it plus the sibling `data/upstream/...` stats/translations.
 pub fn build_officer_scorecard_rows(
-    lcars_dir: &Path,
+    officers_dir: &Path,
     fidelity_path: &Path,
 ) -> Result<Vec<OfficerScorecardRow>, Box<dyn std::error::Error + Send + Sync>> {
-    let officers = load_lcars_dir(lcars_dir)?;
+    // `officers_dir` == `<data>/officers`; upstream stats/translations live under `<data>/upstream`.
+    let data_dir = officers_dir.parent().unwrap_or_else(|| Path::new("."));
+    let upstream = data_dir.join("upstream/data-stfc-space");
+    let officers = crate::lcars::build_officer_model(
+        &officers_dir.join("officers.canonical.json"),
+        &upstream.join("summary-officer.json"),
+        &upstream.join("translations-officer_buffs.json"),
+        &upstream.join("officers"),
+        false,
+    )?;
     let fidelity_map = load_officer_fidelity_map(fidelity_path)
         .map_err(|s| std::io::Error::new(std::io::ErrorKind::InvalidData, s))?;
 

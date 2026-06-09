@@ -210,10 +210,20 @@ pub fn validate_officer_dataset(path: &str) -> Result<ValidationReport, String> 
     }
 }
 
-/// Validate LCARS YAML files in a directory.
+/// Validate the LCARS officer model, built in-process from the `officers.canonical.json` in `path`
+/// (+ sibling `upstream/` stats/translations). The monolith yaml is no longer a runtime artifact.
 pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
-    let officers = lcars::load_lcars_dir(path)
-        .map_err(|e| format!("failed to load LCARS from '{path}': {e}"))?;
+    let officers_dir = Path::new(path);
+    let data_dir = officers_dir.parent().unwrap_or_else(|| Path::new("."));
+    let upstream = data_dir.join("upstream/data-stfc-space");
+    let officers = lcars::build_officer_model(
+        &officers_dir.join("officers.canonical.json"),
+        &upstream.join("summary-officer.json"),
+        &upstream.join("translations-officer_buffs.json"),
+        &upstream.join("officers"),
+        false,
+    )
+    .map_err(|e| format!("failed to build LCARS officer model from '{path}': {e}"))?;
 
     let mut report = ValidationReport::default();
     let mut seen_ids = HashSet::new();

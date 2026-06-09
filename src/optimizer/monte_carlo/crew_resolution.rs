@@ -4,16 +4,11 @@
 //! placeholder/stub path. An officer name that doesn't resolve simply contributes no seat.
 
 use std::collections::HashMap;
-use std::path::Path;
 
 use crate::combat::CrewConfiguration;
 use crate::data::officer::Officer;
-use crate::lcars::{
-    index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
-};
+use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::CrewCandidate;
-
-const DEFAULT_LCARS_OFFICERS_DIR: &str = "data/officers";
 
 /// Build a [CrewConfiguration] from officer names (e.g. from a fight export) by resolving them
 /// through LCARS — the same full-fidelity path the optimizer/sim use.
@@ -25,7 +20,7 @@ pub fn crew_from_officer_names(
     bridge: Vec<String>,
     below_decks: Vec<String>,
 ) -> CrewConfiguration {
-    let officers = load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).unwrap_or_default();
+    let officers = crate::lcars::build_officer_model_default().unwrap_or_default();
     let by_id = index_lcars_officers_by_id(officers);
     let mut name_to_id: HashMap<String, String> = HashMap::new();
     for o in by_id.values() {

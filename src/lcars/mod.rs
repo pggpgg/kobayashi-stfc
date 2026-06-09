@@ -5,8 +5,14 @@
 
 mod canonical_conditions;
 pub mod effect_spec_adapter;
+mod officer_model;
 mod parser;
 pub mod resolver;
+
+pub use officer_model::{
+    build_officer_model, build_officer_model_default, build_officer_model_file_default,
+    DEFAULT_INPUT, DEFAULT_OFFICER_DATA_DIR, DEFAULT_SUMMARY, DEFAULT_TRANSLATIONS,
+};
 
 pub use canonical_conditions::{
     canonical_conditions_to_lcars, is_canonical_condition_mapped,

@@ -2,7 +2,6 @@ use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroUsize;
-use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
 use lru::LruCache;
@@ -16,7 +15,7 @@ use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
-use crate::lcars::{load_lcars_dir, LcarsOfficer};
+use crate::lcars::LcarsOfficer;
 use crate::optimizer::constraints::{
     normalize_officer_name, CrewSearchConstraints, OfficerGroupConstraint,
 };
@@ -36,9 +35,7 @@ static LCARS_POOL_CACHE: OnceLock<Vec<LcarsOfficer>> = OnceLock::new();
 
 fn lcars_pool_cache() -> &'static [LcarsOfficer] {
     LCARS_POOL_CACHE
-        .get_or_init(|| {
-            load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)).unwrap_or_default()
-        })
+        .get_or_init(|| crate::lcars::build_officer_model_default().unwrap_or_default())
         .as_slice()
 }
 

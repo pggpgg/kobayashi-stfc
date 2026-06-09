@@ -9,17 +9,13 @@ use kobayashi::combat::abilities::{
 };
 use kobayashi::combat::condition::evaluate_ability_condition;
 use kobayashi::combat::types::{EnemyTypes, OpponentFactionTag, ShipType};
-use kobayashi::lcars::{load_lcars_file, resolve_officer_ability, ResolveOptions};
+use kobayashi::lcars::{build_officer_model_file_default, resolve_officer_ability, ResolveOptions};
 
 const LESLIE_ID: &str = "leslie-975ce0";
 
 fn load_leslie_captain_contexts() -> Vec<CrewSeatContext> {
-    let path = format!(
-        "{}/data/officers/officers.lcars.yaml",
-        env!("CARGO_MANIFEST_DIR")
-    );
-    let officers = load_lcars_file(&path)
-        .expect("load officers.lcars.yaml")
+    let officers = build_officer_model_file_default()
+        .expect("build officer model")
         .officers;
     let leslie = officers
         .into_iter()

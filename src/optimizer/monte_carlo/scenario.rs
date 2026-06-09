@@ -52,9 +52,7 @@ use crate::data::research_effect_spec_adapter::incoming_shield_mitigation_for_co
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatalog};
-use crate::lcars::{
-    index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
-};
+use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::{
     CrewCandidate, BRIDGE_SLOTS, MAX_BELOW_DECKS_SLOTS, MIN_BELOW_DECKS_SLOTS,
 };
@@ -64,8 +62,6 @@ use super::crew_resolution::{
     hash_identifier, index_officers_by_name, normalize_lookup_key,
     roster_officer_ids_from_candidate, split_name_and_tier,
 };
-
-const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 
 /// Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -2137,8 +2133,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .map(|cat| support_buffs::describe_resolved_support_buffs(cat, &resolved_support_buffs))
         .unwrap_or_default();
 
-    // LCARS is the sole officer source; `None` only if the data fails to load.
-    let lcars_data = load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
+    // LCARS is the sole officer source, built in-process from canonical; `None` only on load failure.
+    let lcars_data = crate::lcars::build_officer_model_default()
         .ok()
         .map(lcars_officer_data_from_officers);
 

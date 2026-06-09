@@ -1,7 +1,6 @@
 //! AllReloadSpeed / AllLoadSpeed: enemy delay vs self-recharge (Uhura, Chang, Kuron, Vixis, Pon, Rom, Ortegas).
 
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::OnceLock;
 
 use kobayashi::lcars::LcarsOfficer;
@@ -16,8 +15,8 @@ use kobayashi::combat::{
 };
 use kobayashi::data::combat_effect_spec::AbilityModifierSpec;
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, lcars_effect_to_combat_effect_spec, load_lcars_file,
-    resolve_crew_to_buff_set, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id,
+    lcars_effect_to_combat_effect_spec, resolve_crew_to_buff_set, ResolveOptions,
 };
 
 fn delay_events(events: &[kobayashi::combat::CombatEvent]) -> Vec<&kobayashi::combat::CombatEvent> {
@@ -173,8 +172,7 @@ fn sim_config(seed: u64, rounds: u32) -> SimulationConfig {
 fn lcars_officers_by_id() -> &'static HashMap<String, LcarsOfficer> {
     static OFFICERS: OnceLock<HashMap<String, LcarsOfficer>> = OnceLock::new();
     OFFICERS.get_or_init(|| {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        let file = load_lcars_file(path).expect("officers.lcars.yaml");
+        let file = build_officer_model_file_default().expect("build officer model");
         index_lcars_officers_by_id(file.officers)
     })
 }
@@ -233,9 +231,6 @@ fn setup_fight_with_defender(
 
 #[test]
 fn kuron_captain_resolves_combat_begin_shots_bonus() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("kuron-15cda2", &[], 1);
     let effects = active_effects_for_timing(&crew, TimingWindow::CombatBegin);
     assert!(
@@ -259,9 +254,6 @@ fn kuron_captain_resolves_combat_begin_shots_bonus() {
 
 #[test]
 fn uhura_captain_emits_defender_fire_delay_on_shield_break() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("uhura-ea117c", &[], 1);
     assert!(
         active_effects_for_timing(&crew, TimingWindow::ShieldBreak)
@@ -297,11 +289,9 @@ fn uhura_captain_emits_defender_fire_delay_on_shield_break() {
 
 #[test]
 fn chang_bridge_compiles_enemy_delay_with_requires_critical() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    let file = load_lcars_file(path).expect("load lcars");
+    };
     let chang = file
         .officers
         .into_iter()
@@ -335,9 +325,6 @@ fn chang_bridge_compiles_enemy_delay_with_requires_critical() {
 
 #[test]
 fn chang_bridge_delay_on_crit_when_defender_hull_breach_active() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = crew_with_defender_hull_breach(resolve_crew(
         "kirk-1323b6",
         &["chang-ecc238".to_string()],
@@ -364,9 +351,6 @@ fn chang_bridge_delay_on_crit_when_defender_hull_breach_active() {
 
 #[test]
 fn kuron_captain_combat_start_shots_bonus_increases_damage() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let baseline = resolve_crew("kirk-1323b6", &[], 1);
     let with_kuron = resolve_crew("kuron-15cda2", &[], 1);
     let kuron_setup = setup_fight(&with_kuron, 0, 2, ShipType::Battleship, true, false);
@@ -408,9 +392,6 @@ fn kuron_captain_combat_start_shots_bonus_increases_damage() {
 
 #[test]
 fn vixis_captain_round_start_can_delay_defender_fire() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("vixis-9eec06", &[], 1);
     let mut saw_delay = false;
     for seed in 0..500_u64 {
@@ -432,11 +413,9 @@ fn vixis_captain_round_start_can_delay_defender_fire() {
 
 #[test]
 fn pon_captain_compiles_enemy_delay_at_combat_begin() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    let file = load_lcars_file(path).expect("load lcars");
+    };
     let pon = file
         .officers
         .into_iter()
@@ -467,9 +446,6 @@ fn pon_captain_compiles_enemy_delay_at_combat_begin() {
 
 #[test]
 fn pon_captain_fires_delay_vs_player_defender_on_explorer() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("pon-a2ddd4", &[], 3);
     let mut saw_delay = false;
     for seed in 0..300_u64 {
@@ -491,9 +467,6 @@ fn pon_captain_fires_delay_vs_player_defender_on_explorer() {
 
 #[test]
 fn rom_captain_inactive_vs_npc_hostile_attacker() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("rom-621ae3", &[], 1);
     let setup = setup_fight(&crew, 42, 4, ShipType::Battleship, true, false);
     let result = simulate_combat_from_setup(&setup, 42);
@@ -505,9 +478,6 @@ fn rom_captain_inactive_vs_npc_hostile_attacker() {
 
 #[test]
 fn pon_captain_inactive_vs_npc_hostile_attacker() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("pon-a2ddd4", &[], 3);
     let setup = setup_fight(&crew, 12_345, 3, ShipType::Explorer, true, false);
     let result = simulate_combat_from_setup(&setup, 12_345);
@@ -519,11 +489,9 @@ fn pon_captain_inactive_vs_npc_hostile_attacker() {
 
 #[test]
 fn rom_captain_compiles_one_round_combat_begin_delay() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    let file = load_lcars_file(path).expect("load lcars");
+    };
     let rom = file
         .officers
         .into_iter()
@@ -552,11 +520,9 @@ fn rom_captain_compiles_one_round_combat_begin_delay() {
 
 #[test]
 fn ortegas_bridge_compiles_round_start_enemy_delay_from_canonical() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    let file = load_lcars_file(path).expect("load lcars");
+    };
     let ortegas = file
         .officers
         .into_iter()
@@ -592,9 +558,6 @@ fn ortegas_bridge_compiles_round_start_enemy_delay_from_canonical() {
 
 #[test]
 fn ortegas_bridge_round_start_delay_vs_player_defender() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew(
         "kirk-1323b6",
         &["strike-team-ortegas-d9df30".to_string()],

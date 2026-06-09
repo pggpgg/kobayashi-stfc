@@ -1,7 +1,6 @@
 //! SNW Sam Kirk captain: enemy-targeted per-round shield drain vs non-Armada hostiles.
 
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::OnceLock;
 
 use kobayashi::combat::abilities::{active_effects_for_timing, CrewConfiguration, TimingWindow};
@@ -12,15 +11,14 @@ use kobayashi::combat::{
 };
 use kobayashi::data::combat_effect_spec::AbilityModifierSpec;
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, lcars_effect_to_combat_effect_spec, load_lcars_file,
-    resolve_crew_to_buff_set, LcarsOfficer, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id,
+    lcars_effect_to_combat_effect_spec, resolve_crew_to_buff_set, LcarsOfficer, ResolveOptions,
 };
 
 fn lcars_officers_by_id() -> &'static HashMap<String, LcarsOfficer> {
     static OFFICERS: OnceLock<HashMap<String, LcarsOfficer>> = OnceLock::new();
     OFFICERS.get_or_init(|| {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        let file = load_lcars_file(path).expect("officers.lcars.yaml");
+        let file = build_officer_model_file_default().expect("build officer model");
         index_lcars_officers_by_id(file.officers)
     })
 }
@@ -101,11 +99,9 @@ fn attacker() -> Combatant {
 
 #[test]
 fn snw_sam_kirk_captain_compiles_defender_shield_drain_per_round() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    let file = load_lcars_file(path).expect("load lcars");
+    };
     let kirk = file
         .officers
         .into_iter()
@@ -144,9 +140,6 @@ fn snw_sam_kirk_captain_compiles_defender_shield_drain_per_round() {
 
 #[test]
 fn snw_sam_kirk_drains_npc_hostile_shields_at_round_start() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew("snw-sam-kirk-0a77f9", 1);
     assert!(
         active_effects_for_timing(&crew, TimingWindow::RoundStart)
