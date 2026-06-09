@@ -851,6 +851,16 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 LcarsDuration::Rounds {
                     rounds: num_rounds_from_attributes(a.attributes.as_deref()).unwrap_or(2),
                 }
+            } else if matches!(
+                stat.as_str(),
+                "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
+            ) {
+                // Officer-stat keys honor canonical `num_rounds` (e.g. Kirk OfficerStatAll
+                // `num_rounds=1` → first-round-only), matching the Tag path. Other stat_modify
+                // effects (shield drain, weapon damage, …) stay permanent unless handled above.
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|n| LcarsDuration::Rounds { rounds: n })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
             } else {
                 LcarsDuration::Permanent("permanent".to_string())
             };
@@ -1199,7 +1209,10 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             } else {
                 "shield_regen".into()
             },
-            "add".into(),
+            // Honor canonical operation: enemy drains are `MultiplySub`/`MultiplyBaseSub` (→ `sub`,
+            // compiled to DefenderShieldDrainPerRound); self repairs are `MultiplyAdd`/`Add`.
+            // Hardcoding `add` here was wrong for drains (only SNW Sam Kirk was hand-fixed).
+            map_lcars_operator(a.operation.as_deref().unwrap_or("Add")),
             val,
         ),
         // Fraction of hull damage taken last round; engine applies at round start.
@@ -1210,9 +1223,12 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "ShieldRepairPrevRound" => {
             MappedEffect::StatModify("shield_hp_repair_prev_round".into(), "add".into(), val)
         }
-        "HullHPRepair" | "HullRegen" => {
-            MappedEffect::StatModify("hull_hp_repair".into(), "add".into(), val)
-        }
+        "HullHPRepair" | "HullRegen" => MappedEffect::StatModify(
+            "hull_hp_repair".into(),
+            // Honor canonical operation (enemy hull drains use `MultiplySub`/`MultiplyBaseSub`).
+            map_lcars_operator(a.operation.as_deref().unwrap_or("Add")),
+            val,
+        ),
         "AddState" => {
             let attrs = a.attributes.as_deref().unwrap_or("");
             match add_state_type_from_attributes(attrs) {

@@ -1063,7 +1063,7 @@ officers:
         enemy_type: null
         battle_types: null
         conditions:
-        - type: and
+        - type: literal_false
           stat: null
           threshold_pct: null
           min: null
@@ -1077,37 +1077,7 @@ officers:
           ship_id: null
           enemy_type: null
           battle_types: null
-          conditions:
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
+          conditions: null
         - type: combat_battle_type_any
           stat: null
           threshold_pct: null
@@ -7733,7 +7703,7 @@ officers:
     - type: stat_modify
       stat: hull_hp_repair
       target: enemy
-      operator: add
+      operator: sub
       value: null
       trigger: on_combat_start
       duration: permanent
@@ -7755,7 +7725,7 @@ officers:
         - 1.0
         - 1.0
       condition:
-        type: and
+        type: literal_false
         stat: null
         threshold_pct: null
         min: null
@@ -7769,37 +7739,7 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions:
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -9209,7 +9149,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: self
-      operator: add
+      operator: multiplybaseadd
       value: null
       trigger: on_round_start
       duration: permanent
@@ -10239,7 +10179,7 @@ officers:
     - type: stat_modify
       stat: shield_regen_max_fraction
       target: self
-      operator: add
+      operator: multiply
       value: null
       trigger: on_round_start
       duration: permanent
@@ -12780,11 +12720,11 @@ officers:
   captain_ability:
     name: Motivational
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.08
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -12792,7 +12732,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.08
+        - 0.03
+        - 0.06
         chance_values:
         - 1.0
         - 1.0
@@ -12800,7 +12743,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -13252,11 +13195,11 @@ officers:
   captain_ability:
     name: Doctor
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.1
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -13264,7 +13207,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.1
+        - 0.05
+        - 0.1
         chance_values:
         - 1.0
         - 1.0
@@ -13272,7 +13218,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -15803,7 +15749,7 @@ officers:
         - 1.0
         - 1.0
       condition:
-        type: and
+        type: defender_is_player_ship
         stat: null
         threshold_pct: null
         min: null
@@ -15817,37 +15763,7 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions:
-        - type: defender_is_player_ship
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -20213,7 +20129,7 @@ officers:
         enemy_type: null
         battle_types: null
         conditions:
-        - type: and
+        - type: literal_false
           stat: null
           threshold_pct: null
           min: null
@@ -20227,37 +20143,7 @@ officers:
           ship_id: null
           enemy_type: null
           battle_types: null
-          conditions:
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
+          conditions: null
         - type: combat_battle_type_any
           stat: null
           threshold_pct: null
@@ -20738,11 +20624,11 @@ officers:
   captain_ability:
     name: War of Endurance
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.1
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -20750,7 +20636,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.1
+        - 0.02
+        - 0.05
         chance_values:
         - 1.0
         - 1.0
@@ -20758,7 +20647,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -21287,11 +21176,11 @@ officers:
   bridge_ability:
     name: Yay, Friends!
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.05
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -21299,7 +21188,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.05
+        - 0.1
+        - 0.15
+        - 0.25
+        - 0.3
         chance_values:
         - 1.0
         - 1.0
@@ -21309,7 +21203,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability:
@@ -23348,7 +23242,7 @@ officers:
         - 1.0
         - 1.0
       condition:
-        type: and
+        type: defender_is_player_ship
         stat: null
         threshold_pct: null
         min: null
@@ -23362,37 +23256,7 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions:
-        - type: defender_is_player_ship
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -26024,11 +25888,11 @@ officers:
   bridge_ability:
     name: Chokepoint
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.1
+      value: null
       trigger: on_combat_start
       duration: permanent
       scaling:
@@ -26036,7 +25900,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.1
+        - 0.14
+        - 0.2
+        - 0.3
+        - 0.5
         chance_values:
         - 1.0
         - 1.0
@@ -26091,7 +25960,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability:
@@ -26573,7 +26442,7 @@ officers:
         - 1.0
         - 1.0
       condition:
-        type: and
+        type: literal_false
         stat: null
         threshold_pct: null
         min: null
@@ -26587,37 +26456,7 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions:
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
+        conditions: null
       chance: null
       multiplier: null
       tag: shieldmitigation:unmapped
@@ -31619,7 +31458,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: multiplybasesub
       value: null
       trigger: on_round_start
       duration: permanent
@@ -32217,7 +32056,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: self
-      operator: add
+      operator: multiply
       value: null
       trigger: on_shield_break
       duration: permanent
@@ -32727,21 +32566,6 @@ officers:
           battle_types: null
           conditions: null
         - type: defender_is_player_ship
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
           stat: null
           threshold_pct: null
           min: null
@@ -53685,7 +53509,7 @@ officers:
         enemy_type: null
         battle_types: null
         conditions:
-        - type: and
+        - type: literal_false
           stat: null
           threshold_pct: null
           min: null
@@ -53699,37 +53523,7 @@ officers:
           ship_id: null
           enemy_type: null
           battle_types: null
-          conditions:
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
+          conditions: null
         - type: combat_battle_type_any
           stat: null
           threshold_pct: null
@@ -57718,11 +57512,11 @@ officers:
   captain_ability:
     name: Leader
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.4
+      value: null
       trigger: on_round_start
       duration:
         rounds: 1
@@ -57731,7 +57525,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.4
+        - 0.1
+        - 0.2
         chance_values:
         - 1.0
         - 1.0
@@ -57754,7 +57551,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -59811,11 +59608,11 @@ officers:
   bridge_ability:
     name: Know your Enemy
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: enemy_bridge
-      operator: sub
-      value: 0.2
+      operator: multiply
+      value: null
       trigger: on_combat_start
       duration: permanent
       scaling:
@@ -59823,7 +59620,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.2
+        - 0.3
+        - 0.4
+        - 0.5
+        - 0.6
         chance_values:
         - 1.0
         - 1.0
@@ -59848,7 +59650,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -60755,11 +60557,11 @@ officers:
   captain_ability:
     name: Discipline
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.05
+      value: null
       trigger: on_round_start
       duration: permanent
       scaling:
@@ -60767,7 +60569,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.05
+        - 0.02
+        - 0.05
         chance_values:
         - 1.0
         - 1.0
@@ -60775,7 +60580,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -61725,11 +61530,11 @@ officers:
   captain_ability:
     name: Romulan Health
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.2
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -61737,7 +61542,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.2
+        - 0.1
+        - 0.2
         chance_values:
         - 1.0
         - 1.0
@@ -61745,7 +61553,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -62750,7 +62558,7 @@ officers:
     - type: stat_modify
       stat: hull_hp_repair
       target: self
-      operator: add
+      operator: multiply
       value: null
       trigger: on_round_end
       duration: permanent
@@ -69475,11 +69283,11 @@ officers:
   bridge_ability:
     name: Let Me Help You
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.5
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -69487,7 +69295,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.5
+        - 0.6
+        - 0.7
+        - 0.8
+        - 0.9
         chance_values:
         - 1.0
         - 1.0
@@ -69497,7 +69310,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -71406,7 +71219,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: multiplybasesub
       value: null
       trigger: passive
       duration: permanent
@@ -76892,11 +76705,11 @@ officers:
   captain_ability:
     name: Home Protector
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.2
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -76904,7 +76717,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.2
+        - 0.1
+        - 0.2
         chance_values:
         - 1.0
         - 1.0
@@ -76927,7 +76743,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -77382,7 +77198,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: self
-      operator: add
+      operator: multiply
       value: null
       trigger: passive
       duration: permanent
@@ -81084,11 +80900,11 @@ officers:
   captain_ability:
     name: Hypospray
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.1
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -81096,7 +80912,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.1
+        - 0.05
+        - 0.1
         chance_values:
         - 1.0
         - 1.0
@@ -81104,7 +80923,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -81551,11 +81370,11 @@ officers:
   captain_ability:
     name: The Measure of a Man
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.08
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -81563,7 +81382,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.08
+        - 0.03
+        - 0.06
         chance_values:
         - 1.0
         - 1.0
@@ -81571,7 +81393,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -86534,11 +86356,11 @@ officers:
   captain_ability:
     name: Biologist
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
-      operator: add
-      value: 10.0
+      operator: multiply
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -86546,7 +86368,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 10.0
+        - 2.0
+        - 5.0
         chance_values:
         - 1.0
         - 1.0
@@ -86554,7 +86379,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -88054,7 +87879,7 @@ officers:
         - 1.0
         - 1.0
       condition:
-        type: and
+        type: defender_is_player_ship
         stat: null
         threshold_pct: null
         min: null
@@ -88068,37 +87893,7 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions:
-        - type: defender_is_player_ship
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -96326,11 +96121,11 @@ officers:
   captain_ability:
     name: Endless Ambition
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.5
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -96338,7 +96133,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 0.5
+        - 0.25
+        - 0.5
         chance_values:
         - 1.0
         - 1.0
@@ -96346,7 +96144,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -101566,7 +101364,7 @@ officers:
     - type: stat_modify
       stat: shield_regen_max_fraction
       target: self
-      operator: add
+      operator: multiply
       value: null
       trigger: on_round_start
       duration: permanent
@@ -102251,11 +102049,11 @@ officers:
   bridge_ability:
     name: Strengthen the Unimatrix
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.6
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -102263,7 +102061,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.6
+        - 0.7
+        - 0.8
+        - 0.9
+        - 1.0
         chance_values:
         - 1.0
         - 1.0
@@ -102273,7 +102076,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -103204,7 +103007,7 @@ officers:
     - type: stat_modify
       stat: hull_hp_repair
       target: enemy
-      operator: add
+      operator: sub
       value: null
       trigger: on_round_start
       duration: permanent
@@ -105354,7 +105157,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: multiplybasesub
       value: null
       trigger: on_hit
       duration: permanent
@@ -106427,11 +106230,11 @@ officers:
   below_decks_ability:
     name: Telepathic Resolve
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.7
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -106439,7 +106242,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.7
+        - 0.8
+        - 1.0
+        - 1.2
+        - 1.5
         chance_values:
         - 1.0
         - 1.0
@@ -106449,7 +106257,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   stats:
@@ -108021,7 +107829,7 @@ officers:
     - type: stat_modify
       stat: shield_regen_max_fraction
       target: self
-      operator: add
+      operator: multiply
       value: null
       trigger: on_round_start
       duration: permanent
@@ -115386,7 +115194,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: self
-      operator: add
+      operator: multiplybaseadd
       value: null
       trigger: on_round_start
       duration: permanent
@@ -118008,11 +117816,11 @@ officers:
   captain_ability:
     name: Team Profiling
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 1.3
+      value: null
       trigger: on_round_start
       duration: permanent
       scaling:
@@ -118020,7 +117828,10 @@ officers:
         per_rank: null
         max_rank: 3
         base_chance: null
-        values: null
+        values:
+        - 1.3
+        - 0.05
+        - 0.1
         chance_values:
         - 1.0
         - 1.0
@@ -118073,7 +117884,7 @@ officers:
           conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   bridge_ability:
@@ -121241,7 +121052,7 @@ officers:
     - type: stat_modify
       stat: hull_hp_repair
       target: enemy
-      operator: add
+      operator: sub
       value: null
       trigger: on_round_start
       duration: permanent
@@ -124264,7 +124075,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: sub
       value: null
       trigger: on_combat_start
       duration: permanent
@@ -124282,7 +124093,7 @@ officers:
         - 1.0
         - 1.0
       condition:
-        type: and
+        type: defender_is_player_ship
         stat: null
         threshold_pct: null
         min: null
@@ -124296,37 +124107,7 @@ officers:
         ship_id: null
         enemy_type: null
         battle_types: null
-        conditions:
-        - type: defender_is_player_ship
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
+        conditions: null
       chance: null
       multiplier: null
       tag: null
@@ -128024,7 +127805,7 @@ officers:
         enemy_type: null
         battle_types: null
         conditions:
-        - type: and
+        - type: defender_is_player_ship
           stat: null
           threshold_pct: null
           min: null
@@ -128038,37 +127819,7 @@ officers:
           ship_id: null
           enemy_type: null
           battle_types: null
-          conditions:
-          - type: defender_is_player_ship
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
+          conditions: null
         - type: combat_battle_type_any
           stat: null
           threshold_pct: null
@@ -129073,22 +128824,7 @@ officers:
         - 1.0
         - 1.0
         officer_stat: health
-      condition:
-        type: literal_false
-        stat: null
-        threshold_pct: null
-        min: null
-        max: null
-        faction: null
-        group: null
-        min_members: null
-        tag: null
-        ship_type: null
-        faction_id: null
-        ship_id: null
-        enemy_type: null
-        battle_types: null
-        conditions: null
+      condition: null
       chance: null
       multiplier: null
       tag: null
@@ -129097,11 +128833,11 @@ officers:
   bridge_ability:
     name: Just An Old Country Doctor
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.2
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -129109,7 +128845,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.2
+        - 0.4
+        - 0.6
+        - 0.8
+        - 1.0
         chance_values:
         - 1.0
         - 1.0
@@ -129134,7 +128875,7 @@ officers:
         conditions: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -130038,7 +129779,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: self
-      operator: add
+      operator: multiplybaseadd
       value: null
       trigger: on_round_start
       duration: permanent
@@ -130056,22 +129797,7 @@ officers:
         - 1.0
         - 1.0
         officer_stat: defense
-      condition:
-        type: literal_false
-        stat: null
-        threshold_pct: null
-        min: null
-        max: null
-        faction: null
-        group: null
-        min_members: null
-        tag: null
-        ship_type: null
-        faction_id: null
-        ship_id: null
-        enemy_type: null
-        battle_types: null
-        conditions: null
+      condition: null
       chance: null
       multiplier: null
       tag: null
@@ -133170,7 +132896,7 @@ officers:
         enemy_type: null
         battle_types: null
         conditions:
-        - type: and
+        - type: literal_false
           stat: null
           threshold_pct: null
           min: null
@@ -133184,37 +132910,7 @@ officers:
           ship_id: null
           enemy_type: null
           battle_types: null
-          conditions:
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
-          - type: literal_false
-            stat: null
-            threshold_pct: null
-            min: null
-            max: null
-            faction: null
-            group: null
-            min_members: null
-            tag: null
-            ship_type: null
-            faction_id: null
-            ship_id: null
-            enemy_type: null
-            battle_types: null
-            conditions: null
+          conditions: null
         - type: combat_battle_type_any
           stat: null
           threshold_pct: null
@@ -135300,11 +134996,11 @@ officers:
   bridge_ability:
     name: Sturdy Companion
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_health
       target: self
       operator: multiply
-      value: 0.05
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -135312,7 +135008,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.05
+        - 0.07
+        - 0.09
+        - 0.12
+        - 0.15
         chance_values:
         - 1.0
         - 1.0
@@ -135322,7 +135023,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstathealth:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -135744,7 +135445,7 @@ officers:
     - type: stat_modify
       stat: hull_hp_repair
       target: self
-      operator: add
+      operator: sub
       value: null
       trigger: on_shield_break
       duration: permanent
@@ -135773,7 +135474,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: multiplybasesub
       value: null
       trigger: on_round_start
       duration: permanent
@@ -137930,11 +137631,11 @@ officers:
   bridge_ability:
     name: Traveler's Scion
     effects:
-    - type: tag
-      stat: null
+    - type: stat_modify
+      stat: officer_stat_all
       target: self
       operator: multiply
-      value: 0.2
+      value: null
       trigger: passive
       duration: permanent
       scaling:
@@ -137942,7 +137643,12 @@ officers:
         per_rank: null
         max_rank: 5
         base_chance: null
-        values: null
+        values:
+        - 0.2
+        - 0.4
+        - 0.7
+        - 1.0
+        - 2.0
         chance_values:
         - 1.0
         - 1.0
@@ -137952,7 +137658,7 @@ officers:
       condition: null
       chance: null
       multiplier: null
-      tag: officerstatall:unmapped
+      tag: null
       accumulate: null
       decay: null
   below_decks_ability: null
@@ -140086,21 +139792,6 @@ officers:
           battle_types: null
           conditions: null
         - type: attacker_officer_tal_not_on_bridge
-          stat: null
-          threshold_pct: null
-          min: null
-          max: null
-          faction: null
-          group: null
-          min_members: null
-          tag: null
-          ship_type: null
-          faction_id: null
-          ship_id: null
-          enemy_type: null
-          battle_types: null
-          conditions: null
-        - type: literal_false
           stat: null
           threshold_pct: null
           min: null
@@ -143710,7 +143401,7 @@ officers:
     - type: stat_modify
       stat: shield_regen
       target: enemy
-      operator: add
+      operator: sub
       value: null
       trigger: on_round_start
       duration: permanent
