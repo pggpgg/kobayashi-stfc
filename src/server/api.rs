@@ -410,6 +410,10 @@ pub struct SimulateResponse {
     pub seed: u64,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
+    /// Crew officers that did not resolve to an LCARS combat definition (so they contributed no
+    /// effects). Empty for any roster-legal crew; a non-empty list signals a canonical↔LCARS gap.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub unresolved_officers: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -865,6 +869,16 @@ pub fn simulate_payload(
                 .to_string(),
         );
     }
+    let unresolved_officers = crate::optimizer::monte_carlo::unresolved_officers_for_candidate(
+        registry,
+        &result.candidate,
+    );
+    if !unresolved_officers.is_empty() {
+        warnings.push(format!(
+            "Officer(s) with no LCARS combat definition contributed no effects: {}",
+            unresolved_officers.join(", ")
+        ));
+    }
     if let Some(message) = roster_import_fallback_warning_message(profile_id) {
         warnings.push(message);
     }
@@ -882,6 +896,7 @@ pub fn simulate_payload(
         },
         seed,
         warnings,
+        unresolved_officers,
     };
     serde_json::to_string(&response).map_err(SimulateError::Parse)
 }

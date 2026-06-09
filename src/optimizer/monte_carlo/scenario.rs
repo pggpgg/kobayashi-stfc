@@ -665,14 +665,79 @@ pub(crate) struct LcarsOfficerData {
     pub name_to_id: HashMap<String, String>,
 }
 
-fn lcars_officer_data_from_officers(officers: Vec<crate::lcars::LcarsOfficer>) -> LcarsOfficerData {
-    let by_id = index_lcars_officers_by_id(officers);
+/// Build the normalized `name_to_id` map (keys: both officer name and id) shared by
+/// [`LcarsOfficerData`] and the unresolved-officer diagnostic, so all name→id lookups agree.
+fn lcars_name_to_id<'a>(
+    officers: impl IntoIterator<Item = &'a crate::lcars::LcarsOfficer>,
+) -> HashMap<String, String> {
     let mut name_to_id: HashMap<String, String> = HashMap::new();
-    for o in by_id.values() {
+    for o in officers {
         name_to_id.insert(normalize_lookup_key(&o.name), o.id.clone());
         name_to_id.insert(normalize_lookup_key(&o.id), o.id.clone());
     }
+    name_to_id
+}
+
+fn lcars_officer_data_from_officers(officers: Vec<crate::lcars::LcarsOfficer>) -> LcarsOfficerData {
+    let by_id = index_lcars_officers_by_id(officers);
+    let name_to_id = lcars_name_to_id(by_id.values());
     LcarsOfficerData { by_id, name_to_id }
+}
+
+/// Resolve an officer name or id (with optional `(TN)` tier suffix) to its LCARS id via a
+/// `name_to_id` map. The single source of truth for the name→id step, shared by
+/// [`build_crew_and_buffs`] and [`unresolved_officer_names`] so the diagnostic can't drift from
+/// what the combat path actually resolves.
+pub(crate) fn resolve_officer_name(
+    name_to_id: &HashMap<String, String>,
+    name: &str,
+) -> Option<String> {
+    name_to_id
+        .get(&normalize_lookup_key(&split_name_and_tier(name).0))
+        .cloned()
+}
+
+/// Officer names on `candidate` (captain + bridge + below decks) that don't resolve to an LCARS
+/// officer id — skipping empty / placeholder ("--") slots and de-duplicating. Because it uses the
+/// same resolution as the combat path, it faithfully reports officers that would contribute no
+/// combat effects. Expected to be **empty** for any roster-legal crew (the canonical roster and the
+/// LCARS model derive from the same source); a non-empty result flags a canonical↔LCARS drift or a
+/// name-alias gap rather than normal operation.
+pub(crate) fn unresolved_officer_names(
+    candidate: &CrewCandidate,
+    name_to_id: &HashMap<String, String>,
+) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut check = |raw: &str| {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() || trimmed == "--" {
+            return;
+        }
+        if resolve_officer_name(name_to_id, trimmed).is_none() {
+            let display = split_name_and_tier(trimmed).0;
+            if !out.iter().any(|n| n == &display) {
+                out.push(display);
+            }
+        }
+    };
+    check(&candidate.captain);
+    candidate.bridge.iter().for_each(|n| check(n));
+    candidate.below_decks.iter().for_each(|n| check(n));
+    out
+}
+
+/// [`unresolved_officer_names`] for a candidate, resolved against the registry's LCARS officers.
+/// Returns empty when officer data failed to load (nothing to classify against). Setup-time only —
+/// builds a transient name→id map per call, so it is not for hot loops.
+pub fn unresolved_officers_for_candidate(
+    registry: &crate::data::data_registry::DataRegistry,
+    candidate: &CrewCandidate,
+) -> Vec<String> {
+    let Some(officers) = registry.lcars_officers() else {
+        return Vec::new();
+    };
+    let name_to_id = lcars_name_to_id(officers.iter());
+    unresolved_officer_names(candidate, &name_to_id)
 }
 
 /// Pre-resolved data for (ship, hostile) shared across all candidates in one Monte Carlo run.
@@ -1445,12 +1510,7 @@ fn build_crew_and_buffs(
     Vec<crate::lcars::PendingOfficerStatContribution>,
 ) {
     if let Some(lcars) = lcars_data {
-        let resolve_id = |name: &str| {
-            lcars
-                .name_to_id
-                .get(&normalize_lookup_key(&split_name_and_tier(name).0))
-                .cloned()
-        };
+        let resolve_id = |name: &str| resolve_officer_name(&lcars.name_to_id, name);
         let captain_id = resolve_id(&candidate.captain);
         let bridge_ids: Vec<String> = candidate
             .bridge
@@ -3799,5 +3859,42 @@ mod tests {
             false,
         );
         assert!((attacker.apex_barrier - 0.22).abs() < 1e-12);
+    }
+
+    #[test]
+    fn unresolved_officer_names_reports_only_unknown_seats() {
+        let mut name_to_id: HashMap<String, String> = HashMap::new();
+        name_to_id.insert(normalize_lookup_key("Kirk"), "kirk-1".to_string());
+        name_to_id.insert(normalize_lookup_key("Spock"), "spock-2".to_string());
+        name_to_id.insert(normalize_lookup_key("Uhura"), "uhura-3".to_string());
+
+        let candidate = CrewCandidate {
+            captain: "Kirk".to_string(),
+            // One resolvable (with a tier suffix, which must be stripped), one bogus, one empty,
+            // one placeholder — only the bogus name should be reported.
+            bridge: vec![
+                "Spock (T5)".to_string(),
+                "Nobody McFake".to_string(),
+                String::new(),
+            ],
+            below_decks: vec!["Uhura".to_string(), "--".to_string()],
+        };
+
+        let unresolved = unresolved_officer_names(&candidate, &name_to_id);
+        assert_eq!(unresolved, vec!["Nobody McFake".to_string()]);
+    }
+
+    #[test]
+    fn unresolved_officer_names_empty_when_all_resolve() {
+        let mut name_to_id: HashMap<String, String> = HashMap::new();
+        name_to_id.insert(normalize_lookup_key("Kirk"), "kirk-1".to_string());
+        name_to_id.insert(normalize_lookup_key("kirk-1"), "kirk-1".to_string());
+        let candidate = CrewCandidate {
+            captain: "Kirk".to_string(),
+            // Reference by id as well as name — both key forms resolve.
+            bridge: vec!["kirk-1".to_string()],
+            below_decks: vec![],
+        };
+        assert!(unresolved_officer_names(&candidate, &name_to_id).is_empty());
     }
 }

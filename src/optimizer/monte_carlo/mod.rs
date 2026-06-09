@@ -15,7 +15,7 @@ pub use compare_crews::{
 pub use crew_resolution::crew_from_officer_names;
 pub use scenario::{
     mitigation_and_pierce_for_player_vs_player, pvp_scenario_params_from_api_fields,
-    DefenderOpponent, PvpScenarioParams,
+    unresolved_officers_for_candidate, DefenderOpponent, PvpScenarioParams,
 };
 pub use simulation::{
     crew_candidate_stable_hash, replay_optimize_iteration_with_registry, run_monte_carlo,

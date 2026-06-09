@@ -1710,6 +1710,14 @@ components:
           type: array
           items:
             type: string
+        unresolved_officers:
+          type: array
+          description: >-
+            Crew officers that did not resolve to an LCARS combat definition (so they
+            contributed no effects). Omitted when empty; a non-empty list signals a
+            canonical-to-LCARS gap rather than normal operation.
+          items:
+            type: string
 
     SensitivityRequest:
       type: object
