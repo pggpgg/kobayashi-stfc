@@ -304,6 +304,32 @@ fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
         })
 }
 
+/// Fold a normalized LCARS operator + value into an **additive** contribution for the standard
+/// additive modifier family (Pierce, Isolytic{Damage,Defense,CascadeDamage}, additive
+/// ShieldMitigation, ShotsBonus, Accuracy): multiply-family → `v - 1`, sub-family → `-v`,
+/// everything else (add / set / unknown) → `v`.
+fn fold_operator_to_additive(op: &str, v: f64) -> f64 {
+    match op {
+        "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+        "sub" | "mul_sub" | "multiplysub" => -v,
+        _ => v,
+    }
+}
+
+/// Like [`fold_operator_to_additive`] but for the armor-style family (MitigationAdditive /
+/// ShieldDeflection, Dodge): also folds the `multiply_base_*` operator variants, and treats
+/// `set` as unsupported (`None`) so the caller can raise `UnsupportedModifierOperation`.
+fn fold_operator_to_additive_armor(op: &str, v: f64) -> Option<f64> {
+    match op {
+        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => {
+            Some(v - 1.0)
+        }
+        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => Some(-v),
+        "set" => None,
+        _ => Some(v),
+    }
+}
+
 /// True when the compiled effect carries its own `duration_rounds` / `delay_rounds` field that
 /// the engine reads to time-bound application. Such effects must NOT also be AND'd with a
 /// `RoundRange` condition — the engine would see both gates and apply only once at round 1
@@ -413,12 +439,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                "set" => v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::PierceBonus(add),
@@ -622,11 +643,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::IsolyticDamageBonus(add),
@@ -639,11 +656,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::IsolyticDefenseBonus(add),
@@ -656,11 +669,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::IsolyticCascadeDamageBonus(add),
@@ -688,11 +697,7 @@ fn compile_officer_combat_spec_impl(
                     compiled_condition.clone(),
                 ));
             }
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             // target=AttackerSelf: buff the *attacker's* mitigation on counter-fire (engine
             // adds via `effective_incoming_shield_mitigation`). Without this routing the
             // bonus leaks into the `ShieldMitigationBonus` accumulator that the outbound
@@ -719,18 +724,12 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                | "multiplybaseadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
-                "set" => {
-                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
-                        modifier: spec.modifier,
-                        operation: spec.operation,
-                    });
-                }
-                _ => v,
-            };
+            let add = fold_operator_to_additive_armor(op, v).ok_or(
+                EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                },
+            )?;
             Ok((
                 timing,
                 AbilityEffect::MitigationAdditive(mitigation_fraction_from_lcars_armor_value(add)),
@@ -743,12 +742,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let bonus_pct = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                "set" => v,
-                _ => v,
-            };
+            let bonus_pct = fold_operator_to_additive(op, v);
             let duration_rounds = officer_spec_duration_rounds(spec, 1);
             Ok((
                 timing,
@@ -831,18 +825,12 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                | "multiplybaseadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
-                "set" => {
-                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
-                        modifier: spec.modifier,
-                        operation: spec.operation,
-                    });
-                }
-                _ => v,
-            };
+            let add = fold_operator_to_additive_armor(op, v).ok_or(
+                EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                },
+            )?;
             Ok((
                 timing,
                 AbilityEffect::DodgeBonus(mitigation_fraction_from_lcars_armor_value(add)),
@@ -913,11 +901,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::AccuracyBonus(add),
