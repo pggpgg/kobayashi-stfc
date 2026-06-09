@@ -5,7 +5,7 @@
 
 use crate::data::combat_effect_spec::{
     AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec, ChanceSpec,
-    CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource, ValueSpec,
+    CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource, OfficerSpecAttrs, ValueSpec,
 };
 use crate::data::hostile_ability_resolve::HostileAbilityCatalogEntry;
 
@@ -76,6 +76,7 @@ pub fn hostile_ability_to_combat_effect_spec(
         accumulate: None,
         conditions: Vec::new(),
         attributes: serde_json::Map::new(),
+        officer: OfficerSpecAttrs::default(),
         stacking: None,
         category: Some(EffectCategory::Combat),
         confidence: Some(EffectConfidence::Authoritative),

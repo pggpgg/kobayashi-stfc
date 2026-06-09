@@ -13,42 +13,16 @@ use crate::data::combat_effect_spec::{
 };
 use crate::data::ship_ability_resolve;
 
-/// Raw LCARS operator string after dash/underscore normalization (matches resolver `normalize_operator`).
-/// Set by [`crate::lcars::effect_spec_adapter`] so the compiler can preserve multiply-family
-/// variants (`mul_add`, etc.) that the coarser `spec.operation` enum collapses into `Add`.
-pub const OFFICER_SPEC_ATTR_LCARS_OP: &str = "kobayashi_lcars_normalize_op";
-/// When true, the effect only procs on critical hits (Chang bridge reload delay).
-pub const OFFICER_SPEC_ATTR_REQUIRES_CRITICAL: &str = "requires_critical";
-/// JSON array of STFC state ids from canonical `multi_state=[…]` (each id is also its weight).
-pub const OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS: &str = "random_state_weights";
-
 /// Default T'Ana / Zeph style weights when LCARS omits `multi_state`.
 pub const DEFAULT_RANDOM_STATE_WEIGHTS: &[(u32, u32)] = &[(8, 8), (4, 4), (2, 2)];
 
-/// `(state_id, weight)` pairs for [`crate::combat::AbilityEffect::RandomDefenderState`].
-pub fn random_state_weighted_outcomes_from_spec(
-    attributes: &serde_json::Map<String, serde_json::Value>,
-) -> Vec<(u32, u32)> {
-    let Some(arr) = attributes
-        .get(OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS)
-        .and_then(|v| v.as_array())
-    else {
+/// `(state_id, weight)` pairs for [`crate::combat::AbilityEffect::RandomDefenderState`], built from
+/// the typed `officer.random_state_weights` (each id is also its own weight). Empty → defaults.
+pub fn random_state_weighted_outcomes(weights: &[u32]) -> Vec<(u32, u32)> {
+    if weights.is_empty() {
         return DEFAULT_RANDOM_STATE_WEIGHTS.to_vec();
-    };
-    let parsed: Vec<(u32, u32)> = arr
-        .iter()
-        .filter_map(|v| {
-            let id = v
-                .as_u64()
-                .or_else(|| v.as_f64().map(|f| f.round() as u64))? as u32;
-            Some((id, id))
-        })
-        .collect();
-    if parsed.is_empty() {
-        DEFAULT_RANDOM_STATE_WEIGHTS.to_vec()
-    } else {
-        parsed
     }
+    weights.iter().map(|&id| (id, id)).collect()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -291,10 +265,9 @@ fn merge_duration_round_condition(
 }
 
 fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
-    spec.attributes
-        .get(OFFICER_SPEC_ATTR_LCARS_OP)
-        .and_then(|v| v.as_str())
-        .map(std::string::ToString::to_string)
+    spec.officer
+        .lcars_op
+        .clone()
         .unwrap_or_else(|| match spec.operation {
             AbilityOperationSpec::Multiply => "multiply".to_string(),
             AbilityOperationSpec::Set => "set".to_string(),
@@ -302,6 +275,32 @@ fn lcars_op_from_officer_spec(spec: &CombatEffectSpec) -> String {
             AbilityOperationSpec::Max => "max".to_string(),
             _ => "add".to_string(),
         })
+}
+
+/// Fold a normalized LCARS operator + value into an **additive** contribution for the standard
+/// additive modifier family (Pierce, Isolytic{Damage,Defense,CascadeDamage}, additive
+/// ShieldMitigation, ShotsBonus, Accuracy): multiply-family → `v - 1`, sub-family → `-v`,
+/// everything else (add / set / unknown) → `v`.
+fn fold_operator_to_additive(op: &str, v: f64) -> f64 {
+    match op {
+        "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
+        "sub" | "mul_sub" | "multiplysub" => -v,
+        _ => v,
+    }
+}
+
+/// Like [`fold_operator_to_additive`] but for the armor-style family (MitigationAdditive /
+/// ShieldDeflection, Dodge): also folds the `multiply_base_*` operator variants, and treats
+/// `set` as unsupported (`None`) so the caller can raise `UnsupportedModifierOperation`.
+fn fold_operator_to_additive_armor(op: &str, v: f64) -> Option<f64> {
+    match op {
+        "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add" | "multiplybaseadd" => {
+            Some(v - 1.0)
+        }
+        "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => Some(-v),
+        "set" => None,
+        _ => Some(v),
+    }
 }
 
 /// True when the compiled effect carries its own `duration_rounds` / `delay_rounds` field that
@@ -413,12 +412,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                "set" => v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::PierceBonus(add),
@@ -622,11 +616,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::IsolyticDamageBonus(add),
@@ -639,11 +629,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::IsolyticDefenseBonus(add),
@@ -656,14 +642,29 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::IsolyticCascadeDamageBonus(add),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::ShieldMitigationBypass => {
+            // **Multiplicative** bypass of the opponent's shield mitigation (Harrison-style "ignores
+            // X% of opponent shield", canonical `op: MultiplySub`). Engine applies as
+            // `mitigation × (1 - bypass)` (see `engine.rs` shield_mitigation_bypass clamp). A single
+            // source may exceed 100% (clamped at consume); we clamp to [0, 1] here as a guard. The
+            // producer picks this modifier explicitly — the compiler no longer infers bypass from
+            // `target` (see the LCARS adapter's ShieldMitigation→ShieldMitigationBypass remap).
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let bypass = v.clamp(0.0, 1.0);
+            Ok((
+                timing,
+                AbilityEffect::ShieldMitigationBypassFraction(bypass),
                 compiled_condition.clone(),
             ))
         }
@@ -673,33 +674,13 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            // target=DefenderOpponent → **multiplicative** bypass on defender (Harrison-style
-            // "ignores X% of opponent shield" — canonical `op: MultiplySub`). Engine applies as
-            // `mitigation × (1 - bypass)` (see `engine.rs` shield_mitigation_bypass clamp).
-            // The generator drops `MultiplySub` when ShieldMitigation falls through the
-            // `:unmapped` tag path (YAML lands with `operator: null, value: 0.7`), so the
-            // target field is what flags the multiplicative semantic. A single source may
-            // exceed 100% (clamped at consume); we clamp to [0, 1] here as a guard.
-            if matches!(spec.target, AbilityTargetSpec::DefenderOpponent) {
-                let bypass = v.clamp(0.0, 1.0);
-                return Ok((
-                    timing,
-                    AbilityEffect::ShieldMitigationBypassFraction(bypass),
-                    compiled_condition.clone(),
-                ));
-            }
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             // target=AttackerSelf: buff the *attacker's* mitigation on counter-fire (engine
             // adds via `effective_incoming_shield_mitigation`). Without this routing the
             // bonus leaks into the `ShieldMitigationBonus` accumulator that the outbound
             // path adds to `defender.shield_mitigation` — i.e. it would buff the **defender**
-            // and hurt the attacker. target=DefenderOpponent (and the default) keep emitting
-            // additive `ShieldMitigationBonus`; multiplicative bypass for the opponent path
-            // is handled separately (see `ShieldMitigationBypassFraction`).
+            // and hurt the attacker. The default keeps emitting additive `ShieldMitigationBonus`;
+            // multiplicative bypass is the separate `ShieldMitigationBypass` modifier above.
             if matches!(spec.target, AbilityTargetSpec::AttackerSelf) {
                 return Ok((
                     timing,
@@ -719,18 +700,12 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                | "multiplybaseadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
-                "set" => {
-                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
-                        modifier: spec.modifier,
-                        operation: spec.operation,
-                    });
-                }
-                _ => v,
-            };
+            let add = fold_operator_to_additive_armor(op, v).ok_or(
+                EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                },
+            )?;
             Ok((
                 timing,
                 AbilityEffect::MitigationAdditive(mitigation_fraction_from_lcars_armor_value(add)),
@@ -743,12 +718,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let bonus_pct = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                "set" => v,
-                _ => v,
-            };
+            let bonus_pct = fold_operator_to_additive(op, v);
             let duration_rounds = officer_spec_duration_rounds(spec, 1);
             Ok((
                 timing,
@@ -831,18 +801,12 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                | "multiplybaseadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
-                "set" => {
-                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
-                        modifier: spec.modifier,
-                        operation: spec.operation,
-                    });
-                }
-                _ => v,
-            };
+            let add = fold_operator_to_additive_armor(op, v).ok_or(
+                EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                },
+            )?;
             Ok((
                 timing,
                 AbilityEffect::DodgeBonus(mitigation_fraction_from_lcars_armor_value(add)),
@@ -913,11 +877,7 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
-            let add = match op {
-                "multiply" | "mul_add" | "multiplyadd" => v - 1.0,
-                "sub" | "mul_sub" | "multiplysub" => -v,
-                _ => v,
-            };
+            let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
                 AbilityEffect::AccuracyBonus(add),
@@ -943,11 +903,7 @@ fn compile_officer_combat_spec_impl(
                 .filter(|c| c.is_finite())
                 .unwrap_or(1.0)
                 .clamp(0.0, 1.0);
-            let requires_critical = spec
-                .attributes
-                .get(OFFICER_SPEC_ATTR_REQUIRES_CRITICAL)
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
+            let requires_critical = spec.officer.requires_critical;
             Ok((
                 timing,
                 AbilityEffect::DefenderFireDelay {
@@ -986,7 +942,7 @@ fn compile_officer_combat_spec_impl(
                 .unwrap_or(1.0)
                 .clamp(0.0, 1.0);
             let duration_rounds = officer_spec_duration_rounds(spec, 3);
-            let pairs = random_state_weighted_outcomes_from_spec(&spec.attributes);
+            let pairs = random_state_weighted_outcomes(&spec.officer.random_state_weights);
             let (state_outcome_count, state_outcomes) =
                 crate::combat::abilities::pack_random_defender_state_outcomes(&pairs);
             Ok((
@@ -1117,8 +1073,8 @@ pub fn static_buff_op_from_lcars_op(normalized_op: &str) -> StaticBuffOp {
 /// [`StaticBuffContribution`]. Returns `None` when the spec has no resolvable scalar value.
 ///
 /// The op classification reads the raw normalized LCARS op stashed by the adapter in
-/// `attributes[OFFICER_SPEC_ATTR_LCARS_OP]` so multiply-family variants (`mul_add` etc.) are
-/// honoured — the coarser `spec.operation` enum collapses them all into `Add`.
+/// `spec.officer.lcars_op` so multiply-family variants (`mul_add` etc.) are honoured — the coarser
+/// `spec.operation` enum collapses them all into `Add`.
 ///
 /// `stat_key` is the LCARS-side stat string the caller uses as the
 /// [`crate::combat::types::BuffSet::static_buffs`] hash-map key.
@@ -1263,7 +1219,7 @@ mod tests {
     use super::*;
     use crate::combat::abilities::AbilityCondition;
     use crate::data::combat_effect_spec::{
-        CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource,
+        CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource, OfficerSpecAttrs,
     };
 
     #[test]
@@ -1323,6 +1279,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1368,6 +1325,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1397,6 +1355,7 @@ mod tests {
         // into the accumulator for the rest of the fight. Regression test for the Harrison
         // Sabotage `ShieldMitigationBypassFraction` first-round-only semantic.
         let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.modifier = AbilityModifierSpec::ShieldMitigationBypass;
         spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
         spec.trigger = AbilityTriggerSpec::CombatBegin;
         let (_, _, condition) =
@@ -1408,11 +1367,13 @@ mod tests {
     }
 
     #[test]
-    fn shield_mitigation_compile_defender_opponent_emits_bypass_fraction() {
+    fn shield_mitigation_bypass_emits_bypass_fraction() {
         // Harrison's "Sabotage": canonical `op: MultiplySub, value 0.7 (rank 2), target EnemyShip`
-        // → multiplicative bypass of defender's shield_mitigation. Engine math:
-        // `mitigation × (1 - 0.7)`. Regression test for the `harrison-56cc6c` fidelity gap.
+        // → the LCARS adapter emits the explicit `ShieldMitigationBypass` modifier, which compiles
+        // to multiplicative bypass `mitigation × (1 - 0.7)`. Regression test for the
+        // `harrison-56cc6c` fidelity gap.
         let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 0.7);
+        spec.modifier = AbilityModifierSpec::ShieldMitigationBypass;
         spec.duration = Some(DurationSpec::Rounds { rounds: 1 });
         let (_, effect, condition) =
             compile_officer_combat_spec(&spec).expect("defender shield mitigation");
@@ -1463,12 +1424,13 @@ mod tests {
     }
 
     #[test]
-    fn shield_mitigation_compile_defender_opponent_clamps_bypass_at_100pct() {
+    fn shield_mitigation_bypass_clamps_at_100pct() {
         // Belt-and-suspenders clamp: a single source with value > 1.0 must not bypass more than
         // 100% of the defender's mitigation. (The engine also clamps the *total* across sources.)
-        let spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 1.4);
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 1.4);
+        spec.modifier = AbilityModifierSpec::ShieldMitigationBypass;
         let (_, effect, _) =
-            compile_officer_combat_spec(&spec).expect("defender shield mitigation > 100%");
+            compile_officer_combat_spec(&spec).expect("shield mitigation bypass > 100%");
         assert!(
             matches!(effect, AbilityEffect::ShieldMitigationBypassFraction(v) if (v - 1.0).abs() < 1e-12),
             "Bypass > 100% must clamp to 1.0; got {effect:?}"
@@ -1497,10 +1459,11 @@ mod tests {
             decay: None,
             accumulate: None,
             conditions: vec![],
-            attributes: serde_json::Map::from_iter([(
-                OFFICER_SPEC_ATTR_LCARS_OP.into(),
-                serde_json::Value::String("sub".into()),
-            )]),
+            attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs {
+                lcars_op: Some("sub".into()),
+                ..Default::default()
+            },
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1541,6 +1504,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
@@ -1582,6 +1546,7 @@ mod tests {
             accumulate: None,
             conditions: vec![AbilityConditionSpec::DefenderBurning],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
