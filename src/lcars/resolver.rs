@@ -570,7 +570,11 @@ fn expand_dynamic_officer_stat_effects(
 ) -> Vec<CrewSeatContext> {
     let mut out = Vec::new();
     for effect in &ability.effects {
-        if effect.effect_type != "tag" {
+        // Dynamic-conditioned officer-stat effects arrive either as a legacy unmapped `tag`
+        // (`officerstatall:unmapped`) or as `stat_modify officer_stat_all` (current generator
+        // output). Both feed the synthetic per-round seat below; the pending-contribution path
+        // skips the dynamic-conditioned ones so they are not double-counted.
+        if effect.effect_type != "tag" && effect.effect_type != "stat_modify" {
             continue;
         }
         let Some(stat) = effective_stat_for_effect(effect) else {
@@ -772,6 +776,14 @@ pub fn resolve_crew_to_buff_set(
             // filter); the pending list preserves them with target_attacker=false so a future
             // Phase 4c can route them through PvP defender-side compute.
             if !spec.conditions.is_empty() {
+                // Dynamic (per-round) conditions — morale / burning / hull-breach / round-range /
+                // stat thresholds — are realized as synthetic per-round seats by
+                // [`expand_dynamic_officer_stat_effects`]; keeping them here too would double-count
+                // (see phase4d_production_kirk_* tests). Only static fight-setup conditions
+                // (faction, ship class, engagement, defender_is_player_ship, …) belong in pending.
+                if spec.conditions.iter().any(condition_is_dynamic) {
+                    continue;
+                }
                 pending_officer_stat_contributions.push(PendingOfficerStatContribution {
                     stat_key: stat.to_string(),
                     value: v,
