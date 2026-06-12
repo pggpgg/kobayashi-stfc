@@ -1,0 +1,898 @@
+[
+  {
+    "result": {
+      "attacker_hull_remaining": 59956.8,
+      "attacker_shield_remaining": 23827.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44395.2,
+      "defender_shield_remaining": 15580.8,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3024.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "scalar_baseline",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59955.36,
+      "attacker_shield_remaining": 23821.44,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44395.2,
+      "defender_shield_remaining": 15580.8,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3024.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "scalar_baseline",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59956.8,
+      "attacker_shield_remaining": 23827.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44360.64,
+      "defender_shield_remaining": 15442.56,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3196.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "scalar_baseline",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59956.8,
+      "attacker_shield_remaining": 23827.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44360.64,
+      "defender_shield_remaining": 15442.56,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3196.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "scalar_baseline",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59838.0,
+      "attacker_shield_remaining": 23352.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41241.92,
+      "defender_shield_remaining": 2967.68,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 18790.4,
+      "winner_by_round_limit": false
+    },
+    "scenario": "multi_weapon_both_sides",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59831.52,
+      "attacker_shield_remaining": 23326.08,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41138.16,
+      "defender_shield_remaining": 2552.64,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 19309.2,
+      "winner_by_round_limit": false
+    },
+    "scenario": "multi_weapon_both_sides",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59825.04,
+      "attacker_shield_remaining": 23300.16,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41306.72,
+      "defender_shield_remaining": 3226.88,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 18466.4,
+      "winner_by_round_limit": false
+    },
+    "scenario": "multi_weapon_both_sides",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59829.792,
+      "attacker_shield_remaining": 23319.168,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41333.92,
+      "defender_shield_remaining": 3335.68,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 18330.4,
+      "winner_by_round_limit": false
+    },
+    "scenario": "multi_weapon_both_sides",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59890.848,
+      "attacker_shield_remaining": 23563.392,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 39240.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 23760.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "crit_proc_heavy",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59887.104,
+      "attacker_shield_remaining": 23548.416,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 32760.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 30240.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "crit_proc_heavy",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59883.648,
+      "attacker_shield_remaining": 23534.592,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 34056.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 28944.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "crit_proc_heavy",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59883.072,
+      "attacker_shield_remaining": 23532.288,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 26712.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 36288.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "crit_proc_heavy",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59956.8,
+      "attacker_shield_remaining": 23827.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41976.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3024.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "shieldless_defender",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59955.36,
+      "attacker_shield_remaining": 23821.44,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41976.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3024.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "shieldless_defender",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59956.8,
+      "attacker_shield_remaining": 23827.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41803.2,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3196.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "shieldless_defender",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59956.8,
+      "attacker_shield_remaining": 23827.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41803.2,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 3,
+      "total_damage": 3196.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "shieldless_defender",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44061.276606,
+      "defender_shield_remaining": 14245.106424,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 4693.61697,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hostile_dynamic_mitigation_morale",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59922.24,
+      "attacker_shield_remaining": 23688.96,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44186.439725,
+      "defender_shield_remaining": 14745.758901,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 4067.801374,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hostile_dynamic_mitigation_morale",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59916.48,
+      "attacker_shield_remaining": 23665.92,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44139.503555,
+      "defender_shield_remaining": 14558.014222,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 4302.482223,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hostile_dynamic_mitigation_morale",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59926.56,
+      "attacker_shield_remaining": 23706.24,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44217.730505,
+      "defender_shield_remaining": 14870.92202,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 3911.347475,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hostile_dynamic_mitigation_morale",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59913.6,
+      "attacker_shield_remaining": 23654.4,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41990.4,
+      "defender_shield_remaining": 13161.6,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 7848.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "burning_crew",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59907.84,
+      "attacker_shield_remaining": 23631.36,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 42492.24,
+      "defender_shield_remaining": 13368.96,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 7138.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "burning_crew",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59902.08,
+      "attacker_shield_remaining": 23608.32,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 41626.8,
+      "defender_shield_remaining": 13507.2,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 7866.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "burning_crew",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59912.16,
+      "attacker_shield_remaining": 23648.64,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 42024.96,
+      "defender_shield_remaining": 13299.84,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 7675.2,
+      "winner_by_round_limit": false
+    },
+    "scenario": "burning_crew",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59913.6,
+      "attacker_shield_remaining": 23654.4,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43574.4,
+      "defender_shield_remaining": 12297.6,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 7128.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hull_breach_attack_mult_crew",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59907.84,
+      "attacker_shield_remaining": 23631.36,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43755.84,
+      "defender_shield_remaining": 13023.36,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 6220.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hull_breach_attack_mult_crew",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59902.08,
+      "attacker_shield_remaining": 23608.32,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43531.2,
+      "defender_shield_remaining": 12124.8,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 7344.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hull_breach_attack_mult_crew",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59912.16,
+      "attacker_shield_remaining": 23648.64,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43090.56,
+      "defender_shield_remaining": 10362.24,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 9547.2,
+      "winner_by_round_limit": false
+    },
+    "scenario": "hull_breach_attack_mult_crew",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59884.8,
+      "attacker_shield_remaining": 23539.55,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43185.6,
+      "defender_shield_remaining": 10742.4,
+      "events": [],
+      "rounds_simulated": 8,
+      "total_damage": 9072.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "regen_crew",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59877.6,
+      "attacker_shield_remaining": 23510.75,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43272.0,
+      "defender_shield_remaining": 11088.0,
+      "events": [],
+      "rounds_simulated": 8,
+      "total_damage": 8640.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "regen_crew",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59879.04,
+      "attacker_shield_remaining": 23516.51,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43358.4,
+      "defender_shield_remaining": 11433.6,
+      "events": [],
+      "rounds_simulated": 8,
+      "total_damage": 8208.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "regen_crew",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59877.6,
+      "attacker_shield_remaining": 23510.75,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43323.84,
+      "defender_shield_remaining": 11295.36,
+      "events": [],
+      "rounds_simulated": 8,
+      "total_damage": 8380.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "regen_crew",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59920.8,
+      "attacker_shield_remaining": 23683.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 42443.750894,
+      "defender_shield_remaining": 12773.008363,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 7783.240744,
+      "winner_by_round_limit": false
+    },
+    "scenario": "isolytic_apex_end_of_round",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59912.88,
+      "attacker_shield_remaining": 23651.52,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 42334.855234,
+      "defender_shield_remaining": 12337.425726,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 8327.71904,
+      "winner_by_round_limit": false
+    },
+    "scenario": "isolytic_apex_end_of_round",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59920.8,
+      "attacker_shield_remaining": 23683.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 42334.855234,
+      "defender_shield_remaining": 12337.425726,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 8327.71904,
+      "winner_by_round_limit": false
+    },
+    "scenario": "isolytic_apex_end_of_round",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59920.8,
+      "attacker_shield_remaining": 23683.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 42509.088289,
+      "defender_shield_remaining": 13034.357944,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 7456.553767,
+      "winner_by_round_limit": false
+    },
+    "scenario": "isolytic_apex_end_of_round",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43873.2,
+      "defender_shield_remaining": 13492.8,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 5634.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pierce_proc_crew",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59920.8,
+      "attacker_shield_remaining": 23683.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43786.8,
+      "defender_shield_remaining": 13147.2,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 6066.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pierce_proc_crew",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43786.8,
+      "defender_shield_remaining": 13147.2,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 6066.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pierce_proc_crew",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43925.04,
+      "defender_shield_remaining": 13700.16,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 5374.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pierce_proc_crew",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 499950.0608,
+      "attacker_shield_remaining": 23800.2432,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 399363.52,
+      "defender_shield_remaining": 15454.08,
+      "events": [],
+      "rounds_simulated": 100,
+      "total_damage": 3182.4,
+      "winner_by_round_limit": true
+    },
+    "scenario": "long_soak_100_rounds",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 499949.696,
+      "attacker_shield_remaining": 23798.784,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 399345.664,
+      "defender_shield_remaining": 15382.656,
+      "events": [],
+      "rounds_simulated": 100,
+      "total_damage": 3271.68,
+      "winner_by_round_limit": true
+    },
+    "scenario": "long_soak_100_rounds",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 499949.552,
+      "attacker_shield_remaining": 23798.208,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 399356.032,
+      "defender_shield_remaining": 15424.128,
+      "events": [],
+      "rounds_simulated": 100,
+      "total_damage": 3219.84,
+      "winner_by_round_limit": true
+    },
+    "scenario": "long_soak_100_rounds",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 499949.0816,
+      "attacker_shield_remaining": 23796.3264,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 399344.512,
+      "defender_shield_remaining": 15378.048,
+      "events": [],
+      "rounds_simulated": 100,
+      "total_damage": 3277.44,
+      "winner_by_round_limit": true
+    },
+    "scenario": "long_soak_100_rounds",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 39928.0,
+      "attacker_shield_remaining": 23640.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43704.0,
+      "defender_shield_remaining": 12816.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 6480.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "chain_carry_over",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 39921.52,
+      "attacker_shield_remaining": 23610.48,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43704.0,
+      "defender_shield_remaining": 12816.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 6480.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "chain_carry_over",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 39922.24,
+      "attacker_shield_remaining": 23616.96,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43704.0,
+      "defender_shield_remaining": 12816.0,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 6480.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "chain_carry_over",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 39926.56,
+      "attacker_shield_remaining": 23634.24,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43842.24,
+      "defender_shield_remaining": 13368.96,
+      "events": [],
+      "rounds_simulated": 6,
+      "total_damage": 5788.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "chain_carry_over",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43963.2,
+      "defender_shield_remaining": 13852.8,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 5184.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pvp_defender_player_crewed",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59920.8,
+      "attacker_shield_remaining": 23683.2,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43876.8,
+      "defender_shield_remaining": 13507.2,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 5616.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pvp_defender_player_crewed",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 43876.8,
+      "defender_shield_remaining": 13507.2,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 5616.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pvp_defender_player_crewed",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59928.0,
+      "attacker_shield_remaining": 23712.0,
+      "attacker_won": false,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 44015.04,
+      "defender_shield_remaining": 14060.16,
+      "events": [],
+      "rounds_simulated": 5,
+      "total_damage": 4924.8,
+      "winner_by_round_limit": false
+    },
+    "scenario": "pvp_defender_player_crewed",
+    "seed": 9007199254740993
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59985.6,
+      "attacker_shield_remaining": 23942.4,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 0.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 1,
+      "total_damage": 10800000.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "overkill_round_one",
+    "seed": 7
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59984.16,
+      "attacker_shield_remaining": 23936.64,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 0.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 1,
+      "total_damage": 10800000.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "overkill_round_one",
+    "seed": 42
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59985.6,
+      "attacker_shield_remaining": 23942.4,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 0.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 1,
+      "total_damage": 7200000.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "overkill_round_one",
+    "seed": 1337
+  },
+  {
+    "result": {
+      "attacker_hull_remaining": 59985.6,
+      "attacker_shield_remaining": 23942.4,
+      "attacker_won": true,
+      "conqueror_borg_beam_suppression": false,
+      "defender_hull_remaining": 0.0,
+      "defender_shield_remaining": 0.0,
+      "events": [],
+      "rounds_simulated": 1,
+      "total_damage": 7200000.0,
+      "winner_by_round_limit": false
+    },
+    "scenario": "overkill_round_one",
+    "seed": 9007199254740993
+  }
+]

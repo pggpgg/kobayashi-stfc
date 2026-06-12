@@ -6,7 +6,13 @@ _Planned 2026-06-09 from a full repo audit (fidelity docs, test inventory, code 
 
 **Baseline at planning time:** clippy clean under `-D warnings`, ~382 backend tests, OpenAPI contract spot-checks, a bench-regression gate with auto-refreshed baselines, bounded job registries, no TODO/FIXME debt in `src/`. The leverage is simulation fidelity and assurance coverage, not cleanup.
 
-**Current focus (2026-06-11):** items 2–3 are deliberately deferred — they depend on a recorded-fight suite that is only trustworthy under the **snapshot-calibration protocol** documented below, which needs a maintainer-scheduled game-state freeze. Until that happens, work on tasks that don't depend on recorded fights: best next picks are 8 and 12 (then 4, which builds on 12), with 5, 6, and 9 as independent parallel tracks.
+**Execution order (2026-06-12, items 1 & 8 shipped):**
+
+1. **Main lane (serialized):** **12** (engine decomposition — keystone: explicitly prerequisite to 4, and every fidelity change lands in that function) → **4** (Phase 4d, the largest open fidelity gap) → **6** (hostile-ability audit report can start anytime; *closing* its gaps belongs after 12) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces.
+2. **Pre-freeze prep lane (early, any order — the freeze window is the scarcest resource, so tooling must be ready before a window opens):** **3** (import faction resolution), the composite-score harness, and the profile-snapshot completeness audit (see protocol below).
+3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** **11** (coverage — do first, it calibrates the rest), **7** (SSE test), **9** (OpenAPI gate), **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts).
+4. **Anytime, independent:** **10** (frontend tests), **15** (display-names investigation, timeboxed).
+5. **Post-freeze (maintainer-scheduled):** **2** (scoreboard + snapshot-bound corpus), then the iterate loop from the protocol.
 
 ## Tier 1 — Simulation fidelity
 
