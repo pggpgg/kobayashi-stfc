@@ -211,11 +211,41 @@ pub fn validate_officer_dataset(path: &str) -> Result<ValidationReport, String> 
 }
 
 /// Validate LCARS YAML files in a directory.
+///
+/// Unlike the runtime loader ([`lcars::load_lcars_dir`], which warns and skips malformed files
+/// so the engine can keep running), validation parses each `*.lcars.yaml` individually and
+/// reports a parse failure as a hard **Error** — a corrupt user-edited file must fail
+/// `kobayashi validate` and the CI `validate_data` gate, not silently vanish its officers.
 pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
-    let officers = lcars::load_lcars_dir(path)
-        .map_err(|e| format!("failed to load LCARS from '{path}': {e}"))?;
-
     let mut report = ValidationReport::default();
+    let mut officers: Vec<lcars::LcarsOfficer> = Vec::new();
+    let dir = Path::new(path);
+    if dir.is_dir() {
+        let entries =
+            fs::read_dir(dir).map_err(|e| format!("failed to read LCARS dir '{path}': {e}"))?;
+        let mut paths: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| {
+                p.is_file()
+                    && p.file_name()
+                        .and_then(|n| n.to_str())
+                        .is_some_and(|n| n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml"))
+            })
+            .collect();
+        paths.sort();
+        for file_path in paths {
+            match lcars::load_lcars_file(&file_path) {
+                Ok(file) => officers.extend(file.officers),
+                Err(e) => report.push(
+                    ValidationSeverity::Error,
+                    "lcars.parse",
+                    format!("failed to parse '{}': {e}", file_path.display()),
+                ),
+            }
+        }
+    }
+
     let mut seen_ids = HashSet::new();
 
     for (file_index, officer) in officers.iter().enumerate() {
@@ -931,6 +961,36 @@ pub fn validate_ships_extended_dataset(path: &str) -> Result<ValidationReport, S
                             ValidationSeverity::Warning,
                             ctx.clone(),
                             "extended ship has empty `levels` (no per-level shield/hull bonuses)",
+                        );
+                    }
+                    // `shield_deflection` is the in-game Shield Deflection stat, sourced by the
+                    // normalizer from upstream's legacy `Shield.absorption` field. A retired
+                    // extraction read `Deflector.deflection` instead — a constant 120 on every
+                    // upstream ship that maps to no in-game concept. That signature in committed
+                    // data means a pre-fix record survived; re-run `normalize_data_stfc_space`.
+                    if extended.tiers.len() > 1
+                        && extended.tiers.iter().all(|t| t.shield_deflection == 120.0)
+                    {
+                        report.push(
+                            ValidationSeverity::Error,
+                            format!("{ctx}.shield_deflection"),
+                            "stale shield_deflection (legacy Deflector.deflection constant 120 on \
+                             every tier); re-run normalize_data_stfc_space",
+                        );
+                    }
+                    // An explorer with no Shield Deflection at any tier has a dead officer-defense
+                    // channel (docs/OFFICER_STAT_FORMULA.md §2c routes explorer defense_bonus
+                    // through shield_deflection). Zero is legitimate for shieldless hulls (the
+                    // Sarcophagus, a battleship), so this stays scoped to explorers.
+                    if extended.ship_class.eq_ignore_ascii_case("explorer")
+                        && extended.tiers.iter().all(|t| t.shield_deflection <= 0.0)
+                    {
+                        report.push(
+                            ValidationSeverity::Warning,
+                            format!("{ctx}.shield_deflection"),
+                            "explorer has zero shield_deflection on every tier; the officer-defense \
+                             channel contributes nothing — check the upstream `Shield.absorption` \
+                             extraction in normalize_data_stfc_space",
                         );
                     }
                     if let Some(rec) = extended.to_ship_record(Some(1), Some(1)) {

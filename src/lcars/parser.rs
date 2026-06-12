@@ -326,8 +326,15 @@ pub fn load_lcars_dir(
             let is_lcars =
                 name.is_some_and(|n| n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml"));
             if is_lcars {
-                if let Ok(file) = load_lcars_file(&path) {
-                    officers.extend(file.officers);
+                // Lenient at runtime (the engine still loads the remaining files) but loud:
+                // a silently skipped monolith would mean simulating with zero officers.
+                // `validate_lcars_dir` treats the same failure as a hard validation Error.
+                match load_lcars_file(&path) {
+                    Ok(file) => officers.extend(file.officers),
+                    Err(e) => eprintln!(
+                        "warning: skipping malformed LCARS file '{}': {e}",
+                        path.display()
+                    ),
                 }
             }
         }
@@ -524,5 +531,98 @@ max_rank: 5
         assert!((row.value_for(OfficerStat::Attack) - 800.0).abs() < 1e-12);
         assert!((row.value_for(OfficerStat::Defense) - 400.0).abs() < 1e-12);
         assert!((row.value_for(OfficerStat::Health) - 350.0).abs() < 1e-12);
+    }
+
+    // ── malformed-input robustness: parsing must Err cleanly, never panic ──
+
+    fn parse(yaml: &str) -> Result<LcarsFile, serde_yaml::Error> {
+        serde_yaml::from_str(yaml)
+    }
+
+    #[test]
+    fn broken_yaml_syntax_returns_err() {
+        assert!(parse("officers: [ {id: \"x\", name: ").is_err());
+        assert!(parse(":\n  - :::").is_err());
+    }
+
+    #[test]
+    fn missing_top_level_officers_key_returns_err() {
+        assert!(parse("crew: []").is_err());
+        assert!(parse("{}").is_err());
+    }
+
+    #[test]
+    fn wrong_type_in_typed_field_returns_err() {
+        // `value` is Option<f64>; a string must be rejected at deserialization.
+        let yaml = r#"
+officers:
+  - id: x
+    name: X
+    captain_ability:
+      name: A
+      effects:
+        - type: stat_modify
+          value: "not a number"
+"#;
+        assert!(parse(yaml).is_err());
+        // `officers` must be a sequence.
+        assert!(parse("officers: 17").is_err());
+    }
+
+    /// YAML scalar extremes are accepted by serde at parse time (`.inf` → f64::INFINITY,
+    /// huge literals → finite f64); rejecting unreasonable values is post-parse validation's
+    /// job, not the parser's. Pinned so the boundary of responsibility stays explicit.
+    #[test]
+    fn extreme_numeric_scalars_are_parse_accepted() {
+        let yaml = r#"
+officers:
+  - id: "  "
+    name: X
+    captain_ability:
+      name: A
+      effects:
+        - type: stat_modify
+          value: .inf
+        - type: stat_modify
+          value: 1.0e308
+"#;
+        let file = parse(yaml).expect("scalar extremes parse");
+        let effects = &file.officers[0].captain_ability.as_ref().unwrap().effects;
+        assert!(effects[0].value.unwrap().is_infinite());
+        assert!(effects[1].value.unwrap().is_finite());
+        // Whitespace-only id also parse-accepted; validate_lcars_dir flags it as an Error.
+        assert_eq!(file.officers[0].id, "  ");
+    }
+
+    /// serde_yaml rejects duplicate mapping keys outright — a hand-edited officer with two
+    /// `value:` lines fails the whole parse rather than silently taking either value.
+    #[test]
+    fn duplicate_mapping_keys_return_err() {
+        let yaml = r#"
+officers:
+  - id: x
+    name: X
+    captain_ability:
+      name: A
+      effects:
+        - type: stat_modify
+          value: 0.1
+          value: 0.2
+"#;
+        assert!(parse(yaml).is_err());
+    }
+
+    /// Pathologically deep nesting where a scalar is expected must come back as Err (or hit
+    /// serde's recursion limit) — never a stack overflow.
+    #[test]
+    fn deeply_nested_yaml_errs_without_stack_overflow() {
+        let mut value = String::from("0.1");
+        for _ in 0..200 {
+            value = format!("{{a: {value}}}");
+        }
+        let yaml = format!(
+            "officers:\n  - id: x\n    name: X\n    captain_ability:\n      name: A\n      effects:\n        - type: t\n          value: {value}\n"
+        );
+        assert!(parse(&yaml).is_err());
     }
 }
