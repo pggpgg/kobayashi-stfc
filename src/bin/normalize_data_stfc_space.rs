@@ -420,13 +420,15 @@ fn extract_tier_combat(
     let mut shield_mitigation = 0.8;
     // Player defender stats for hostile→player counter-fire mitigation, and the per-ship channel
     // constants for officer-stat Defense routing (see `docs/OFFICER_STAT_FORMULA.md` §2c).
-    // Sources on data.stfc.space tier components:
+    // Sources on data.stfc.space tier components (`Shield.absorption` is upstream's legacy field
+    // name for the in-game Shield Deflection stat):
     //   - `Armor.plating`           → `armor`              (battleship-primary channel)
     //   - `Shield.absorption`       → `shield_deflection`  (explorer-primary channel)
     //   - `Impulse.dodge`           → `dodge`              (interceptor-primary channel)
-    // The legacy `Deflector.deflection` field is a stale `120` for every ship and is intentionally
-    // ignored; the hostile normalizer (`normalize_hostiles_stfc_space.rs`) already sources
-    // `shield_deflection` from `Shield.absorption`, so this brings player ships into alignment.
+    // The upstream `Deflector.deflection` field is a stale `120` for every ship, maps to no
+    // in-game concept, and is intentionally ignored; the hostile normalizer
+    // (`normalize_hostiles_stfc_space.rs`) already sources `shield_deflection` the same way,
+    // so this keeps player ships in alignment.
     let mut armor_stat = 0.0;
     let mut shield_deflection_stat = 0.0;
     let mut dodge_stat = 0.0;
@@ -465,8 +467,9 @@ fn extract_tier_combat(
                 }
             }
             "Deflector" => {
-                // Legacy `Deflector.deflection` is a stale constant (120) across every upstream ship.
-                // The real shield-deflection mitigation lives in `Shield.absorption` (handled above).
+                // `Deflector.deflection` is a stale constant (120) across every upstream ship and
+                // maps to no in-game concept. The in-game Shield Deflection stat is sourced from
+                // upstream's legacy `Shield.absorption` field (handled above).
             }
             "Impulse" => {
                 if let Some(d) = data.get("dodge").and_then(Value::as_f64) {
@@ -562,9 +565,10 @@ fn extract_tier_combat(
     } else {
         attack_total
     };
-    if shield_health <= 0.0 {
-        shield_health = 1000.0;
-    }
+    // No fallback for zero shield_health: every upstream ship carries a Shield component, and
+    // hp 0 means genuinely shieldless in-game (Sarcophagus, Enterprise NX-01) — the engine
+    // routes all damage to hull when shields are 0. A phantom default here would give those
+    // hulls a shield layer they don't have.
     if hull_health <= 0.0 {
         hull_health = shield_health * 2.0;
     }

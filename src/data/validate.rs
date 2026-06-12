@@ -212,20 +212,61 @@ pub fn validate_officer_dataset(path: &str) -> Result<ValidationReport, String> 
 
 /// Validate the LCARS officer model, built in-process from the `officers.canonical.json` in `path`
 /// (+ sibling `upstream/` stats/translations). The monolith yaml is no longer a runtime artifact.
+///
+/// Any `*.lcars.yaml` / `*.lcars.yml` files present in `path` (user-authored or legacy) are
+/// additionally parsed one by one, and a corrupt file is a hard **Error** diagnostic: the runtime
+/// loader ([`lcars::load_lcars_dir`]) warns and skips so the engine keeps running, but validation
+/// must not let a malformed user-edited file pass silently. When `path` has no
+/// `officers.canonical.json` (a standalone directory of LCARS YAML files), the per-officer checks
+/// run on the parsed YAML officers instead of the in-process model.
 pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
     let officers_dir = Path::new(path);
-    let data_dir = officers_dir.parent().unwrap_or_else(|| Path::new("."));
-    let upstream = data_dir.join("upstream/data-stfc-space");
-    let officers = lcars::build_officer_model(
-        &officers_dir.join("officers.canonical.json"),
-        &upstream.join("summary-officer.json"),
-        &upstream.join("translations-officer_buffs.json"),
-        &upstream.join("officers"),
-        false,
-    )
-    .map_err(|e| format!("failed to build LCARS officer model from '{path}': {e}"))?;
-
     let mut report = ValidationReport::default();
+
+    // Strict parse-check of LCARS YAML files (lenient-runtime / strict-validation split).
+    let mut yaml_officers: Vec<lcars::LcarsOfficer> = Vec::new();
+    if officers_dir.is_dir() {
+        let entries = fs::read_dir(officers_dir)
+            .map_err(|e| format!("failed to read LCARS dir '{path}': {e}"))?;
+        let mut paths: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| {
+                p.is_file()
+                    && p.file_name()
+                        .and_then(|n| n.to_str())
+                        .is_some_and(|n| n.ends_with(".lcars.yaml") || n.ends_with(".lcars.yml"))
+            })
+            .collect();
+        paths.sort();
+        for file_path in paths {
+            match lcars::load_lcars_file(&file_path) {
+                Ok(file) => yaml_officers.extend(file.officers),
+                Err(e) => report.push(
+                    ValidationSeverity::Error,
+                    "lcars.parse",
+                    format!("failed to parse '{}': {e}", file_path.display()),
+                ),
+            }
+        }
+    }
+
+    let canonical = officers_dir.join("officers.canonical.json");
+    let officers: Vec<lcars::LcarsOfficer> = if canonical.is_file() {
+        let data_dir = officers_dir.parent().unwrap_or_else(|| Path::new("."));
+        let upstream = data_dir.join("upstream/data-stfc-space");
+        lcars::build_officer_model(
+            &canonical,
+            &upstream.join("summary-officer.json"),
+            &upstream.join("translations-officer_buffs.json"),
+            &upstream.join("officers"),
+            false,
+        )
+        .map_err(|e| format!("failed to build LCARS officer model from '{path}': {e}"))?
+    } else {
+        yaml_officers
+    };
+
     let mut seen_ids = HashSet::new();
 
     for (file_index, officer) in officers.iter().enumerate() {
@@ -941,6 +982,36 @@ pub fn validate_ships_extended_dataset(path: &str) -> Result<ValidationReport, S
                             ValidationSeverity::Warning,
                             ctx.clone(),
                             "extended ship has empty `levels` (no per-level shield/hull bonuses)",
+                        );
+                    }
+                    // `shield_deflection` is the in-game Shield Deflection stat, sourced by the
+                    // normalizer from upstream's legacy `Shield.absorption` field. A retired
+                    // extraction read `Deflector.deflection` instead — a constant 120 on every
+                    // upstream ship that maps to no in-game concept. That signature in committed
+                    // data means a pre-fix record survived; re-run `normalize_data_stfc_space`.
+                    if extended.tiers.len() > 1
+                        && extended.tiers.iter().all(|t| t.shield_deflection == 120.0)
+                    {
+                        report.push(
+                            ValidationSeverity::Error,
+                            format!("{ctx}.shield_deflection"),
+                            "stale shield_deflection (legacy Deflector.deflection constant 120 on \
+                             every tier); re-run normalize_data_stfc_space",
+                        );
+                    }
+                    // An explorer with no Shield Deflection at any tier has a dead officer-defense
+                    // channel (docs/OFFICER_STAT_FORMULA.md §2c routes explorer defense_bonus
+                    // through shield_deflection). Zero is legitimate for shieldless hulls (the
+                    // Sarcophagus, a battleship), so this stays scoped to explorers.
+                    if extended.ship_class.eq_ignore_ascii_case("explorer")
+                        && extended.tiers.iter().all(|t| t.shield_deflection <= 0.0)
+                    {
+                        report.push(
+                            ValidationSeverity::Warning,
+                            format!("{ctx}.shield_deflection"),
+                            "explorer has zero shield_deflection on every tier; the officer-defense \
+                             channel contributes nothing — check the upstream `Shield.absorption` \
+                             extraction in normalize_data_stfc_space",
                         );
                     }
                     if let Some(rec) = extended.to_ship_record(Some(1), Some(1)) {

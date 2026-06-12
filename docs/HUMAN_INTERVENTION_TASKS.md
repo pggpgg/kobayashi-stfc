@@ -19,6 +19,11 @@ Work the simulator or data pipeline cannot complete automatically: judgment, ups
   - **Calibration drift fixtures:** set `simulation.defender_faction` (slug) — and optionally `simulation.defender_hull_faction_id` — in a `drift_*.json` fixture. Validated at load and threaded through `src/calibration/drift.rs` so `AbilityCondition::DefenderFactionIs` gating fires (see `drift_faction_gated_attack_multiplier.json`).
   - **Recorded-fight import (still open):** TSV fight exports (`FightExport`, `src/combat/export_csv.rs`) carry no faction field, so `simulate_combat` defaults to `OpponentFactionTag::Unknown`. Honoring faction-gated hull abilities for imported fights needs a human decision on how to supply faction (enemy ship-name → hostile id → faction lookup, or an explicit import flag).
 
+## Calibration
+
+1. **Snapshot freeze + curated fight suite** — needs the maintainer, one uninterrupted sitting.
+  Snapshot the full game state into a Kobayashi profile, freeze all progression (no tiering, leveling, research, or building), record a varied curated set of in-game fights, and export them as the test suite for that snapshot. Gates roadmap items 2–3; the full protocol and rationale (avoiding overfit to mixed-vintage fight records) live in [ROADMAP.md](ROADMAP.md). Scheduling constraint: the freeze blocks STFC event participation, so the window must be chosen deliberately — until then, calibration work proceeds only on synthetic drift fixtures.
+
 ## Research / CI environment
 
 1. **Broad research catalog for integration tests**

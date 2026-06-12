@@ -7,8 +7,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use kobayashi::data::validate::{
     full_validation_report_to_json, hostile_ship_class_is_recognized, validate_all_data_for_report,
     validate_buildings_dataset, validate_forbidden_tech_bonus_gaps, validate_registry_dataset,
-    validate_research_mapping_gaps, validate_support_buffs_catalog_data,
-    validate_unmapped_canonical_officer_conditions, ValidationSeverity,
+    validate_research_mapping_gaps, validate_ships_extended_dataset,
+    validate_support_buffs_catalog_data, validate_unmapped_canonical_officer_conditions,
+    ValidationSeverity,
 };
 
 static CANONICAL_CONDITION_VALIDATE_TEST_LOCK: Mutex<()> = Mutex::new(());
@@ -320,6 +321,80 @@ fn research_mapping_gaps_reports_summary_when_catalog_present() {
     assert!(
         !report.has_errors(),
         "default mode should not error on baseline-matched gaps, got {:?}",
+        report.diagnostics
+    );
+}
+
+fn write_ships_extended_fixture_ship(dir: &Path, id: &str, deflection_t1: f64, deflection_t2: f64) {
+    let tier = |tier: u32, deflection: f64| {
+        format!(
+            r#"{{"tier":{tier},"armor_piercing":1.0,"shield_piercing":1.0,"accuracy":1.0,
+                "armor":100.0,"shield_deflection":{deflection},"dodge":100.0,
+                "attack":100.0,"crit_chance":0.1,"crit_damage":1.5,
+                "hull_health":1000.0,"shield_health":500.0}}"#
+        )
+    };
+    std::fs::write(
+        dir.join(format!("{id}.json")),
+        format!(
+            r#"{{"id":"{id}","ship_name":"{id}","ship_class":"explorer",
+                "tiers":[{},{}],
+                "levels":[{{"level":1,"shield":0.0,"health":0.0}}]}}"#,
+            tier(1, deflection_t1),
+            tier(2, deflection_t2),
+        ),
+    )
+    .unwrap();
+}
+
+/// `shield_deflection` guards: the legacy `Deflector.deflection` signature (constant 120 on every
+/// tier) is an error; an explorer with zero Shield Deflection everywhere (dead officer-defense
+/// channel, OFFICER_STAT_FORMULA.md §2c) is a warning; real per-tier values pass clean.
+#[test]
+fn ships_extended_validation_flags_stale_and_zero_shield_deflection() {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let tmp = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("target")
+        .join(format!("ships_extended_validate_{nanos}"));
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).unwrap();
+    std::fs::write(
+        tmp.join("index.json"),
+        r#"{"data_version":"test","ships":[
+            {"id":"stale_explorer","ship_name":"stale_explorer","ship_class":"explorer"},
+            {"id":"zero_explorer","ship_name":"zero_explorer","ship_class":"explorer"},
+            {"id":"good_explorer","ship_name":"good_explorer","ship_class":"explorer"}
+        ]}"#,
+    )
+    .unwrap();
+    write_ships_extended_fixture_ship(&tmp, "stale_explorer", 120.0, 120.0);
+    write_ships_extended_fixture_ship(&tmp, "zero_explorer", 0.0, 0.0);
+    write_ships_extended_fixture_ship(&tmp, "good_explorer", 6667.0, 13338.0);
+
+    let report = validate_ships_extended_dataset(tmp.to_str().unwrap()).expect("validate ships");
+    let _ = std::fs::remove_dir_all(&tmp);
+
+    assert!(report.diagnostics.iter().any(|d| {
+        d.severity == ValidationSeverity::Error
+            && d.context.contains("stale_explorer")
+            && d.context.ends_with(".shield_deflection")
+            && d.message.contains("Deflector.deflection")
+    }));
+    assert!(report.diagnostics.iter().any(|d| {
+        d.severity == ValidationSeverity::Warning
+            && d.context.contains("zero_explorer")
+            && d.context.ends_with(".shield_deflection")
+            && d.message.contains("officer-defense")
+    }));
+    assert!(
+        !report
+            .diagnostics
+            .iter()
+            .any(|d| d.context.contains("good_explorer")),
+        "real per-tier Shield Deflection values should pass clean, got {:?}",
         report.diagnostics
     );
 }
