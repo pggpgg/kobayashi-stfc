@@ -462,82 +462,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     let conqueror_borg_beam_suppression = setup.conqueror_borg_beam_suppression;
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
-    record_ability_activations(
+    apply_combat_begin_phase(
         &mut trace,
-        0,
-        "combat_begin",
+        &mut rng,
         attacker,
         combat_begin_filtered,
         combat_begin_assimilated,
-    );
-    roll_burning_triggers(
-        &mut RoundPhaseCtx {
-            trace: &mut trace,
-            rng: &mut rng,
-            round_index: 0,
-        },
-        combat_begin_filtered,
-        combat_begin_assimilated,
-        "combat_begin",
-        &attacker.id,
-        None,
         &mut defender_burning_rounds,
+        &mut defender_weapon_fire_delayed_rounds,
+        &mut shots_bonus_entries,
     );
-
-    for effect in combat_begin_filtered {
-        let effective_effect = scale_effect(effect.effect, combat_begin_assimilated);
-        if let AbilityEffect::DefenderFireDelay {
-            chance,
-            delay_rounds,
-            requires_critical,
-        } = effective_effect
-        {
-            apply_defender_fire_delay(
-                &mut trace,
-                &mut rng,
-                0,
-                "combat_begin",
-                &attacker.id,
-                &effect.ability_name,
-                chance,
-                delay_rounds,
-                requires_critical,
-                false,
-                &mut defender_weapon_fire_delayed_rounds,
-            );
-        }
-        if let AbilityEffect::ShotsBonus {
-            chance,
-            bonus_pct,
-            duration_rounds,
-        } = effective_effect
-        {
-            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-            let triggered = shots_roll < chance.clamp(0.0, 1.0);
-            if triggered {
-                let duration = duration_rounds.max(1);
-                shots_bonus_entries.push((bonus_pct, duration));
-            }
-            trace.record_if(|| CombatEvent {
-                event_type: "shots_bonus_trigger".to_string(),
-                round_index: 0,
-                phase: "combat_begin".to_string(),
-                source: EventSource {
-                    officer_id: Some(attacker.id.clone()),
-                    ship_ability_id: Some(effect.ability_name.clone()),
-                    ..EventSource::default()
-                },
-                weapon_index: None,
-                values: Map::from_iter([
-                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
-                    ("triggered".to_string(), Value::Bool(triggered)),
-                    ("chance".to_string(), Value::from(round_f64(chance))),
-                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
-                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                ]),
-            });
-        }
-    }
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
@@ -3558,6 +3492,102 @@ pub(crate) struct RoundPhaseCtx<'a> {
     pub trace: &'a mut TraceCollector,
     pub rng: &'a mut Rng,
     pub round_index: u32,
+}
+
+/// Combat-begin phase: record attacker ability activations, roll burning triggers, and roll
+/// `DefenderFireDelay` / `ShotsBonus` effects from the pre-filtered combat-begin list.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); the RNG draw order
+/// (burning rolls, then per-effect fire-delay/shots-bonus rolls in list order) is load-bearing
+/// for same-seed determinism and must not change.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn apply_combat_begin_phase(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    attacker: &Combatant,
+    combat_begin_filtered: &[ActiveAbilityEffect],
+    combat_begin_assimilated: bool,
+    defender_burning_rounds: &mut u32,
+    defender_weapon_fire_delayed_rounds: &mut u32,
+    shots_bonus_entries: &mut Vec<(f64, u32)>,
+) {
+    record_ability_activations(
+        trace,
+        0,
+        "combat_begin",
+        attacker,
+        combat_begin_filtered,
+        combat_begin_assimilated,
+    );
+    roll_burning_triggers(
+        &mut RoundPhaseCtx {
+            trace: &mut *trace,
+            rng: &mut *rng,
+            round_index: 0,
+        },
+        combat_begin_filtered,
+        combat_begin_assimilated,
+        "combat_begin",
+        &attacker.id,
+        None,
+        defender_burning_rounds,
+    );
+
+    for effect in combat_begin_filtered {
+        let effective_effect = scale_effect(effect.effect, combat_begin_assimilated);
+        if let AbilityEffect::DefenderFireDelay {
+            chance,
+            delay_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            apply_defender_fire_delay(
+                trace,
+                rng,
+                0,
+                "combat_begin",
+                &attacker.id,
+                &effect.ability_name,
+                chance,
+                delay_rounds,
+                requires_critical,
+                false,
+                defender_weapon_fire_delayed_rounds,
+            );
+        }
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                shots_bonus_entries.push((bonus_pct, duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "shots_bonus_trigger".to_string(),
+                round_index: 0,
+                phase: "combat_begin".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
 }
 
 /// Which side just entered hull breach. Selects the [`CombatContext`] flag and trace phase
