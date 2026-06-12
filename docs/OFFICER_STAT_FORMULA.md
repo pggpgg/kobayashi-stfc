@@ -114,15 +114,15 @@ Both `data/upstream/data-stfc-space/ship_id_registry.json` and all 113 `data/shi
 
 | Ship class | channel | upstream field | engine stat |
 |---|---|---|---|
-| Battleship | armor | `Armor.plating` (tier component) | `armor` (already extracted) |
-| Explorer | shield_deflection | `Shield.absorption` (tier component) | **not yet extracted — Phase 2 adds it** |
-| Interceptor | dodge | `Impulse.dodge` (tier component) | `dodge` (already extracted) |
+| Battleship | armor | `Armor.plating` (tier component) | `armor` (extracted) |
+| Explorer | shield_deflection | `Shield.absorption` (tier component) | `shield_deflection` (extracted) |
+| Interceptor | dodge | `Impulse.dodge` (tier component) | `dodge` (extracted) |
 | Survey | even thirds | matching field per channel | each routed via the rule above |
 
-Verified for the Cerritos: `Shield.absorption` at tier 12 = **13,338**, exactly matching the observed defense-channel constant. Note: the existing `shield_deflection` field extracted by [src/bin/normalize_data_stfc_space.rs](../src/bin/normalize_data_stfc_space.rs) reads `Deflector.deflection` which is a stale `120` across every ship — unrelated to the actual shield deflection mechanic and should be considered unused; Phase 2 will source the real value from `Shield.absorption`.
+Naming: the in-game stat is **Shield Deflection**, and the engine's `shield_deflection` field names it directly. Upstream's `Shield.absorption` is that platform's legacy field name for the same stat. The upstream `Deflector.deflection` field — a stale constant `120` on every ship — maps to no in-game concept; an earlier normalizer version read it, and [src/bin/normalize_data_stfc_space.rs](../src/bin/normalize_data_stfc_space.rs) now ignores it and sources `shield_deflection` from `Shield.absorption` per tier. Verified for the Cerritos: tier 12 = **13,338**, exactly matching the observed defense-channel constant (anchored by `cerritos_tier12_shield_deflection_matches_in_game_observation` in [tests/data_provenance_tests.rs](../tests/data_provenance_tests.rs); `validate_ships_extended_dataset` errors on the stale-120 signature).
 
 **Defense additive routes to the primary mitigation stat** (not to `shield_mitigation`):
-- explorer: `shield_deflection += ship.shield_absorption × defense_bonus`
+- explorer: `shield_deflection += ship.shield_deflection × defense_bonus`
 - battleship: `armor += ship.armor × defense_bonus`
 - interceptor: `dodge += ship.dodge × defense_bonus`
 - survey: ⅓ of `defense_bonus` applied to each channel above with the matching ship constant.
@@ -136,7 +136,7 @@ Empirical confirmation (Cerritos, both observations):
 
 Both rows imply identical `shield_per_bonus = 13,338` for the Cerritos. **Confirmed:** `mitigation_added = ship.mit_per_bonus[channel] × defense_bonus`. `defense_rating` itself only feeds the breakpoint lookup.
 
-**Critical:** `defense_rating` (and its bonus) **do not** influence `shield_mitigation` (the multiplicative damage-after-shield knob). Today's [src/data/profile.rs:1945](../src/data/profile.rs) has `shield_mitigation += officer_defense`, which is incorrect per this spec. Phase 2 must remove that line and route through the breakpoint + ship-class-mitigation pathway instead.
+**Critical:** `defense_rating` (and its bonus) **do not** influence `shield_mitigation` (the multiplicative damage-after-shield knob). An earlier `shield_mitigation += officer_defense` line in [src/data/profile.rs](../src/data/profile.rs) was incorrect per this spec and has been removed (see the §2c comment in `apply_profile_to_attacker`); officer Defense now routes exclusively through the breakpoint + ship-class-mitigation pathway.
 
 ### 2d. Health — bonus × per-ship hull/shield constants
 

@@ -972,10 +972,10 @@
   "abilities": [
     {
       "id": "1379978713",
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value": 0.0,
-      "duration_rounds": null,
+      "timing": "round_start",
+      "effect_type": "defender_shield_drain_per_round",
+      "value": 0.001,
+      "duration_rounds": 5,
       "condition_morale": false,
       "condition_defender_burning": false,
       "condition_defender_hull_breach": false,

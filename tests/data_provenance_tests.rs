@@ -105,6 +105,90 @@ fn resolve_one_ship_and_validate_stats_bounds() {
     );
 }
 
+/// U.S.S. Cerritos tier 12 Shield Deflection: in-game-verified anchor for the officer-defense
+/// channel (docs/OFFICER_STAT_FORMULA.md §2c).
+///
+/// The engine's `shield_deflection` is the in-game *Shield Deflection* stat, sourced by
+/// `normalize_data_stfc_space` from upstream's legacy `Shield.absorption` field. (The upstream
+/// `Deflector.deflection` field — a constant 120 on every ship — maps to no in-game concept and
+/// is ignored.) The value 13,338 was verified in-game from the Cerritos Defense tooltip via the
+/// Sesha L15 / Ghrush L30 experiments; it is the explorer defense-channel constant, so a
+/// regression here silently breaks officer Defense routing for every explorer.
+#[test]
+fn cerritos_tier12_shield_deflection_matches_in_game_observation() {
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    let extended = match load_extended_ship_record(ext_dir, "uss_cerritos") {
+        Some(r) => r,
+        None => {
+            eprintln!("Skipping: uss_cerritos not in {}", ext_dir.display());
+            return;
+        }
+    };
+    let tier12 = extended
+        .tiers
+        .iter()
+        .find(|t| t.tier == 12)
+        .expect("Cerritos tier 12");
+    assert_eq!(
+        tier12.shield_deflection, 13338.0,
+        "Cerritos T12 Shield Deflection is 13,338 (in-game verified, OFFICER_STAT_FORMULA.md §2c); \
+         got {}. If a data refresh moved this, re-verify against the in-game Defense tooltip \
+         before updating this anchor.",
+        tier12.shield_deflection
+    );
+    // Real Shield Deflection grows with tier; the retired stale constant (120) did not.
+    let tier1 = extended
+        .tiers
+        .iter()
+        .find(|t| t.tier == 1)
+        .expect("Cerritos tier 1");
+    assert!(
+        tier1.shield_deflection > 0.0 && tier1.shield_deflection < tier12.shield_deflection,
+        "Shield Deflection should grow with tier; got t1 {} vs t12 {}",
+        tier1.shield_deflection,
+        tier12.shield_deflection
+    );
+}
+
+/// Shieldless hulls stay shieldless: the Sarcophagus and Enterprise NX-01 have no shields
+/// in-game (upstream `Shield: {hp: 0, absorption: 0}` on every tier). An earlier normalizer
+/// fallback gave any zero value a phantom 1000 shield HP; this pins the faithful zero so the
+/// fallback is not reintroduced. The engine routes all damage to hull when shields are 0
+/// (`apply_shield_hull_split` overflow path).
+#[test]
+fn shieldless_ships_normalize_to_zero_shield_health() {
+    let ext_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+    for id in ["sarcophagus", "enterprise_nx_01"] {
+        let extended = match load_extended_ship_record(ext_dir, id) {
+            Some(r) => r,
+            None => {
+                eprintln!("Skipping: {} not in {}", id, ext_dir.display());
+                continue;
+            }
+        };
+        for tier in &extended.tiers {
+            assert_eq!(
+                tier.shield_health, 0.0,
+                "{} tier {} should have zero shield_health (shieldless in-game); got {}",
+                id, tier.tier, tier.shield_health
+            );
+        }
+        let rec = extended
+            .to_ship_record(Some(1), Some(1))
+            .expect("tier 1 level 1 record");
+        assert_eq!(
+            rec.shield_health, 0.0,
+            "{} resolved record should keep zero shield_health (no per-level shield bonuses)",
+            id
+        );
+        assert!(
+            rec.hull_health > 0.0,
+            "{} must still have positive hull",
+            id
+        );
+    }
+}
+
 /// USS Crozier tier 1: per-shot attack and shots from normalize_data_stfc_space (data-stfc.space).
 #[test]
 fn crozier_tier1_has_per_shot_attack_and_shots() {

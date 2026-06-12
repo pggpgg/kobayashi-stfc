@@ -743,8 +743,8 @@
     {
       "id": "1463338054",
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
-      "value": 0.0,
+      "effect_type": "hostile_engagement_defensive",
+      "value": 0.004,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,

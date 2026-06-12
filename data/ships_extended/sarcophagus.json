@@ -15,7 +15,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 123243.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -80,7 +80,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 151732.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -145,7 +145,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 158401.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -210,7 +210,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 231580.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -275,7 +275,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 256627.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -340,7 +340,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 273007.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -405,7 +405,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 300932.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -470,7 +470,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 317856.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -535,7 +535,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 321723.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -600,7 +600,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 361905.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -665,7 +665,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 368975.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
@@ -730,7 +730,7 @@
       "crit_chance": 0.1,
       "crit_damage": 1.5,
       "hull_health": 387163.0,
-      "shield_health": 1000.0,
+      "shield_health": 0.0,
       "shield_mitigation": 0.1,
       "weapons": [
         {
