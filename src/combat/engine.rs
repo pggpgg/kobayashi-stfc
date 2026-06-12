@@ -425,6 +425,21 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let round_end_effects = &setup.round_end_effects;
     let after_subround_effects = &setup.after_subround_effects;
 
+    let ctx_template = CombatCtxTemplate {
+        defender_faction,
+        attacker_owner_faction: config.attacker_owner_faction,
+        defender_hull_faction_id: config.defender_hull_faction_id,
+        defender_ship_type,
+        attacker_ship_type,
+        attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
+        defender_level: config.defender_level,
+    };
+
     let defender_combat_begin_effects = &setup.defender_combat_begin_effects;
     let defender_round_start_effects = &setup.defender_round_start_effects;
     let defender_attack_phase_effects = &setup.defender_attack_phase_effects;
@@ -487,173 +502,50 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_weapon_fire_delayed_rounds.saturating_sub(1);
         }
 
-        let defender_hull_pct_for_def_round_start =
-            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-        let defender_shield_pct_for_def_round_start = if defender.shield_health > 0.0 {
-            defender_shield_remaining / defender.shield_health
-        } else {
-            1.0
-        };
-        let attacker_hull_pct_round =
-            1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
-        let attacker_shield_pct_round = if attacker.shield_health > 0.0 {
-            attacker_shield_remaining / attacker.shield_health
-        } else {
-            1.0
-        };
-
-        // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
-        let ctx_def_round_start = CombatContext {
+        let DefenderRoundStartVitals {
+            attacker_hull_pct_round,
+            attacker_shield_pct_round,
+            defender_hull_pct_round,
+            defender_shield_pct_round,
+        } = apply_defender_round_start(
+            &mut trace,
+            &mut rng,
+            &ctx_template,
             round_index,
-            defender_hull_pct: defender_hull_pct_for_def_round_start,
-            defender_shield_pct: defender_shield_pct_for_def_round_start,
-            attacker_hull_pct: attacker_hull_pct_round,
-            attacker_shield_pct: attacker_shield_pct_round,
-            attacker_morale_active: false,
-            defender_morale_active: defender_morale_rounds_remaining > 0,
-            defender_burning_active: defender_burning_rounds > 0,
-            defender_hull_breach_active: defender_hull_breach_rounds > 0,
-            attacker_burning_active: attacker_burning_rounds > 0,
-            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: config.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-            combat_battle_type_id: None,
-            defender_level: config.defender_level,
-        };
-        let defender_rs_for_assim =
-            filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
-        let def_rs_assim_active = defender_assimilated_rounds_remaining > 0;
-        roll_assimilated_extensions_from_effects(
-            &mut RoundPhaseCtx {
-                trace: &mut trace,
-                rng: &mut rng,
-                round_index,
-            },
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-            "round_start",
-            &defender.id,
+            attacker,
+            defender,
+            attacker_crew,
+            defender_round_start_effects,
+            defender_morale_rounds_remaining,
+            defender_burning_rounds,
+            defender_hull_breach_rounds,
+            attacker_burning_rounds,
+            attacker_hull_breach_rounds,
+            &mut total_hull_damage,
+            total_attacker_hull_damage,
+            &mut defender_shield_remaining,
+            attacker_shield_remaining,
             &mut defender_assimilated_rounds_remaining,
         );
 
-        let def_rs_shield = EffectAccumulator::sum_shield_regen_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        let def_rs_hull = EffectAccumulator::sum_hull_regen_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        let def_rs_shield_frac = EffectAccumulator::sum_shield_regen_max_fraction_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        let def_rs_hull_frac = EffectAccumulator::sum_hull_regen_max_fraction_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        if def_rs_shield != 0.0
-            || def_rs_hull != 0.0
-            || def_rs_shield_frac != 0.0
-            || def_rs_hull_frac != 0.0
-        {
-            let shield_heal = def_rs_shield + def_rs_shield_frac * defender.shield_health.max(0.0);
-            let hull_heal = def_rs_hull + def_rs_hull_frac * defender.hull_health.max(0.0);
-            defender_shield_remaining =
-                (defender_shield_remaining + shield_heal).min(defender.shield_health.max(0.0));
-            total_hull_damage = (total_hull_damage - hull_heal).max(0.0);
-        }
-
-        let shield_drain_ctx = CombatContext {
+        let mut combat_ctx = ctx_template.at(
             round_index,
-            defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
-            defender_shield_pct: if defender.shield_health > 0.0 {
-                defender_shield_remaining / defender.shield_health
-            } else {
-                1.0
+            CtxVitals {
+                defender_hull_pct: defender_hull_pct_round,
+                defender_shield_pct: defender_shield_pct_round,
+                attacker_hull_pct: attacker_hull_pct_round,
+                attacker_shield_pct: attacker_shield_pct_round,
             },
-            attacker_hull_pct: attacker_hull_pct_round,
-            attacker_shield_pct: if attacker.shield_health > 0.0 {
-                attacker_shield_remaining / attacker.shield_health
-            } else {
-                1.0
+            CtxStatusFlags {
+                attacker_morale_active: false,
+                defender_morale_active: defender_morale_rounds_remaining > 0,
+                defender_burning_active: defender_burning_rounds > 0,
+                defender_hull_breach_active: defender_hull_breach_rounds > 0,
+                attacker_burning_active: attacker_burning_rounds > 0,
+                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
             },
-            attacker_morale_active: false,
-            defender_morale_active: defender_morale_rounds_remaining > 0,
-            defender_burning_active: defender_burning_rounds > 0,
-            defender_hull_breach_active: defender_hull_breach_rounds > 0,
-            attacker_burning_active: attacker_burning_rounds > 0,
-            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: config.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-            combat_battle_type_id: None,
-            defender_level: config.defender_level,
-        };
-        let (shield_drain_frac, shield_drain_rounds) =
-            defender_shield_drain_per_round_from_crew(attacker_crew, &shield_drain_ctx);
-        if shield_drain_frac > 0.0
-            && round_in_inclusive_first_n(round_index, shield_drain_rounds)
-            && defender.shield_health > 0.0
-        {
-            let drain = shield_drain_frac * defender.shield_health;
-            defender_shield_remaining = (defender_shield_remaining - drain).max(0.0);
-        }
-
-        let defender_hull_pct_round =
-            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-        let defender_shield_pct_round = if defender.shield_health > 0.0 {
-            defender_shield_remaining / defender.shield_health
-        } else {
-            1.0
-        };
-
-        let mut combat_ctx = CombatContext {
-            round_index,
-            defender_hull_pct: defender_hull_pct_round,
-            defender_shield_pct: defender_shield_pct_round,
-            attacker_hull_pct: attacker_hull_pct_round,
-            attacker_shield_pct: attacker_shield_pct_round,
-            attacker_morale_active: false,
-            defender_morale_active: defender_morale_rounds_remaining > 0,
-            defender_burning_active: defender_burning_rounds > 0,
-            defender_hull_breach_active: defender_hull_breach_rounds > 0,
-            attacker_burning_active: attacker_burning_rounds > 0,
-            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: config.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-            combat_battle_type_id: None,
-            defender_level: config.defender_level,
-        };
+        );
 
         // Symmetric attacker-outbound CDR: read `HostileCritDamageReduction` from the
         // defender's crew (in PvP, the opponent's `player_crit_damage_reduction` profile
@@ -3492,6 +3384,241 @@ pub(crate) struct RoundPhaseCtx<'a> {
     pub trace: &'a mut TraceCollector,
     pub rng: &'a mut Rng,
     pub round_index: u32,
+}
+
+/// The per-fight immutable [`CombatContext`] fields, captured once per trial so per-round
+/// snapshots don't repeat 24-field literals. [`CombatCtxTemplate::at`] stamps a context; every
+/// per-round field stays explicit at the call site so extractions remain verbatim-equivalent
+/// (task 12). `combat_battle_type_id` is fixed `None`: nothing in the round loop ever sets it.
+pub(crate) struct CombatCtxTemplate {
+    defender_faction: OpponentFactionTag,
+    attacker_owner_faction: OpponentFactionTag,
+    defender_hull_faction_id: i64,
+    defender_ship_type: ShipType,
+    attacker_ship_type: ShipType,
+    attacker_ship_id: std::sync::Arc<str>,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
+    attacker_tal_assigned_captain_or_bridge: bool,
+    defender_hostile_tag_mask: u32,
+    engagement_enemy_types: std::sync::Arc<EnemyTypes>,
+    defender_level: Option<u32>,
+}
+
+/// The four hull/shield percentages of a [`CombatContext`] snapshot.
+pub(crate) struct CtxVitals {
+    pub defender_hull_pct: f64,
+    pub defender_shield_pct: f64,
+    pub attacker_hull_pct: f64,
+    pub attacker_shield_pct: f64,
+}
+
+/// The seven status flags of a [`CombatContext`] snapshot.
+pub(crate) struct CtxStatusFlags {
+    pub attacker_morale_active: bool,
+    pub defender_morale_active: bool,
+    pub defender_burning_active: bool,
+    pub defender_hull_breach_active: bool,
+    pub attacker_burning_active: bool,
+    pub attacker_hull_breach_active: bool,
+    pub defender_assimilated_active: bool,
+}
+
+impl CombatCtxTemplate {
+    fn at(&self, round_index: u32, vitals: CtxVitals, flags: CtxStatusFlags) -> CombatContext {
+        CombatContext {
+            round_index,
+            defender_hull_pct: vitals.defender_hull_pct,
+            defender_shield_pct: vitals.defender_shield_pct,
+            attacker_hull_pct: vitals.attacker_hull_pct,
+            attacker_shield_pct: vitals.attacker_shield_pct,
+            attacker_morale_active: flags.attacker_morale_active,
+            defender_morale_active: flags.defender_morale_active,
+            defender_burning_active: flags.defender_burning_active,
+            defender_hull_breach_active: flags.defender_hull_breach_active,
+            attacker_burning_active: flags.attacker_burning_active,
+            attacker_hull_breach_active: flags.attacker_hull_breach_active,
+            defender_assimilated_active: flags.defender_assimilated_active,
+            defender_faction: self.defender_faction,
+            attacker_owner_faction: self.attacker_owner_faction,
+            defender_hull_faction_id: self.defender_hull_faction_id,
+            defender_ship_type: self.defender_ship_type,
+            attacker_ship_type: self.attacker_ship_type,
+            attacker_ship_id: std::sync::Arc::clone(&self.attacker_ship_id),
+            defender_is_npc_hostile: self.defender_is_npc_hostile,
+            defender_is_player_ship: self.defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge: self.attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: self.defender_hostile_tag_mask,
+            engagement_enemy_types: std::sync::Arc::clone(&self.engagement_enemy_types),
+            combat_battle_type_id: None,
+            defender_level: self.defender_level,
+        }
+    }
+}
+
+/// The vitals percentages flowing out of [`apply_defender_round_start`] into the attacker
+/// round-start context: attacker percentages are sampled *before* defender regen/drain, defender
+/// percentages *after* — preserving the original in-loop sampling points exactly.
+pub(crate) struct DefenderRoundStartVitals {
+    pub attacker_hull_pct_round: f64,
+    pub attacker_shield_pct_round: f64,
+    pub defender_hull_pct_round: f64,
+    pub defender_shield_pct_round: f64,
+}
+
+/// Defender round-start phase: assimilation-extension rolls, defender round-start regen, and
+/// crew-driven per-round shield drain.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// (assimilation rolls only) and float evaluation order are unchanged.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn apply_defender_round_start(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    ctx_template: &CombatCtxTemplate,
+    round_index: u32,
+    attacker: &Combatant,
+    defender: &Combatant,
+    attacker_crew: &CrewConfiguration,
+    defender_round_start_effects: &[ActiveAbilityEffect],
+    defender_morale_rounds_remaining: u32,
+    defender_burning_rounds: u32,
+    defender_hull_breach_rounds: u32,
+    attacker_burning_rounds: u32,
+    attacker_hull_breach_rounds: u32,
+    total_hull_damage: &mut f64,
+    total_attacker_hull_damage: f64,
+    defender_shield_remaining: &mut f64,
+    attacker_shield_remaining: f64,
+    defender_assimilated_rounds_remaining: &mut u32,
+) -> DefenderRoundStartVitals {
+    let defender_hull_pct_for_def_round_start =
+        1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+    let defender_shield_pct_for_def_round_start = if defender.shield_health > 0.0 {
+        *defender_shield_remaining / defender.shield_health
+    } else {
+        1.0
+    };
+    let attacker_hull_pct_round =
+        1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+    let attacker_shield_pct_round = if attacker.shield_health > 0.0 {
+        attacker_shield_remaining / attacker.shield_health
+    } else {
+        1.0
+    };
+
+    // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
+    let ctx_def_round_start = ctx_template.at(
+        round_index,
+        CtxVitals {
+            defender_hull_pct: defender_hull_pct_for_def_round_start,
+            defender_shield_pct: defender_shield_pct_for_def_round_start,
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: attacker_shield_pct_round,
+        },
+        CtxStatusFlags {
+            attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
+            defender_burning_active: defender_burning_rounds > 0,
+            defender_hull_breach_active: defender_hull_breach_rounds > 0,
+            attacker_burning_active: attacker_burning_rounds > 0,
+            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+        },
+    );
+    let defender_rs_for_assim =
+        filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
+    let def_rs_assim_active = *defender_assimilated_rounds_remaining > 0;
+    roll_assimilated_extensions_from_effects(
+        &mut RoundPhaseCtx {
+            trace: &mut *trace,
+            rng: &mut *rng,
+            round_index,
+        },
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+        "round_start",
+        &defender.id,
+        defender_assimilated_rounds_remaining,
+    );
+
+    let def_rs_shield = EffectAccumulator::sum_shield_regen_from_effects(
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+    );
+    let def_rs_hull =
+        EffectAccumulator::sum_hull_regen_from_effects(&defender_rs_for_assim, def_rs_assim_active);
+    let def_rs_shield_frac = EffectAccumulator::sum_shield_regen_max_fraction_from_effects(
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+    );
+    let def_rs_hull_frac = EffectAccumulator::sum_hull_regen_max_fraction_from_effects(
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+    );
+    if def_rs_shield != 0.0
+        || def_rs_hull != 0.0
+        || def_rs_shield_frac != 0.0
+        || def_rs_hull_frac != 0.0
+    {
+        let shield_heal = def_rs_shield + def_rs_shield_frac * defender.shield_health.max(0.0);
+        let hull_heal = def_rs_hull + def_rs_hull_frac * defender.hull_health.max(0.0);
+        *defender_shield_remaining =
+            (*defender_shield_remaining + shield_heal).min(defender.shield_health.max(0.0));
+        *total_hull_damage = (*total_hull_damage - hull_heal).max(0.0);
+    }
+
+    let shield_drain_ctx = ctx_template.at(
+        round_index,
+        CtxVitals {
+            defender_hull_pct: 1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                *defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+        },
+        CtxStatusFlags {
+            attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
+            defender_burning_active: defender_burning_rounds > 0,
+            defender_hull_breach_active: defender_hull_breach_rounds > 0,
+            attacker_burning_active: attacker_burning_rounds > 0,
+            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+        },
+    );
+    let (shield_drain_frac, shield_drain_rounds) =
+        defender_shield_drain_per_round_from_crew(attacker_crew, &shield_drain_ctx);
+    if shield_drain_frac > 0.0
+        && round_in_inclusive_first_n(round_index, shield_drain_rounds)
+        && defender.shield_health > 0.0
+    {
+        let drain = shield_drain_frac * defender.shield_health;
+        *defender_shield_remaining = (*defender_shield_remaining - drain).max(0.0);
+    }
+
+    let defender_hull_pct_round =
+        1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+    let defender_shield_pct_round = if defender.shield_health > 0.0 {
+        *defender_shield_remaining / defender.shield_health
+    } else {
+        1.0
+    };
+
+    DefenderRoundStartVitals {
+        attacker_hull_pct_round,
+        attacker_shield_pct_round,
+        defender_hull_pct_round,
+        defender_shield_pct_round,
+    }
 }
 
 /// Combat-begin phase: record attacker ability activations, roll burning triggers, and roll
