@@ -210,19 +210,24 @@ pub fn validate_officer_dataset(path: &str) -> Result<ValidationReport, String> 
     }
 }
 
-/// Validate LCARS YAML files in a directory.
+/// Validate the LCARS officer model, built in-process from the `officers.canonical.json` in `path`
+/// (+ sibling `upstream/` stats/translations). The monolith yaml is no longer a runtime artifact.
 ///
-/// Unlike the runtime loader ([`lcars::load_lcars_dir`], which warns and skips malformed files
-/// so the engine can keep running), validation parses each `*.lcars.yaml` individually and
-/// reports a parse failure as a hard **Error** — a corrupt user-edited file must fail
-/// `kobayashi validate` and the CI `validate_data` gate, not silently vanish its officers.
+/// Any `*.lcars.yaml` / `*.lcars.yml` files present in `path` (user-authored or legacy) are
+/// additionally parsed one by one, and a corrupt file is a hard **Error** diagnostic: the runtime
+/// loader ([`lcars::load_lcars_dir`]) warns and skips so the engine keeps running, but validation
+/// must not let a malformed user-edited file pass silently. When `path` has no
+/// `officers.canonical.json` (a standalone directory of LCARS YAML files), the per-officer checks
+/// run on the parsed YAML officers instead of the in-process model.
 pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
+    let officers_dir = Path::new(path);
     let mut report = ValidationReport::default();
-    let mut officers: Vec<lcars::LcarsOfficer> = Vec::new();
-    let dir = Path::new(path);
-    if dir.is_dir() {
-        let entries =
-            fs::read_dir(dir).map_err(|e| format!("failed to read LCARS dir '{path}': {e}"))?;
+
+    // Strict parse-check of LCARS YAML files (lenient-runtime / strict-validation split).
+    let mut yaml_officers: Vec<lcars::LcarsOfficer> = Vec::new();
+    if officers_dir.is_dir() {
+        let entries = fs::read_dir(officers_dir)
+            .map_err(|e| format!("failed to read LCARS dir '{path}': {e}"))?;
         let mut paths: Vec<_> = entries
             .filter_map(|e| e.ok())
             .map(|e| e.path())
@@ -236,7 +241,7 @@ pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
         paths.sort();
         for file_path in paths {
             match lcars::load_lcars_file(&file_path) {
-                Ok(file) => officers.extend(file.officers),
+                Ok(file) => yaml_officers.extend(file.officers),
                 Err(e) => report.push(
                     ValidationSeverity::Error,
                     "lcars.parse",
@@ -245,6 +250,22 @@ pub fn validate_lcars_dir(path: &str) -> Result<ValidationReport, String> {
             }
         }
     }
+
+    let canonical = officers_dir.join("officers.canonical.json");
+    let officers: Vec<lcars::LcarsOfficer> = if canonical.is_file() {
+        let data_dir = officers_dir.parent().unwrap_or_else(|| Path::new("."));
+        let upstream = data_dir.join("upstream/data-stfc-space");
+        lcars::build_officer_model(
+            &canonical,
+            &upstream.join("summary-officer.json"),
+            &upstream.join("translations-officer_buffs.json"),
+            &upstream.join("officers"),
+            false,
+        )
+        .map_err(|e| format!("failed to build LCARS officer model from '{path}': {e}"))?
+    } else {
+        yaml_officers
+    };
 
     let mut seen_ids = HashSet::new();
 

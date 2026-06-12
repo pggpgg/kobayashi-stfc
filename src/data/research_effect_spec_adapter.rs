@@ -14,7 +14,7 @@ use crate::combat::CrewSeatContext;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
     AbilityTriggerSpec, CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource,
-    ValueSpec,
+    OfficerSpecAttrs, ValueSpec,
 };
 use crate::data::combat_effect_spec_validate::validate_combat_effect_spec;
 use crate::data::import::ResearchEntry;
@@ -182,6 +182,7 @@ fn compile_canonical_override_seats(
             accumulate: None,
             conditions: effect.conditions.clone(),
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: effect.category,
             confidence: effect.confidence,
@@ -372,6 +373,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         accumulate: None,
                         conditions: condition_specs.unwrap_or_default(),
                         attributes: serde_json::Map::new(),
+                        officer: OfficerSpecAttrs::default(),
                         stacking: None,
                         category: Some(EffectCategory::Combat),
                         confidence: Some(EffectConfidence::Authoritative),

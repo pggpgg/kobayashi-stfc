@@ -26,7 +26,6 @@
 //! carry no officerstatall).
 
 use std::collections::HashMap;
-use std::path::Path;
 
 use kobayashi::combat::CrewOfficerStatTotals;
 use kobayashi::data::combat_effect_spec::AbilityConditionSpec;
@@ -36,8 +35,8 @@ use kobayashi::data::profile::{
 };
 use kobayashi::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, load_lcars_file, resolve_crew_to_buff_set, BuffSet,
-    OfficerStatOpponentScope, PendingOfficerStatContribution, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
+    BuffSet, OfficerStatOpponentScope, PendingOfficerStatContribution, ResolveOptions,
 };
 
 /// Load the bundled production LCARS catalog. Returns `None` when the data file is absent so the
@@ -46,11 +45,7 @@ fn bundled_officers() -> Option<(
     std::collections::HashMap<String, kobayashi::lcars::LcarsOfficer>,
     ResolveOptions,
 )> {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
-        return None;
-    }
-    let file = load_lcars_file(path).ok()?;
+    let file = build_officer_model_file_default().ok()?;
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(1),

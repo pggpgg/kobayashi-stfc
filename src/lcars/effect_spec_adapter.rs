@@ -4,11 +4,10 @@
 //! [`crate::combat::effect_spec_compile::compile_officer_combat_spec`] (see
 //! [`crate::lcars::resolver::resolve_effect`]). HTTP debug and parity tests use the same path.
 
-use crate::combat::effect_spec_compile::OFFICER_SPEC_ATTR_LCARS_OP;
 use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource,
+    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource, OfficerSpecAttrs,
     OfficerStatScaling, ValueSpec,
 };
 use crate::lcars::parser::{
@@ -747,6 +746,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
             accumulate: None,
             conditions: Vec::new(),
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
             confidence: Some(crate::data::combat_effect_spec::EffectConfidence::Authoritative),
@@ -840,20 +840,19 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
     let duration = effect.duration.as_ref().and_then(lcars_duration_to_spec);
 
     let op_norm = normalize_operator(effect.operator.as_deref());
-    let mut attributes = serde_json::Map::new();
-    attributes.insert(
-        OFFICER_SPEC_ATTR_LCARS_OP.into(),
-        serde_json::Value::String(op_norm.clone()),
-    );
+    // Officer-specific carry is now typed (was stuffed into `attributes`); `attributes` stays
+    // empty for officer specs and is reserved for genuinely producer-specific keys (e.g. stfc_cc).
+    let attributes = serde_json::Map::new();
+    let mut officer = OfficerSpecAttrs {
+        lcars_op: Some(op_norm.clone()),
+        ..Default::default()
+    };
     if effect
         .trigger
         .as_deref()
         .is_some_and(|t| t.trim().eq_ignore_ascii_case("on_critical"))
     {
-        attributes.insert(
-            crate::combat::effect_spec_compile::OFFICER_SPEC_ATTR_REQUIRES_CRITICAL.into(),
-            serde_json::Value::Bool(true),
-        );
+        officer.requires_critical = true;
     }
     let operation = op_to_spec(op_norm.as_str());
 
@@ -919,6 +918,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     accumulate: None,
                     conditions,
                     attributes,
+                    officer: officer.clone(),
                     stacking: None,
                     category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
                     confidence: None,
@@ -953,6 +953,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                     }),
                     conditions,
                     attributes,
+                    officer: officer.clone(),
                     stacking: None,
                     category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
                     confidence: None,
@@ -973,6 +974,16 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 return None;
             }
         };
+        // Opponent-targeted shield mitigation is the **multiplicative bypass** semantic
+        // ("ignore X% of the opponent's shield"). Emit the explicit `ShieldMitigationBypass`
+        // modifier here rather than leaving the compiler to infer bypass from `target`.
+        let modifier = if modifier == AbilityModifierSpec::ShieldMitigation
+            && target == AbilityTargetSpec::DefenderOpponent
+        {
+            AbilityModifierSpec::ShieldMitigationBypass
+        } else {
+            modifier
+        };
         if stat == "random_defender_state" {
             if let Some(ids) = effect
                 .scaling
@@ -980,15 +991,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 .and_then(|s| s.values.as_ref())
                 .filter(|v| !v.is_empty())
             {
-                attributes.insert(
-                    crate::combat::effect_spec_compile::OFFICER_SPEC_ATTR_RANDOM_STATE_WEIGHTS
-                        .into(),
-                    serde_json::Value::Array(
-                        ids.iter()
-                            .map(|v| serde_json::Value::from(v.round() as u64))
-                            .collect(),
-                    ),
-                );
+                officer.random_state_weights = ids.iter().map(|v| v.round() as u32).collect();
             }
         }
         return Some(CombatEffectSpec {
@@ -1032,6 +1035,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
             accumulate: None,
             conditions,
             attributes,
+            officer: officer.clone(),
             stacking: None,
             category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
             confidence: None,
@@ -1064,6 +1068,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 accumulate: None,
                 conditions,
                 attributes,
+                officer: officer.clone(),
                 stacking: None,
                 category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
                 confidence: None,
@@ -1094,6 +1099,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 accumulate: None,
                 conditions,
                 attributes,
+                officer: officer.clone(),
                 stacking: None,
                 category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
                 confidence: None,
@@ -1124,6 +1130,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 accumulate: None,
                 conditions,
                 attributes,
+                officer: officer.clone(),
                 stacking: None,
                 category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
                 confidence: None,
@@ -1154,6 +1161,7 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 accumulate: None,
                 conditions,
                 attributes,
+                officer: officer.clone(),
                 stacking: None,
                 category: Some(crate::data::combat_effect_spec::EffectCategory::Combat),
                 confidence: None,

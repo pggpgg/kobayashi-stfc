@@ -127,6 +127,16 @@ pub fn ship_ability_effect_from_catalog(
                 value.clamp(0.0, 0.95),
             ))
         }
+        // Hegh'ta "Open the Wound": per-hit crit-chance growth while opponent hull breached.
+        // Applied out of band at the per-shot crit site; the hull-breach gate is evaluated live
+        // in the engine (so it honors mid-round breach onset), so no condition is attached here.
+        "cumulative_breach_crit_chance" | "breach_crit_chance_per_hit" => Some(
+            AbilityEffect::BreachCumulativeCritChancePerHit(value.max(0.0)),
+        ),
+        // Rotarran "Bird of Prey": per-crit crit-damage growth while opponent hull breached.
+        "cumulative_breach_crit_damage" | "breach_crit_damage_per_crit" => Some(
+            AbilityEffect::BreachCumulativeCritDamagePerCrit(value.max(0.0)),
+        ),
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
             Some(AbilityEffect::PierceBonus(value))
         }

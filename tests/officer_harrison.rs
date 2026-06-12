@@ -13,8 +13,6 @@
 //! `0.775 × (1 - 0.70) = 0.2325` effective mitigation. The SHP : HHP split goes from
 //! 77.5 : 22.5 to 23.25 : 76.75.
 
-use std::path::Path;
-
 use kobayashi::combat::abilities::{
     filter_effects_by_condition, AbilityCondition, AbilityEffect, CombatContext, TimingWindow,
 };
@@ -25,17 +23,16 @@ use kobayashi::combat::{
 };
 use kobayashi::data::combat_effect_spec::{AbilityModifierSpec, AbilityTargetSpec};
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, lcars_effect_to_combat_effect_spec, load_lcars_file,
-    resolve_crew_to_buff_set, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id,
+    lcars_effect_to_combat_effect_spec, resolve_crew_to_buff_set, ResolveOptions,
 };
 
 #[test]
 fn harrison_sabotage_compiles_to_shield_mitigation_bypass_fraction() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
-        return; // minimal checkouts — matches `resolve_bundled_lcars_yaml_*` convention
-    }
-    let file = load_lcars_file(path).unwrap();
+    // skip in minimal checkouts — matches `resolve_bundled_lcars_yaml_*` convention
+    let Ok(file) = build_officer_model_file_default() else {
+        return;
+    };
     let harrison = file
         .officers
         .iter()
@@ -69,7 +66,9 @@ fn harrison_sabotage_compiles_to_shield_mitigation_bypass_fraction() {
     )
     .expect("Harrison shield_mitigation effect should produce a CombatEffectSpec");
 
-    assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigation);
+    // Opponent-targeted shield mitigation is the explicit multiplicative-bypass modifier (the
+    // adapter remaps ShieldMitigation+DefenderOpponent → ShieldMitigationBypass).
+    assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigationBypass);
     assert_eq!(spec.target, AbilityTargetSpec::DefenderOpponent);
 
     let (_, effect, condition) =
@@ -116,11 +115,9 @@ fn harrison_bypass_math_matches_in_game_split() {
 
 #[test]
 fn harrison_sabotage_round_range_gates_bypass_to_first_combat_round() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(1),
@@ -196,11 +193,9 @@ fn harrison_sabotage_round_range_gates_bypass_to_first_combat_round() {
 
 #[test]
 fn harrison_sabotage_increases_outbound_hull_damage_vs_high_shield_mitigation() {
-    let path = Path::new("data/officers/officers.lcars.yaml");
-    if !path.exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file(path).unwrap();
+    };
     let officers = index_lcars_officers_by_id(file.officers);
     let opts = ResolveOptions {
         tier: Some(2),

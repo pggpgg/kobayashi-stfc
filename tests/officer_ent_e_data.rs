@@ -1,7 +1,6 @@
 //! Ent-E Data bridge: isolytic cascade at combat start vs non-Armada NPC hostiles only.
 
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::OnceLock;
 
 use kobayashi::combat::abilities::{
@@ -14,15 +13,14 @@ use kobayashi::combat::{
 };
 use kobayashi::data::combat_effect_spec::AbilityModifierSpec;
 use kobayashi::lcars::{
-    index_lcars_officers_by_id, lcars_effect_to_combat_effect_spec, load_lcars_file,
-    resolve_crew_to_buff_set, LcarsOfficer, ResolveOptions,
+    build_officer_model_file_default, index_lcars_officers_by_id,
+    lcars_effect_to_combat_effect_spec, resolve_crew_to_buff_set, LcarsOfficer, ResolveOptions,
 };
 
 fn lcars_officers_by_id() -> &'static HashMap<String, LcarsOfficer> {
     static OFFICERS: OnceLock<HashMap<String, LcarsOfficer>> = OnceLock::new();
     OFFICERS.get_or_init(|| {
-        let path = Path::new("data/officers/officers.lcars.yaml");
-        let file = load_lcars_file(path).expect("officers.lcars.yaml");
+        let file = build_officer_model_file_default().expect("build officer model");
         index_lcars_officers_by_id(file.officers)
     })
 }
@@ -99,10 +97,9 @@ fn passive_defender() -> Combatant {
 
 #[test]
 fn ent_e_data_bridge_lcars_maps_non_armada_hostile_gate() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
+    let Ok(file) = build_officer_model_file_default() else {
         return;
-    }
-    let file = load_lcars_file("data/officers/officers.lcars.yaml").expect("load lcars");
+    };
     let data = file
         .officers
         .into_iter()
@@ -171,9 +168,6 @@ fn ent_e_data_bridge_lcars_maps_non_armada_hostile_gate() {
 
 #[test]
 fn ent_e_data_isolytic_cascade_inactive_vs_armada_defender() {
-    if !Path::new("data/officers/officers.lcars.yaml").exists() {
-        return;
-    }
     let crew = resolve_crew(5);
     assert!(
         active_effects_for_timing(&crew, TimingWindow::CombatBegin)

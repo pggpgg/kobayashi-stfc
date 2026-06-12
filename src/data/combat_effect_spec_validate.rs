@@ -120,7 +120,7 @@ mod tests {
     use super::*;
     use crate::data::combat_effect_spec::{
         AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec,
-        ChanceSpec, CombatEffectSpec, EffectSource, ValueSpec,
+        ChanceSpec, CombatEffectSpec, EffectSource, OfficerSpecAttrs, ValueSpec,
     };
 
     fn minimal_spec() -> CombatEffectSpec {
@@ -145,6 +145,7 @@ mod tests {
             accumulate: None,
             conditions: vec![],
             attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
             stacking: None,
             category: None,
             confidence: None,

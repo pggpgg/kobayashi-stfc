@@ -10,6 +10,9 @@ frontend/dist/assets/
 data/upstream/stfccommunity-data/
 # Generated mapping backlog (node scripts/import_stfcspace_research.mjs --dump-unmapped)
 data/research/unmapped_buff_backlog.json
+# Retired LCARS monolith: now built in-process from officers.canonical.json. `generate_lcars`
+# still writes this for debug/inspection only — keep it out of git so it can't drift back in.
+data/officers/officers.lcars.yaml
 **/.DS_Store
 
 # Downloaded spreadsheets (e.g. Syndicate Progression)

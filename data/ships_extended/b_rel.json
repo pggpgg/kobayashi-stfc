@@ -744,7 +744,7 @@
       "id": "2441576367",
       "timing": "combat_begin",
       "effect_type": "hostile_counter_stat_debuff",
-      "value": 0.0015,
+      "value": 0.15,
       "duration_rounds": 1,
       "condition_morale": false,
       "condition_defender_burning": false,

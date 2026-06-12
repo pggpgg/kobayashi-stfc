@@ -203,6 +203,21 @@ pub enum AbilityEffect {
         per_round: f64,
         cap: f64,
     },
+    /// Player ship hull ability (Hegh'ta "Open the Wound"): while the opponent has **Hull Breach**,
+    /// every weapon hit adds `per_hit` (absolute probability) to this ship's critical-hit **chance**,
+    /// cumulative for the rest of the fight. Engine applies it as `per_hit × (breached hits so far)`
+    /// at each shot's crit roll (uncapped; the crit-chance roll itself clamps to `[0, 1]`).
+    /// Resolved out of band via [`sum_breach_cumulative_crit_chance_per_hit`]; a no-op in the
+    /// per-timing accumulator so it is not double-counted.
+    BreachCumulativeCritChancePerHit(f64),
+    /// Player ship hull ability (Rotarran "Bird of Prey"): while the opponent has **Hull Breach**,
+    /// every **critical** hit adds `per_crit` to this ship's critical-hit **damage**, cumulative for
+    /// the rest of the fight. Engine applies it as **additive percentage points** on the crit
+    /// multiplier — `crit_mult = weapon_crit × officer_crit + per_crit × (breached crits so far)`
+    /// (uncapped), matching how STFC crit-damage stat bonuses add rather than compound. Resolved
+    /// out of band via [`sum_breach_cumulative_crit_damage_per_crit`]; a no-op in the per-timing
+    /// accumulator.
+    BreachCumulativeCritDamagePerCrit(f64),
     /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables the
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
@@ -802,6 +817,10 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *per_round = scale(*per_round);
             *cap = scale(*cap);
         }
+        // Per-hit / per-crit fractions are already the resolved per-tier values; they are applied
+        // out of band at the per-shot crit site (not amplified by assimilation), so leave as-is.
+        AbilityEffect::BreachCumulativeCritChancePerHit(_)
+        | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => {}
         AbilityEffect::BridgeAbilityEffectivenessBonus(_)
         | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
         | AbilityEffect::DefenderFireDelay { .. }
@@ -931,6 +950,30 @@ pub fn sum_hostile_engagement_defensive_bonus(effects: &[ActiveAbilityEffect]) -
         .iter()
         .filter_map(|e| match e.effect {
             AbilityEffect::HostileEngagementDefensiveBonus(v) => Some(v),
+            _ => None,
+        })
+        .sum()
+}
+
+/// Hegh'ta "Open the Wound": per-hit crit-chance increment applied while the opponent is hull
+/// breached. Summed across effects so multiple sources (rare) stack additively.
+pub fn sum_breach_cumulative_crit_chance_per_hit(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::BreachCumulativeCritChancePerHit(v) => Some(v),
+            _ => None,
+        })
+        .sum()
+}
+
+/// Rotarran "Bird of Prey": per-crit crit-damage increment applied while the opponent is hull
+/// breached. Summed across effects so multiple sources (rare) stack additively.
+pub fn sum_breach_cumulative_crit_damage_per_crit(effects: &[ActiveAbilityEffect]) -> f64 {
+    effects
+        .iter()
+        .filter_map(|e| match e.effect {
+            AbilityEffect::BreachCumulativeCritDamagePerCrit(v) => Some(v),
             _ => None,
         })
         .sum()

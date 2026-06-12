@@ -196,3 +196,186 @@ fn hostile_engagement_defensive_preserves_more_attacker_hull() {
         buffed.attacker_hull_remaining
     );
 }
+
+// ── Breach-gated cumulative crit hull abilities (Hegh'ta / Rotarran) ──
+
+/// A multi-shot attacker that cannot crit on its own (crit_chance 0). Paired with a deterministic
+/// hull-breach proc so the breach-gated crit abilities have something to ramp against.
+fn multishot_breacher() -> Combatant {
+    Combatant {
+        attack: 400.0,
+        crit_chance: 0.0,
+        crit_multiplier: 2.0,
+        weapons: vec![WeaponStats {
+            attack: 400.0,
+            shots: Some(8),
+            ..Default::default()
+        }],
+        ..weak_attacker()
+    }
+}
+
+fn breach_seat() -> CrewSeatContext {
+    CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: "breach_proc".into(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::AttackPhase,
+            boostable: false,
+            effect: AbilityEffect::HullBreach {
+                chance: 1.0,
+                duration_rounds: 10,
+                requires_critical: false,
+            },
+            condition: None,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: kobayashi::combat::NO_EXPLICIT_CONTRIBUTION_BATCH,
+    }
+}
+
+fn ship_seat(name: &str, effect: AbilityEffect) -> CrewSeatContext {
+    CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: name.into(),
+            class: AbilityClass::ShipAbility,
+            timing: TimingWindow::AttackPhase,
+            boostable: false,
+            effect,
+            condition: None,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: kobayashi::combat::NO_EXPLICIT_CONTRIBUTION_BATCH,
+    }
+}
+
+#[test]
+fn breach_cumulative_crit_chance_increases_damage_only_while_breached() {
+    let attacker = multishot_breacher();
+    let defender = Combatant {
+        hull_health: 5_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        crit_chance: 0.0,
+        attack: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 0.0,
+            shots: None,
+            ..Default::default()
+        }],
+        ..high_crit_defender()
+    };
+    let config = default_config(4);
+
+    // Breach only (Hegh'ta ability absent) — attacker never crits on its own.
+    let breach_only = CrewConfiguration {
+        seats: vec![breach_seat()],
+    };
+    let base = simulate_combat(&attacker, &defender, &config, &breach_only);
+
+    // Breach + Hegh'ta "Open the Wound": per-hit crit chance ramps while breached, so crits land.
+    let with_ability = CrewConfiguration {
+        seats: vec![
+            breach_seat(),
+            ship_seat(
+                "3432906971",
+                AbilityEffect::BreachCumulativeCritChancePerHit(0.05),
+            ),
+        ],
+    };
+    let ramped = simulate_combat(&attacker, &defender, &config, &with_ability);
+
+    assert!(
+        ramped.total_damage > base.total_damage,
+        "per-hit crit-chance ramp should land crits and raise damage; base={} ramped={}",
+        base.total_damage,
+        ramped.total_damage
+    );
+}
+
+#[test]
+fn breach_cumulative_crit_chance_inert_without_breach() {
+    // No breach proc: the per-hit crit chance ability must contribute nothing (it is gated on the
+    // opponent being hull breached), so damage matches a plain crew.
+    let attacker = multishot_breacher();
+    let defender = Combatant {
+        hull_health: 5_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        crit_chance: 0.0,
+        attack: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 0.0,
+            shots: None,
+            ..Default::default()
+        }],
+        ..high_crit_defender()
+    };
+    let config = default_config(4);
+
+    let plain = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
+    let with_ability = CrewConfiguration {
+        seats: vec![ship_seat(
+            "3432906971",
+            AbilityEffect::BreachCumulativeCritChancePerHit(0.2),
+        )],
+    };
+    let gated = simulate_combat(&attacker, &defender, &config, &with_ability);
+
+    assert!(
+        (gated.total_damage - plain.total_damage).abs() < 1e-6,
+        "crit-chance ability must be inert without hull breach; plain={} gated={}",
+        plain.total_damage,
+        gated.total_damage
+    );
+}
+
+#[test]
+fn breach_cumulative_crit_damage_increases_damage_while_breached() {
+    // Attacker always crits (crit_chance 1.0), so Rotarran's per-crit crit-damage ramp compounds.
+    let attacker = Combatant {
+        crit_chance: 1.0,
+        ..multishot_breacher()
+    };
+    let defender = Combatant {
+        hull_health: 50_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        crit_chance: 0.0,
+        attack: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 0.0,
+            shots: None,
+            ..Default::default()
+        }],
+        ..high_crit_defender()
+    };
+    let config = default_config(4);
+
+    let breach_only = CrewConfiguration {
+        seats: vec![breach_seat()],
+    };
+    let base = simulate_combat(&attacker, &defender, &config, &breach_only);
+
+    let with_ability = CrewConfiguration {
+        seats: vec![
+            breach_seat(),
+            ship_seat(
+                "2195955652",
+                AbilityEffect::BreachCumulativeCritDamagePerCrit(0.1),
+            ),
+        ],
+    };
+    let ramped = simulate_combat(&attacker, &defender, &config, &with_ability);
+
+    assert!(
+        ramped.total_damage > base.total_damage,
+        "per-crit crit-damage ramp should raise total damage; base={} ramped={}",
+        base.total_damage,
+        ramped.total_damage
+    );
+}

@@ -744,7 +744,7 @@
       "id": "1463338054",
       "timing": "combat_begin",
       "effect_type": "hostile_engagement_defensive",
-      "value": 0.004,
+      "value": 0.4,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,

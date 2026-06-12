@@ -2515,6 +2515,8 @@ export interface components {
             /** Format: int64 */
             seed: number;
             warnings?: string[];
+            /** @description Crew officers that did not resolve to an LCARS combat definition (so they contributed no effects). Omitted when empty; a non-empty list signals a canonical-to-LCARS gap rather than normal operation. */
+            unresolved_officers?: string[];
         };
         SensitivityRequest: {
             /** @description Ship id (e.g. `uss_enterprise_d`). */

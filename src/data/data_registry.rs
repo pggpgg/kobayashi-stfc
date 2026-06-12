@@ -30,7 +30,7 @@ use crate::data::ship::{
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
 };
-use crate::lcars::{load_lcars_dir, LcarsOfficer};
+use crate::lcars::LcarsOfficer;
 
 use super::ship::ExtendedShipRecord;
 
@@ -62,7 +62,8 @@ pub struct DataRegistry {
     pub hostile_index: Option<HostileIndex>,
     /// `loca_id` → display name from data.stfc.space translation exports (for API / UI).
     pub hostile_loca_display: HashMap<u64, String>,
-    /// LCARS officers when KOBAYASHI_OFFICER_SOURCE=lcars; used by monte_carlo to resolve abilities.
+    /// LCARS officers — the sole ability source; `None` only if the data failed to load.
+    /// Used by monte_carlo to resolve abilities.
     pub lcars_officers: Option<Vec<LcarsOfficer>>,
     /// Forbidden/chaos tech catalog for merging into profile with imported player tech.
     pub forbidden_chaos_catalog: Option<ForbiddenChaosList>,
@@ -80,8 +81,6 @@ impl DataRegistry {
     /// Load all static data from disk. Returns an Arc so it can be shared across handlers and threads.
     /// Officer load failure returns Err; missing ship/hostile indices are allowed (None).
     pub fn load() -> Result<Arc<DataRegistry>, std::io::Error> {
-        const DEFAULT_LCARS_OFFICERS_DIR: &str = "data/officers";
-
         let officers = load_canonical_officers(Path::new(DEFAULT_CANONICAL_OFFICERS_PATH))?;
         let officers = OfficerCache::from_officers(officers);
 
@@ -93,11 +92,9 @@ impl DataRegistry {
         let hostile_loca_display =
             load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
 
-        let lcars_officers = if Self::use_lcars_officer_source() {
-            load_lcars_dir(Path::new(DEFAULT_LCARS_OFFICERS_DIR)).ok()
-        } else {
-            None
-        };
+        // LCARS is the sole officer ability source, built in-process from canonical (no committed
+        // monolith); `None` only if the source data fails to load.
+        let lcars_officers = crate::lcars::build_officer_model_default().ok();
 
         let forbidden_chaos_catalog = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH);
         let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
@@ -122,13 +119,8 @@ impl DataRegistry {
         }))
     }
 
-    fn use_lcars_officer_source() -> bool {
-        std::env::var("KOBAYASHI_OFFICER_SOURCE")
-            .map(|v| v.eq_ignore_ascii_case("lcars"))
-            .unwrap_or(false)
-    }
-
-    /// LCARS officers when KOBAYASHI_OFFICER_SOURCE=lcars. Monte Carlo builds by_id/name_to_id from this.
+    /// LCARS officers (the sole ability source; `None` only on load failure). Monte Carlo builds
+    /// by_id/name_to_id from this.
     pub fn lcars_officers(&self) -> Option<&[LcarsOfficer]> {
         self.lcars_officers.as_deref()
     }

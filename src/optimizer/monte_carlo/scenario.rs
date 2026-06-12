@@ -52,20 +52,16 @@ use crate::data::research_effect_spec_adapter::incoming_shield_mitigation_for_co
 use crate::data::ship::ShipRecord;
 use crate::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use crate::data::support_buffs::{self, AppliedSupportBuffTrace, SupportBuffCatalog};
-use crate::lcars::{
-    index_lcars_officers_by_id, load_lcars_dir, resolve_crew_to_buff_set, ResolveOptions,
-};
+use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
 use crate::optimizer::crew_generator::{
     CrewCandidate, BRIDGE_SLOTS, MAX_BELOW_DECKS_SLOTS, MIN_BELOW_DECKS_SLOTS,
 };
 use std::path::Path;
 
 use super::crew_resolution::{
-    build_crew_seats, hash_identifier, index_officers_by_name, normalize_lookup_key,
+    hash_identifier, index_officers_by_name, normalize_lookup_key,
     roster_officer_ids_from_candidate, split_name_and_tier,
 };
-
-const DEFAULT_LCARS_OFFICERS_DIR_STANDALONE: &str = "data/officers";
 
 /// Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -661,12 +657,6 @@ fn defender_combatant_from_hostile_record(
     }
 }
 
-fn use_lcars_officer_source_standalone() -> bool {
-    std::env::var("KOBAYASHI_OFFICER_SOURCE")
-        .map(|v| v.eq_ignore_ascii_case("lcars"))
-        .unwrap_or(false)
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct LcarsOfficerData {
     pub by_id: HashMap<String, crate::lcars::LcarsOfficer>,
@@ -675,14 +665,79 @@ pub(crate) struct LcarsOfficerData {
     pub name_to_id: HashMap<String, String>,
 }
 
-fn lcars_officer_data_from_officers(officers: Vec<crate::lcars::LcarsOfficer>) -> LcarsOfficerData {
-    let by_id = index_lcars_officers_by_id(officers);
+/// Build the normalized `name_to_id` map (keys: both officer name and id) shared by
+/// [`LcarsOfficerData`] and the unresolved-officer diagnostic, so all name→id lookups agree.
+fn lcars_name_to_id<'a>(
+    officers: impl IntoIterator<Item = &'a crate::lcars::LcarsOfficer>,
+) -> HashMap<String, String> {
     let mut name_to_id: HashMap<String, String> = HashMap::new();
-    for o in by_id.values() {
+    for o in officers {
         name_to_id.insert(normalize_lookup_key(&o.name), o.id.clone());
         name_to_id.insert(normalize_lookup_key(&o.id), o.id.clone());
     }
+    name_to_id
+}
+
+fn lcars_officer_data_from_officers(officers: Vec<crate::lcars::LcarsOfficer>) -> LcarsOfficerData {
+    let by_id = index_lcars_officers_by_id(officers);
+    let name_to_id = lcars_name_to_id(by_id.values());
     LcarsOfficerData { by_id, name_to_id }
+}
+
+/// Resolve an officer name or id (with optional `(TN)` tier suffix) to its LCARS id via a
+/// `name_to_id` map. The single source of truth for the name→id step, shared by
+/// [`build_crew_and_buffs`] and [`unresolved_officer_names`] so the diagnostic can't drift from
+/// what the combat path actually resolves.
+pub(crate) fn resolve_officer_name(
+    name_to_id: &HashMap<String, String>,
+    name: &str,
+) -> Option<String> {
+    name_to_id
+        .get(&normalize_lookup_key(&split_name_and_tier(name).0))
+        .cloned()
+}
+
+/// Officer names on `candidate` (captain + bridge + below decks) that don't resolve to an LCARS
+/// officer id — skipping empty / placeholder ("--") slots and de-duplicating. Because it uses the
+/// same resolution as the combat path, it faithfully reports officers that would contribute no
+/// combat effects. Expected to be **empty** for any roster-legal crew (the canonical roster and the
+/// LCARS model derive from the same source); a non-empty result flags a canonical↔LCARS drift or a
+/// name-alias gap rather than normal operation.
+pub(crate) fn unresolved_officer_names(
+    candidate: &CrewCandidate,
+    name_to_id: &HashMap<String, String>,
+) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut check = |raw: &str| {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() || trimmed == "--" {
+            return;
+        }
+        if resolve_officer_name(name_to_id, trimmed).is_none() {
+            let display = split_name_and_tier(trimmed).0;
+            if !out.iter().any(|n| n == &display) {
+                out.push(display);
+            }
+        }
+    };
+    check(&candidate.captain);
+    candidate.bridge.iter().for_each(|n| check(n));
+    candidate.below_decks.iter().for_each(|n| check(n));
+    out
+}
+
+/// [`unresolved_officer_names`] for a candidate, resolved against the registry's LCARS officers.
+/// Returns empty when officer data failed to load (nothing to classify against). Setup-time only —
+/// builds a transient name→id map per call, so it is not for hot loops.
+pub fn unresolved_officers_for_candidate(
+    registry: &crate::data::data_registry::DataRegistry,
+    candidate: &CrewCandidate,
+) -> Vec<String> {
+    let Some(officers) = registry.lcars_officers() else {
+        return Vec::new();
+    };
+    let name_to_id = lcars_name_to_id(officers.iter());
+    unresolved_officer_names(candidate, &name_to_id)
 }
 
 /// Pre-resolved data for (ship, hostile) shared across all candidates in one Monte Carlo run.
@@ -982,12 +1037,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_officer_stat_contributions,
-    ) = build_crew_and_buffs(
-        candidate,
-        &shared.officer_index,
-        shared.lcars_data.as_ref(),
-        &resolve_opts,
-    );
+    ) = build_crew_and_buffs(candidate, shared.lcars_data.as_ref(), &resolve_opts);
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
     if !shared.support_attacker_debuff_static_buffs.is_empty() {
@@ -1448,7 +1498,6 @@ fn resolve_options_with_candidate_tiers(
 #[allow(clippy::type_complexity)]
 fn build_crew_and_buffs(
     candidate: &CrewCandidate,
-    officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
 ) -> (
@@ -1461,64 +1510,45 @@ fn build_crew_and_buffs(
     Vec<crate::lcars::PendingOfficerStatContribution>,
 ) {
     if let Some(lcars) = lcars_data {
-        let captain_id = lcars
-            .name_to_id
-            .get(&normalize_lookup_key(
-                &split_name_and_tier(&candidate.captain).0,
-            ))
-            .cloned();
+        let resolve_id = |name: &str| resolve_officer_name(&lcars.name_to_id, name);
+        let captain_id = resolve_id(&candidate.captain);
         let bridge_ids: Vec<String> = candidate
             .bridge
             .iter()
-            .filter_map(|n| {
-                lcars
-                    .name_to_id
-                    .get(&normalize_lookup_key(&split_name_and_tier(n).0))
-                    .cloned()
-            })
+            .filter_map(|n| resolve_id(n))
             .collect();
         let below_ids: Vec<String> = candidate
             .below_decks
             .iter()
-            .filter_map(|n| {
-                lcars
-                    .name_to_id
-                    .get(&normalize_lookup_key(&split_name_and_tier(n).0))
-                    .cloned()
-            })
+            .filter_map(|n| resolve_id(n))
             .collect();
 
-        if let Some(cap_id) = captain_id {
-            let buff_set = resolve_crew_to_buff_set(
-                &cap_id,
-                &bridge_ids,
-                &below_ids,
-                &lcars.by_id,
-                resolve_options,
-            );
-            (
-                buff_set.to_crew_config().seats.clone(),
-                buff_set.static_buffs,
-                buff_set.proc_chance,
-                buff_set.proc_multiplier,
-                buff_set.officer_stat_totals,
-                buff_set.bridge_officer_stat_totals,
-                buff_set.pending_officer_stat_contributions,
-            )
-        } else {
-            (
-                build_crew_seats(candidate, officers_by_name),
-                HashMap::new(),
-                0.0,
-                1.0,
-                crate::combat::CrewOfficerStatTotals::default(),
-                crate::combat::CrewOfficerStatTotals::default(),
-                Vec::new(),
-            )
-        }
-    } else {
+        // Resolve per seat. Any officer that doesn't map to an LCARS id simply contributes nothing:
+        // `resolve_crew_to_buff_set` skips ids absent from `by_id`, including an empty captain id.
+        // (Previously an unresolved *captain* dropped the entire crew — bridge and below decks too —
+        // to the placeholder stub; that all-or-nothing fallback is gone.)
+        let buff_set = resolve_crew_to_buff_set(
+            captain_id.as_deref().unwrap_or(""),
+            &bridge_ids,
+            &below_ids,
+            &lcars.by_id,
+            resolve_options,
+        );
         (
-            build_crew_seats(candidate, officers_by_name),
+            buff_set.to_crew_config().seats.clone(),
+            buff_set.static_buffs,
+            buff_set.proc_chance,
+            buff_set.proc_multiplier,
+            buff_set.officer_stat_totals,
+            buff_set.bridge_officer_stat_totals,
+            buff_set.pending_officer_stat_contributions,
+        )
+    } else {
+        // No LCARS data (officer data failed to load). There is no placeholder fallback: resolve
+        // nothing rather than fabricate effects. A genuinely missing data file shows up as an empty
+        // crew with no officer contributions — visibly broken, not silently wrong.
+        (
+            Vec::new(),
             HashMap::new(),
             0.0,
             1.0,
@@ -1685,7 +1715,7 @@ fn resolve_player_defender_officer_bundle(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_contribs,
-    ) = build_crew_and_buffs(&candidate, officers_by_name, lcars_data, resolve_options);
+    ) = build_crew_and_buffs(&candidate, lcars_data, resolve_options);
     (
         seats,
         static_buffs,
@@ -1725,7 +1755,7 @@ pub(crate) fn scenario_to_combat_input(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_officer_stat_contributions,
-    ) = build_crew_and_buffs(candidate, officers_by_name, lcars_data, &resolve_opts);
+    ) = build_crew_and_buffs(candidate, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
@@ -2163,13 +2193,10 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .map(|cat| support_buffs::describe_resolved_support_buffs(cat, &resolved_support_buffs))
         .unwrap_or_default();
 
-    let lcars_data = if use_lcars_officer_source_standalone() {
-        load_lcars_dir(DEFAULT_LCARS_OFFICERS_DIR_STANDALONE)
-            .ok()
-            .map(lcars_officer_data_from_officers)
-    } else {
-        None
-    };
+    // LCARS is the sole officer source, built in-process from canonical; `None` only on load failure.
+    let lcars_data = crate::lcars::build_officer_model_default()
+        .ok()
+        .map(lcars_officer_data_from_officers);
 
     let roster_path = profile_path(&pid, ROSTER_IMPORTED)
         .to_string_lossy()
@@ -3832,5 +3859,42 @@ mod tests {
             false,
         );
         assert!((attacker.apex_barrier - 0.22).abs() < 1e-12);
+    }
+
+    #[test]
+    fn unresolved_officer_names_reports_only_unknown_seats() {
+        let mut name_to_id: HashMap<String, String> = HashMap::new();
+        name_to_id.insert(normalize_lookup_key("Kirk"), "kirk-1".to_string());
+        name_to_id.insert(normalize_lookup_key("Spock"), "spock-2".to_string());
+        name_to_id.insert(normalize_lookup_key("Uhura"), "uhura-3".to_string());
+
+        let candidate = CrewCandidate {
+            captain: "Kirk".to_string(),
+            // One resolvable (with a tier suffix, which must be stripped), one bogus, one empty,
+            // one placeholder — only the bogus name should be reported.
+            bridge: vec![
+                "Spock (T5)".to_string(),
+                "Nobody McFake".to_string(),
+                String::new(),
+            ],
+            below_decks: vec!["Uhura".to_string(), "--".to_string()],
+        };
+
+        let unresolved = unresolved_officer_names(&candidate, &name_to_id);
+        assert_eq!(unresolved, vec!["Nobody McFake".to_string()]);
+    }
+
+    #[test]
+    fn unresolved_officer_names_empty_when_all_resolve() {
+        let mut name_to_id: HashMap<String, String> = HashMap::new();
+        name_to_id.insert(normalize_lookup_key("Kirk"), "kirk-1".to_string());
+        name_to_id.insert(normalize_lookup_key("kirk-1"), "kirk-1".to_string());
+        let candidate = CrewCandidate {
+            captain: "Kirk".to_string(),
+            // Reference by id as well as name — both key forms resolve.
+            bridge: vec!["kirk-1".to_string()],
+            below_decks: vec![],
+        };
+        assert!(unresolved_officer_names(&candidate, &name_to_id).is_empty());
     }
 }
