@@ -425,6 +425,21 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let round_end_effects = &setup.round_end_effects;
     let after_subround_effects = &setup.after_subround_effects;
 
+    let ctx_template = CombatCtxTemplate {
+        defender_faction,
+        attacker_owner_faction: config.attacker_owner_faction,
+        defender_hull_faction_id: config.defender_hull_faction_id,
+        defender_ship_type,
+        attacker_ship_type,
+        attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
+        defender_level: config.defender_level,
+    };
+
     let defender_combat_begin_effects = &setup.defender_combat_begin_effects;
     let defender_round_start_effects = &setup.defender_round_start_effects;
     let defender_attack_phase_effects = &setup.defender_attack_phase_effects;
@@ -462,82 +477,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     let conqueror_borg_beam_suppression = setup.conqueror_borg_beam_suppression;
     let combat_begin_assimilated = assimilated_rounds_remaining > 0;
-    record_ability_activations(
+    apply_combat_begin_phase(
         &mut trace,
-        0,
-        "combat_begin",
+        &mut rng,
         attacker,
         combat_begin_filtered,
         combat_begin_assimilated,
-    );
-    roll_burning_triggers(
-        &mut RoundPhaseCtx {
-            trace: &mut trace,
-            rng: &mut rng,
-            round_index: 0,
-        },
-        combat_begin_filtered,
-        combat_begin_assimilated,
-        "combat_begin",
-        &attacker.id,
-        None,
         &mut defender_burning_rounds,
+        &mut defender_weapon_fire_delayed_rounds,
+        &mut shots_bonus_entries,
     );
-
-    for effect in combat_begin_filtered {
-        let effective_effect = scale_effect(effect.effect, combat_begin_assimilated);
-        if let AbilityEffect::DefenderFireDelay {
-            chance,
-            delay_rounds,
-            requires_critical,
-        } = effective_effect
-        {
-            apply_defender_fire_delay(
-                &mut trace,
-                &mut rng,
-                0,
-                "combat_begin",
-                &attacker.id,
-                &effect.ability_name,
-                chance,
-                delay_rounds,
-                requires_critical,
-                false,
-                &mut defender_weapon_fire_delayed_rounds,
-            );
-        }
-        if let AbilityEffect::ShotsBonus {
-            chance,
-            bonus_pct,
-            duration_rounds,
-        } = effective_effect
-        {
-            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-            let triggered = shots_roll < chance.clamp(0.0, 1.0);
-            if triggered {
-                let duration = duration_rounds.max(1);
-                shots_bonus_entries.push((bonus_pct, duration));
-            }
-            trace.record_if(|| CombatEvent {
-                event_type: "shots_bonus_trigger".to_string(),
-                round_index: 0,
-                phase: "combat_begin".to_string(),
-                source: EventSource {
-                    officer_id: Some(attacker.id.clone()),
-                    ship_ability_id: Some(effect.ability_name.clone()),
-                    ..EventSource::default()
-                },
-                weapon_index: None,
-                values: Map::from_iter([
-                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
-                    ("triggered".to_string(), Value::Bool(triggered)),
-                    ("chance".to_string(), Value::from(round_f64(chance))),
-                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
-                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                ]),
-            });
-        }
-    }
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
@@ -553,173 +502,50 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_weapon_fire_delayed_rounds.saturating_sub(1);
         }
 
-        let defender_hull_pct_for_def_round_start =
-            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-        let defender_shield_pct_for_def_round_start = if defender.shield_health > 0.0 {
-            defender_shield_remaining / defender.shield_health
-        } else {
-            1.0
-        };
-        let attacker_hull_pct_round =
-            1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
-        let attacker_shield_pct_round = if attacker.shield_health > 0.0 {
-            attacker_shield_remaining / attacker.shield_health
-        } else {
-            1.0
-        };
-
-        // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
-        let ctx_def_round_start = CombatContext {
+        let DefenderRoundStartVitals {
+            attacker_hull_pct_round,
+            attacker_shield_pct_round,
+            defender_hull_pct_round,
+            defender_shield_pct_round,
+        } = apply_defender_round_start(
+            &mut trace,
+            &mut rng,
+            &ctx_template,
             round_index,
-            defender_hull_pct: defender_hull_pct_for_def_round_start,
-            defender_shield_pct: defender_shield_pct_for_def_round_start,
-            attacker_hull_pct: attacker_hull_pct_round,
-            attacker_shield_pct: attacker_shield_pct_round,
-            attacker_morale_active: false,
-            defender_morale_active: defender_morale_rounds_remaining > 0,
-            defender_burning_active: defender_burning_rounds > 0,
-            defender_hull_breach_active: defender_hull_breach_rounds > 0,
-            attacker_burning_active: attacker_burning_rounds > 0,
-            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: config.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-            combat_battle_type_id: None,
-            defender_level: config.defender_level,
-        };
-        let defender_rs_for_assim =
-            filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
-        let def_rs_assim_active = defender_assimilated_rounds_remaining > 0;
-        roll_assimilated_extensions_from_effects(
-            &mut RoundPhaseCtx {
-                trace: &mut trace,
-                rng: &mut rng,
-                round_index,
-            },
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-            "round_start",
-            &defender.id,
+            attacker,
+            defender,
+            attacker_crew,
+            defender_round_start_effects,
+            defender_morale_rounds_remaining,
+            defender_burning_rounds,
+            defender_hull_breach_rounds,
+            attacker_burning_rounds,
+            attacker_hull_breach_rounds,
+            &mut total_hull_damage,
+            total_attacker_hull_damage,
+            &mut defender_shield_remaining,
+            attacker_shield_remaining,
             &mut defender_assimilated_rounds_remaining,
         );
 
-        let def_rs_shield = EffectAccumulator::sum_shield_regen_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        let def_rs_hull = EffectAccumulator::sum_hull_regen_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        let def_rs_shield_frac = EffectAccumulator::sum_shield_regen_max_fraction_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        let def_rs_hull_frac = EffectAccumulator::sum_hull_regen_max_fraction_from_effects(
-            &defender_rs_for_assim,
-            def_rs_assim_active,
-        );
-        if def_rs_shield != 0.0
-            || def_rs_hull != 0.0
-            || def_rs_shield_frac != 0.0
-            || def_rs_hull_frac != 0.0
-        {
-            let shield_heal = def_rs_shield + def_rs_shield_frac * defender.shield_health.max(0.0);
-            let hull_heal = def_rs_hull + def_rs_hull_frac * defender.hull_health.max(0.0);
-            defender_shield_remaining =
-                (defender_shield_remaining + shield_heal).min(defender.shield_health.max(0.0));
-            total_hull_damage = (total_hull_damage - hull_heal).max(0.0);
-        }
-
-        let shield_drain_ctx = CombatContext {
+        let mut combat_ctx = ctx_template.at(
             round_index,
-            defender_hull_pct: 1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
-            defender_shield_pct: if defender.shield_health > 0.0 {
-                defender_shield_remaining / defender.shield_health
-            } else {
-                1.0
+            CtxVitals {
+                defender_hull_pct: defender_hull_pct_round,
+                defender_shield_pct: defender_shield_pct_round,
+                attacker_hull_pct: attacker_hull_pct_round,
+                attacker_shield_pct: attacker_shield_pct_round,
             },
-            attacker_hull_pct: attacker_hull_pct_round,
-            attacker_shield_pct: if attacker.shield_health > 0.0 {
-                attacker_shield_remaining / attacker.shield_health
-            } else {
-                1.0
+            CtxStatusFlags {
+                attacker_morale_active: false,
+                defender_morale_active: defender_morale_rounds_remaining > 0,
+                defender_burning_active: defender_burning_rounds > 0,
+                defender_hull_breach_active: defender_hull_breach_rounds > 0,
+                attacker_burning_active: attacker_burning_rounds > 0,
+                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
             },
-            attacker_morale_active: false,
-            defender_morale_active: defender_morale_rounds_remaining > 0,
-            defender_burning_active: defender_burning_rounds > 0,
-            defender_hull_breach_active: defender_hull_breach_rounds > 0,
-            attacker_burning_active: attacker_burning_rounds > 0,
-            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: config.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-            combat_battle_type_id: None,
-            defender_level: config.defender_level,
-        };
-        let (shield_drain_frac, shield_drain_rounds) =
-            defender_shield_drain_per_round_from_crew(attacker_crew, &shield_drain_ctx);
-        if shield_drain_frac > 0.0
-            && round_in_inclusive_first_n(round_index, shield_drain_rounds)
-            && defender.shield_health > 0.0
-        {
-            let drain = shield_drain_frac * defender.shield_health;
-            defender_shield_remaining = (defender_shield_remaining - drain).max(0.0);
-        }
-
-        let defender_hull_pct_round =
-            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-        let defender_shield_pct_round = if defender.shield_health > 0.0 {
-            defender_shield_remaining / defender.shield_health
-        } else {
-            1.0
-        };
-
-        let mut combat_ctx = CombatContext {
-            round_index,
-            defender_hull_pct: defender_hull_pct_round,
-            defender_shield_pct: defender_shield_pct_round,
-            attacker_hull_pct: attacker_hull_pct_round,
-            attacker_shield_pct: attacker_shield_pct_round,
-            attacker_morale_active: false,
-            defender_morale_active: defender_morale_rounds_remaining > 0,
-            defender_burning_active: defender_burning_rounds > 0,
-            defender_hull_breach_active: defender_hull_breach_rounds > 0,
-            attacker_burning_active: attacker_burning_rounds > 0,
-            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-            defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
-            defender_faction,
-            attacker_owner_faction: config.attacker_owner_faction,
-            defender_hull_faction_id: config.defender_hull_faction_id,
-            defender_ship_type,
-            attacker_ship_type,
-            attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-            defender_is_npc_hostile,
-            defender_is_player_ship,
-            attacker_tal_assigned_captain_or_bridge,
-            defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-            engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-            combat_battle_type_id: None,
-            defender_level: config.defender_level,
-        };
+        );
 
         // Symmetric attacker-outbound CDR: read `HostileCritDamageReduction` from the
         // defender's crew (in PvP, the opponent's `player_crit_damage_reduction` profile
@@ -780,314 +606,44 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             round_index,
         );
 
-        for effect in &bench {
-            let effective_effect = scale_effect(effect.effect, round_start_assimilated);
+        roll_attacker_round_start_procs(
+            &mut trace,
+            &mut rng,
+            round_index,
+            attacker,
+            &bench,
+            round_start_assimilated,
+            hull_breach_effects,
+            &combat_ctx,
+            &mut phase_effects,
+            &mut assimilated_rounds_remaining,
+            &mut defender_burning_rounds,
+            &mut defender_hull_breach_rounds,
+            &mut defender_assimilated_rounds_remaining,
+            &mut defender_morale_rounds_remaining,
+            &mut shots_bonus_entries,
+            &mut defender_weapon_fire_delayed_rounds,
+        );
 
-            if let AbilityEffect::Assimilated {
-                chance,
-                duration_rounds,
-            } = effective_effect
-            {
-                let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    assimilated_rounds_remaining =
-                        assimilated_rounds_remaining.max(duration_rounds.max(1));
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "assimilated_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            if let AbilityEffect::HullBreach {
-                chance,
-                duration_rounds,
-                requires_critical,
-            } = effective_effect
-            {
-                if requires_critical {
-                    continue;
-                }
-
-                let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
-                let breach_before = defender_hull_breach_rounds;
-                if triggered {
-                    defender_hull_breach_rounds =
-                        defender_hull_breach_rounds.max(duration_rounds.max(1));
-                }
-                if breach_before == 0 && defender_hull_breach_rounds > 0 {
-                    let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
-                    apply_hull_breach_timing_window(
-                        &mut RoundPhaseCtx {
-                            trace: &mut trace,
-                            rng: &mut rng,
-                            round_index,
-                        },
-                        HullBreachSide::Defender,
-                        attacker,
-                        hull_breach_effects,
-                        combat_ctx.clone(),
-                        round_start_assimilated,
-                        weapon_base_rs,
-                        &mut phase_effects,
-                        &mut defender_burning_rounds,
-                    );
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "hull_breach_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            roll_burning_triggers(
-                &mut RoundPhaseCtx {
-                    trace: &mut trace,
-                    rng: &mut rng,
-                    round_index,
-                },
-                std::slice::from_ref(effect),
-                round_start_assimilated,
-                "round_start",
-                &attacker.id,
-                None,
-                &mut defender_burning_rounds,
-            );
-
-            if let AbilityEffect::ShotsBonus {
-                chance,
-                bonus_pct,
-                duration_rounds,
-            } = effective_effect
-            {
-                let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = shots_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    let duration = duration_rounds.max(1);
-                    shots_bonus_entries.push((bonus_pct, round_index + duration));
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "shots_bonus_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(shots_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            if let AbilityEffect::DefenderFireDelay {
-                chance,
-                delay_rounds,
-                requires_critical,
-            } = effective_effect
-            {
-                apply_defender_fire_delay(
-                    &mut trace,
-                    &mut rng,
-                    round_index,
-                    "round_start",
-                    &attacker.id,
-                    &effect.ability_name,
-                    chance,
-                    delay_rounds,
-                    requires_critical,
-                    false,
-                    &mut defender_weapon_fire_delayed_rounds,
-                );
-            }
-
-            if let AbilityEffect::RandomDefenderState {
-                chance,
-                duration_rounds,
-                state_outcome_count,
-                state_outcomes,
-            } = effective_effect
-            {
-                let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = roll < chance.clamp(0.0, 1.0);
-                let mut state_applied = String::from("none");
-                if triggered {
-                    let breach_before = defender_hull_breach_rounds;
-                    let weights = crate::combat::abilities::random_defender_state_outcomes(
-                        state_outcome_count,
-                        &state_outcomes,
-                    );
-                    let state_id =
-                        crate::combat::abilities::pick_weighted_state_id(weights, rng.next_u64());
-                    let label = crate::combat::abilities::apply_defender_random_state_id(
-                        state_id,
-                        duration_rounds,
-                        &mut defender_burning_rounds,
-                        &mut defender_hull_breach_rounds,
-                        &mut defender_assimilated_rounds_remaining,
-                        &mut defender_morale_rounds_remaining,
-                    );
-                    state_applied = label.to_string();
-                    if breach_before == 0
-                        && defender_hull_breach_rounds > 0
-                        && label == "hull_breach"
-                    {
-                        let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
-                        apply_hull_breach_timing_window(
-                            &mut RoundPhaseCtx {
-                                trace: &mut trace,
-                                rng: &mut rng,
-                                round_index,
-                            },
-                            HullBreachSide::Defender,
-                            attacker,
-                            hull_breach_effects,
-                            combat_ctx.clone(),
-                            round_start_assimilated,
-                            weapon_base_rs,
-                            &mut phase_effects,
-                            &mut defender_burning_rounds,
-                        );
-                    }
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "random_defender_state_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                        ("state".to_string(), Value::String(state_applied)),
-                    ]),
-                });
-            }
-        }
-
-        // Defender crew ShotsBonus for counter-fire: process RoundStart effects similarly
-        // to the attacker's ShotsBonus above, using the same combat context for conditions.
-        {
-            let defender_rstart_filtered =
-                filter_effects_by_condition(defender_round_start_effects, &combat_ctx);
-            let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
-            for effect in &defender_rstart_filtered {
-                let effective_effect = scale_effect(effect.effect, defender_rstart_assimilated);
-                if let AbilityEffect::ShotsBonus {
-                    chance,
-                    bonus_pct,
-                    duration_rounds,
-                } = effective_effect
-                {
-                    let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                    let triggered = shots_roll < chance.clamp(0.0, 1.0);
-                    if triggered {
-                        let duration = duration_rounds.max(1);
-                        defender_shots_bonus_entries.push((bonus_pct, round_index + duration));
-                    }
-                    trace.record_if(|| CombatEvent {
-                        event_type: "defender_shots_bonus_trigger".to_string(),
-                        round_index,
-                        phase: "round_start".to_string(),
-                        source: EventSource {
-                            hostile_ability_id: Some(effect.ability_name.clone()),
-                            ..EventSource::default()
-                        },
-                        weapon_index: None,
-                        values: Map::from_iter([
-                            ("roll".to_string(), Value::from(round_f64(shots_roll))),
-                            ("triggered".to_string(), Value::Bool(triggered)),
-                            ("chance".to_string(), Value::from(round_f64(chance))),
-                            ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
-                            ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                        ]),
-                    });
-                }
-            }
-        }
+        roll_defender_round_start_shots_bonus(
+            &mut trace,
+            &mut rng,
+            round_index,
+            defender_round_start_effects,
+            &combat_ctx,
+            defender_assimilated_rounds_remaining,
+            &mut defender_shots_bonus_entries,
+        );
 
         // Morale proc after other round-start RNG consumers (assimilated, hull breach, burning, shots).
         // Sets [CombatContext::attacker_morale_active] for [AbilityCondition::MoraleActive] and pierce.
-        let morale_triggered = {
-            let morale_source = bench.iter().find_map(|effect| {
-                if let AbilityEffect::Morale(chance) =
-                    scale_effect(effect.effect, round_start_assimilated)
-                {
-                    Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
-                } else {
-                    None
-                }
-            });
-            if let Some((morale_source, morale_chance)) = morale_source {
-                let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = morale_roll < morale_chance;
-                trace.record_if(|| CombatEvent {
-                    event_type: "morale_activation".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        ship_ability_id: Some(morale_source),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("roll".to_string(), Value::from(round_f64(morale_roll))),
-                        ("chance".to_string(), Value::from(round_f64(morale_chance))),
-                        (
-                            "applied_to".to_string(),
-                            Value::String("primary_piercing".to_string()),
-                        ),
-                        (
-                            "multiplier".to_string(),
-                            Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
-                        ),
-                    ]),
-                });
-                triggered
-            } else {
-                false
-            }
-        };
+        let morale_triggered = roll_morale_activation(
+            &mut trace,
+            &mut rng,
+            round_index,
+            &bench,
+            round_start_assimilated,
+        );
         combat_ctx.attacker_morale_active = morale_triggered;
         combat_ctx.defender_morale_active = defender_morale_rounds_remaining > 0;
         // Round-start procs above may have applied breach/burning; refresh gates before attack-phase filtering.
@@ -1120,52 +676,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             );
         }
 
-        // Shield/hull regen from [`TimingWindow::CombatBegin`] + [`TimingWindow::RoundStart`]: apply
-        // at the **start** of this round (before weapon sub-rounds), then remove from the accumulator
-        // so it is not applied again at round end with ReceiveDamage/RoundEnd regen.
-        let att_rs_shield = phase_effects.composed_shield_regen();
-        let att_rs_hull = phase_effects.composed_hull_regen();
-        let att_rs_shield_frac = phase_effects.composed_shield_regen_max_fraction();
-        let att_rs_hull_frac = phase_effects.composed_hull_regen_max_fraction();
-        if att_rs_shield != 0.0
-            || att_rs_hull != 0.0
-            || att_rs_shield_frac != 0.0
-            || att_rs_hull_frac != 0.0
-        {
-            let shield_heal = att_rs_shield + att_rs_shield_frac * attacker.shield_health.max(0.0);
-            let hull_heal = att_rs_hull + att_rs_hull_frac * attacker.hull_health.max(0.0);
-            attacker_shield_remaining =
-                (attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
-            total_attacker_hull_damage = (total_attacker_hull_damage - hull_heal).max(0.0);
-        }
-        phase_effects.clear_shield_hull_regen_stacks();
-
-        // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
-        let round_start_prev_heal = filter_effects_by_condition(round_start_effects, &combat_ctx);
-        let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
-            &round_start_prev_heal,
+        apply_attacker_round_start_regen(
+            attacker,
+            round_index,
+            round_start_effects,
+            &combat_ctx,
             round_start_assimilated,
-        )
-        .min(1.0);
-        if round_index >= 2 && prev_round_frac > 0.0 && attacker_hull_gross_damage_last_round > 0.0
-        {
-            let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
-            total_attacker_hull_damage = (total_attacker_hull_damage - heal).max(0.0);
-        }
-
-        let shield_prev_frac = EffectAccumulator::sum_shield_regen_prev_round_fraction(
-            &round_start_prev_heal,
-            round_start_assimilated,
-        )
-        .min(1.0);
-        if round_index >= 2
-            && shield_prev_frac > 0.0
-            && attacker_shield_gross_damage_last_round > 0.0
-        {
-            let heal_sh = shield_prev_frac * attacker_shield_gross_damage_last_round;
-            attacker_shield_remaining =
-                (attacker_shield_remaining + heal_sh).min(attacker.shield_health.max(0.0));
-        }
+            &mut phase_effects,
+            &mut attacker_shield_remaining,
+            &mut total_attacker_hull_damage,
+            attacker_hull_gross_damage_last_round,
+            attacker_shield_gross_damage_last_round,
+        );
 
         // Prune expired shots bonuses and compute B_shots(r) for this round.
         shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
@@ -3558,6 +3080,754 @@ pub(crate) struct RoundPhaseCtx<'a> {
     pub trace: &'a mut TraceCollector,
     pub rng: &'a mut Rng,
     pub round_index: u32,
+}
+
+/// Defender crew ShotsBonus for counter-fire: process the defender's RoundStart effects with the
+/// same combat context the attacker's rolls used.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// unchanged.
+fn roll_defender_round_start_shots_bonus(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    defender_round_start_effects: &[ActiveAbilityEffect],
+    combat_ctx: &CombatContext,
+    defender_assimilated_rounds_remaining: u32,
+    defender_shots_bonus_entries: &mut Vec<(f64, u32)>,
+) {
+    let defender_rstart_filtered =
+        filter_effects_by_condition(defender_round_start_effects, combat_ctx);
+    let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
+    for effect in &defender_rstart_filtered {
+        let effective_effect = scale_effect(effect.effect, defender_rstart_assimilated);
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                defender_shots_bonus_entries.push((bonus_pct, round_index + duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "defender_shots_bonus_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    hostile_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+}
+
+/// Morale activation roll: at most one `Morale` effect (first in `bench` order) is rolled, after
+/// every other round-start RNG consumer. Returns whether morale is active this round.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// unchanged.
+fn roll_morale_activation(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    bench: &[ActiveAbilityEffect],
+    round_start_assimilated: bool,
+) -> bool {
+    let morale_source = bench.iter().find_map(|effect| {
+        if let AbilityEffect::Morale(chance) = scale_effect(effect.effect, round_start_assimilated)
+        {
+            Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
+        } else {
+            None
+        }
+    });
+    if let Some((morale_source, morale_chance)) = morale_source {
+        let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+        let triggered = morale_roll < morale_chance;
+        trace.record_if(|| CombatEvent {
+            event_type: "morale_activation".to_string(),
+            round_index,
+            phase: "round_start".to_string(),
+            source: EventSource {
+                ship_ability_id: Some(morale_source),
+                ..EventSource::default()
+            },
+            weapon_index: None,
+            values: Map::from_iter([
+                ("triggered".to_string(), Value::Bool(triggered)),
+                ("roll".to_string(), Value::from(round_f64(morale_roll))),
+                ("chance".to_string(), Value::from(round_f64(morale_chance))),
+                (
+                    "applied_to".to_string(),
+                    Value::String("primary_piercing".to_string()),
+                ),
+                (
+                    "multiplier".to_string(),
+                    Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
+                ),
+            ]),
+        });
+        triggered
+    } else {
+        false
+    }
+}
+
+/// Attacker round-start regen: CombatBegin + RoundStart shield/hull regen applied before weapon
+/// sub-rounds (then cleared from the accumulator so round-end regen doesn't double-apply), plus
+/// the previous-round hull/shield heal fractions (PIC Hugh style). No RNG draws.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); float evaluation
+/// order unchanged.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn apply_attacker_round_start_regen(
+    attacker: &Combatant,
+    round_index: u32,
+    round_start_effects: &[ActiveAbilityEffect],
+    combat_ctx: &CombatContext,
+    round_start_assimilated: bool,
+    phase_effects: &mut EffectAccumulator,
+    attacker_shield_remaining: &mut f64,
+    total_attacker_hull_damage: &mut f64,
+    attacker_hull_gross_damage_last_round: f64,
+    attacker_shield_gross_damage_last_round: f64,
+) {
+    // Shield/hull regen from [`TimingWindow::CombatBegin`] + [`TimingWindow::RoundStart`]: apply
+    // at the **start** of this round (before weapon sub-rounds), then remove from the accumulator
+    // so it is not applied again at round end with ReceiveDamage/RoundEnd regen.
+    let att_rs_shield = phase_effects.composed_shield_regen();
+    let att_rs_hull = phase_effects.composed_hull_regen();
+    let att_rs_shield_frac = phase_effects.composed_shield_regen_max_fraction();
+    let att_rs_hull_frac = phase_effects.composed_hull_regen_max_fraction();
+    if att_rs_shield != 0.0
+        || att_rs_hull != 0.0
+        || att_rs_shield_frac != 0.0
+        || att_rs_hull_frac != 0.0
+    {
+        let shield_heal = att_rs_shield + att_rs_shield_frac * attacker.shield_health.max(0.0);
+        let hull_heal = att_rs_hull + att_rs_hull_frac * attacker.hull_health.max(0.0);
+        *attacker_shield_remaining =
+            (*attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
+        *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+    }
+    phase_effects.clear_shield_hull_regen_stacks();
+
+    // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
+    let round_start_prev_heal = filter_effects_by_condition(round_start_effects, combat_ctx);
+    let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
+        &round_start_prev_heal,
+        round_start_assimilated,
+    )
+    .min(1.0);
+    if round_index >= 2 && prev_round_frac > 0.0 && attacker_hull_gross_damage_last_round > 0.0 {
+        let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
+        *total_attacker_hull_damage = (*total_attacker_hull_damage - heal).max(0.0);
+    }
+
+    let shield_prev_frac = EffectAccumulator::sum_shield_regen_prev_round_fraction(
+        &round_start_prev_heal,
+        round_start_assimilated,
+    )
+    .min(1.0);
+    if round_index >= 2 && shield_prev_frac > 0.0 && attacker_shield_gross_damage_last_round > 0.0 {
+        let heal_sh = shield_prev_frac * attacker_shield_gross_damage_last_round;
+        *attacker_shield_remaining =
+            (*attacker_shield_remaining + heal_sh).min(attacker.shield_health.max(0.0));
+    }
+}
+
+/// Attacker round-start proc rolls over the pre-filtered `bench` effects: assimilation,
+/// hull breach (with the first-transition timing window), burning, shots bonus, defender
+/// fire delay, and random defender state — one roll block per effect in list order.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); the RNG draw
+/// order is load-bearing for same-seed determinism and must not change.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn roll_attacker_round_start_procs(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    attacker: &Combatant,
+    bench: &[ActiveAbilityEffect],
+    round_start_assimilated: bool,
+    hull_breach_effects: &[ActiveAbilityEffect],
+    combat_ctx: &CombatContext,
+    phase_effects: &mut EffectAccumulator,
+    assimilated_rounds_remaining: &mut u32,
+    defender_burning_rounds: &mut u32,
+    defender_hull_breach_rounds: &mut u32,
+    defender_assimilated_rounds_remaining: &mut u32,
+    defender_morale_rounds_remaining: &mut u32,
+    shots_bonus_entries: &mut Vec<(f64, u32)>,
+    defender_weapon_fire_delayed_rounds: &mut u32,
+) {
+    for effect in bench {
+        let effective_effect = scale_effect(effect.effect, round_start_assimilated);
+
+        if let AbilityEffect::Assimilated {
+            chance,
+            duration_rounds,
+        } = effective_effect
+        {
+            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                *assimilated_rounds_remaining =
+                    (*assimilated_rounds_remaining).max(duration_rounds.max(1));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "assimilated_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+
+        if let AbilityEffect::HullBreach {
+            chance,
+            duration_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            if requires_critical {
+                continue;
+            }
+
+            let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+            let breach_before = *defender_hull_breach_rounds;
+            if triggered {
+                *defender_hull_breach_rounds =
+                    (*defender_hull_breach_rounds).max(duration_rounds.max(1));
+            }
+            if breach_before == 0 && *defender_hull_breach_rounds > 0 {
+                let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
+                apply_hull_breach_timing_window(
+                    &mut RoundPhaseCtx {
+                        trace: &mut *trace,
+                        rng: &mut *rng,
+                        round_index,
+                    },
+                    HullBreachSide::Defender,
+                    attacker,
+                    hull_breach_effects,
+                    combat_ctx.clone(),
+                    round_start_assimilated,
+                    weapon_base_rs,
+                    phase_effects,
+                    defender_burning_rounds,
+                );
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "hull_breach_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+
+        roll_burning_triggers(
+            &mut RoundPhaseCtx {
+                trace: &mut *trace,
+                rng: &mut *rng,
+                round_index,
+            },
+            std::slice::from_ref(effect),
+            round_start_assimilated,
+            "round_start",
+            &attacker.id,
+            None,
+            defender_burning_rounds,
+        );
+
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                shots_bonus_entries.push((bonus_pct, round_index + duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "shots_bonus_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+
+        if let AbilityEffect::DefenderFireDelay {
+            chance,
+            delay_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            apply_defender_fire_delay(
+                trace,
+                rng,
+                round_index,
+                "round_start",
+                &attacker.id,
+                &effect.ability_name,
+                chance,
+                delay_rounds,
+                requires_critical,
+                false,
+                defender_weapon_fire_delayed_rounds,
+            );
+        }
+
+        if let AbilityEffect::RandomDefenderState {
+            chance,
+            duration_rounds,
+            state_outcome_count,
+            state_outcomes,
+        } = effective_effect
+        {
+            let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = roll < chance.clamp(0.0, 1.0);
+            let mut state_applied = String::from("none");
+            if triggered {
+                let breach_before = *defender_hull_breach_rounds;
+                let weights = crate::combat::abilities::random_defender_state_outcomes(
+                    state_outcome_count,
+                    &state_outcomes,
+                );
+                let state_id =
+                    crate::combat::abilities::pick_weighted_state_id(weights, rng.next_u64());
+                let label = crate::combat::abilities::apply_defender_random_state_id(
+                    state_id,
+                    duration_rounds,
+                    defender_burning_rounds,
+                    defender_hull_breach_rounds,
+                    defender_assimilated_rounds_remaining,
+                    defender_morale_rounds_remaining,
+                );
+                state_applied = label.to_string();
+                if breach_before == 0 && *defender_hull_breach_rounds > 0 && label == "hull_breach"
+                {
+                    let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
+                    apply_hull_breach_timing_window(
+                        &mut RoundPhaseCtx {
+                            trace: &mut *trace,
+                            rng: &mut *rng,
+                            round_index,
+                        },
+                        HullBreachSide::Defender,
+                        attacker,
+                        hull_breach_effects,
+                        combat_ctx.clone(),
+                        round_start_assimilated,
+                        weapon_base_rs,
+                        phase_effects,
+                        defender_burning_rounds,
+                    );
+                }
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "random_defender_state_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ("state".to_string(), Value::String(state_applied)),
+                ]),
+            });
+        }
+    }
+}
+
+/// The per-fight immutable [`CombatContext`] fields, captured once per trial so per-round
+/// snapshots don't repeat 24-field literals. [`CombatCtxTemplate::at`] stamps a context; every
+/// per-round field stays explicit at the call site so extractions remain verbatim-equivalent
+/// (task 12). `combat_battle_type_id` is fixed `None`: nothing in the round loop ever sets it.
+pub(crate) struct CombatCtxTemplate {
+    defender_faction: OpponentFactionTag,
+    attacker_owner_faction: OpponentFactionTag,
+    defender_hull_faction_id: i64,
+    defender_ship_type: ShipType,
+    attacker_ship_type: ShipType,
+    attacker_ship_id: std::sync::Arc<str>,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
+    attacker_tal_assigned_captain_or_bridge: bool,
+    defender_hostile_tag_mask: u32,
+    engagement_enemy_types: std::sync::Arc<EnemyTypes>,
+    defender_level: Option<u32>,
+}
+
+/// The four hull/shield percentages of a [`CombatContext`] snapshot.
+pub(crate) struct CtxVitals {
+    pub defender_hull_pct: f64,
+    pub defender_shield_pct: f64,
+    pub attacker_hull_pct: f64,
+    pub attacker_shield_pct: f64,
+}
+
+/// The seven status flags of a [`CombatContext`] snapshot.
+pub(crate) struct CtxStatusFlags {
+    pub attacker_morale_active: bool,
+    pub defender_morale_active: bool,
+    pub defender_burning_active: bool,
+    pub defender_hull_breach_active: bool,
+    pub attacker_burning_active: bool,
+    pub attacker_hull_breach_active: bool,
+    pub defender_assimilated_active: bool,
+}
+
+impl CombatCtxTemplate {
+    fn at(&self, round_index: u32, vitals: CtxVitals, flags: CtxStatusFlags) -> CombatContext {
+        CombatContext {
+            round_index,
+            defender_hull_pct: vitals.defender_hull_pct,
+            defender_shield_pct: vitals.defender_shield_pct,
+            attacker_hull_pct: vitals.attacker_hull_pct,
+            attacker_shield_pct: vitals.attacker_shield_pct,
+            attacker_morale_active: flags.attacker_morale_active,
+            defender_morale_active: flags.defender_morale_active,
+            defender_burning_active: flags.defender_burning_active,
+            defender_hull_breach_active: flags.defender_hull_breach_active,
+            attacker_burning_active: flags.attacker_burning_active,
+            attacker_hull_breach_active: flags.attacker_hull_breach_active,
+            defender_assimilated_active: flags.defender_assimilated_active,
+            defender_faction: self.defender_faction,
+            attacker_owner_faction: self.attacker_owner_faction,
+            defender_hull_faction_id: self.defender_hull_faction_id,
+            defender_ship_type: self.defender_ship_type,
+            attacker_ship_type: self.attacker_ship_type,
+            attacker_ship_id: std::sync::Arc::clone(&self.attacker_ship_id),
+            defender_is_npc_hostile: self.defender_is_npc_hostile,
+            defender_is_player_ship: self.defender_is_player_ship,
+            attacker_tal_assigned_captain_or_bridge: self.attacker_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: self.defender_hostile_tag_mask,
+            engagement_enemy_types: std::sync::Arc::clone(&self.engagement_enemy_types),
+            combat_battle_type_id: None,
+            defender_level: self.defender_level,
+        }
+    }
+}
+
+/// The vitals percentages flowing out of [`apply_defender_round_start`] into the attacker
+/// round-start context: attacker percentages are sampled *before* defender regen/drain, defender
+/// percentages *after* — preserving the original in-loop sampling points exactly.
+pub(crate) struct DefenderRoundStartVitals {
+    pub attacker_hull_pct_round: f64,
+    pub attacker_shield_pct_round: f64,
+    pub defender_hull_pct_round: f64,
+    pub defender_shield_pct_round: f64,
+}
+
+/// Defender round-start phase: assimilation-extension rolls, defender round-start regen, and
+/// crew-driven per-round shield drain.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// (assimilation rolls only) and float evaluation order are unchanged.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn apply_defender_round_start(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    ctx_template: &CombatCtxTemplate,
+    round_index: u32,
+    attacker: &Combatant,
+    defender: &Combatant,
+    attacker_crew: &CrewConfiguration,
+    defender_round_start_effects: &[ActiveAbilityEffect],
+    defender_morale_rounds_remaining: u32,
+    defender_burning_rounds: u32,
+    defender_hull_breach_rounds: u32,
+    attacker_burning_rounds: u32,
+    attacker_hull_breach_rounds: u32,
+    total_hull_damage: &mut f64,
+    total_attacker_hull_damage: f64,
+    defender_shield_remaining: &mut f64,
+    attacker_shield_remaining: f64,
+    defender_assimilated_rounds_remaining: &mut u32,
+) -> DefenderRoundStartVitals {
+    let defender_hull_pct_for_def_round_start =
+        1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+    let defender_shield_pct_for_def_round_start = if defender.shield_health > 0.0 {
+        *defender_shield_remaining / defender.shield_health
+    } else {
+        1.0
+    };
+    let attacker_hull_pct_round =
+        1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+    let attacker_shield_pct_round = if attacker.shield_health > 0.0 {
+        attacker_shield_remaining / attacker.shield_health
+    } else {
+        1.0
+    };
+
+    // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
+    let ctx_def_round_start = ctx_template.at(
+        round_index,
+        CtxVitals {
+            defender_hull_pct: defender_hull_pct_for_def_round_start,
+            defender_shield_pct: defender_shield_pct_for_def_round_start,
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: attacker_shield_pct_round,
+        },
+        CtxStatusFlags {
+            attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
+            defender_burning_active: defender_burning_rounds > 0,
+            defender_hull_breach_active: defender_hull_breach_rounds > 0,
+            attacker_burning_active: attacker_burning_rounds > 0,
+            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+        },
+    );
+    let defender_rs_for_assim =
+        filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
+    let def_rs_assim_active = *defender_assimilated_rounds_remaining > 0;
+    roll_assimilated_extensions_from_effects(
+        &mut RoundPhaseCtx {
+            trace: &mut *trace,
+            rng: &mut *rng,
+            round_index,
+        },
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+        "round_start",
+        &defender.id,
+        defender_assimilated_rounds_remaining,
+    );
+
+    let def_rs_shield = EffectAccumulator::sum_shield_regen_from_effects(
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+    );
+    let def_rs_hull =
+        EffectAccumulator::sum_hull_regen_from_effects(&defender_rs_for_assim, def_rs_assim_active);
+    let def_rs_shield_frac = EffectAccumulator::sum_shield_regen_max_fraction_from_effects(
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+    );
+    let def_rs_hull_frac = EffectAccumulator::sum_hull_regen_max_fraction_from_effects(
+        &defender_rs_for_assim,
+        def_rs_assim_active,
+    );
+    if def_rs_shield != 0.0
+        || def_rs_hull != 0.0
+        || def_rs_shield_frac != 0.0
+        || def_rs_hull_frac != 0.0
+    {
+        let shield_heal = def_rs_shield + def_rs_shield_frac * defender.shield_health.max(0.0);
+        let hull_heal = def_rs_hull + def_rs_hull_frac * defender.hull_health.max(0.0);
+        *defender_shield_remaining =
+            (*defender_shield_remaining + shield_heal).min(defender.shield_health.max(0.0));
+        *total_hull_damage = (*total_hull_damage - hull_heal).max(0.0);
+    }
+
+    let shield_drain_ctx = ctx_template.at(
+        round_index,
+        CtxVitals {
+            defender_hull_pct: 1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+            defender_shield_pct: if defender.shield_health > 0.0 {
+                *defender_shield_remaining / defender.shield_health
+            } else {
+                1.0
+            },
+            attacker_hull_pct: attacker_hull_pct_round,
+            attacker_shield_pct: if attacker.shield_health > 0.0 {
+                attacker_shield_remaining / attacker.shield_health
+            } else {
+                1.0
+            },
+        },
+        CtxStatusFlags {
+            attacker_morale_active: false,
+            defender_morale_active: defender_morale_rounds_remaining > 0,
+            defender_burning_active: defender_burning_rounds > 0,
+            defender_hull_breach_active: defender_hull_breach_rounds > 0,
+            attacker_burning_active: attacker_burning_rounds > 0,
+            attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+            defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+        },
+    );
+    let (shield_drain_frac, shield_drain_rounds) =
+        defender_shield_drain_per_round_from_crew(attacker_crew, &shield_drain_ctx);
+    if shield_drain_frac > 0.0
+        && round_in_inclusive_first_n(round_index, shield_drain_rounds)
+        && defender.shield_health > 0.0
+    {
+        let drain = shield_drain_frac * defender.shield_health;
+        *defender_shield_remaining = (*defender_shield_remaining - drain).max(0.0);
+    }
+
+    let defender_hull_pct_round =
+        1.0 - (*total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+    let defender_shield_pct_round = if defender.shield_health > 0.0 {
+        *defender_shield_remaining / defender.shield_health
+    } else {
+        1.0
+    };
+
+    DefenderRoundStartVitals {
+        attacker_hull_pct_round,
+        attacker_shield_pct_round,
+        defender_hull_pct_round,
+        defender_shield_pct_round,
+    }
+}
+
+/// Combat-begin phase: record attacker ability activations, roll burning triggers, and roll
+/// `DefenderFireDelay` / `ShotsBonus` effects from the pre-filtered combat-begin list.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); the RNG draw order
+/// (burning rolls, then per-effect fire-delay/shots-bonus rolls in list order) is load-bearing
+/// for same-seed determinism and must not change.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn apply_combat_begin_phase(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    attacker: &Combatant,
+    combat_begin_filtered: &[ActiveAbilityEffect],
+    combat_begin_assimilated: bool,
+    defender_burning_rounds: &mut u32,
+    defender_weapon_fire_delayed_rounds: &mut u32,
+    shots_bonus_entries: &mut Vec<(f64, u32)>,
+) {
+    record_ability_activations(
+        trace,
+        0,
+        "combat_begin",
+        attacker,
+        combat_begin_filtered,
+        combat_begin_assimilated,
+    );
+    roll_burning_triggers(
+        &mut RoundPhaseCtx {
+            trace: &mut *trace,
+            rng: &mut *rng,
+            round_index: 0,
+        },
+        combat_begin_filtered,
+        combat_begin_assimilated,
+        "combat_begin",
+        &attacker.id,
+        None,
+        defender_burning_rounds,
+    );
+
+    for effect in combat_begin_filtered {
+        let effective_effect = scale_effect(effect.effect, combat_begin_assimilated);
+        if let AbilityEffect::DefenderFireDelay {
+            chance,
+            delay_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            apply_defender_fire_delay(
+                trace,
+                rng,
+                0,
+                "combat_begin",
+                &attacker.id,
+                &effect.ability_name,
+                chance,
+                delay_rounds,
+                requires_critical,
+                false,
+                defender_weapon_fire_delayed_rounds,
+            );
+        }
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                shots_bonus_entries.push((bonus_pct, duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "shots_bonus_trigger".to_string(),
+                round_index: 0,
+                phase: "combat_begin".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
 }
 
 /// Which side just entered hull breach. Selects the [`CombatContext`] flag and trace phase
