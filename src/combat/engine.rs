@@ -625,90 +625,25 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &mut defender_weapon_fire_delayed_rounds,
         );
 
-        // Defender crew ShotsBonus for counter-fire: process RoundStart effects similarly
-        // to the attacker's ShotsBonus above, using the same combat context for conditions.
-        {
-            let defender_rstart_filtered =
-                filter_effects_by_condition(defender_round_start_effects, &combat_ctx);
-            let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
-            for effect in &defender_rstart_filtered {
-                let effective_effect = scale_effect(effect.effect, defender_rstart_assimilated);
-                if let AbilityEffect::ShotsBonus {
-                    chance,
-                    bonus_pct,
-                    duration_rounds,
-                } = effective_effect
-                {
-                    let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                    let triggered = shots_roll < chance.clamp(0.0, 1.0);
-                    if triggered {
-                        let duration = duration_rounds.max(1);
-                        defender_shots_bonus_entries.push((bonus_pct, round_index + duration));
-                    }
-                    trace.record_if(|| CombatEvent {
-                        event_type: "defender_shots_bonus_trigger".to_string(),
-                        round_index,
-                        phase: "round_start".to_string(),
-                        source: EventSource {
-                            hostile_ability_id: Some(effect.ability_name.clone()),
-                            ..EventSource::default()
-                        },
-                        weapon_index: None,
-                        values: Map::from_iter([
-                            ("roll".to_string(), Value::from(round_f64(shots_roll))),
-                            ("triggered".to_string(), Value::Bool(triggered)),
-                            ("chance".to_string(), Value::from(round_f64(chance))),
-                            ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
-                            ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                        ]),
-                    });
-                }
-            }
-        }
+        roll_defender_round_start_shots_bonus(
+            &mut trace,
+            &mut rng,
+            round_index,
+            defender_round_start_effects,
+            &combat_ctx,
+            defender_assimilated_rounds_remaining,
+            &mut defender_shots_bonus_entries,
+        );
 
         // Morale proc after other round-start RNG consumers (assimilated, hull breach, burning, shots).
         // Sets [CombatContext::attacker_morale_active] for [AbilityCondition::MoraleActive] and pierce.
-        let morale_triggered = {
-            let morale_source = bench.iter().find_map(|effect| {
-                if let AbilityEffect::Morale(chance) =
-                    scale_effect(effect.effect, round_start_assimilated)
-                {
-                    Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
-                } else {
-                    None
-                }
-            });
-            if let Some((morale_source, morale_chance)) = morale_source {
-                let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = morale_roll < morale_chance;
-                trace.record_if(|| CombatEvent {
-                    event_type: "morale_activation".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        ship_ability_id: Some(morale_source),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("roll".to_string(), Value::from(round_f64(morale_roll))),
-                        ("chance".to_string(), Value::from(round_f64(morale_chance))),
-                        (
-                            "applied_to".to_string(),
-                            Value::String("primary_piercing".to_string()),
-                        ),
-                        (
-                            "multiplier".to_string(),
-                            Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
-                        ),
-                    ]),
-                });
-                triggered
-            } else {
-                false
-            }
-        };
+        let morale_triggered = roll_morale_activation(
+            &mut trace,
+            &mut rng,
+            round_index,
+            &bench,
+            round_start_assimilated,
+        );
         combat_ctx.attacker_morale_active = morale_triggered;
         combat_ctx.defender_morale_active = defender_morale_rounds_remaining > 0;
         // Round-start procs above may have applied breach/burning; refresh gates before attack-phase filtering.
@@ -741,52 +676,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             );
         }
 
-        // Shield/hull regen from [`TimingWindow::CombatBegin`] + [`TimingWindow::RoundStart`]: apply
-        // at the **start** of this round (before weapon sub-rounds), then remove from the accumulator
-        // so it is not applied again at round end with ReceiveDamage/RoundEnd regen.
-        let att_rs_shield = phase_effects.composed_shield_regen();
-        let att_rs_hull = phase_effects.composed_hull_regen();
-        let att_rs_shield_frac = phase_effects.composed_shield_regen_max_fraction();
-        let att_rs_hull_frac = phase_effects.composed_hull_regen_max_fraction();
-        if att_rs_shield != 0.0
-            || att_rs_hull != 0.0
-            || att_rs_shield_frac != 0.0
-            || att_rs_hull_frac != 0.0
-        {
-            let shield_heal = att_rs_shield + att_rs_shield_frac * attacker.shield_health.max(0.0);
-            let hull_heal = att_rs_hull + att_rs_hull_frac * attacker.hull_health.max(0.0);
-            attacker_shield_remaining =
-                (attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
-            total_attacker_hull_damage = (total_attacker_hull_damage - hull_heal).max(0.0);
-        }
-        phase_effects.clear_shield_hull_regen_stacks();
-
-        // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
-        let round_start_prev_heal = filter_effects_by_condition(round_start_effects, &combat_ctx);
-        let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
-            &round_start_prev_heal,
+        apply_attacker_round_start_regen(
+            attacker,
+            round_index,
+            round_start_effects,
+            &combat_ctx,
             round_start_assimilated,
-        )
-        .min(1.0);
-        if round_index >= 2 && prev_round_frac > 0.0 && attacker_hull_gross_damage_last_round > 0.0
-        {
-            let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
-            total_attacker_hull_damage = (total_attacker_hull_damage - heal).max(0.0);
-        }
-
-        let shield_prev_frac = EffectAccumulator::sum_shield_regen_prev_round_fraction(
-            &round_start_prev_heal,
-            round_start_assimilated,
-        )
-        .min(1.0);
-        if round_index >= 2
-            && shield_prev_frac > 0.0
-            && attacker_shield_gross_damage_last_round > 0.0
-        {
-            let heal_sh = shield_prev_frac * attacker_shield_gross_damage_last_round;
-            attacker_shield_remaining =
-                (attacker_shield_remaining + heal_sh).min(attacker.shield_health.max(0.0));
-        }
+            &mut phase_effects,
+            &mut attacker_shield_remaining,
+            &mut total_attacker_hull_damage,
+            attacker_hull_gross_damage_last_round,
+            attacker_shield_gross_damage_last_round,
+        );
 
         // Prune expired shots bonuses and compute B_shots(r) for this round.
         shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
@@ -3179,6 +3080,174 @@ pub(crate) struct RoundPhaseCtx<'a> {
     pub trace: &'a mut TraceCollector,
     pub rng: &'a mut Rng,
     pub round_index: u32,
+}
+
+/// Defender crew ShotsBonus for counter-fire: process the defender's RoundStart effects with the
+/// same combat context the attacker's rolls used.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// unchanged.
+fn roll_defender_round_start_shots_bonus(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    defender_round_start_effects: &[ActiveAbilityEffect],
+    combat_ctx: &CombatContext,
+    defender_assimilated_rounds_remaining: u32,
+    defender_shots_bonus_entries: &mut Vec<(f64, u32)>,
+) {
+    let defender_rstart_filtered =
+        filter_effects_by_condition(defender_round_start_effects, combat_ctx);
+    let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
+    for effect in &defender_rstart_filtered {
+        let effective_effect = scale_effect(effect.effect, defender_rstart_assimilated);
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                defender_shots_bonus_entries.push((bonus_pct, round_index + duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "defender_shots_bonus_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    hostile_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+    }
+}
+
+/// Morale activation roll: at most one `Morale` effect (first in `bench` order) is rolled, after
+/// every other round-start RNG consumer. Returns whether morale is active this round.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// unchanged.
+fn roll_morale_activation(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    bench: &[ActiveAbilityEffect],
+    round_start_assimilated: bool,
+) -> bool {
+    let morale_source = bench.iter().find_map(|effect| {
+        if let AbilityEffect::Morale(chance) = scale_effect(effect.effect, round_start_assimilated)
+        {
+            Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
+        } else {
+            None
+        }
+    });
+    if let Some((morale_source, morale_chance)) = morale_source {
+        let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+        let triggered = morale_roll < morale_chance;
+        trace.record_if(|| CombatEvent {
+            event_type: "morale_activation".to_string(),
+            round_index,
+            phase: "round_start".to_string(),
+            source: EventSource {
+                ship_ability_id: Some(morale_source),
+                ..EventSource::default()
+            },
+            weapon_index: None,
+            values: Map::from_iter([
+                ("triggered".to_string(), Value::Bool(triggered)),
+                ("roll".to_string(), Value::from(round_f64(morale_roll))),
+                ("chance".to_string(), Value::from(round_f64(morale_chance))),
+                (
+                    "applied_to".to_string(),
+                    Value::String("primary_piercing".to_string()),
+                ),
+                (
+                    "multiplier".to_string(),
+                    Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
+                ),
+            ]),
+        });
+        triggered
+    } else {
+        false
+    }
+}
+
+/// Attacker round-start regen: CombatBegin + RoundStart shield/hull regen applied before weapon
+/// sub-rounds (then cleared from the accumulator so round-end regen doesn't double-apply), plus
+/// the previous-round hull/shield heal fractions (PIC Hugh style). No RNG draws.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); float evaluation
+/// order unchanged.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn apply_attacker_round_start_regen(
+    attacker: &Combatant,
+    round_index: u32,
+    round_start_effects: &[ActiveAbilityEffect],
+    combat_ctx: &CombatContext,
+    round_start_assimilated: bool,
+    phase_effects: &mut EffectAccumulator,
+    attacker_shield_remaining: &mut f64,
+    total_attacker_hull_damage: &mut f64,
+    attacker_hull_gross_damage_last_round: f64,
+    attacker_shield_gross_damage_last_round: f64,
+) {
+    // Shield/hull regen from [`TimingWindow::CombatBegin`] + [`TimingWindow::RoundStart`]: apply
+    // at the **start** of this round (before weapon sub-rounds), then remove from the accumulator
+    // so it is not applied again at round end with ReceiveDamage/RoundEnd regen.
+    let att_rs_shield = phase_effects.composed_shield_regen();
+    let att_rs_hull = phase_effects.composed_hull_regen();
+    let att_rs_shield_frac = phase_effects.composed_shield_regen_max_fraction();
+    let att_rs_hull_frac = phase_effects.composed_hull_regen_max_fraction();
+    if att_rs_shield != 0.0
+        || att_rs_hull != 0.0
+        || att_rs_shield_frac != 0.0
+        || att_rs_hull_frac != 0.0
+    {
+        let shield_heal = att_rs_shield + att_rs_shield_frac * attacker.shield_health.max(0.0);
+        let hull_heal = att_rs_hull + att_rs_hull_frac * attacker.hull_health.max(0.0);
+        *attacker_shield_remaining =
+            (*attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
+        *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+    }
+    phase_effects.clear_shield_hull_regen_stacks();
+
+    // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
+    let round_start_prev_heal = filter_effects_by_condition(round_start_effects, combat_ctx);
+    let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
+        &round_start_prev_heal,
+        round_start_assimilated,
+    )
+    .min(1.0);
+    if round_index >= 2 && prev_round_frac > 0.0 && attacker_hull_gross_damage_last_round > 0.0 {
+        let heal = prev_round_frac * attacker_hull_gross_damage_last_round;
+        *total_attacker_hull_damage = (*total_attacker_hull_damage - heal).max(0.0);
+    }
+
+    let shield_prev_frac = EffectAccumulator::sum_shield_regen_prev_round_fraction(
+        &round_start_prev_heal,
+        round_start_assimilated,
+    )
+    .min(1.0);
+    if round_index >= 2 && shield_prev_frac > 0.0 && attacker_shield_gross_damage_last_round > 0.0 {
+        let heal_sh = shield_prev_frac * attacker_shield_gross_damage_last_round;
+        *attacker_shield_remaining =
+            (*attacker_shield_remaining + heal_sh).min(attacker.shield_health.max(0.0));
+    }
 }
 
 /// Attacker round-start proc rolls over the pre-filtered `bench` effects: assimilation,
