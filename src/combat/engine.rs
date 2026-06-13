@@ -829,711 +829,37 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             let base_shots = attacker.weapon_base_shots(weapon_index);
             let effective_shots = effective_shots_for_weapon(base_shots, b_shots);
             let shield_before_weapon = st.defender_shield_remaining;
-            let mut simd_damage_batch: Vec<f64> =
-                if use_simd_outbound_weapon_path && effective_shots > 0 {
-                    Vec::with_capacity(4)
-                } else {
-                    Vec::new()
-                };
-            let mut simd_isolytic_batch: Vec<f64> =
-                if use_simd_outbound_weapon_path && effective_shots > 0 {
-                    Vec::with_capacity(4)
-                } else {
-                    Vec::new()
-                };
-            let mut simd_shield_mitigation_batch: Vec<f64> =
-                if use_simd_outbound_weapon_path && effective_shots > 0 {
-                    Vec::with_capacity(4)
-                } else {
-                    Vec::new()
-                };
-            let mut simd_damage_after_apex_batch: Vec<f64> =
-                if use_simd_outbound_weapon_path && effective_shots > 0 {
-                    Vec::with_capacity(4)
-                } else {
-                    Vec::new()
-                };
-
-            for hit_index in 0..effective_shots {
-                if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
-                    let pre_mult = phase_effects.pre_attack_multiplier();
-                    let g_galaxy = phase_effects.galaxy_additive_weapon_frac();
-                    let p_prof = config.profile_weapon_damage_fraction;
-                    let galaxy_dilution =
-                        if g_galaxy > 0.0 && g_galaxy.is_finite() && (1.0 + p_prof) > 1e-12 {
-                            1.0 + g_galaxy / (1.0 + p_prof)
-                        } else {
-                            1.0
-                        };
-                    let effective_attack = match config.weapon_damage_profile_additive_pool {
-                        Some(p) if p > 0.0 && p.is_finite() => {
-                            // Experimental: one additive pool for profile weapon_damage + dynamic pre-attack sum.
-                            // Galaxy growth `g` shares the same additive pool as `p` (see findings doc).
-                            attacker_weapon_attack * (p + pre_mult + g_galaxy) / (1.0 + p)
-                        }
-                        _ => attacker_weapon_attack * pre_mult * galaxy_dilution,
-                    };
-
-                    let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                    trace.record_if(|| CombatEvent {
-                        event_type: "attack_roll".to_string(),
-                        round_index,
-                        phase: "attack".to_string(),
-                        source: EventSource {
-                            officer_id: Some(attacker.id.clone()),
-                            ..EventSource::default()
-                        },
-                        weapon_index: Some(weapon_index_u),
-                        values: Map::from_iter([
-                            ("roll".to_string(), Value::from(round_f64(roll))),
-                            ("hit_index".to_string(), Value::from(hit_index)),
-                            (
-                                "base_attack".to_string(),
-                                Value::from(attacker_weapon_attack),
-                            ),
-                            (
-                                "effective_attack".to_string(),
-                                Value::from(round_f64(effective_attack)),
-                            ),
-                        ]),
-                    });
-
-                    let mut mitigation_trace_breakdown = None;
-                    let effective_mitigation =
-                        if let Some(params) = &defender.hostile_mitigation_params {
-                            let mut adjusted_attacker = params.base_attacker_stats;
-                            adjusted_attacker.accuracy += attacker_accuracy_bonus;
-                            let breakdown = mitigation_breakdown(
-                                params.defender_stats,
-                                adjusted_attacker,
-                                params.ship_type,
-                                params.mystery_mitigation_factor,
-                            );
-                            mitigation_trace_breakdown =
-                                Some((breakdown, params.floor, params.ceiling));
-                            breakdown.raw_mitigation.clamp(params.floor, params.ceiling)
-                        } else {
-                            defender.mitigation
-                        };
-                    let mitigation_multiplier = (1.0 - effective_mitigation).max(0.0);
-                    trace.record_if(|| CombatEvent {
-                        event_type: "mitigation_calc".to_string(),
-                        round_index,
-                        phase: "defense".to_string(),
-                        source: EventSource {
-                            hostile_ability_id: Some(format!("{}_mitigation", defender.id)),
-                            ..EventSource::default()
-                        },
-                        weapon_index: Some(weapon_index_u),
-                        values: {
-                            let mut values = Map::from_iter([
-                                (
-                                    "mitigation".to_string(),
-                                    Value::from(round_f64(effective_mitigation)),
-                                ),
-                                (
-                                    "multiplier".to_string(),
-                                    Value::from(round_f64(mitigation_multiplier)),
-                                ),
-                            ]);
-                            if let Some((breakdown, floor, ceiling)) = mitigation_trace_breakdown {
-                                values.insert(
-                                    "mitigation_raw".to_string(),
-                                    Value::from(round_f64(breakdown.raw_mitigation)),
-                                );
-                                values.insert(
-                                    "mitigation_floor".to_string(),
-                                    Value::from(round_f64(floor)),
-                                );
-                                values.insert(
-                                    "mitigation_ceiling".to_string(),
-                                    Value::from(round_f64(ceiling)),
-                                );
-                                values.insert(
-                                    "c_armor".to_string(),
-                                    Value::from(round_f64(breakdown.c_armor)),
-                                );
-                                values.insert(
-                                    "c_shield".to_string(),
-                                    Value::from(round_f64(breakdown.c_shield)),
-                                );
-                                values.insert(
-                                    "c_dodge".to_string(),
-                                    Value::from(round_f64(breakdown.c_dodge)),
-                                );
-                                values.insert(
-                                    "armor_ratio".to_string(),
-                                    Value::from(round_f64(breakdown.armor_ratio)),
-                                );
-                                values.insert(
-                                    "shield_ratio".to_string(),
-                                    Value::from(round_f64(breakdown.shield_ratio)),
-                                );
-                                values.insert(
-                                    "dodge_ratio".to_string(),
-                                    Value::from(round_f64(breakdown.dodge_ratio)),
-                                );
-                                values.insert(
-                                    "f_armor".to_string(),
-                                    Value::from(round_f64(breakdown.f_armor)),
-                                );
-                                values.insert(
-                                    "f_shield".to_string(),
-                                    Value::from(round_f64(breakdown.f_shield)),
-                                );
-                                values.insert(
-                                    "f_dodge".to_string(),
-                                    Value::from(round_f64(breakdown.f_dodge)),
-                                );
-                                values.insert(
-                                    "weighted_armor".to_string(),
-                                    Value::from(round_f64(breakdown.weighted_armor)),
-                                );
-                                values.insert(
-                                    "weighted_shield".to_string(),
-                                    Value::from(round_f64(breakdown.weighted_shield)),
-                                );
-                                values.insert(
-                                    "weighted_dodge".to_string(),
-                                    Value::from(round_f64(breakdown.weighted_dodge)),
-                                );
-                                values.insert(
-                                    "mystery_mitigation_factor".to_string(),
-                                    Value::from(round_f64(breakdown.mystery_mitigation_factor)),
-                                );
-                                values.insert(
-                                    "one_minus_mystery".to_string(),
-                                    Value::from(round_f64(breakdown.one_minus_mystery)),
-                                );
-                            }
-                            values
-                        },
-                    });
-
-                    let defender_inbound_assimilated = st.defender_assimilated_rounds_remaining > 0;
-                    let mut inbound_defender_effects = EffectAccumulator::default();
-                    inbound_defender_effects.set_trace_contributions(false);
-                    inbound_defender_effects.add_effects(
-                        TimingWindow::DefensePhase,
-                        &defender_inbound_defense_filtered,
-                        weapon_base,
-                        defender_inbound_assimilated,
-                        round_index,
-                    );
-                    let combined_defense_mitigation_bonus = phase_effects
-                        .defense_mitigation_bonus()
-                        + inbound_defender_effects.defense_mitigation_bonus();
-
-                    // Damage-through factor: fraction of attack that gets through (can exceed 1.0 with pierce).
-                    let damage_through_factor = compute_damage_through_factor(
-                        mitigation_multiplier,
-                        effective_pierce,
-                        combined_defense_mitigation_bonus,
-                    );
-                    trace.record_if(|| CombatEvent {
-                        event_type: "pierce_calc".to_string(),
-                        round_index,
-                        phase: "attack".to_string(),
-                        source: EventSource {
-                            officer_id: Some(attacker.id.clone()),
-                            player_bonus_source: Some("attack_pierce_bonus".to_string()),
-                            ..EventSource::default()
-                        },
-                        weapon_index: None,
-                        values: Map::from_iter([
-                            ("pierce".to_string(), Value::from(effective_pierce)),
-                            (
-                                "damage_through_factor".to_string(),
-                                Value::from(round_f64(damage_through_factor)),
-                            ),
-                        ]),
-                    });
-
-                    let hull_breach_active = st.defender_hull_breach_rounds > 0;
-                    // Breach-gated cumulative crit growth (Hegh'ta / Rotarran). The bonus reflects
-                    // only events that occurred *before* this shot; the counters grow afterwards.
-                    // Crit chance grows additively (clamps to [0,1] in the roll); crit damage grows
-                    // as additive percentage points on the crit multiplier (per-crit stat bonus).
-                    let breach_crit_chance_add = breach_crit_chance_per_hit * st.breach_hits as f64;
-                    let breach_crit_damage_add =
-                        breach_crit_damage_per_crit * st.breach_crits as f64;
-                    let crit = resolve_vehicle_weapon_crit(
-                        attacker.weapon_crit_chance(weapon_index),
-                        phase_effects.crit_chance_bonus() + breach_crit_chance_add,
-                        attacker.weapon_crit_multiplier(weapon_index),
-                        phase_effects.crit_damage_multiplier(),
-                        breach_crit_damage_add,
-                        effective_attacker_crit_reduction,
-                        attacker.crit_damage_floor,
-                        hull_breach_active,
-                        &mut rng,
-                    );
-                    let crit_multiplier = crit.multiplier;
-                    let is_crit = crit.is_crit;
-                    // Grow the cumulative breach crit counters after this shot resolves, so the
-                    // bonus benefits subsequent hits/crits (not the current one).
-                    if hull_breach_active {
-                        if breach_crit_chance_per_hit > 0.0 {
-                            st.breach_hits += 1;
-                        }
-                        if is_crit && breach_crit_damage_per_crit > 0.0 {
-                            st.breach_crits += 1;
-                        }
-                    }
-                    trace.record_if(|| CombatEvent {
-                        event_type: "crit_resolution".to_string(),
-                        round_index,
-                        phase: "attack".to_string(),
-                        source: EventSource {
-                            officer_id: Some(attacker.id.clone()),
-                            ship_ability_id: Some("crit_matrix".to_string()),
-                            ..EventSource::default()
-                        },
-                        weapon_index: None,
-                        values: Map::from_iter([
-                            ("roll".to_string(), Value::from(round_f64(crit.roll))),
-                            ("is_crit".to_string(), Value::Bool(crit.is_crit)),
-                            ("multiplier".to_string(), Value::from(crit_multiplier)),
-                            (
-                                "effective_crit_chance".to_string(),
-                                Value::from(round_f64(crit.effective_crit_chance)),
-                            ),
-                            (
-                                "attacker_crit_reduction".to_string(),
-                                Value::from(round_f64(effective_attacker_crit_reduction)),
-                            ),
-                            (
-                                "crit_damage_floor".to_string(),
-                                Value::from(round_f64(attacker.crit_damage_floor)),
-                            ),
-                            (
-                                "hull_breach_active".to_string(),
-                                Value::Bool(hull_breach_active),
-                            ),
-                        ]),
-                    });
-
-                    for effect in &attack_phase_filtered {
-                        let effective_effect =
-                            scale_effect(effect.effect, attack_phase_assimilated);
-
-                        if let AbilityEffect::Assimilated {
-                            chance,
-                            duration_rounds,
-                        } = effective_effect
-                        {
-                            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                            let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
-                            if triggered {
-                                st.assimilated_rounds_remaining =
-                                    st.assimilated_rounds_remaining.max(duration_rounds.max(1));
-                            }
-                            trace.record_if(|| CombatEvent {
-                                event_type: "assimilated_trigger".to_string(),
-                                round_index,
-                                phase: "attack".to_string(),
-                                source: EventSource {
-                                    officer_id: Some(attacker.id.clone()),
-                                    ship_ability_id: Some(effect.ability_name.clone()),
-                                    ..EventSource::default()
-                                },
-                                weapon_index: None,
-                                values: Map::from_iter([
-                                    ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
-                                    ("triggered".to_string(), Value::Bool(triggered)),
-                                    ("chance".to_string(), Value::from(round_f64(chance))),
-                                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                                ]),
-                            });
-                        }
-
-                        if let AbilityEffect::HullBreach {
-                            chance,
-                            duration_rounds,
-                            requires_critical,
-                        } = effective_effect
-                        {
-                            if requires_critical && !is_crit {
-                                continue;
-                            }
-
-                            let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                            let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
-                            let breach_before = st.defender_hull_breach_rounds;
-                            if triggered {
-                                st.defender_hull_breach_rounds =
-                                    st.defender_hull_breach_rounds.max(duration_rounds.max(1));
-                            }
-                            if breach_before == 0 && st.defender_hull_breach_rounds > 0 {
-                                let mut ctx_hb = combat_ctx.clone();
-                                ctx_hb.defender_hull_pct = 1.0
-                                    - (st.total_hull_damage / defender.hull_health.max(0.0))
-                                        .min(1.0);
-                                ctx_hb.defender_shield_pct = if defender.shield_health > 0.0 {
-                                    st.defender_shield_remaining / defender.shield_health
-                                } else {
-                                    1.0
-                                };
-                                apply_hull_breach_timing_window(
-                                    &mut RoundPhaseCtx {
-                                        trace: &mut trace,
-                                        rng: &mut rng,
-                                        round_index,
-                                    },
-                                    HullBreachSide::Defender,
-                                    attacker,
-                                    hull_breach_effects,
-                                    ctx_hb,
-                                    attack_phase_assimilated,
-                                    weapon_base,
-                                    &mut phase_effects_round,
-                                    &mut st.defender_burning_rounds,
-                                );
-                            }
-                            trace.record_if(|| CombatEvent {
-                                event_type: "hull_breach_trigger".to_string(),
-                                round_index,
-                                phase: "attack".to_string(),
-                                source: EventSource {
-                                    officer_id: Some(attacker.id.clone()),
-                                    ship_ability_id: Some(effect.ability_name.clone()),
-                                    ..EventSource::default()
-                                },
-                                weapon_index: None,
-                                values: Map::from_iter([
-                                    ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
-                                    ("triggered".to_string(), Value::Bool(triggered)),
-                                    ("chance".to_string(), Value::from(round_f64(chance))),
-                                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                                    (
-                                        "requires_critical".to_string(),
-                                        Value::Bool(requires_critical),
-                                    ),
-                                ]),
-                            });
-                        }
-
-                        if let AbilityEffect::DefenderFireDelay {
-                            chance,
-                            delay_rounds,
-                            requires_critical,
-                        } = effective_effect
-                        {
-                            apply_defender_fire_delay(
-                                &mut trace,
-                                &mut rng,
-                                round_index,
-                                "attack",
-                                &attacker.id,
-                                &effect.ability_name,
-                                chance,
-                                delay_rounds,
-                                requires_critical,
-                                is_crit,
-                                &mut st.defender_weapon_fire_delayed_rounds,
-                            );
-                        }
-
-                        roll_burning_triggers(
-                            &mut RoundPhaseCtx {
-                                trace: &mut trace,
-                                rng: &mut rng,
-                                round_index,
-                            },
-                            std::slice::from_ref(effect),
-                            attack_phase_assimilated,
-                            "attack",
-                            &attacker.id,
-                            None,
-                            &mut st.defender_burning_rounds,
-                        );
-                    }
-
-                    for effect in &defense_phase_filtered {
-                        roll_burning_triggers(
-                            &mut RoundPhaseCtx {
-                                trace: &mut trace,
-                                rng: &mut rng,
-                                round_index,
-                            },
-                            std::slice::from_ref(effect),
-                            defense_phase_assimilated,
-                            "defense",
-                            &attacker.id,
-                            None,
-                            &mut st.defender_burning_rounds,
-                        );
-                    }
-
-                    for effect in &defender_inbound_defense_filtered {
-                        roll_burning_triggers(
-                            &mut RoundPhaseCtx {
-                                trace: &mut trace,
-                                rng: &mut rng,
-                                round_index,
-                            },
-                            std::slice::from_ref(effect),
-                            defender_inbound_assimilated,
-                            "defense_inbound",
-                            &defender.id,
-                            None,
-                            &mut st.defender_burning_rounds,
-                        );
-                    }
-
-                    let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
-                    let (did_proc, proc_roll) = roll_weapon_intrinsic_proc(w_proc_chance, &mut rng);
-                    let proc_multiplier = if did_proc {
-                        attacker.weapon_proc_multiplier(weapon_index)
-                    } else {
-                        1.0
-                    };
-                    trace.record_if(|| CombatEvent {
-                        event_type: "proc_triggers".to_string(),
-                        round_index,
-                        phase: "proc".to_string(),
-                        source: EventSource {
-                            officer_id: Some(attacker.id.clone()),
-                            ship_ability_id: Some("officer_proc".to_string()),
-                            ..EventSource::default()
-                        },
-                        weapon_index: None,
-                        values: Map::from_iter([
-                            ("roll".to_string(), Value::from(round_f64(proc_roll))),
-                            ("triggered".to_string(), Value::Bool(did_proc)),
-                            ("multiplier".to_string(), Value::from(proc_multiplier)),
-                        ]),
-                    });
-
-                    let pre_attack_damage = effective_attack
-                        * damage_through_factor
-                        * crit_multiplier
-                        * proc_multiplier;
-                    phase_effects.set_pre_attack_damage_base(pre_attack_damage);
-                    let pre_attack_damage = phase_effects.composed_pre_attack_damage();
-                    let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
-
-                    trace.record_if(|| {
-                        let mut values = phase_effects.stack_resolution_values();
-                        values.insert(
-                            "pre_attack_damage_composed".to_string(),
-                            Value::from(round_f64(pre_attack_damage)),
-                        );
-                        values.insert(
-                            "damage_after_attack_phase_compose".to_string(),
-                            Value::from(round_f64(damage)),
-                        );
-                        CombatEvent {
-                            event_type: "stack_resolution".to_string(),
-                            round_index,
-                            phase: "attack".to_string(),
-                            source: EventSource {
-                                officer_id: Some(attacker.id.clone()),
-                                player_bonus_source: Some("effect_stacks".to_string()),
-                                ..EventSource::default()
-                            },
-                            weapon_index: Some(weapon_index_u),
-                            values,
-                        }
-                    });
-
-                    // Isolytic: from pre-apex standard damage; report formula: isolytic taken = Isolytic Damage / (1 + I_def).
-                    let effective_isolytic_damage = (attacker.isolytic_damage
-                        + phase_effects.composed_isolytic_damage_bonus())
-                    .max(0.0);
-                    let effective_isolytic_defense = (defender.isolytic_defense
-                        + phase_effects.composed_isolytic_defense_bonus()
-                        + inbound_defender_effects.composed_isolytic_defense_bonus())
-                    .max(0.0);
-                    let effective_isolytic_cascade = phase_effects
-                        .composed_isolytic_cascade_damage_bonus()
-                        .max(0.0);
-                    let isolytic_taken = compute_isolytic_taken(
-                        damage,
-                        effective_isolytic_damage,
-                        effective_isolytic_defense,
-                        effective_isolytic_cascade,
-                    );
-
-                    // Apex barrier: apply once to combined pool (standard_net + isolytic_taken).
-                    let damage_before_apex = damage + isolytic_taken;
-                    let damage_after_apex = damage_before_apex * apex_damage_factor;
-
-                    // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
-                    // Additive bonuses (e.g. Quantum Slipstream cumulative debuff) compose first,
-                    // then any multiplicative bypass (e.g. Harrison "Sabotage") scales the result
-                    // by (1 - bypass). Bypass total is clamped to [0, 1] so it cannot exceed 100%.
-                    let pre_bypass_shield_mitigation = (defender.shield_mitigation
-                        + phase_effects.composed_shield_mitigation_bonus()
-                        + inbound_defender_effects.composed_shield_mitigation_bonus())
-                    .clamp(0.0, 1.0);
-                    let total_bypass_fraction = (phase_effects.composed_shield_mitigation_bypass()
-                        + inbound_defender_effects.composed_shield_mitigation_bypass())
-                    .clamp(0.0, 1.0);
-                    let effective_shield_mitigation = (pre_bypass_shield_mitigation
-                        * (1.0 - total_bypass_fraction))
-                        .clamp(0.0, 1.0);
-                    let shield_mitigation = if st.defender_shield_remaining > 0.0 {
-                        effective_shield_mitigation
-                    } else {
-                        0.0
-                    };
-
-                    if use_simd_outbound_weapon_path {
-                        // The SIMD kernel consumes parallel slices: damage / isolytic_taken /
-                        // shield_mitigation. The damage push was missing, so the kernel was
-                        // called with `damage_after_attack_phase=&[]` (len 0) and
-                        // `isolytic_taken=&[isolytic_taken]` (len 1), the length-mismatch
-                        // error was silently dropped via `let _`, the output buffer stayed
-                        // empty, and zero damage was applied on every avx2_supported() host.
-                        simd_damage_batch.push(damage);
-                        simd_isolytic_batch.push(isolytic_taken);
-                        simd_shield_mitigation_batch.push(effective_shield_mitigation);
-
-                        let flush_batch =
-                            simd_damage_batch.len() == 4 || hit_index + 1 == effective_shots;
-                        if flush_batch {
-                            simd_damage_after_apex_batch.resize(simd_damage_batch.len(), 0.0);
-                            let _ = compute_damage_after_apex_batch(
-                                &simd_damage_batch,
-                                &simd_isolytic_batch,
-                                apex_damage_factor,
-                                &mut simd_damage_after_apex_batch,
-                            );
-                            for lane in 0..simd_damage_after_apex_batch.len() {
-                                let lane_shield_mitigation = if st.defender_shield_remaining > 0.0 {
-                                    simd_shield_mitigation_batch[lane]
-                                } else {
-                                    0.0
-                                };
-                                let (actual_shield_damage, hull_damage_this_round) =
-                                    apply_shield_hull_split(
-                                        simd_damage_after_apex_batch[lane],
-                                        lane_shield_mitigation,
-                                        st.defender_shield_remaining,
-                                    );
-                                st.defender_shield_remaining =
-                                    (st.defender_shield_remaining - actual_shield_damage).max(0.0);
-                                st.total_hull_damage += hull_damage_this_round;
-                                st.total_shield_damage += actual_shield_damage;
-                            }
-                            simd_damage_batch.clear();
-                            simd_isolytic_batch.clear();
-                            simd_shield_mitigation_batch.clear();
-                        }
-                        continue;
-                    }
-
-                    let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
-                        damage_after_apex,
-                        shield_mitigation,
-                        st.defender_shield_remaining,
-                    );
-
-                    st.defender_shield_remaining =
-                        (st.defender_shield_remaining - actual_shield_damage).max(0.0);
-                    st.total_hull_damage += hull_damage_this_round;
-                    st.total_shield_damage += actual_shield_damage;
-
-                    if hull_damage_this_round > 0.0 {
-                        let def_rd_assim = st.defender_assimilated_rounds_remaining > 0;
-                        let mut ctx_def_rd = combat_ctx.clone();
-                        ctx_def_rd.defender_hull_pct =
-                            1.0 - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-                        ctx_def_rd.defender_shield_pct = if defender.shield_health > 0.0 {
-                            st.defender_shield_remaining / defender.shield_health
-                        } else {
-                            1.0
-                        };
-                        let def_rd_filtered = filter_effects_by_condition(
-                            defender_receive_damage_effects,
-                            &ctx_def_rd,
-                        );
-                        roll_burning_triggers(
-                            &mut RoundPhaseCtx {
-                                trace: &mut trace,
-                                rng: &mut rng,
-                                round_index,
-                            },
-                            &def_rd_filtered,
-                            def_rd_assim,
-                            "receive_damage",
-                            &defender.id,
-                            None,
-                            &mut st.defender_burning_rounds,
-                        );
-                    }
-
-                    trace.record_if(|| CombatEvent {
-                        event_type: "damage_application".to_string(),
-                        round_index,
-                        phase: "damage".to_string(),
-                        source: EventSource {
-                            officer_id: Some(attacker.id.clone()),
-                            hostile_ability_id: Some(format!("{}_hull", defender.id)),
-                            ..EventSource::default()
-                        },
-                        weapon_index: Some(weapon_index_u),
-                        values: Map::from_iter([
-                            (
-                                "damage_after_apex".to_string(),
-                                Value::from(round_f64(damage_after_apex)),
-                            ),
-                            (
-                                "shield_mitigation".to_string(),
-                                Value::from(round_f64(shield_mitigation)),
-                            ),
-                            (
-                                "shield_damage".to_string(),
-                                Value::from(round_f64(actual_shield_damage)),
-                            ),
-                            (
-                                "hull_damage".to_string(),
-                                Value::from(round_f64(hull_damage_this_round)),
-                            ),
-                            (
-                                "running_hull_damage".to_string(),
-                                Value::from(round_f64(st.total_hull_damage)),
-                            ),
-                            (
-                                "defender_shield_remaining".to_string(),
-                                Value::from(round_f64(st.defender_shield_remaining)),
-                            ),
-                            (
-                                "shield_broke".to_string(),
-                                Value::Bool(
-                                    shield_before_weapon > 0.0
-                                        && st.defender_shield_remaining <= 0.0,
-                                ),
-                            ),
-                            (
-                                "assimilated_active".to_string(),
-                                Value::Bool(st.assimilated_rounds_remaining > 0),
-                            ),
-                            ("hit_index".to_string(), Value::from(hit_index)),
-                        ]),
-                    });
-                    if emit_snapshots {
-                        let snap = build_combat_state_snapshot(
-                            SnapshotAnchor::AfterOutboundDamage,
-                            round_index,
-                            Some(weapon_index_u),
-                            Some(hit_index),
-                            attacker,
-                            defender,
-                            st.total_hull_damage,
-                            st.total_attacker_hull_damage,
-                            st.defender_shield_remaining,
-                            st.attacker_shield_remaining,
-                            &combat_ctx,
-                            st.assimilated_rounds_remaining,
-                            st.defender_assimilated_rounds_remaining,
-                            Some(&phase_effects),
-                        );
-                        trace.record(state_snapshot_as_combat_event(&snap));
-                    }
-                }
-            }
+            fire_attacker_weapon(FireAttackerWeapon {
+                st: &mut st,
+                phase_effects_round: &mut phase_effects_round,
+                trace: &mut trace,
+                rng: &mut rng,
+                combat_ctx: &combat_ctx,
+                config,
+                attacker,
+                defender,
+                round_index,
+                weapon_index,
+                shield_before_weapon,
+                attack_phase_filtered: &attack_phase_filtered,
+                defense_phase_filtered: &defense_phase_filtered,
+                defense_phase_assimilated,
+                weapon_base,
+                effective_pierce,
+                effective_shots,
+                apex_damage_factor,
+                effective_attacker_crit_reduction,
+                breach_crit_chance_per_hit,
+                breach_crit_damage_per_crit,
+                attack_phase_assimilated,
+                emit_snapshots,
+                use_simd_outbound_weapon_path,
+                attacker_accuracy_bonus,
+                phase_effects: &mut phase_effects,
+                hull_breach_effects,
+                defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
+                defender_receive_damage_effects,
+            });
 
             let shield_broke_this_round =
                 shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0;
@@ -2773,6 +2099,772 @@ fn roll_attacker_round_start_procs(
                     ("state".to_string(), Value::String(state_applied)),
                 ]),
             });
+        }
+    }
+}
+
+/// Parameters for [`fire_attacker_weapon`] (see [`FireDefenderCounter`] for why this is a struct).
+struct FireAttackerWeapon<'a> {
+    st: &'a mut CombatRunState,
+    phase_effects_round: &'a mut EffectAccumulator,
+    trace: &'a mut TraceCollector,
+    rng: &'a mut Rng,
+    combat_ctx: &'a CombatContext,
+    config: &'a SimulationConfig,
+    attacker: &'a Combatant,
+    defender: &'a Combatant,
+    round_index: u32,
+    weapon_index: usize,
+    shield_before_weapon: f64,
+    attack_phase_filtered: &'a [ActiveAbilityEffect],
+    defense_phase_filtered: &'a [ActiveAbilityEffect],
+    defense_phase_assimilated: bool,
+    weapon_base: f64,
+    effective_pierce: f64,
+    effective_shots: u32,
+    apex_damage_factor: f64,
+    effective_attacker_crit_reduction: f64,
+    breach_crit_chance_per_hit: f64,
+    breach_crit_damage_per_crit: f64,
+    attack_phase_assimilated: bool,
+    emit_snapshots: bool,
+    use_simd_outbound_weapon_path: bool,
+    attacker_accuracy_bonus: f64,
+    phase_effects: &'a mut EffectAccumulator,
+    hull_breach_effects: &'a [ActiveAbilityEffect],
+    defender_inbound_defense_filtered: &'a [ActiveAbilityEffect],
+    defender_receive_damage_effects: &'a [ActiveAbilityEffect],
+}
+
+/// Attacker outbound fire for one weapon sub-round: the per-shot hit loop (attack roll, mitigation,
+/// damage-through, crit/proc, isolytic, apex, shield/hull split, burning/breach/assimilation
+/// triggers) plus the SIMD batch flush. Mutates cumulative damage, shields, and defender status
+/// counters on `st`.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order and
+/// float evaluation order unchanged.
+fn fire_attacker_weapon(p: FireAttackerWeapon) {
+    let FireAttackerWeapon {
+        st,
+        phase_effects_round,
+        trace,
+        rng,
+        combat_ctx,
+        config,
+        attacker,
+        defender,
+        round_index,
+        weapon_index,
+        shield_before_weapon,
+        attack_phase_filtered,
+        defense_phase_filtered,
+        defense_phase_assimilated,
+        weapon_base,
+        effective_pierce,
+        effective_shots,
+        apex_damage_factor,
+        effective_attacker_crit_reduction,
+        breach_crit_chance_per_hit,
+        breach_crit_damage_per_crit,
+        attack_phase_assimilated,
+        emit_snapshots,
+        use_simd_outbound_weapon_path,
+        attacker_accuracy_bonus,
+        phase_effects,
+        hull_breach_effects,
+        defender_inbound_defense_filtered,
+        defender_receive_damage_effects,
+    } = p;
+    let weapon_index_u = weapon_index as u32;
+    let mut simd_damage_batch: Vec<f64> = if use_simd_outbound_weapon_path && effective_shots > 0 {
+        Vec::with_capacity(4)
+    } else {
+        Vec::new()
+    };
+    let mut simd_isolytic_batch: Vec<f64> = if use_simd_outbound_weapon_path && effective_shots > 0
+    {
+        Vec::with_capacity(4)
+    } else {
+        Vec::new()
+    };
+    let mut simd_shield_mitigation_batch: Vec<f64> =
+        if use_simd_outbound_weapon_path && effective_shots > 0 {
+            Vec::with_capacity(4)
+        } else {
+            Vec::new()
+        };
+    let mut simd_damage_after_apex_batch: Vec<f64> =
+        if use_simd_outbound_weapon_path && effective_shots > 0 {
+            Vec::with_capacity(4)
+        } else {
+            Vec::new()
+        };
+
+    for hit_index in 0..effective_shots {
+        if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
+            let pre_mult = phase_effects.pre_attack_multiplier();
+            let g_galaxy = phase_effects.galaxy_additive_weapon_frac();
+            let p_prof = config.profile_weapon_damage_fraction;
+            let galaxy_dilution =
+                if g_galaxy > 0.0 && g_galaxy.is_finite() && (1.0 + p_prof) > 1e-12 {
+                    1.0 + g_galaxy / (1.0 + p_prof)
+                } else {
+                    1.0
+                };
+            let effective_attack = match config.weapon_damage_profile_additive_pool {
+                Some(p) if p > 0.0 && p.is_finite() => {
+                    // Experimental: one additive pool for profile weapon_damage + dynamic pre-attack sum.
+                    // Galaxy growth `g` shares the same additive pool as `p` (see findings doc).
+                    attacker_weapon_attack * (p + pre_mult + g_galaxy) / (1.0 + p)
+                }
+                _ => attacker_weapon_attack * pre_mult * galaxy_dilution,
+            };
+
+            let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            trace.record_if(|| CombatEvent {
+                event_type: "attack_roll".to_string(),
+                round_index,
+                phase: "attack".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: Some(weapon_index_u),
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(roll))),
+                    ("hit_index".to_string(), Value::from(hit_index)),
+                    (
+                        "base_attack".to_string(),
+                        Value::from(attacker_weapon_attack),
+                    ),
+                    (
+                        "effective_attack".to_string(),
+                        Value::from(round_f64(effective_attack)),
+                    ),
+                ]),
+            });
+
+            let mut mitigation_trace_breakdown = None;
+            let effective_mitigation = if let Some(params) = &defender.hostile_mitigation_params {
+                let mut adjusted_attacker = params.base_attacker_stats;
+                adjusted_attacker.accuracy += attacker_accuracy_bonus;
+                let breakdown = mitigation_breakdown(
+                    params.defender_stats,
+                    adjusted_attacker,
+                    params.ship_type,
+                    params.mystery_mitigation_factor,
+                );
+                mitigation_trace_breakdown = Some((breakdown, params.floor, params.ceiling));
+                breakdown.raw_mitigation.clamp(params.floor, params.ceiling)
+            } else {
+                defender.mitigation
+            };
+            let mitigation_multiplier = (1.0 - effective_mitigation).max(0.0);
+            trace.record_if(|| CombatEvent {
+                event_type: "mitigation_calc".to_string(),
+                round_index,
+                phase: "defense".to_string(),
+                source: EventSource {
+                    hostile_ability_id: Some(format!("{}_mitigation", defender.id)),
+                    ..EventSource::default()
+                },
+                weapon_index: Some(weapon_index_u),
+                values: {
+                    let mut values = Map::from_iter([
+                        (
+                            "mitigation".to_string(),
+                            Value::from(round_f64(effective_mitigation)),
+                        ),
+                        (
+                            "multiplier".to_string(),
+                            Value::from(round_f64(mitigation_multiplier)),
+                        ),
+                    ]);
+                    if let Some((breakdown, floor, ceiling)) = mitigation_trace_breakdown {
+                        values.insert(
+                            "mitigation_raw".to_string(),
+                            Value::from(round_f64(breakdown.raw_mitigation)),
+                        );
+                        values.insert(
+                            "mitigation_floor".to_string(),
+                            Value::from(round_f64(floor)),
+                        );
+                        values.insert(
+                            "mitigation_ceiling".to_string(),
+                            Value::from(round_f64(ceiling)),
+                        );
+                        values.insert(
+                            "c_armor".to_string(),
+                            Value::from(round_f64(breakdown.c_armor)),
+                        );
+                        values.insert(
+                            "c_shield".to_string(),
+                            Value::from(round_f64(breakdown.c_shield)),
+                        );
+                        values.insert(
+                            "c_dodge".to_string(),
+                            Value::from(round_f64(breakdown.c_dodge)),
+                        );
+                        values.insert(
+                            "armor_ratio".to_string(),
+                            Value::from(round_f64(breakdown.armor_ratio)),
+                        );
+                        values.insert(
+                            "shield_ratio".to_string(),
+                            Value::from(round_f64(breakdown.shield_ratio)),
+                        );
+                        values.insert(
+                            "dodge_ratio".to_string(),
+                            Value::from(round_f64(breakdown.dodge_ratio)),
+                        );
+                        values.insert(
+                            "f_armor".to_string(),
+                            Value::from(round_f64(breakdown.f_armor)),
+                        );
+                        values.insert(
+                            "f_shield".to_string(),
+                            Value::from(round_f64(breakdown.f_shield)),
+                        );
+                        values.insert(
+                            "f_dodge".to_string(),
+                            Value::from(round_f64(breakdown.f_dodge)),
+                        );
+                        values.insert(
+                            "weighted_armor".to_string(),
+                            Value::from(round_f64(breakdown.weighted_armor)),
+                        );
+                        values.insert(
+                            "weighted_shield".to_string(),
+                            Value::from(round_f64(breakdown.weighted_shield)),
+                        );
+                        values.insert(
+                            "weighted_dodge".to_string(),
+                            Value::from(round_f64(breakdown.weighted_dodge)),
+                        );
+                        values.insert(
+                            "mystery_mitigation_factor".to_string(),
+                            Value::from(round_f64(breakdown.mystery_mitigation_factor)),
+                        );
+                        values.insert(
+                            "one_minus_mystery".to_string(),
+                            Value::from(round_f64(breakdown.one_minus_mystery)),
+                        );
+                    }
+                    values
+                },
+            });
+
+            let defender_inbound_assimilated = st.defender_assimilated_rounds_remaining > 0;
+            let mut inbound_defender_effects = EffectAccumulator::default();
+            inbound_defender_effects.set_trace_contributions(false);
+            inbound_defender_effects.add_effects(
+                TimingWindow::DefensePhase,
+                defender_inbound_defense_filtered,
+                weapon_base,
+                defender_inbound_assimilated,
+                round_index,
+            );
+            let combined_defense_mitigation_bonus = phase_effects.defense_mitigation_bonus()
+                + inbound_defender_effects.defense_mitigation_bonus();
+
+            // Damage-through factor: fraction of attack that gets through (can exceed 1.0 with pierce).
+            let damage_through_factor = compute_damage_through_factor(
+                mitigation_multiplier,
+                effective_pierce,
+                combined_defense_mitigation_bonus,
+            );
+            trace.record_if(|| CombatEvent {
+                event_type: "pierce_calc".to_string(),
+                round_index,
+                phase: "attack".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    player_bonus_source: Some("attack_pierce_bonus".to_string()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("pierce".to_string(), Value::from(effective_pierce)),
+                    (
+                        "damage_through_factor".to_string(),
+                        Value::from(round_f64(damage_through_factor)),
+                    ),
+                ]),
+            });
+
+            let hull_breach_active = st.defender_hull_breach_rounds > 0;
+            // Breach-gated cumulative crit growth (Hegh'ta / Rotarran). The bonus reflects
+            // only events that occurred *before* this shot; the counters grow afterwards.
+            // Crit chance grows additively (clamps to [0,1] in the roll); crit damage grows
+            // as additive percentage points on the crit multiplier (per-crit stat bonus).
+            let breach_crit_chance_add = breach_crit_chance_per_hit * st.breach_hits as f64;
+            let breach_crit_damage_add = breach_crit_damage_per_crit * st.breach_crits as f64;
+            let crit = resolve_vehicle_weapon_crit(
+                attacker.weapon_crit_chance(weapon_index),
+                phase_effects.crit_chance_bonus() + breach_crit_chance_add,
+                attacker.weapon_crit_multiplier(weapon_index),
+                phase_effects.crit_damage_multiplier(),
+                breach_crit_damage_add,
+                effective_attacker_crit_reduction,
+                attacker.crit_damage_floor,
+                hull_breach_active,
+                &mut *rng,
+            );
+            let crit_multiplier = crit.multiplier;
+            let is_crit = crit.is_crit;
+            // Grow the cumulative breach crit counters after this shot resolves, so the
+            // bonus benefits subsequent hits/crits (not the current one).
+            if hull_breach_active {
+                if breach_crit_chance_per_hit > 0.0 {
+                    st.breach_hits += 1;
+                }
+                if is_crit && breach_crit_damage_per_crit > 0.0 {
+                    st.breach_crits += 1;
+                }
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "crit_resolution".to_string(),
+                round_index,
+                phase: "attack".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some("crit_matrix".to_string()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(crit.roll))),
+                    ("is_crit".to_string(), Value::Bool(crit.is_crit)),
+                    ("multiplier".to_string(), Value::from(crit_multiplier)),
+                    (
+                        "effective_crit_chance".to_string(),
+                        Value::from(round_f64(crit.effective_crit_chance)),
+                    ),
+                    (
+                        "attacker_crit_reduction".to_string(),
+                        Value::from(round_f64(effective_attacker_crit_reduction)),
+                    ),
+                    (
+                        "crit_damage_floor".to_string(),
+                        Value::from(round_f64(attacker.crit_damage_floor)),
+                    ),
+                    (
+                        "hull_breach_active".to_string(),
+                        Value::Bool(hull_breach_active),
+                    ),
+                ]),
+            });
+
+            for effect in attack_phase_filtered {
+                let effective_effect = scale_effect(effect.effect, attack_phase_assimilated);
+
+                if let AbilityEffect::Assimilated {
+                    chance,
+                    duration_rounds,
+                } = effective_effect
+                {
+                    let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                    let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+                    if triggered {
+                        st.assimilated_rounds_remaining =
+                            st.assimilated_rounds_remaining.max(duration_rounds.max(1));
+                    }
+                    trace.record_if(|| CombatEvent {
+                        event_type: "assimilated_trigger".to_string(),
+                        round_index,
+                        phase: "attack".to_string(),
+                        source: EventSource {
+                            officer_id: Some(attacker.id.clone()),
+                            ship_ability_id: Some(effect.ability_name.clone()),
+                            ..EventSource::default()
+                        },
+                        weapon_index: None,
+                        values: Map::from_iter([
+                            ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                            ("triggered".to_string(), Value::Bool(triggered)),
+                            ("chance".to_string(), Value::from(round_f64(chance))),
+                            ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                        ]),
+                    });
+                }
+
+                if let AbilityEffect::HullBreach {
+                    chance,
+                    duration_rounds,
+                    requires_critical,
+                } = effective_effect
+                {
+                    if requires_critical && !is_crit {
+                        continue;
+                    }
+
+                    let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+                    let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+                    let breach_before = st.defender_hull_breach_rounds;
+                    if triggered {
+                        st.defender_hull_breach_rounds =
+                            st.defender_hull_breach_rounds.max(duration_rounds.max(1));
+                    }
+                    if breach_before == 0 && st.defender_hull_breach_rounds > 0 {
+                        let mut ctx_hb = combat_ctx.clone();
+                        ctx_hb.defender_hull_pct =
+                            1.0 - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+                        ctx_hb.defender_shield_pct = if defender.shield_health > 0.0 {
+                            st.defender_shield_remaining / defender.shield_health
+                        } else {
+                            1.0
+                        };
+                        apply_hull_breach_timing_window(
+                            &mut RoundPhaseCtx {
+                                trace: &mut *trace,
+                                rng: &mut *rng,
+                                round_index,
+                            },
+                            HullBreachSide::Defender,
+                            attacker,
+                            hull_breach_effects,
+                            ctx_hb,
+                            attack_phase_assimilated,
+                            weapon_base,
+                            &mut *phase_effects_round,
+                            &mut st.defender_burning_rounds,
+                        );
+                    }
+                    trace.record_if(|| CombatEvent {
+                        event_type: "hull_breach_trigger".to_string(),
+                        round_index,
+                        phase: "attack".to_string(),
+                        source: EventSource {
+                            officer_id: Some(attacker.id.clone()),
+                            ship_ability_id: Some(effect.ability_name.clone()),
+                            ..EventSource::default()
+                        },
+                        weapon_index: None,
+                        values: Map::from_iter([
+                            ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
+                            ("triggered".to_string(), Value::Bool(triggered)),
+                            ("chance".to_string(), Value::from(round_f64(chance))),
+                            ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                            (
+                                "requires_critical".to_string(),
+                                Value::Bool(requires_critical),
+                            ),
+                        ]),
+                    });
+                }
+
+                if let AbilityEffect::DefenderFireDelay {
+                    chance,
+                    delay_rounds,
+                    requires_critical,
+                } = effective_effect
+                {
+                    apply_defender_fire_delay(
+                        &mut *trace,
+                        &mut *rng,
+                        round_index,
+                        "attack",
+                        &attacker.id,
+                        &effect.ability_name,
+                        chance,
+                        delay_rounds,
+                        requires_critical,
+                        is_crit,
+                        &mut st.defender_weapon_fire_delayed_rounds,
+                    );
+                }
+
+                roll_burning_triggers(
+                    &mut RoundPhaseCtx {
+                        trace: &mut *trace,
+                        rng: &mut *rng,
+                        round_index,
+                    },
+                    std::slice::from_ref(effect),
+                    attack_phase_assimilated,
+                    "attack",
+                    &attacker.id,
+                    None,
+                    &mut st.defender_burning_rounds,
+                );
+            }
+
+            for effect in defense_phase_filtered {
+                roll_burning_triggers(
+                    &mut RoundPhaseCtx {
+                        trace: &mut *trace,
+                        rng: &mut *rng,
+                        round_index,
+                    },
+                    std::slice::from_ref(effect),
+                    defense_phase_assimilated,
+                    "defense",
+                    &attacker.id,
+                    None,
+                    &mut st.defender_burning_rounds,
+                );
+            }
+
+            for effect in defender_inbound_defense_filtered {
+                roll_burning_triggers(
+                    &mut RoundPhaseCtx {
+                        trace: &mut *trace,
+                        rng: &mut *rng,
+                        round_index,
+                    },
+                    std::slice::from_ref(effect),
+                    defender_inbound_assimilated,
+                    "defense_inbound",
+                    &defender.id,
+                    None,
+                    &mut st.defender_burning_rounds,
+                );
+            }
+
+            let w_proc_chance = attacker.weapon_proc_chance(weapon_index);
+            let (did_proc, proc_roll) = roll_weapon_intrinsic_proc(w_proc_chance, &mut *rng);
+            let proc_multiplier = if did_proc {
+                attacker.weapon_proc_multiplier(weapon_index)
+            } else {
+                1.0
+            };
+            trace.record_if(|| CombatEvent {
+                event_type: "proc_triggers".to_string(),
+                round_index,
+                phase: "proc".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some("officer_proc".to_string()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(proc_roll))),
+                    ("triggered".to_string(), Value::Bool(did_proc)),
+                    ("multiplier".to_string(), Value::from(proc_multiplier)),
+                ]),
+            });
+
+            let pre_attack_damage =
+                effective_attack * damage_through_factor * crit_multiplier * proc_multiplier;
+            phase_effects.set_pre_attack_damage_base(pre_attack_damage);
+            let pre_attack_damage = phase_effects.composed_pre_attack_damage();
+            let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
+
+            trace.record_if(|| {
+                let mut values = phase_effects.stack_resolution_values();
+                values.insert(
+                    "pre_attack_damage_composed".to_string(),
+                    Value::from(round_f64(pre_attack_damage)),
+                );
+                values.insert(
+                    "damage_after_attack_phase_compose".to_string(),
+                    Value::from(round_f64(damage)),
+                );
+                CombatEvent {
+                    event_type: "stack_resolution".to_string(),
+                    round_index,
+                    phase: "attack".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        player_bonus_source: Some("effect_stacks".to_string()),
+                        ..EventSource::default()
+                    },
+                    weapon_index: Some(weapon_index_u),
+                    values,
+                }
+            });
+
+            // Isolytic: from pre-apex standard damage; report formula: isolytic taken = Isolytic Damage / (1 + I_def).
+            let effective_isolytic_damage = (attacker.isolytic_damage
+                + phase_effects.composed_isolytic_damage_bonus())
+            .max(0.0);
+            let effective_isolytic_defense = (defender.isolytic_defense
+                + phase_effects.composed_isolytic_defense_bonus()
+                + inbound_defender_effects.composed_isolytic_defense_bonus())
+            .max(0.0);
+            let effective_isolytic_cascade = phase_effects
+                .composed_isolytic_cascade_damage_bonus()
+                .max(0.0);
+            let isolytic_taken = compute_isolytic_taken(
+                damage,
+                effective_isolytic_damage,
+                effective_isolytic_defense,
+                effective_isolytic_cascade,
+            );
+
+            // Apex barrier: apply once to combined pool (standard_net + isolytic_taken).
+            let damage_before_apex = damage + isolytic_taken;
+            let damage_after_apex = damage_before_apex * apex_damage_factor;
+
+            // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
+            // Additive bonuses (e.g. Quantum Slipstream cumulative debuff) compose first,
+            // then any multiplicative bypass (e.g. Harrison "Sabotage") scales the result
+            // by (1 - bypass). Bypass total is clamped to [0, 1] so it cannot exceed 100%.
+            let pre_bypass_shield_mitigation = (defender.shield_mitigation
+                + phase_effects.composed_shield_mitigation_bonus()
+                + inbound_defender_effects.composed_shield_mitigation_bonus())
+            .clamp(0.0, 1.0);
+            let total_bypass_fraction = (phase_effects.composed_shield_mitigation_bypass()
+                + inbound_defender_effects.composed_shield_mitigation_bypass())
+            .clamp(0.0, 1.0);
+            let effective_shield_mitigation =
+                (pre_bypass_shield_mitigation * (1.0 - total_bypass_fraction)).clamp(0.0, 1.0);
+            let shield_mitigation = if st.defender_shield_remaining > 0.0 {
+                effective_shield_mitigation
+            } else {
+                0.0
+            };
+
+            if use_simd_outbound_weapon_path {
+                // The SIMD kernel consumes parallel slices: damage / isolytic_taken /
+                // shield_mitigation. The damage push was missing, so the kernel was
+                // called with `damage_after_attack_phase=&[]` (len 0) and
+                // `isolytic_taken=&[isolytic_taken]` (len 1), the length-mismatch
+                // error was silently dropped via `let _`, the output buffer stayed
+                // empty, and zero damage was applied on every avx2_supported() host.
+                simd_damage_batch.push(damage);
+                simd_isolytic_batch.push(isolytic_taken);
+                simd_shield_mitigation_batch.push(effective_shield_mitigation);
+
+                let flush_batch = simd_damage_batch.len() == 4 || hit_index + 1 == effective_shots;
+                if flush_batch {
+                    simd_damage_after_apex_batch.resize(simd_damage_batch.len(), 0.0);
+                    let _ = compute_damage_after_apex_batch(
+                        &simd_damage_batch,
+                        &simd_isolytic_batch,
+                        apex_damage_factor,
+                        &mut simd_damage_after_apex_batch,
+                    );
+                    for lane in 0..simd_damage_after_apex_batch.len() {
+                        let lane_shield_mitigation = if st.defender_shield_remaining > 0.0 {
+                            simd_shield_mitigation_batch[lane]
+                        } else {
+                            0.0
+                        };
+                        let (actual_shield_damage, hull_damage_this_round) =
+                            apply_shield_hull_split(
+                                simd_damage_after_apex_batch[lane],
+                                lane_shield_mitigation,
+                                st.defender_shield_remaining,
+                            );
+                        st.defender_shield_remaining =
+                            (st.defender_shield_remaining - actual_shield_damage).max(0.0);
+                        st.total_hull_damage += hull_damage_this_round;
+                        st.total_shield_damage += actual_shield_damage;
+                    }
+                    simd_damage_batch.clear();
+                    simd_isolytic_batch.clear();
+                    simd_shield_mitigation_batch.clear();
+                }
+                continue;
+            }
+
+            let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
+                damage_after_apex,
+                shield_mitigation,
+                st.defender_shield_remaining,
+            );
+
+            st.defender_shield_remaining =
+                (st.defender_shield_remaining - actual_shield_damage).max(0.0);
+            st.total_hull_damage += hull_damage_this_round;
+            st.total_shield_damage += actual_shield_damage;
+
+            if hull_damage_this_round > 0.0 {
+                let def_rd_assim = st.defender_assimilated_rounds_remaining > 0;
+                let mut ctx_def_rd = combat_ctx.clone();
+                ctx_def_rd.defender_hull_pct =
+                    1.0 - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+                ctx_def_rd.defender_shield_pct = if defender.shield_health > 0.0 {
+                    st.defender_shield_remaining / defender.shield_health
+                } else {
+                    1.0
+                };
+                let def_rd_filtered =
+                    filter_effects_by_condition(defender_receive_damage_effects, &ctx_def_rd);
+                roll_burning_triggers(
+                    &mut RoundPhaseCtx {
+                        trace: &mut *trace,
+                        rng: &mut *rng,
+                        round_index,
+                    },
+                    &def_rd_filtered,
+                    def_rd_assim,
+                    "receive_damage",
+                    &defender.id,
+                    None,
+                    &mut st.defender_burning_rounds,
+                );
+            }
+
+            trace.record_if(|| CombatEvent {
+                event_type: "damage_application".to_string(),
+                round_index,
+                phase: "damage".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    hostile_ability_id: Some(format!("{}_hull", defender.id)),
+                    ..EventSource::default()
+                },
+                weapon_index: Some(weapon_index_u),
+                values: Map::from_iter([
+                    (
+                        "damage_after_apex".to_string(),
+                        Value::from(round_f64(damage_after_apex)),
+                    ),
+                    (
+                        "shield_mitigation".to_string(),
+                        Value::from(round_f64(shield_mitigation)),
+                    ),
+                    (
+                        "shield_damage".to_string(),
+                        Value::from(round_f64(actual_shield_damage)),
+                    ),
+                    (
+                        "hull_damage".to_string(),
+                        Value::from(round_f64(hull_damage_this_round)),
+                    ),
+                    (
+                        "running_hull_damage".to_string(),
+                        Value::from(round_f64(st.total_hull_damage)),
+                    ),
+                    (
+                        "defender_shield_remaining".to_string(),
+                        Value::from(round_f64(st.defender_shield_remaining)),
+                    ),
+                    (
+                        "shield_broke".to_string(),
+                        Value::Bool(
+                            shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0,
+                        ),
+                    ),
+                    (
+                        "assimilated_active".to_string(),
+                        Value::Bool(st.assimilated_rounds_remaining > 0),
+                    ),
+                    ("hit_index".to_string(), Value::from(hit_index)),
+                ]),
+            });
+            if emit_snapshots {
+                let snap = build_combat_state_snapshot(
+                    SnapshotAnchor::AfterOutboundDamage,
+                    round_index,
+                    Some(weapon_index_u),
+                    Some(hit_index),
+                    attacker,
+                    defender,
+                    st.total_hull_damage,
+                    st.total_attacker_hull_damage,
+                    st.defender_shield_remaining,
+                    st.attacker_shield_remaining,
+                    combat_ctx,
+                    st.assimilated_rounds_remaining,
+                    st.defender_assimilated_rounds_remaining,
+                    Some(&*phase_effects),
+                );
+                trace.record(state_snapshot_as_combat_event(&snap));
+            }
         }
     }
 }
