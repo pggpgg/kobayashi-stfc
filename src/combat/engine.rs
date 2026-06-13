@@ -1530,91 +1530,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             let shield_broke_this_round =
                 shield_before_weapon > 0.0 && defender_shield_remaining <= 0.0;
             if shield_broke_this_round {
-                let shield_break_filtered =
-                    filter_effects_by_condition(shield_break_effects, &combat_ctx);
-                record_ability_activations(
+                process_defender_shield_break(
                     &mut trace,
+                    &mut rng,
                     round_index,
-                    "shield_break",
                     attacker,
-                    &shield_break_filtered,
-                    attack_phase_assimilated,
-                );
-                phase_effects_round.add_effects(
-                    TimingWindow::ShieldBreak,
-                    &shield_break_filtered,
-                    weapon_base,
-                    attack_phase_assimilated,
-                    round_index,
-                );
-                roll_burning_triggers(
-                    &mut RoundPhaseCtx {
-                        trace: &mut trace,
-                        rng: &mut rng,
-                        round_index,
-                    },
-                    &shield_break_filtered,
-                    attack_phase_assimilated,
-                    "shield_break",
-                    &attacker.id,
-                    None,
-                    &mut defender_burning_rounds,
-                );
-
-                for effect in &shield_break_filtered {
-                    if let AbilityEffect::DefenderFireDelay {
-                        chance,
-                        delay_rounds,
-                        requires_critical,
-                    } = scale_effect(effect.effect, attack_phase_assimilated)
-                    {
-                        apply_defender_fire_delay(
-                            &mut trace,
-                            &mut rng,
-                            round_index,
-                            "shield_break",
-                            &attacker.id,
-                            &effect.ability_name,
-                            chance,
-                            delay_rounds,
-                            requires_critical,
-                            false,
-                            &mut defender_weapon_fire_delayed_rounds,
-                        );
-                    }
-                }
-
-                let def_sb_filtered =
-                    filter_effects_by_condition(defender_shield_break_effects, &combat_ctx);
-                record_ability_activations(
-                    &mut trace,
-                    round_index,
-                    "shield_break",
                     defender,
-                    &def_sb_filtered,
-                    false,
+                    &combat_ctx,
+                    shield_break_effects,
+                    defender_shield_break_effects,
+                    attack_phase_assimilated,
+                    weapon_base,
+                    &mut phase_effects_round,
+                    &mut defender_burning_rounds,
+                    &mut defender_weapon_fire_delayed_rounds,
+                    &mut defender_shield_remaining,
+                    &mut total_hull_damage,
+                    &mut defender_shield_break_carry,
                 );
-                for e in &def_sb_filtered {
-                    match scale_effect(e.effect, false) {
-                        AbilityEffect::ShieldRegen(v) => {
-                            defender_shield_remaining = (defender_shield_remaining + v)
-                                .min(defender.shield_health.max(0.0));
-                        }
-                        AbilityEffect::ShieldRegenMaxFraction(f) => {
-                            let heal = f * defender.shield_health.max(0.0);
-                            defender_shield_remaining = (defender_shield_remaining + heal)
-                                .min(defender.shield_health.max(0.0));
-                        }
-                        AbilityEffect::HullRegen(v) => {
-                            total_hull_damage = (total_hull_damage - v).max(0.0);
-                        }
-                        AbilityEffect::HullRegenMaxFraction(f) => {
-                            let heal = f * defender.hull_health.max(0.0);
-                            total_hull_damage = (total_hull_damage - heal).max(0.0);
-                        }
-                        _ => defender_shield_break_carry.push(e.clone()),
-                    }
-                }
             }
 
             if let Some(defender_weapon_attack) = defender.weapon_attack(weapon_index) {
@@ -3080,6 +3013,118 @@ pub(crate) struct RoundPhaseCtx<'a> {
     pub trace: &'a mut TraceCollector,
     pub rng: &'a mut Rng,
     pub round_index: u32,
+}
+
+/// Defender-shield-break processing, run once when the defender's shields first hit zero within a
+/// weapon sub-round: attacker `ShieldBreak` effects (accumulator add, burning rolls, fire-delay
+/// rolls) followed by defender `ShieldBreak` regen, with non-regen defender effects pushed onto
+/// the carry list consumed by counter-fire in later weapons this round.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
+/// unchanged.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn process_defender_shield_break(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    attacker: &Combatant,
+    defender: &Combatant,
+    combat_ctx: &CombatContext,
+    shield_break_effects: &[ActiveAbilityEffect],
+    defender_shield_break_effects: &[ActiveAbilityEffect],
+    attack_phase_assimilated: bool,
+    weapon_base: f64,
+    phase_effects_round: &mut EffectAccumulator,
+    defender_burning_rounds: &mut u32,
+    defender_weapon_fire_delayed_rounds: &mut u32,
+    defender_shield_remaining: &mut f64,
+    total_hull_damage: &mut f64,
+    defender_shield_break_carry: &mut Vec<ActiveAbilityEffect>,
+) {
+    let shield_break_filtered = filter_effects_by_condition(shield_break_effects, combat_ctx);
+    record_ability_activations(
+        trace,
+        round_index,
+        "shield_break",
+        attacker,
+        &shield_break_filtered,
+        attack_phase_assimilated,
+    );
+    phase_effects_round.add_effects(
+        TimingWindow::ShieldBreak,
+        &shield_break_filtered,
+        weapon_base,
+        attack_phase_assimilated,
+        round_index,
+    );
+    roll_burning_triggers(
+        &mut RoundPhaseCtx {
+            trace: &mut *trace,
+            rng: &mut *rng,
+            round_index,
+        },
+        &shield_break_filtered,
+        attack_phase_assimilated,
+        "shield_break",
+        &attacker.id,
+        None,
+        defender_burning_rounds,
+    );
+
+    for effect in &shield_break_filtered {
+        if let AbilityEffect::DefenderFireDelay {
+            chance,
+            delay_rounds,
+            requires_critical,
+        } = scale_effect(effect.effect, attack_phase_assimilated)
+        {
+            apply_defender_fire_delay(
+                trace,
+                rng,
+                round_index,
+                "shield_break",
+                &attacker.id,
+                &effect.ability_name,
+                chance,
+                delay_rounds,
+                requires_critical,
+                false,
+                defender_weapon_fire_delayed_rounds,
+            );
+        }
+    }
+
+    let def_sb_filtered = filter_effects_by_condition(defender_shield_break_effects, combat_ctx);
+    record_ability_activations(
+        trace,
+        round_index,
+        "shield_break",
+        defender,
+        &def_sb_filtered,
+        false,
+    );
+    for e in &def_sb_filtered {
+        match scale_effect(e.effect, false) {
+            AbilityEffect::ShieldRegen(v) => {
+                *defender_shield_remaining =
+                    (*defender_shield_remaining + v).min(defender.shield_health.max(0.0));
+            }
+            AbilityEffect::ShieldRegenMaxFraction(f) => {
+                let heal = f * defender.shield_health.max(0.0);
+                *defender_shield_remaining =
+                    (*defender_shield_remaining + heal).min(defender.shield_health.max(0.0));
+            }
+            AbilityEffect::HullRegen(v) => {
+                *total_hull_damage = (*total_hull_damage - v).max(0.0);
+            }
+            AbilityEffect::HullRegenMaxFraction(f) => {
+                let heal = f * defender.hull_health.max(0.0);
+                *total_hull_damage = (*total_hull_damage - heal).max(0.0);
+            }
+            _ => defender_shield_break_carry.push(e.clone()),
+        }
+    }
 }
 
 /// Defender crew ShotsBonus for counter-fire: process the defender's RoundStart effects with the
