@@ -239,6 +239,50 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     }
 }
 
+/// Kobayashi-maintained hostile fixtures (e.g. theoretical damage sponge for tests) live under
+/// `data/hostiles/kobayashi_*.json` and are not in the stfc.space upstream cache. Preserve them
+/// in `index.json` across normalizer runs.
+fn merge_kobayashi_fixture_index_entries(
+    out_dir: &Path,
+    index_entries: &mut Vec<HostileIndexEntry>,
+) -> Result<u32, Box<dyn std::error::Error>> {
+    let mut merged = 0u32;
+    for entry in fs::read_dir(out_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().is_none_or(|e| e != "json") {
+            continue;
+        }
+        let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        if !stem.starts_with("kobayashi_") {
+            continue;
+        }
+        if index_entries.iter().any(|e| e.id == stem) {
+            continue;
+        }
+        let content = fs::read_to_string(&path)?;
+        let rec: HostileRecord = serde_json::from_str(&content)?;
+        index_entries.push(HostileIndexEntry {
+            id: rec.id.clone(),
+            hostile_name: rec.hostile_name.clone(),
+            level: rec.level,
+            ship_class: rec.ship_class.clone(),
+            rarity: Some(rec.rarity),
+            upstream_ship_type: Some(rec.upstream_ship_type),
+            loca_id: rec.loca_id,
+        });
+        merged += 1;
+    }
+    index_entries.sort_by(|a, b| {
+        let na: u64 = a.id.parse().unwrap_or(0);
+        let nb: u64 = b.id.parse().unwrap_or(0);
+        na.cmp(&nb).then_with(|| a.id.cmp(&b.id))
+    });
+    Ok(merged)
+}
+
 fn merge_registry_hostiles(
     repo: &Path,
     data_version: &str,
@@ -346,6 +390,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         fs::write(out_path, serde_json::to_string_pretty(rec)?)?;
     }
 
+    let fixtures_merged = merge_kobayashi_fixture_index_entries(&out_dir, &mut index_entries)?;
+
     let index = HostileIndex {
         data_version: Some(data_version.clone()),
         source_note: Some(source_note.clone()),
@@ -369,8 +415,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!(
-        "Normalized {} hostiles from data.stfc.space cache. unknown_hull_types={} parse_errors={} data_version={:?}",
+        "Normalized {} hostiles from data.stfc.space cache. kobayashi_fixtures_merged={} unknown_hull_types={} parse_errors={} data_version={:?}",
         records.len(),
+        fixtures_merged,
         unknown_hull,
         parse_errors,
         data_version

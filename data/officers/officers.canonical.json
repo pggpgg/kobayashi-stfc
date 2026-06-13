@@ -175,8 +175,8 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " CombatGameContext",
-            " SelfDefending"
+            "CombatGameContext",
+            "SelfDefending"
           ],
           "description": "When defending on a Capture Node, at the start of each round, Airiam has a X chance of Burning the opponent for this round.",
           "modifier": "AddState",
@@ -224,7 +224,7 @@
           ],
           "conditions": [
             "SelfHullJunker",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "Increases Apex Shred against players by X (X at rank X) when assigned to the GS-31. -- Apex Barrier remaining after Apex Shred is equal to: -- Apex Barrier / (100% + Apex Shred). -- 100% Apex Shred reduces Apex Barrier by 50%.",
           "modifier": "ApexShred",
@@ -252,9 +252,9 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " EnemyExplorer",
-            " SelfOfficerTalNotOnBridge"
+            "TargetNotArmada",
+            "EnemyExplorer",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Increases Apex Barrier against Explorer hostiles by X (X at rank X). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -372,8 +372,8 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "On round start, if on an Interceptor and enemy player has Hull Breach, Andy Billups increases your Isolytic Cascade damage by X for 1 round. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -401,8 +401,8 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer",
-            " TargetHasBurning"
+            "EnemyPlayer",
+            "TargetHasBurning"
           ],
           "description": "On round start, if on a Battleship and enemy player has Burning, Andy Billups increases your Isolytic Defense by X for 1 round.",
           "modifier": "IsolyticDefense",
@@ -471,8 +471,8 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " SelfOfficerTalNotOnBridge"
+            "TargetNotArmada",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Increases Apex Barrier by X (X at rank X) for 2 rounds when hit by a hostile (Once per weapon)(Cumulative). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -998,7 +998,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "Badgey decreases the Armor, Shield Deflection, and Dodge of enemy ships by X.",
           "modifier": "AllDefenses",
@@ -1092,7 +1092,7 @@
           ],
           "conditions": [
             "SelfMining",
-            " SelfDefending"
+            "SelfDefending"
           ],
           "description": "When the ship becomes attacked while mining, at the beginning of combat, Barot decreases the opponent's Hull Health by X.",
           "modifier": "HullHPRepair",
@@ -1447,7 +1447,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW Black Ops M'Benga restores the Shield Health of your ship every round by X (X at rank X) when fighting hostiles.",
           "modifier": "ShieldHPRepair",
@@ -1565,7 +1565,7 @@
           ],
           "conditions": [
             "SelfAtSoloArmada",
-            " EnemyHullFaction"
+            "EnemyHullFaction"
           ],
           "description": "While fighting against a Borg Solo Armada, upon receiving Hull Damage from an enemy shot, increase Critical Hit Chance by X (Cumulative).",
           "modifier": "CritChance",
@@ -1593,7 +1593,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasAssimilated"
+            "TargetHasAssimilated"
           ],
           "description": "While fighting a player ship with Assimilate, Borg Queen increases the ship's Armor Piercing, Shield Piercing and Accuracy by X each round (Cumulative).",
           "modifier": "AllPiercing",
@@ -2045,7 +2045,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "Cadet Uhura decreases the Weapon Damage of the opponent's ship by X.",
           "modifier": "AllDamage",
@@ -2114,9 +2114,9 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " SelfAttacking",
-            " CombatGameContext",
-            " TargetHasHullBreach"
+            "SelfAttacking",
+            "CombatGameContext",
+            "TargetHasHullBreach"
           ],
           "description": "When attacking on a capture node, at the start of each turn, as long as the opponent's ship has a Hull Breach, Captain Tilly increases the Armor Piercing, Shield Piercing and Accuracy of the ship by X of the total Defense of all Officers on the ship (cumulative).",
           "modifier": "AllPiercing",
@@ -2187,7 +2187,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfDefending"
+            "SelfDefending"
           ],
           "description": "When defending in battle against a player, Carol decreases the Weapon Damage from opponents by X.",
           "modifier": "AllDamage",
@@ -2281,7 +2281,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetStateAny"
+            "TargetStateAny"
           ],
           "description": "On round start, if the enemy player has any state, Carol Freeman increases your Isolytic Cascade damage by X for 1 round. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses. -- States: Morale, Burning, Hull Breach, Assimilated",
           "modifier": "IsolyticCascadeDamage",
@@ -2350,9 +2350,9 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " TargetMaxLevel",
-            " EnemyHostile",
-            " TargetNotArmada"
+            "TargetMaxLevel",
+            "EnemyHostile",
+            "TargetNotArmada"
           ],
           "description": "If the opponent is a Hostile, Cath decreases the Damage done by its Kinetic Weapons by X. Works against Hostiles of level 51 and under.",
           "modifier": "AllDamage",
@@ -2493,8 +2493,8 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB",
-            " TargetHasHullBreach"
+            "TargetNotASB",
+            "TargetHasHullBreach"
           ],
           "description": "If the ship deals a Critical Hit to the opponent's ship while it has a Hull Breach, Chang has a X chance of delaying its next weapon attack by 1 round.",
           "modifier": "AllReloadSpeed",
@@ -2540,7 +2540,7 @@
           ],
           "conditions": [
             "TargetIsArmada",
-            " EnemyHullFaction"
+            "EnemyHullFaction"
           ],
           "description": "Changeling Kira decreases critical hit chance of Cardassian Armadas by X every round (Cumulative).",
           "modifier": "CritChance",
@@ -2679,7 +2679,7 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " EnemyHostile"
+            "EnemyHostile"
           ],
           "description": "Chen increases the Dodge, Shield Deflection and Armor of the ship by X against Hostiles. Works against Hostiles of level 51 and under.",
           "modifier": "AllDefenses",
@@ -2705,9 +2705,9 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " EnemyHostile",
-            " TargetNotArmada",
-            " ModuleEnergy"
+            "EnemyHostile",
+            "TargetNotArmada",
+            "ModuleEnergy"
           ],
           "description": "If the opponent is a Hostile, Chen decreases the damage done by its Energy Weapons by X. Works against Hostiles of level 51 and under.",
           "modifier": "AllDamage",
@@ -2753,8 +2753,8 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " CombatGameContext",
-            " SelfDefending"
+            "CombatGameContext",
+            "SelfDefending"
           ],
           "description": "When defending on a Capture Node, Hugh Culber increases Armor by X of the total Health of the Officers on the ship.",
           "modifier": "ShipArmor",
@@ -2848,8 +2848,8 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB",
-            " TargetHasBurning"
+            "TargetNotASB",
+            "TargetHasBurning"
           ],
           "description": "At the beginning of each round, if the opponent is  Burning, D'jaoki increases the Armor, Shield Deflection, and Dodge of the ship by X of the Health of all Officers on the ship.",
           "modifier": "AllDefenses",
@@ -3033,8 +3033,8 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "While on an Interceptor fighting a player ship with Hull Breach, if Damar scores a Critical Hit, increase Critical Hit Chance by X once per Weapon for the remainder of battle.",
           "modifier": "CritChance",
@@ -3060,8 +3060,8 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "While on an Interceptor fighting a player ship with Hull Breach, if Damar scores a Critical Hit, decrease opponent Critical Hit Damage by X once per Weapon for 3 rounds.",
           "modifier": "CritDamage",
@@ -3179,7 +3179,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfDefending"
+            "SelfDefending"
           ],
           "description": "When the ship is attacked by a player, Darwin increases the Weapon Damage by X.",
           "modifier": "AllDamage",
@@ -3345,7 +3345,7 @@
           ],
           "conditions": [
             "EnemyHullFaction",
-            " EnemyHostile"
+            "EnemyHostile"
           ],
           "description": "Deanna Troi increases Weapon Damage against Romulan Hostiles and Romulan Armadas by X.",
           "modifier": "AllDamage",
@@ -3461,8 +3461,8 @@
           ],
           "conditions": [
             "TargetNotPlayerStation",
-            " TargetIsArmadaOrInvadingEntity",
-            " TargetNotASB"
+            "TargetIsArmadaOrInvadingEntity",
+            "TargetNotASB"
           ],
           "description": "Gwen DeMarco increases Isolytic Cascade damage against Armadas and Invading Entities by X (X at rank X) -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -3490,7 +3490,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetStateAny"
+            "TargetStateAny"
           ],
           "description": "Gwen DeMarco Increases Isolytic Cascade Damage in PvP when the enemy player has any state by  X (X at rank X) -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -3538,7 +3538,7 @@
           ],
           "conditions": [
             "SelfAtSoloArmada",
-            " EnemyHullFaction"
+            "EnemyHullFaction"
           ],
           "description": "While fighting against a Borg Solo Armada, increase all Officer stats by X for the duration of combat.",
           "modifier": "OfficerStatAll",
@@ -3613,7 +3613,7 @@
           ],
           "conditions": [
             "CombatGameContext",
-            " SelfDefending"
+            "SelfDefending"
           ],
           "description": "While defending a mining node, Dixon Hill reduces the opponent's Shield Mitigation every round by X. (This ability can stack)",
           "modifier": "ShieldMitigation",
@@ -4026,7 +4026,7 @@
           ],
           "conditions": [
             "CombatGameContext",
-            " SelfAttacking"
+            "SelfAttacking"
           ],
           "description": "Decreases the opponent crew's Defense by a stacking X of base each round when attacking a player during a Takeover.",
           "modifier": "OfficerStatDefense",
@@ -4052,8 +4052,8 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " CombatGameContext",
-            " SelfAttacking"
+            "CombatGameContext",
+            "SelfAttacking"
           ],
           "description": "When attacking a player on a capture node, at the start of each round, Emperor Georgiou increases the number of shots of each weapon by X. (cumulative) -- Weapon shots are rounded to the nearest whole number",
           "modifier": "ShotsPerAttack",
@@ -4126,7 +4126,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Increases Isolytic Cascade Damage by X versus non-Armada Hostiles -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -4195,7 +4195,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Increases Isolytic Cascade Damage by X for 3 rounds each time you hit a non-Armada Hostile (once per weapon). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -4309,7 +4309,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Reduces the opponent\u2019s Shield Health by X of total Officer Attack at the beginning of each round versus non-Armada Hostiles.",
           "modifier": "ShieldHPRepair",
@@ -4452,8 +4452,8 @@
           ],
           "conditions": [
             "SelfSurveyor",
-            " EnemyPlayer",
-            " SelfDefending"
+            "EnemyPlayer",
+            "SelfDefending"
           ],
           "description": "Ezri Dax increases Isolytic Cascade Damage by X when attacked by a Player while on a Survey Ship.",
           "modifier": "IsolyticCascadeDamage",
@@ -4479,7 +4479,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetStateAny"
+            "TargetStateAny"
           ],
           "description": "Ezri Dax increases Isolytic Cascade Damage by X (X at rank X) for 2 rounds on round start against players, if the opponent has any state.",
           "modifier": "IsolyticCascadeDamage",
@@ -4725,7 +4725,7 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "On round start, if placed on a ship with Morale against players, French Marshal Q increases your weapon shots by X (X at rank X) for 3 rounds.",
           "modifier": "ShotsPerAttack",
@@ -4753,7 +4753,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetStateAny"
+            "TargetStateAny"
           ],
           "description": "On round start, if the enemy player has any state, French Marshal Q repairs X (X at rank X) of hull damage taken in the previous round of combat.",
           "modifier": "HullRepair",
@@ -4822,7 +4822,7 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " EnemyHostile"
+            "EnemyHostile"
           ],
           "description": "If the opponent is a Hostile, Gaila decreases the damage from its Critical Hits by X. Works against Hostiles of level 70 and under.",
           "modifier": "CritDamage",
@@ -4868,9 +4868,9 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "SelfInterceptor",
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "While on an Interceptor fighting a player ship with Hull Breach, Garak reduces opponent Kinetic Weapon Damage by X each round.",
           "modifier": "AllDamage",
@@ -4896,8 +4896,8 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "While on an Interceptor fighting a player ship with Hull Breach, Garak increases Critical Hit Chance by X each round.",
           "modifier": "CritChance",
@@ -4966,7 +4966,7 @@
           ],
           "conditions": [
             "EnemyHullFaction",
-            " EnemyHostile"
+            "EnemyHostile"
           ],
           "description": "Geordi La Forge increases Weapon Damage against Klingon Hostiles and Klingon Armadas by X.",
           "modifier": "AllDamage",
@@ -5422,7 +5422,7 @@
           ],
           "conditions": [
             "SelfAtSoloArmada",
-            " EnemyHullFaction"
+            "EnemyHullFaction"
           ],
           "description": "When fighting against a Borg Solo Armada, at the start of each round reduce target's Critical Damage by X for 1 round.",
           "modifier": "CritDamage",
@@ -5450,7 +5450,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasAssimilated"
+            "TargetHasAssimilated"
           ],
           "description": "While fighting a player ship with Assimilate, Gossa increases the ship's Armor, Shield Deflection and Dodge by X each round (Cumulative).",
           "modifier": "AllDefenses",
@@ -5564,7 +5564,7 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "While on an Interceptor fighting a player ship, at the start of a round Gul Dukat has X chance to apply Hull Breach to it for 3 rounds.",
           "modifier": "AddState",
@@ -5590,8 +5590,8 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "When shot while on an Interceptor fighting a player ship with Hull Breach, Gul Dukat increases the number of shots by X once per Weapon for 5 rounds.",
           "modifier": "ShotsPerAttack",
@@ -5705,7 +5705,7 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " EnemyExplorer"
+            "EnemyExplorer"
           ],
           "description": "When fighting Explorers, John Harrison increases the Weapon damage of the ship by X. Works against Hostiles of level 70 and under.",
           "modifier": "AllDamage",
@@ -5731,8 +5731,8 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotArmada",
+            "TargetNotASB"
           ],
           "description": "For the first round of combat, John Harrison ignores X of the opponent's shield. Works against Hostiles and Players of level 70 and under.",
           "modifier": "ShieldMitigation",
@@ -6225,7 +6225,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Hugh has X chance to increase Critical Hit Chance by 25% for 2 rounds after being hit by a Hostile. (This ability can stack) (Weapons with multiple shots will only trigger this ability once per attack)",
           "modifier": "CritChance",
@@ -6273,8 +6273,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasHullBreach",
-            " SelfOfficerTalNotOnBridge"
+            "TargetHasHullBreach",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Against players with Hull Breach, Icheb increases your Apex Barrier by X (X at rank X) for 4 rounds each time you score a hit (Once per weapon)(Cumulative). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -6302,7 +6302,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfStateNone"
+            "SelfStateNone"
           ],
           "description": "On round start against players, if on a ship with no State applied Icheb increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds (Cumulative). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -6348,7 +6348,7 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "Ikat'ika increases all Mitigation stats by X for 1 Round every Round when when fighting players, if on an Explorer.",
           "modifier": "AllDefenses",
@@ -6374,8 +6374,8 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " SelfHasMorale",
-            " EnemyPlayer"
+            "SelfHasMorale",
+            "EnemyPlayer"
           ],
           "description": "Ikat'ika increases Weapon Damage by X at the start of each Round for 3 Rounds when fighting players, if on an Explorer with Morale.",
           "modifier": "AllDamage",
@@ -6423,7 +6423,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasHullBreach"
+            "TargetHasHullBreach"
           ],
           "description": "Against players with Hull Breach, Infiltrator Tuvok increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds each time you score a hit (Once per weapon)(Cumulative). -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -6451,8 +6451,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfStateNone",
-            " SelfOfficerTalNotOnBridge"
+            "SelfStateNone",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players, if on a ship with no State applied Infiltrator Tuvok increases your Apex Barrier by X (X at rank X) for 3 rounds (Cumulative). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -6566,8 +6566,8 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " SelfHasMorale",
-            " EnemyPlayer"
+            "SelfHasMorale",
+            "EnemyPlayer"
           ],
           "description": "On round start, if on an Explorer with Morale, Jack Ransom increases your Isolytic Cascade damage by X for 1 round against players. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -6595,8 +6595,8 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer",
-            " TargetHasHullBreach"
+            "EnemyPlayer",
+            "TargetHasHullBreach"
           ],
           "description": "On round start, if on an Interceptor and enemy player has Hull Breach, Jack Ransom increases your Isolytic Defense by X for 1 round.",
           "modifier": "IsolyticDefense",
@@ -6805,7 +6805,7 @@
           ],
           "conditions": [
             "EnemyHullFaction",
-            " SelfHullFranklins"
+            "SelfHullFranklins"
           ],
           "description": "When Jaylah is on the Franklin and fighting Swarm hostiles, Jaylah increases the number of shots of the Franklin and Franklin-A by X.",
           "modifier": "ShotsPerAttack",
@@ -6919,7 +6919,7 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel"
+            "EnemySentinel"
           ],
           "description": "When attacking a Station, Joachim has X chances of greatly increasing the mitigation of the ship for the first round of combat.",
           "modifier": "AllDefenses",
@@ -6945,7 +6945,7 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel"
+            "EnemySentinel"
           ],
           "description": "When attacking a Station, Joachim decreases the Weapon Damage of all opponent's Ships and Defense Platforms by X",
           "modifier": "AllDamage",
@@ -7080,7 +7080,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "When you take damage from a hostile or another player, Jonathan Archer increases your Critical Hit damage by X (X at rank X) for 2 rounds. (This ability can stack) (Does not trigger at Armadas or Assaults) (Weapons with multiple shots will only trigger this ability once per attack)",
           "modifier": "CritDamage",
@@ -7219,8 +7219,8 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " CombatGameContext",
-            " SelfDefending"
+            "CombatGameContext",
+            "SelfDefending"
           ],
           "description": "As long as the ship is mining, K'Bisch reduces the damage dealt by attacking opponents by X.",
           "modifier": "AllDamage",
@@ -7402,7 +7402,7 @@
           ],
           "conditions": [
             "EnemySentinel",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "At the start of each round, if the target of the ship is a Defense Platform, Kati increases the Chances of a Critical Hit by X for that round.",
           "modifier": "CritChance",
@@ -7428,7 +7428,7 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel"
+            "EnemySentinel"
           ],
           "description": "When attacking a Station, Kati increases the Critical Hit Damage by X.",
           "modifier": "CritDamage",
@@ -7612,7 +7612,7 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel"
+            "EnemySentinel"
           ],
           "description": "When attacking a Station, Khan has X chances of drastically reducing the mitigation of all opponent's ships and defense platforms for two rounds.",
           "modifier": "AllDefenses",
@@ -7889,7 +7889,7 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "When inside a Battleship, Komal increases Weapon Damage against players by X.",
           "modifier": "AllDamage",
@@ -7915,7 +7915,7 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "If the opponent is a player, Komal decreases the damage made by its Kinetic Weapons by X.",
           "modifier": "AllDamage",
@@ -7986,7 +7986,7 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " TargetHasHullBreach"
+            "TargetHasHullBreach"
           ],
           "description": "As long as the opponent's ship has a Hull Breach, Koth increases the damage dealt by Kinetic Weapons by X.",
           "modifier": "AllDamage",
@@ -8403,7 +8403,7 @@
           ],
           "conditions": [
             "SelfAtWaveDefenseChallenge",
-            " SelfOfficerTalNotOnBridge"
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Laliari increases the Apex Barrier by X (X at rank X) when in Wave Defense. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -8520,9 +8520,9 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " EnemyHostile",
-            " TargetNotArmada",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyHostile",
+            "TargetNotArmada",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Lieutenant Picard increases your Apex Barrier by X vs non-Armada hostiles. -- With full Synergy, Lieutenant Picard provides 11,000 Apex Barrier which reduces the incoming damage by 55%. -- Works against Hostiles of level 35 and under. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -8727,7 +8727,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasHullBreach"
+            "TargetHasHullBreach"
           ],
           "description": "When fighting players, at the start of each round, if the opponent has Hull Breach, Lorca decreases the opponent's Weapon damage by X for this turn.",
           "modifier": "AllDamage",
@@ -8819,7 +8819,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfAttacking"
+            "SelfAttacking"
           ],
           "description": "When attacking other players, Lursa decreases the opponent's Weapon Damage by X.",
           "modifier": "AllDamage",
@@ -9092,8 +9092,8 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB",
-            " TargetHasHullBreach"
+            "TargetNotASB",
+            "TargetHasHullBreach"
           ],
           "description": "As long as the opponent ship has a Hull Breach, Mara decreases its Dodge by X at the end of each round.",
           "modifier": "ShipDodge",
@@ -9283,7 +9283,7 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "On round start, if placed on a ship with Morale against players, Mariachi Q increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds.",
           "modifier": "IsolyticCascadeDamage",
@@ -9311,8 +9311,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasBurning",
-            " SelfOfficerTalNotOnBridge"
+            "TargetHasBurning",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players afflicted by Burning, Mariachi Q increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -9840,8 +9840,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyInterceptor",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyInterceptor",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On combat start while against an Interceptor player, Mirror Data increases your Apex Barrier by X for the duration of combat. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -9910,8 +9910,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyBattleship",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyBattleship",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On combat start while against a Battleship player: Mirror Ezri increases your Apex Barrier by X for the duration of combat. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -9937,8 +9937,8 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " EnemyPlayer",
-            " TargetHasAssimilated"
+            "EnemyPlayer",
+            "TargetHasAssimilated"
           ],
           "description": "On round start against players with Assimilate, Mirror Ezri increases your Kinetic Weapon damage by X (X at rank X) for 1 round.",
           "modifier": "AllDamage",
@@ -9984,7 +9984,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfOfficerTalNotOnBridge"
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players, Mirror Kira increases your Apex Barrier by  X each round for 5 rounds (cumulative). -- Mirror Kira receives full synergy bonuses from all Mirror officers regardless of class. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -10010,7 +10010,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasAssimilated"
+            "TargetHasAssimilated"
           ],
           "description": "On round start against players with Assimilate, Mirror Kira increases your shots by X (X at rank X) each round for 5 rounds (cumulative).",
           "modifier": "ShotsPerAttack",
@@ -10081,8 +10081,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasAssimilated",
-            " SelfOfficerTalNotOnBridge"
+            "TargetHasAssimilated",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players with Assimilate, Mirror Picard increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -10128,8 +10128,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyExplorer",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyExplorer",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On combat start while against an Explorer player: Mirror Troi increases your Apex Barrier by X for the duration of combat. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -10155,8 +10155,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasAssimilated",
-            " ModuleEnergy"
+            "TargetHasAssimilated",
+            "ModuleEnergy"
           ],
           "description": "On round start against players with Assimilate, Mirror Troi increases your Energy Weapon damage by X (X at rank X) for 1 round.",
           "modifier": "AllDamage",
@@ -10204,9 +10204,9 @@
           ],
           "conditions": [
             "TargetNotPlayerStation",
-            " EnemyPlayer",
-            " TargetHasAssimilated",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyPlayer",
+            "TargetHasAssimilated",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Increases your existing Apex Barrier by X (X at rank X) for 2 rounds after receiving HHP damage from a player ship with Assimilate (Once per weapon). -- This ability does not trigger when Tal is assigned to the bridge of your ship or during station combat.",
           "modifier": "ApexBarrier",
@@ -10234,8 +10234,8 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " SelfOfficerTalNotOnBridge"
+            "TargetNotArmada",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Increases your Apex Barrier by X (X at rank X) at the start of combat versus non-Armada Hostiles. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -10283,7 +10283,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasBurning"
+            "TargetHasBurning"
           ],
           "description": "On round start against players afflicted by Burning, Miss Q increases your Isolytic Cascade damage by X (X at rank X) for 3 rounds.",
           "modifier": "IsolyticCascadeDamage",
@@ -10311,8 +10311,8 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyPlayer",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start, if placed on a ship with Morale against players, Miss Q increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -10449,8 +10449,8 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " EnemyHostile",
-            " TargetNotArmada"
+            "EnemyHostile",
+            "TargetNotArmada"
           ],
           "description": "Moreau decreases the Armor Piercing, Shield Piercing and Accuracy of Hostiles by X. Works against Hostiles of level 70 and under.",
           "modifier": "AllPiercing",
@@ -10496,7 +10496,7 @@
           ],
           "conditions": [
             "TargetIsArmada",
-            " TargetMaxLevel"
+            "TargetMaxLevel"
           ],
           "description": "When the ship takes damage from an Armada Target weapon attack, Harry Mudd decreases the Weapon Damage of that Armada Target by X for this round. Works against Hostiles of level 70 and under. -- (Weapons with multiple shots will only trigger this maneuver once per attack.)",
           "modifier": "AllDamage",
@@ -10761,7 +10761,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " SelfOfficerTalNotOnBridge"
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "X chance each round to apply Burning for 1 round versus non-Player hostiles or Armadas. -- This ability does not trigger when Tal is assigned to the bridge of your ship",
           "modifier": "AddState",
@@ -10900,8 +10900,8 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " SelfOfficerTalNotOnBridge"
+            "TargetNotArmada",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Jason Nesmith increases your Apex Barrier by X (X at rank X) when fighting hostiles. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -11079,7 +11079,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "Next Gen La Forge decreases the Weapon Damage of the opponent's ship by X.",
           "modifier": "AllDamage",
@@ -11348,8 +11348,8 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel",
-            " SelfOfficerTalNotOnBridge"
+            "EnemySentinel",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Nog increases Apex Barrier by X for 2 rounds on round start, when attacking a Station. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -11375,7 +11375,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetStateAny"
+            "TargetStateAny"
           ],
           "description": "Nog reduces Critical Hit Chance by X (X at rank X) for 2 rounds on round start against players, if the opponent has any state.",
           "modifier": "CritChance",
@@ -11757,7 +11757,7 @@
           ],
           "conditions": [
             "EnemySentinel",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "At the start of each round, if the target of the ship is a Defense Platform, Otto increases the damage of the ship by X for that round.",
           "modifier": "AllDamage",
@@ -11917,7 +11917,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfDefending"
+            "SelfDefending"
           ],
           "description": "When defending against a Player, Stamets decreases the opponent's Armor Piercing by X.",
           "modifier": "ArmorPiercing",
@@ -12035,8 +12035,8 @@
           ],
           "conditions": [
             "TargetNotPlayerStation",
-            " TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotArmada",
+            "TargetNotASB"
           ],
           "description": "On combat start against players and hostiles, Phlox reduces the opponent's Critical Hit Chance by X (X at rank X), for 8 rounds. (Does not trigger at Armadas, Assaults or Station Combat).",
           "modifier": "CritChance",
@@ -12132,7 +12132,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyExplorer"
+            "EnemyExplorer"
           ],
           "description": "Admiral Picard increases your ship base Weapon Damage by X on combat start against a player Explorer for the duration of combat.",
           "modifier": "AllDamage",
@@ -12180,7 +12180,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Increases Critical Hit Damage by X every time your ship is hit by an attack while fighting Non-Armada Hostiles. (Cumulative) (Weapons with multiple shots will only trigger this ability once per attack.)",
           "modifier": "CritDamage",
@@ -12346,7 +12346,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyBattleship"
+            "EnemyBattleship"
           ],
           "description": "Riker increases your ship base Weapon Damage by X on combat start against a player Battleship for the duration of combat.",
           "modifier": "AllDamage",
@@ -12417,7 +12417,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyInterceptor"
+            "EnemyInterceptor"
           ],
           "description": "Worf increases your ship base Weapon Damage by X on combat start against a player Interceptor for the duration of combat.",
           "modifier": "AllDamage",
@@ -12531,8 +12531,8 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " EnemyPlayer",
-            " SelfDefending"
+            "EnemyPlayer",
+            "SelfDefending"
           ],
           "description": "Pon has a X chance at the start of combat to delay opponent weapons for 3 Rounds when attacked by players, if your ship is an Explorer.",
           "modifier": "AllLoadSpeed",
@@ -12558,8 +12558,8 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " SelfHasMorale",
-            " EnemyPlayer"
+            "SelfHasMorale",
+            "EnemyPlayer"
           ],
           "description": "Pon decreases opponent player's Critical Chance by X at the start of each Round for 3 Rounds if on an Explorer with Morale.",
           "modifier": "CritChance",
@@ -12605,8 +12605,8 @@
           ],
           "conditions": [
             "SelfHasHullBreach",
-            " TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotArmada",
+            "TargetNotASB"
           ],
           "description": "When the ship gets a Hull Breach from the opponent, Qa'ug decreases all the stats of the officers on the opponent's ship by X.",
           "modifier": "AllDefenses",
@@ -12772,7 +12772,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Increases Apex Shred against non-Armada hostiles by X (X at rank X). -- Apex Barrier remaining after Apex Shred is equal to: -- Apex Barrier / (100% + Apex Shred) -- 100% Apex Shred reduces Apex Barrier by 50%.",
           "modifier": "ApexShred",
@@ -12845,9 +12845,9 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " SelfOfficerTalNotOnBridge",
-            " EnemyBattleship"
+            "TargetNotArmada",
+            "SelfOfficerTalNotOnBridge",
+            "EnemyBattleship"
           ],
           "description": "Increases Apex Barrier against Battleship hostiles by X (X at rank X). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -13099,8 +13099,8 @@
           ],
           "conditions": [
             "EnemySentinel",
-            " TargetNotASB",
-            " SelfAttacking"
+            "TargetNotASB",
+            "SelfAttacking"
           ],
           "description": "When attacking a station, Rom delays opponent ship and defense platform Weapon Fire for X round. -- This ability does not gain synergy group benefits.",
           "modifier": "AllLoadSpeed",
@@ -13126,8 +13126,8 @@
           ],
           "conditions": [
             "EnemySentinel",
-            " TargetNotASB",
-            " SelfAttacking"
+            "TargetNotASB",
+            "SelfAttacking"
           ],
           "description": "When attacking a station, Rom increases the number of shots of the ship's weapons by X.",
           "modifier": "ShotsPerAttack",
@@ -13175,7 +13175,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasBurning"
+            "TargetHasBurning"
           ],
           "description": "On round start against players afflicted by Burning, Romi increases your Isolytic Defense by X (X at rank X) for 3 rounds.",
           "modifier": "IsolyticDefense",
@@ -13203,8 +13203,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasHullBreach",
-            " SelfOfficerTalNotOnBridge"
+            "TargetHasHullBreach",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players afflicted by Hull Breach, Romi increases your Apex Barrier by X (X at rank X) for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -13250,7 +13250,7 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "When inside an Explorer, Rukor increases the Weapon Damage against players by X.",
           "modifier": "AllDamage",
@@ -13276,7 +13276,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " ModuleEnergy"
+            "ModuleEnergy"
           ],
           "description": "If the opponent is a player, Rukor increases the damage made by the Energy Weapons of the ship by X.",
           "modifier": "AllDamage",
@@ -13324,7 +13324,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Increases Apex Shred  against non-Armada hostiles by X (X at rank X). -- Apex Barrier remaining after Apex Shred is equal to: -- Apex Barrier / (100% + Apex Shred) -- 100% Apex Shred reduces Apex Barrier by 50%.",
           "modifier": "ApexShred",
@@ -13745,7 +13745,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Restores the Shield Health of your ship every round by X (X at rank X) when fighting hostiles.",
           "modifier": "ShieldHPRepair",
@@ -13773,7 +13773,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Increases Critical Hit Damage by X (X at rank X) for 4 rounds each time you score a hit (Once per weapon) when fighting hostiles.",
           "modifier": "CritDamage",
@@ -13819,7 +13819,7 @@
           ],
           "conditions": [
             "EnemyHullFaction",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting a Borg Tactical Probe, Seven of Eleven has a X chance of increasing the number of shots of each weapon by 2.",
           "modifier": "ShotsPerAttack",
@@ -13962,8 +13962,8 @@
           ],
           "conditions": [
             "SelfHasBurning",
-            " TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotArmada",
+            "TargetNotASB"
           ],
           "description": "When the ship is Burning from the opponent, Severus decreases the opponent's Hull Health by X each round.",
           "modifier": "HullHPRepair",
@@ -14036,8 +14036,8 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer",
-            " TargetHasBurning"
+            "EnemyPlayer",
+            "TargetHasBurning"
           ],
           "description": "On round start, if on a Battleship and enemy player has Burning, Shaxs increases your Isolytic Cascade damage by X for 1 round. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -14065,8 +14065,8 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " SelfHasMorale",
-            " EnemyPlayer"
+            "SelfHasMorale",
+            "EnemyPlayer"
           ],
           "description": "On round start, if on an Explorer with Morale, Shaxs increases your Isolytic Defense by X for 1 round against players.",
           "modifier": "IsolyticDefense",
@@ -14135,7 +14135,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " ModuleEnergy"
+            "ModuleEnergy"
           ],
           "description": "If the opponent is a Hostile, Shev increases the damage of the Energy weapons of the ship by X.",
           "modifier": "AllDamage",
@@ -14391,8 +14391,8 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " EnemySurvey"
+            "TargetNotArmada",
+            "EnemySurvey"
           ],
           "description": "SNW Hemmer increases Armor, Shield Deflection, and Dodge by X of total Health when in combat with hostile Survey ships.",
           "modifier": "AllDefenses",
@@ -14463,7 +14463,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW James Kirk reduces enemy Shield Mitigation by X vs non-Armada Hostiles",
           "modifier": "ShieldMitigation",
@@ -14489,7 +14489,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW James Kirk increases base Weapon Damage by X vs non-Armada Hostiles",
           "modifier": "AllDamage",
@@ -14605,7 +14605,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW M'Benga increases all mitigation stats by  X of Officer Health vs non-Armada Hostiles",
           "modifier": "AllDefenses",
@@ -14631,7 +14631,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW M'Benga increases SHP every round by X (X at rank X) vs non-Armada Hostiles",
           "modifier": "ShieldHPRepair",
@@ -14704,7 +14704,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "At the start of combat, SNW Chapel increases Isolytic Cascade damage by X (X at rank X) vs non-Armada Hostiles. -- Isolytic Cascade multiplies your total damage, including Isolytic Damage, and all research and other bonuses.",
           "modifier": "IsolyticCascadeDamage",
@@ -14750,7 +14750,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting hostiles, SNW Ortegas increases critical hit chance against hostiles by X.",
           "modifier": "CritChance",
@@ -14776,9 +14776,9 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyHostile",
-            " EnemyExplorer",
-            " TargetNotArmada"
+            "EnemyHostile",
+            "EnemyExplorer",
+            "TargetNotArmada"
           ],
           "description": "SNW Ortegas increases Armor, Shield Deflection, and Dodge by X of total Health when attacking hostile Explorers from a Battleship.",
           "modifier": "AllDefenses",
@@ -14826,7 +14826,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW Pelia reduces Isolytic Damage received from non-Armada hostiles by X (X at rank X)",
           "modifier": "IsolyticDefense",
@@ -14897,7 +14897,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting hostiles, SNW Pike increases Shield Mitigation by X.",
           "modifier": "ShieldMitigation",
@@ -14923,7 +14923,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting hostiles, SNW Pike decreases hostile Shield Mitigation by X.",
           "modifier": "ShieldMitigation",
@@ -14969,7 +14969,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW Sam Kirk reduces enemy SHP by X every round vs non-Armada Hostiles",
           "modifier": "ShieldHPRepair",
@@ -14995,7 +14995,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW Sam Kirk increases Critical Damage by X (X at rank X) vs non-Armada Hostiles",
           "modifier": "CritDamage",
@@ -15113,7 +15113,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting hostiles, SNW Spock decreases hostile critical hit chance by X.",
           "modifier": "CritChance",
@@ -15139,9 +15139,9 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " EnemyHostile",
-            " TargetNotArmada",
-            " EnemyInterceptor"
+            "EnemyHostile",
+            "TargetNotArmada",
+            "EnemyInterceptor"
           ],
           "description": "SNW Spock increases Armor, Shield Deflection, and Dodge by X of total Defense when attacking hostile Interceptors from an Explorer.",
           "modifier": "AllDefenses",
@@ -15189,7 +15189,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "SNW T'Pring increases Armor, Shield Deflection, and Dodge by X (X at rank X) of total Defense against non-Armada hostiles.",
           "modifier": "AllDefenses",
@@ -15260,7 +15260,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting hostiles, SNW Uhura increases critical hit damage against hostiles by X.",
           "modifier": "CritDamage",
@@ -15286,9 +15286,9 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyHostile",
-            " TargetNotArmada",
-            " EnemyBattleship"
+            "EnemyHostile",
+            "TargetNotArmada",
+            "EnemyBattleship"
           ],
           "description": "SNW Uhura increases Armor, Shield Deflection, and Dodge by X of total Attack when attacking hostile Battleships from an Interceptor.",
           "modifier": "AllDefenses",
@@ -15334,7 +15334,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When fighting hostiles, SNW Una increases base Weapon Damage by X.",
           "modifier": "AllDamage",
@@ -15403,7 +15403,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfOfficerTalNotOnBridge"
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players, Soran has X chance to apply Burning to your target for 1 round. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "AddState",
@@ -15429,9 +15429,9 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyExplorer",
-            " TargetHasBurning",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyExplorer",
+            "TargetHasBurning",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start against players commanding an Explorer afflicted by Burning, Soran increases your Apex Barrier by X (X at rank X) for 5 rounds. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -15477,8 +15477,8 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " TargetHasHullBreach",
-            " EnemyBattleship"
+            "TargetHasHullBreach",
+            "EnemyBattleship"
           ],
           "description": "On round start against player Battleships with Hull Breach, Specialist Seven increases your shots by X each round for 4 rounds (Cumulative)",
           "modifier": "ShotsPerAttack",
@@ -15642,9 +15642,9 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer",
-            " EnemyInterceptor",
-            " SelfOfficerTalNotOnBridge"
+            "EnemyPlayer",
+            "EnemyInterceptor",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "On round start, if placed on a ship with Morale against players commanding an Interceptor, Starfleet Q increases your Apex Barrier by X (X at rank X) for 5 rounds. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -15756,8 +15756,8 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer",
-            " TargetHasBurning"
+            "EnemyPlayer",
+            "TargetHasBurning"
           ],
           "description": "While on a Battleship fighting a Burning player ship, at the start of each round Strike Team SNW La'an increases the number of shots per Weapon by X.",
           "modifier": "ShotsPerAttack",
@@ -15783,7 +15783,7 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "While on a Battleship fighting a player ship, each time your ship hits with a weapon, Strike Team SNW La'an has a X chance of Burning it for 3 rounds.",
           "modifier": "AddState",
@@ -15829,7 +15829,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " EnemyExplorer"
+            "EnemyExplorer"
           ],
           "description": "When shot by a player Explorer, Strike Team SNW Ortegas has X chance of Burning them for 3 rounds.",
           "modifier": "AddState",
@@ -15855,7 +15855,7 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "While on a Battleship fighting a player ship, Strike Team SNW Ortegas causes weapons shot by them to have a X chance of having their next attack delayed by 1 round.",
           "modifier": "AllReloadSpeed",
@@ -15901,7 +15901,7 @@
           ],
           "conditions": [
             "EnemyExplorer",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "While in combat against a player Explorer, Strike Team SNW Una increases all Officer stats by X each round.",
           "modifier": "OfficerStatAll",
@@ -15927,7 +15927,7 @@
           ],
           "conditions": [
             "SelfBattleship",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "While on a Battleship fighting a player ship, Strike Team SNW Una decreases their Shield Mitigation by X each round.",
           "modifier": "ShieldMitigation",
@@ -15975,7 +15975,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "Repairs X (X at rank X) of hull damage taken in the previous round of combat when fighting hostiles.",
           "modifier": "HullRepair",
@@ -16003,7 +16003,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "At the start of combat increases Critical Hit Damage by X (X at rank X) for 5 rounds when fighting hostiles.",
           "modifier": "CritDamage",
@@ -16072,7 +16072,7 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " ModuleEnergy"
+            "ModuleEnergy"
           ],
           "description": "When the ship has Morale, Sulu increases the total damage made by Energy Weapons by X.",
           "modifier": "AllDamage",
@@ -16141,9 +16141,9 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " TargetMaxLevel",
-            " EnemyHostile",
-            " TargetNotArmada"
+            "TargetMaxLevel",
+            "EnemyHostile",
+            "TargetNotArmada"
           ],
           "description": "If the opponent is a Hostile, T'Laan decreases the Damage done by its Kinetic Weapons by X. Works against Hostiles of level 51 and under.",
           "modifier": "AllDamage",
@@ -16350,11 +16350,11 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetHasBurning",
-            " TargetNotInvadingEntity",
-            " TargetNotASB",
-            " TargetMaxLevel",
-            " EnemyNotToaTrialHostile"
+            "TargetHasBurning",
+            "TargetNotInvadingEntity",
+            "TargetNotASB",
+            "TargetMaxLevel",
+            "EnemyNotToaTrialHostile"
           ],
           "description": "Tal decreases the opponent ship's Hull Health by a cumulative X each round while it is Burning versus players, and Hostiles level 60 and under.",
           "modifier": "HullHPRepair",
@@ -16744,7 +16744,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " SelfDefending"
+            "SelfDefending"
           ],
           "description": "At the start of combat, when defending from a player attack, Tilly decreases the opponent's Shield Health by X of its starting Shield Health.",
           "modifier": "ShieldHPRepair",
@@ -16883,8 +16883,8 @@
           ],
           "conditions": [
             "TargetMaxLevel",
-            " CombatBattleType",
-            " SelfOfficerTalNotOnBridge"
+            "CombatBattleType",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "TMP Hikaru Sulu increases Apex Barrier by X for 10 rounds against non-Armada Hostiles, Outposts and Retaliation Hostiles. Works against Hostiles of level 81 and under. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -16910,7 +16910,7 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " TargetStateAny"
+            "TargetStateAny"
           ],
           "description": "On round start, TMP Hikaru Sulu increases your ship's critical chance by X (X at rank X) for 4 rounds, if any state is applied to non-Armada Hostiles, Outposts or Retaliation Hostiles.",
           "modifier": "CritChance",
@@ -17271,8 +17271,8 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " EnemyPlayer",
-            " SelfDefending"
+            "EnemyPlayer",
+            "SelfDefending"
           ],
           "description": "When attacked while on a Capture or Mining Node by a player, TOS Chekov decreases the opponent's damage by X.",
           "modifier": "AllDamage",
@@ -17318,8 +17318,8 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer",
-            " ModuleEnergy"
+            "EnemyPlayer",
+            "ModuleEnergy"
           ],
           "description": "When fighting players, at the start of each turn, as long as the ship has Morale, TOS James T. Kirk increases the damage of energy weapons by X of the total Defense of all Officers on the ship (cumulative).",
           "modifier": "AllDamage",
@@ -17553,7 +17553,7 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "When fighting players, as long as the ship has Morale, TOS Spock decreases the Critical Hit Damage bonus of the opponent's ship by X.",
           "modifier": "CritDamage",
@@ -17622,7 +17622,7 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " SelfHasMorale"
+            "SelfHasMorale"
           ],
           "description": "If the ship is an Explorer, at the start of each turn, if the ship has Morale, TOS Hikaru Sulu increases its Critical Hit Chance by X for that round.",
           "modifier": "CritChance",
@@ -17668,7 +17668,7 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "When fighting players, as long as the ship has Morale, TOS Nyota Uhura decreases the opponent's Critical Hit Chance by X.",
           "modifier": "CritChance",
@@ -17694,7 +17694,7 @@
           ],
           "conditions": [
             "SelfHasMorale",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "When fighting players, as long as the ship has Morale, TOS Nyota Uhura removes X from the Shield Mitigation of the opponent's ship. -- Shield Mitigation determines the amount of damage dealt to the shield health",
           "modifier": "ShieldMitigation",
@@ -17742,7 +17742,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "When you take damage from a hostile or another player, Trip Tucker decreases your opponent's critical damage by X for 2 rounds. (This ability can stack) (Does not trigger at Armadas or Assaults) (Weapons with multiple shots will only trigger this ability once per attack)",
           "modifier": "CritDamage",
@@ -17951,8 +17951,8 @@
           ],
           "conditions": [
             "CombatBattleType",
-            " CombatGameContext",
-            " SelfDefending"
+            "CombatGameContext",
+            "SelfDefending"
           ],
           "description": "When defending on a Capture Node, Ash Tyler gives all Officers on the ship a bonus of X to their Attack. -- Increasing Attack may result in an increase in Damage",
           "modifier": "OfficerStatAttack",
@@ -18089,7 +18089,7 @@
           ],
           "conditions": [
             "SelfInterceptor",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "When inside an Interceptor, Vartoq increases the Weapon Damage against players by X.",
           "modifier": "AllDamage",
@@ -18115,7 +18115,7 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "If the opponent is a player, Vartoq increases the damage made by the Kinetic Weapons of the ship by X.",
           "modifier": "AllDamage",
@@ -18184,7 +18184,7 @@
           ],
           "conditions": [
             "ModuleKinetic",
-            " EnemyHostile"
+            "EnemyHostile"
           ],
           "description": "If the opponent is a Hostile, Vel increases the damage made by the Kinetic Weapons of the ship by X.",
           "modifier": "AllDamage",
@@ -18368,7 +18368,7 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel"
+            "EnemySentinel"
           ],
           "description": "VIL Gul Dukat increases Shots by X (X at rank X) when attacking a Station.",
           "modifier": "ShotsPerAttack",
@@ -18443,7 +18443,7 @@
           ],
           "conditions": [
             "TargetNotASB",
-            " EnemySentinel"
+            "EnemySentinel"
           ],
           "description": "When attacking a station, Winn Adami ignores X (X at rank X) of the opponent's shield for the first 3 rounds.",
           "modifier": "ShieldMitigation",
@@ -18516,7 +18516,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "At the beginning of each round, Vixis has a X chance of delaying the opponent Weapon Fire by one round.",
           "modifier": "AllReloadSpeed",
@@ -18542,7 +18542,7 @@
           ],
           "conditions": [
             "EnemyPlayer",
-            " ModuleEnergy"
+            "ModuleEnergy"
           ],
           "description": "Vixis decreases the Energy Weapon Damage of opponent players by X.",
           "modifier": "AllDamage",
@@ -18656,7 +18656,7 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " EnemyPlayer"
+            "EnemyPlayer"
           ],
           "description": "On round start, Weyoun has a X chance to apply Morale for 3 rounds when fighting against players, if on an Explorer.",
           "modifier": "AddState",
@@ -18682,8 +18682,8 @@
           ],
           "conditions": [
             "SelfExplorer",
-            " SelfHasMorale",
-            " EnemyPlayer"
+            "SelfHasMorale",
+            "EnemyPlayer"
           ],
           "description": "Weyoun increases Weapon Shots by +X at the start of each Round for 2 Rounds when fighting players, if on an Explorer with Morale.",
           "modifier": "ShotsPerAttack",
@@ -18754,7 +18754,7 @@
           ],
           "conditions": [
             "EnemyHullFaction",
-            " EnemyHostile"
+            "EnemyHostile"
           ],
           "description": "William T. Riker increases Weapon Damage against Federation Hostiles and Federation Armadas by X.",
           "modifier": "AllDamage",
@@ -18827,7 +18827,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "When you take hull damage from a non-Armada hostile, WOK Carol Marcus increases your Shield Mitigation by X (X at rank X) for 1 round (cumulative). -- (Weapons with multiple shots will only trigger this ability once per attack.)",
           "modifier": "ShieldMitigation",
@@ -18875,9 +18875,9 @@
           ],
           "conditions": [
             "SelfSurveyor",
-            " EnemyPlayer",
-            " SelfOfficerTalNotOnBridge",
-            " SelfDefending"
+            "EnemyPlayer",
+            "SelfOfficerTalNotOnBridge",
+            "SelfDefending"
           ],
           "description": "On combat start, WOK Joachim increases your Apex Barrier by X (X at rank X) when attacked by a player while on a Survey ship. -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",
@@ -19051,8 +19051,8 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " TargetStateAny"
+            "TargetNotArmada",
+            "TargetStateAny"
           ],
           "description": "On round start, against non-Armada hostiles, WOK Saavik increases your Isolytic Cascade damage by X (X at rank X) for 1 round, if the enemy has any state.",
           "modifier": "IsolyticCascadeDamage",
@@ -19125,7 +19125,7 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada"
+            "TargetNotArmada"
           ],
           "description": "WOK Montgomery Scott reduces enemy Shield Mitigation by X (X at rank X) when fighting non-Armada hostiles.",
           "modifier": "ShieldMitigation",
@@ -19377,7 +19377,7 @@
           ],
           "conditions": [
             "TargetNotArmada",
-            " TargetNotASB"
+            "TargetNotASB"
           ],
           "description": "Yuki Sulu decreases the Shield Health of the opponent's ship by X each round.",
           "modifier": "ShieldHPRepair",
@@ -19547,9 +19547,9 @@
           ],
           "conditions": [
             "EnemyHostile",
-            " TargetNotArmada",
-            " EnemyInterceptor",
-            " SelfOfficerTalNotOnBridge"
+            "TargetNotArmada",
+            "EnemyInterceptor",
+            "SelfOfficerTalNotOnBridge"
           ],
           "description": "Increases Apex Barrier against Interceptor hostiles by X (X at rank X). -- This ability does not trigger when Tal is assigned to the bridge of your ship.",
           "modifier": "ApexBarrier",

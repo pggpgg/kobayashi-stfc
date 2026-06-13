@@ -1,4 +1,0 @@
-{
-  "actionable_opaque_buff_stats": 0,
-  "note": "Track building opaque buff regression baseline. Regenerate after intentional allowlist or mapping changes: cargo run --bin report_building_mapping_gaps"
-}

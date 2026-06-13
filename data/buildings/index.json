@@ -1,5 +1,5 @@
 {
-  "data_version": "stfcspace-2026-04-28",
+  "data_version": "stfcspace-2026-06-13",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "buildings": [
     {
@@ -469,6 +469,12 @@
       "building_name": "The Warp Dive Bar",
       "file": "88_the_warp_dive_bar",
       "bid": 88
+    },
+    {
+      "id": "building_87",
+      "building_name": "Starfleet Academy: Remote Campus",
+      "file": "87_starfleet_academy_remote_campus",
+      "bid": 87
     },
     {
       "id": "building_1000",

@@ -1,7 +1,7 @@
 {
   "id": "building_77",
   "building_name": "The Facade",
-  "data_version": "stfcspace-2026-04-28",
+  "data_version": "stfcspace-2026-06-13",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -52,6 +52,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -103,6 +117,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -154,6 +182,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -205,6 +247,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -256,6 +312,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -307,6 +377,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -358,6 +442,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -409,6 +507,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -460,6 +572,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -511,6 +637,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -562,6 +702,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -613,6 +767,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -664,6 +832,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -715,6 +897,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -766,6 +962,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -817,6 +1027,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -868,6 +1092,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -919,6 +1157,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -970,6 +1222,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1021,6 +1287,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1072,6 +1352,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1123,6 +1417,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1174,6 +1482,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1225,6 +1547,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1276,6 +1612,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1327,6 +1677,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1378,6 +1742,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1429,6 +1807,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1480,6 +1872,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1531,6 +1937,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1582,6 +2002,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1633,6 +2067,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1684,6 +2132,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1735,6 +2197,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1786,6 +2262,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1837,6 +2327,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1888,6 +2392,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1939,6 +2457,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -1990,6 +2522,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2041,6 +2587,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2092,6 +2652,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2143,6 +2717,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2194,6 +2782,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2245,6 +2847,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2296,6 +2912,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2347,6 +2977,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2398,6 +3042,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2449,6 +3107,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2500,6 +3172,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2551,6 +3237,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2602,6 +3302,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2653,6 +3367,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2704,6 +3432,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2755,6 +3497,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2806,6 +3562,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2857,6 +3627,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2908,6 +3692,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -2959,6 +3757,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3010,6 +3822,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3061,6 +3887,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3071,7 +3911,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 21.3,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3080,28 +3920,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 23.45,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 5.7,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 5.7,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 5.7,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3112,6 +3952,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3122,7 +3976,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 22.7,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3131,28 +3985,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 24.4,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 6.4,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 6.4,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 6.4,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3163,6 +4017,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0.55,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3173,7 +4041,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 24.2,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3182,28 +4050,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 25.4,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 7.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 7.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 7.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3214,6 +4082,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3224,7 +4106,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 25.8,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3233,28 +4115,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 26.45,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 7.8,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 7.8,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 7.8,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3265,6 +4147,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3275,7 +4171,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 27.5,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3284,28 +4180,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 27.5,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 8.5,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 8.5,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 8.5,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3316,6 +4212,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0.8,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3326,7 +4236,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 29.3,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3335,28 +4245,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 28.6,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 9.2,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 9.2,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 9.2,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3367,6 +4277,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 0.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3377,7 +4301,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 31.2,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3386,28 +4310,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 29.75,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 9.9,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 9.9,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 9.9,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3418,6 +4342,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3428,7 +4366,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 33.2,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3437,28 +4375,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 30.95,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 10.6,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 10.6,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 10.6,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3469,6 +4407,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1.15,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3479,7 +4431,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 35.4,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3488,28 +4440,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 32.15,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 11.3,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 11.3,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 11.3,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3520,6 +4472,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1.3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3530,7 +4496,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 37.7,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3539,28 +4505,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 33.4,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 12,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 12,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 12,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3571,6 +4537,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1.45,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 0,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3581,7 +4561,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 40.2,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3590,28 +4570,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 34.75,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 12.7,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 12.7,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 12.7,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3622,6 +4602,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1.6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 6,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3632,7 +4626,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 42.8,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3641,28 +4635,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 36.15,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 13.4,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 13.4,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 13.4,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3673,6 +4667,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1.75,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3683,7 +4691,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 45.6,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3692,28 +4700,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 37.55,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 14.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 14.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 14.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3724,6 +4732,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 1.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 12,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3734,7 +4756,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 48.5,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3743,28 +4765,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 39,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 14.8,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 14.8,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 14.8,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3775,6 +4797,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 2.05,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 16,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3785,7 +4821,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 51.7,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3794,28 +4830,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 40.45,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 15.5,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 15.5,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 15.5,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3826,6 +4862,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 2.2,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 20,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3836,7 +4886,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 55,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3845,28 +4895,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 41.95,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 16.3,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 16.3,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 16.3,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3877,6 +4927,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 2.35,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 25,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3887,7 +4951,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 58.4,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3896,28 +4960,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 43.5,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 17.2,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 17.2,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 17.2,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3928,6 +4992,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 2.5,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 30,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3938,7 +5016,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 62,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3947,28 +5025,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 45.1,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 18.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 18.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 18.1,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -3979,6 +5057,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 2.7,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 36,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -3989,7 +5081,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 65.9,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -3998,28 +5090,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 46.75,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 19,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 19,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 19,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -4030,6 +5122,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 2.9,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 46,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     },
@@ -4040,7 +5146,7 @@
       "bonuses": [
         {
           "stat": "weapon_damage",
-          "value": 0,
+          "value": 70,
           "operator": "add",
           "conditions": [
             "defender_is_npc_hostile"
@@ -4049,28 +5155,28 @@
         },
         {
           "stat": "buff_4020372601",
-          "value": 0,
+          "value": 50,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61002"
         },
         {
           "stat": "officer_attack",
-          "value": 0,
+          "value": 20,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_defense",
-          "value": 0,
+          "value": 20,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
         },
         {
           "stat": "officer_health",
-          "value": 0,
+          "value": 20,
           "operator": "add",
           "conditions": [],
           "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers."
@@ -4081,6 +5187,20 @@
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
+        },
+        {
+          "stat": "buff_3171687260",
+          "value": 3,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+        },
+        {
+          "stat": "buff_3380254177",
+          "value": 50,
+          "operator": "add",
+          "conditions": [],
+          "notes": "auto-imported from data.stfc.space; loca_id=90402"
         }
       ]
     }

@@ -1,0 +1,12 @@
+{
+  "started": "2026-06-13T07:03:36.332Z",
+  "source": "https://data.stfc.space",
+  "segment": "officer",
+  "mode": "missing-only",
+  "total": 287,
+  "fetched": 6,
+  "skipped": 281,
+  "failed": 0,
+  "failures": [],
+  "finished": "2026-06-13T07:03:38.022Z"
+}

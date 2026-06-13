@@ -1,7 +1,7 @@
 {
   "id": "building_82",
   "building_name": "DTI Headquarters",
-  "data_version": "stfcspace-2026-04-28",
+  "data_version": "stfcspace-2026-06-13",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -66,7 +66,7 @@
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -132,7 +132,7 @@
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -198,7 +198,7 @@
           "value": 3,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -264,7 +264,7 @@
           "value": 4,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -330,7 +330,7 @@
           "value": 5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -396,7 +396,7 @@
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -462,7 +462,7 @@
           "value": 7,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -528,7 +528,7 @@
           "value": 8,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -594,7 +594,7 @@
           "value": 9,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -660,7 +660,7 @@
           "value": 10,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -726,7 +726,7 @@
           "value": 11,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -792,7 +792,7 @@
           "value": 12,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -858,7 +858,7 @@
           "value": 13,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -924,7 +924,7 @@
           "value": 14,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -990,7 +990,7 @@
           "value": 15,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1056,7 +1056,7 @@
           "value": 16,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1122,7 +1122,7 @@
           "value": 17,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1188,7 +1188,7 @@
           "value": 18,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1254,7 +1254,7 @@
           "value": 19,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1320,7 +1320,7 @@
           "value": 20,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1386,7 +1386,7 @@
           "value": 21.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1452,7 +1452,7 @@
           "value": 23,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1518,7 +1518,7 @@
           "value": 24.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1584,7 +1584,7 @@
           "value": 26,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1650,7 +1650,7 @@
           "value": 27.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1716,7 +1716,7 @@
           "value": 29,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1782,7 +1782,7 @@
           "value": 30.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1848,7 +1848,7 @@
           "value": 32,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1914,7 +1914,7 @@
           "value": 33.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -1980,7 +1980,7 @@
           "value": 35,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2046,7 +2046,7 @@
           "value": 36.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2112,7 +2112,7 @@
           "value": 38,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2178,7 +2178,7 @@
           "value": 39.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2244,7 +2244,7 @@
           "value": 41,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2310,7 +2310,7 @@
           "value": 42.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2376,7 +2376,7 @@
           "value": 44,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2442,7 +2442,7 @@
           "value": 45.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2508,7 +2508,7 @@
           "value": 47,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2574,7 +2574,7 @@
           "value": 48.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2640,7 +2640,7 @@
           "value": 50,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2706,7 +2706,7 @@
           "value": 51.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2772,7 +2772,7 @@
           "value": 53,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2838,7 +2838,7 @@
           "value": 54.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2904,7 +2904,7 @@
           "value": 56,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -2970,7 +2970,7 @@
           "value": 57.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3036,7 +3036,7 @@
           "value": 59,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3102,7 +3102,7 @@
           "value": 60.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3168,7 +3168,7 @@
           "value": 62,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3234,7 +3234,7 @@
           "value": 63.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3300,7 +3300,7 @@
           "value": 65,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3366,7 +3366,7 @@
           "value": 67,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3432,7 +3432,7 @@
           "value": 69,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3498,7 +3498,7 @@
           "value": 71,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3564,7 +3564,7 @@
           "value": 73,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3630,7 +3630,7 @@
           "value": 75,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3696,7 +3696,7 @@
           "value": 77,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3762,7 +3762,7 @@
           "value": 79,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3828,7 +3828,7 @@
           "value": 81,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3894,7 +3894,7 @@
           "value": 83,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -3960,7 +3960,7 @@
           "value": 85,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4026,7 +4026,7 @@
           "value": 87,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4092,7 +4092,7 @@
           "value": 89,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4158,7 +4158,7 @@
           "value": 91,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4224,7 +4224,7 @@
           "value": 93,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4290,7 +4290,7 @@
           "value": 95,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4356,7 +4356,7 @@
           "value": 98,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4422,7 +4422,7 @@
           "value": 101,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4488,7 +4488,7 @@
           "value": 104,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4554,7 +4554,7 @@
           "value": 107,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4620,7 +4620,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4686,7 +4686,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4752,7 +4752,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4818,7 +4818,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4884,7 +4884,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -4950,7 +4950,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -5016,7 +5016,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -5082,7 +5082,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -5148,7 +5148,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -5214,7 +5214,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     },
@@ -5280,7 +5280,7 @@
           "value": 110,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to weapon_damage via buff_id_to_stat.json (was buff_341559099). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_341559099 (common combat) at import"
         }
       ]
     }

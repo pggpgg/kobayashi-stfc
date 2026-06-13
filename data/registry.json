@@ -7,13 +7,13 @@
   },
   "syndicate_reputation": {
     "source": "community_spreadsheet",
-    "last_updated": "2026-04-17",
+    "last_updated": "2026-06-13",
     "path": "syndicate_reputation.json"
   },
   "hostiles": {
     "source": "data-stfc-space",
-    "data_version": "stfcspace-hostiles-2026-04-20",
-    "last_updated": "2026-04-20",
+    "data_version": "stfcspace-hostiles-2026-06-13",
+    "last_updated": "2026-06-13",
     "path": "hostiles/index.json"
   }
 }

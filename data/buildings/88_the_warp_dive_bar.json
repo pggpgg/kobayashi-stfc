@@ -1,7 +1,7 @@
 {
   "id": "building_88",
   "building_name": "The Warp Dive Bar",
-  "data_version": "stfcspace-2026-04-28",
+  "data_version": "stfcspace-2026-06-13",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -14,7 +14,7 @@
           "value": 0.05,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -42,7 +42,7 @@
           "value": 0.06,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -70,7 +70,7 @@
           "value": 0.07,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -98,7 +98,7 @@
           "value": 0.08,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -126,7 +126,7 @@
           "value": 0.1,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -154,7 +154,7 @@
           "value": 0.12,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -182,7 +182,7 @@
           "value": 0.14,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -210,7 +210,7 @@
           "value": 0.16,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -238,7 +238,7 @@
           "value": 0.18,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -266,7 +266,7 @@
           "value": 0.2,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -294,7 +294,7 @@
           "value": 0.22,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -322,7 +322,7 @@
           "value": 0.24,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -350,7 +350,7 @@
           "value": 0.26,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -378,7 +378,7 @@
           "value": 0.28,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -406,7 +406,7 @@
           "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -434,7 +434,7 @@
           "value": 0.32,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -462,7 +462,7 @@
           "value": 0.34,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -490,7 +490,7 @@
           "value": 0.36,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -518,7 +518,7 @@
           "value": 0.38,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -546,7 +546,7 @@
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -574,7 +574,7 @@
           "value": 0.42,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -602,7 +602,7 @@
           "value": 0.44,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -630,7 +630,7 @@
           "value": 0.46,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -658,7 +658,7 @@
           "value": 0.48,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -686,7 +686,7 @@
           "value": 0.5,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -714,7 +714,7 @@
           "value": 0.52,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -742,7 +742,7 @@
           "value": 0.54,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -770,7 +770,7 @@
           "value": 0.56,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -798,7 +798,7 @@
           "value": 0.58,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -826,7 +826,7 @@
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -854,7 +854,7 @@
           "value": 0.62,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -882,7 +882,7 @@
           "value": 0.64,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -910,7 +910,7 @@
           "value": 0.66,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -938,7 +938,7 @@
           "value": 0.68,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -966,7 +966,7 @@
           "value": 0.7,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -994,7 +994,7 @@
           "value": 0.72,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1022,7 +1022,7 @@
           "value": 0.74,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1050,7 +1050,7 @@
           "value": 0.76,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1078,7 +1078,7 @@
           "value": 0.78,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1106,7 +1106,7 @@
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1134,7 +1134,7 @@
           "value": 0.82,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1162,7 +1162,7 @@
           "value": 0.84,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1190,7 +1190,7 @@
           "value": 0.86,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1218,7 +1218,7 @@
           "value": 0.88,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1246,7 +1246,7 @@
           "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1274,7 +1274,7 @@
           "value": 0.92,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1302,7 +1302,7 @@
           "value": 0.94,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1330,7 +1330,7 @@
           "value": 0.96,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1358,7 +1358,7 @@
           "value": 0.98,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1386,7 +1386,7 @@
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1414,7 +1414,7 @@
           "value": 1.03,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1442,7 +1442,7 @@
           "value": 1.06,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1470,7 +1470,7 @@
           "value": 1.09,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1498,7 +1498,7 @@
           "value": 1.12,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1526,7 +1526,7 @@
           "value": 1.15,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1554,7 +1554,7 @@
           "value": 1.18,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1582,7 +1582,7 @@
           "value": 1.21,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1610,7 +1610,7 @@
           "value": 1.24,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1638,7 +1638,7 @@
           "value": 1.27,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1666,7 +1666,7 @@
           "value": 1.3,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1694,7 +1694,7 @@
           "value": 1.33,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1722,7 +1722,7 @@
           "value": 1.36,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1750,7 +1750,7 @@
           "value": 1.39,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1778,7 +1778,7 @@
           "value": 1.42,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1806,7 +1806,7 @@
           "value": 1.45,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1834,7 +1834,7 @@
           "value": 1.48,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1862,7 +1862,7 @@
           "value": 1.51,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1890,7 +1890,7 @@
           "value": 1.54,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1918,7 +1918,7 @@
           "value": 1.57,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1946,7 +1946,7 @@
           "value": 1.6,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -1974,7 +1974,7 @@
           "value": 1.64,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2002,7 +2002,7 @@
           "value": 1.68,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2030,7 +2030,7 @@
           "value": 1.72,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2058,7 +2058,7 @@
           "value": 1.76,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2086,7 +2086,7 @@
           "value": 1.8,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2114,7 +2114,7 @@
           "value": 1.84,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2142,7 +2142,7 @@
           "value": 1.88,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2170,7 +2170,7 @@
           "value": 1.92,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2198,7 +2198,7 @@
           "value": 1.96,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",
@@ -2226,7 +2226,7 @@
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "Holodeck/hostile pierce and similar: normalized to isolytic_damage via buff_id_to_stat.json (was buff_301108821). In-game scope (hostile class/faction) not modeled \u2014 merged globally."
+          "notes": "normalized from buff_301108821 (common combat) at import"
         },
         {
           "stat": "buff_4020430113",

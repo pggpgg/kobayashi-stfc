@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-05-29",
+  "last_updated": "2026-06-13",
   "items": [
     {
       "rid": 2999437,
@@ -50901,6 +50901,74 @@
       ]
     },
     {
+      "rid": 2667283315,
+      "name": "G6+ Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.85,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2678851440,
       "name": "Interceptor Regeneration",
       "data_version": "stfcspace-upstream",
@@ -55235,6 +55303,74 @@
       ]
     },
     {
+      "rid": 2957955927,
+      "name": "Isolytic Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2958184913,
       "name": "6⇵ Tactical Advantage",
       "data_version": "stfcspace-upstream",
@@ -57725,6 +57861,64 @@
             {
               "stat": "armor",
               "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3102591583,
+      "name": "G6+ Isolytic Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.03,
               "operator": "add"
             }
           ]
@@ -76590,6 +76784,24 @@
             {
               "stat": "weapon_damage",
               "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4092392991,
+      "name": "Academy Drone Damage Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
               "operator": "add"
             }
           ]

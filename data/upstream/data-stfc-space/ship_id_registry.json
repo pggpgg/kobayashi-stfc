@@ -267,6 +267,12 @@
       "ship_class": "explorer"
     },
     {
+      "numeric_id": 3091911492,
+      "id": "uss_athena",
+      "ship_name": "U.S.S. ATHENA",
+      "ship_class": "explorer"
+    },
+    {
       "numeric_id": 2797581949,
       "id": "uss_cerritos",
       "ship_name": "U.S.S. CERRITOS",

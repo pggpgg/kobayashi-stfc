@@ -1,7 +1,7 @@
 {
   "id": "building_53",
   "building_name": "Parsteel Generator G",
-  "data_version": "stfcspace-2026-04-28",
+  "data_version": "stfcspace-2026-06-13",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -690,14 +690,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 2825,
+          "value": 23000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 56500,
+          "value": 460000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -725,14 +725,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 2950,
+          "value": 25000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 59000,
+          "value": 500000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -760,14 +760,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 3100,
+          "value": 27000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 62000,
+          "value": 540000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -795,14 +795,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 3225,
+          "value": 30000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 64500,
+          "value": 600000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -830,14 +830,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 3375,
+          "value": 35000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 67500,
+          "value": 700000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -865,14 +865,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 4025,
+          "value": 75000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 80500,
+          "value": 1500000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -900,14 +900,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 4175,
+          "value": 100000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 83500,
+          "value": 2000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -935,14 +935,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 4350,
+          "value": 150000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 87000,
+          "value": 3000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -970,14 +970,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 4500,
+          "value": 200000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 90000,
+          "value": 4000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1005,14 +1005,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 4675,
+          "value": 250000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 93500,
+          "value": 5000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1040,14 +1040,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 5400,
+          "value": 300000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 108000,
+          "value": 6000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1075,14 +1075,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 5600,
+          "value": 1000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 112000,
+          "value": 20000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1110,14 +1110,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 5800,
+          "value": 1250000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 125280,
+          "value": 27000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1145,14 +1145,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 6000,
+          "value": 1500000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 139200,
+          "value": 34800000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1180,14 +1180,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 6200,
+          "value": 1750000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 143840,
+          "value": 40600000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1215,14 +1215,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 7000,
+          "value": 2000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 173600,
+          "value": 49600000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1250,14 +1250,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 7300,
+          "value": 2500000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 194180,
+          "value": 66500000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1285,14 +1285,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 7500,
+          "value": 3000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 199500,
+          "value": 79800000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1320,14 +1320,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 7700,
+          "value": 3500000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 218680,
+          "value": 99400000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1355,14 +1355,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 7900,
+          "value": 4000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 241740,
+          "value": 122400000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1390,14 +1390,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 8900,
+          "value": 10000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 272340,
+          "value": 306000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1425,14 +1425,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 9100,
+          "value": 11000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 300300,
+          "value": 363000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1460,14 +1460,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 9300,
+          "value": 12000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 336660,
+          "value": 434400000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1495,14 +1495,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 9500,
+          "value": 13000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 343900,
+          "value": 470600000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1530,14 +1530,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 9800,
+          "value": 14000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 392000,
+          "value": 560000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1565,14 +1565,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 11300,
+          "value": 17000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 508500,
+          "value": 765000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1600,14 +1600,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 11600,
+          "value": 20000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 522000,
+          "value": 900000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1635,14 +1635,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 11800,
+          "value": 24000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 531000,
+          "value": 1080000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1670,14 +1670,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 12100,
+          "value": 28000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 544500,
+          "value": 1260000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1705,14 +1705,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 12300,
+          "value": 32000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 553500,
+          "value": 1440000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1740,14 +1740,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 15100,
+          "value": 36000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 679500,
+          "value": 1620000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1775,14 +1775,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 15400,
+          "value": 50000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 693000,
+          "value": 2250000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1810,14 +1810,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 15700,
+          "value": 60000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 706500,
+          "value": 2700000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1845,14 +1845,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 16000,
+          "value": 70000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 720000,
+          "value": 3150000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1880,14 +1880,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 16300,
+          "value": 80000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 733500,
+          "value": 3600000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1915,14 +1915,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 19400,
+          "value": 90000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 873000,
+          "value": 4050000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1950,14 +1950,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 19800,
+          "value": 100000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 891000,
+          "value": 4500000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -1985,14 +1985,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 20000,
+          "value": 110000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 900000,
+          "value": 4950000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -2020,14 +2020,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 20500,
+          "value": 120000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 922500,
+          "value": 5400000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -2055,14 +2055,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 20750,
+          "value": 130000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 933750,
+          "value": 5850000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
@@ -2090,14 +2090,14 @@
         },
         {
           "stat": "buff_2886402254",
-          "value": 24250,
+          "value": 140000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1001"
         },
         {
           "stat": "buff_4233854918",
-          "value": 1091250,
+          "value": 6300000000,
           "operator": "add",
           "conditions": [],
           "notes": "auto-imported from data.stfc.space; loca_id=1002"
