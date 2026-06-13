@@ -29,7 +29,7 @@ use crate::optimizer::monte_carlo::scenario::{
 use crate::server::sensitivity_jobs::SensitivityJobProgress;
 
 /// User-chosen outcome scalar that each stat's Δ is measured against.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum OutcomeMetric {
     /// Attacker hull remaining as a fraction of starting hull (0–1). Continuous, sensitive,
@@ -99,7 +99,7 @@ impl OutcomeMetric {
 
 /// Crew + scenario input to a sensitivity run. Mirrors the shape of `/api/simulate` so the
 /// frontend can reuse its scenario pickers.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct SensitivityRequest {
     pub ship: String,
     pub hostile: String,
@@ -132,7 +132,7 @@ pub struct SensitivityRequest {
 }
 
 /// One row in the ranked sensitivity report.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SensitivityRow {
     /// Stat key (snake_case, matches [`StatKey::as_str`]).
     pub stat: String,
@@ -150,7 +150,7 @@ pub struct SensitivityRow {
     pub significant: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SensitivityResponse {
     pub metric: &'static str,
     pub baseline_mean: f64,

@@ -264,7 +264,7 @@ pub(crate) fn scout_refine_candidate_hashes(
 }
 
 /// Trial accounting for tiered scouting (coarse pass, optional refine pass, final per-crew totals).
-#[derive(Debug, Clone, Copy, Default, serde::Serialize)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, schemars::JsonSchema)]
 pub struct TieredScoutBudgetStats {
     /// Sum of `trials_run` after the coarse scout pass (one row per crew).
     pub coarse_pass_trials: u64,

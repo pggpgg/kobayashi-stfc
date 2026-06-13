@@ -50,7 +50,7 @@ pub const MAX_NUM_SIMS_PER_POINT: u32 = 10_000;
 
 /// Crew + scenario input for a Morris run. Mirrors [`crate::optimizer::sensitivity::SensitivityRequest`]
 /// plus `r_trajectories`. JSON shape matches the OAT request so the frontend can share scenario inputs.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct MorrisRequest {
     pub ship: String,
     pub hostile: String,
@@ -87,7 +87,7 @@ pub struct MorrisRequest {
 }
 
 /// One stat's aggregated elementary-effect statistics across the `r` trajectories.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct MorrisRow {
     /// Stat key (snake_case, matches [`StatKey::as_str`]).
     pub stat: String,
@@ -106,7 +106,7 @@ pub struct MorrisRow {
     pub mu_star_ci95_high: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct MorrisResponse {
     pub metric: &'static str,
     pub num_sims_per_point: u32,

@@ -40,7 +40,7 @@ fn parse_captain_must_be_tokens(s: &str) -> Vec<String> {
 }
 
 /// Chain grinding: N sequential fights, HHP carry-over, full SHP each link (optimizer / simulate).
-#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct ChainGrindRequest {
     #[serde(default)]
     pub enabled: bool,
@@ -80,7 +80,7 @@ pub fn chain_grind_params_from_request(
 }
 
 /// Same JSON shape as simulate `crew` — duplicated so `requests` stays independent of `api`.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct ReplaySeedCrew {
     pub captain: Option<String>,
     pub bridge: Option<Vec<Option<String>>>,
@@ -88,7 +88,7 @@ pub struct ReplaySeedCrew {
 }
 
 /// Replay one Monte Carlo draw from an optimize/simulate run (`seed` + `sim_index` → `iteration_seed`).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct ReplaySeedRequest {
     pub ship: String,
     pub hostile: String,
@@ -107,7 +107,7 @@ pub struct ReplaySeedRequest {
     pub defender_opponent: DefenderOpponent,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct WarmStartCrewDto {
     pub captain: String,
     pub bridge: Vec<String>,
@@ -115,14 +115,14 @@ pub struct WarmStartCrewDto {
 }
 
 /// Optional LCARS crew for the defending side (same shape as simulate `defender_crew`).
-#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct DefenderOfficerCrewDto {
     pub captain: Option<String>,
     pub bridge: Option<Vec<Option<String>>>,
     pub below_deck: Option<Vec<Option<String>>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct OptimizeRequest {
     pub ship: String,
     pub hostile: String,
@@ -236,7 +236,7 @@ pub fn relax_below_decks_combat_strictness(request: &OptimizeRequest) -> bool {
 }
 
 /// JSON body for `OptimizeRequest.constraints`.
-#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct OptimizeConstraintsDto {
     #[serde(default)]
     pub must_include: Vec<String>,
@@ -251,19 +251,19 @@ pub struct OptimizeConstraintsDto {
     pub below_decks_must_include: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct OfficerGroupConstraintDto {
     pub officers: Vec<String>,
     pub min_count: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, schemars::JsonSchema)]
 pub struct ValidationIssue {
     pub field: &'static str,
     pub messages: Vec<String>,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, schemars::JsonSchema)]
 pub struct ValidationErrorResponse {
     pub status: &'static str,
     pub message: &'static str,

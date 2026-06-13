@@ -10,7 +10,7 @@ _Planned 2026-06-09 from a full repo audit (fidelity docs, test inventory, code 
 
 1. **Main lane (serialized):** **12** (engine decomposition — keystone: explicitly prerequisite to 4, and every fidelity change lands in that function) → **4** (Phase 4d, the largest open fidelity gap) → **6** (hostile-ability audit report can start anytime; *closing* its gaps belongs after 12) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces.
 2. **Pre-freeze prep lane (early, any order — the freeze window is the scarcest resource, so tooling must be ready before a window opens):** **3** (import faction resolution), the composite-score harness, and the profile-snapshot completeness audit (see protocol below).
-3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; ~~**7** (SSE test)~~ *shipped*; **9** (OpenAPI gate), **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts).
+3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; ~~**7** (SSE test)~~ *shipped*; ~~**9** (OpenAPI gate)~~ *shipped*; **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts).
 4. **Anytime, independent:** **10** (frontend tests), **15** (display-names investigation, timeboxed).
 5. **Post-freeze (maintainer-scheduled):** **2** (scoreboard + snapshot-bound corpus), then the iterate loop from the protocol.
 
@@ -60,8 +60,8 @@ Places where a bug would ship undetected today.
 - [x] **8. Unit-test `mitigation.rs`; add property-based engine invariants** (M) — *closed 2026-06-11*
   Shipped: 21 dedicated tests in [mitigation.rs](../src/combat/mitigation.rs) (constants pinned, curve known-points, EPSILON/negative/NaN guard semantics, class-channel routing, floor/ceiling clamps, morale piercing, isolytic formula) plus pure-formula proptest properties (bounds, monotonicity); [engine_property_tests.rs](../tests/engine_property_tests.rs) with random-valid-combatant strategies asserting damage ≥ 0, hull/shield ∈ [0, max], round caps, and same-seed determinism (no violations found); [lcars_yaml_robustness.rs](../tests/lcars_yaml_robustness.rs) + parser malformed-input tests. Also fixed a real hole the work surfaced: `load_lcars_dir` silently skipped corrupt `*.lcars.yaml` (now warns on stderr) and `validate_lcars_dir` passed on them (now a hard Error).
 
-- [ ] **9. OpenAPI ↔ handler completeness gate** (S/M)
-  Contract tests spot-check shapes but don't diff Rust request/response structs against [kobayashi-openapi.yaml](openapi/kobayashi-openapi.yaml) — and frontend types are generated from the YAML, so a new handler field silently breaks the SPA. Add a field-by-field schema comparison test.
+- [x] **9. OpenAPI ↔ handler completeness gate** (S/M) — *closed 2026-06-13*
+  [openapi_parity.rs](../src/server/openapi_parity.rs) compares schemars-derived property names on handler DTOs against bundled OpenAPI component schemas (~45 mapped types); integration test in [openapi_schema_parity_test.rs](../tests/openapi_schema_parity_test.rs). Caught and fixed drift: `OptimizeRequest.enable_learned_pair_prior` and `ProfileEntry.is_default` were missing from the YAML.
 
 - [ ] **10. Frontend: test `RosterProfile.tsx` and sensitivity result components** (M)
   The largest page ([RosterProfile.tsx](../frontend/src/pages/RosterProfile.tsx), ~1,450 lines: profile sync, roster mutations, error paths) has zero unit tests; 6 of 7 pages and the Morris/Sobol result components are untested. Test the critical flows, or split the page into testable pieces first.

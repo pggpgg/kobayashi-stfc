@@ -72,7 +72,7 @@ pub const MAX_N_SAMPLES: u32 = 8192;
 const BOOTSTRAP_RESAMPLES: usize = 200;
 
 /// Crew + scenario input for a Sobol run. JSON shape mirrors the OAT / Morris requests.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct SobolRequest {
     pub ship: String,
     pub hostile: String,
@@ -112,7 +112,7 @@ pub struct SobolRequest {
 }
 
 /// One stat's variance-decomposition row.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SobolRow {
     /// Stat key (snake_case, matches [`StatKey::as_str`]).
     pub stat: String,
@@ -138,7 +138,7 @@ pub struct SobolRow {
 
 /// One pair's second-order Sobol index (the "pure" pairwise interaction strength —
 /// excludes the individual main effects, which appear in [`SobolRow::s1`] for each stat).
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SobolPairRow {
     /// Stat key for the first member of the pair (matches [`StatKey::as_str`]).
     pub stat_a: String,
@@ -161,7 +161,7 @@ pub struct SobolPairRow {
     pub s_ij_ci95_high: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SobolResponse {
     pub metric: &'static str,
     pub n_samples: u32,

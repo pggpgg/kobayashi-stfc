@@ -18,7 +18,7 @@ pub const DEFAULT_PROFILE_ID: &str = "default";
 pub const DEMO_PROFILE_ID: &str = "demo";
 
 /// One profile entry in the index.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct ProfileEntry {
     pub id: String,
     pub name: String,

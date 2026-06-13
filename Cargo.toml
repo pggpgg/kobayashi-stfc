@@ -112,6 +112,7 @@ getrandom = ">=0.2, <0.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
+schemars = { version = "0.8", features = ["chrono"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_System_Threading"] }

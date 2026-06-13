@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::optimizer::monte_carlo::scenario::{CombatSimulationInput, SharedScenarioData};
 
 /// How to break ties among crews with similar chain-primary success (conditional on primary hit).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ChainSecondaryObjective {
     /// Maximize mean attacker hull fraction after the Nth kill (minimize hull damage over the chain).
@@ -25,7 +25,7 @@ pub struct ChainGrindParams {
 }
 
 /// Aggregated chain-grind Monte Carlo (attached to optimizer [`super::monte_carlo::SimulationResult`] when enabled).
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
 pub struct ChainSimulationSummary {
     pub kills_target: u32,
     pub secondary_objective: ChainSecondaryObjective,

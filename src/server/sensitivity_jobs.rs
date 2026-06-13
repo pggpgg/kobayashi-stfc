@@ -72,7 +72,7 @@ pub enum SensitivityJobRequest {
 
 /// Tagged result type so the SSE stream / status endpoint can serialize whichever engine
 /// produced this job's output without forcing all three into a single response shape.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 #[serde(tag = "method", rename_all = "snake_case")]
 pub enum SensitivityJobResult {
     Oat(SensitivityResponse),
@@ -113,12 +113,12 @@ impl JobState for SensitivityJobState {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SensitivityStartResponse {
     pub job_id: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SensitivityStatusResponse {
     pub status: String,
     /// Method discriminator (`oat`, `morris`, or `sobol`) — useful for clients that

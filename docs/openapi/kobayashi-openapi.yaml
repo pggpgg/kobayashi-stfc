@@ -1384,6 +1384,9 @@ components:
           type: string
         sync_token:
           type: string
+        is_default:
+          type: boolean
+          description: Present and true for the index default profile entry.
 
     CreateProfileRequest:
       type: object
@@ -2340,6 +2343,11 @@ components:
           type: string
         analytical_prefilter_keep:
           type: integer
+        enable_learned_pair_prior:
+          type: boolean
+          description: >
+            Analytical prefilter only. When false, disables learned pair co-occurrence prior from
+            warm-start/history refs. Omitted defaults to enabled (backward compatible).
         tiered_scout_sims:
           type: integer
         tiered_top_k:

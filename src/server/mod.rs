@@ -3,6 +3,7 @@ pub mod api_key;
 pub(crate) mod cpu_admission;
 pub mod job_registry;
 pub mod openapi;
+pub mod openapi_parity;
 pub mod profile_backup;
 pub mod routes;
 pub mod sensitivity_jobs;

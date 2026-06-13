@@ -165,7 +165,7 @@ fn resolve_effective_optimize_strategy(
     (strategy, true)
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct CrewRecommendation {
     pub captain: String,
     pub bridge: Vec<String>,
@@ -193,7 +193,7 @@ pub struct CrewRecommendation {
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct OptimizeConstraintsSummary {
     pub must_include: usize,
     pub exclude: usize,
@@ -247,7 +247,7 @@ fn summarize_constraints(
     })
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct ScenarioSummary {
     pub ship: String,
     pub hostile: String,
@@ -301,7 +301,7 @@ pub struct ScenarioSummary {
     pub exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct OptimizeResponse {
     pub status: &'static str,
     pub engine: &'static str,
@@ -1459,12 +1459,12 @@ impl crate::server::job_registry::JobState for OptimizeJobState {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct OptimizeStartResponse {
     pub job_id: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct OptimizeStatusResponse {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]

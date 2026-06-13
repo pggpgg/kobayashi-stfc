@@ -31,7 +31,7 @@ const PROC_LABELS: &[&str] = &[
     "proc_triggers",
 ];
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct CompareCrewDistribution {
     pub captain: String,
     pub trials: u32,

@@ -12,7 +12,8 @@ pub use execution::{
 };
 pub use requests::{
     chain_grind_params_from_request, parse_optimize_request_body, validate_request,
-    ChainGrindRequest, OptimizePayloadError, OptimizeRequest, ReplaySeedRequest,
+    ChainGrindRequest, DefenderOfficerCrewDto, OfficerGroupConstraintDto, OptimizeConstraintsDto,
+    OptimizePayloadError, OptimizeRequest, ReplaySeedCrew, ReplaySeedRequest, WarmStartCrewDto,
     ValidationErrorResponse, ValidationIssue, DEFAULT_SIMS, MAX_CANDIDATES, MAX_SIMS,
 };
 
@@ -111,7 +112,7 @@ fn parse_owned_only(path: &str) -> bool {
     })
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct OfficerListItem {
     pub id: String,
     pub name: String,
@@ -150,7 +151,7 @@ pub fn officers_payload(
     serde_json::to_string(&serde_json::json!({ "officers": list }))
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct ShipListItem {
     pub id: String,
     pub ship_name: String,
@@ -306,7 +307,7 @@ pub fn ship_tiers_levels_payload(
     )
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct HostileListItem {
     pub id: String,
     /// Raw name from `data/hostiles` (may be a placeholder when using numeric upstream ids).
@@ -341,13 +342,13 @@ pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::E
     serde_json::to_string(&serde_json::json!({ "hostiles": list }))
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct MechanicStatus {
     pub name: String,
     pub status: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct DataVersionResponse {
     pub officer_version: Option<String>,
     pub hostile_version: Option<String>,
@@ -355,7 +356,7 @@ pub struct DataVersionResponse {
     pub mechanics: Vec<MechanicStatus>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct SimulateRequest {
     pub ship: String,
     pub hostile: String,
@@ -395,7 +396,7 @@ pub struct SimulateRequest {
     pub defender_profile_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct SimulateCrew {
     pub captain: Option<String>,
     /// Bridge officer IDs; null entries mean "no officer" in that slot.
@@ -404,7 +405,7 @@ pub struct SimulateCrew {
     pub below_deck: Option<Vec<Option<String>>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SimulateResponse {
     pub status: &'static str,
     pub stats: SimulateStats,
@@ -417,7 +418,7 @@ pub struct SimulateResponse {
     pub unresolved_officers: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SimulateStats {
     pub win_rate: f64,
     pub stall_rate: f64,
@@ -430,7 +431,7 @@ pub struct SimulateStats {
     pub win_rate_95_ci: Option<[f64; 2]>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct CompareCrewsRequest {
     pub ship: String,
     pub hostile: String,
@@ -464,7 +465,7 @@ pub struct CompareCrewsRequest {
     pub defender_profile_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct CompareCrewsResponse {
     pub status: &'static str,
     pub seed: u64,
@@ -1881,7 +1882,7 @@ fn presets_dir_for_profile(profile_id: &str) -> std::path::PathBuf {
     profile_path(profile_id, PRESETS_SUBDIR)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct PresetCrew {
     pub captain: Option<String>,
     pub bridge: Option<Vec<String>>,
@@ -1889,7 +1890,7 @@ pub struct PresetCrew {
 }
 
 /// Snapshot written when saving a preset.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct PresetProvenance {
     /// RFC3339 timestamp when the preset was written.
     pub saved_at: String,
@@ -1935,7 +1936,7 @@ fn default_preset_schema_version() -> u32 {
     PRESET_SCHEMA_VERSION
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct Preset {
     #[serde(default = "default_preset_schema_version")]
     pub schema_version: u32,
@@ -1947,7 +1948,7 @@ pub struct Preset {
     pub provenance: PresetProvenance,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct PresetSummary {
     pub id: String,
     pub name: String,
