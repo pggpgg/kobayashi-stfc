@@ -937,6 +937,8 @@ pub(crate) struct CombatSimulationInput {
     pub incoming_shield_mitigation_bonus_rounds: u32,
     /// Copied into [`crate::combat::SimulationConfig::attacker_owner_faction`].
     pub attacker_owner_faction: OpponentFactionTag,
+    /// Phase 4d: per-round officer-stat breakpoint context for the attacker crew.
+    pub officer_stat_round: Option<crate::data::officer_stat_round::OfficerStatRoundContext>,
 }
 
 /// PvP defender [`Combatant`] with opponent profile + defender crew officer-stat runtime,
@@ -1037,6 +1039,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_officer_stat_contributions,
+        dynamic_officer_stat_contributions,
     ) = build_crew_and_buffs(candidate, shared.lcars_data.as_ref(), &resolve_opts);
     let mut merged_static =
         support_buffs::merge_static_buff_maps(&static_buffs, &shared.support_static_buffs);
@@ -1256,6 +1259,23 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             weapon_damage_profile_additive_pool_from_env(&shared.profile);
         let profile_weapon_damage_fraction =
             profile_weapon_damage_fraction_for_combat(&shared.profile);
+        let opponent_enemy_pending = if shared.is_pvp() {
+            shared.defender_pending_officer_stat_contributions.as_slice()
+        } else {
+            &[]
+        };
+        let officer_stat_round =
+            crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs(
+                ship_rec,
+                &shared.profile,
+                &merged_static,
+                officer_stat_totals,
+                bridge_officer_stat_totals,
+                &pending_officer_stat_contributions,
+                opponent_enemy_pending,
+                &dynamic_officer_stat_contributions,
+                cond_ctx,
+            );
         return CombatSimulationInput {
             attacker,
             defender,
@@ -1280,6 +1300,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 shared.incoming_shield_mitigation_bonus_rounds
             },
             attacker_owner_faction: shared.attacker_owner_faction,
+            officer_stat_round,
         };
     }
 
@@ -1420,6 +1441,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
         attacker_owner_faction: shared.attacker_owner_faction,
+        officer_stat_round: None,
     }
 }
 
@@ -1508,6 +1530,7 @@ fn build_crew_and_buffs(
     crate::combat::CrewOfficerStatTotals,
     crate::combat::CrewOfficerStatTotals,
     Vec<crate::lcars::PendingOfficerStatContribution>,
+    Vec<crate::lcars::DynamicOfficerStatContribution>,
 ) {
     if let Some(lcars) = lcars_data {
         let resolve_id = |name: &str| resolve_officer_name(&lcars.name_to_id, name);
@@ -1542,6 +1565,7 @@ fn build_crew_and_buffs(
             buff_set.officer_stat_totals,
             buff_set.bridge_officer_stat_totals,
             buff_set.pending_officer_stat_contributions,
+            buff_set.dynamic_officer_stat_contributions,
         )
     } else {
         // No LCARS data (officer data failed to load). There is no placeholder fallback: resolve
@@ -1554,6 +1578,7 @@ fn build_crew_and_buffs(
             1.0,
             crate::combat::CrewOfficerStatTotals::default(),
             crate::combat::CrewOfficerStatTotals::default(),
+            Vec::new(),
             Vec::new(),
         )
     }
@@ -1715,6 +1740,7 @@ fn resolve_player_defender_officer_bundle(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_contribs,
+        _dynamic_contribs,
     ) = build_crew_and_buffs(&candidate, lcars_data, resolve_options);
     (
         seats,
@@ -1755,6 +1781,7 @@ pub(crate) fn scenario_to_combat_input(
         officer_stat_totals,
         bridge_officer_stat_totals,
         pending_officer_stat_contributions,
+        dynamic_officer_stat_contributions,
     ) = build_crew_and_buffs(candidate, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
 
@@ -1846,6 +1873,34 @@ pub(crate) fn scenario_to_combat_input(
             weapon_damage_profile_additive_pool_from_env(profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
         let engagement_enemy_types = hostile_rec.engagement_enemy_types_for_combat();
+        let cond_ctx = crate::data::profile::OfficerStatConditionContext {
+            attacker_ship_class: Some(ship_rec.ship_class.trim().to_string())
+                .filter(|s| !s.is_empty()),
+            attacker_ship_id: Some(ship_rec.id.trim().to_string()).filter(|s| !s.is_empty()),
+            attacker_owner_faction: ship_rec.faction.clone(),
+            defender_is_player_ship: false,
+            defender_ship_type: Some(hostile_rec.ship_class.trim().to_string())
+                .filter(|s| !s.is_empty()),
+            defender_faction_id: hostile_rec.faction.as_ref().map(|f| f.id),
+            defender_faction_slug: None,
+            engagement_types: engagement_enemy_types
+                .0
+                .iter()
+                .map(|t| format!("{:?}", t).to_lowercase())
+                .collect(),
+        };
+        let officer_stat_round =
+            crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs(
+                &ship_rec,
+                profile,
+                &static_buffs,
+                officer_stat_totals,
+                bridge_officer_stat_totals,
+                &pending_officer_stat_contributions,
+                &[],
+                &dynamic_officer_stat_contributions,
+                cond_ctx,
+            );
         let hostile_mitigation_params = HostileMitigationParams {
             defender_stats: hostile_rec.to_defender_stats(),
             base_attacker_stats: effective_attacker_stats_for_mitigation(
@@ -1882,6 +1937,7 @@ pub(crate) fn scenario_to_combat_input(
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_owner_faction: attacker_owner_faction_from_ship(Some(&ship_rec)),
+            officer_stat_round,
         };
     }
 
@@ -1972,6 +2028,7 @@ pub(crate) fn scenario_to_combat_input(
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_owner_faction: attacker_owner_faction_from_ship(resolve_ship(ship).as_ref()),
+        officer_stat_round: None,
     }
 }
 

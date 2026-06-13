@@ -200,6 +200,7 @@ mod tests {
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_owner_faction: OpponentFactionTag::Unknown,
+            officer_stat_round: None,
         }
     }
 

@@ -245,7 +245,7 @@ fn officer_spec_duration_rounds(spec: &CombatEffectSpec, fallback: u32) -> u32 {
 
 /// AND-merge a `RoundRange { min: 1, max: rounds }` gate from finite LCARS duration so
 /// combat-begin rows (e.g. Harrison Sabotage) do not re-apply every round.
-fn merge_duration_round_condition(
+pub(crate) fn merge_duration_round_condition(
     condition: Option<AbilityCondition>,
     spec: &CombatEffectSpec,
 ) -> Option<AbilityCondition> {

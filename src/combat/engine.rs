@@ -170,6 +170,8 @@ pub struct PreCombatSetup {
     pub attacker_ship_id_arc: std::sync::Arc<str>,
     /// Pre-allocated Arc for engagement enemy types — avoids EnemyTypes clone per construction.
     pub engagement_enemy_types_arc: std::sync::Arc<EnemyTypes>,
+    /// Phase 4d: per-round officer-stat breakpoint context (when crew has dynamic rows).
+    pub officer_stat_round: Option<crate::data::officer_stat_round::OfficerStatRoundContext>,
 }
 
 impl PreCombatSetup {
@@ -193,6 +195,36 @@ pub fn build_combat_setup(
     defender_is_npc_hostile: bool,
     defender_is_player_ship: bool,
     defender_crew: &CrewConfiguration,
+) -> PreCombatSetup {
+    build_combat_setup_with_officer_stat(
+        attacker,
+        defender,
+        config,
+        attacker_crew,
+        defender_faction,
+        defender_ship_type,
+        attacker_ship_type,
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        defender_crew,
+        None,
+    )
+}
+
+/// Like [`build_combat_setup`] with optional Phase 4d per-round officer-stat context.
+#[allow(clippy::too_many_arguments)]
+pub fn build_combat_setup_with_officer_stat(
+    attacker: &Combatant,
+    defender: &Combatant,
+    config: &SimulationConfig,
+    attacker_crew: &CrewConfiguration,
+    defender_faction: OpponentFactionTag,
+    defender_ship_type: ShipType,
+    attacker_ship_type: ShipType,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
+    defender_crew: &CrewConfiguration,
+    officer_stat_round: Option<crate::data::officer_stat_round::OfficerStatRoundContext>,
 ) -> PreCombatSetup {
     let mut attacker_crew = apply_duplicate_officer_policy(attacker_crew);
     let mut defender_crew = apply_duplicate_officer_policy(defender_crew);
@@ -350,6 +382,7 @@ pub fn build_combat_setup(
         defender_receive_damage_effects,
         attacker_ship_id_arc,
         engagement_enemy_types_arc,
+        officer_stat_round,
     }
 }
 
@@ -679,6 +712,21 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             );
         }
 
+        let osr_round_delta = setup
+            .officer_stat_round
+            .as_ref()
+            .map(|ctx| ctx.delta_for_timing(&combat_ctx, TimingWindow::RoundStart))
+            .unwrap_or_default();
+        if osr_round_delta.attack_pre_mult_add.abs() > f64::EPSILON {
+            phase_effects.add_effect(
+                TimingWindow::RoundStart,
+                AbilityEffect::AttackMultiplier(osr_round_delta.attack_pre_mult_add),
+                attacker.attack,
+                round_index,
+                None,
+            );
+        }
+
         apply_attacker_round_start_regen(
             attacker,
             round_index,
@@ -925,6 +973,9 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     receive_damage_effects,
                     self_shield_break_effects,
                     hull_breach_effects,
+                    osr_defense_armor_add: osr_round_delta.defense_armor_add,
+                    osr_defense_shield_deflection_add: osr_round_delta.defense_shield_deflection_add,
+                    osr_defense_dodge_add: osr_round_delta.defense_dodge_add,
                 });
             }
 
@@ -2908,6 +2959,9 @@ struct FireDefenderCounter<'a> {
     receive_damage_effects: &'a [ActiveAbilityEffect],
     self_shield_break_effects: &'a [ActiveAbilityEffect],
     hull_breach_effects: &'a [ActiveAbilityEffect],
+    osr_defense_armor_add: f64,
+    osr_defense_shield_deflection_add: f64,
+    osr_defense_dodge_add: f64,
 }
 
 /// Defender counter-fire for one weapon sub-round: hostile weapon shots vs the player ship,
@@ -2955,6 +3009,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         receive_damage_effects,
         self_shield_break_effects,
         hull_breach_effects,
+        osr_defense_armor_add,
+        osr_defense_shield_deflection_add,
+        osr_defense_dodge_add,
     } = p;
     // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
     // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
@@ -2971,9 +3028,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // scalar directly so existing fixtures keep their calibrated behavior.
     let eff_player_mitigation = {
         let (c_armor, c_shield, c_dodge) = attacker_ship_type.coefficients();
-        let component_sum = c_armor * attacker.armor
-            + c_shield * attacker.shield_deflection
-            + c_dodge * (attacker.dodge + attacker_dodge_bonus)
+        let component_sum = c_armor * (attacker.armor + osr_defense_armor_add)
+            + c_shield * (attacker.shield_deflection + osr_defense_shield_deflection_add)
+            + c_dodge * (attacker.dodge + attacker_dodge_bonus + osr_defense_dodge_add)
             + attacker.damage_reduction;
         let base = if component_sum > 0.0 {
             component_sum

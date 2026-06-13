@@ -1,7 +1,7 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
 use crate::combat::{
-    build_combat_setup, simulate_combat_batch,
+    build_combat_setup_with_officer_stat, simulate_combat_batch,
     simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
     SimulationConfig, TraceMode,
 };
@@ -379,7 +379,7 @@ fn run_candidate_monte_carlo(
     let defender_is_player = shared.defender_opponent.defender_is_player_ship();
 
     // Build immutable combat setup once for batch reuse
-    let setup = build_combat_setup(
+    let setup = build_combat_setup_with_officer_stat(
         &input.attacker,
         &input.defender,
         &combat_config,
@@ -390,6 +390,7 @@ fn run_candidate_monte_carlo(
         defender_is_npc,
         defender_is_player,
         &input.defender_crew,
+        input.officer_stat_round.clone(),
     );
 
     const BATCH_SIZE: usize = 64;

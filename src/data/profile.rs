@@ -2073,9 +2073,8 @@ pub struct OfficerStatRuntimeBonus {
 /// `docs/OFFICER_STAT_FORMULA.md`, Phase 4b). All fields default to "unknown"; conditions that
 /// depend on an unknown field evaluate to `None` (undecidable) and the contribution is dropped.
 ///
-/// Dynamic conditions (round state, morale procs, hull breach state, …) are intentionally
-/// outside this struct's scope — they require per-round evaluation and are deferred to a
-/// future runtime path.
+/// Dynamic conditions (round state, morale procs, hull breach state, …) are evaluated per round
+/// via [`crate::data::officer_stat_round::OfficerStatRoundContext`], not through this struct.
 #[derive(Debug, Clone, Default)]
 pub struct OfficerStatConditionContext {
     /// Attacker's ship class slug (`battleship` / `explorer` / `interceptor` / `survey`).
@@ -2178,8 +2177,8 @@ fn eval_static_condition(
             }
         }
         // Dynamic conditions (round state, morale procs, hull breach, …) cannot be evaluated
-        // at fight setup; report as undecidable so the caller drops the conditional bonus
-        // until Phase 4d adds per-round evaluation.
+        // at fight setup; report as undecidable so the caller drops the conditional bonus.
+        // Phase 4d routes these through [`crate::data::officer_stat_round`].
         C::MoraleActive
         | C::DefenderBurning
         | C::DefenderHullBreach
@@ -2274,6 +2273,49 @@ fn apply_pending_officer_stat_contributions(
     }
 }
 
+/// Like [`apply_pending_officer_stat_contributions`] but skips condition evaluation — rows are
+/// pre-filtered by the Phase 4d per-round combat path.
+fn apply_unconditional_officer_stat_contributions(
+    mults: &mut OfficerStatAxisMults,
+    pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    want_target_attacker: bool,
+) {
+    use crate::lcars::resolver::OfficerStatOpponentScope;
+    for c in pending {
+        if c.target_attacker != want_target_attacker {
+            continue;
+        }
+        let v = if want_target_attacker { c.value } else { -c.value };
+        let bridge_only =
+            !want_target_attacker && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
+        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key.as_str()
+        {
+            "officer_attack" => *attack += v,
+            "officer_defense" => *defense += v,
+            "officer_health" => *health += v,
+            "officer_stat_all" => {
+                *attack += v;
+                *defense += v;
+                *health += v;
+            }
+            _ => {}
+        };
+        if bridge_only {
+            add(
+                &mut mults.bridge_only_attack,
+                &mut mults.bridge_only_defense,
+                &mut mults.bridge_only_health,
+            );
+        } else {
+            add(
+                &mut mults.crew_wide_attack,
+                &mut mults.crew_wide_defense,
+                &mut mults.crew_wide_health,
+            );
+        }
+    }
+}
+
 fn axis_rating_from_parts(
     bridge_raw: f64,
     below_raw: f64,
@@ -2307,6 +2349,38 @@ pub fn compute_officer_stat_runtime_bonus(
     cond_ctx: &OfficerStatConditionContext,
     opponent_enemy_target_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
 ) -> OfficerStatRuntimeBonus {
+    compute_officer_stat_runtime_bonus_with_round(
+        totals,
+        bridge_totals,
+        ship,
+        profile,
+        owner_faction_slug,
+        static_buffs,
+        self_pending_contributions,
+        cond_ctx,
+        opponent_enemy_target_pending,
+        &[],
+        None,
+        None,
+    )
+}
+
+/// Full officer-stat runtime path including Phase 4d per-round active rows.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
+    totals: crate::combat::CrewOfficerStatTotals,
+    bridge_totals: crate::combat::CrewOfficerStatTotals,
+    ship: &crate::data::ship::ShipRecord,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+    self_pending_contributions: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
+    opponent_enemy_target_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    round_active_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    _combat_ctx: Option<&crate::combat::abilities::CombatContext>,
+    _eval_timing: Option<crate::combat::abilities::TimingWindow>,
+) -> OfficerStatRuntimeBonus {
     if ship.officer_bonus.is_empty() {
         return OfficerStatRuntimeBonus::default();
     }
@@ -2336,6 +2410,9 @@ pub fn compute_officer_stat_runtime_bonus(
         false,
         cond_ctx,
     );
+    // Phase 4d: per-round dynamic rows pre-filtered by the combat loop (conditions already true).
+    apply_unconditional_officer_stat_contributions(&mut mults, round_active_pending, true);
+    apply_unconditional_officer_stat_contributions(&mut mults, round_active_pending, false);
 
     let below_decks = crate::combat::CrewOfficerStatTotals {
         attack: (totals.attack - bridge_totals.attack).max(0.0),

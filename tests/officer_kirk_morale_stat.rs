@@ -1,16 +1,18 @@
-//! Phase 4d (attack-axis v1): Kirk captain `officerstatall` gated on `morale_active`.
+//! Phase 4d: Kirk captain `officerstatall` gated on `morale_active` — full 3-axis breakpoint path.
 //!
-//! Production sole case: `kirk-1323b6` captain "Leader" → synthetic `AttackMultiplier`
-//! seat via [`expand_dynamic_officer_stat_effects`]. Defense/Health axes are not modeled.
+//! Production sole case: `kirk-1323b6` captain "Leader" → dynamic officer-stat contribution
+//! evaluated per round via [`OfficerStatRoundContext`].
 
-use kobayashi::combat::abilities::{
-    filter_effects_by_condition, Ability, AbilityClass, AbilityCondition, AbilityEffect,
-    CombatContext, CrewSeat, CrewSeatContext, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
-};
+use kobayashi::combat::abilities::{Ability, AbilityClass, AbilityCondition, AbilityEffect, CombatContext, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH};
 use kobayashi::combat::{
-    build_combat_setup, simulate_combat_from_setup, Combatant, CrewConfiguration,
-    OpponentFactionTag, ShipType, SimulationConfig, TraceMode, WeaponStats,
+    build_combat_setup_with_officer_stat, simulate_combat_from_setup, Combatant,
+    CrewConfiguration, CrewOfficerStatTotals, CrewSeat, CrewSeatContext, OpponentFactionTag,
+    ShipType, SimulationConfig, TraceMode, WeaponStats,
 };
+use kobayashi::data::officer_stat_round::OfficerStatRoundContext;
+use kobayashi::data::profile::OfficerStatConditionContext;
+use kobayashi::data::profile::PlayerProfile;
+use kobayashi::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
 use kobayashi::lcars::{
     build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
     ResolveOptions,
@@ -41,15 +43,92 @@ fn resolve_kirk_buff_set() -> Option<kobayashi::lcars::BuffSet> {
     ))
 }
 
-fn kirk_leader_attack_seats(buff: &kobayashi::lcars::BuffSet) -> Vec<&CrewSeatContext> {
-    buff.crew
-        .seats
-        .iter()
-        .filter(|s| {
-            s.ability.timing == TimingWindow::RoundStart
-                && matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_))
-        })
-        .collect()
+fn test_battleship() -> ShipRecord {
+    ShipRecord {
+        id: "test-battleship".into(),
+        ship_class: "battleship".into(),
+        armor: 1000.0,
+        shield_deflection: 0.0,
+        dodge: 0.0,
+        attack: 800.0,
+        hull_health: 50_000.0,
+        shield_health: 0.0,
+        officer_bonus: OfficerBonusTable {
+            attack: vec![
+                OfficerBonusBreakpoint {
+                    value: 0.0,
+                    bonus: 0.0,
+                },
+                OfficerBonusBreakpoint {
+                    value: 100.0,
+                    bonus: 0.2,
+                },
+                OfficerBonusBreakpoint {
+                    value: 280.0,
+                    bonus: 0.5,
+                },
+            ],
+            defense: vec![
+                OfficerBonusBreakpoint {
+                    value: 0.0,
+                    bonus: 0.0,
+                },
+                OfficerBonusBreakpoint {
+                    value: 100.0,
+                    bonus: 0.1,
+                },
+                OfficerBonusBreakpoint {
+                    value: 280.0,
+                    bonus: 0.3,
+                },
+            ],
+            health: vec![
+                OfficerBonusBreakpoint {
+                    value: 0.0,
+                    bonus: 0.0,
+                },
+                OfficerBonusBreakpoint {
+                    value: 100.0,
+                    bonus: 0.15,
+                },
+                OfficerBonusBreakpoint {
+                    value: 280.0,
+                    bonus: 0.45,
+                },
+            ],
+        },
+        ..ShipRecord::default()
+    }
+}
+
+fn kirk_officer_stat_round(buff: &kobayashi::lcars::BuffSet) -> Option<OfficerStatRoundContext> {
+    let ship = test_battleship();
+    // Ensure non-zero crew rating so +40% crew_mult can cross a breakpoint tier in the test table.
+    let totals = if buff.officer_stat_totals.attack > 0.0 {
+        buff.officer_stat_totals
+    } else {
+        CrewOfficerStatTotals {
+            attack: 200.0,
+            defense: 200.0,
+            health: 200.0,
+        }
+    };
+    let bridge = if buff.bridge_officer_stat_totals.attack > 0.0 {
+        buff.bridge_officer_stat_totals
+    } else {
+        totals
+    };
+    OfficerStatRoundContext::try_from_ship_and_buffs(
+        &ship,
+        &PlayerProfile::default(),
+        &buff.static_buffs,
+        totals,
+        bridge,
+        &buff.pending_officer_stat_contributions,
+        &[],
+        &buff.dynamic_officer_stat_contributions,
+        OfficerStatConditionContext::default(),
+    )
 }
 
 fn minimal_attacker() -> Combatant {
@@ -57,7 +136,7 @@ fn minimal_attacker() -> Combatant {
         id: "att".into(),
         attack: 800.0,
         mitigation: 0.0,
-        armor: 0.0,
+        armor: 1000.0,
         shield_deflection: 0.0,
         dodge: 0.0,
         damage_reduction: 0.0,
@@ -122,81 +201,54 @@ fn morale_injector_seat() -> CrewSeatContext {
     }
 }
 
-fn crew_leader_only(buff: &kobayashi::lcars::BuffSet) -> CrewConfiguration {
-    let seats: Vec<_> = kirk_leader_attack_seats(buff)
-        .into_iter()
-        .cloned()
-        .collect();
-    assert!(
-        !seats.is_empty(),
-        "expected Kirk Leader AttackMultiplier seat in buff set"
-    );
+fn crew_with_optional_morale(buff: &kobayashi::lcars::BuffSet, inject_morale: bool) -> CrewConfiguration {
+    let mut seats = buff.crew.seats.clone();
+    if inject_morale {
+        seats.push(morale_injector_seat());
+    }
     CrewConfiguration { seats }
-}
-
-fn crew_leader_with_guaranteed_morale(buff: &kobayashi::lcars::BuffSet) -> CrewConfiguration {
-    let mut seats: Vec<_> = kirk_leader_attack_seats(buff)
-        .into_iter()
-        .cloned()
-        .collect();
-    seats.push(morale_injector_seat());
-    CrewConfiguration { seats }
-}
-
-fn active_leader_effects(
-    buff: &kobayashi::lcars::BuffSet,
-) -> Vec<kobayashi::combat::ActiveAbilityEffect> {
-    kirk_leader_attack_seats(buff)
-        .into_iter()
-        .map(|s| kobayashi::combat::ActiveAbilityEffect {
-            ability_name: s.ability.name.clone(),
-            officer_id: s.officer_id.clone(),
-            effect: s.ability.effect,
-            boosted: s.boosted,
-            condition: s.ability.condition.clone(),
-        })
-        .collect()
 }
 
 #[test]
-fn kirk_production_phase4d_emits_single_attack_multiplier_seat() {
+fn kirk_production_phase4d_emits_dynamic_officer_stat_contribution() {
     let Some(buff) = resolve_kirk_buff_set() else {
         return;
     };
 
-    let attack_seats = kirk_leader_attack_seats(&buff);
     assert_eq!(
-        attack_seats.len(),
+        buff.dynamic_officer_stat_contributions.len(),
         1,
-        "expected one synthetic Leader AttackMultiplier seat; got {:?}",
-        buff.crew
-            .seats
-            .iter()
-            .map(|s| (s.ability.name.as_str(), format!("{:?}", s.ability.effect)))
-            .collect::<Vec<_>>()
+        "expected one dynamic Leader contribution; got {:?}",
+        buff.dynamic_officer_stat_contributions
     );
-
-    let seat = attack_seats[0];
+    let row = &buff.dynamic_officer_stat_contributions[0];
+    assert_eq!(row.stat_key, "officer_stat_all");
+    assert!((row.value - 0.4).abs() < 1e-9);
+    assert_eq!(row.timing, TimingWindow::RoundStart);
+    assert!(row.target_attacker);
     assert!(
-        matches!(
-            seat.ability.condition,
-            Some(AbilityCondition::MoraleActive) | Some(AbilityCondition::And(_))
-        ),
-        "Leader seat should gate on MoraleActive (possibly AND RoundRange); got {:?}",
-        seat.ability.condition
+        row.runtime_condition.as_ref().is_some_and(|c| matches!(
+            c,
+            AbilityCondition::MoraleActive | AbilityCondition::And(_)
+        )),
+        "Leader row should gate on MoraleActive (+ RoundRange); got {:?}",
+        row.runtime_condition
     );
-    if let Some(AbilityEffect::AttackMultiplier(v)) = Some(seat.ability.effect) {
-        assert!(
-            (v - 0.4).abs() < 1e-9,
-            "rank-1 Kirk Leader should be +40% attack mult, got {v}"
-        );
-    } else {
-        panic!("expected AttackMultiplier effect");
-    }
 
     assert!(
         buff.pending_officer_stat_contributions.is_empty(),
         "dynamic Kirk Leader must not duplicate via pending_officer_stat_contributions"
+    );
+
+    let attack_multiplier_seats = buff
+        .crew
+        .seats
+        .iter()
+        .filter(|s| matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_)))
+        .count();
+    assert_eq!(
+        attack_multiplier_seats, 0,
+        "Phase 4d full path must not emit synthetic AttackMultiplier seats"
     );
 
     let morale_bridge_count = buff
@@ -216,34 +268,39 @@ fn kirk_leader_morale_gated_damage_requires_morale() {
     let Some(buff) = resolve_kirk_buff_set() else {
         return;
     };
+    let Some(osr_ctx) = kirk_officer_stat_round(&buff) else {
+        panic!("expected officer stat round context for Kirk + test ship");
+    };
 
     let attacker = minimal_attacker();
     let defender = minimal_defender();
     let config = sim_config(4);
 
-    let setup_no_morale = build_combat_setup(
+    let setup_no_morale = build_combat_setup_with_officer_stat(
         &attacker,
         &defender,
         &config,
-        &crew_leader_only(&buff),
+        &crew_with_optional_morale(&buff, false),
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Explorer,
         true,
         false,
         &CrewConfiguration::default(),
+        Some(osr_ctx.clone()),
     );
-    let setup_with_morale = build_combat_setup(
+    let setup_with_morale = build_combat_setup_with_officer_stat(
         &attacker,
         &defender,
         &config,
-        &crew_leader_with_guaranteed_morale(&buff),
+        &crew_with_optional_morale(&buff, true),
         OpponentFactionTag::Unknown,
         ShipType::Battleship,
         ShipType::Explorer,
         true,
         false,
         &CrewConfiguration::default(),
+        Some(osr_ctx),
     );
 
     let without = simulate_combat_from_setup(&setup_no_morale, config.seed);
@@ -251,7 +308,7 @@ fn kirk_leader_morale_gated_damage_requires_morale() {
 
     assert!(
         with.total_damage > without.total_damage,
-        "Leader +40% should apply only when MoraleActive (with={}, without={})",
+        "Leader +40% breakpoint path should apply only when MoraleActive (with={}, without={})",
         with.total_damage,
         without.total_damage
     );
@@ -262,11 +319,11 @@ fn kirk_leader_duration_round_range_gates_bonus_to_first_round() {
     let Some(buff) = resolve_kirk_buff_set() else {
         return;
     };
+    let Some(ctx) = kirk_officer_stat_round(&buff) else {
+        panic!("expected officer stat round context");
+    };
 
-    let effects = active_leader_effects(&buff);
-    assert_eq!(effects.len(), 1);
-
-    let mut ctx = CombatContext {
+    let mut combat_ctx = CombatContext {
         round_index: 1,
         defender_hull_pct: 1.0,
         defender_shield_pct: 1.0,
@@ -294,15 +351,16 @@ fn kirk_leader_duration_round_range_gates_bonus_to_first_round() {
         defender_level: Some(50),
     };
 
-    assert_eq!(
-        filter_effects_by_condition(&effects, &ctx).len(),
-        1,
-        "round 1 + morale should apply Leader bonus"
+    let active_r1 = ctx.delta_for_timing(&combat_ctx, TimingWindow::RoundStart);
+    assert!(
+        !active_r1.is_effectively_zero(),
+        "round 1 + morale should apply Leader 3-axis bonus"
     );
 
-    ctx.round_index = 2;
+    combat_ctx.round_index = 2;
+    let active_r2 = ctx.delta_for_timing(&combat_ctx, TimingWindow::RoundStart);
     assert!(
-        filter_effects_by_condition(&effects, &ctx).is_empty(),
+        active_r2.is_effectively_zero(),
         "round 2 should not apply duration-1 Leader bonus even with morale"
     );
 }

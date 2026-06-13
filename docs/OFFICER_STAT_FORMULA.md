@@ -2,7 +2,7 @@
 
 Canonical reference for how per-officer Attack / Defense / Health stats sum across a crew and feed into a ship's effective combat stats. Authored by the maintainer; consumed by the engine extension that adds first-class officer A/D/H runtime support (see `/Users/pgagnong/.claude/plans/what-should-we-work-recursive-lobster.md`).
 
-Status: **specified and implemented**. The formula below is locked from in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and the Phase 4d dynamic attack-axis). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs) and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). The one remaining gap is the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
+Status: **specified and implemented**. The formula below is locked from in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs) and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). The one remaining gap is the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
 
 ---
 
@@ -288,18 +288,20 @@ Phase 2b can now proceed with the simpler model:
 
 ---
 
-## Phase 4d — dynamic officer-stat conditions (attack-axis v1)
+## Phase 4d — dynamic officer-stat conditions (3-axis breakpoint path)
 
-Officer-stat tags (`officerstatall`, `officer_attack`, …) whose LCARS `condition` depends on **round state** (morale, hull breach, burning, `round_range`, …) cannot be evaluated at fight setup. Phase 4b pending contributions only handle static setup gates.
+Officer-stat tags (`officerstatall`, `officer_attack`, …) whose LCARS `condition` depends on **round state** (morale, hull breach, burning, `round_range`, …) cannot be evaluated at fight setup.
 
-**Resolver path** ([`expand_dynamic_officer_stat_effects`](../src/lcars/resolver.rs)): dynamic `officerstat*` rows are expanded into synthetic `stat_modify` seats that compile to per-round engine effects. **Attack axis only** in v1:
+**Resolver path** ([`collect_dynamic_officer_stat_contributions`](../src/lcars/resolver.rs)): dynamic `officerstat*` rows are stored on [`BuffSet::dynamic_officer_stat_contributions`](../src/lcars/resolver.rs) with a compiled runtime [`AbilityCondition`](../src/combat/abilities.rs) (including duration `RoundRange` when present).
 
-- `officer_attack` / `officer_stat_all` → synthetic `weapon_damage` → [`AbilityEffect::AttackMultiplier`](../src/combat/abilities.rs) at the LCARS trigger (typically `on_round_start`), with the original dynamic condition AND any finite `duration.rounds` merged as `RoundRange`.
-- **Approximation:** in-game +X% officer A/D/H flows through breakpoint lookup; v1 maps the attack portion to a direct `weapon_damage` multiplier for the gated round(s). Magnitude diverges near breakpoint tier boundaries.
-- **Defense and Health axes are not modeled** mid-fight (no per-round engine hook for class-routed mitigation adds or max hull/shield recomputation).
+**Combat path** ([`OfficerStatRoundContext`](../src/data/officer_stat_round.rs)): each round after morale/state gates refresh, active dynamic rows are merged into [`compute_officer_stat_runtime_bonus_with_round`](../src/data/profile.rs) and the delta vs fight-setup baseline is applied:
+
+- **Attack:** `attack_pre_mult_add` → outbound `pre_attack_multiplier` (proper breakpoint lookup, not a flat `weapon_damage` proxy).
+- **Defense:** additive armor / shield_deflection / dodge on inbound counter-fire mitigation.
+- **Health:** `health_max_mult` scales effective max hull/shield for survivability (proportional scaling assumption when the gate turns on mid-fight).
 
 **Production data (2026-05):** only [`kirk-1323b6`](../data/officers/officers.lcars.yaml) captain "Leader" — `officerstatall` +40%, `morale_active`, `on_round_start`, duration 1 round. Bridge "Inspirational" morale proc is separate (standard `Morale` seat).
 
-**Tests:** [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs); resolver unit tests `phase4d_*` in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs).
+**Tests:** [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs); resolver unit tests `phase4d_*` in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs); [`src/data/officer_stat_round.rs`](../src/data/officer_stat_round.rs).
 
-**Deferred:** full per-round `compute_officer_stat_runtime_bonus()` in the combat loop (proper 3-axis breakpoint path); PvP defender-side dynamic `target: enemy` officer-stat debuffs (no prod LCARS cases today).
+**Deferred:** PvP defender-side dynamic `target: enemy` officer-stat debuffs (no prod LCARS cases today); mid-fight health bar proportional heal on gate activation is an explicit assumption pending in-game confirmation.
