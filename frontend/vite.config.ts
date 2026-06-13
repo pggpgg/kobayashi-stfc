@@ -29,5 +29,12 @@ export default defineConfig({
         singleFork: false,
       },
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary", "lcov"],
+      reportsDirectory: "./coverage",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/lib/api/generated.d.ts", "src/test/**"],
+    },
   },
 });

@@ -10,7 +10,7 @@ _Planned 2026-06-09 from a full repo audit (fidelity docs, test inventory, code 
 
 1. **Main lane (serialized):** **12** (engine decomposition — keystone: explicitly prerequisite to 4, and every fidelity change lands in that function) → **4** (Phase 4d, the largest open fidelity gap) → **6** (hostile-ability audit report can start anytime; *closing* its gaps belongs after 12) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces.
 2. **Pre-freeze prep lane (early, any order — the freeze window is the scarcest resource, so tooling must be ready before a window opens):** **3** (import faction resolution), the composite-score harness, and the profile-snapshot completeness audit (see protocol below).
-3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** **11** (coverage — do first, it calibrates the rest), **7** (SSE test), **9** (OpenAPI gate), **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts).
+3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; **7** (SSE test), **9** (OpenAPI gate), **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts).
 4. **Anytime, independent:** **10** (frontend tests), **15** (display-names investigation, timeboxed).
 5. **Post-freeze (maintainer-scheduled):** **2** (scoreboard + snapshot-bound corpus), then the iterate loop from the protocol.
 
@@ -66,8 +66,8 @@ Places where a bug would ship undetected today.
 - [ ] **10. Frontend: test `RosterProfile.tsx` and sensitivity result components** (M)
   The largest page ([RosterProfile.tsx](../frontend/src/pages/RosterProfile.tsx), ~1,450 lines: profile sync, roster mutations, error paths) has zero unit tests; 6 of 7 pages and the Morris/Sobol result components are untested. Test the critical flows, or split the page into testable pieces first.
 
-- [ ] **11. Coverage measurement in CI** (S)
-  `cargo llvm-cov` + a frontend coverage report, even without a hard gate initially. Today nobody can answer "what fraction of the engine is covered"; the Tier 2 priorities above are educated guesses.
+- [x] **11. Coverage measurement in CI** (S) — *closed 2026-06-12*
+  Parallel **Rust coverage** job runs `cargo llvm-cov --lib --tests` (summary in logs, `rust-lcov.info` artifact). Frontend job runs `npm run test:coverage` (Vitest v8; `frontend/coverage/lcov.info` artifact). Informational only — no threshold gate.
 
 ## Tier 3 — Maintainability & operations
 

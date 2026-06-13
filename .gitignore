@@ -48,3 +48,8 @@ profiles/*
 # Playwright artifacts
 playwright-report/
 test-results/
+
+# Test coverage (CI artifacts; informational only)
+coverage/
+frontend/coverage/
+rust-lcov.info

@@ -11,6 +11,10 @@
 #
 # Static SPA (audit task 13):
 # - `CompressionLayer` (gzip + brotli) on the Axum router; `Cache-Control` for `assets/*` (immutable) vs `index.html` (no-cache) in `src/server/routes.rs`.
+#
+# Coverage (roadmap task 11):
+# - Parallel `rust_coverage` job: `cargo llvm-cov --lib --tests` with summary in logs + lcov artifact (no threshold gate).
+# - Frontend job runs `npm run test:coverage` instead of plain `npm test`; uploads Vitest lcov (informational only).
 
 name: CI
 
@@ -113,6 +117,47 @@ jobs:
       - name: cargo audit
         run: cargo audit
 
+  rust_coverage:
+    name: Rust coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Rust coverage (lib + integration tests)
+        env:
+          CI: true
+        run: |
+          cargo llvm-cov --lib --tests \
+            --lcov --output-path rust-lcov.info \
+            --summary-only
+
+      - name: Upload Rust coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-coverage
+          path: rust-lcov.info
+          retention-days: 21
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -142,9 +187,17 @@ jobs:
         working-directory: frontend
         run: npm run typecheck
 
-      - name: Run frontend tests
+      - name: Run frontend tests with coverage
         working-directory: frontend
-        run: npm run test
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/lcov.info
+          retention-days: 21
 
       - name: Build frontend
         working-directory: frontend
