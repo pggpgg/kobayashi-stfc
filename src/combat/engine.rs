@@ -374,18 +374,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let mut trace = TraceCollector::new(matches!(config.trace_mode, TraceMode::Events));
     let emit_snapshots = config.emit_state_snapshots && trace.is_enabled();
     let use_experimental_simd_damage_after_apex_base = avx2_supported() && !trace.is_enabled();
-    let mut total_hull_damage = 0.0;
-    let mut total_shield_damage = 0.0;
-    let mut defender_shield_remaining = defender.shield_health.max(0.0);
-    let mut attacker_shield_remaining = attacker.shield_health.max(0.0);
     let max_att_hull = attacker.hull_health.max(0.0);
-    let mut total_attacker_hull_damage =
-        config.initial_attacker_hull_damage.clamp(0.0, max_att_hull);
-    let mut attacker_hull_gross_damage_this_round: f64 = 0.0;
-    let mut attacker_hull_gross_damage_last_round: f64 = 0.0;
-    let mut attacker_shield_gross_damage_this_round: f64 = 0.0;
-    let mut attacker_shield_gross_damage_last_round: f64 = 0.0;
-    let mut defender_hull_breach_rounds = 0_u32;
     // Breach-gated cumulative crit hull abilities (Hegh'ta "Open the Wound", Rotarran "Bird of
     // Prey"): while the opponent is hull breached, each weapon hit grows crit chance and each crit
     // grows crit damage, cumulative for the rest of the fight. `breach_hits` / `breach_crits` count
@@ -394,17 +383,29 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         sum_breach_cumulative_crit_chance_per_hit(&setup.attack_phase_effects);
     let breach_crit_damage_per_crit =
         sum_breach_cumulative_crit_damage_per_crit(&setup.attack_phase_effects);
-    let mut breach_hits: u64 = 0;
-    let mut breach_crits: u64 = 0;
-    let mut defender_burning_rounds = 0_u32;
-    let mut attacker_hull_breach_rounds = 0_u32;
-    let mut attacker_burning_rounds = 0_u32;
-    let mut assimilated_rounds_remaining = 0_u32;
-    let mut defender_assimilated_rounds_remaining = 0_u32;
-    let mut defender_morale_rounds_remaining = 0_u32;
-    let mut shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
-    let mut defender_shots_bonus_entries: Vec<(f64, u32)> = Vec::new();
-    let mut defender_weapon_fire_delayed_rounds = 0_u32;
+    let mut st = CombatRunState {
+        total_hull_damage: 0.0,
+        total_shield_damage: 0.0,
+        defender_shield_remaining: defender.shield_health.max(0.0),
+        attacker_shield_remaining: attacker.shield_health.max(0.0),
+        total_attacker_hull_damage: config.initial_attacker_hull_damage.clamp(0.0, max_att_hull),
+        attacker_hull_gross_damage_this_round: 0.0,
+        attacker_hull_gross_damage_last_round: 0.0,
+        attacker_shield_gross_damage_this_round: 0.0,
+        attacker_shield_gross_damage_last_round: 0.0,
+        defender_hull_breach_rounds: 0,
+        breach_hits: 0,
+        breach_crits: 0,
+        defender_burning_rounds: 0,
+        attacker_hull_breach_rounds: 0,
+        attacker_burning_rounds: 0,
+        assimilated_rounds_remaining: 0,
+        defender_assimilated_rounds_remaining: 0,
+        defender_morale_rounds_remaining: 0,
+        shots_bonus_entries: Vec::new(),
+        defender_shots_bonus_entries: Vec::new(),
+        defender_weapon_fire_delayed_rounds: 0,
+    };
 
     // Re-use precomputed effects from setup
     let combat_begin_effects = &setup.combat_begin_effects;
@@ -459,8 +460,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         )
         || setup.evo_assim_instant_loss
     {
-        let total_attacker_hull_damage = max_att_hull;
-        let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        let instant_loss_hull = max_att_hull;
+        let attacker_hull_remaining = (attacker.hull_health - instant_loss_hull).max(0.0);
         return SimulationResult {
             total_damage: 0.0,
             attacker_won: false,
@@ -468,38 +469,40 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             rounds_simulated: 0,
             attacker_hull_remaining: round_f64(attacker_hull_remaining),
             defender_hull_remaining: round_f64(defender.hull_health),
-            defender_shield_remaining: round_f64(defender_shield_remaining),
-            attacker_shield_remaining: round_f64(attacker_shield_remaining),
+            defender_shield_remaining: round_f64(st.defender_shield_remaining),
+            attacker_shield_remaining: round_f64(st.attacker_shield_remaining),
             events: trace.events(),
             conqueror_borg_beam_suppression: setup.conqueror_borg_beam_suppression,
         };
     }
 
     let conqueror_borg_beam_suppression = setup.conqueror_borg_beam_suppression;
-    let combat_begin_assimilated = assimilated_rounds_remaining > 0;
+    let combat_begin_assimilated = st.assimilated_rounds_remaining > 0;
     apply_combat_begin_phase(
         &mut trace,
         &mut rng,
         attacker,
         combat_begin_filtered,
         combat_begin_assimilated,
-        &mut defender_burning_rounds,
-        &mut defender_weapon_fire_delayed_rounds,
-        &mut shots_bonus_entries,
+        &mut st.defender_burning_rounds,
+        &mut st.defender_weapon_fire_delayed_rounds,
+        &mut st.shots_bonus_entries,
     );
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
-    shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
-    defender_shots_bonus_entries.reserve(rounds_to_simulate.min(32) as usize);
+    st.shots_bonus_entries
+        .reserve(rounds_to_simulate.min(32) as usize);
+    st.defender_shots_bonus_entries
+        .reserve(rounds_to_simulate.min(32) as usize);
     let mut rounds_completed = 0u32;
 
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
 
-        let skip_defender_counter_attack = defender_weapon_fire_delayed_rounds > 0;
-        if defender_weapon_fire_delayed_rounds > 0 {
-            defender_weapon_fire_delayed_rounds =
-                defender_weapon_fire_delayed_rounds.saturating_sub(1);
+        let skip_defender_counter_attack = st.defender_weapon_fire_delayed_rounds > 0;
+        if st.defender_weapon_fire_delayed_rounds > 0 {
+            st.defender_weapon_fire_delayed_rounds =
+                st.defender_weapon_fire_delayed_rounds.saturating_sub(1);
         }
 
         let DefenderRoundStartVitals {
@@ -516,16 +519,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             defender,
             attacker_crew,
             defender_round_start_effects,
-            defender_morale_rounds_remaining,
-            defender_burning_rounds,
-            defender_hull_breach_rounds,
-            attacker_burning_rounds,
-            attacker_hull_breach_rounds,
-            &mut total_hull_damage,
-            total_attacker_hull_damage,
-            &mut defender_shield_remaining,
-            attacker_shield_remaining,
-            &mut defender_assimilated_rounds_remaining,
+            st.defender_morale_rounds_remaining,
+            st.defender_burning_rounds,
+            st.defender_hull_breach_rounds,
+            st.attacker_burning_rounds,
+            st.attacker_hull_breach_rounds,
+            &mut st.total_hull_damage,
+            st.total_attacker_hull_damage,
+            &mut st.defender_shield_remaining,
+            st.attacker_shield_remaining,
+            &mut st.defender_assimilated_rounds_remaining,
         );
 
         let mut combat_ctx = ctx_template.at(
@@ -538,12 +541,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             },
             CtxStatusFlags {
                 attacker_morale_active: false,
-                defender_morale_active: defender_morale_rounds_remaining > 0,
-                defender_burning_active: defender_burning_rounds > 0,
-                defender_hull_breach_active: defender_hull_breach_rounds > 0,
-                attacker_burning_active: attacker_burning_rounds > 0,
-                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+                defender_morale_active: st.defender_morale_rounds_remaining > 0,
+                defender_burning_active: st.defender_burning_rounds > 0,
+                defender_hull_breach_active: st.defender_hull_breach_rounds > 0,
+                attacker_burning_active: st.attacker_burning_rounds > 0,
+                attacker_hull_breach_active: st.attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
             },
         );
 
@@ -564,7 +567,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             TimingWindow::CombatBegin,
             &combat_begin_this_round,
             attacker.attack,
-            assimilated_rounds_remaining > 0,
+            st.assimilated_rounds_remaining > 0,
             round_index,
         );
 
@@ -587,7 +590,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             ]),
         });
 
-        let round_start_assimilated = assimilated_rounds_remaining > 0;
+        let round_start_assimilated = st.assimilated_rounds_remaining > 0;
         // Round-start conditions that do not use [AbilityCondition::MoraleActive] (morale unknown yet).
         let bench = filter_effects_by_condition(round_start_effects, &combat_ctx);
         record_ability_activations(
@@ -616,13 +619,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             hull_breach_effects,
             &combat_ctx,
             &mut phase_effects,
-            &mut assimilated_rounds_remaining,
-            &mut defender_burning_rounds,
-            &mut defender_hull_breach_rounds,
-            &mut defender_assimilated_rounds_remaining,
-            &mut defender_morale_rounds_remaining,
-            &mut shots_bonus_entries,
-            &mut defender_weapon_fire_delayed_rounds,
+            &mut st.assimilated_rounds_remaining,
+            &mut st.defender_burning_rounds,
+            &mut st.defender_hull_breach_rounds,
+            &mut st.defender_assimilated_rounds_remaining,
+            &mut st.defender_morale_rounds_remaining,
+            &mut st.shots_bonus_entries,
+            &mut st.defender_weapon_fire_delayed_rounds,
         );
 
         roll_defender_round_start_shots_bonus(
@@ -631,8 +634,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             round_index,
             defender_round_start_effects,
             &combat_ctx,
-            defender_assimilated_rounds_remaining,
-            &mut defender_shots_bonus_entries,
+            st.defender_assimilated_rounds_remaining,
+            &mut st.defender_shots_bonus_entries,
         );
 
         // Morale proc after other round-start RNG consumers (assimilated, hull breach, burning, shots).
@@ -645,12 +648,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             round_start_assimilated,
         );
         combat_ctx.attacker_morale_active = morale_triggered;
-        combat_ctx.defender_morale_active = defender_morale_rounds_remaining > 0;
+        combat_ctx.defender_morale_active = st.defender_morale_rounds_remaining > 0;
         // Round-start procs above may have applied breach/burning; refresh gates before attack-phase filtering.
-        combat_ctx.defender_hull_breach_active = defender_hull_breach_rounds > 0;
-        combat_ctx.attacker_hull_breach_active = attacker_hull_breach_rounds > 0;
-        combat_ctx.defender_burning_active = defender_burning_rounds > 0;
-        combat_ctx.attacker_burning_active = attacker_burning_rounds > 0;
+        combat_ctx.defender_hull_breach_active = st.defender_hull_breach_rounds > 0;
+        combat_ctx.attacker_hull_breach_active = st.attacker_hull_breach_rounds > 0;
+        combat_ctx.defender_burning_active = st.defender_burning_rounds > 0;
+        combat_ctx.attacker_burning_active = st.attacker_burning_rounds > 0;
 
         let full_round_start = filter_effects_by_condition(round_start_effects, &combat_ctx);
         let round_start_extra: Vec<_> = full_round_start
@@ -683,17 +686,19 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &combat_ctx,
             round_start_assimilated,
             &mut phase_effects,
-            &mut attacker_shield_remaining,
-            &mut total_attacker_hull_damage,
-            attacker_hull_gross_damage_last_round,
-            attacker_shield_gross_damage_last_round,
+            &mut st.attacker_shield_remaining,
+            &mut st.total_attacker_hull_damage,
+            st.attacker_hull_gross_damage_last_round,
+            st.attacker_shield_gross_damage_last_round,
         );
 
         // Prune expired shots bonuses and compute B_shots(r) for this round.
-        shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
-        let b_shots: f64 = shots_bonus_entries.iter().map(|(b, _)| b).sum();
-        defender_shots_bonus_entries.retain(|(_, expires)| *expires >= round_index);
-        let def_b_shots: f64 = defender_shots_bonus_entries.iter().map(|(b, _)| b).sum();
+        st.shots_bonus_entries
+            .retain(|(_, expires)| *expires >= round_index);
+        let b_shots: f64 = st.shots_bonus_entries.iter().map(|(b, _)| b).sum();
+        st.defender_shots_bonus_entries
+            .retain(|(_, expires)| *expires >= round_index);
+        let def_b_shots: f64 = st.defender_shots_bonus_entries.iter().map(|(b, _)| b).sum();
 
         if emit_snapshots {
             let snap = build_combat_state_snapshot(
@@ -703,19 +708,19 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 None,
                 attacker,
                 defender,
-                total_hull_damage,
-                total_attacker_hull_damage,
-                defender_shield_remaining,
-                attacker_shield_remaining,
+                st.total_hull_damage,
+                st.total_attacker_hull_damage,
+                st.defender_shield_remaining,
+                st.attacker_shield_remaining,
                 &combat_ctx,
-                assimilated_rounds_remaining,
-                defender_assimilated_rounds_remaining,
+                st.assimilated_rounds_remaining,
+                st.defender_assimilated_rounds_remaining,
                 Some(&phase_effects),
             );
             trace.record(state_snapshot_as_combat_event(&snap));
         }
 
-        let round_end_assimilated_early = assimilated_rounds_remaining > 0;
+        let round_end_assimilated_early = st.assimilated_rounds_remaining > 0;
         let round_end_filtered = filter_effects_by_condition(round_end_effects, &combat_ctx);
         // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
         // must not feed the same-round weapon sub-rounds. Apply RoundEnd only after all weapons
@@ -723,7 +728,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let mut phase_effects_round = phase_effects.clone();
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
 
-        let attack_phase_assimilated = assimilated_rounds_remaining > 0;
+        let attack_phase_assimilated = st.assimilated_rounds_remaining > 0;
         let attack_phase_filtered = filter_effects_by_condition(attack_phase_effects, &combat_ctx);
         let defense_phase_filtered =
             filter_effects_by_condition(defense_phase_effects, &combat_ctx);
@@ -736,7 +741,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &attack_phase_filtered,
             attack_phase_assimilated,
         );
-        let defense_phase_assimilated = assimilated_rounds_remaining > 0;
+        let defense_phase_assimilated = st.assimilated_rounds_remaining > 0;
         record_ability_activations(
             &mut trace,
             round_index,
@@ -754,7 +759,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             "defense_inbound",
             defender,
             &defender_inbound_defense_filtered,
-            defender_assimilated_rounds_remaining > 0,
+            st.defender_assimilated_rounds_remaining > 0,
         );
         let use_simd_outbound_weapon_path = use_experimental_simd_damage_after_apex_base
             && defender_inbound_defense_filtered.is_empty()
@@ -802,13 +807,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     None,
                     attacker,
                     defender,
-                    total_hull_damage,
-                    total_attacker_hull_damage,
-                    defender_shield_remaining,
-                    attacker_shield_remaining,
+                    st.total_hull_damage,
+                    st.total_attacker_hull_damage,
+                    st.defender_shield_remaining,
+                    st.attacker_shield_remaining,
                     &combat_ctx,
-                    assimilated_rounds_remaining,
-                    defender_assimilated_rounds_remaining,
+                    st.assimilated_rounds_remaining,
+                    st.defender_assimilated_rounds_remaining,
                     Some(&phase_effects),
                 );
                 trace.record(state_snapshot_as_combat_event(&snap));
@@ -823,7 +828,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
             let base_shots = attacker.weapon_base_shots(weapon_index);
             let effective_shots = effective_shots_for_weapon(base_shots, b_shots);
-            let shield_before_weapon = defender_shield_remaining;
+            let shield_before_weapon = st.defender_shield_remaining;
             let mut simd_damage_batch: Vec<f64> =
                 if use_simd_outbound_weapon_path && effective_shots > 0 {
                     Vec::with_capacity(4)
@@ -1005,7 +1010,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         },
                     });
 
-                    let defender_inbound_assimilated = defender_assimilated_rounds_remaining > 0;
+                    let defender_inbound_assimilated = st.defender_assimilated_rounds_remaining > 0;
                     let mut inbound_defender_effects = EffectAccumulator::default();
                     inbound_defender_effects.set_trace_contributions(false);
                     inbound_defender_effects.add_effects(
@@ -1044,13 +1049,14 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         ]),
                     });
 
-                    let hull_breach_active = defender_hull_breach_rounds > 0;
+                    let hull_breach_active = st.defender_hull_breach_rounds > 0;
                     // Breach-gated cumulative crit growth (Hegh'ta / Rotarran). The bonus reflects
                     // only events that occurred *before* this shot; the counters grow afterwards.
                     // Crit chance grows additively (clamps to [0,1] in the roll); crit damage grows
                     // as additive percentage points on the crit multiplier (per-crit stat bonus).
-                    let breach_crit_chance_add = breach_crit_chance_per_hit * breach_hits as f64;
-                    let breach_crit_damage_add = breach_crit_damage_per_crit * breach_crits as f64;
+                    let breach_crit_chance_add = breach_crit_chance_per_hit * st.breach_hits as f64;
+                    let breach_crit_damage_add =
+                        breach_crit_damage_per_crit * st.breach_crits as f64;
                     let crit = resolve_vehicle_weapon_crit(
                         attacker.weapon_crit_chance(weapon_index),
                         phase_effects.crit_chance_bonus() + breach_crit_chance_add,
@@ -1068,10 +1074,10 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     // bonus benefits subsequent hits/crits (not the current one).
                     if hull_breach_active {
                         if breach_crit_chance_per_hit > 0.0 {
-                            breach_hits += 1;
+                            st.breach_hits += 1;
                         }
                         if is_crit && breach_crit_damage_per_crit > 0.0 {
-                            breach_crits += 1;
+                            st.breach_crits += 1;
                         }
                     }
                     trace.record_if(|| CombatEvent {
@@ -1119,8 +1125,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                             let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
                             if triggered {
-                                assimilated_rounds_remaining =
-                                    assimilated_rounds_remaining.max(duration_rounds.max(1));
+                                st.assimilated_rounds_remaining =
+                                    st.assimilated_rounds_remaining.max(duration_rounds.max(1));
                             }
                             trace.record_if(|| CombatEvent {
                                 event_type: "assimilated_trigger".to_string(),
@@ -1153,17 +1159,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                             let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                             let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
-                            let breach_before = defender_hull_breach_rounds;
+                            let breach_before = st.defender_hull_breach_rounds;
                             if triggered {
-                                defender_hull_breach_rounds =
-                                    defender_hull_breach_rounds.max(duration_rounds.max(1));
+                                st.defender_hull_breach_rounds =
+                                    st.defender_hull_breach_rounds.max(duration_rounds.max(1));
                             }
-                            if breach_before == 0 && defender_hull_breach_rounds > 0 {
+                            if breach_before == 0 && st.defender_hull_breach_rounds > 0 {
                                 let mut ctx_hb = combat_ctx.clone();
                                 ctx_hb.defender_hull_pct = 1.0
-                                    - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+                                    - (st.total_hull_damage / defender.hull_health.max(0.0))
+                                        .min(1.0);
                                 ctx_hb.defender_shield_pct = if defender.shield_health > 0.0 {
-                                    defender_shield_remaining / defender.shield_health
+                                    st.defender_shield_remaining / defender.shield_health
                                 } else {
                                     1.0
                                 };
@@ -1180,7 +1187,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                     attack_phase_assimilated,
                                     weapon_base,
                                     &mut phase_effects_round,
-                                    &mut defender_burning_rounds,
+                                    &mut st.defender_burning_rounds,
                                 );
                             }
                             trace.record_if(|| CombatEvent {
@@ -1223,7 +1230,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 delay_rounds,
                                 requires_critical,
                                 is_crit,
-                                &mut defender_weapon_fire_delayed_rounds,
+                                &mut st.defender_weapon_fire_delayed_rounds,
                             );
                         }
 
@@ -1238,7 +1245,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             "attack",
                             &attacker.id,
                             None,
-                            &mut defender_burning_rounds,
+                            &mut st.defender_burning_rounds,
                         );
                     }
 
@@ -1254,7 +1261,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             "defense",
                             &attacker.id,
                             None,
-                            &mut defender_burning_rounds,
+                            &mut st.defender_burning_rounds,
                         );
                     }
 
@@ -1270,7 +1277,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             "defense_inbound",
                             &defender.id,
                             None,
-                            &mut defender_burning_rounds,
+                            &mut st.defender_burning_rounds,
                         );
                     }
 
@@ -1366,7 +1373,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     let effective_shield_mitigation = (pre_bypass_shield_mitigation
                         * (1.0 - total_bypass_fraction))
                         .clamp(0.0, 1.0);
-                    let shield_mitigation = if defender_shield_remaining > 0.0 {
+                    let shield_mitigation = if st.defender_shield_remaining > 0.0 {
                         effective_shield_mitigation
                     } else {
                         0.0
@@ -1394,7 +1401,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 &mut simd_damage_after_apex_batch,
                             );
                             for lane in 0..simd_damage_after_apex_batch.len() {
-                                let lane_shield_mitigation = if defender_shield_remaining > 0.0 {
+                                let lane_shield_mitigation = if st.defender_shield_remaining > 0.0 {
                                     simd_shield_mitigation_batch[lane]
                                 } else {
                                     0.0
@@ -1403,12 +1410,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                     apply_shield_hull_split(
                                         simd_damage_after_apex_batch[lane],
                                         lane_shield_mitigation,
-                                        defender_shield_remaining,
+                                        st.defender_shield_remaining,
                                     );
-                                defender_shield_remaining =
-                                    (defender_shield_remaining - actual_shield_damage).max(0.0);
-                                total_hull_damage += hull_damage_this_round;
-                                total_shield_damage += actual_shield_damage;
+                                st.defender_shield_remaining =
+                                    (st.defender_shield_remaining - actual_shield_damage).max(0.0);
+                                st.total_hull_damage += hull_damage_this_round;
+                                st.total_shield_damage += actual_shield_damage;
                             }
                             simd_damage_batch.clear();
                             simd_isolytic_batch.clear();
@@ -1420,21 +1427,21 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
                         damage_after_apex,
                         shield_mitigation,
-                        defender_shield_remaining,
+                        st.defender_shield_remaining,
                     );
 
-                    defender_shield_remaining =
-                        (defender_shield_remaining - actual_shield_damage).max(0.0);
-                    total_hull_damage += hull_damage_this_round;
-                    total_shield_damage += actual_shield_damage;
+                    st.defender_shield_remaining =
+                        (st.defender_shield_remaining - actual_shield_damage).max(0.0);
+                    st.total_hull_damage += hull_damage_this_round;
+                    st.total_shield_damage += actual_shield_damage;
 
                     if hull_damage_this_round > 0.0 {
-                        let def_rd_assim = defender_assimilated_rounds_remaining > 0;
+                        let def_rd_assim = st.defender_assimilated_rounds_remaining > 0;
                         let mut ctx_def_rd = combat_ctx.clone();
                         ctx_def_rd.defender_hull_pct =
-                            1.0 - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
+                            1.0 - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
                         ctx_def_rd.defender_shield_pct = if defender.shield_health > 0.0 {
-                            defender_shield_remaining / defender.shield_health
+                            st.defender_shield_remaining / defender.shield_health
                         } else {
                             1.0
                         };
@@ -1453,7 +1460,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             "receive_damage",
                             &defender.id,
                             None,
-                            &mut defender_burning_rounds,
+                            &mut st.defender_burning_rounds,
                         );
                     }
 
@@ -1486,21 +1493,22 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             ),
                             (
                                 "running_hull_damage".to_string(),
-                                Value::from(round_f64(total_hull_damage)),
+                                Value::from(round_f64(st.total_hull_damage)),
                             ),
                             (
                                 "defender_shield_remaining".to_string(),
-                                Value::from(round_f64(defender_shield_remaining)),
+                                Value::from(round_f64(st.defender_shield_remaining)),
                             ),
                             (
                                 "shield_broke".to_string(),
                                 Value::Bool(
-                                    shield_before_weapon > 0.0 && defender_shield_remaining <= 0.0,
+                                    shield_before_weapon > 0.0
+                                        && st.defender_shield_remaining <= 0.0,
                                 ),
                             ),
                             (
                                 "assimilated_active".to_string(),
-                                Value::Bool(assimilated_rounds_remaining > 0),
+                                Value::Bool(st.assimilated_rounds_remaining > 0),
                             ),
                             ("hit_index".to_string(), Value::from(hit_index)),
                         ]),
@@ -1513,13 +1521,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             Some(hit_index),
                             attacker,
                             defender,
-                            total_hull_damage,
-                            total_attacker_hull_damage,
-                            defender_shield_remaining,
-                            attacker_shield_remaining,
+                            st.total_hull_damage,
+                            st.total_attacker_hull_damage,
+                            st.defender_shield_remaining,
+                            st.attacker_shield_remaining,
                             &combat_ctx,
-                            assimilated_rounds_remaining,
-                            defender_assimilated_rounds_remaining,
+                            st.assimilated_rounds_remaining,
+                            st.defender_assimilated_rounds_remaining,
                             Some(&phase_effects),
                         );
                         trace.record(state_snapshot_as_combat_event(&snap));
@@ -1528,7 +1536,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             }
 
             let shield_broke_this_round =
-                shield_before_weapon > 0.0 && defender_shield_remaining <= 0.0;
+                shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0;
             if shield_broke_this_round {
                 process_defender_shield_break(
                     &mut trace,
@@ -1542,10 +1550,10 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     attack_phase_assimilated,
                     weapon_base,
                     &mut phase_effects_round,
-                    &mut defender_burning_rounds,
-                    &mut defender_weapon_fire_delayed_rounds,
-                    &mut defender_shield_remaining,
-                    &mut total_hull_damage,
+                    &mut st.defender_burning_rounds,
+                    &mut st.defender_weapon_fire_delayed_rounds,
+                    &mut st.defender_shield_remaining,
+                    &mut st.total_hull_damage,
                     &mut defender_shield_break_carry,
                 );
             }
@@ -1593,12 +1601,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     attacker_hull_pct: combat_ctx.attacker_hull_pct,
                     attacker_shield_pct: combat_ctx.attacker_shield_pct,
                     attacker_morale_active: false,
-                    defender_morale_active: defender_morale_rounds_remaining > 0,
+                    defender_morale_active: st.defender_morale_rounds_remaining > 0,
                     defender_burning_active: false,
                     defender_hull_breach_active: false,
                     attacker_burning_active: combat_ctx.attacker_burning_active,
                     attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
-                    defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+                    defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
                     defender_faction,
                     attacker_owner_faction: combat_ctx.attacker_owner_faction,
                     defender_hull_faction_id: config.defender_hull_faction_id,
@@ -1774,7 +1782,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         }
                     });
                     let defender_attack_phase_assimilated =
-                        defender_assimilated_rounds_remaining > 0;
+                        st.defender_assimilated_rounds_remaining > 0;
                     roll_assimilated_extensions_from_effects(
                         &mut RoundPhaseCtx {
                             trace: &mut trace,
@@ -1785,7 +1793,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         defender_attack_phase_assimilated,
                         "attack",
                         &defender.id,
-                        &mut defender_assimilated_rounds_remaining,
+                        &mut st.defender_assimilated_rounds_remaining,
                     );
 
                     let mut defender_phase_effects = defender_phase_template.clone();
@@ -1822,7 +1830,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             defender.weapon_pierce(weapon_index)
                                 + defender_phase_effects.pre_attack_pierce_bonus(),
                             defender_ship_type,
-                            defender_morale_rounds_remaining > 0,
+                            st.defender_morale_rounds_remaining > 0,
                         );
                     if hostile_counter_debuff > 0.0
                         && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
@@ -1834,7 +1842,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         counter_pierce,
                         defender_phase_effects.defense_mitigation_bonus(),
                     );
-                    let attacker_hull_breach_active_for_crit = attacker_hull_breach_rounds > 0;
+                    let attacker_hull_breach_active_for_crit = st.attacker_hull_breach_rounds > 0;
                     // Defender counter-fire: pass 0 for the new attacker-outbound CDR / floor
                     // params. The existing `hostile_crit_reduction` post-call adjustment below
                     // keeps the player-side defensive CDR semantics intact.
@@ -1942,8 +1950,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 &mut counter_simd_after_apex_batch,
                             );
                             for lane in 0..counter_simd_after_apex_batch.len() {
-                                let att_shield_before_counter = attacker_shield_remaining;
-                                let lane_mit = if attacker_shield_remaining > 0.0 {
+                                let att_shield_before_counter = st.attacker_shield_remaining;
+                                let lane_mit = if st.attacker_shield_remaining > 0.0 {
                                     counter_simd_shield_mit_batch[lane]
                                 } else {
                                     0.0
@@ -1952,13 +1960,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                     apply_shield_hull_split(
                                         counter_simd_after_apex_batch[lane],
                                         lane_mit,
-                                        attacker_shield_remaining,
+                                        st.attacker_shield_remaining,
                                     );
-                                attacker_shield_remaining =
-                                    (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
-                                total_attacker_hull_damage += att_hull_damage_this_round;
-                                attacker_hull_gross_damage_this_round += att_hull_damage_this_round;
-                                attacker_shield_gross_damage_this_round += att_actual_shield_damage;
+                                st.attacker_shield_remaining = (st.attacker_shield_remaining
+                                    - att_actual_shield_damage)
+                                    .max(0.0);
+                                st.total_attacker_hull_damage += att_hull_damage_this_round;
+                                st.attacker_hull_gross_damage_this_round +=
+                                    att_hull_damage_this_round;
+                                st.attacker_shield_gross_damage_this_round +=
+                                    att_actual_shield_damage;
 
                                 let def_is_crit_lane = counter_simd_crit_batch[lane];
                                 if att_hull_damage_this_round > 0.0 {
@@ -1980,22 +1991,23 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                                 (rng.next_u64() as f64) / (u64::MAX as f64);
                                             let triggered =
                                                 hull_breach_roll < chance.clamp(0.0, 1.0);
-                                            let breach_before = attacker_hull_breach_rounds;
+                                            let breach_before = st.attacker_hull_breach_rounds;
                                             if triggered {
-                                                attacker_hull_breach_rounds =
-                                                    attacker_hull_breach_rounds
-                                                        .max(duration_rounds.max(1));
+                                                st.attacker_hull_breach_rounds = st
+                                                    .attacker_hull_breach_rounds
+                                                    .max(duration_rounds.max(1));
                                             }
-                                            if breach_before == 0 && attacker_hull_breach_rounds > 0
+                                            if breach_before == 0
+                                                && st.attacker_hull_breach_rounds > 0
                                             {
                                                 let mut ctx_hb = combat_ctx.clone();
                                                 ctx_hb.attacker_hull_pct = 1.0
-                                                    - (total_attacker_hull_damage
+                                                    - (st.total_attacker_hull_damage
                                                         / attacker.hull_health.max(0.0))
                                                     .min(1.0);
                                                 ctx_hb.attacker_shield_pct =
                                                     if attacker.shield_health > 0.0 {
-                                                        attacker_shield_remaining
+                                                        st.attacker_shield_remaining
                                                             / attacker.shield_health
                                                     } else {
                                                         0.0
@@ -2010,10 +2022,10 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                                     attacker,
                                                     hull_breach_effects,
                                                     ctx_hb,
-                                                    assimilated_rounds_remaining > 0,
+                                                    st.assimilated_rounds_remaining > 0,
                                                     defender_weapon_attack,
                                                     &mut phase_effects_round,
-                                                    &mut defender_burning_rounds,
+                                                    &mut st.defender_burning_rounds,
                                                 );
                                             }
                                             trace.record_if(|| CombatEvent {
@@ -2071,23 +2083,23 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                             "counter",
                                             &defender.id,
                                             Some(weapon_index as u32),
-                                            &mut attacker_burning_rounds,
+                                            &mut st.attacker_burning_rounds,
                                         );
                                     }
                                 }
 
                                 let attacker_own_shields_broke = att_shield_before_counter > 0.0
-                                    && attacker_shield_remaining <= 0.0;
+                                    && st.attacker_shield_remaining <= 0.0;
                                 if attacker_own_shields_broke {
                                     let mut ctx_self_sb = combat_ctx.clone();
                                     ctx_self_sb.attacker_shield_pct =
                                         if attacker.shield_health > 0.0 {
-                                            attacker_shield_remaining / attacker.shield_health
+                                            st.attacker_shield_remaining / attacker.shield_health
                                         } else {
                                             0.0
                                         };
                                     ctx_self_sb.attacker_hull_pct = 1.0
-                                        - (total_attacker_hull_damage
+                                        - (st.total_attacker_hull_damage
                                             / attacker.hull_health.max(0.0))
                                         .min(1.0);
                                     let self_sb_filtered = filter_effects_by_condition(
@@ -2105,24 +2117,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                     for e in &self_sb_filtered {
                                         match scale_effect(e.effect, attack_phase_assimilated) {
                                             AbilityEffect::ShieldRegen(v) => {
-                                                attacker_shield_remaining =
-                                                    (attacker_shield_remaining + v)
+                                                st.attacker_shield_remaining =
+                                                    (st.attacker_shield_remaining + v)
                                                         .min(attacker.shield_health.max(0.0));
                                             }
                                             AbilityEffect::ShieldRegenMaxFraction(f) => {
                                                 let heal = f * attacker.shield_health.max(0.0);
-                                                attacker_shield_remaining =
-                                                    (attacker_shield_remaining + heal)
+                                                st.attacker_shield_remaining =
+                                                    (st.attacker_shield_remaining + heal)
                                                         .min(attacker.shield_health.max(0.0));
                                             }
                                             AbilityEffect::HullRegen(v) => {
-                                                total_attacker_hull_damage =
-                                                    (total_attacker_hull_damage - v).max(0.0);
+                                                st.total_attacker_hull_damage =
+                                                    (st.total_attacker_hull_damage - v).max(0.0);
                                             }
                                             AbilityEffect::HullRegenMaxFraction(f) => {
                                                 let heal = f * attacker.hull_health.max(0.0);
-                                                total_attacker_hull_damage =
-                                                    (total_attacker_hull_damage - heal).max(0.0);
+                                                st.total_attacker_hull_damage =
+                                                    (st.total_attacker_hull_damage - heal).max(0.0);
                                             }
                                             _ => {}
                                         }
@@ -2161,21 +2173,21 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                         "self_shield_break",
                                         &attacker.id,
                                         None,
-                                        &mut defender_burning_rounds,
+                                        &mut st.defender_burning_rounds,
                                     );
                                 }
                                 if att_hull_damage_this_round > 0.0 {
                                     counter_hull_damage_this_subround = true;
                                     let receive_damage_assimilated =
-                                        assimilated_rounds_remaining > 0;
+                                        st.assimilated_rounds_remaining > 0;
                                     let mut ctx_receive = combat_ctx.clone();
                                     ctx_receive.attacker_hull_pct = 1.0
-                                        - (total_attacker_hull_damage
+                                        - (st.total_attacker_hull_damage
                                             / attacker.hull_health.max(0.0))
                                         .min(1.0);
                                     ctx_receive.attacker_shield_pct =
                                         if attacker.shield_health > 0.0 {
-                                            attacker_shield_remaining / attacker.shield_health
+                                            st.attacker_shield_remaining / attacker.shield_health
                                         } else {
                                             0.0
                                         };
@@ -2194,7 +2206,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                         "receive_damage",
                                         &attacker.id,
                                         None,
-                                        &mut attacker_burning_rounds,
+                                        &mut st.attacker_burning_rounds,
                                     );
                                 }
                             }
@@ -2208,7 +2220,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
                     let counter_after_apex =
                         (counter_after_attack_phase + counter_iso_taken) * counter_apex_factor;
-                    let att_shield_mitigation = if attacker_shield_remaining > 0.0 {
+                    let att_shield_mitigation = if st.attacker_shield_remaining > 0.0 {
                         effective_incoming_shield_mitigation(
                             attacker.shield_mitigation,
                             config,
@@ -2218,18 +2230,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     } else {
                         0.0
                     };
-                    let att_shield_before_counter = attacker_shield_remaining;
+                    let att_shield_before_counter = st.attacker_shield_remaining;
                     let (att_actual_shield_damage, att_hull_damage_this_round) =
                         apply_shield_hull_split(
                             counter_after_apex,
                             att_shield_mitigation,
-                            attacker_shield_remaining,
+                            st.attacker_shield_remaining,
                         );
-                    attacker_shield_remaining =
-                        (attacker_shield_remaining - att_actual_shield_damage).max(0.0);
-                    total_attacker_hull_damage += att_hull_damage_this_round;
-                    attacker_hull_gross_damage_this_round += att_hull_damage_this_round;
-                    attacker_shield_gross_damage_this_round += att_actual_shield_damage;
+                    st.attacker_shield_remaining =
+                        (st.attacker_shield_remaining - att_actual_shield_damage).max(0.0);
+                    st.total_attacker_hull_damage += att_hull_damage_this_round;
+                    st.attacker_hull_gross_damage_this_round += att_hull_damage_this_round;
+                    st.attacker_shield_gross_damage_this_round += att_actual_shield_damage;
 
                     if att_hull_damage_this_round > 0.0 {
                         for effect in defender_attack_filtered
@@ -2248,19 +2260,19 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 }
                                 let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
                                 let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
-                                let breach_before = attacker_hull_breach_rounds;
+                                let breach_before = st.attacker_hull_breach_rounds;
                                 if triggered {
-                                    attacker_hull_breach_rounds =
-                                        attacker_hull_breach_rounds.max(duration_rounds.max(1));
+                                    st.attacker_hull_breach_rounds =
+                                        st.attacker_hull_breach_rounds.max(duration_rounds.max(1));
                                 }
-                                if breach_before == 0 && attacker_hull_breach_rounds > 0 {
+                                if breach_before == 0 && st.attacker_hull_breach_rounds > 0 {
                                     let mut ctx_hb = combat_ctx.clone();
                                     ctx_hb.attacker_hull_pct = 1.0
-                                        - (total_attacker_hull_damage
+                                        - (st.total_attacker_hull_damage
                                             / attacker.hull_health.max(0.0))
                                         .min(1.0);
                                     ctx_hb.attacker_shield_pct = if attacker.shield_health > 0.0 {
-                                        attacker_shield_remaining / attacker.shield_health
+                                        st.attacker_shield_remaining / attacker.shield_health
                                     } else {
                                         0.0
                                     };
@@ -2274,10 +2286,10 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                         attacker,
                                         hull_breach_effects,
                                         ctx_hb,
-                                        assimilated_rounds_remaining > 0,
+                                        st.assimilated_rounds_remaining > 0,
                                         defender_weapon_attack,
                                         &mut phase_effects_round,
-                                        &mut defender_burning_rounds,
+                                        &mut st.defender_burning_rounds,
                                     );
                                 }
                                 trace.record_if(|| CombatEvent {
@@ -2329,22 +2341,23 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                                 "counter",
                                 &defender.id,
                                 Some(weapon_index as u32),
-                                &mut attacker_burning_rounds,
+                                &mut st.attacker_burning_rounds,
                             );
                         }
                     }
 
                     let attacker_own_shields_broke =
-                        att_shield_before_counter > 0.0 && attacker_shield_remaining <= 0.0;
+                        att_shield_before_counter > 0.0 && st.attacker_shield_remaining <= 0.0;
                     if attacker_own_shields_broke {
                         let mut ctx_self_sb = combat_ctx.clone();
                         ctx_self_sb.attacker_shield_pct = if attacker.shield_health > 0.0 {
-                            attacker_shield_remaining / attacker.shield_health
+                            st.attacker_shield_remaining / attacker.shield_health
                         } else {
                             0.0
                         };
                         ctx_self_sb.attacker_hull_pct = 1.0
-                            - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                            - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0))
+                                .min(1.0);
                         let self_sb_filtered =
                             filter_effects_by_condition(self_shield_break_effects, &ctx_self_sb);
                         record_ability_activations(
@@ -2358,22 +2371,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         for e in &self_sb_filtered {
                             match scale_effect(e.effect, attack_phase_assimilated) {
                                 AbilityEffect::ShieldRegen(v) => {
-                                    attacker_shield_remaining = (attacker_shield_remaining + v)
+                                    st.attacker_shield_remaining = (st.attacker_shield_remaining
+                                        + v)
                                         .min(attacker.shield_health.max(0.0));
                                 }
                                 AbilityEffect::ShieldRegenMaxFraction(f) => {
                                     let heal = f * attacker.shield_health.max(0.0);
-                                    attacker_shield_remaining = (attacker_shield_remaining + heal)
+                                    st.attacker_shield_remaining = (st.attacker_shield_remaining
+                                        + heal)
                                         .min(attacker.shield_health.max(0.0));
                                 }
                                 AbilityEffect::HullRegen(v) => {
-                                    total_attacker_hull_damage =
-                                        (total_attacker_hull_damage - v).max(0.0);
+                                    st.total_attacker_hull_damage =
+                                        (st.total_attacker_hull_damage - v).max(0.0);
                                 }
                                 AbilityEffect::HullRegenMaxFraction(f) => {
                                     let heal = f * attacker.hull_health.max(0.0);
-                                    total_attacker_hull_damage =
-                                        (total_attacker_hull_damage - heal).max(0.0);
+                                    st.total_attacker_hull_damage =
+                                        (st.total_attacker_hull_damage - heal).max(0.0);
                                 }
                                 _ => {}
                             }
@@ -2411,17 +2426,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             "self_shield_break",
                             &attacker.id,
                             None,
-                            &mut defender_burning_rounds,
+                            &mut st.defender_burning_rounds,
                         );
                     }
                     if att_hull_damage_this_round > 0.0 {
                         counter_hull_damage_this_subround = true;
-                        let receive_damage_assimilated = assimilated_rounds_remaining > 0;
+                        let receive_damage_assimilated = st.assimilated_rounds_remaining > 0;
                         let mut ctx_receive = combat_ctx.clone();
                         ctx_receive.attacker_hull_pct = 1.0
-                            - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                            - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0))
+                                .min(1.0);
                         ctx_receive.attacker_shield_pct = if attacker.shield_health > 0.0 {
-                            attacker_shield_remaining / attacker.shield_health
+                            st.attacker_shield_remaining / attacker.shield_health
                         } else {
                             0.0
                         };
@@ -2438,17 +2454,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                             "receive_damage",
                             &attacker.id,
                             None,
-                            &mut attacker_burning_rounds,
+                            &mut st.attacker_burning_rounds,
                         );
                     }
                 }
 
                 if counter_hull_damage_this_subround {
                     let mut ctx_rd = combat_ctx.clone();
-                    ctx_rd.attacker_hull_pct =
-                        1.0 - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
+                    ctx_rd.attacker_hull_pct = 1.0
+                        - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
                     ctx_rd.attacker_shield_pct = if attacker.shield_health > 0.0 {
-                        attacker_shield_remaining / attacker.shield_health
+                        st.attacker_shield_remaining / attacker.shield_health
                     } else {
                         0.0
                     };
@@ -2460,13 +2476,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                         "receive_damage",
                         attacker,
                         &receive_damage_filtered,
-                        assimilated_rounds_remaining > 0,
+                        st.assimilated_rounds_remaining > 0,
                     );
                     phase_effects_round.add_effects(
                         TimingWindow::ReceiveDamage,
                         &receive_damage_filtered,
                         defender_weapon_attack,
-                        assimilated_rounds_remaining > 0,
+                        st.assimilated_rounds_remaining > 0,
                         round_index,
                     );
                 }
@@ -2475,26 +2491,26 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             let ctx_after_subround = CombatContext {
                 round_index,
                 defender_hull_pct: 1.0
-                    - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+                    - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
                 defender_shield_pct: if defender.shield_health > 0.0 {
-                    defender_shield_remaining / defender.shield_health
+                    st.defender_shield_remaining / defender.shield_health
                 } else {
                     1.0
                 },
                 attacker_hull_pct: 1.0
-                    - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+                    - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
                 attacker_shield_pct: if attacker.shield_health > 0.0 {
-                    attacker_shield_remaining / attacker.shield_health
+                    st.attacker_shield_remaining / attacker.shield_health
                 } else {
                     1.0
                 },
                 attacker_morale_active: combat_ctx.attacker_morale_active,
-                defender_morale_active: defender_morale_rounds_remaining > 0,
-                defender_burning_active: defender_burning_rounds > 0,
-                defender_hull_breach_active: defender_hull_breach_rounds > 0,
-                attacker_burning_active: attacker_burning_rounds > 0,
-                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+                defender_morale_active: st.defender_morale_rounds_remaining > 0,
+                defender_burning_active: st.defender_burning_rounds > 0,
+                defender_hull_breach_active: st.defender_hull_breach_rounds > 0,
+                attacker_burning_active: st.attacker_burning_rounds > 0,
+                attacker_hull_breach_active: st.attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
                 defender_faction,
                 attacker_owner_faction: combat_ctx.attacker_owner_faction,
                 defender_hull_faction_id: config.defender_hull_faction_id,
@@ -2531,7 +2547,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 "after_subround",
                 &attacker.id,
                 None,
-                &mut defender_burning_rounds,
+                &mut st.defender_burning_rounds,
             );
             after_subround_carry.add_effects(
                 TimingWindow::AfterSubround,
@@ -2555,24 +2571,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &round_end_filtered,
             round_end_assimilated_early,
             &mut phase_effects_round,
-            &mut defender_burning_rounds,
-            attacker_burning_rounds,
-            defender_assimilated_rounds_remaining,
-            &mut total_hull_damage,
-            &mut total_attacker_hull_damage,
-            &mut attacker_hull_gross_damage_this_round,
-            &mut attacker_shield_remaining,
-            &mut defender_shield_remaining,
+            &mut st.defender_burning_rounds,
+            st.attacker_burning_rounds,
+            st.defender_assimilated_rounds_remaining,
+            &mut st.total_hull_damage,
+            &mut st.total_attacker_hull_damage,
+            &mut st.attacker_hull_gross_damage_this_round,
+            &mut st.attacker_shield_remaining,
+            &mut st.defender_shield_remaining,
         );
 
-        defender_burning_rounds = defender_burning_rounds.saturating_sub(1);
-        defender_hull_breach_rounds = defender_hull_breach_rounds.saturating_sub(1);
-        attacker_burning_rounds = attacker_burning_rounds.saturating_sub(1);
-        attacker_hull_breach_rounds = attacker_hull_breach_rounds.saturating_sub(1);
-        assimilated_rounds_remaining = assimilated_rounds_remaining.saturating_sub(1);
-        defender_assimilated_rounds_remaining =
-            defender_assimilated_rounds_remaining.saturating_sub(1);
-        defender_morale_rounds_remaining = defender_morale_rounds_remaining.saturating_sub(1);
+        st.defender_burning_rounds = st.defender_burning_rounds.saturating_sub(1);
+        st.defender_hull_breach_rounds = st.defender_hull_breach_rounds.saturating_sub(1);
+        st.attacker_burning_rounds = st.attacker_burning_rounds.saturating_sub(1);
+        st.attacker_hull_breach_rounds = st.attacker_hull_breach_rounds.saturating_sub(1);
+        st.assimilated_rounds_remaining = st.assimilated_rounds_remaining.saturating_sub(1);
+        st.defender_assimilated_rounds_remaining =
+            st.defender_assimilated_rounds_remaining.saturating_sub(1);
+        st.defender_morale_rounds_remaining = st.defender_morale_rounds_remaining.saturating_sub(1);
 
         trace.record_if(|| CombatEvent {
             event_type: "end_of_round_effects".to_string(),
@@ -2598,7 +2614,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 ),
                 (
                     "running_hull_damage".to_string(),
-                    Value::from(round_f64(total_hull_damage)),
+                    Value::from(round_f64(st.total_hull_damage)),
                 ),
             ]),
         });
@@ -2607,26 +2623,26 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             let ctx_end = CombatContext {
                 round_index,
                 defender_hull_pct: 1.0
-                    - (total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
+                    - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0),
                 defender_shield_pct: if defender.shield_health > 0.0 {
-                    defender_shield_remaining / defender.shield_health
+                    st.defender_shield_remaining / defender.shield_health
                 } else {
                     1.0
                 },
                 attacker_hull_pct: 1.0
-                    - (total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+                    - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
                 attacker_shield_pct: if attacker.shield_health > 0.0 {
-                    attacker_shield_remaining / attacker.shield_health
+                    st.attacker_shield_remaining / attacker.shield_health
                 } else {
                     1.0
                 },
                 attacker_morale_active: combat_ctx.attacker_morale_active,
-                defender_morale_active: defender_morale_rounds_remaining > 0,
-                defender_burning_active: defender_burning_rounds > 0,
-                defender_hull_breach_active: defender_hull_breach_rounds > 0,
-                attacker_burning_active: attacker_burning_rounds > 0,
-                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-                defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
+                defender_morale_active: st.defender_morale_rounds_remaining > 0,
+                defender_burning_active: st.defender_burning_rounds > 0,
+                defender_hull_breach_active: st.defender_hull_breach_rounds > 0,
+                attacker_burning_active: st.attacker_burning_rounds > 0,
+                attacker_hull_breach_active: st.attacker_hull_breach_rounds > 0,
+                defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
                 defender_faction,
                 attacker_owner_faction: config.attacker_owner_faction,
                 defender_hull_faction_id: config.defender_hull_faction_id,
@@ -2648,21 +2664,21 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 None,
                 attacker,
                 defender,
-                total_hull_damage,
-                total_attacker_hull_damage,
-                defender_shield_remaining,
-                attacker_shield_remaining,
+                st.total_hull_damage,
+                st.total_attacker_hull_damage,
+                st.defender_shield_remaining,
+                st.attacker_shield_remaining,
                 &ctx_end,
-                assimilated_rounds_remaining,
-                defender_assimilated_rounds_remaining,
+                st.assimilated_rounds_remaining,
+                st.defender_assimilated_rounds_remaining,
                 Some(&phase_effects_round),
             );
             trace.record(state_snapshot_as_combat_event(&snap));
         }
 
         // Fight ends when defender or attacker runs out of hull (HHP).
-        let defender_hull_now = (defender.hull_health - total_hull_damage).max(0.0);
-        let mut attacker_hull_now = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
+        let defender_hull_now = (defender.hull_health - st.total_hull_damage).max(0.0);
+        let mut attacker_hull_now = (attacker.hull_health - st.total_attacker_hull_damage).max(0.0);
         if defender_hull_now <= 0.0 {
             attacker_hull_now = resolve_defender_kill(
                 &mut trace,
@@ -2673,18 +2689,18 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender,
                 &combat_ctx,
                 kill_effects,
-                assimilated_rounds_remaining,
-                defender_assimilated_rounds_remaining,
-                defender_shield_remaining,
-                attacker_shield_remaining,
-                &mut total_attacker_hull_damage,
-                &mut defender_burning_rounds,
+                st.assimilated_rounds_remaining,
+                st.defender_assimilated_rounds_remaining,
+                st.defender_shield_remaining,
+                st.attacker_shield_remaining,
+                &mut st.total_attacker_hull_damage,
+                &mut st.defender_burning_rounds,
             );
         }
-        attacker_hull_gross_damage_last_round = attacker_hull_gross_damage_this_round;
-        attacker_hull_gross_damage_this_round = 0.0;
-        attacker_shield_gross_damage_last_round = attacker_shield_gross_damage_this_round;
-        attacker_shield_gross_damage_this_round = 0.0;
+        st.attacker_hull_gross_damage_last_round = st.attacker_hull_gross_damage_this_round;
+        st.attacker_hull_gross_damage_this_round = 0.0;
+        st.attacker_shield_gross_damage_last_round = st.attacker_shield_gross_damage_this_round;
+        st.attacker_shield_gross_damage_this_round = 0.0;
 
         if defender_hull_now <= 0.0 || attacker_hull_now <= 0.0 {
             break;
@@ -2698,16 +2714,16 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         attacker,
         defender,
         combat_end_effects,
-        &mut attacker_shield_remaining,
-        &mut total_attacker_hull_damage,
-        &mut defender_shield_remaining,
-        &mut total_shield_damage,
-        &mut total_hull_damage,
+        &mut st.attacker_shield_remaining,
+        &mut st.total_attacker_hull_damage,
+        &mut st.defender_shield_remaining,
+        &mut st.total_shield_damage,
+        &mut st.total_hull_damage,
     );
 
-    let total_damage = total_hull_damage + total_shield_damage;
-    let attacker_hull_remaining = (attacker.hull_health - total_attacker_hull_damage).max(0.0);
-    let defender_hull_remaining = (defender.hull_health - total_hull_damage).max(0.0);
+    let total_damage = st.total_hull_damage + st.total_shield_damage;
+    let attacker_hull_remaining = (attacker.hull_health - st.total_attacker_hull_damage).max(0.0);
+    let defender_hull_remaining = (defender.hull_health - st.total_hull_damage).max(0.0);
     let winner_by_round_limit = rounds_completed == MAX_COMBAT_ROUNDS
         && defender_hull_remaining > 0.0
         && attacker_hull_remaining > 0.0;
@@ -2728,8 +2744,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         rounds_simulated: rounds_completed,
         attacker_hull_remaining: round_f64(attacker_hull_remaining),
         defender_hull_remaining: round_f64(defender_hull_remaining),
-        defender_shield_remaining: round_f64(defender_shield_remaining),
-        attacker_shield_remaining: round_f64(attacker_shield_remaining),
+        defender_shield_remaining: round_f64(st.defender_shield_remaining),
+        attacker_shield_remaining: round_f64(st.attacker_shield_remaining),
         events: trace.events(),
         conqueror_borg_beam_suppression,
     }
@@ -3645,6 +3661,35 @@ fn roll_attacker_round_start_procs(
             });
         }
     }
+}
+
+/// The per-fight **mutable running state** threaded through `simulate_combat_from_setup` and its
+/// phase helpers: cumulative damage, remaining shields, and the per-side status-duration counters.
+/// Bundled into one struct (task 12) so the weapon-block helpers take `&mut CombatRunState` rather
+/// than ~20 separate `&mut` primitives. Immutable per-fight constants (`max_att_hull`, the breach
+/// per-event rates) and the trace/RNG stay as their own locals.
+struct CombatRunState {
+    total_hull_damage: f64,
+    total_shield_damage: f64,
+    defender_shield_remaining: f64,
+    attacker_shield_remaining: f64,
+    total_attacker_hull_damage: f64,
+    attacker_hull_gross_damage_this_round: f64,
+    attacker_hull_gross_damage_last_round: f64,
+    attacker_shield_gross_damage_this_round: f64,
+    attacker_shield_gross_damage_last_round: f64,
+    defender_hull_breach_rounds: u32,
+    breach_hits: u64,
+    breach_crits: u64,
+    defender_burning_rounds: u32,
+    attacker_hull_breach_rounds: u32,
+    attacker_burning_rounds: u32,
+    assimilated_rounds_remaining: u32,
+    defender_assimilated_rounds_remaining: u32,
+    defender_morale_rounds_remaining: u32,
+    shots_bonus_entries: Vec<(f64, u32)>,
+    defender_shots_bonus_entries: Vec<(f64, u32)>,
+    defender_weapon_fire_delayed_rounds: u32,
 }
 
 /// The per-fight immutable [`CombatContext`] fields, captured once per trial so per-round
