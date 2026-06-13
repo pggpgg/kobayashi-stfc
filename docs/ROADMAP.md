@@ -10,7 +10,7 @@ _Planned 2026-06-09 from a full repo audit (fidelity docs, test inventory, code 
 
 1. **Main lane (serialized):** **12** (engine decomposition — keystone: explicitly prerequisite to 4, and every fidelity change lands in that function) → **4** (Phase 4d, the largest open fidelity gap) → **6** (hostile-ability audit report can start anytime; *closing* its gaps belongs after 12) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces.
 2. **Pre-freeze prep lane (early, any order — the freeze window is the scarcest resource, so tooling must be ready before a window opens):** **3** (import faction resolution), the composite-score harness, and the profile-snapshot completeness audit (see protocol below).
-3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; ~~**7** (SSE test)~~ *shipped*; ~~**9** (OpenAPI gate)~~ *shipped*; **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts).
+3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; ~~**7** (SSE test)~~ *shipped*; ~~**9** (OpenAPI gate)~~ *shipped*; **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts), **16–17** (June 2026 patch ship + officers — see Tier 1).
 4. **Anytime, independent:** ~~**10** (frontend tests)~~ *shipped*; **15** (display-names investigation, timeboxed).
 5. **Post-freeze (maintainer-scheduled):** **2** (scoreboard + snapshot-bound corpus), then the iterate loop from the protocol.
 
@@ -49,6 +49,12 @@ The product *is* its accuracy; these are the largest known gaps between the sim 
 
 - [ ] **6. Hostile-ability coverage audit** (M)
   A large share of hostile records carry upstream ability data; the engine has plumbing (`hostile_ability_id` flows through [engine.rs](../src/combat/engine.rs)) and a few modeled cases (Conqueror Borg suppression), but no report says which hostile abilities are modeled vs silently ignored — unlike ships, which got [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md). Produce the equivalent audit, then close the top gaps it surfaces.
+
+- [ ] **16. U.S.S. Athena (`uss_athena`) — ship ability + combat readiness** (M) — **from stfc.space refresh 2026-06-13**
+  Upstream hull `3091911492` is normalized into [ships_extended](../data/ships_extended/uss_athena.json) (stats + tier curve) and [hull_id_registry.json](../data/hull_id_registry.json), but **`abilities[]` is empty** — the ship's upstream ability (`2357321655`) is not in the catalog yet, so optimize/simulate runs without its hull ability. Classify the buff text ([translations-ship_buffs.json](../data/upstream/data-stfc-space/translations-ship_buffs.json)), add catalog/override rows per [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) §5, re-run `normalize_data_stfc_space`, and add a focused integration test if the effect is combat-modeled (not `combat_noop`).
+
+- [ ] **17. June 2026 officer batch — canonical catalog + LCARS** (M) — **from stfc.space refresh 2026-06-13**
+  Six new upstream officer reference JSON files exist under [data/upstream/data-stfc-space/officers/](../data/upstream/data-stfc-space/officers/) but are **not** in [officers.canonical.json](../data/officers/officers.canonical.json), so they are invisible to optimize/simulate: **Academy Doctor**, **Caleb Mir**, **Genesis Lythe**, **Jirali**, **Chancellor Ake**, **Deidamia**. For each: add canonical ability rows (captain/bridge/below-decks) from upstream + [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md); run `normalize_officer_id_strings.py` → `generate_lcars`; map any new `conditions` tokens ([CANONICAL_CONDITIONS.md](CANONICAL_CONDITIONS.md)); add fidelity notes in [officer_modeling_fidelity.yaml](../data/officers/officer_modeling_fidelity.yaml) and regenerate [OFFICER_MODELING_SCORECARD.md](OFFICER_MODELING_SCORECARD.md). See [LCARS_CONTRIBUTING.md](LCARS_CONTRIBUTING.md).
 
 ## Tier 2 — Assurance gaps
 
