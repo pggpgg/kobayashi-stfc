@@ -1705,6 +1705,26 @@ pub fn cancel_job(job_id: &str) -> Result<(), OptimizeStatusError> {
     }
 }
 
+/// Insert a synthetic optimize job for integration tests (SSE / status polling).
+#[doc(hidden)]
+pub fn seed_optimize_job_for_tests(job_id: &str, state: OptimizeJobState) {
+    REGISTRY.insert(
+        job_id.to_string(),
+        state,
+        Arc::new(AtomicBool::new(false)),
+        MAX_OPTIMIZE_JOBS_RETAINED,
+    );
+}
+
+/// Mutate a seeded test job; returns `false` when the id is absent.
+#[doc(hidden)]
+pub fn patch_optimize_job_for_tests(
+    job_id: &str,
+    patch: impl FnOnce(&mut OptimizeJobState),
+) -> bool {
+    REGISTRY.with_state_mut(job_id, patch).is_some()
+}
+
 // Note: the previous `parse_job_timestamp_reads_opt_prefix` and
 // `prune_drops_oldest_completed_first` unit tests covered helpers that have moved into
 // the shared `crate::server::job_registry` module; equivalent tests live there.

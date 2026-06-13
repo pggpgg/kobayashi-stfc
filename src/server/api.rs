@@ -5,8 +5,9 @@ mod requests;
 pub use pvp::{validate_scenario_target, ScenarioTarget, ScenarioTargetFields};
 
 pub use execution::{
-    cancel_job, get_job_status, run_optimize, start_optimize_job, CrewRecommendation,
-    OptimizeJobState, OptimizeResponse, OptimizeStartResponse, OptimizeStatusError,
+    cancel_job, get_job_status, patch_optimize_job_for_tests, run_optimize,
+    seed_optimize_job_for_tests, start_optimize_job, CrewRecommendation, OptimizeJobState,
+    OptimizeJobStatus, OptimizeResponse, OptimizeStartResponse, OptimizeStatusError,
     OptimizeStatusResponse, ScenarioSummary,
 };
 pub use requests::{
