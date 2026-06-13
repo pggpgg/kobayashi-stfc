@@ -606,229 +606,24 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             round_index,
         );
 
-        for effect in &bench {
-            let effective_effect = scale_effect(effect.effect, round_start_assimilated);
-
-            if let AbilityEffect::Assimilated {
-                chance,
-                duration_rounds,
-            } = effective_effect
-            {
-                let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    assimilated_rounds_remaining =
-                        assimilated_rounds_remaining.max(duration_rounds.max(1));
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "assimilated_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            if let AbilityEffect::HullBreach {
-                chance,
-                duration_rounds,
-                requires_critical,
-            } = effective_effect
-            {
-                if requires_critical {
-                    continue;
-                }
-
-                let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
-                let breach_before = defender_hull_breach_rounds;
-                if triggered {
-                    defender_hull_breach_rounds =
-                        defender_hull_breach_rounds.max(duration_rounds.max(1));
-                }
-                if breach_before == 0 && defender_hull_breach_rounds > 0 {
-                    let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
-                    apply_hull_breach_timing_window(
-                        &mut RoundPhaseCtx {
-                            trace: &mut trace,
-                            rng: &mut rng,
-                            round_index,
-                        },
-                        HullBreachSide::Defender,
-                        attacker,
-                        hull_breach_effects,
-                        combat_ctx.clone(),
-                        round_start_assimilated,
-                        weapon_base_rs,
-                        &mut phase_effects,
-                        &mut defender_burning_rounds,
-                    );
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "hull_breach_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            roll_burning_triggers(
-                &mut RoundPhaseCtx {
-                    trace: &mut trace,
-                    rng: &mut rng,
-                    round_index,
-                },
-                std::slice::from_ref(effect),
-                round_start_assimilated,
-                "round_start",
-                &attacker.id,
-                None,
-                &mut defender_burning_rounds,
-            );
-
-            if let AbilityEffect::ShotsBonus {
-                chance,
-                bonus_pct,
-                duration_rounds,
-            } = effective_effect
-            {
-                let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = shots_roll < chance.clamp(0.0, 1.0);
-                if triggered {
-                    let duration = duration_rounds.max(1);
-                    shots_bonus_entries.push((bonus_pct, round_index + duration));
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "shots_bonus_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(shots_roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                    ]),
-                });
-            }
-
-            if let AbilityEffect::DefenderFireDelay {
-                chance,
-                delay_rounds,
-                requires_critical,
-            } = effective_effect
-            {
-                apply_defender_fire_delay(
-                    &mut trace,
-                    &mut rng,
-                    round_index,
-                    "round_start",
-                    &attacker.id,
-                    &effect.ability_name,
-                    chance,
-                    delay_rounds,
-                    requires_critical,
-                    false,
-                    &mut defender_weapon_fire_delayed_rounds,
-                );
-            }
-
-            if let AbilityEffect::RandomDefenderState {
-                chance,
-                duration_rounds,
-                state_outcome_count,
-                state_outcomes,
-            } = effective_effect
-            {
-                let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
-                let triggered = roll < chance.clamp(0.0, 1.0);
-                let mut state_applied = String::from("none");
-                if triggered {
-                    let breach_before = defender_hull_breach_rounds;
-                    let weights = crate::combat::abilities::random_defender_state_outcomes(
-                        state_outcome_count,
-                        &state_outcomes,
-                    );
-                    let state_id =
-                        crate::combat::abilities::pick_weighted_state_id(weights, rng.next_u64());
-                    let label = crate::combat::abilities::apply_defender_random_state_id(
-                        state_id,
-                        duration_rounds,
-                        &mut defender_burning_rounds,
-                        &mut defender_hull_breach_rounds,
-                        &mut defender_assimilated_rounds_remaining,
-                        &mut defender_morale_rounds_remaining,
-                    );
-                    state_applied = label.to_string();
-                    if breach_before == 0
-                        && defender_hull_breach_rounds > 0
-                        && label == "hull_breach"
-                    {
-                        let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
-                        apply_hull_breach_timing_window(
-                            &mut RoundPhaseCtx {
-                                trace: &mut trace,
-                                rng: &mut rng,
-                                round_index,
-                            },
-                            HullBreachSide::Defender,
-                            attacker,
-                            hull_breach_effects,
-                            combat_ctx.clone(),
-                            round_start_assimilated,
-                            weapon_base_rs,
-                            &mut phase_effects,
-                            &mut defender_burning_rounds,
-                        );
-                    }
-                }
-                trace.record_if(|| CombatEvent {
-                    event_type: "random_defender_state_trigger".to_string(),
-                    round_index,
-                    phase: "round_start".to_string(),
-                    source: EventSource {
-                        officer_id: Some(attacker.id.clone()),
-                        ship_ability_id: Some(effect.ability_name.clone()),
-                        ..EventSource::default()
-                    },
-                    weapon_index: None,
-                    values: Map::from_iter([
-                        ("roll".to_string(), Value::from(round_f64(roll))),
-                        ("triggered".to_string(), Value::Bool(triggered)),
-                        ("chance".to_string(), Value::from(round_f64(chance))),
-                        ("duration_rounds".to_string(), Value::from(duration_rounds)),
-                        ("state".to_string(), Value::String(state_applied)),
-                    ]),
-                });
-            }
-        }
+        roll_attacker_round_start_procs(
+            &mut trace,
+            &mut rng,
+            round_index,
+            attacker,
+            &bench,
+            round_start_assimilated,
+            hull_breach_effects,
+            &combat_ctx,
+            &mut phase_effects,
+            &mut assimilated_rounds_remaining,
+            &mut defender_burning_rounds,
+            &mut defender_hull_breach_rounds,
+            &mut defender_assimilated_rounds_remaining,
+            &mut defender_morale_rounds_remaining,
+            &mut shots_bonus_entries,
+            &mut defender_weapon_fire_delayed_rounds,
+        );
 
         // Defender crew ShotsBonus for counter-fire: process RoundStart effects similarly
         // to the attacker's ShotsBonus above, using the same combat context for conditions.
@@ -3384,6 +3179,255 @@ pub(crate) struct RoundPhaseCtx<'a> {
     pub trace: &'a mut TraceCollector,
     pub rng: &'a mut Rng,
     pub round_index: u32,
+}
+
+/// Attacker round-start proc rolls over the pre-filtered `bench` effects: assimilation,
+/// hull breach (with the first-transition timing window), burning, shots bonus, defender
+/// fire delay, and random defender state — one roll block per effect in list order.
+///
+/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); the RNG draw
+/// order is load-bearing for same-seed determinism and must not change.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn roll_attacker_round_start_procs(
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    attacker: &Combatant,
+    bench: &[ActiveAbilityEffect],
+    round_start_assimilated: bool,
+    hull_breach_effects: &[ActiveAbilityEffect],
+    combat_ctx: &CombatContext,
+    phase_effects: &mut EffectAccumulator,
+    assimilated_rounds_remaining: &mut u32,
+    defender_burning_rounds: &mut u32,
+    defender_hull_breach_rounds: &mut u32,
+    defender_assimilated_rounds_remaining: &mut u32,
+    defender_morale_rounds_remaining: &mut u32,
+    shots_bonus_entries: &mut Vec<(f64, u32)>,
+    defender_weapon_fire_delayed_rounds: &mut u32,
+) {
+    for effect in bench {
+        let effective_effect = scale_effect(effect.effect, round_start_assimilated);
+
+        if let AbilityEffect::Assimilated {
+            chance,
+            duration_rounds,
+        } = effective_effect
+        {
+            let assimilated_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = assimilated_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                *assimilated_rounds_remaining =
+                    (*assimilated_rounds_remaining).max(duration_rounds.max(1));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "assimilated_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(assimilated_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+
+        if let AbilityEffect::HullBreach {
+            chance,
+            duration_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            if requires_critical {
+                continue;
+            }
+
+            let hull_breach_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+            let breach_before = *defender_hull_breach_rounds;
+            if triggered {
+                *defender_hull_breach_rounds =
+                    (*defender_hull_breach_rounds).max(duration_rounds.max(1));
+            }
+            if breach_before == 0 && *defender_hull_breach_rounds > 0 {
+                let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
+                apply_hull_breach_timing_window(
+                    &mut RoundPhaseCtx {
+                        trace: &mut *trace,
+                        rng: &mut *rng,
+                        round_index,
+                    },
+                    HullBreachSide::Defender,
+                    attacker,
+                    hull_breach_effects,
+                    combat_ctx.clone(),
+                    round_start_assimilated,
+                    weapon_base_rs,
+                    phase_effects,
+                    defender_burning_rounds,
+                );
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "hull_breach_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+
+        roll_burning_triggers(
+            &mut RoundPhaseCtx {
+                trace: &mut *trace,
+                rng: &mut *rng,
+                round_index,
+            },
+            std::slice::from_ref(effect),
+            round_start_assimilated,
+            "round_start",
+            &attacker.id,
+            None,
+            defender_burning_rounds,
+        );
+
+        if let AbilityEffect::ShotsBonus {
+            chance,
+            bonus_pct,
+            duration_rounds,
+        } = effective_effect
+        {
+            let shots_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = shots_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                let duration = duration_rounds.max(1);
+                shots_bonus_entries.push((bonus_pct, round_index + duration));
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "shots_bonus_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(shots_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                ]),
+            });
+        }
+
+        if let AbilityEffect::DefenderFireDelay {
+            chance,
+            delay_rounds,
+            requires_critical,
+        } = effective_effect
+        {
+            apply_defender_fire_delay(
+                trace,
+                rng,
+                round_index,
+                "round_start",
+                &attacker.id,
+                &effect.ability_name,
+                chance,
+                delay_rounds,
+                requires_critical,
+                false,
+                defender_weapon_fire_delayed_rounds,
+            );
+        }
+
+        if let AbilityEffect::RandomDefenderState {
+            chance,
+            duration_rounds,
+            state_outcome_count,
+            state_outcomes,
+        } = effective_effect
+        {
+            let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = roll < chance.clamp(0.0, 1.0);
+            let mut state_applied = String::from("none");
+            if triggered {
+                let breach_before = *defender_hull_breach_rounds;
+                let weights = crate::combat::abilities::random_defender_state_outcomes(
+                    state_outcome_count,
+                    &state_outcomes,
+                );
+                let state_id =
+                    crate::combat::abilities::pick_weighted_state_id(weights, rng.next_u64());
+                let label = crate::combat::abilities::apply_defender_random_state_id(
+                    state_id,
+                    duration_rounds,
+                    defender_burning_rounds,
+                    defender_hull_breach_rounds,
+                    defender_assimilated_rounds_remaining,
+                    defender_morale_rounds_remaining,
+                );
+                state_applied = label.to_string();
+                if breach_before == 0 && *defender_hull_breach_rounds > 0 && label == "hull_breach"
+                {
+                    let weapon_base_rs = attacker.weapon_attack(0).unwrap_or(attacker.attack);
+                    apply_hull_breach_timing_window(
+                        &mut RoundPhaseCtx {
+                            trace: &mut *trace,
+                            rng: &mut *rng,
+                            round_index,
+                        },
+                        HullBreachSide::Defender,
+                        attacker,
+                        hull_breach_effects,
+                        combat_ctx.clone(),
+                        round_start_assimilated,
+                        weapon_base_rs,
+                        phase_effects,
+                        defender_burning_rounds,
+                    );
+                }
+            }
+            trace.record_if(|| CombatEvent {
+                event_type: "random_defender_state_trigger".to_string(),
+                round_index,
+                phase: "round_start".to_string(),
+                source: EventSource {
+                    officer_id: Some(attacker.id.clone()),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ("state".to_string(), Value::String(state_applied)),
+                ]),
+            });
+        }
+    }
 }
 
 /// The per-fight immutable [`CombatContext`] fields, captured once per trial so per-round
