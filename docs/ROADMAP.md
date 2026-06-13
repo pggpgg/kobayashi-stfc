@@ -6,9 +6,9 @@ _Planned 2026-06-09 from a full repo audit (fidelity docs, test inventory, code 
 
 **Baseline at planning time:** clippy clean under `-D warnings`, ~382 backend tests, OpenAPI contract spot-checks, a bench-regression gate with auto-refreshed baselines, bounded job registries, no TODO/FIXME debt in `src/`. The leverage is simulation fidelity and assurance coverage, not cleanup.
 
-**Execution order (2026-06-12, items 1 & 8 shipped):**
+**Execution order (2026-06-13, items 1, 4, 8 & 12 shipped):**
 
-1. **Main lane (serialized):** **12** (engine decomposition — keystone: explicitly prerequisite to 4, and every fidelity change lands in that function) → **4** (Phase 4d, the largest open fidelity gap) → **6** (hostile-ability audit report can start anytime; *closing* its gaps belongs after 12) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces.
+1. **Main lane (serialized):** ~~**12** (engine decomposition)~~ **done** → ~~**4** (Phase 4d)~~ **done** → **6** (hostile-ability audit report can start anytime; *closing* its gaps lands in the now-decomposed engine) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces. **6 (or 5) is the next pickup.**
 2. **Pre-freeze prep lane (early, any order — the freeze window is the scarcest resource, so tooling must be ready before a window opens):** **3** (import faction resolution), the composite-score harness, and the profile-snapshot completeness audit (see protocol below).
 3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; ~~**7** (SSE test)~~ *shipped*; ~~**9** (OpenAPI gate)~~ *shipped*; **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts), **16–17** (June 2026 patch ship + officers — see Tier 1).
 4. **Anytime, independent:** ~~**10** (frontend tests)~~ *shipped*; **15** (display-names investigation, timeboxed).
@@ -77,8 +77,8 @@ Places where a bug would ship undetected today.
 
 ## Tier 3 — Maintainability & operations
 
-- [ ] **12. Incrementally decompose `simulate_combat_from_setup`** (L, bench-gated)
-  A genuine ~3,160-line single function in [engine.rs](../src/combat/engine.rs) where every Tier 1 fidelity task must land. The "it's the hot path" objection is exactly what the bench-regression gate (10% median, auto-baselined) exists to police: extract round/phase helpers one at a time with `#[inline]`, letting the gate veto any regression. Do this before item 4.
+- [x] **12. Incrementally decompose `simulate_combat_from_setup`** (L, bench-gated) — *closed 2026-06-13*
+  Decomposed **3,164 → 835 lines** across PRs [#215](https://github.com/pggpgg/kobayashi-stfc/pull/215) / [#217](https://github.com/pggpgg/kobayashi-stfc/pull/217) / [#218](https://github.com/pggpgg/kobayashi-stfc/pull/218) into a flat sequence of named phase helpers (`apply_combat_begin_phase`, `apply_defender_round_start`, `roll_attacker_round_start_procs`, `fire_attacker_weapon`, `process_defender_shield_break`, `fire_defender_counter`, `apply_round_end_phase`, `resolve_defender_kill`, `apply_combat_end_phase`). Running state bundled into `CombatRunState`; the weapon blocks take params-structs. Step 0 built the golden-master harness ([engine_golden_master_tests.rs](../tests/engine_golden_master_tests.rs)) — drift fixtures only assert bands and the determinism property test compares a binary to itself, so neither catches a bit-identical-violating refactor. Every extraction was gated on exact golden-master match + the full engine suite; the bench gate vetoed nothing.
 
 - [ ] **13. Split `profile.rs` special-tech handlers** (S)
   Extract the Borg-alcove / quantum-slipstream FID special cases from the ~5,000-line [profile.rs](../src/data/profile.rs) into submodules (~30% size reduction, purely mechanical). Bundle the one debug leftover: the stray `eprintln!` in [canonical_conditions.rs](../src/lcars/canonical_conditions.rs) → `tracing`.
