@@ -4,6 +4,8 @@ alwaysApply: true
 ---
 You are working on Kobayashi, a Star Trek Fleet Command fight simulator and optimizer.
 
+For commands, module layout, and data paths see [CLAUDE.md](../../CLAUDE.md). Cursor rule index: [.cursor/README.md](../README.md).
+
 Primary goals:
 - Improve simulator correctness, explainability, and maintainability.
 - Prefer generalizable combat logic over narrow fixes that only match one imported fight.

@@ -1,9 +1,9 @@
 ---
-description: Benchmark discipline and anti-overfitting rules for benchmark assets
-globs: benchmarks/**/*
+description: Anti-overfitting rules for recorded fight fixtures and golden assets
+globs: tests/fixtures/**/*
 alwaysApply: false
 ---
-Benchmark files exist to measure generalization, not to be memorized.
+Recorded fight fixtures and golden assets exist to measure generalization, not to be memorized.
 
 Rules:
 - Do not optimize directly for one imported fight.

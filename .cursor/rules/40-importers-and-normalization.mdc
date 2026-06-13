@@ -1,6 +1,10 @@
 ---
 description: Rules for parsing, importers, and normalization
-globs: src/**/*.rs
+globs:
+  - src/data/**
+  - src/bin/**
+  - scripts/**
+  - xtask/**
 alwaysApply: false
 ---
 When working on import and normalization code:

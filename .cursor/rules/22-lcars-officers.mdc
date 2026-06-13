@@ -1,0 +1,17 @@
+---
+description: LCARS officer definitions and canonical officer catalog
+globs: data/officers/**/*
+alwaysApply: false
+---
+Officer combat behavior is declared in LCARS YAML, not Rust combat code.
+
+Source of truth:
+- **`data/officers/officers.canonical.json`** — maintainer-curated catalog; edit fidelity and abilities here.
+- **`data/officers/officers.lcars.yaml`** — generated (`cargo xtask regen-lcars` / `generate-lcars`); do not hand-edit for routine changes.
+- **`data/officers/name_aliases.json`** — import/name resolution aliases.
+
+Rules:
+- Model new or changed abilities in canonical JSON, then regenerate LCARS; see `docs/LCARS_CONTRIBUTING.md`.
+- Do not patch combat outcomes in Rust when the fix belongs in LCARS unless the engine lacks a general effect type.
+- Unknown LCARS effect types are skipped with a warning — add engine support only when the effect type is real and reusable.
+- Preserve `loca_id` / translation linkage documented in `docs/OFFICER_TRANSLATIONS_MAPPING.md`.

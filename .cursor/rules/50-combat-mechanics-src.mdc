@@ -1,6 +1,8 @@
 ---
 description: Combat mechanic rules for simulator code
-globs: src/**/*.rs
+globs:
+  - src/combat/**
+  - src/lcars/**
 alwaysApply: false
 ---
 Combat changes must be mechanic-driven.

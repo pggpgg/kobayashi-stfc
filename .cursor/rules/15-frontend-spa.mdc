@@ -1,0 +1,13 @@
+---
+description: React SPA conventions for the Kobayashi frontend
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+The frontend is a Vite + React + TypeScript SPA served from `frontend/dist` by the Rust server.
+
+Rules:
+- Keep API types in sync: after OpenAPI changes, run `npm run gen:api` in `frontend/`.
+- Prefer existing workspace patterns (`Workspace.tsx`, `OptimizePanel.tsx`, profile context) over one-off fetch logic.
+- CPU-heavy work stays on the Rust API; the SPA submits jobs and polls/SSE — do not simulate fights in the browser.
+- Run `npm run lint`, `npm run typecheck`, and `npm run test` in `frontend/` for UI changes (CI runs the same).
+- Co-locate Vitest tests as `*.test.tsx` / `*.test.ts` next to the code they cover.
