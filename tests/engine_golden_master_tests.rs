@@ -375,6 +375,28 @@ fn scenarios() -> Vec<Scenario> {
     s.rounds = 3;
     all.push(s);
 
+    // 15. Trace-events enabled: SimulationResult serializes its `events` vec, so this scenario
+    //     locks down the full per-event trace payload (keys + values), not just the final tallies
+    //     — the Off-trace scenarios above cannot catch a regression in event contents. Multi-weapon
+    //     attacker vs a thin shield so shield-break / damage-application events fire across weapons.
+    let mut s = Scenario::new("trace_events_multi_weapon_shield_break");
+    s.attacker.weapons = vec![
+        WeaponStats {
+            attack: 600.0,
+            shots: Some(2),
+            ..WeaponStats::default()
+        },
+        WeaponStats {
+            attack: 900.0,
+            shots: Some(1),
+            ..WeaponStats::default()
+        },
+    ];
+    s.defender.shield_health = 400.0;
+    s.rounds = 4;
+    s.config_overrides = |c| c.trace_mode = TraceMode::Events;
+    all.push(s);
+
     all
 }
 
