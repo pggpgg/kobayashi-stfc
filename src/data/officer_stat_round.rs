@@ -72,6 +72,7 @@ pub struct OfficerStatRoundContext {
 
 impl OfficerStatRoundContext {
     /// Build round context when the ship has breakpoint tables and at least one dynamic contribution.
+    #[allow(clippy::too_many_arguments)]
     pub fn try_from_ship_and_buffs(
         ship: &ShipRecord,
         profile: &PlayerProfile,
