@@ -1527,7 +1527,7 @@ pub fn validate_forbidden_tech_bonus_gaps(data_root: &Path) -> Result<Validation
             severity,
             "forbidden_tech.bonus_routing.gap",
             format!(
-                "fid {} ({}) stat `{}` has no combat route (see forbidden_tech_bonus_combat_route in profile.rs)",
+                "fid {} ({}) stat `{}` has no combat route (see forbidden_tech_bonus_combat_route in profile/forbidden_tech_special.rs)",
                 row.fid,
                 row.tech_name,
                 row.stat

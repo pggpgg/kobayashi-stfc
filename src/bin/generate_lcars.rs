@@ -10,6 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use kobayashi::lcars::{build_officer_model, LcarsFile};
+use kobayashi::logging;
 
 const DEFAULT_INPUT: &str = "data/officers/officers.canonical.json";
 const DEFAULT_OUTPUT_DIR: &str = "data/officers";
@@ -27,6 +28,7 @@ fn abs_or_base(arg: &str, base: &Path) -> PathBuf {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    logging::init();
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     let base = Path::new(&manifest_dir);
 

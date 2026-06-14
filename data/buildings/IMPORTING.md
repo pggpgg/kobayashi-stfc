@@ -136,7 +136,7 @@ combat profile and condition allowlists. Maintainer tooling:
   forbidden-tech catalog bonus routing gaps.
 
 Goal: **Still actionable: 0** for building opaque buffs (allowlist or map each distinct `buff_*`).
-Forbidden-tech catalog bonus rows must route via `forbidden_tech_bonus_combat_route` in `profile.rs`.
+Forbidden-tech catalog bonus rows must route via `forbidden_tech_bonus_combat_route` in `profile/forbidden_tech_special.rs`.
 
 The strict flag also upgrades unmapped canonical officer `conditions`
 (`KOBAYASHI_REQUIRE_CANONICAL_CONDITION_MAPS`) so a single `--strict` run is uniform across

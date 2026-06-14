@@ -284,9 +284,11 @@ pub fn canonical_conditions_to_lcars(
         } else {
             let tok = raw.trim();
             if !tok.is_empty() {
-                eprintln!(
-                    "generate_lcars: skipping unmapped canonical condition {tok:?} \
-                     (officer {officer_name:?}, ability {ability_label:?})"
+                tracing::warn!(
+                    token = %tok,
+                    officer = %officer_name,
+                    ability = %ability_label,
+                    "skipping unmapped canonical condition"
                 );
             }
         }
