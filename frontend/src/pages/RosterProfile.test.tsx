@@ -64,6 +64,7 @@ describe("RosterProfile", () => {
     vi.mocked(api.fetchProfile).mockResolvedValue(profileFixture);
     vi.mocked(api.fetchForbiddenTech).mockResolvedValue([]);
     vi.mocked(api.fetchForbiddenTechImported).mockResolvedValue({
+      profile_id: "p1",
       forbidden_tech: [],
     });
     vi.mocked(api.fetchBuildingCombatSummary).mockResolvedValue({
@@ -74,6 +75,7 @@ describe("RosterProfile", () => {
     });
     vi.mocked(api.fetchResearchCombatSummary).mockResolvedValue({
       profile_id: "p1",
+      synced_research_count: 0,
       research: [],
       unmapped_rids: [],
     });
