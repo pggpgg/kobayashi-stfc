@@ -202,7 +202,7 @@ Use as a checklist during the freeze sitting. Adjust counts if you lack a ship o
    cargo test --test recorded_fight_calibration_tests fight_export
    cargo test --test log_ingest_tests
    ```
-5. Add metadata row to the suite manifest (YAML/JSON committed next to fixtures — **to be added** when item 2 ships):
+5. Add metadata row to the suite manifest ([`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json)):
    - `profile_id`, `ship_id`, `ship_tier`, `ship_level`
    - `hostile_id` or resolved display name + level
    - `captain`, `bridge`, `below_decks`
@@ -241,15 +241,17 @@ These shorten the sitting but do not substitute for recorded fights:
 
 - [x] Defender faction for TSV imports ([ROADMAP.md](ROADMAP.md) item 3)
 - [ ] Profile-snapshot completeness audit (every combat input capturable in one pass)
-- [ ] Composite-score harness against existing `drift_*.json`
-- [ ] “Add a real fight log in 10 minutes” doc snippet in [calibration_drift_tests.rs](../tests/calibration_drift_tests.rs) workflow
-- [ ] Suite manifest schema + CI loader bound to frozen `profile_id`
+- [x] Composite-score harness against existing `drift_*.json` — [`src/calibration/scoreboard.rs`](../src/calibration/scoreboard.rs), `cargo xtask calibration-scoreboard`
+- [x] “Add a real fight log in 10 minutes” — [CALIBRATION_ADD_FIGHT.md](CALIBRATION_ADD_FIGHT.md) + module doc in [calibration_drift_tests.rs](../tests/calibration_drift_tests.rs)
+- [x] Suite manifest schema + CI loader — [`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json), [`src/calibration/recorded.rs`](../src/calibration/recorded.rs) (empty fights until freeze)
 
 ---
 
 ## Quick reference links
 
 - [ROADMAP.md](ROADMAP.md) — snapshot-calibration protocol
+- [CALIBRATION_SCOREBOARD.md](CALIBRATION_SCOREBOARD.md) — regenerated accuracy scoreboard
+- [CALIBRATION_ADD_FIGHT.md](CALIBRATION_ADD_FIGHT.md) — add a fight workflow
 - [HUMAN_INTERVENTION_TASKS.md](HUMAN_INTERVENTION_TASKS.md) — maintainer-only steps
 - [combat_log_format.md](combat_log_format.md) — TSV / JSON ingest
 - [HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md) — what hostile abilities matter

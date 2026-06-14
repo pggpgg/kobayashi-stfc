@@ -94,6 +94,14 @@ enum Commands {
         #[arg(long)]
         compare_dir: Option<PathBuf>,
     },
+    /// Run drift calibration scoreboard; optionally write docs/CALIBRATION_SCOREBOARD.md
+    CalibrationScoreboard {
+        /// Write Markdown scoreboard (default path: docs/CALIBRATION_SCOREBOARD.md when flag is present without value)
+        #[arg(long, num_args = 0..=1, default_missing_value = "docs/CALIBRATION_SCOREBOARD.md")]
+        write: Option<PathBuf>,
+        #[arg(long)]
+        quiet: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -214,6 +222,37 @@ fn main() -> Result<()> {
                 });
             }
             node(&repo, "scripts/check_stfcspace_summary_drift.mjs", &args)?;
+        }
+        Commands::CalibrationScoreboard { write, quiet } => {
+            let output = kobayashi::calibration::run_calibration_scoreboard(&repo)
+                .map_err(|e| anyhow::anyhow!(e))?;
+            if !quiet {
+                print!("{}", output.text_report());
+            }
+            if let Some(path) = write {
+                let md_path = if path.as_os_str().is_empty() {
+                    repo.join("docs/CALIBRATION_SCOREBOARD.md")
+                } else if path.is_absolute() {
+                    path
+                } else {
+                    repo.join(path)
+                };
+                if let Some(parent) = md_path.parent() {
+                    std::fs::create_dir_all(parent).with_context(|| {
+                        format!("create scoreboard parent {}", parent.display())
+                    })?;
+                }
+                std::fs::write(&md_path, output.markdown_report()).with_context(|| {
+                    format!("write scoreboard {}", md_path.display())
+                })?;
+                eprintln!("Wrote {}", md_path.display());
+            }
+            if !output.composite.drift_all_ok() {
+                bail!(
+                    "drift calibration failed: {} fixture(s) out of band",
+                    output.composite.drift_fixtures_failed
+                );
+            }
         }
     }
     Ok(())

@@ -563,48 +563,51 @@ fn push_band(
     });
 }
 
-/// Compare simulation output to fixture bands; build a drift report (numeric + optional win flag).
-pub fn drift_report(
-    spec: &DriftFixtureFile,
+/// Compare simulation output to metric bands; build a drift-style report (numeric + optional win flag).
+pub fn simulation_band_report(
+    fixture_id: &str,
+    description: Option<&str>,
+    source: Option<&str>,
+    bands: &MetricBands,
+    expect_attacker_won: Option<bool>,
     result: &crate::combat::SimulationResult,
 ) -> DriftRunReport {
-    let id = spec.id.clone();
     let mut rows = Vec::new();
 
-    if let Some(b) = spec.bands.total_damage {
-        push_band(&mut rows, &id, "total_damage", result.total_damage, b);
+    if let Some(b) = bands.total_damage {
+        push_band(&mut rows, fixture_id, "total_damage", result.total_damage, b);
     }
-    if let Some(b) = spec.bands.rounds_simulated {
+    if let Some(b) = bands.rounds_simulated {
         push_band(
             &mut rows,
-            &id,
+            fixture_id,
             "rounds_simulated",
             result.rounds_simulated as f64,
             b,
         );
     }
-    if let Some(b) = spec.bands.defender_hull_remaining {
+    if let Some(b) = bands.defender_hull_remaining {
         push_band(
             &mut rows,
-            &id,
+            fixture_id,
             "defender_hull_remaining",
             result.defender_hull_remaining,
             b,
         );
     }
-    if let Some(b) = spec.bands.defender_shield_remaining {
+    if let Some(b) = bands.defender_shield_remaining {
         push_band(
             &mut rows,
-            &id,
+            fixture_id,
             "defender_shield_remaining",
             result.defender_shield_remaining,
             b,
         );
     }
-    if let Some(b) = spec.bands.attacker_hull_remaining {
+    if let Some(b) = bands.attacker_hull_remaining {
         push_band(
             &mut rows,
-            &id,
+            fixture_id,
             "attacker_hull_remaining",
             result.attacker_hull_remaining,
             b,
@@ -612,20 +615,33 @@ pub fn drift_report(
     }
 
     let all_numeric_ok = rows.iter().all(|r| r.in_band);
-    let attacker_won_ok = spec
-        .expect_attacker_won
-        .map(|expected| result.attacker_won == expected);
+    let attacker_won_ok = expect_attacker_won.map(|expected| result.attacker_won == expected);
     let all_ok = all_numeric_ok && attacker_won_ok.unwrap_or(true);
 
     DriftRunReport {
-        fixture_id: id,
-        description: spec.description.clone(),
-        source: spec.source.clone(),
+        fixture_id: fixture_id.to_string(),
+        description: description.map(str::to_string),
+        source: source.map(str::to_string),
         rows,
         attacker_won_ok,
         all_numeric_ok,
         all_ok,
     }
+}
+
+/// Compare simulation output to fixture bands; build a drift report (numeric + optional win flag).
+pub fn drift_report(
+    spec: &DriftFixtureFile,
+    result: &crate::combat::SimulationResult,
+) -> DriftRunReport {
+    simulation_band_report(
+        &spec.id,
+        spec.description.as_deref(),
+        spec.source.as_deref(),
+        &spec.bands,
+        spec.expect_attacker_won,
+        result,
+    )
 }
 
 /// Load, run, and report in one step.

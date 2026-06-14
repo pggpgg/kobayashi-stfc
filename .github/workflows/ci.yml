@@ -90,6 +90,24 @@ jobs:
           path: mitigation-damage-through-drift-report.txt
           retention-days: 21
 
+      - name: Calibration scoreboard
+        run: |
+          set -o pipefail
+          cargo xtask calibration-scoreboard | tee calibration-scoreboard.txt
+
+      - name: Calibration scoreboard doc up to date
+        run: |
+          cargo xtask calibration-scoreboard --write --quiet
+          git diff --exit-code docs/CALIBRATION_SCOREBOARD.md
+
+      - name: Upload calibration scoreboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-scoreboard
+          path: calibration-scoreboard.txt
+          retention-days: 21
+
       - name: Strict data validation report
         run: |
           cargo run --bin validate_data -- \

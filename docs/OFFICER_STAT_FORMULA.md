@@ -261,7 +261,10 @@ These three anchors are tied to their real production officers and exercised by
 test currently asserts the **LCARS→engine routing and the direction** of each effect (and records
 the engine's predicted bonus in its assertion messages). The **expected in-game damage delta** for
 each is still `_TBD_` — supply observed numbers (plus the exact ship + crew used) to upgrade these
-from direction/routing checks to exact-magnitude calibration.
+from direction/routing checks to exact-magnitude calibration. After the snapshot freeze, record
+anchor fights with `officer_anchor` set to `kirk`, `marla`, or `kras` in
+[`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json) and
+copy observed damage deltas into this section and the manifest `bands`.
 
 - Cadet Kirk `cadet-kirk-a80563` captain "Motivational" +8% all stats (crew-wide, `target: self`),
   vs a fixed hostile: expected damage delta = _TBD_. *(Routing locked: `officer_stat_all += 0.08`.)*

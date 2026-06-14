@@ -2533,6 +2533,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "kobayashi",
  "serde",
  "serde_json",
 ]

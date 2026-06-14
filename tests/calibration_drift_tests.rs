@@ -1,4 +1,14 @@
 //! Drift harness: load `tests/fixtures/recorded_fights/drift_*.json`, run combat, assert reference bands.
+//!
+//! ## Add a real fight log (~10 minutes)
+//!
+//! See [docs/CALIBRATION_ADD_FIGHT.md](../docs/CALIBRATION_ADD_FIGHT.md). Quick path:
+//!
+//! 1. Save TSV to `fight samples/<ship>_vs_<hostile>_<level>_<outcome>.csv`
+//! 2. `cargo test --test recorded_fight_calibration_tests fight_export`
+//! 3. Add a row to `recorded_fight_suite.json` (after snapshot freeze only)
+//! 4. For synthetic mechanics, copy a `drift_*.json` template from [docs/combat_log_format.md](../docs/combat_log_format.md)
+//! 5. `cargo xtask calibration-scoreboard --write`
 
 use std::path::Path;
 

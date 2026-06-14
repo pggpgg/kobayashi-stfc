@@ -175,3 +175,11 @@ The game can export a fight log as a **tab-separated** file with several section
 ### Drift calibration fixtures (`drift_*.json`)
 
 Synthetic scenarios (not raw combat logs) used for regression: each file describes attacker/defender stats, `simulation.rounds` / `seed`, and inclusive numeric **bands** for key `SimulationResult` fields. The library module `kobayashi::calibration` loads a fixture, runs `simulate_combat` with an empty crew, and builds a **drift report** (per-metric σ from band midpoint, in/out of band). Use `format_drift_summary` to print a multi-fixture table (including the largest |σ| metrics — what moved farthest from the reference center). Tests: `tests/calibration_drift_tests.rs`.
+
+**Scoreboard:** Regenerate the committed calibration scoreboard with `cargo xtask calibration-scoreboard --write` → [CALIBRATION_SCOREBOARD.md](CALIBRATION_SCOREBOARD.md). Recorded fights use [`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json) (populate after snapshot freeze). Band targets:
+
+| Layer | Target |
+| --- | --- |
+| Drift synthetic | all metrics in band (σ ≤ 1.0) |
+| Drift composite | mean σ ≤ 0.35 (informational) |
+| Recorded (post-freeze) | mean σ ≤ 2.0 initially; holdout excluded from iteration composite |

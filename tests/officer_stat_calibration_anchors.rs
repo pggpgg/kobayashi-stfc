@@ -350,3 +350,30 @@ fn anchor_kras_debuff_is_noop_versus_npc_hostile_but_active_in_pvp() {
         with_debuff.attack_bonus,
     );
 }
+
+/// When the snapshot-bound suite is populated, magnitude anchors live in
+/// `recorded_fight_suite.json` (`officer_anchor`: kirk | marla | kras) with observed `bands`.
+#[test]
+fn officer_stat_magnitude_anchors_use_recorded_fight_manifest_when_present() {
+    use std::path::Path;
+
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/recorded_fights/recorded_fight_suite.json");
+    let suite =
+        kobayashi::calibration::load_recorded_fight_suite(&manifest).expect("load manifest");
+    let anchors: std::collections::BTreeMap<_, _> = suite
+        .fights
+        .iter()
+        .filter_map(|f| f.officer_anchor.as_ref().map(|a| (a.as_str(), f.id.as_str())))
+        .collect();
+    // Pre-freeze: empty manifest — test documents hook for post-freeze Kirk/Marla/Kras fights.
+    if anchors.is_empty() {
+        return;
+    }
+    for key in ["kirk", "marla", "kras"] {
+        assert!(
+            anchors.contains_key(key),
+            "expected officer_anchor fight for {key} in recorded_fight_suite.json"
+        );
+    }
+}
