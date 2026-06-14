@@ -142,7 +142,7 @@ fn is_conditional_attack_seat_research_stat(stat: &str) -> bool {
 /// Stats that compile to round-start seats when gated on morale only (excluding `isolytic_damage`,
 /// which uses the broader conditional-isolytic rule below).
 fn research_morale_gated_seat_stat(stat: &str) -> bool {
-    stat == "apex_barrier"
+    matches!(stat, "apex_barrier" | "hull_hp" | "shield_hp")
 }
 
 /// Conditional rows that compile to timed/conditional seats (`research_derived_attack_phase_seats_from_spec`)
@@ -171,6 +171,13 @@ pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry
     if bonus.stat == "isolytic_damage" && research_bonus_is_conditional(bonus) {
         return true;
     }
+    // Conditional hull/shield with extra gates (morale, burning, HB, ship class) — not faction-only dual-gate scenario rows.
+    if matches!(bonus.stat.as_str(), "hull_hp" | "shield_hp")
+        && research_bonus_is_conditional(bonus)
+        && !dual_gate_hull_shield_scenario_apply_condition(&bonus.condition)
+    {
+        return true;
+    }
     false
 }
 
@@ -185,7 +192,7 @@ fn defender_context_for_research_attack_seat(key: &ResearchBonusConditionKey) ->
 /// Stats that omit flat profile merge when `defender_faction` is set (compiled as conditional seats).
 /// Stats keyed on **`defender_faction`** where we omit flat [`PlayerProfile::bonuses`] merge and rely on
 /// [`research_derived_attack_phase_seats_from_spec`] (narrow research compile path + LCARS/officer fallback).
-/// **Excludes** `hull_hp` / `shield_hp` (HullHp multiplier compile requires multiply-shaped ops — research CSV uses Add).
+/// **Includes** `hull_hp` / `shield_hp` when compiled as conditional max-HP seats (research `add` operator).
 fn research_defender_conditional_stat_skips_flat_profile(stat: &str) -> bool {
     matches!(
         stat,
@@ -199,6 +206,8 @@ fn research_defender_conditional_stat_skips_flat_profile(stat: &str) -> bool {
             | "isolytic_defense"
             | "apex_shred"
             | "apex_barrier"
+            | "hull_hp"
+            | "shield_hp"
     )
 }
 
@@ -608,7 +617,9 @@ pub fn cumulative_research_level_conditional_bonuses(
                 || (bonus.condition.requires_morale
                     && research_morale_gated_seat_stat(&bonus.stat))
                 || (bonus.condition.defender_faction.is_some()
-                    && research_defender_conditional_stat_skips_flat_profile(&bonus.stat)))
+                    && research_defender_conditional_stat_skips_flat_profile(&bonus.stat))
+                || (matches!(bonus.stat.as_str(), "hull_hp" | "shield_hp")
+                    && !dual_gate_hull_shield_scenario_apply_condition(&bonus.condition)))
             {
                 continue;
             }

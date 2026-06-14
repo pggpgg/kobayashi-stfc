@@ -51,6 +51,10 @@ pub const RANDOM_DEFENDER_STATE_OUTCOMES_CAP: usize = 8;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AbilityEffect {
     AttackMultiplier(f64),
+    /// Additive max-hull fraction from conditional research/LCARS (`0.12` ⇒ ×1.12 max hull when the seat's conditions pass).
+    HullHpMultiplier(f64),
+    /// Additive max-shield fraction from conditional research/LCARS (`0.08` ⇒ ×1.08 max shield when conditions pass).
+    ShieldHpMultiplier(f64),
     PierceBonus(f64),
     /// Chance-gated multiplier that applies to this combatant's shot calculation when evaluated.
     /// Used for hostile-side (defender) upstream abilities on return fire.
@@ -748,6 +752,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         }
         AbilityEffect::CritChanceBonus(c) => *c = cap_one(*c),
         AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
+        AbilityEffect::HullHpMultiplier(m) => *m = scale(*m),
+        AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
         AbilityEffect::CritDamageMultiplier(m) => *m = scale(*m),
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),

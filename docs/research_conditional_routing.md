@@ -12,7 +12,7 @@ How gated research catalog rows reach combat. Companion inventory: [research_con
 |------|------|----------------|
 | **Flat `profile.bonuses`** | Unconditional combat stats | Scenario attacker base stats |
 | **Owner-faction map** | `attacker_faction` / `attacker_factions` only (no defender gate on hull/shield dual rows) | When ship faction matches |
-| **Attack-phase / round-start seats** | Conditional weapon damage, crit, isolytic, defender-faction mitigation stats, etc. | `research_derived_attack_phase_seats` → fight loop |
+| **Attack-phase / round-start seats** | Conditional weapon damage, crit, isolytic, defender-faction mitigation stats, conditional `hull_hp` / `shield_hp` (morale / burning / HB / ship class), etc. | `research_derived_attack_phase_seats` → fight loop |
 | **Dual-gate hull/shield** | Owner faction **and** `defender_faction`, stat `hull_hp` or `shield_hp`, **no** extra gates (morale / burning / HB / ship class) | `cumulative_dual_gate_hull_shield_research_fractions` at scenario build |
 | **Canonical override** | `data/research_canonical.json` entry for synced `rid` | Replaces catalog compile for that project; KSG incoming SM handled separately |
 | **Incoming shield mitigation** | Canonical effect with `incoming_shield_mitigation_rounds` | `SimulationConfig` rounds 1..=N only (counter-fire / incoming damage) |
@@ -35,9 +35,9 @@ These rows are **skipped** from:
 - Flat `profile.bonuses` merge
 - `research_owner_faction_bonuses` (would incorrectly apply vs all hostiles)
 
-**Not covered today:** dual-gate hull/shield that also needs morale, burning, or HB — those need attack-phase seats (not implemented for fractional hull/shield multiply).
+**Not covered by scenario dual-gate:** rows that also need morale, burning, hull breach, or defender ship class compile to **conditional max-HP seats** (`HullHpMultiplier` / `ShieldHpMultiplier` in `src/combat/abilities.rs`), applied once per round in the fight loop when gates pass.
 
-**Catalog gap:** no owner+defender `hull_hp`/`shield_hp` rows are mapped in `buff_id_to_stat.json` yet; dual-gate scenario path is ready when mappings land (see faction patch workflow in Track B).
+**Catalog audit (2026-06-14):** upstream has **no** `hull_hp`/`shield_hp` projects with owner+defender faction only. Owner-faction hull/shield lines (Graviton Shields, Resolve, etc.) correctly map with `attacker_faction` only. Cross-faction **weapon_damage** rows were corrected (`982655355` Romulan vs Federation, `2982312380` Federation vs Klingon, `4009387266` Klingon vs Romulan). Dual-gate hull/shield scenario path is covered by unit tests; add `buff_id_to_stat.json` rows when upstream ships them.
 
 ---
 
@@ -72,6 +72,8 @@ From `research_effect_spec_adapter.rs`:
 - **Other conditional isolytic** → `AttackPhase`.
 - **`isolytic_cascade_damage`** → always `AttackPhase`.
 - **Conditional weapon damage / crit** → `AttackPhase` seats; not flat `profile.bonuses`.
+- **`hull_hp` / `shield_hp` + `requires_morale`** → `RoundStart` (`HullHpMultiplier` / `ShieldHpMultiplier`).
+- **Other conditional `hull_hp` / `shield_hp`** (burning, HB, defender faction, ship class) → `AttackPhase`.
 
 ---
 

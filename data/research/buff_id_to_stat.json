@@ -148,8 +148,8 @@
   "982655355": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "federation",
-    "attacker_faction": "federation"
+    "attacker_faction": "romulan",
+    "defender_faction": "federation"
   },
   "1024053940": {
     "stat": "shield_deflection",
@@ -355,6 +355,7 @@
   "2982312380": {
     "stat": "weapon_damage",
     "operator": "add",
+    "attacker_faction": "federation",
     "defender_faction": "klingon"
   },
   "3011884829": {
@@ -455,8 +456,8 @@
   "4009387266": {
     "stat": "weapon_damage",
     "operator": "add",
-    "defender_faction": "romulan",
-    "attacker_faction": "romulan"
+    "attacker_faction": "klingon",
+    "defender_faction": "romulan"
   },
   "4058743636": {
     "stat": "hull_hp",

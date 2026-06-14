@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-06-13",
+  "last_updated": "2026-06-14",
   "items": [
     {
       "rid": 2999437,
@@ -11912,7 +11912,8 @@
               "stat": "weapon_damage",
               "value": 0.5,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11923,7 +11924,8 @@
               "stat": "weapon_damage",
               "value": 0.75,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11934,7 +11936,8 @@
               "stat": "weapon_damage",
               "value": 0.01,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11945,7 +11948,8 @@
               "stat": "weapon_damage",
               "value": 0.015,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11956,7 +11960,8 @@
               "stat": "weapon_damage",
               "value": 0.02,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11967,7 +11972,8 @@
               "stat": "weapon_damage",
               "value": 0.0275,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11978,7 +11984,8 @@
               "stat": "weapon_damage",
               "value": 0.0375,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -11989,7 +11996,8 @@
               "stat": "weapon_damage",
               "value": 0.05,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -12000,7 +12008,8 @@
               "stat": "weapon_damage",
               "value": 0.07,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         },
@@ -12011,7 +12020,8 @@
               "stat": "weapon_damage",
               "value": 0.1,
               "operator": "add",
-              "defender_faction": "klingon"
+              "defender_faction": "klingon",
+              "attacker_faction": "federation"
             }
           ]
         }
@@ -15397,7 +15407,7 @@
               "value": 0.5,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15409,7 +15419,7 @@
               "value": 0.75,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15421,7 +15431,7 @@
               "value": 0.01,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15433,7 +15443,7 @@
               "value": 0.015,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15445,7 +15455,7 @@
               "value": 0.02,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15457,7 +15467,7 @@
               "value": 0.0275,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15469,7 +15479,7 @@
               "value": 0.0375,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15481,7 +15491,7 @@
               "value": 0.05,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15493,7 +15503,7 @@
               "value": 0.07,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         },
@@ -15505,7 +15515,7 @@
               "value": 0.1,
               "operator": "add",
               "defender_faction": "romulan",
-              "attacker_faction": "romulan"
+              "attacker_faction": "klingon"
             }
           ]
         }
@@ -68286,7 +68296,7 @@
               "value": 0.5,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68298,7 +68308,7 @@
               "value": 0.75,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68310,7 +68320,7 @@
               "value": 0.01,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68322,7 +68332,7 @@
               "value": 0.015,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68334,7 +68344,7 @@
               "value": 0.02,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68346,7 +68356,7 @@
               "value": 0.0275,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68358,7 +68368,7 @@
               "value": 0.0375,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68370,7 +68380,7 @@
               "value": 0.05,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68382,7 +68392,7 @@
               "value": 0.07,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         },
@@ -68394,7 +68404,7 @@
               "value": 0.1,
               "operator": "add",
               "defender_faction": "federation",
-              "attacker_faction": "federation"
+              "attacker_faction": "romulan"
             }
           ]
         }

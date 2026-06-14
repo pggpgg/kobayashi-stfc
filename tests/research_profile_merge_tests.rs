@@ -597,3 +597,145 @@ fn merge_research_morale_apex_barrier_is_round_start_seat_not_flat_profile() {
         Some(AbilityCondition::MoraleActive)
     );
 }
+
+#[test]
+fn merge_research_dual_gate_hull_shield_skips_flat_and_owner_faction_maps() {
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: 9001,
+            name: Some("Fed vs Klingon hull".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![
+                    ResearchBonusEntry {
+                        stat: "hull_hp".into(),
+                        value: 0.12,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            attacker_faction: Some("federation".into()),
+                            defender_faction: Some("klingon".into()),
+                            ..Default::default()
+                        },
+                    },
+                    ResearchBonusEntry {
+                        stat: "shield_hp".into(),
+                        value: 0.08,
+                        operator: "add".into(),
+                        condition: ResearchBonusConditionKey {
+                            attacker_faction: Some("romulan".into()),
+                            defender_faction: Some("federation".into()),
+                            ..Default::default()
+                        },
+                    },
+                ],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry { rid: 9001, level: 1 }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+    assert!(
+        !profile.bonuses.contains_key("hull_hp"),
+        "dual-gate hull must not flat-merge"
+    );
+    assert!(
+        !profile.bonuses.contains_key("shield_hp"),
+        "dual-gate shield must not flat-merge"
+    );
+    assert!(
+        profile.research_owner_faction_bonuses.is_empty(),
+        "dual-gate hull/shield must not merge into owner_faction map"
+    );
+}
+
+#[test]
+fn merge_research_morale_gated_hull_hp_round_start_seat() {
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: 9003,
+            name: Some("Morale hull".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "hull_hp".into(),
+                    value: 0.15,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        requires_morale: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry { rid: 9003, level: 1 }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+    assert!(!profile.bonuses.contains_key("hull_hp"));
+
+    let gates = SupportBuffResearchGateState::default();
+    let seats = research_derived_attack_phase_seats(
+        &imported,
+        &catalog,
+        &gates,
+        &std::collections::HashMap::new(),
+    );
+    assert_eq!(seats.len(), 1);
+    assert_eq!(seats[0].ability.timing, TimingWindow::RoundStart);
+    match &seats[0].ability.effect {
+        AbilityEffect::HullHpMultiplier(v) => assert!((*v - 0.15).abs() < 1e-12),
+        e => panic!("expected HullHpMultiplier, got {e:?}"),
+    }
+}
+
+#[test]
+fn merge_research_burning_gated_shield_hp_attack_phase_seat() {
+    let catalog = ResearchCatalog {
+        source: None,
+        last_updated: None,
+        items: vec![ResearchRecord {
+            rid: 9004,
+            name: Some("Burning shield".into()),
+            data_version: None,
+            source_note: None,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "shield_hp".into(),
+                    value: 0.1,
+                    operator: "add".into(),
+                    condition: ResearchBonusConditionKey {
+                        requires_defender_burning: true,
+                        ..Default::default()
+                    },
+                }],
+            }],
+        }],
+    };
+    let imported = vec![ResearchEntry { rid: 9004, level: 1 }];
+    let mut profile = PlayerProfile::default();
+    merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+    assert!(!profile.bonuses.contains_key("shield_hp"));
+
+    let gates = SupportBuffResearchGateState::default();
+    let seats = research_derived_attack_phase_seats(
+        &imported,
+        &catalog,
+        &gates,
+        &std::collections::HashMap::new(),
+    );
+    assert_eq!(seats.len(), 1);
+    assert_eq!(seats[0].ability.timing, TimingWindow::AttackPhase);
+    match &seats[0].ability.effect {
+        AbilityEffect::ShieldHpMultiplier(v) => assert!((*v - 0.1).abs() < 1e-12),
+        e => panic!("expected ShieldHpMultiplier, got {e:?}"),
+    }
+}

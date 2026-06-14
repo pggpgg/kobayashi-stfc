@@ -820,6 +820,11 @@ fn compile_officer_combat_spec_impl(
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
             match op {
+                "add" => Ok((
+                    timing,
+                    AbilityEffect::ShieldHpMultiplier(v),
+                    compiled_condition.clone(),
+                )),
                 "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
                 | "multiplybaseadd" => {
                     let bonus = v - 1.0;
@@ -849,6 +854,11 @@ fn compile_officer_combat_spec_impl(
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
             match op {
+                "add" => Ok((
+                    timing,
+                    AbilityEffect::HullHpMultiplier(v),
+                    compiled_condition.clone(),
+                )),
                 "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
                 | "multiplybaseadd" => {
                     let bonus = v - 1.0;
@@ -1135,6 +1145,8 @@ pub fn compile_research_attack_effect(
     let v = scalar_fraction(value)?;
     match modifier {
         AbilityModifierSpec::WeaponDamage => Ok(AbilityEffect::AttackMultiplier(v)),
+        AbilityModifierSpec::HullHp => Ok(AbilityEffect::HullHpMultiplier(v)),
+        AbilityModifierSpec::ShieldHp => Ok(AbilityEffect::ShieldHpMultiplier(v)),
         AbilityModifierSpec::CritChance => Ok(AbilityEffect::CritChanceBonus(
             ship_ability_resolve::normalize_probability(v),
         )),

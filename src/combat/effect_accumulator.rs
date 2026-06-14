@@ -21,6 +21,10 @@ pub(crate) struct EffectAccumulator {
     crit_chance_bonus: f64,
     /// Product of timed [`AbilityEffect::CritDamageMultiplier`] for the current shot stack.
     crit_damage_multiplier: f64,
+    /// Additive max-hull fractions from conditional seats this stack (research/LCARS `hull_hp` `add` rows).
+    hull_hp_multiplier_sum: f64,
+    /// Additive max-shield fractions from conditional seats this stack.
+    shield_hp_multiplier_sum: f64,
     /// When true, each applied effect appends a row to [`Self::contribution_lines`] for `stack_resolution` traces.
     trace_contributions: bool,
     contribution_lines: Vec<Value>,
@@ -185,6 +189,8 @@ impl Default for EffectAccumulator {
             round_end_modifier_sum: 0.0,
             crit_chance_bonus: 0.0,
             crit_damage_multiplier: 1.0,
+            hull_hp_multiplier_sum: 0.0,
+            shield_hp_multiplier_sum: 0.0,
             trace_contributions: false,
             contribution_lines: Vec::new(),
         }
@@ -604,6 +610,45 @@ impl EffectAccumulator {
         self.stacks.composed_for(EffectStatKey::PreAttackDamage)
     }
 
+    /// Sum additive max-HP fractions from timed effects (after condition filtering).
+    pub(crate) fn sum_max_hp_multipliers_from_effects(
+        effects: &[ActiveAbilityEffect],
+        assimilated_active: bool,
+    ) -> (f64, f64) {
+        let mut hull = 0.0_f64;
+        let mut shield = 0.0_f64;
+        for e in effects {
+            match scale_effect(e.effect, assimilated_active) {
+                AbilityEffect::HullHpMultiplier(f) if f.is_finite() && f != 0.0 => hull += f,
+                AbilityEffect::ShieldHpMultiplier(f) if f.is_finite() && f != 0.0 => shield += f,
+                _ => {}
+            }
+        }
+        (hull, shield)
+    }
+
+    /// Scale attacker max hull/shield when conditional research seats apply (+fraction ⇒ ×(1+f) max; current remaining gains the delta).
+    pub(crate) fn apply_max_hp_multiplier_sums_to_attacker(
+        attacker: &mut Combatant,
+        hull_fraction_sum: f64,
+        shield_fraction_sum: f64,
+        attacker_shield_remaining: &mut f64,
+    ) {
+        if hull_fraction_sum.is_finite() && hull_fraction_sum != 0.0 {
+            let old_max = attacker.hull_health.max(0.0);
+            attacker.hull_health = old_max * (1.0 + hull_fraction_sum);
+        }
+        if shield_fraction_sum.is_finite() && shield_fraction_sum != 0.0 {
+            let old_max = attacker.shield_health.max(0.0);
+            let new_max = old_max * (1.0 + shield_fraction_sum);
+            attacker.shield_health = new_max;
+            if old_max > 0.0 {
+                *attacker_shield_remaining =
+                    (*attacker_shield_remaining * (new_max / old_max)).min(new_max);
+            }
+        }
+    }
+
     pub(crate) fn clear(&mut self) {
         self.stacks.clear();
         self.pre_attack_modifier_sum = 0.0;
@@ -612,6 +657,8 @@ impl EffectAccumulator {
         self.round_end_modifier_sum = 0.0;
         self.crit_chance_bonus = 0.0;
         self.crit_damage_multiplier = 1.0;
+        self.hull_hp_multiplier_sum = 0.0;
+        self.shield_hp_multiplier_sum = 0.0;
         self.contribution_lines.clear();
     }
 
@@ -623,6 +670,8 @@ impl EffectAccumulator {
         self.round_end_modifier_sum = other.round_end_modifier_sum;
         self.crit_chance_bonus += other.crit_chance_bonus;
         self.crit_damage_multiplier *= other.crit_damage_multiplier;
+        self.hull_hp_multiplier_sum += other.hull_hp_multiplier_sum;
+        self.shield_hp_multiplier_sum += other.shield_hp_multiplier_sum;
         if self.trace_contributions {
             self.contribution_lines
                 .extend(other.contribution_lines.iter().cloned());
@@ -761,6 +810,16 @@ impl EffectAccumulator {
             TimingWindow::CombatBegin | TimingWindow::RoundStart => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.trace_add_pre_mod(source, timing, "AttackMultiplier", modifier);
+                }
+                AbilityEffect::HullHpMultiplier(f) => {
+                    if f.is_finite() {
+                        self.hull_hp_multiplier_sum += f;
+                    }
+                }
+                AbilityEffect::ShieldHpMultiplier(f) => {
+                    if f.is_finite() {
+                        self.shield_hp_multiplier_sum += f;
+                    }
                 }
                 AbilityEffect::PierceBonus(value) => {
                     self.add_stack_flat_traced(
@@ -970,6 +1029,16 @@ impl EffectAccumulator {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.trace_add_attack_phase_mod(source, timing, "AttackMultiplier", modifier);
                 }
+                AbilityEffect::HullHpMultiplier(f) => {
+                    if f.is_finite() {
+                        self.hull_hp_multiplier_sum += f;
+                    }
+                }
+                AbilityEffect::ShieldHpMultiplier(f) => {
+                    if f.is_finite() {
+                        self.shield_hp_multiplier_sum += f;
+                    }
+                }
                 AbilityEffect::PierceBonus(value) => {
                     let flat = value * base_attack * 0.5;
                     self.add_stack_flat_traced(
@@ -1118,6 +1187,7 @@ impl EffectAccumulator {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.trace_add_attack_phase_mod(source, timing, "AttackMultiplier", modifier);
                 }
+                AbilityEffect::HullHpMultiplier(_) | AbilityEffect::ShieldHpMultiplier(_) => {}
                 AbilityEffect::PierceBonus(value) => {
                     let flat = value * base_attack * 0.5;
                     self.add_stack_flat_traced(
@@ -1271,6 +1341,7 @@ impl EffectAccumulator {
                         "AttackMultiplier",
                     );
                 }
+                AbilityEffect::HullHpMultiplier(_) | AbilityEffect::ShieldHpMultiplier(_) => {}
                 AbilityEffect::PierceBonus(value) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::DefenseMitigationBonus,
@@ -1393,6 +1464,7 @@ impl EffectAccumulator {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.trace_add_round_end_mod(source, timing, "AttackMultiplier", modifier);
                 }
+                AbilityEffect::HullHpMultiplier(_) | AbilityEffect::ShieldHpMultiplier(_) => {}
                 AbilityEffect::PierceBonus(value) => {
                     self.add_stack_flat_traced(
                         EffectStatKey::RoundEndDamage,
@@ -1575,6 +1647,16 @@ impl EffectAccumulator {
             | TimingWindow::CombatEnd => match effect {
                 AbilityEffect::AttackMultiplier(modifier) => {
                     self.trace_add_pre_mod(source, timing, "AttackMultiplier", modifier);
+                }
+                AbilityEffect::HullHpMultiplier(f) => {
+                    if f.is_finite() {
+                        self.hull_hp_multiplier_sum += f;
+                    }
+                }
+                AbilityEffect::ShieldHpMultiplier(f) => {
+                    if f.is_finite() {
+                        self.shield_hp_multiplier_sum += f;
+                    }
                 }
                 AbilityEffect::PierceBonus(value) => {
                     self.add_stack_flat_traced(
@@ -1810,6 +1892,12 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
     match effect {
         AbilityEffect::AttackMultiplier(modifier) => {
             AbilityEffect::AttackMultiplier(modifier * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::HullHpMultiplier(f) => {
+            AbilityEffect::HullHpMultiplier(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::ShieldHpMultiplier(f) => {
+            AbilityEffect::ShieldHpMultiplier(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::PierceBonus(value) => {
             AbilityEffect::PierceBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

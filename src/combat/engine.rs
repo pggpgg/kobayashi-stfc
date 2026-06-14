@@ -390,7 +390,8 @@ pub fn build_combat_setup_with_officer_stat(
 /// All immutable setup is reused; only per-trial mutable state is freshly initialized.
 pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> SimulationResult {
     let config = &setup.config;
-    let attacker = &setup.attacker;
+    let mut attacker = setup.attacker.clone();
+    let attacker = &mut attacker;
     let defender = &setup.defender;
     let attacker_crew = &setup.attacker_crew;
     let defender_crew = &setup.defender_crew;
@@ -812,6 +813,28 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let use_simd_outbound_weapon_path = use_experimental_simd_damage_after_apex_base
             && defender_inbound_defense_filtered.is_empty()
             && defender_receive_damage_effects.is_empty();
+
+        let (round_hull_hp_mult, round_shield_hp_mult) = {
+            let (mut hull, mut shield) =
+                EffectAccumulator::sum_max_hp_multipliers_from_effects(
+                    &full_round_start,
+                    round_start_assimilated,
+                );
+            let (atk_hull, atk_shield) =
+                EffectAccumulator::sum_max_hp_multipliers_from_effects(
+                    &attack_phase_filtered,
+                    attack_phase_assimilated,
+                );
+            hull += atk_hull;
+            shield += atk_shield;
+            (hull, shield)
+        };
+        EffectAccumulator::apply_max_hp_multiplier_sums_to_attacker(
+            attacker,
+            round_hull_hp_mult,
+            round_shield_hp_mult,
+            &mut st.attacker_shield_remaining,
+        );
 
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();

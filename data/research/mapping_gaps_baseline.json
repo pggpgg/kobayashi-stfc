@@ -1,5 +1,5 @@
 {
-  "unmapped_buff_ids": 1357,
+  "unmapped_buff_ids": 1418,
   "suspect_global_scopes": 0,
-  "note": "Track E regression baseline. Regenerate after intentional mapping changes: node scripts/research_mapping_gaps.mjs --json"
+  "note": "Track E regression baseline after task 5 dual-gate mapping + cross-faction weapon fixes. Regenerate: node scripts/research_mapping_gaps.mjs --json"
 }
