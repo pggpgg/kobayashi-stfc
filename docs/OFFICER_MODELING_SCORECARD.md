@@ -61,6 +61,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | strike-team-una-5ec6f6 | Strike Team Una | 2 | 0/1/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 50 | 100 | — | 75 | 71 | 0 | 71 | C | 100 | none | Cap OfficerStatAll on_round_start; bridge enemy ShieldMitigation on_round_start. |
 | kras-a47042 | Kras | 2 | 1/0/0 | 0/1/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 50 | — | 75 | 79 | 0 | 79 | C | 100 | none | CptManeuverEffect + enemy OfficerStatAll are PvP-gated (EnemyPlayer); inactive vs NPC hostiles. |
 | 718-0-2509d7 | 718.0 | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| academy-doctor-bc8e69 | Academy Doctor | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_cascade_damage at combat start vs Explorer hostiles is gated on Wave Defense (SelfAtWaveDefenseChallenge → literal_false): inert on the default path. BD Interceptor crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles, active only in the PvP toggle. |
 | ahvix-f90184 | Ahvix | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | airiam-9265fc | Airiam | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | alok-sahar-4d1370 | Alok Sahar | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -87,11 +88,13 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | cadet-scotty-b342ae | Cadet Scotty | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | cadet-sulu-784421 | Cadet Sulu | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | cadet-uhura-3ef15c | Cadet Uhura | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| caleb-mir-3588ed | Caleb Mir | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge shield_regen_max_fraction (per-round SHP restore, MultiplyAdd) vs non-Armada hostiles is the one combat-modeled row (EnemyHostile + TargetNotArmada → defender_is_npc_hostile AND NOT armada); the in-game 'Outposts' half is unmodeled. BD Top Marks weapon_damage vs Outposts/Retaliation is gated on SelfAtStation (→ literal_false) so the very large below-deck bonus does not over-apply in generic hostile fights. |
 | cap-tilly-070cc9 | Cap. Tilly | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | carol-755a05 | Carol | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | carol-freeman-a46be4 | Carol Freeman | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | cath-f0e149 | Cath | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | chakotay-a1f5df | Chakotay | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| chancellor-ake-225a78 | Chancellor Ake | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_cascade_damage vs Battleship hostiles is Wave-Defense-gated (literal_false): inert. BD Explorer crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles. |
 | chang-ecc238 | Chang | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Bridge enemy_delay on crit (on_critical) when defender hull breach active; DefenderFireDelay skips counter-fire. Captain weapon bonus uses hull_hp <60% gate. |
 | changeling-kira-666ebe | Changeling Kira | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | charvanek-0f1b5c | Charvanek | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -105,6 +108,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | data-d20ef8 | Data | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | deanna-troi-57341d | Deanna Troi | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | decius-8fce68 | Decius | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| deidamia-50f1da | Deidamia | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_cascade_damage vs Interceptor hostiles is Wave-Defense-gated (literal_false): inert. BD Battleship crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles. |
 | demarco-7f2d86 | Demarco | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | dixon-hill-b7ea10 | Dixon Hill | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 50 | mixed | — |
 | doctor-t-ana-b98f82 | Doctor T'Ana | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | AddRandomState vs player defenders only (PvP); same weighted states and rank proc as Zeph; inactive in default hostile optimize. |
@@ -121,6 +125,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | french-marshal-q-1f0a28 | French Marshal Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | gaila-3d387a | Gaila | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | garak-771862 | Garak | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| genesis-lythe-82d460 | Genesis Lythe | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | No captain (Chain of Command). Bridge shield_regen_max_fraction restore is Wave-Defense-gated (literal_false): inert on the default path. BD Admiral's Daughter (Outpost retaliation medals/plunder) is economy → :non_combat tag. |
 | geordi-la-forge-914cec | Geordi La Forge | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | georgiou-d2bdef | Georgiou | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | gonzales-de640c | Gonzales | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -319,6 +324,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | hadley-ae14a1 | Hadley | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | helvia-70a338 | Helvia | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | hoshi-sato-3bc529 | Hoshi Sato | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
+| jirali-551c28 | Jirali | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | Entirely out-of-combat: captain Beam Augmenter (extra Borg Cube cutting-beam charge), bridge Tech Expert (cutting-beam loot), and BD Black Market Mechanic (repair-speed cascade) all map to :non_combat tags (no in-fight damage/hull/shield effect). |
 | joaquin-697b4c | Joaquin | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | makinen-a124a0 | Mäkinen | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |
 | mavery-60052a | Mavery | 0 | 0/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | — | — | — | 0 | — | — | 100 | economy_only | — |

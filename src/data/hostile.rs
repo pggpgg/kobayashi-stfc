@@ -328,6 +328,7 @@ fn opponent_faction_from_upstream_id(id: i64) -> Option<OpponentFactionTag> {
         2352723133 | 2745774076 | 505966333 => Some(OpponentFactionTag::Xindi),
         2489857622 => Some(OpponentFactionTag::Swarm),
         1125688202 => Some(OpponentFactionTag::Breen),
+        331567901 => Some(OpponentFactionTag::VenariRal), // Venari Ral (loca 90001; U.S.S. Athena counter).
         // Additional `summary-hostile` faction.id values (correlate with `faction.loca_id` / translations-factions).
         2796195869 => Some(OpponentFactionTag::Federation), // Texas-class
         2385047502 => Some(OpponentFactionTag::Borg), // Borg (paired loca 26 in bundled hostiles)
@@ -359,6 +360,7 @@ fn opponent_faction_from_faction_loca_id(loca: u64) -> Option<OpponentFactionTag
         27 => Some(OpponentFactionTag::Federation), // Texas-class
         84001 => Some(OpponentFactionTag::Cardassian), // "Card" (short label)
         86001 => Some(OpponentFactionTag::Borg), // V'Ger Clone
+        90001 => Some(OpponentFactionTag::VenariRal), // Venari Ral [VENRA]
         _ => None,
     }
 }

@@ -73,6 +73,83 @@
     {
       "abilities": [
         {
+          "ability_id": "1396937009",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfAtWaveDefenseChallenge",
+            "EnemyHostile",
+            "EnemyExplorer"
+          ],
+          "description": "Physician's Instinct: increases Isolytic Cascade Damage by X against hostile Explorers on combat start in Wave Defense.",
+          "modifier": "IsolyticCascadeDamage",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2.0,
+            2.6,
+            3.3,
+            4.0,
+            5.0
+          ]
+        },
+        {
+          "ability_id": "884912451",
+          "attributes": "num_rounds=8",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfInterceptor",
+            "EnemyPlayer"
+          ],
+          "description": "Critical Diagnosis: increases Interceptor Critical Chance by X against players on combat start for 8 rounds.",
+          "modifier": "CritChance",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.4,
+            0.5,
+            0.6,
+            0.8,
+            1.0
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "STARFLEET ACADEMY",
+      "id": "academy-doctor-bc8e69",
+      "name": "Academy Doctor",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3718842126"
+    },
+    {
+      "abilities": [
+        {
           "ability_id": "1074437376",
           "attributes": "faction_id=1750120904, num_rounds=3",
           "chance_by_rank": [
@@ -2105,6 +2182,81 @@
     {
       "abilities": [
         {
+          "ability_id": "3851967764",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyHostile",
+            "TargetNotArmada"
+          ],
+          "description": "Programmable Matter Prodigy: restores X Shield Health against Outposts and non-Armada hostiles on round start.",
+          "modifier": "ShieldHPRepair",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [
+            0.07,
+            0.09,
+            0.14,
+            0.2,
+            0.3
+          ]
+        },
+        {
+          "ability_id": "1768055716",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfAtStation"
+          ],
+          "description": "Top Marks: increases Weapon Damage by X against Outposts and Retaliation hostiles on combat start.",
+          "modifier": "AllDamage",
+          "operation": "MultiplyAdd",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            10.0,
+            13.7,
+            18.0,
+            22.0,
+            27.5
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "STARFLEET ACADEMY",
+      "id": "caleb-mir-3588ed",
+      "name": "Caleb Mir",
+      "rarity": "rare",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "390339249"
+    },
+    {
+      "abilities": [
+        {
           "ability_id": "2059684707",
           "attributes": "battle_types=[4], game_context=capture_node, officer_stat=2",
           "chance_by_rank": [
@@ -2455,6 +2607,83 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "3838190976"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "1020161798",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfAtWaveDefenseChallenge",
+            "EnemyHostile",
+            "EnemyBattleship"
+          ],
+          "description": "Lanthanite Wisdom: increases Isolytic Cascade Damage by X against Battleship hostiles on combat start in Wave Defense.",
+          "modifier": "IsolyticCascadeDamage",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2.0,
+            2.6,
+            3.3,
+            4.0,
+            5.0
+          ]
+        },
+        {
+          "ability_id": "2678016443",
+          "attributes": "num_rounds=8",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfExplorer",
+            "EnemyPlayer"
+          ],
+          "description": "Chancellor's Guidance: increases Explorer Critical Chance by X against players on combat start for 8 rounds.",
+          "modifier": "CritChance",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.4,
+            0.5,
+            0.6,
+            0.8,
+            1.0
+          ]
+        }
+      ],
+      "faction": "Unknown",
+      "group": "STARFLEET ACADEMY",
+      "id": "chancellor-ake-225a78",
+      "name": "Chancellor Ake",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3626925026"
     },
     {
       "abilities": [
@@ -3446,6 +3675,83 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "3961190554"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "2641061201",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfAtWaveDefenseChallenge",
+            "EnemyHostile",
+            "EnemyInterceptor"
+          ],
+          "description": "Pirate Queen: increases Isolytic Cascade Damage by X against Interceptor hostiles on combat start in Wave Defense.",
+          "modifier": "IsolyticCascadeDamage",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2.0,
+            2.6,
+            3.3,
+            4.0,
+            5.0
+          ]
+        },
+        {
+          "ability_id": "4294701396",
+          "attributes": "num_rounds=8",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfBattleship",
+            "EnemyPlayer"
+          ],
+          "description": "No Holds Barred: increases Battleship Critical Chance by X against players on combat start for 8 rounds.",
+          "modifier": "CritChance",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.4,
+            0.5,
+            0.6,
+            0.8,
+            1.0
+          ]
+        }
+      ],
+      "faction": "Klingon",
+      "group": "STARFLEET ACADEMY",
+      "id": "deidamia-50f1da",
+      "name": "Deidamia",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "394136698"
     },
     {
       "abilities": [
@@ -4516,6 +4822,75 @@
     {
       "abilities": [
         {
+          "ability_id": "1610205778",
+          "attributes": "num_rounds=2",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "TargetNotSoloArmada",
+            "TargetIsArmada"
+          ],
+          "description": "Increases Shots by X for 2 rounds on round start against Group Armadas.",
+          "modifier": "ShotsPerAttack",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [
+            0.4,
+            0.3,
+            0.8
+          ]
+        },
+        {
+          "ability_id": "1470259639",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Increases base Loot gained from Armadas by X.",
+          "modifier": "ArmadaLoot",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            0.4,
+            0.55,
+            0.8,
+            1.1,
+            1.5
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "UNKNOWN",
+      "id": "fcm-data-3b9e4d",
+      "name": "FCM Data",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3638382364"
+    },
+    {
+      "abilities": [
+        {
           "ability_id": "4265842515",
           "attributes": "resources=[2325683920, 743985951, 2614028847, 1908242242, 96209859, 1371898528, 84292608, 1779416627, 680796905, 802509572, 2964093937, 3735331456, 2905009151, 1349464922, 3598797204, 1600760006, 2166628666, 1957060718, 1692987719, 2424553373, 2991010408, 2705205969, 563579678, 2164745208, 4275314946, 1734940706, 733419347, 3842158911, 2002611017, 3739531165, 999782265, 580616659, 3043859351, 3662113780, 2392079650, 3111281042, 2160856496, 3821364733, 1768524995, 1495067766, 2431214132, 3342042571, 819663825, 1586478890, 296474010, 2285412015, 2440004407, 1574840331, 298768773, 141958867]",
           "chance_by_rank": [
@@ -4930,6 +5305,78 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "3681781473"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "1166619300",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfAtWaveDefenseChallenge"
+          ],
+          "description": "Group Work: restores X Shield Health on round start in Wave Defense.",
+          "modifier": "ShieldHPRepair",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [
+            0.07,
+            0.09,
+            0.14,
+            0.2,
+            0.3
+          ]
+        },
+        {
+          "ability_id": "3778044537",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Admiral's Daughter: increases Retaliation Medals and Plunder from Solo / Elite Solo Outpost Retaliation attacks by X. (Out of combat.)",
+          "modifier": "OutpostMedalsAndPlunderLoot",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            0.7,
+            1.15,
+            1.7,
+            2.4,
+            3.25
+          ]
+        }
+      ],
+      "faction": "Unknown",
+      "group": "STARFLEET ACADEMY",
+      "id": "genesis-lythe-82d460",
+      "name": "Genesis Lythe",
+      "rarity": "rare",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "2024435434"
     },
     {
       "abilities": [
@@ -6906,6 +7353,101 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "1427486959"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "2658253664",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Tech Expert: increases Technological Distinctiveness Loot gained from the Borg Cutting Beam against Hostiles by X. (Out of combat.)",
+          "modifier": "TechnologicalDistinctivenessLoot",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            3.0,
+            3.5,
+            4.0,
+            4.5,
+            5.0
+          ]
+        },
+        {
+          "ability_id": "4123306445",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Beam Augmenter: increases the Borg Cube Cutting Beam's charge by one. (Out of combat.)",
+          "modifier": "CuttingBeamCharge",
+          "operation": "Add",
+          "slot": "captain",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "ability_id": "3471920737",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Black Market Mechanic: increases the ship's Repair Speed Cascade by X. (Out of combat.)",
+          "modifier": "RepairSpeedCascade",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            0.5,
+            1.25,
+            1.5,
+            1.75,
+            2.0
+          ]
+        }
+      ],
+      "faction": "Unknown",
+      "group": "EMERALD CHAIN",
+      "id": "jirali-551c28",
+      "name": "Jirali",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "2500610530"
     },
     {
       "abilities": [
@@ -19509,6 +20051,80 @@
     {
       "abilities": [
         {
+          "ability_id": "0",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "TargetIsArmada"
+          ],
+          "description": "Let's Rock'n'Roll! Increases Isolytic Cascade Damage by X against Group Armadas.",
+          "modifier": "IsolyticCascadeDamage",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            0.7,
+            1.0,
+            1.4,
+            1.9,
+            2.5
+          ]
+        },
+        {
+          "ability_id": "0",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "TargetIsArmada"
+          ],
+          "description": "Visionary... or Something. On round start, repair X of hull damage taken in the previous round of combat against all Armadas.",
+          "modifier": "HullRepair",
+          "operation": "MultiplyAdd",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "RoundEnd",
+          "value_by_rank": [
+            0.05,
+            0.07,
+            0.12,
+            0.2,
+            0.3
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "UNKNOWN",
+      "id": "zefram-cochrane-f8a1c2",
+      "name": "Zefram Cochrane",
+      "rarity": "unknown",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "766153048"
+    },
+    {
+      "abilities": [
+        {
           "ability_id": "3682632277",
           "attributes": "multi_state=[8, 4, 2], num_rounds=3",
           "chance_by_rank": [
@@ -19650,149 +20266,6 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "1143746577"
-    },
-    {
-      "abilities": [
-        {
-          "ability_id": "0",
-          "attributes": "",
-          "chance_by_rank": [
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0
-          ],
-          "conditions": [
-            "TargetIsArmada"
-          ],
-          "description": "Let's Rock'n'Roll! Increases Isolytic Cascade Damage by X against Group Armadas.",
-          "modifier": "IsolyticCascadeDamage",
-          "operation": "MultiplyAdd",
-          "slot": "officer",
-          "target": "SelfShip",
-          "trigger": "ShipLaunched",
-          "value_by_rank": [
-            0.7,
-            1.0,
-            1.4,
-            1.9,
-            2.5
-          ]
-        },
-        {
-          "ability_id": "0",
-          "attributes": "",
-          "chance_by_rank": [
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0
-          ],
-          "conditions": [
-            "TargetIsArmada"
-          ],
-          "description": "Visionary... or Something. On round start, repair X of hull damage taken in the previous round of combat against all Armadas.",
-          "modifier": "HullRepair",
-          "operation": "MultiplyAdd",
-          "slot": "below_decks",
-          "target": "SelfShip",
-          "trigger": "RoundEnd",
-          "value_by_rank": [
-            0.05,
-            0.07,
-            0.12,
-            0.2,
-            0.3
-          ]
-        }
-      ],
-      "faction": "Federation",
-      "group": "UNKNOWN",
-      "id": "zefram-cochrane-f8a1c2",
-      "name": "Zefram Cochrane",
-      "rarity": "unknown",
-      "scaling": {
-        "rank_chance_model": "ability.chance_by_rank",
-        "rank_value_model": "ability.value_by_rank",
-        "tier_model": "unknown"
-      },
-      "slot": "unknown",
-      "source": {
-        "sheet": "RawOfficers",
-        "workbook": "manual_curation"
-      },
-      "source_officer_id": "766153048"
-    },
-    {
-      "abilities": [
-        {
-          "ability_id": "1610205778",
-          "attributes": "num_rounds=2",
-          "chance_by_rank": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "conditions": [
-            "TargetNotSoloArmada",
-            "TargetIsArmada"
-          ],
-          "description": "Increases Shots by X for 2 rounds on round start against Group Armadas.",
-          "modifier": "ShotsPerAttack",
-          "operation": "MultiplyAdd",
-          "slot": "officer",
-          "target": "SelfShip",
-          "trigger": "RoundStart",
-          "value_by_rank": [
-            0.4,
-            0.3,
-            0.8
-          ]
-        },
-        {
-          "ability_id": "1470259639",
-          "attributes": "",
-          "chance_by_rank": [
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0
-          ],
-          "conditions": [],
-          "description": "Increases base Loot gained from Armadas by X.",
-          "modifier": "ArmadaLoot",
-          "operation": "MultiplyAdd",
-          "slot": "officer",
-          "target": "SelfShip",
-          "trigger": "ShipLaunched",
-          "value_by_rank": [
-            0.4,
-            0.55,
-            0.8,
-            1.1,
-            1.5
-          ]
-        }
-      ],
-      "faction": "Federation",
-      "group": "UNKNOWN",
-      "id": "fcm-data-3b9e4d",
-      "name": "FCM Data",
-      "rarity": "epic",
-      "scaling": {
-        "rank_chance_model": "ability.chance_by_rank",
-        "rank_value_model": "ability.value_by_rank",
-        "tier_model": "unknown"
-      },
-      "slot": "unknown",
-      "source": {
-        "sheet": "RawOfficers",
-        "workbook": "manual_curation"
-      },
-      "source_officer_id": "3638382364"
     }
   ],
   "schema_version": 1,

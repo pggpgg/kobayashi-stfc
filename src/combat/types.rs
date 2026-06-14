@@ -223,6 +223,7 @@ pub enum OpponentFactionTag {
     GornHuntingPack,
     Xindi,
     Breen,
+    VenariRal,
 }
 
 impl OpponentFactionTag {
@@ -247,6 +248,7 @@ impl OpponentFactionTag {
             "gorn_hunting_pack" | "gorn" => Some(Self::GornHuntingPack),
             "xindi" => Some(Self::Xindi),
             "breen" => Some(Self::Breen),
+            "venari_ral" | "venra" => Some(Self::VenariRal),
             _ => None,
         }
     }

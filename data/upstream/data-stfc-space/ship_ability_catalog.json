@@ -8,6 +8,12 @@
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0.0
     },
+    "39689355": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
     "47269853": {
       "timing": "combat_begin",
       "effect_type": "hostile_crit_damage_reduction",
@@ -115,7 +121,9 @@
       "ignore_upstream_value_is_percentage": false,
       "values_scale_with_ship_level": true,
       "post_scale": 0.001,
-      "condition_opponent_hostile_tags": ["conqueror_borg"]
+      "condition_opponent_hostile_tags": [
+        "conqueror_borg"
+      ]
     },
     "546190599": {
       "timing": "combat_begin",
@@ -431,7 +439,9 @@
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "condition_opponent_hostile_tags": ["conqueror_borg"]
+      "condition_opponent_hostile_tags": [
+        "conqueror_borg"
+      ]
     },
     "1784814733": {
       "timing": "combat_begin",
@@ -482,6 +492,12 @@
       "value_override": 0.0
     },
     "1905773933": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "1913694321": {
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
@@ -580,13 +596,22 @@
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0.0
     },
+    "2357321655": {
+      "timing": "combat_begin",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_faction": "venari_ral"
+    },
     "2425475474": {
       "timing": "combat_begin",
       "effect_type": "conqueror_borg_beam_suppression",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0.0,
-      "condition_opponent_hostile_tags": ["conqueror_borg"]
+      "condition_opponent_hostile_tags": [
+        "conqueror_borg"
+      ]
     },
     "2432056626": {
       "timing": "combat_begin",
@@ -631,6 +656,12 @@
     "2500322687": {
       "timing": "combat_begin",
       "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
+    "2506949026": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
     },

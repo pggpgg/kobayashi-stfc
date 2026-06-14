@@ -63,3 +63,13 @@ vella-7ab77e: "Cap weapon_damage at combat start; bridge passive OfficerStatHeal
 vil-winn-adami-6c42f3: "Bridge enemy ShieldMitigation 3R; BD crit_damage at combat start."
 wesley-crusher-834fce: "Cap weapon_damage at combat start; bridge passive OfficerStatAll."
 woteln-c67650: "Cap weapon_damage at combat start; bridge passive ShipDodge (ship-type gate)."
+
+# June 2026 stfc.space refresh — Starfleet Academy / Emerald Chain batch (ROADMAP item 17).
+# These officers are predominantly Wave Defense / PvP / Outpost / economy-gated, so most rows are
+# intentionally inert on the default ship-vs-hostile path (gate → literal_false / EnemyPlayer false).
+academy-doctor-bc8e69: "No captain (Chain of Command). Bridge isolytic_cascade_damage at combat start vs Explorer hostiles is gated on Wave Defense (SelfAtWaveDefenseChallenge → literal_false): inert on the default path. BD Interceptor crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles, active only in the PvP toggle."
+caleb-mir-3588ed: "No captain (Chain of Command). Bridge shield_regen_max_fraction (per-round SHP restore, MultiplyAdd) vs non-Armada hostiles is the one combat-modeled row (EnemyHostile + TargetNotArmada → defender_is_npc_hostile AND NOT armada); the in-game 'Outposts' half is unmodeled. BD Top Marks weapon_damage vs Outposts/Retaliation is gated on SelfAtStation (→ literal_false) so the very large below-deck bonus does not over-apply in generic hostile fights."
+genesis-lythe-82d460: "No captain (Chain of Command). Bridge shield_regen_max_fraction restore is Wave-Defense-gated (literal_false): inert on the default path. BD Admiral's Daughter (Outpost retaliation medals/plunder) is economy → :non_combat tag."
+jirali-551c28: "Entirely out-of-combat: captain Beam Augmenter (extra Borg Cube cutting-beam charge), bridge Tech Expert (cutting-beam loot), and BD Black Market Mechanic (repair-speed cascade) all map to :non_combat tags (no in-fight damage/hull/shield effect)."
+chancellor-ake-225a78: "No captain (Chain of Command). Bridge isolytic_cascade_damage vs Battleship hostiles is Wave-Defense-gated (literal_false): inert. BD Explorer crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles."
+deidamia-50f1da: "No captain (Chain of Command). Bridge isolytic_cascade_damage vs Interceptor hostiles is Wave-Defense-gated (literal_false): inert. BD Battleship crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles."
