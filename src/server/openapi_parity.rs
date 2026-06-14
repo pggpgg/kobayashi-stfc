@@ -12,18 +12,14 @@ use serde_yaml::Value;
 use crate::data::profile_index::ProfileEntry;
 use crate::optimizer::sensitivity::{SensitivityRequest, SensitivityResponse, SensitivityRow};
 use crate::optimizer::sensitivity_morris::{MorrisRequest, MorrisResponse, MorrisRow};
-use crate::optimizer::sensitivity_sobol::{
-    SobolPairRow, SobolRequest, SobolResponse, SobolRow,
-};
+use crate::optimizer::sensitivity_sobol::{SobolPairRow, SobolRequest, SobolResponse, SobolRow};
+use crate::server::api::{ChainGrindRequest, OfficerGroupConstraintDto, OptimizeConstraintsDto};
 use crate::server::api::{
     CompareCrewsRequest, CompareCrewsResponse, DataVersionResponse, HostileListItem,
     OfficerListItem, OptimizeRequest, OptimizeResponse, OptimizeStartResponse,
-    OptimizeStatusResponse, Preset, PresetSummary, ReplaySeedCrew, ReplaySeedRequest,
-    ShipListItem, SimulateCrew, SimulateRequest, SimulateResponse, SimulateStats,
-    ValidationErrorResponse, ValidationIssue, WarmStartCrewDto,
-};
-use crate::server::api::{
-    ChainGrindRequest, OfficerGroupConstraintDto, OptimizeConstraintsDto,
+    OptimizeStatusResponse, Preset, PresetSummary, ReplaySeedCrew, ReplaySeedRequest, ShipListItem,
+    SimulateCrew, SimulateRequest, SimulateResponse, SimulateStats, ValidationErrorResponse,
+    ValidationIssue, WarmStartCrewDto,
 };
 use crate::server::openapi::OPENAPI_YAML;
 use crate::server::sensitivity_jobs::{SensitivityStartResponse, SensitivityStatusResponse};
@@ -393,8 +389,15 @@ pub fn verify_openapi_rust_field_parity() -> Result<(), String> {
                 pair.openapi_name
             ));
         }
-        let only_rust: Vec<_> = pair.rust_fields.difference(&openapi_fields).cloned().collect();
-        let only_openapi: Vec<_> = openapi_fields.difference(&pair.rust_fields).cloned().collect();
+        let only_rust: Vec<_> = pair
+            .rust_fields
+            .difference(&openapi_fields)
+            .cloned()
+            .collect();
+        let only_openapi: Vec<_> = openapi_fields
+            .difference(&pair.rust_fields)
+            .cloned()
+            .collect();
         if !only_rust.is_empty() || !only_openapi.is_empty() {
             return Err(format!(
                 "{}: property mismatch\n  only in Rust: {only_rust:?}\n  only in OpenAPI: {only_openapi:?}",

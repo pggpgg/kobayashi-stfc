@@ -115,10 +115,20 @@ fn normalize_display_name_for_lookup(name: &str) -> String {
 /// Returns `Ok(None)` when no index entry matches. When multiple entries match the same
 /// display name and level, picks deterministically if they share the same combat faction tag
 /// and upstream `faction.id`; otherwise returns an error listing candidate ids.
-pub fn resolve_hostile_by_display_name(display_name: &str, level: u32) -> Result<Option<HostileRecord>, String> {
+pub fn resolve_hostile_by_display_name(
+    display_name: &str,
+    level: u32,
+) -> Result<Option<HostileRecord>, String> {
     let cache = HOSTILE_DISPLAY_RESOLVE_CACHE.get_or_init(|| RwLock::new(HashMap::new()));
-    let key = format!("{}|{level}", normalize_display_name_for_lookup(display_name));
-    if let Some(hit) = cache.read().expect("hostile display cache poisoned").get(&key) {
+    let key = format!(
+        "{}|{level}",
+        normalize_display_name_for_lookup(display_name)
+    );
+    if let Some(hit) = cache
+        .read()
+        .expect("hostile display cache poisoned")
+        .get(&key)
+    {
         return hit.clone();
     }
     let resolved = resolve_hostile_by_display_name_uncached(display_name, level);
@@ -131,14 +141,14 @@ pub fn resolve_hostile_by_display_name(display_name: &str, level: u32) -> Result
 
 type HostileDisplayResolveCache = HashMap<String, Result<Option<HostileRecord>, String>>;
 
-static HOSTILE_DISPLAY_RESOLVE_CACHE: OnceLock<RwLock<HostileDisplayResolveCache>> = OnceLock::new();
+static HOSTILE_DISPLAY_RESOLVE_CACHE: OnceLock<RwLock<HostileDisplayResolveCache>> =
+    OnceLock::new();
 
 static HOSTILE_LOCA_DISPLAY_NAMES: OnceLock<HashMap<u64, String>> = OnceLock::new();
 
 fn hostile_loca_display_names() -> &'static HashMap<u64, String> {
-    HOSTILE_LOCA_DISPLAY_NAMES.get_or_init(|| {
-        load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")))
-    })
+    HOSTILE_LOCA_DISPLAY_NAMES
+        .get_or_init(|| load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR"))))
 }
 
 fn resolve_hostile_by_display_name_uncached(
@@ -190,11 +200,9 @@ pub(crate) fn resolve_hostile_by_display_name_with_index(
         return Ok(None);
     }
 
-    candidate_ids.sort_by(|a, b| {
-        match (a.parse::<u64>(), b.parse::<u64>()) {
-            (Ok(a_id), Ok(b_id)) => a_id.cmp(&b_id).then_with(|| a.cmp(b)),
-            _ => a.cmp(b),
-        }
+    candidate_ids.sort_by(|a, b| match (a.parse::<u64>(), b.parse::<u64>()) {
+        (Ok(a_id), Ok(b_id)) => a_id.cmp(&b_id).then_with(|| a.cmp(b)),
+        _ => a.cmp(b),
     });
 
     if candidate_ids.len() == 1 {

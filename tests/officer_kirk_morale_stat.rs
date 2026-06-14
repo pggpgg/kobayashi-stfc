@@ -3,11 +3,14 @@
 //! Production sole case: `kirk-1323b6` captain "Leader" → dynamic officer-stat contribution
 //! evaluated per round via [`OfficerStatRoundContext`].
 
-use kobayashi::combat::abilities::{Ability, AbilityClass, AbilityCondition, AbilityEffect, CombatContext, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH};
+use kobayashi::combat::abilities::{
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CombatContext, TimingWindow,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
+};
 use kobayashi::combat::{
-    build_combat_setup_with_officer_stat, simulate_combat_from_setup, Combatant,
-    CrewConfiguration, CrewOfficerStatTotals, CrewSeat, CrewSeatContext, OpponentFactionTag,
-    ShipType, SimulationConfig, TraceMode, WeaponStats,
+    build_combat_setup_with_officer_stat, simulate_combat_from_setup, Combatant, CrewConfiguration,
+    CrewOfficerStatTotals, CrewSeat, CrewSeatContext, OpponentFactionTag, ShipType,
+    SimulationConfig, TraceMode, WeaponStats,
 };
 use kobayashi::data::officer_stat_round::OfficerStatRoundContext;
 use kobayashi::data::profile::OfficerStatConditionContext;
@@ -201,7 +204,10 @@ fn morale_injector_seat() -> CrewSeatContext {
     }
 }
 
-fn crew_with_optional_morale(buff: &kobayashi::lcars::BuffSet, inject_morale: bool) -> CrewConfiguration {
+fn crew_with_optional_morale(
+    buff: &kobayashi::lcars::BuffSet,
+    inject_morale: bool,
+) -> CrewConfiguration {
     let mut seats = buff.crew.seats.clone();
     if inject_morale {
         seats.push(morale_injector_seat());

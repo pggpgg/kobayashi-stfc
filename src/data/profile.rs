@@ -2285,7 +2285,11 @@ fn apply_unconditional_officer_stat_contributions(
         if c.target_attacker != want_target_attacker {
             continue;
         }
-        let v = if want_target_attacker { c.value } else { -c.value };
+        let v = if want_target_attacker {
+            c.value
+        } else {
+            -c.value
+        };
         let bridge_only =
             !want_target_attacker && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
         let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key.as_str()

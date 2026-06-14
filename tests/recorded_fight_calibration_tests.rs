@@ -7,11 +7,10 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    export_to_combat_input, parse_fight_export, simulate_combat, simulate_combat_with_defender_faction,
-    Ability, AbilityClass,
-    AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag,
-    ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    export_to_combat_input, parse_fight_export, simulate_combat,
+    simulate_combat_with_defender_faction, Ability, AbilityClass, AbilityEffect, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag, ShipType, SimulationConfig,
+    TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use kobayashi::data::loader::defender_faction_for_fight_export;
 

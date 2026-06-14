@@ -36,7 +36,9 @@ describe("SensitivityResults", () => {
     );
 
     expect(
-      screen.getByText(/No rows yet. Configure the scenario and run a sensitivity analysis./),
+      screen.getByText(
+        /No rows yet. Configure the scenario and run a sensitivity analysis./,
+      ),
     ).toBeTruthy();
   });
 
@@ -53,7 +55,10 @@ describe("SensitivityResults", () => {
     expect(screen.getByText(/hull_remaining/)).toBeTruthy();
     expect(screen.getByText(/baseline mean =/)).toBeTruthy();
 
-    const statCells = screen.getAllByRole("row").slice(1).map((row) => row.children[0]?.textContent);
+    const statCells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => row.children[0]?.textContent);
     expect(statCells[0]).toBe("shield_hp");
     expect(statCells[1]).toBe("weapon_damage");
 

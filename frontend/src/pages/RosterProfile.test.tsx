@@ -103,7 +103,9 @@ describe("RosterProfile", () => {
   });
 
   it("shows mod sync and building summary errors", async () => {
-    vi.mocked(api.fetchModSyncStatus).mockRejectedValue(new Error("sync offline"));
+    vi.mocked(api.fetchModSyncStatus).mockRejectedValue(
+      new Error("sync offline"),
+    );
     vi.mocked(api.fetchBuildingCombatSummary).mockRejectedValue(
       new Error("buildings unavailable"),
     );
@@ -191,7 +193,9 @@ describe("RosterProfile", () => {
       );
     });
 
-    vi.mocked(api.updateProfile).mockRejectedValueOnce(new Error("save failed"));
+    vi.mocked(api.updateProfile).mockRejectedValueOnce(
+      new Error("save failed"),
+    );
     fireEvent.change(weaponInput, { target: { value: "8" } });
     fireEvent.click(saveButton);
 

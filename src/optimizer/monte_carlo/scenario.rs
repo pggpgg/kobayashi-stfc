@@ -64,7 +64,17 @@ use super::crew_resolution::{
 };
 
 /// Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum DefenderOpponent {
     /// NPC hostile (default ship-vs-hostile optimizer); `EnemyHostile` gates pass.
@@ -1260,7 +1270,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         let profile_weapon_damage_fraction =
             profile_weapon_damage_fraction_for_combat(&shared.profile);
         let opponent_enemy_pending = if shared.is_pvp() {
-            shared.defender_pending_officer_stat_contributions.as_slice()
+            shared
+                .defender_pending_officer_stat_contributions
+                .as_slice()
         } else {
             &[]
         };

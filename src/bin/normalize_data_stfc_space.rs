@@ -138,12 +138,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Write extended index for resolver (id, ship_name, ship_class per normalized ship).
-    let data_version = std::env::var("STFCSPACE_SHIPS_VERSION").unwrap_or_else(|_| {
-        format!(
-            "stfcspace-ships-{}",
-            chrono::Utc::now().format("%Y-%m-%d")
-        )
-    });
+    let data_version = std::env::var("STFCSPACE_SHIPS_VERSION")
+        .unwrap_or_else(|_| format!("stfcspace-ships-{}", chrono::Utc::now().format("%Y-%m-%d")));
     let source_note = std::env::var("STFCSPACE_SHIPS_SOURCE_NOTE")
         .unwrap_or_else(|_| DEFAULT_SHIPS_SOURCE_NOTE.to_string());
 

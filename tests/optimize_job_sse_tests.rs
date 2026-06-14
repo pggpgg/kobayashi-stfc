@@ -54,8 +54,9 @@ async fn collect_optimize_sse_events(
         builder = builder.header(*name, *value);
     }
     let mut req = builder.body(Body::empty()).expect("request");
-    req.extensions_mut()
-        .insert(ConnectInfo("127.0.0.1:12345".parse::<SocketAddr>().unwrap()));
+    req.extensions_mut().insert(ConnectInfo(
+        "127.0.0.1:12345".parse::<SocketAddr>().unwrap(),
+    ));
 
     let resp = app.oneshot(req).await.expect("router response");
     assert_eq!(resp.status(), StatusCode::OK);
@@ -87,11 +88,10 @@ async fn post_json(path: &str, body: &str, extra_headers: &[(&str, &str)]) -> St
     for (name, value) in extra_headers {
         builder = builder.header(*name, *value);
     }
-    let mut req = builder
-        .body(Body::from(body.to_string()))
-        .expect("request");
-    req.extensions_mut()
-        .insert(ConnectInfo("127.0.0.1:12345".parse::<SocketAddr>().unwrap()));
+    let mut req = builder.body(Body::from(body.to_string())).expect("request");
+    req.extensions_mut().insert(ConnectInfo(
+        "127.0.0.1:12345".parse::<SocketAddr>().unwrap(),
+    ));
     let resp = app.oneshot(req).await.expect("router response");
     assert_eq!(resp.status(), StatusCode::OK, "POST {path} failed");
     let bytes = axum::body::to_bytes(resp.into_body(), 256 * 1024)
@@ -109,7 +109,11 @@ async fn optimize_job_stream_unknown_job_emits_error_and_closes() {
         Duration::from_secs(2),
     )
     .await;
-    assert_eq!(events.len(), 1, "expected single terminal event: {events:?}");
+    assert_eq!(
+        events.len(),
+        1,
+        "expected single terminal event: {events:?}"
+    );
     assert_eq!(events[0]["status"], "error");
     assert_eq!(events[0]["error"], "Job not found");
 }
@@ -135,7 +139,11 @@ async fn optimize_job_stream_terminal_error_job_emits_error_payload() {
 
     let path = format!("/api/optimize/jobs/{job_id}/stream");
     let events = collect_optimize_sse_events(&path, &[], Duration::from_secs(2)).await;
-    assert_eq!(events.len(), 1, "terminal error should emit once: {events:?}");
+    assert_eq!(
+        events.len(),
+        1,
+        "terminal error should emit once: {events:?}"
+    );
     assert_eq!(events[0]["status"], "error");
     assert_eq!(events[0]["error"], "validation failed");
 }
@@ -185,7 +193,10 @@ async fn optimize_job_stream_emits_running_updates_then_done() {
     let last = events.last().expect("terminal event");
     assert_eq!(last["status"], "done");
     assert_eq!(last["progress"], 100);
-    assert!(events.len() >= 2, "expected progress + terminal events: {events:?}");
+    assert!(
+        events.len() >= 2,
+        "expected progress + terminal events: {events:?}"
+    );
 }
 
 #[serial_test::serial]

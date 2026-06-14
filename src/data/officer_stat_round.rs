@@ -8,9 +8,7 @@ use std::collections::HashMap;
 use crate::combat::abilities::{CombatContext, TimingWindow};
 use crate::combat::condition::evaluate_ability_condition;
 use crate::combat::CrewOfficerStatTotals;
-use crate::data::profile::{
-    OfficerStatConditionContext, OfficerStatRuntimeBonus, PlayerProfile,
-};
+use crate::data::profile::{OfficerStatConditionContext, OfficerStatRuntimeBonus, PlayerProfile};
 use crate::data::ship::{OfficerBonusTable, ShipRecord};
 use crate::lcars::{DynamicOfficerStatContribution, PendingOfficerStatContribution};
 
@@ -27,7 +25,10 @@ pub struct OfficerStatRoundDelta {
 }
 
 impl OfficerStatRoundDelta {
-    pub fn from_runtime(baseline: OfficerStatRuntimeBonus, active: OfficerStatRuntimeBonus) -> Self {
+    pub fn from_runtime(
+        baseline: OfficerStatRuntimeBonus,
+        active: OfficerStatRuntimeBonus,
+    ) -> Self {
         let attack_ratio = (1.0 + active.attack_bonus) / (1.0 + baseline.attack_bonus);
         let health_ratio = (1.0 + active.health_bonus) / (1.0 + baseline.health_bonus);
         Self {
@@ -128,9 +129,11 @@ impl OfficerStatRoundContext {
             .dynamic_contributions
             .iter()
             .filter(|c| c.timing == timing)
-            .filter(|c| c.runtime_condition.as_ref().is_none_or(|cond| {
-                evaluate_ability_condition(cond, combat_ctx)
-            }))
+            .filter(|c| {
+                c.runtime_condition
+                    .as_ref()
+                    .is_none_or(|cond| evaluate_ability_condition(cond, combat_ctx))
+            })
             .map(|c| PendingOfficerStatContribution {
                 stat_key: c.stat_key.clone(),
                 value: c.value,

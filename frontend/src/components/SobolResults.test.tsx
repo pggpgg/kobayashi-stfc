@@ -54,7 +54,9 @@ describe("SobolResults", () => {
     );
 
     expect(
-      screen.getByText(/No rows yet. Configure the scenario and run Sobol analysis./),
+      screen.getByText(
+        /No rows yet. Configure the scenario and run Sobol analysis./,
+      ),
     ).toBeTruthy();
   });
 
@@ -70,7 +72,10 @@ describe("SobolResults", () => {
       />,
     );
 
-    const statCells = screen.getAllByRole("row").slice(1).map((row) => row.children[0]?.textContent);
+    const statCells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => row.children[0]?.textContent);
     expect(statCells[0]).toBe("shield_hp");
     expect(statCells[1]).toBe("weapon_damage");
   });
@@ -90,7 +95,10 @@ describe("SobolResults", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Solo impact" }));
 
-    const statCells = screen.getAllByRole("row").slice(1).map((row) => row.children[0]?.textContent);
+    const statCells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => row.children[0]?.textContent);
     expect(statCells[0]).toBe("weapon_damage");
     expect(statCells[1]).toBe("shield_hp");
 

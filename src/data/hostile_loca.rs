@@ -9,8 +9,7 @@ use serde::Deserialize;
 const TRANSLATIONS_SHIPS: &str = "data/upstream/data-stfc-space/translations-ships.json";
 const TRANSLATIONS_OFFICER_NAMES: &str =
     "data/upstream/data-stfc-space/translations-officer_names.json";
-const TRANSLATIONS_NAVIGATION: &str =
-    "data/upstream/data-stfc-space/translations-navigation.json";
+const TRANSLATIONS_NAVIGATION: &str = "data/upstream/data-stfc-space/translations-navigation.json";
 
 #[derive(Debug, Deserialize)]
 struct TranslationRow {
@@ -70,11 +69,7 @@ fn load_translation_file(data_root: &Path, rel: &str) -> HashMap<u64, (u8, Strin
     best
 }
 
-fn merge_translation_file(
-    data_root: &Path,
-    rel: &str,
-    best: &mut HashMap<u64, (u8, String)>,
-) {
+fn merge_translation_file(data_root: &Path, rel: &str, best: &mut HashMap<u64, (u8, String)>) {
     let path = data_root.join(rel);
     if !path.is_file() {
         return;

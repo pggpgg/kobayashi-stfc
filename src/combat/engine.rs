@@ -974,7 +974,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     self_shield_break_effects,
                     hull_breach_effects,
                     osr_defense_armor_add: osr_round_delta.defense_armor_add,
-                    osr_defense_shield_deflection_add: osr_round_delta.defense_shield_deflection_add,
+                    osr_defense_shield_deflection_add: osr_round_delta
+                        .defense_shield_deflection_add,
                     osr_defense_dodge_add: osr_round_delta.defense_dodge_add,
                 });
             }

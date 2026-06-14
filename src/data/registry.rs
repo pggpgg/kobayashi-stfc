@@ -81,8 +81,13 @@ mod tests {
         )
         .unwrap();
 
-        merge_registry_entry(&repo, "ships", "stfcspace-ships-2026-06-14", "ships_extended/index.json")
-            .expect("merge ships");
+        merge_registry_entry(
+            &repo,
+            "ships",
+            "stfcspace-ships-2026-06-14",
+            "ships_extended/index.json",
+        )
+        .expect("merge ships");
 
         let reg: Registry =
             serde_json::from_str(&fs::read_to_string(repo.join(DEFAULT_REGISTRY_PATH)).unwrap())
@@ -92,7 +97,10 @@ mod tests {
             Some("stfcspace-hostiles-2026-01-01")
         );
         let ships = reg.get("ships").expect("ships row");
-        assert_eq!(ships.data_version.as_deref(), Some("stfcspace-ships-2026-06-14"));
+        assert_eq!(
+            ships.data_version.as_deref(),
+            Some("stfcspace-ships-2026-06-14")
+        );
         assert_eq!(ships.path, "ships_extended/index.json");
         assert_eq!(ships.last_updated.as_deref().unwrap().len(), 10);
 

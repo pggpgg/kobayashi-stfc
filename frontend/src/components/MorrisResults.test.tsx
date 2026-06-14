@@ -40,7 +40,9 @@ describe("MorrisResults", () => {
     );
 
     expect(
-      screen.getByText(/No rows yet. Configure the scenario and run Morris screening./),
+      screen.getByText(
+        /No rows yet. Configure the scenario and run Morris screening./,
+      ),
     ).toBeTruthy();
   });
 
@@ -56,7 +58,10 @@ describe("MorrisResults", () => {
       />,
     );
 
-    const statCells = screen.getAllByRole("row").slice(1).map((row) => row.children[0]?.textContent);
+    const statCells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => row.children[0]?.textContent);
     expect(statCells[0]).toBe("shield_hp");
     expect(statCells[1]).toBe("weapon_damage");
     expect(screen.getByText("•")).toBeTruthy();
@@ -76,7 +81,10 @@ describe("MorrisResults", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "σ (interaction)" }));
 
-    const statCells = screen.getAllByRole("row").slice(1).map((row) => row.children[0]?.textContent);
+    const statCells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => row.children[0]?.textContent);
     expect(statCells[0]).toBe("shield_hp");
     expect(statCells[1]).toBe("weapon_damage");
   });

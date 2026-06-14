@@ -604,10 +604,7 @@ fn collect_dynamic_officer_stat_contributions(
         }
         let stable_id = format!(
             "lcars:{}:{}:dynamic:{}{}",
-            officer.id,
-            ability.name,
-            effect_idx_base,
-            idx
+            officer.id, ability.name, effect_idx_base, idx
         );
         let Some(spec) = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
             effect,
@@ -1390,9 +1387,10 @@ mod tests {
             row.runtime_condition
         );
         assert!(
-            buff.crew.seats.iter().all(|s| {
-                !matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_))
-            }),
+            buff.crew
+                .seats
+                .iter()
+                .all(|s| { !matches!(s.ability.effect, AbilityEffect::AttackMultiplier(_)) }),
             "must not emit synthetic AttackMultiplier seats"
         );
     }
