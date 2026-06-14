@@ -85,6 +85,15 @@ enum Commands {
         #[arg(long)]
         markdown_out: Option<PathBuf>,
     },
+    /// Fetch live data.stfc.space summaries and compare to committed upstream cache
+    CheckUpstreamDrift {
+        /// Write Markdown report (optional)
+        #[arg(long)]
+        markdown_out: Option<PathBuf>,
+        /// Compare on-disk before/after trees instead of live fetch (`--compare-dir PATH`)
+        #[arg(long)]
+        compare_dir: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -180,6 +189,31 @@ fn main() -> Result<()> {
                 write_baseline,
                 md,
             )?;
+        }
+        Commands::CheckUpstreamDrift {
+            markdown_out,
+            compare_dir,
+        } => {
+            let mut args = Vec::new();
+            if let Some(dir) = compare_dir {
+                args.push("--compare-dir".into());
+                args.push(if dir.is_absolute() {
+                    dir.to_string_lossy().into_owned()
+                } else {
+                    repo.join(dir).to_string_lossy().into_owned()
+                });
+            } else {
+                args.push("--check".into());
+            }
+            if let Some(md) = markdown_out {
+                args.push("--markdown-out".into());
+                args.push(if md.is_absolute() {
+                    md.to_string_lossy().into_owned()
+                } else {
+                    repo.join(md).to_string_lossy().into_owned()
+                });
+            }
+            node(&repo, "scripts/check_stfcspace_summary_drift.mjs", &args)?;
         }
     }
     Ok(())

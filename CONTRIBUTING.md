@@ -83,6 +83,8 @@ From the repo root, `cargo xtask --help` lists wrappers for ship/hostile/researc
 
 The workflow [.github/workflows/data-refresh.yml](.github/workflows/data-refresh.yml) can open pull requests with large `data/` diffs. Treat them like any other PR: review scope, run local `cargo test` if needed, and merge when satisfied.
 
+**Upstream summary drift:** CI job `upstream_drift` fails when live data.stfc.space ship/hostile/research catalogs differ from committed `data/upstream/data-stfc-space/summary-*.json`. When it fails, merge the open automated data refresh PR or run `cargo xtask check-upstream-drift` locally and refresh before merging feature work (avoids `data/` merge conflicts).
+
 ## Convenience npm script (frontend only)
 
 From the repo root:

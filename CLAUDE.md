@@ -89,6 +89,7 @@ cargo xtask --help
 cargo xtask refresh-ships -- --full
 cargo xtask refresh-hostiles
 cargo xtask data-refresh -- --stfcspace
+cargo xtask check-upstream-drift
 cargo xtask regen-lcars
 cargo xtask validate
 cargo xtask verify

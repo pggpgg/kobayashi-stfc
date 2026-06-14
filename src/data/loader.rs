@@ -499,6 +499,7 @@ mod defender_faction_cli_tests {
     use super::resolve_hostile_by_display_name;
     use crate::combat::export_csv::FightExport;
     use crate::combat::{OpponentFactionTag, ShipType};
+    use crate::data::hostile::HostileRecord;
 
     #[test]
     fn explicit_slug_and_none_default() {

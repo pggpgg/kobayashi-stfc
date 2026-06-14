@@ -158,6 +158,20 @@ jobs:
           path: rust-lcov.info
           retention-days: 21
 
+  upstream_drift:
+    name: Upstream summary drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check live summary catalogs vs committed
+        run: node scripts/check_stfcspace_summary_drift.mjs --check
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest

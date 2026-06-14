@@ -45,6 +45,7 @@ struct AbilityCatalogEntry {
     post_scale: Option<f64>,
 }
 
+use kobayashi::data::registry::merge_registry_entry;
 use kobayashi::data::ship::{
     CrewSlotUnlock, ExtendedShipRecord, LevelBonus, OfficerBonusBreakpoint, OfficerBonusTable,
     ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
@@ -52,6 +53,7 @@ use kobayashi::data::ship::{
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
+const DEFAULT_SHIPS_SOURCE_NOTE: &str = "From normalize_data_stfc_space";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo_root = Path::new(".");
@@ -136,14 +138,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Write extended index for resolver (id, ship_name, ship_class per normalized ship).
+    let data_version = std::env::var("STFCSPACE_SHIPS_VERSION").unwrap_or_else(|_| {
+        format!(
+            "stfcspace-ships-{}",
+            chrono::Utc::now().format("%Y-%m-%d")
+        )
+    });
+    let source_note = std::env::var("STFCSPACE_SHIPS_SOURCE_NOTE")
+        .unwrap_or_else(|_| DEFAULT_SHIPS_SOURCE_NOTE.to_string());
+
     let extended_index = kobayashi::data::ship::ExtendedShipIndex {
-        data_version: Some("data-stfc-space".to_string()),
-        source_note: Some("From normalize_data_stfc_space".to_string()),
+        data_version: Some(data_version.clone()),
+        source_note: Some(source_note),
         ships: index_entries,
     };
     fs::write(
         out_dir.join("index.json"),
         serde_json::to_string_pretty(&extended_index)?,
+    )?;
+
+    merge_registry_entry(
+        repo_root,
+        "ships",
+        &data_version,
+        "ships_extended/index.json",
     )?;
 
     println!(

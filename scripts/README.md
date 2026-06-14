@@ -4,16 +4,25 @@ Prefer **`cargo xtask --help`** from the repo root for a single discoverable ent
 
 ## Automated refresh (CI)
 
-A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the same high-level sequence as a local refresh: catalog fetch (`fetch_stfcspace_page_upstream.py`), ship/hostile/research detail fetches (missing-only by default), `npm run data:refresh -- --stfcspace`, then `cargo test`, and opens a PR when files change.
+A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the same high-level sequence as a local refresh: snapshot summaries → catalog fetch → ship/hostile/research detail fetches (scheduled: ships `--full`, hostiles/research missing-only) → `npm run data:refresh -- --stfcspace` → `cargo test` + `validate_data`, and opens a PR when files change (body includes summary drift report).
+
+**CI drift gate:** every CI run includes job `upstream_drift` ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), which fails when live data.stfc.space ship/hostile/research summaries diverge from committed caches. Remediation: merge the weekly bot PR or refresh locally.
+
+**Local check:**
+
+```bash
+cargo xtask check-upstream-drift
+# or: node scripts/check_stfcspace_summary_drift.mjs --check
+```
 
 **Manual run:** Actions → **Data refresh (stfc.space)** → *Run workflow*. Inputs:
 
 | Input | Effect |
 |-------|--------|
-| `full_fetch` | Pass `--full` to the three `fetch_stfcspace_*.mjs` scripts (long; re-downloads all cached ids). |
+| `full_fetch` | Pass `--full` to all three `fetch_stfcspace_*.mjs` scripts (long; re-downloads all cached ids). |
 | `dry_run` | Run fetch + normalize + tests but **skip** opening a PR. |
 
-Scheduled runs do **not** use `--stfccommunity` (PowerShell). `--stfcspace` only.
+Scheduled runs use ships `--full` automatically; hostiles/research stay missing-only unless **full_fetch** is enabled on manual dispatch.
 
 ## Single data-refresh entrypoint (audit task 19)
 

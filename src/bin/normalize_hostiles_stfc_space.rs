@@ -12,7 +12,7 @@ use kobayashi::data::hostile::{
     hostile_hull_type_raw_to_ship_class, HostileFactionRef, HostileIndex, HostileIndexEntry,
     HostileRecord, HostileResourceDrop,
 };
-use kobayashi::data::registry::{DataSetEntry, Registry};
+use kobayashi::data::registry::merge_registry_entry;
 
 const UPSTREAM_HOSTILES_SUFFIX: &str = "data/upstream/data-stfc-space/hostiles";
 const OUT_HOSTILES_SUFFIX: &str = "data/hostiles";
@@ -283,34 +283,6 @@ fn merge_kobayashi_fixture_index_entries(
     Ok(merged)
 }
 
-fn merge_registry_hostiles(
-    repo: &Path,
-    data_version: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let reg_path = repo.join("data/registry.json");
-    let mut reg: Registry = if reg_path.is_file() {
-        let s = fs::read_to_string(&reg_path)?;
-        serde_json::from_str(&s).unwrap_or_default()
-    } else {
-        Registry::default()
-    };
-    let last_updated = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    reg.insert(
-        "hostiles".to_string(),
-        DataSetEntry {
-            source: "data-stfc-space".to_string(),
-            data_version: Some(data_version.to_string()),
-            last_updated: Some(last_updated),
-            path: "hostiles/index.json".to_string(),
-        },
-    );
-    if let Some(parent) = reg_path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    fs::write(reg_path, serde_json::to_string_pretty(&reg)?)?;
-    Ok(())
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo = repo_root();
     let upstream = repo.join(UPSTREAM_HOSTILES_SUFFIX);
@@ -402,7 +374,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::to_string_pretty(&index)?,
     )?;
 
-    merge_registry_hostiles(&repo, &data_version)?;
+    merge_registry_entry(&repo, "hostiles", &data_version, "hostiles/index.json")?;
 
     // Re-load validation (same as normalize_stfc_data)
     let hostile_index_path = out_dir.join("index.json");

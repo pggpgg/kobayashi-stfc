@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs, optional CI), with the legacy **STFCcommunity** path kept optional for older baselines.
+This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs), with automated **summary drift detection** in CI and weekly refresh PRs (see Part 7). Legacy **STFCcommunity** path kept optional for older baselines.
 
 ---
 
@@ -438,9 +438,11 @@ There is **no** `data/ships/index.json` — flat ships were removed; ships live 
 
 **Ships extended** (`normalize_data_stfc_space`):
 
-- Currently **hardcoded** in the binary: `data_version` = `"data-stfc-space"`, `source_note` = `"From normalize_data_stfc_space"` (no env override in that normalizer).
+- `data_version`: from env `STFCSPACE_SHIPS_VERSION`, else default `stfcspace-ships-{UTC_YYYY-MM-DD}`.
+- `source_note`: from env `STFCSPACE_SHIPS_SOURCE_NOTE`, else `"From normalize_data_stfc_space"`.
+- `data/registry.json` `ships` row: updated on each normalize via `merge_registry_entry` (same `data_version` + run date as `last_updated`).
 
-The doc’s older suggestion of a bare `stfcspace-YYYY-MM-DD` string is only a **style guideline**; live data may use prefixes (`stfcspace-hostiles-…`) or the ship normalizer’s fixed label until someone threads env vars through `normalize_data_stfc_space`.
+The doc’s older suggestion of a bare `stfcspace-YYYY-MM-DD` string is only a **style guideline**; live data uses prefixed stamps (`stfcspace-hostiles-…`, `stfcspace-ships-…`).
 
 ### Fields **not** implemented
 
@@ -449,7 +451,7 @@ The following do **not** appear in index JSON or normalizers today:
 - `last_imported_at`
 - `import_url`
 
-`**registry.json` `last_updated`:** set when hostile normalizer runs (`merge_registry_hostiles` uses the run date). The ships registry row is **not** automatically bumped by `normalize_data_stfc_space` in the same way—maintainers may update `data/registry.json` manually or via other tooling; do not assume ship and hostile `last_updated` move in lockstep.
+`**registry.json` `last_updated`:** set when hostile or ship normalizers run (`merge_registry_entry` uses the run date). Both `hostiles` and `ships` rows update on their respective normalize passes.
 
 ### How “freshness” actually works
 
@@ -527,10 +529,10 @@ Older drafts of this document described **phased delivery** of a Rust `fetch-dat
 | Priority | Item                              | Notes                                                                                                                                                                                                                                             |
 | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1        | **Hostile display names**         | `loca_id` is stored; normalizer still sets `hostile_name` to `Hostile {id}`. Need a verified string source (translation category, game dump, or new upstream field). The standard translation fetch list has **no** `hostiles` category (Part 2). |
-| 2        | **Provenance parity**             | `normalize_data_stfc_space` does not update `data/registry.json` “ships” row or `last_updated`; hostile normalizer does for `hostiles`. Optionally wire registry updates + env-driven `data_version` for ships extended (Part 5).                 |
+| 2        | **Provenance parity**             | ~~Ships `registry.json` row~~ *shipped 2026-06-14* — `normalize_data_stfc_space` now calls `merge_registry_entry` with env-driven `STFCSPACE_SHIPS_VERSION` / `STFCSPACE_SHIPS_SOURCE_NOTE`. |
 | 3        | **Hostile abilities in combat**   | `ability[]` is stored on `HostileRecord`; full engine support may need entries in `data/upstream/data-stfc-space/hostile_ability_catalog.json` and resolver work (pattern after `ship_ability_catalog.json` + `ship_ability_resolve.rs`).         |
 | 4        | **Research / buildings coverage** | Extend `BUFF_MAPPING` / buff-id maps and research importers as new STFC buff ids appear; use `--dump-unmapped` on research import.                                                                                                                |
-| 5        | **Optional CI freshness**         | No workflow in repo today. A lightweight check could: run `fetch_stfcspace_page_upstream.mjs --summaries-only`, compare row counts or checksums to committed `summary-*.json`, fail or warn on drift—without auto-opening PRs.                    |
+| 5        | **CI summary drift gate**         | ~~Optional~~ *shipped 2026-06-14* — CI job `upstream_drift` runs `scripts/check_stfcspace_summary_drift.mjs --check`; weekly [`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml) opens remediation PRs.                |
 
 
 ### Explicitly deferred (see Part 6)
@@ -671,7 +673,7 @@ A data refresh is **successful** when:
 3. **Logs:** Fetch logs show expected `fetched`/`skipped` for the mode used (`missing-only` vs `--full`); failures are explained or fixed.
 4. **Provenance:** `data_version` / `source_note` (and `registry.json` where updated) reflect the refresh intent.
 
-Formal CI for “summary JSON drift” is **optional** (Part 7).
+Formal CI for “summary JSON drift” is implemented (Part 7 backlog item 5): see `upstream_drift` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
 ---
 

@@ -4,7 +4,7 @@ name: Data refresh (stfc.space)
 
 on:
   schedule:
-    # Weekly Monday 06:00 UTC — missing-only fetches by default
+    # Weekly Monday 06:00 UTC — ships use --full; hostiles/research missing-only by default
     - cron: "0 6 * * 1"
   workflow_dispatch:
     inputs:
@@ -66,19 +66,43 @@ jobs:
       - name: Install npm dependencies (repo root)
         run: npm ci
 
+      - name: Snapshot summary catalogs (pre-fetch)
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/before
+          for f in summary-ship.json summary-hostile.json summary-research.json; do
+            src="data/upstream/data-stfc-space/${f}"
+            if [ -f "$src" ]; then
+              cp "$src" "/tmp/before/${f}"
+            fi
+          done
+
       - name: Fetch stfc.space catalog (summaries + translations)
         run: python3 scripts/fetch_stfcspace_page_upstream.py
+
+      - name: Summary drift report (catalog fetch)
+        run: |
+          set -euo pipefail
+          node scripts/check_stfcspace_summary_drift.mjs \
+            --compare-dir /tmp/before \
+            --markdown-out /tmp/summary_drift.md || true
 
       - name: Fetch ship / hostile / research detail JSON
         run: |
           set -euo pipefail
-          EXTRA=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.full_fetch }}" = "true" ]; then
-            EXTRA="--full"
+          SHIP_EXTRA=""
+          HOSTILE_EXTRA=""
+          RESEARCH_EXTRA=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            SHIP_EXTRA="--full"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.full_fetch }}" = "true" ]; then
+            SHIP_EXTRA="--full"
+            HOSTILE_EXTRA="--full"
+            RESEARCH_EXTRA="--full"
           fi
-          node scripts/fetch_stfcspace_ships.mjs ${EXTRA}
-          node scripts/fetch_stfcspace_hostiles.mjs ${EXTRA}
-          node scripts/fetch_stfcspace_research.mjs ${EXTRA}
+          node scripts/fetch_stfcspace_ships.mjs ${SHIP_EXTRA}
+          node scripts/fetch_stfcspace_hostiles.mjs ${HOSTILE_EXTRA}
+          node scripts/fetch_stfcspace_research.mjs ${RESEARCH_EXTRA}
 
       - name: Run data refresh (core + stfc.space pipeline)
         run: npm run data:refresh -- --stfcspace
@@ -86,20 +110,46 @@ jobs:
       - name: cargo test
         run: cargo test
 
+      - name: Strict data validation
+        run: cargo run --bin validate_data
+
+      - name: Check normalized data diff
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/; then
+            echo "No normalized data drift under data/; create-pull-request will skip if nothing changed."
+          else
+            echo "Normalized data changed; PR will be opened when enabled."
+            git diff --stat -- data/ | tail -n 40
+          fi
+
+      - name: Assemble Pull Request body
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Automated update from workflow **${{ github.workflow }}** ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))."
+            echo ""
+            if [ -f /tmp/summary_drift.md ]; then
+              cat /tmp/summary_drift.md
+              echo ""
+            fi
+            echo "## Pipeline"
+            echo ""
+            echo "- Catalog: \`python3 scripts/fetch_stfcspace_page_upstream.py\`"
+            echo "- Detail fetch: \`fetch_stfcspace_ships.mjs\` (scheduled: **--full**), hostiles + research (missing-only unless manual **full_fetch**)"
+            echo "- Normalize: \`npm run data:refresh -- --stfcspace\`"
+            echo "- Verify: \`cargo test\` + \`cargo run --bin validate_data\`"
+            echo ""
+            echo "Please review large \`data/\` diffs before merge."
+          } > /tmp/pr_body.md
+
       - name: Create Pull Request
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "chore(data): automated stfc.space refresh"
           title: "chore(data): automated stfc.space refresh"
-          body: |
-            Automated update from workflow **${{ github.workflow }}** ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})).
-
-            - Catalog: `python3 scripts/fetch_stfcspace_page_upstream.py`
-            - Detail fetch: `fetch_stfcspace_{ships,hostiles,research}.mjs` (scheduled runs use missing-only; manual dispatch can enable **full** fetch)
-            - Normalize: `npm run data:refresh -- --stfcspace`
-            - Verify: `cargo test`
-
-            Please review large `data/` diffs before merge.
+          body-path: /tmp/pr_body.md
           branch: automated/data-refresh-${{ github.run_id }}
           delete-branch: true
