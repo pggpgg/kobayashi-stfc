@@ -11,7 +11,7 @@ _Planned 2026-06-09 from a full repo audit (fidelity docs, test inventory, code 
 1. **Main lane (serialized):** ~~**12** (engine decomposition)~~ **done** → ~~**4** (Phase 4d)~~ **done** → **6** (hostile-ability audit report can start anytime; *closing* its gaps lands in the now-decomposed engine) and **5** (dual-gate research mapping), with 5-vs-6 priority decided by what 6's audit surfaces. **6 (or 5) is the next pickup.**
 2. **Pre-freeze prep lane (early, any order — the freeze window is the scarcest resource, so tooling must be ready before a window opens):** **3** (import faction resolution), the composite-score harness, and the profile-snapshot completeness audit (see protocol below).
 3. **Side-quests (small/independent, slot between 12's bench-gated PRs):** ~~**11** (coverage)~~ *shipped*; ~~**7** (SSE test)~~ *shipped*; ~~**9** (OpenAPI gate)~~ *shipped*; **13** (profile.rs split — land before 4 to cut churn), **14** (upstream drift cron — prevents the data/catalog drift that caused PR #214's merge conflicts); ~~**16–17** (June 2026 patch ship + officers)~~ *shipped*.
-4. **Anytime, independent:** ~~**10** (frontend tests)~~ *shipped*; **15** (display-names investigation, timeboxed).
+4. **Anytime, independent:** ~~**10** (frontend tests)~~ *shipped*; ~~**15** (hostile display names)~~ *shipped — UI already resolved*.
 5. **Post-freeze (maintainer-scheduled):** **2** (scoreboard + snapshot-bound corpus), then the iterate loop from the protocol.
 
 ## Tier 1 — Simulation fidelity
@@ -86,8 +86,8 @@ Places where a bug would ship undetected today.
 - [ ] **14. Automate upstream data-drift detection** (M)
   Refreshes from data.stfc.space are fully manual ([STFC_SPACE_DATA_STRATEGY.md](STFC_SPACE_DATA_STRATEGY.md)). Clone the cron'd bench-baseline pattern: a weekly upstream diff that opens a PR when ships/hostiles/research change. Include the provenance parity fix (the ship normalizer doesn't update `registry.json`).
 
-- [ ] **15. Hostile display names** (S dev, blocked on data)
-  4,930 hostiles render as "Hostile {id}". Pure UX; blocked on finding a verified `loca_id` → string source upstream — worth a timeboxed investigation, not engine work.
+- [x] **15. Hostile display names** (S) — *closed 2026-06-14*
+  Reassessed: the hostile picker already shows proper names. [`/api/hostiles`](../src/server/api.rs) resolves `display_name` from each index row's `loca_id` via bundled upstream translations ([`hostile_loca.rs`](../src/data/hostile_loca.rs): `translations-ships.json`, `translations-officer_names.json`, `translations-navigation.json`); [HostilePicker](../frontend/src/components/HostilePicker.tsx) labels rows with `display_name ?? hostile_name`. **5,384 / 5,385** hostiles resolve (only the internal `kobayashi_theoretical_damage_sponge` fixture lacks `loca_id`). On-disk `hostile_name` in `data/hostiles/*.json` still uses `Hostile {id}` placeholders from the normalizer — cosmetic data debt, not a UI gap. Optional follow-up: bake resolved names into `normalize_hostiles_stfc_space` and refresh stale notes in [STFC_SPACE_DATA_STRATEGY.md](STFC_SPACE_DATA_STRATEGY.md).
 
 ## Assessed, no action planned
 
