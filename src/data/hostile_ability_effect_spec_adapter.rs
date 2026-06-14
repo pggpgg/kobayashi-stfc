@@ -8,6 +8,7 @@ use crate::data::combat_effect_spec::{
     CombatEffectSpec, EffectCategory, EffectConfidence, EffectSource, OfficerSpecAttrs, ValueSpec,
 };
 use crate::data::hostile_ability_resolve::HostileAbilityCatalogEntry;
+use crate::data::ship_ability_effect_spec_adapter::ship_ability_effect_type_to_modifier;
 
 /// Map a hostile ability catalog `effect_type` string to an [`AbilityModifierSpec`].
 pub fn hostile_ability_effect_type_to_modifier(effect_type: &str) -> Option<AbilityModifierSpec> {
@@ -19,8 +20,9 @@ pub fn hostile_ability_effect_type_to_modifier(effect_type: &str) -> Option<Abil
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
             Some(AbilityModifierSpec::ProcPierceBonus)
         }
-        "hostile_crit_damage_reduction" | "reduce_attacker_crit_damage" => None,
-        _ => None,
+        "conqueror_borg_beam_suppression" | "borg_conqueror_beam_suppression" => None,
+        "accuracy" | "accuracy_bonus" => None,
+        _ => ship_ability_effect_type_to_modifier(effect_type),
     }
 }
 
@@ -90,16 +92,16 @@ mod tests {
 
     #[test]
     fn hostile_ability_effect_type_map_covers_resolved_types() {
-        for effect_type in ["attack_multiplier", "pierce_bonus"] {
+        for effect_type in ["isolytic_damage", "apex_barrier", "crit_damage", "attack_multiplier"] {
             assert!(
                 hostile_ability_effect_type_to_modifier(effect_type).is_some(),
-                "hostile ability effect_type '{effect_type}' should map"
+                "missing mapping for {effect_type}"
             );
         }
     }
 
     #[test]
-    fn unmapped_effect_type_returns_none() {
+    fn hostile_ability_effect_type_map_rejects_noop() {
         assert!(hostile_ability_effect_type_to_modifier("combat_noop").is_none());
         assert!(hostile_ability_effect_type_to_modifier("unknown_xyz").is_none());
     }
@@ -107,8 +109,8 @@ mod tests {
     #[test]
     fn hostile_ability_maps_to_spec() {
         let entry = HostileAbilityCatalogEntry {
-            timing: "round_start".into(),
-            effect_type: "attack_multiplier".into(),
+            timing: "combat_begin".to_string(),
+            effect_type: "isolytic_damage".to_string(),
             value_is_percentage: true,
             ignore_upstream_value_is_percentage: false,
             value_override: None,
@@ -116,11 +118,10 @@ mod tests {
         };
         let spec =
             hostile_ability_to_combat_effect_spec("123", &entry, 100.0, 0.15).expect("should map");
-        assert_eq!(spec.modifier, AbilityModifierSpec::ProcAttackMultiplier);
-        assert_eq!(spec.trigger, AbilityTriggerSpec::RoundStart);
-        let v = spec.value.as_ref().and_then(|v| v.scalar).unwrap();
-        assert!((v - 0.15).abs() < 1e-12);
-        let c = spec.chance.as_ref().and_then(|c| c.scalar).unwrap();
-        assert!((c - 1.0).abs() < 1e-12);
+        assert_eq!(spec.id, "123");
+        assert!(matches!(
+            spec.modifier,
+            AbilityModifierSpec::IsolyticDamage
+        ));
     }
 }

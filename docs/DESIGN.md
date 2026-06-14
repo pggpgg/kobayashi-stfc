@@ -453,7 +453,21 @@ Officer abilities come from LCARS. **Ship hull abilities** are separate: they or
 - **Combat start: armor/shield piercing or weapon damage** — Mapped to `combat_begin` + `pierce_bonus` or `attack_multiplier` with percentage flags set from text heuristics. **“Ignore X% of enemy shields” (Breen-style)** — Mapped to percentage `pierce_bonus`; the client may implement this as a distinct bypass layer rather than the same stat as armor piercing.
 - **Upstream `values[]`** — Only the first scalar value is normalized onto the ship; per-tier ability curves are not modeled.
 
-**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at `combat_begin` only is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Hostile `ability` arrays are preserved on `HostileRecord` in [src/data/hostile.rs](../src/data/hostile.rs) but are not merged into player-side crew resolution. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); maintain that list when the catalog changes.
+**Gaps:** **Accuracy** from ship hull abilities: catalog `effect_type` `accuracy` / `accuracy_bonus` at `combat_begin` only is summed by `sum_combat_begin_accuracy_from_ship_abilities` into attacker stats (not a crew `AbilityEffect`; see `ship_ability_resolve`). Other timings or accuracy tied to non-combat-begin windows are not modeled. Text conditions such as “when fighting Hostiles” are not modeled separately—the effect applies in all scenarios once the ship is loaded. Remaining ship `combat_noop` ids are inventoried in [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md); hostile ids in [HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md).
+
+#### Hostile hull abilities (data.stfc.space → defender counter-fire)
+
+Hostile upstream `ability[]` rows use the same translation source as ships (`translations-ship_buffs.json`, `ship_ability_desc` keyed by row `loca_id`). They apply to **defender return fire**, not the player's crew.
+
+1. **Catalog:** [data/upstream/data-stfc-space/hostile_ability_catalog.json](../data/upstream/data-stfc-space/hostile_ability_catalog.json) — one row per unique upstream ability id (regen: `python3 scripts/generate_full_hostile_ability_catalog.py`). Overrides: [hostile_ability_catalog_overrides.json](../data/upstream/data-stfc-space/hostile_ability_catalog_overrides.json).
+2. **Storage:** [normalize_hostiles_stfc_space.rs](../src/bin/normalize_hostiles_stfc_space.rs) copies `ability[]` verbatim onto [HostileRecord](../src/data/hostile.rs).
+3. **Scenario:** [scenario.rs](../src/optimizer/monte_carlo/scenario.rs) calls [`hostile_abilities_to_defender_crew`](../src/data/hostile_ability_resolve.rs) → `defender_crew` seats (`CrewSeat::Ship`, `AbilityClass::ShipAbility`).
+4. **Resolver:** [`hostile_ability_effect_from_catalog`](../src/data/hostile_ability_resolve.rs) maps proc attack/pierce locally; other effect types delegate to [`ship_ability_effect_from_catalog`](../src/data/ship_ability_resolve.rs) where defender-safe.
+5. **Combat loop:** Counter-fire reads defender `CombatBegin` / round effects from `defender_crew` (isolytic, apex barrier, proc multipliers, etc.) via the same effect accumulator as ship hull abilities.
+
+**Other hostile mechanics (not catalog ids):** Base stats/components on `HostileRecord`; Conqueror Borg resonance beams + Evolutionary Assimilation via curated `hostile_tags` ([HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md §1](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md)). Attacker ship abilities that debuff hostiles (Crozier CDR, Track D2) remain in the **ship** catalog.
+
+**Trace note:** `EventSource.hostile_ability_id` in combat traces labels synthetic mechanics (e.g. `{defender_id}_mitigation`) — not upstream catalog ids.
 
 **Combat-begin and pre-combat stats:** Combat_begin effects are applied at the start of each round to a fresh per-round effect accumulator (see engine loop). They are not re-accumulated across rounds, so they behave as permanent pre-combat modifiers. The first round uses the same effective stats as later rounds (same accumulator build: combat_begin → round_start → attack → defense → round_end).
 

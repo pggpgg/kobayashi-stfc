@@ -98,6 +98,15 @@ npm run fetch:stfcspace:details -- --entities ships,hostiles,officers,research,f
 
 Shared helpers: [scripts/lib/stfcspace_detail_fetch.mjs](lib/stfcspace_detail_fetch.mjs).
 
+### Ability catalogs (ships + hostiles)
+
+| Script | Output | Audit doc |
+|--------|--------|-----------|
+| `python3 scripts/generate_full_ship_ability_catalog.py` | `data/upstream/data-stfc-space/ship_ability_catalog.json` | [docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](../docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) |
+| `python3 scripts/generate_full_hostile_ability_catalog.py` | `data/upstream/data-stfc-space/hostile_ability_catalog.json` | [docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](../docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md) |
+
+Both merge optional `*_catalog_overrides.json` after heuristics. Run after refreshing upstream `ships/` or `hostiles/` detail JSON.
+
 ---
 
 ## Post-sync verification

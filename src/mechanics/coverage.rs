@@ -8,8 +8,8 @@ use serde::Serialize;
 use crate::combat::abilities::TimingWindow;
 use crate::data::data_registry::DataRegistry;
 use crate::data::hostile_ability_resolve::{
-    hostile_ability_effect_from_catalog, load_hostile_ability_catalog, HostileAbilityCatalogEntry,
-    DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
+    collect_upstream_hostile_ability_ids, hostile_ability_effect_from_catalog,
+    load_hostile_ability_catalog, HostileAbilityCatalogEntry, DEFAULT_HOSTILE_ABILITY_CATALOG_PATH,
 };
 use crate::data::ship::{load_extended_ship_record, ExtendedShipIndex, ShipAbility};
 use crate::data::ship_ability_resolve::{
@@ -65,6 +65,14 @@ pub struct MechanicsCoverageReport {
     pub ships_with_abilities_scanned: u32,
     pub hostile_catalog_entries: TierCounts,
     pub hostile_catalog_entry_count: u32,
+    /// Unique upstream hostile ability ids in cached stfc.space JSON.
+    pub hostile_upstream_unique_ability_ids: u32,
+    /// Catalog rows with `effect_type` other than combat_noop.
+    pub hostile_catalog_modeled_count: u32,
+    /// Catalog rows explicitly marked combat_noop.
+    pub hostile_catalog_noop_count: u32,
+    /// Upstream ability ids missing from the catalog (should stay 0 after regen).
+    pub hostile_upstream_ids_missing_from_catalog: u32,
     /// Counts by LCARS `effect_type` string (lowercased).
     pub lcars_by_effect_type: HashMap<String, TierCounts>,
     /// Sample of ignored LCARS pathways (capped) for debugging.
@@ -352,8 +360,16 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
         .as_ref()
         .map(|c| c.entries.len() as u32)
         .unwrap_or(0);
+    let mut hostile_catalog_modeled_count = 0u32;
+    let mut hostile_catalog_noop_count = 0u32;
     if let Some(ref c) = catalog {
         for entry in c.entries.values() {
+            let et = entry.effect_type.trim().to_lowercase();
+            if et == "combat_noop" || et == "unmodeled" || et == "not_applicable" {
+                hostile_catalog_noop_count += 1;
+            } else {
+                hostile_catalog_modeled_count += 1;
+            }
             let row = classify_hostile_catalog_entry(entry);
             hostile_counts.add_tier(row.tier);
         }
@@ -361,6 +377,23 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
         notes.push(format!(
             "Hostile ability catalog not loaded from {}.",
             hostile_path.display()
+        ));
+    }
+
+    let upstream_hostiles_dir = root_dir().join("data/upstream/data-stfc-space/hostiles");
+    let upstream_ability_ids = collect_upstream_hostile_ability_ids(&upstream_hostiles_dir);
+    let hostile_upstream_unique_ability_ids = upstream_ability_ids.len() as u32;
+    let hostile_upstream_ids_missing_from_catalog = if let Some(ref c) = catalog {
+        upstream_ability_ids
+            .keys()
+            .filter(|id| !c.entries.contains_key(id.as_str()))
+            .count() as u32
+    } else {
+        hostile_upstream_unique_ability_ids
+    };
+    if hostile_upstream_ids_missing_from_catalog > 0 {
+        notes.push(format!(
+            "Hostile ability catalog missing {hostile_upstream_ids_missing_from_catalog} upstream ability ids; run scripts/generate_full_hostile_ability_catalog.py."
         ));
     }
 
@@ -379,6 +412,10 @@ pub fn build_mechanics_coverage_report(registry: &DataRegistry) -> MechanicsCove
         ships_with_abilities_scanned: ships_scanned,
         hostile_catalog_entries: hostile_counts,
         hostile_catalog_entry_count: hostile_entry_count,
+        hostile_upstream_unique_ability_ids,
+        hostile_catalog_modeled_count,
+        hostile_catalog_noop_count,
+        hostile_upstream_ids_missing_from_catalog,
         lcars_by_effect_type,
         lcars_ignored_samples,
         fidelity_backlog,

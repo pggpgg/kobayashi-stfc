@@ -1,0 +1,4 @@
+{
+  "description": "Full catalog row replacement per hostile ability id, merged after generate_full_hostile_ability_catalog.py heuristics. See docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md.",
+  "entries": {}
+}

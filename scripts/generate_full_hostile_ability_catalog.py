@@ -1,0 +1,380 @@
+#!/usr/bin/env python3
+"""
+Regenerate data/upstream/data-stfc-space/hostile_ability_catalog.json (one entry per ability id).
+
+Scans data/upstream/data-stfc-space/hostiles/*.json, dedupes by ability[].id, resolves text via
+ability.loca_id → translations-ship_buffs.json (ship_ability_desc).
+
+After classification, merges hostile_ability_catalog_overrides.json (entries dict).
+See docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md.
+
+Usage (repo root):  python3 scripts/generate_full_hostile_ability_catalog.py
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+UPSTREAM = REPO / "data/upstream/data-stfc-space"
+HOSTILES_DIR = UPSTREAM / "hostiles"
+TRANS = UPSTREAM / "translations-ship_buffs.json"
+OUT = UPSTREAM / "hostile_ability_catalog.json"
+CATALOG_OVERRIDES_JSON = UPSTREAM / "hostile_ability_catalog_overrides.json"
+AUDIT_META_JSON = REPO / "data/upstream/data-stfc-space/hostile_ability_audit_meta.json"
+
+NOOP = {
+    "timing": "combat_begin",
+    "effect_type": "combat_noop",
+    "value_is_percentage": False,
+    "ignore_upstream_value_is_percentage": True,
+    "value_override": 0.0,
+}
+
+
+def plain(txt: str) -> str:
+    return re.sub(r"<[^>]+>", "", txt or "").lower()
+
+
+def load_desc_by_loca() -> dict[int, str]:
+    with open(TRANS, encoding="utf-8") as f:
+        rows = json.load(f)
+    out: dict[int, str] = {}
+    for r in rows:
+        if r.get("key") == "ship_ability_desc" and r.get("id") is not None:
+            out[int(r["id"])] = r.get("text") or ""
+    return out
+
+
+def load_post_classify_overrides() -> dict[str, dict]:
+    if not CATALOG_OVERRIDES_JSON.is_file():
+        return {}
+    with open(CATALOG_OVERRIDES_JSON, encoding="utf-8") as f:
+        root = json.load(f)
+    raw = root.get("entries")
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, dict] = {}
+    for k, v in raw.items():
+        if isinstance(v, dict):
+            try:
+                out[str(int(str(k).strip()))] = v
+            except (TypeError, ValueError):
+                continue
+    return out
+
+
+def modeled(
+    timing: str,
+    effect_type: str,
+    *,
+    value_is_percentage: bool = False,
+    ignore_upstream_value_is_percentage: bool = True,
+    duration_rounds: int | None = None,
+    condition_defender_hull_breach: bool = False,
+    condition_defender_burning: bool = False,
+    round_cap: int | None = None,
+) -> dict:
+    d: dict = {
+        "timing": timing,
+        "effect_type": effect_type,
+        "value_is_percentage": value_is_percentage,
+        "ignore_upstream_value_is_percentage": ignore_upstream_value_is_percentage,
+    }
+    if duration_rounds is not None:
+        d["duration_rounds"] = duration_rounds
+    if condition_defender_hull_breach:
+        d["condition_defender_hull_breach"] = True
+    if condition_defender_burning:
+        d["condition_defender_burning"] = True
+    cap = None if duration_rounds is not None else round_cap
+    if cap is not None and cap > 0:
+        d["round_cap"] = int(cap)
+    return d
+
+
+def first_n_rounds_cap(p: str) -> int | None:
+    m = re.search(r"first\s+(\d+)\s+rounds", p)
+    if not m:
+        return None
+    try:
+        n = int(m.group(1))
+    except ValueError:
+        return None
+    return n if n > 0 else None
+
+
+def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
+    """Return (catalog_row, audit_bucket)."""
+    p = plain(text)
+    if not p.strip():
+        return dict(NOOP), "empty_translation"
+
+    rc = first_n_rounds_cap(p)
+
+    def m(timing: str, effect_type: str, **kwargs) -> tuple[dict, str]:
+        if kwargs.get("duration_rounds") is None:
+            kwargs.setdefault("round_cap", rc)
+        bucket = kwargs.pop("_bucket", "modeled_combat")
+        return modeled(timing, effect_type, **kwargs), bucket
+
+    # PvP-only (default PvE path is ship vs hostile NPC)
+    if "enemy player" in p or "opponent player" in p:
+        return dict(NOOP), "pvp_player_target"
+
+    # Outpost / station scope (not ship-vs-hostile PvE)
+    if "outpost abilities" in p or "outpost ability" in p:
+        return dict(NOOP), "outpost_scope"
+
+    # Armada / wave defense
+    if "armada" in p or "wave defense" in p:
+        return dict(NOOP), "armada_scope"
+
+    # Economy / progression / intel
+    if any(
+        k in p
+        for k in (
+            "mining rate",
+            "mining bonus",
+            "mining laser",
+            "when mining",
+            "resources from hostile",
+            "more resources",
+            "loot dropped",
+            "loot token",
+            "encrypted intelligence",
+            "intel",
+            "blueprint",
+            "reward you get",
+            "radiation resistance",
+            "ion storm",
+            "asteroid field",
+        )
+    ):
+        return dict(NOOP), "economy"
+
+    # Multi-stat crit rows (Critical Training: chance + damage + floor in one ability)
+    if "critical hit chance" in p and "critical hit damage" in p and "critical damage floor" in p:
+        return dict(NOOP), "crit_multi_stat_review"
+
+    # Crit damage floor only (Diverted Power) — no AbilityEffect yet
+    if "critical hit damage cannot fall below" in p or "crit damage cannot fall below" in p:
+        return dict(NOOP), "crit_floor_unmodeled"
+
+    # Isolytic
+    if "isolytic" in p and ("defense" in p or "defence" in p):
+        return m(
+            "combat_begin",
+            "isolytic_defense",
+            value_is_percentage=True,
+            ignore_upstream_value_is_percentage=False,
+            _bucket="isolytic_combat",
+        )
+    if "isolytic" in p:
+        return m(
+            "combat_begin",
+            "isolytic_damage",
+            value_is_percentage=True,
+            ignore_upstream_value_is_percentage=False,
+            _bucket="isolytic_combat",
+        )
+
+    # Apex
+    if "apex shred" in p and "increas" in p:
+        return m(
+            "combat_begin",
+            "apex_shred",
+            value_is_percentage=False,
+            ignore_upstream_value_is_percentage=True,
+            _bucket="apex_combat",
+        )
+    if "apex barrier" in p:
+        return m(
+            "combat_begin",
+            "apex_barrier",
+            value_is_percentage=False,
+            ignore_upstream_value_is_percentage=True,
+            _bucket="apex_combat",
+        )
+
+    # Hull breach conditional weapon damage (Imperial Starfleet Dismantlement-style)
+    if "hull breach" in p and "weapon damage" in p and "increas" in p:
+        if "round" in p:
+            return m(
+                "round_start",
+                "attack_multiplier",
+                value_is_percentage=True,
+                ignore_upstream_value_is_percentage=False,
+                duration_rounds=1,
+                condition_defender_hull_breach=True,
+                _bucket="weapon_damage_combat",
+            )
+
+    # Combat-start crit chance / damage (single-stat)
+    if ("combat start" in p or "start of combat" in p or "at the start of combat" in p) and "critical" in p:
+        if "chance" in p and "damage" not in p:
+            return m(
+                "combat_begin",
+                "crit_chance",
+                value_is_percentage=True,
+                ignore_upstream_value_is_percentage=False,
+                _bucket="crit_combat",
+            )
+        if "damage" in p and "floor" not in p:
+            return m(
+                "combat_begin",
+                "crit_damage",
+                value_is_percentage=True,
+                ignore_upstream_value_is_percentage=False,
+                _bucket="crit_combat",
+            )
+
+    # Pierce at combat start
+    if ("combat start" in p or "start of combat" in p) and "pierc" in p:
+        return m(
+            "combat_begin",
+            "pierce_bonus",
+            value_is_percentage=True,
+            ignore_upstream_value_is_percentage=False,
+            _bucket="pierce_combat",
+        )
+
+    # Weapon damage at combat start / round start
+    if "weapon damage" in p and "increas" in p:
+        timing = "round_start" if "start of the round" in p or "at the start of the round" in p else "combat_begin"
+        return m(
+            timing,
+            "attack_multiplier",
+            value_is_percentage=True,
+            ignore_upstream_value_is_percentage=False,
+            _bucket="weapon_damage_combat",
+        )
+
+    # Generic combat-start damage increase
+    if (
+        ("combat start" in p or "start of combat" in p or "at the start of combat" in p)
+        and "increas" in p
+        and "damage" in p
+    ):
+        return m(
+            "combat_begin",
+            "attack_multiplier",
+            value_is_percentage=True,
+            ignore_upstream_value_is_percentage=False,
+            _bucket="weapon_damage_combat",
+        )
+
+    # Shield-related (drain, restore) — defer unless clear pattern
+    if "shield" in p and ("drain" in p or "decreas" in p):
+        return dict(NOOP), "shield_combat_review"
+
+    # Defense stats
+    if any(k in p for k in ("dodge", "armor", "mitigation", "deflect")) and "increas" in p:
+        return dict(NOOP), "defense_combat_review"
+
+    return dict(NOOP), "other_review"
+
+
+def collect_upstream_abilities() -> dict[str, dict]:
+    """ability id -> metadata from upstream hostiles."""
+    meta: dict[str, dict] = {}
+    for path in sorted(HOSTILES_DIR.glob("*.json")):
+        with open(path, encoding="utf-8") as f:
+            hostile = json.load(f)
+        hid = str(hostile.get("id", path.stem))
+        for ab in hostile.get("ability") or []:
+            aid = ab.get("id")
+            if aid is None:
+                continue
+            aid_str = str(int(aid))
+            row = meta.setdefault(
+                aid_str,
+                {
+                    "loca_id": ab.get("loca_id"),
+                    "hostile_count": 0,
+                    "sample_hostile_id": hid,
+                    "sample_level": hostile.get("level"),
+                    "value_is_percentage": ab.get("value_is_percentage"),
+                    "first_value": None,
+                    "first_chance": None,
+                },
+            )
+            row["hostile_count"] += 1
+            values = ab.get("values") or []
+            if values and row["first_value"] is None:
+                first = values[0]
+                row["first_value"] = first.get("value")
+                row["first_chance"] = first.get("chance")
+            if row.get("loca_id") is None and ab.get("loca_id") is not None:
+                row["loca_id"] = ab.get("loca_id")
+    return meta
+
+
+def main() -> None:
+    by_loca = load_desc_by_loca()
+    upstream = collect_upstream_abilities()
+    entries: dict[str, dict] = {}
+    audit_meta: dict[str, dict] = {}
+
+    for aid_str, info in sorted(upstream.items(), key=lambda kv: int(kv[0])):
+        loca = info.get("loca_id")
+        text = by_loca.get(int(loca), "") if loca is not None else ""
+        row, bucket = classify_hostile_ability(int(loca or 0), text)
+        entries[aid_str] = row
+        audit_meta[aid_str] = {
+            "bucket": bucket,
+            "loca_id": loca,
+            "hostile_count": info["hostile_count"],
+            "sample_hostile_id": info["sample_hostile_id"],
+            "sample_level": info.get("sample_level"),
+            "text_snippet": plain(text)[:240],
+            "effect_type": row.get("effect_type"),
+        }
+
+    for oid, row in load_post_classify_overrides().items():
+        entries[oid] = row
+        if oid in audit_meta:
+            audit_meta[oid]["effect_type"] = row.get("effect_type")
+            audit_meta[oid]["overridden"] = True
+
+    root = {
+        "description": (
+            "Maps upstream hostile ability id (hostiles/*.json ability[].id) to Kobayashi timing/effect_type. "
+            "Regenerate: python3 scripts/generate_full_hostile_ability_catalog.py. "
+            "Optional overrides (merged last): hostile_ability_catalog_overrides.json. "
+            "Unmapped ids are ignored at runtime; combat_noop rows are catalogued only. "
+            "See src/data/hostile_ability_resolve.rs and docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md."
+        ),
+        "entries": dict(sorted(entries.items(), key=lambda kv: int(kv[0]))),
+    }
+    with open(OUT, "w", encoding="utf-8") as f:
+        json.dump(root, f, indent=2)
+        f.write("\n")
+
+    with open(AUDIT_META_JSON, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "generated_from": "scripts/generate_full_hostile_ability_catalog.py",
+                "unique_ability_ids": len(entries),
+                "hostiles_with_abilities_scanned": sum(
+                    1 for p in HOSTILES_DIR.glob("*.json") if json.loads(p.read_text()).get("ability")
+                ),
+                "entries": audit_meta,
+            },
+            f,
+            indent=2,
+        )
+        f.write("\n")
+
+    n_mod = sum(1 for v in entries.values() if v.get("effect_type") != "combat_noop")
+    print(
+        f"Wrote {len(entries)} hostile ability ids to {OUT} "
+        f"({n_mod} modeled, {len(entries) - n_mod} combat_noop)"
+    )
+    print(f"Audit metadata: {AUDIT_META_JSON}")
+
+
+if __name__ == "__main__":
+    main()

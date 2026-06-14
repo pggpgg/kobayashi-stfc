@@ -12,13 +12,16 @@
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::path::Path;
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::CrewConfiguration;
-use crate::data::ship_ability_resolve::parse_ship_ability_timing;
+use crate::data::ship_ability_resolve::{
+    parse_ship_ability_timing, ship_ability_effect_from_catalog,
+};
 
 pub const DEFAULT_HOSTILE_ABILITY_CATALOG_PATH: &str =
     "data/upstream/data-stfc-space/hostile_ability_catalog.json";
@@ -140,8 +143,7 @@ pub(crate) fn hostile_ability_effect_from_catalog(
     value: f64,
     duration_rounds: Option<u32>,
 ) -> Option<AbilityEffect> {
-    // We intentionally keep this small: these are the effects we can safely apply to the defender’s
-    // return fire without additional engine mechanics.
+    // Proc-gated counter-fire multipliers keep upstream `values[].chance` semantics.
     match effect_type.trim().to_lowercase().replace('-', "_").as_str() {
         "combat_noop" | "unmodeled" | "not_applicable" => None,
         "attack_multiplier" | "weapon_damage" | "attack" => {
@@ -154,17 +156,39 @@ pub(crate) fn hostile_ability_effect_from_catalog(
             chance: normalize_probability(chance),
             bonus: value,
         }),
-        "hostile_crit_damage_reduction" | "reduce_attacker_crit_damage" => {
-            // Defender-side crit reduction doesn't exist; but we can reuse HostileCritDamageReduction
-            // to apply to attacker crits only if engine threads it. Out of scope for task 2.
-            let _ = (timing, chance, duration_rounds);
-            None
+        // Attacker-only hull abilities that must not apply on hostile defender crew.
+        "conqueror_borg_beam_suppression"
+        | "borg_conqueror_beam_suppression"
+        | "accuracy"
+        | "accuracy_bonus" => None,
+        _ => ship_ability_effect_from_catalog(effect_type, timing, value, duration_rounds),
+    }
+}
+
+/// Collect every unique upstream hostile ability id from cached stfc.space JSON.
+pub fn collect_upstream_hostile_ability_ids(hostiles_dir: &Path) -> HashMap<String, u32> {
+    let mut counts: HashMap<String, u32> = HashMap::new();
+    let Ok(read_dir) = std::fs::read_dir(hostiles_dir) else {
+        return counts;
+    };
+    for entry in read_dir.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
         }
-        _ => {
-            let _ = (timing, chance, duration_rounds);
-            None
+        let Ok(s) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(v) = serde_json::from_str::<Value>(&s) else {
+            continue;
+        };
+        for raw in v.get("ability").and_then(|a| a.as_array()).into_iter().flatten() {
+            if let Some(parsed) = parse_one_upstream_ability(raw) {
+                *counts.entry(parsed.id).or_insert(0) += 1;
+            }
         }
     }
+    counts
 }
 
 pub fn hostile_abilities_to_defender_crew(
@@ -323,6 +347,27 @@ mod tests {
         let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
         assert_eq!(crew.seats.len(), 1);
         assert_eq!(crew.seats[0].ability.name, "123");
+    }
+
+    #[test]
+    fn hostile_catalog_delegates_isolytic_and_apex_to_ship_resolver() {
+        let iso = hostile_ability_effect_from_catalog(
+            "isolytic_damage",
+            TimingWindow::CombatBegin,
+            100.0,
+            0.15,
+            None,
+        );
+        assert!(matches!(iso, Some(AbilityEffect::IsolyticDamageBonus(v)) if (v - 0.15).abs() < 1e-9));
+
+        let apex = hostile_ability_effect_from_catalog(
+            "apex_barrier",
+            TimingWindow::CombatBegin,
+            100.0,
+            5000.0,
+            None,
+        );
+        assert!(matches!(apex, Some(AbilityEffect::ApexBarrierBonus(v)) if (v - 5000.0).abs() < 1e-9));
     }
 
     /// Parity: spec-path function produces the same count of seats as the direct catalog path.
