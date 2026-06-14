@@ -101,6 +101,8 @@ const SHIELD_MAX_FRACTION_ABILITY_IDS: &[&str] = &[
     "1513489186", // Black Ops M'Benga: per-round SHP restore vs non-armada hostiles.
     "3196098481", // Seska: per-round SHP restore vs non-armada hostiles.
     "3634862157", // SNW M'Benga: per-round SHP restore vs non-armada hostiles.
+    "3851967764", // Caleb Mir: per-round SHP restore vs Outposts / non-armada hostiles.
+    "1166619300", // Genesis Lythe: per-round SHP restore in Wave Defense.
 ];
 
 #[derive(Debug, Deserialize)]
@@ -1240,7 +1242,14 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         | "GornHostileVolatileLoot"
         | "HirogenRelicAndBiotoxinLoot"
         | "WokAugmentAllLootRewards"
-        | "XindiHostileLoot" => {
+        | "XindiHostileLoot"
+        // June 2026 batch (Emerald Chain / Starfleet Academy): loot, repair, and overworld
+        // cutting-beam economy modifiers with no in-fight effect on damage / hull / shield.
+        | "TechnologicalDistinctivenessLoot" // Jirali (bridge): cutting-beam loot.
+        | "CuttingBeamCharge" // Jirali (captain): extra Borg Cube cutting-beam charge.
+        | "RepairSpeedCascade" // Jirali (below): ship repair-speed cascade.
+        | "OutpostMedalsAndPlunderLoot" => {
+            // Genesis Lythe (below): outpost retaliation medals / plunder loot.
             MappedEffect::Tag(format!("{}:non_combat", modifier.to_lowercase()))
         }
         _ => MappedEffect::Tag(format!("{}:unmapped", modifier.to_lowercase())),

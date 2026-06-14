@@ -1206,7 +1206,64 @@
       "unlock_level": 70
     }
   ],
-  "abilities": null,
+  "abilities": [
+    {
+      "id": "2357321655",
+      "timing": "combat_begin",
+      "effect_type": "attack_multiplier",
+      "value": 85000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": "venari_ral",
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "1913694321",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 140000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "2506949026",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 10000000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "39689355",
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value": 15000000.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    }
+  ],
   "officer_bonus": {
     "attack": [
       {
