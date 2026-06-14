@@ -7,11 +7,13 @@
 use std::path::Path;
 
 use kobayashi::combat::{
-    export_to_combat_input, parse_fight_export, simulate_combat, Ability, AbilityClass,
+    export_to_combat_input, parse_fight_export, simulate_combat, simulate_combat_with_defender_faction,
+    Ability, AbilityClass,
     AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, OpponentFactionTag,
     ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
+use kobayashi::data::loader::defender_faction_for_fight_export;
 
 fn fixture_path(name: &str) -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -233,6 +235,23 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         "vanilla game TSV omits Weapon Index; events should have weapon_index None"
     );
 
+    assert_eq!(export.enemy_player_name.as_deref(), Some("Takret Militia"));
+    assert_eq!(export.enemy_ship_level, Some(10));
+    assert_eq!(export.enemy_ship_strength, Some(1870));
+
+    let defender_ctx = defender_faction_for_fight_export(&export, None).expect("faction resolve");
+    assert!(
+        defender_ctx.resolved_hostile_id.as_deref() == Some("845501025")
+            || defender_ctx.resolved_hostile_id.as_deref() == Some("1973028640"),
+        "takret hostile id: {:?}",
+        defender_ctx.resolved_hostile_id
+    );
+    assert_eq!(
+        defender_ctx.defender_faction,
+        OpponentFactionTag::Unknown,
+        "Takret Militia upstream faction.id is -1 in bundled data"
+    );
+
     let (attacker, defender, crew) = export_to_combat_input(&export);
     let config = SimulationConfig {
         rounds: 10,
@@ -241,7 +260,7 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: None,
         profile_weapon_damage_fraction: 0.0,
-        defender_hull_faction_id: 0,
+        defender_hull_faction_id: defender_ctx.defender_hull_faction_id,
         defender_hostile_tag_mask: 0,
         attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: Default::default(),
@@ -251,7 +270,13 @@ fn fight_export_realta_vs_takret_militia_10_matches_simulation() {
         incoming_shield_mitigation_bonus_rounds: 0,
         emit_state_snapshots: false,
     };
-    let result = simulate_combat(&attacker, &defender, &config, &crew);
+    let result = simulate_combat_with_defender_faction(
+        &attacker,
+        &defender,
+        &config,
+        &crew,
+        defender_ctx.defender_faction,
+    );
 
     assert_eq!(
         result.attacker_won, export.attacker_won,

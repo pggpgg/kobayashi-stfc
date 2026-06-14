@@ -5,11 +5,13 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{OnceLock, RwLock};
 
+use crate::combat::export_csv::FightExport;
 use crate::combat::OpponentFactionTag;
 use crate::data::hostile::{
     load_hostile_index, load_hostile_record, HostileIndex, HostileRecord,
     DEFAULT_HOSTILES_INDEX_PATH,
 };
+use crate::data::hostile_loca::{load_hostile_loca_display_names, strip_stfc_color_tags};
 use crate::data::ship::{
     load_extended_ship_index, load_extended_ship_record, CrewSlotUnlock, ExtendedShipIndex,
     ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
@@ -81,6 +83,207 @@ pub fn resolve_hostile_with_index(
         return load_hostile_record(data_dir, &by_name[0].id);
     }
     None
+}
+
+/// Defender faction + hostile metadata resolved from a parsed fight export.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FightExportDefenderContext {
+    pub defender_faction: OpponentFactionTag,
+    pub defender_hull_faction_id: i64,
+    pub resolved_hostile_id: Option<String>,
+}
+
+/// Parse a defender-faction slug (CLI `--defender-faction`, drift fixtures, import override).
+pub fn opponent_faction_tag_from_slug(slug: &str) -> Result<OpponentFactionTag, String> {
+    let t = slug.trim();
+    if t.is_empty() {
+        return Err("defender faction slug requires a non-empty value".to_string());
+    }
+    OpponentFactionTag::from_data_slug(t).ok_or_else(|| {
+        format!(
+            "unknown defender faction {t:?}; expected a slug such as klingon, romulan, federation, borg, swarm, or unknown"
+        )
+    })
+}
+
+fn normalize_display_name_for_lookup(name: &str) -> String {
+    normalize_lookup(&strip_stfc_color_tags(name))
+}
+
+/// Resolve a hostile by game display name + level (from fight-export summary rows).
+///
+/// Returns `Ok(None)` when no index entry matches. When multiple entries match the same
+/// display name and level, picks deterministically if they share the same combat faction tag
+/// and upstream `faction.id`; otherwise returns an error listing candidate ids.
+pub fn resolve_hostile_by_display_name(display_name: &str, level: u32) -> Result<Option<HostileRecord>, String> {
+    let cache = HOSTILE_DISPLAY_RESOLVE_CACHE.get_or_init(|| RwLock::new(HashMap::new()));
+    let key = format!("{}|{level}", normalize_display_name_for_lookup(display_name));
+    if let Some(hit) = cache.read().expect("hostile display cache poisoned").get(&key) {
+        return hit.clone();
+    }
+    let resolved = resolve_hostile_by_display_name_uncached(display_name, level);
+    cache
+        .write()
+        .expect("hostile display cache poisoned")
+        .insert(key, resolved.clone());
+    resolved
+}
+
+type HostileDisplayResolveCache = HashMap<String, Result<Option<HostileRecord>, String>>;
+
+static HOSTILE_DISPLAY_RESOLVE_CACHE: OnceLock<RwLock<HostileDisplayResolveCache>> = OnceLock::new();
+
+static HOSTILE_LOCA_DISPLAY_NAMES: OnceLock<HashMap<u64, String>> = OnceLock::new();
+
+fn hostile_loca_display_names() -> &'static HashMap<u64, String> {
+    HOSTILE_LOCA_DISPLAY_NAMES.get_or_init(|| {
+        load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")))
+    })
+}
+
+fn resolve_hostile_by_display_name_uncached(
+    display_name: &str,
+    level: u32,
+) -> Result<Option<HostileRecord>, String> {
+    let index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH)
+        .ok_or_else(|| "hostile index missing".to_string())?;
+    let data_dir = Path::new(DEFAULT_HOSTILES_INDEX_PATH)
+        .parent()
+        .ok_or_else(|| "hostile data directory missing".to_string())?;
+    resolve_hostile_by_display_name_with_index(
+        &index,
+        data_dir,
+        hostile_loca_display_names(),
+        display_name,
+        level,
+    )
+}
+
+pub(crate) fn resolve_hostile_by_display_name_with_index(
+    index: &HostileIndex,
+    data_dir: &Path,
+    loca_names: &HashMap<u64, String>,
+    display_name: &str,
+    level: u32,
+) -> Result<Option<HostileRecord>, String> {
+    let normalized = normalize_display_name_for_lookup(display_name);
+    if normalized.is_empty() {
+        return Ok(None);
+    }
+
+    let mut candidate_ids: Vec<String> = index
+        .hostiles
+        .iter()
+        .filter(|e| e.level == level)
+        .filter_map(|e| {
+            let loca_id = e.loca_id?;
+            let label = loca_names.get(&loca_id)?;
+            if normalize_display_name_for_lookup(label) == normalized {
+                Some(e.id.clone())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if candidate_ids.is_empty() {
+        return Ok(None);
+    }
+
+    candidate_ids.sort_by(|a, b| {
+        match (a.parse::<u64>(), b.parse::<u64>()) {
+            (Ok(a_id), Ok(b_id)) => a_id.cmp(&b_id).then_with(|| a.cmp(b)),
+            _ => a.cmp(b),
+        }
+    });
+
+    if candidate_ids.len() == 1 {
+        return load_hostile_record(data_dir, &candidate_ids[0])
+            .ok_or_else(|| format!("hostile record missing for id {}", candidate_ids[0]))
+            .map(Some);
+    }
+
+    let mut records = Vec::with_capacity(candidate_ids.len());
+    for id in &candidate_ids {
+        let Some(rec) = load_hostile_record(data_dir, id) else {
+            return Err(format!("hostile record missing for id {id}"));
+        };
+        records.push(rec);
+    }
+
+    disambiguate_hostile_records(display_name, level, records).map(Some)
+}
+
+fn disambiguate_hostile_records(
+    display_name: &str,
+    level: u32,
+    records: Vec<HostileRecord>,
+) -> Result<HostileRecord, String> {
+    if records.is_empty() {
+        return Err("disambiguate_hostile_records: empty candidate list".to_string());
+    }
+    if records.len() == 1 {
+        return Ok(records.into_iter().next().expect("len checked"));
+    }
+
+    let first_tag = records[0].opponent_faction_tag();
+    let first_faction_id = records[0].faction.as_ref().map(|f| f.id).unwrap_or(-1);
+    if records.iter().all(|r| {
+        r.opponent_faction_tag() == first_tag
+            && r.faction.as_ref().map(|f| f.id).unwrap_or(-1) == first_faction_id
+    }) {
+        return Ok(records
+            .into_iter()
+            .min_by(|a, b| a.id.cmp(&b.id))
+            .expect("non-empty"));
+    }
+
+    let ids: Vec<_> = records.iter().map(|r| r.id.as_str()).collect();
+    Err(format!(
+        "ambiguous hostile display name {display_name:?} level {level}: conflicting faction tags among ids {}",
+        ids.join(", ")
+    ))
+}
+
+fn defender_context_from_hostile(rec: &HostileRecord) -> FightExportDefenderContext {
+    FightExportDefenderContext {
+        defender_faction: rec.opponent_faction_tag(),
+        defender_hull_faction_id: rec.faction.as_ref().map(|f| f.id).unwrap_or(0),
+        resolved_hostile_id: Some(rec.id.clone()),
+    }
+}
+
+/// Resolve defender faction for a parsed fight export.
+///
+/// Precedence: explicit `faction_slug_override` wins, then enemy summary display name + level
+/// lookup, then [`OpponentFactionTag::Unknown`].
+pub fn defender_faction_for_fight_export(
+    export: &FightExport,
+    faction_slug_override: Option<&str>,
+) -> Result<FightExportDefenderContext, String> {
+    if let Some(slug) = faction_slug_override {
+        return Ok(FightExportDefenderContext {
+            defender_faction: opponent_faction_tag_from_slug(slug)?,
+            defender_hull_faction_id: 0,
+            resolved_hostile_id: None,
+        });
+    }
+
+    match (export.enemy_player_name.as_deref(), export.enemy_ship_level) {
+        (Some(name), Some(level)) => match resolve_hostile_by_display_name(name, level)? {
+            Some(rec) => Ok(defender_context_from_hostile(&rec)),
+            None => Ok(FightExportDefenderContext {
+                defender_faction: OpponentFactionTag::Unknown,
+                defender_hull_faction_id: 0,
+                resolved_hostile_id: None,
+            }),
+        },
+        _ => Ok(FightExportDefenderContext {
+            defender_faction: OpponentFactionTag::Unknown,
+            defender_hull_faction_id: 0,
+            resolved_hostile_id: None,
+        }),
+    }
 }
 
 /// Process-wide memoization for [`resolve_hostile`]. The bundled hostile index is ~1 MB of JSON;
@@ -259,15 +462,7 @@ pub fn defender_faction_for_cli_simulate(
     hostile_lookup: Option<&str>,
 ) -> Result<OpponentFactionTag, String> {
     if let Some(slug) = faction_slug {
-        let t = slug.trim();
-        if t.is_empty() {
-            return Err("--defender-faction requires a non-empty value".to_string());
-        }
-        return OpponentFactionTag::from_data_slug(t).ok_or_else(|| {
-            format!(
-                "unknown --defender-faction {t:?}; expected a slug such as klingon, romulan, federation, borg, swarm, or unknown"
-            )
-        });
+        return opponent_faction_tag_from_slug(slug);
     }
     if let Some(hostile) = hostile_lookup {
         let key = hostile.trim();
@@ -297,8 +492,13 @@ pub fn defender_hull_faction_id_for_cli_simulate(hostile_lookup: Option<&str>) -
 #[cfg(test)]
 mod defender_faction_cli_tests {
     use super::defender_faction_for_cli_simulate;
+    use super::defender_faction_for_fight_export;
     use super::defender_hull_faction_id_for_cli_simulate;
-    use crate::combat::OpponentFactionTag;
+    use super::disambiguate_hostile_records;
+    use super::opponent_faction_tag_from_slug;
+    use super::resolve_hostile_by_display_name;
+    use crate::combat::export_csv::FightExport;
+    use crate::combat::{OpponentFactionTag, ShipType};
 
     #[test]
     fn explicit_slug_and_none_default() {
@@ -346,5 +546,109 @@ mod defender_faction_cli_tests {
     fn hostile_lookup_sets_defender_hull_faction_id_when_present() {
         let id = defender_hull_faction_id_for_cli_simulate(Some("2918121098"));
         assert_ne!(id, 0, "bundled hostile should carry faction.id");
+    }
+
+    #[test]
+    fn resolve_hostile_by_display_name_finds_takret_militia_level_10() {
+        let rec = resolve_hostile_by_display_name("Takret Militia", 10)
+            .expect("lookup")
+            .expect("takret should resolve");
+        assert!(
+            rec.id == "845501025" || rec.id == "1973028640",
+            "unexpected takret id: {}",
+            rec.id
+        );
+    }
+
+    #[test]
+    fn resolve_hostile_by_display_name_romulan_intruder_level_38() {
+        let rec = resolve_hostile_by_display_name("Romulan Intruder", 38)
+            .expect("lookup")
+            .expect("romulan intruder should resolve uniquely");
+        assert_eq!(rec.id, "287240");
+        assert_eq!(rec.opponent_faction_tag(), OpponentFactionTag::Romulan);
+    }
+
+    #[test]
+    fn defender_faction_for_fight_export_auto_romulan_intruder() {
+        let export = FightExport {
+            attacker_won: true,
+            rounds: 1,
+            defender_hull_remaining: 0.0,
+            defender_shield_remaining: 0.0,
+            total_damage: 0.0,
+            player_fleet: Default::default(),
+            enemy_fleet: Default::default(),
+            events: vec![],
+            player_ship_name: None,
+            player_officer_one: None,
+            player_officer_two: None,
+            player_officer_three: None,
+            attacker_ship_type: ShipType::Battleship,
+            enemy_player_name: Some("Romulan Intruder".into()),
+            enemy_ship_level: Some(38),
+            enemy_ship_strength: None,
+        };
+        let ctx = defender_faction_for_fight_export(&export, None).expect("resolve");
+        assert_eq!(ctx.defender_faction, OpponentFactionTag::Romulan);
+        assert_eq!(ctx.resolved_hostile_id.as_deref(), Some("287240"));
+        assert_ne!(ctx.defender_hull_faction_id, 0);
+    }
+
+    #[test]
+    fn defender_faction_for_fight_export_override_wins() {
+        let export = FightExport {
+            attacker_won: true,
+            rounds: 1,
+            defender_hull_remaining: 0.0,
+            defender_shield_remaining: 0.0,
+            total_damage: 0.0,
+            player_fleet: Default::default(),
+            enemy_fleet: Default::default(),
+            events: vec![],
+            player_ship_name: None,
+            player_officer_one: None,
+            player_officer_two: None,
+            player_officer_three: None,
+            attacker_ship_type: ShipType::Battleship,
+            enemy_player_name: Some("Romulan Intruder".into()),
+            enemy_ship_level: Some(38),
+            enemy_ship_strength: None,
+        };
+        let ctx = defender_faction_for_fight_export(&export, Some("klingon")).expect("resolve");
+        assert_eq!(ctx.defender_faction, OpponentFactionTag::Klingon);
+        assert!(ctx.resolved_hostile_id.is_none());
+        assert_eq!(ctx.defender_hull_faction_id, 0);
+    }
+
+    #[test]
+    fn opponent_faction_tag_from_slug_rejects_unknown_token() {
+        assert!(opponent_faction_tag_from_slug("not_a_real_faction").is_err());
+    }
+
+    #[test]
+    fn disambiguate_hostile_records_errors_on_conflicting_factions() {
+        let klingon: HostileRecord = serde_json::from_str(
+            r#"{
+            "id":"9001","hostile_name":"H","level":5,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":4153667145,"loca_id":2}
+        }"#,
+        )
+        .expect("klingon json");
+        let romulan: HostileRecord = serde_json::from_str(
+            r#"{
+            "id":"9002","hostile_name":"H","level":5,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":669838839,"loca_id":3}
+        }"#,
+        )
+        .expect("romulan json");
+        let err = disambiguate_hostile_records("Conflict Hostile", 5, vec![klingon, romulan])
+            .expect_err("conflicting factions");
+        assert!(
+            err.contains("ambiguous hostile display name"),
+            "unexpected err: {err}"
+        );
     }
 }

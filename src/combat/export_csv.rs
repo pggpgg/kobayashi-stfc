@@ -40,6 +40,12 @@ pub struct FightExport {
     pub player_officer_three: Option<String>,
     /// Attacker (player) ship type inferred from player_ship_name.
     pub attacker_ship_type: ShipType,
+    /// Enemy display name from summary `Player Name` (e.g. "Takret Militia").
+    pub enemy_player_name: Option<String>,
+    /// Enemy level from summary `Ship Level`.
+    pub enemy_ship_level: Option<u32>,
+    /// Enemy `Ship Strength` from summary (optional tie-breaker when display name + level are ambiguous).
+    pub enemy_ship_strength: Option<u32>,
 }
 
 /// Single event row from the events section.
@@ -139,6 +145,10 @@ fn get_event_u32(row: &[String], col: Option<usize>) -> Option<u32> {
     s.parse::<u32>().ok()
 }
 
+fn optional_u32_cell(map: &HashMap<String, String>, key: &str) -> Option<u32> {
+    optional_cell(map.get(key)).and_then(|s| s.parse::<u32>().ok())
+}
+
 /// Parse a full fight export string (tab-separated, multi-section).
 pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
     let lines: Vec<&str> = input
@@ -163,6 +173,9 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
     let mut player_officer_two: Option<String> = None;
     let mut player_officer_three: Option<String> = None;
     let mut attacker_ship_type = ShipType::Battleship;
+    let mut enemy_player_name: Option<String> = None;
+    let mut enemy_ship_level: Option<u32> = None;
+    let mut enemy_ship_strength: Option<u32> = None;
 
     let mut i = 0;
     while i < lines.len() {
@@ -198,6 +211,9 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
             player_officer_two = optional_cell(player_map.get("Officer Two"));
             player_officer_three = optional_cell(player_map.get("Officer Three"));
             attacker_ship_type = ship_type_from_name(player_ship_name.as_deref().unwrap_or(""));
+            enemy_player_name = optional_cell(enemy_map.get("Player Name"));
+            enemy_ship_level = optional_u32_cell(&enemy_map, "Ship Level");
+            enemy_ship_strength = optional_u32_cell(&enemy_map, "Ship Strength");
             i += 2;
             continue;
         }
@@ -287,6 +303,9 @@ pub fn parse_fight_export(input: &str) -> Result<FightExport, String> {
         player_officer_two,
         player_officer_three,
         attacker_ship_type,
+        enemy_player_name,
+        enemy_ship_level,
+        enemy_ship_strength,
     })
 }
 
@@ -456,6 +475,16 @@ mod export_parse_tests {
 
     const FIXTURE_WEAPON_INDEX: &str =
         include_str!("../../tests/fixtures/recorded_fights/fight_export_weapon_index.tsv");
+    const FIXTURE_TAKRET: &str =
+        include_str!("../../fight samples/realta vs takret militia 10.csv");
+
+    #[test]
+    fn parse_fight_export_reads_enemy_summary_identity() {
+        let export = parse_fight_export(FIXTURE_TAKRET).expect("parse takret sample");
+        assert_eq!(export.enemy_player_name.as_deref(), Some("Takret Militia"));
+        assert_eq!(export.enemy_ship_level, Some(10));
+        assert_eq!(export.enemy_ship_strength, Some(1870));
+    }
 
     #[test]
     fn parse_fight_export_reads_optional_weapon_index_column() {

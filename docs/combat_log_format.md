@@ -131,6 +131,7 @@ The game can export a fight log as a **tab-separated** file with several section
 
 1. **Summary** — Header row starting with `Player Name`. Two data rows: player (attacker) and enemy (defender).
   - Key columns: `Outcome` (VICTORY/DEFEAT), `Ship Name`, `Officer One`, `Officer Two`, `Officer Three`, `Hull Health Remaining`, `Shield Health Remaining`.
+  - Enemy row also supplies **`Player Name`** (display name, e.g. `Takret Militia`), **`Ship Level`**, and optional **`Ship Strength`** for hostile lookup (stored on `FightExport` as `enemy_player_name`, `enemy_ship_level`, `enemy_ship_strength`).
   - Player row outcome = attacker_won; defender hull/shield remaining come from the enemy row. `Ship Name` is used to infer attacker ship type; officer columns are used to build crew (see below). `"--"` or empty cells are treated as absent.
 2. **Rewards** — Optional; header `Reward Name`, then reward rows. Skipped for combat parity.
 3. **Fleet stats** — Header row starting with `Fleet Type`. Two data rows: `Player Fleet 1` and `Enemy Fleet 1`.
@@ -152,11 +153,13 @@ The game can export a fight log as a **tab-separated** file with several section
 - Defender mitigation and attacker pierce are computed with `mitigation()` and `pierce_damage_through_bonus()` from `DefenderStats` and `AttackerStats` derived from the fleet rows.
 - Ship type for mitigation weights is inferred from names (e.g. `HOSTILE BATTLESHIP` → Battleship); default Battleship if unknown.
 
-**Crew from export:** Use `export_to_crew(export)` or `export_to_combat_input(export)` to get a `CrewConfiguration` from the summary officer slots. Slot convention: **Officer One** = captain, **Officer Two** = first bridge slot, **Officer Three** = second bridge slot; below_decks = [] unless the format is extended. Officer names are matched to canonical officers (`data/officers/officers.canonical.json`); unknown or empty slots are skipped. Use the returned crew when calling `simulate_combat` so the simulator runs with the same crew as the recorded fight.
+**Crew from export:** Use `export_to_crew(export)` or `export_to_combat_input(export)` to get a `CrewConfiguration` from the summary officer slots. Slot convention: **Officer One** = captain, **Officer Two** = first bridge slot, **Officer Three** = second bridge slot; below_decks = [] unless the format is extended. Officer names are matched to canonical officers (`data/officers/officers.canonical.json`); unknown or empty slots are skipped. Use the returned crew when calling `simulate_combat_with_defender_faction` so the simulator runs with the same crew as the recorded fight.
+
+**Defender faction from export:** Call `defender_faction_for_fight_export(export, faction_slug_override)` in [`src/data/loader.rs`](../src/data/loader.rs). Precedence matches CLI/drift fixtures: explicit slug override wins, then auto lookup from enemy summary `Player Name` + `Ship Level` via upstream display-name translations (`resolve_hostile_by_display_name`), then `OpponentFactionTag::Unknown`. Returns `FightExportDefenderContext` with `defender_faction`, `defender_hull_faction_id`, and `resolved_hostile_id`. Thread `defender_faction` into `simulate_combat_with_defender_faction` and set `SimulationConfig.defender_hull_faction_id` from the context. When multiple bundled hostiles share the same display name and level but disagree on faction, resolution returns an error — pass an override slug. Hostiles whose upstream `faction.id` is unmapped (e.g. Takret Militia) resolve to a hostile id but still yield `Unknown` for ability gating until `hostile.rs` maps that faction.
 
 **Attacker ship type:** Inferred from the player’s **Ship Name** in the summary. Known name → type mappings: `REALTA` → Explorer; names containing `BATTLESHIP`, `EXPLORER`, `INTERCEPTOR`, `SURVEY`, or `ARMADA` use that class. Default is Battleship if unknown. Stored as `attacker_ship_type` on `FightExport` for consistency and future use (e.g. morale primary piercing by ship type).
 
-**Sample:** `fight samples/realta vs takret militia 10.csv` at repo root. Calibration test: `fight_export_realta_vs_takret_militia_10_matches_simulation` in `tests/recorded_fight_calibration_tests.rs` (uses `export_to_combat_input` and passes the crew into `simulate_combat`).
+**Sample:** `fight samples/realta vs takret militia 10.csv` at repo root. Calibration test: `fight_export_realta_vs_takret_militia_10_matches_simulation` in `tests/recorded_fight_calibration_tests.rs` (uses `export_to_combat_input`, `defender_faction_for_fight_export`, and `simulate_combat_with_defender_faction`).
 
 ## Fixtures
 
