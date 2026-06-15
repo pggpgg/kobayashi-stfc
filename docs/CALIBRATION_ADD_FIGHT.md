@@ -51,4 +51,4 @@ Committed output: [CALIBRATION_SCOREBOARD.md](CALIBRATION_SCOREBOARD.md).
 ## Related
 
 - [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) — fight selection (~40 fights)
-- [ROADMAP.md](ROADMAP.md) — snapshot-calibration protocol
+- [NOT_ROADMAP.md](NOT_ROADMAP.md) — snapshot-calibration protocol (not planned)

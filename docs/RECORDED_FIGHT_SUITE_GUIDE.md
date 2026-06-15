@@ -1,6 +1,6 @@
 # Recorded fight suite — curation guide
 
-How to choose **30–50 in-game fights** for a snapshot-bound calibration suite. This implements roadmap item **2** ([ROADMAP.md](ROADMAP.md)) under the [snapshot-calibration protocol](ROADMAP.md#the-snapshot-calibration-protocol-gates-items-2–3).
+How to choose **30–50 in-game fights** for a snapshot-bound calibration suite. **Not on the roadmap** — reference material under [NOT_ROADMAP.md](NOT_ROADMAP.md) § [Snapshot-bound calibration](NOT_ROADMAP.md#snapshot-bound-calibration-simulation-fidelity) and the [snapshot-calibration protocol](NOT_ROADMAP.md#snapshot-calibration-protocol) there.
 
 **Audience:** maintainer running the one-time freeze window (see [HUMAN_INTERVENTION_TASKS.md](HUMAN_INTERVENTION_TASKS.md)).
 
@@ -216,7 +216,7 @@ Defender faction: prefer auto-resolve from export; if `Unknown` (e.g. Takret Mil
 
 ## Scoring & iteration (after recording)
 
-1. **Composite score** — aggregate per-fight deviation (damage, rounds, outcome, end hull/shield) into one number; per-fight sigma report already exists as a CI artifact from mitigation-feedback calibration — promote to a committed scoreboard ([ROADMAP.md](ROADMAP.md) item 2).
+1. **Composite score** — aggregate per-fight deviation (damage, rounds, outcome, end hull/shield) into one number; shipped as [CALIBRATION_SCOREBOARD.md](CALIBRATION_SCOREBOARD.md) + `cargo xtask calibration-scoreboard`.
 2. **Iterate loop** — engine changes accepted when composite improves **and** no non-holdout fight regresses beyond band.
 3. **Holdout** — run full suite including holdout before tagging a release; never tune directly to holdout fights.
 
@@ -239,8 +239,8 @@ Band widths: start loose on first pass (outcome + order-of-magnitude damage), ti
 
 These shorten the sitting but do not substitute for recorded fights:
 
-- [x] Defender faction for TSV imports ([ROADMAP.md](ROADMAP.md) item 3)
-- [ ] Profile-snapshot completeness audit (every combat input capturable in one pass)
+- [x] Defender faction for TSV imports (shipped 2026-06-14)
+- [ ] Profile-snapshot completeness audit (every combat input capturable in one pass) — not on roadmap; see [NOT_ROADMAP.md](NOT_ROADMAP.md)
 - [x] Composite-score harness against existing `drift_*.json` — [`src/calibration/scoreboard.rs`](../src/calibration/scoreboard.rs), `cargo xtask calibration-scoreboard`
 - [x] “Add a real fight log in 10 minutes” — [CALIBRATION_ADD_FIGHT.md](CALIBRATION_ADD_FIGHT.md) + module doc in [calibration_drift_tests.rs](../tests/calibration_drift_tests.rs)
 - [x] Suite manifest schema + CI loader — [`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json), [`src/calibration/recorded.rs`](../src/calibration/recorded.rs) (empty fights until freeze)
@@ -249,7 +249,7 @@ These shorten the sitting but do not substitute for recorded fights:
 
 ## Quick reference links
 
-- [ROADMAP.md](ROADMAP.md) — snapshot-calibration protocol
+- [NOT_ROADMAP.md](NOT_ROADMAP.md) — snapshot-calibration protocol (not planned)
 - [CALIBRATION_SCOREBOARD.md](CALIBRATION_SCOREBOARD.md) — regenerated accuracy scoreboard
 - [CALIBRATION_ADD_FIGHT.md](CALIBRATION_ADD_FIGHT.md) — add a fight workflow
 - [HUMAN_INTERVENTION_TASKS.md](HUMAN_INTERVENTION_TASKS.md) — maintainer-only steps

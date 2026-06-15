@@ -22,7 +22,7 @@ Work the simulator or data pipeline cannot complete automatically: judgment, ups
 ## Calibration
 
 1. **Snapshot freeze + curated fight suite** — needs the maintainer, one uninterrupted sitting.
-  Snapshot the full game state into a Kobayashi profile, freeze all progression (no tiering, leveling, research, or building), record a varied curated set of in-game fights, and export them as the test suite for that snapshot. Gates roadmap items 2–3; the full protocol and rationale (avoiding overfit to mixed-vintage fight records) live in [ROADMAP.md](ROADMAP.md). Scheduling constraint: the freeze blocks STFC event participation, so the window must be chosen deliberately — until then, calibration work proceeds only on synthetic drift fixtures.
+  Snapshot the full game state into a Kobayashi profile, freeze all progression (no tiering, leveling, research, or building), record a varied curated set of in-game fights, and export them as the test suite for that snapshot. **Not on the roadmap** — see [NOT_ROADMAP.md](NOT_ROADMAP.md) § Snapshot-bound calibration; protocol and rationale (avoiding overfit to mixed-vintage fight records) are documented there. Scheduling constraint: the freeze blocks STFC event participation, so the window must be chosen deliberately — until then, calibration work proceeds only on synthetic drift fixtures.
 
 ## Research / CI environment
 

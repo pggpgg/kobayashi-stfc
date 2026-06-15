@@ -4,6 +4,34 @@ This file lists **explicit non-goals**: ideas or enhancements we are **not** tre
 
 ---
 
+## Snapshot-bound calibration (simulation fidelity)
+
+**Not planned:** growing a snapshot-bound recorded-fight corpus, the profile-snapshot completeness audit, or the full snapshot-calibration iterate loop. Tooling shipped in 2026-06 (composite-score harness, suite manifest, recorded runner, import faction resolution) remains in the repo for ad-hoc use; we are not scheduling the maintainer freeze window or corpus growth as roadmap work.
+
+### Calibration scoreboard + recorded-fight corpus growth
+
+Only 20 `drift_*.json` fixtures (mostly synthetic) plus a handful of recorded fights exist. **Shipped (2026-06-14):** composite-score harness ([`src/calibration/scoreboard.rs`](../src/calibration/scoreboard.rs)), `cargo xtask calibration-scoreboard`, committed [CALIBRATION_SCOREBOARD.md](CALIBRATION_SCOREBOARD.md), CI artifact + stale-doc gate, suite manifest ([`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json)), profile-bound recorded runner ([`src/calibration/recorded.rs`](../src/calibration/recorded.rs)), [CALIBRATION_ADD_FIGHT.md](CALIBRATION_ADD_FIGHT.md). **Declined as roadmap work:** populate ~40 snapshot-bound fights; fill three `_TBD_` in-game damage anchors in [OFFICER_STAT_FORMULA.md](OFFICER_STAT_FORMULA.md). Reference material if the stance changes: [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md).
+
+### Profile-snapshot completeness audit
+
+Verify every sim input — including artifacts, syndicate, and exocomp-class bonuses — is capturable in one profile export before a freeze window. Prep checklist: [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md).
+
+### Snapshot-calibration protocol
+
+**Why corpus growth keeps getting parked.** The live game state evolves continuously — research, buildings, artifacts/forbidden tech, officer and ship levels all improve steadily — while recorded fights are frozen snapshots of whatever the state was when each one was captured. Calibrating against a mixed-vintage corpus risks **overfitting the engine to assumptions that are no longer true** (or were never true simultaneously): a "fix" that improves agreement with stale fights can encode a wrong model of the current game. Calibration data is only trustworthy when the profile the sim consumes matches the exact game state that produced the fights.
+
+**The protocol** — one sitting, in a deliberately chosen window (the freeze blocks STFC event participation, which is why it can't happen casually):
+
+1. **Snapshot** — capture the full game state into a Kobayashi profile: research, buildings, artifacts/forbidden tech, officer levels/tiers, ship tiers/levels — everything the engine consumes as input.
+2. **Freeze** — no tiering, leveling, research, building, or any other state-changing progression for the duration of the window.
+3. **Record** — run a varied, curated set of in-game fights (different hostiles, levels, crews, ship classes) and export each one. That set is the **fight test suite for that snapshot**, permanently bound to the frozen profile.
+4. **Score** — a composite accuracy score over the suite (per-fight deviation → aggregate) measuring how faithfully the engine replicates the frozen reality.
+5. **Iterate** — the composite score becomes the objective function for an auto-research self-improvement loop: engine and model changes are evaluated against the frozen suite, accepted when the composite improves without regressing individual fights.
+
+**Prep already shipped:** defender faction for TSV imports; composite-score harness (developable against existing synthetic drift fixtures).
+
+---
+
 ## Buildings / scenarios
 
 - **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
