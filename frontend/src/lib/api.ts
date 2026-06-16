@@ -522,6 +522,8 @@ export interface CrewRecommendation {
   avg_defender_hull_remaining_ci_high: number;
   /** Present when optimization used chain grind mode. */
   chain?: ChainSimulationSummary;
+  /** Closed-form expected hull damage when strategy was linear_eval. */
+  expected_hull_damage?: number;
 }
 
 export interface ChainGrindRequestBody {
@@ -693,6 +695,7 @@ export function formatOptimizePhaseLabel(
     genetic: "Genetic search",
     tiered_scout: "Tiered (scout)",
     tiered_confirm: "Tiered (confirm)",
+    linear_eval: "Linear eval",
   };
   return map[phase] ?? phase.replace(/_/g, " ");
 }
@@ -704,7 +707,11 @@ export async function fetchHeuristics(): Promise<string[]> {
   return data.seeds ?? [];
 }
 
-export type OptimizerStrategyType = "exhaustive" | "genetic" | "tiered";
+export type OptimizerStrategyType =
+  | "exhaustive"
+  | "genetic"
+  | "tiered"
+  | "linear_eval";
 
 /** Optional hooks for `optimizeStart` (CPU admission may queue the request). */
 export type OptimizeStartOptions = {

@@ -819,6 +819,7 @@ pub fn simulate_payload(
         avg_defender_hull_remaining_ci_low: 0.0,
         avg_defender_hull_remaining_ci_high: 0.0,
         chain: None,
+        expected_hull_damage: None,
     });
 
     let wins = (result.win_rate * num_sims as f64).round() as u32;

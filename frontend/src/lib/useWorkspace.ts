@@ -133,6 +133,8 @@ export function useWorkspace() {
   const [lastOptimizeDurationMs, setLastOptimizeDurationMs] = useState<
     number | null
   >(null);
+  const [lastOptimizeEffectiveStrategy, setLastOptimizeEffectiveStrategy] =
+    useState<string | null>(null);
   /** True after last completed optimize reused profile disk cache for tiered scout/confirm. */
   const [cachedWarmStartBadge, setCachedWarmStartBadge] = useState(false);
 
@@ -566,6 +568,9 @@ export function useWorkspace() {
     sseAttemptRef.current = 0;
     if (status.status === "done" && status.result) {
       setRecommendations(status.result.recommendations ?? []);
+      setLastOptimizeEffectiveStrategy(
+        status.result.scenario?.effective_strategy ?? null,
+      );
       saveWarmStartFromRecommendations(
         optimizeWarmStartCacheKey(),
         status.result.recommendations ?? [],
@@ -982,6 +987,7 @@ export function useWorkspace() {
     optimizePreview,
     estimate,
     lastOptimizeDurationMs,
+    lastOptimizeEffectiveStrategy,
     cachedWarmStartBadge,
     // Optimization parameters
     simsPerCrew,

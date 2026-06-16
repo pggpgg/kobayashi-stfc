@@ -288,6 +288,7 @@ pub fn build_from_history_entry(
                 value: crew.win_rate as f32,
             },
             chain: crew.chain.clone(),
+            expected_hull_damage: None,
         })
         .collect();
 
@@ -366,6 +367,7 @@ mod tests {
             avg_defender_hull_remaining_ci_high: 0.0,
             score: crate::optimizer::ranking::RankingScore { value: 0.82 },
             chain: None,
+            expected_hull_damage: None,
         };
 
         scores.update_from_results(&[result], "romulan", "defiant");
@@ -404,6 +406,7 @@ mod tests {
             avg_defender_hull_remaining_ci_high: 0.0,
             score: crate::optimizer::ranking::RankingScore { value: 0.82 },
             chain: None,
+            expected_hull_damage: None,
         };
         scores.update_from_results(std::slice::from_ref(&result), "romulan", "defiant");
         let after_first = scores.get_score("Kirk", "romulan", "defiant");

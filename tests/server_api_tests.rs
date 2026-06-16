@@ -408,6 +408,63 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     );
 }
 
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_linear_eval_returns_expected_hull_damage_without_monte_carlo() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":16,"strategy":"linear_eval"}"#;
+    let response = route_request_optimize(body).await;
+
+    assert_eq!(response.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+
+    assert_eq!(payload["engine"], "linear_eval");
+    assert_eq!(payload["scenario"]["effective_strategy"], "linear_eval");
+    assert_eq!(payload["scenario"]["strategy_auto"], false);
+    assert_eq!(payload["scenario"]["requested_strategy"], "linear_eval");
+
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(
+        !recommendations.is_empty(),
+        "recommendations should not be empty"
+    );
+
+    let first = &recommendations[0];
+    assert!(
+        first["expected_hull_damage"].as_f64().is_some(),
+        "linear_eval rows should include expected_hull_damage"
+    );
+    assert_eq!(first["win_rate"].as_f64(), Some(0.0));
+
+    let approximate = payload["approximate_notes"]
+        .as_array()
+        .expect("approximate_notes should be present");
+    assert!(
+        approximate
+            .iter()
+            .any(|n| n.as_str().unwrap_or("").contains("Linear eval")),
+        "approximate_notes should mention linear eval"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_linear_eval_rejects_chain_grind() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","strategy":"linear_eval","chain":{"enabled":true,"kills_target":3}}"#;
+    let response = route_request_optimize(body).await;
+    assert_eq!(response.status_code, 400);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("validation error json");
+    let errors = payload["errors"].as_array().expect("errors array");
+    assert!(
+        errors.iter().any(|e| e["field"] == "chain"),
+        "chain field should be rejected for linear_eval"
+    );
+}
+
 /// Auto tiered vs exhaustive must use post-constraint candidate count (not raw generation).
 #[serial_test::serial]
 #[tokio::test]

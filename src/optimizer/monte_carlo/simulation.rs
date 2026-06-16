@@ -55,6 +55,8 @@ pub struct SimulationResult {
     pub avg_defender_hull_remaining_ci_high: f64,
     /// When set, `win_rate` is chain primary success rate and `avg_hull_remaining` is the conditional secondary mean.
     pub chain: Option<ChainSimulationSummary>,
+    /// Closed-form expected hull damage when ranked by linear eval (no Monte Carlo).
+    pub expected_hull_damage: Option<f64>,
 }
 
 /// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
@@ -322,6 +324,7 @@ fn run_candidate_chain_monte_carlo(
         avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high,
         chain: Some(summary),
+        expected_hull_damage: None,
     }
 }
 
@@ -556,6 +559,7 @@ fn run_candidate_monte_carlo(
         avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high,
         chain: None,
+        expected_hull_damage: None,
     }
 }
 
@@ -679,6 +683,7 @@ pub fn run_monte_carlo_parallel_deduped(
                 avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
                 avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
                 chain: r.chain.clone(),
+                expected_hull_damage: r.expected_hull_damage,
             },
         );
     }
@@ -769,6 +774,7 @@ pub fn run_monte_carlo_parallel_deduped_chunked(
                     avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
                     avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
                     chain: r.chain.clone(),
+                    expected_hull_damage: r.expected_hull_damage,
                 },
             );
         }
@@ -858,6 +864,7 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
                     avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
                     avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
                     chain: r.chain.clone(),
+                    expected_hull_damage: r.expected_hull_damage,
                 },
             );
         }

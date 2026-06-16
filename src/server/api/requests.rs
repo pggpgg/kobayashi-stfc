@@ -569,6 +569,28 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         }
     }
 
+    let strategy = parse_strategy(request.strategy.as_ref());
+    if strategy == OptimizerStrategy::LinearEval {
+        if request.chain.as_ref().is_some_and(|c| c.enabled) {
+            errors.push(ValidationIssue {
+                field: "chain",
+                messages: vec![
+                    "chain grind is not supported with strategy linear_eval (expected hull damage only)"
+                        .to_string(),
+                ],
+            });
+        }
+        if request.heuristics_only == Some(true) {
+            errors.push(ValidationIssue {
+                field: "heuristics_only",
+                messages: vec![
+                    "heuristics_only is not supported with strategy linear_eval (no Monte Carlo)"
+                        .to_string(),
+                ],
+            });
+        }
+    }
+
     if errors.is_empty() {
         return Ok(());
     }
@@ -780,6 +802,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
     match s {
         Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
         Some(v) if v.trim().eq_ignore_ascii_case("tiered") => OptimizerStrategy::Tiered,
+        Some(v) if v.trim().eq_ignore_ascii_case("linear_eval") => OptimizerStrategy::LinearEval,
         _ => OptimizerStrategy::Exhaustive,
     }
 }

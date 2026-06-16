@@ -39,6 +39,11 @@ function formatPctWithCi(p: number, lo: number, hi: number): string {
   return `${main}\u00a0(${a}\u2013${b})`;
 }
 
+function formatExpectedHullDamage(value: number | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return Math.round(value).toLocaleString();
+}
+
 /** Scenario context for POST /api/compare/crews (Monte Carlo distributions). */
 export interface CompareWorkspaceParams {
   ship: string;
@@ -135,6 +140,8 @@ interface SimResultsProps {
   optimizeThroughput?: number | null;
   optimizePreview?: CrewRecommendation[] | null;
   compareWorkspace?: CompareWorkspaceParams | null;
+  /** Last optimize run effective strategy (from API scenario.effective_strategy). */
+  optimizeEffectiveStrategy?: string | null;
 }
 
 export default memo(function SimResults({
@@ -150,6 +157,7 @@ export default memo(function SimResults({
   optimizeThroughput = null,
   optimizePreview = null,
   compareWorkspace = null,
+  optimizeEffectiveStrategy = null,
 }: SimResultsProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
@@ -168,6 +176,9 @@ export default memo(function SimResults({
     [recommendations],
   );
   const chainMode = chainMeta != null;
+  const linearEvalMode =
+    optimizeEffectiveStrategy === "linear_eval" ||
+    recommendations.some((r) => r.expected_hull_damage != null);
   const chainWinHeader = chainMode
     ? `P(${chainMeta.kills_target}-kill)`
     : "Win %";
@@ -180,17 +191,26 @@ export default memo(function SimResults({
   const chainR1Header = chainMode ? "R1 (1st link)" : "R1 %";
   const numericTableHeaders = useMemo(
     () =>
-      chainMode
-        ? [
-            chainWinHeader,
-            "Stall %",
-            "Loss %",
-            chainR1Header,
-            chainHullHeader,
-            "Enemy hull %",
-          ]
-        : ["Win %", "Stall %", "Loss %", "R1 %", "Your hull %", "Enemy hull %"],
-    [chainMode, chainWinHeader, chainR1Header, chainHullHeader],
+      linearEvalMode
+        ? ["Expected hull damage"]
+        : chainMode
+          ? [
+              chainWinHeader,
+              "Stall %",
+              "Loss %",
+              chainR1Header,
+              chainHullHeader,
+              "Enemy hull %",
+            ]
+          : [
+              "Win %",
+              "Stall %",
+              "Loss %",
+              "R1 %",
+              "Your hull %",
+              "Enemy hull %",
+            ],
+    [linearEvalMode, chainMode, chainWinHeader, chainR1Header, chainHullHeader],
   );
 
   const total = recommendations.length;
@@ -227,7 +247,8 @@ export default memo(function SimResults({
     [selected],
   );
   const totalSelected = selected.size;
-  const showCompare = selectedList.length >= 2 && selectedList.length <= 5;
+  const showCompare =
+    !linearEvalMode && selectedList.length >= 2 && selectedList.length <= 5;
 
   const runCompareDistributions = useCallback(async () => {
     if (!compareWorkspace || !showCompare) return;
@@ -447,6 +468,22 @@ export default memo(function SimResults({
 
       {hasRecs && (
         <>
+          {linearEvalMode && (
+            <p
+              style={{
+                margin: "0 0 0.5rem",
+                padding: "0.5rem 0.65rem",
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+                background: "rgba(232,149,46,0.08)",
+                border: "1px solid var(--border)",
+                borderRadius: 6,
+              }}
+            >
+              Approximate ranking by expected hull damage — win rates were not
+              simulated. Use tiered or exhaustive to confirm crews in combat.
+            </p>
+          )}
           <p
             style={{
               margin: "0 0 0.5rem",
@@ -454,7 +491,12 @@ export default memo(function SimResults({
               color: "var(--text-muted)",
             }}
           >
-            {chainMode ? (
+            {linearEvalMode ? (
+              <>
+                Rows sorted by closed-form expected hull damage over the fight
+                length. Compare is disabled (requires Monte Carlo).
+              </>
+            ) : chainMode ? (
               <>
                 Select 2–5 rows to compare. <strong>Chain grind:</strong>{" "}
                 {chainMeta.kills_target} consecutive wins vs the same hostile;
@@ -749,6 +791,19 @@ export default memo(function SimResults({
                           </td>
                         );
                       })}
+                      {linearEvalMode ? (
+                        <td
+                          style={{
+                            padding: TABLE_NUM_PAD,
+                            textAlign: "right",
+                            whiteSpace: "nowrap",
+                            fontVariantNumeric: "tabular-nums",
+                          }}
+                        >
+                          {formatExpectedHullDamage(r.expected_hull_damage)}
+                        </td>
+                      ) : (
+                        <>
                       <td
                         style={{
                           padding: TABLE_NUM_PAD,
@@ -833,6 +888,8 @@ export default memo(function SimResults({
                           r.avg_defender_hull_remaining_ci_high,
                         )}
                       </td>
+                        </>
+                      )}
                     </tr>
                   );
                 })}

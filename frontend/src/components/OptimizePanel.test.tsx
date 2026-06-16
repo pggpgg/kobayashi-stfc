@@ -248,4 +248,14 @@ describe("OptimizePanel", () => {
     render(<OptimizePanel {...baseProps} cachedWarmStartBadge={true} />);
     expect(screen.getByText("Cached warm start")).toBeTruthy();
   });
+
+  it("shows linear eval strategy and hides tiered fields", () => {
+    render(<OptimizePanel {...baseProps} optimizerStrategy="linear_eval" />);
+    expect(
+      screen.getByRole("option", { name: /Linear eval \(expected damage\)/i }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Tiered scout sims / crew (optional)")).toBeNull();
+    expect(screen.queryByText(/Chain grind/)).toBeNull();
+    expect(screen.queryByText("Learned pair prior")).toBeNull();
+  });
 });

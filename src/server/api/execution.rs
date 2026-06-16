@@ -63,6 +63,7 @@ fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
         OptimizerStrategy::Exhaustive => "exhaustive",
         OptimizerStrategy::Genetic => "genetic",
         OptimizerStrategy::Tiered => "tiered",
+        OptimizerStrategy::LinearEval => "linear_eval",
     }
 }
 
@@ -190,6 +191,9 @@ pub struct CrewRecommendation {
     pub avg_defender_hull_remaining_ci_high: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chain: Option<crate::optimizer::ChainSimulationSummary>,
+    /// Closed-form expected hull damage when ranked by linear eval (no Monte Carlo).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expected_hull_damage: Option<f64>,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -227,6 +231,7 @@ fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
         avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
         chain: r.chain.clone(),
+        expected_hull_damage: r.expected_hull_damage,
     }
 }
 
@@ -596,6 +601,7 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
         avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
         chain: r.chain.clone(),
+        expected_hull_damage: r.expected_hull_damage,
     }
 }
 
@@ -893,7 +899,11 @@ fn gather_optimize_simulation_results(
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
 
     let mut all_results: Vec<SimulationResult> =
-        if heuristics_seeds_nonempty && !is_seeded_genetic && !fast_discovery {
+        if heuristics_seeds_nonempty
+            && !is_seeded_genetic
+            && !fast_discovery
+            && strategy != OptimizerStrategy::LinearEval
+        {
             let h_total = h_candidates.len() as u32;
             sink.on_heuristics_start(h_total);
             let h_len = h_candidates.len();
@@ -1057,11 +1067,13 @@ fn gather_optimize_simulation_results(
         }
         let pf = outcome.analytical_prefilter;
         // Update and persist learned officer scores from the just-completed ranked results.
-        if let Some(pid) = profile_id {
-            if !outcome.ranked.is_empty() {
-                let mut scores = optimize_history::load_officer_scores(pid);
-                scores.update_from_results(&outcome.ranked, &request.hostile, &request.ship);
-                let _ = optimize_history::save_officer_scores(pid, &scores);
+        if strategy != OptimizerStrategy::LinearEval {
+            if let Some(pid) = profile_id {
+                if !outcome.ranked.is_empty() {
+                    let mut scores = optimize_history::load_officer_scores(pid);
+                    scores.update_from_results(&outcome.ranked, &request.hostile, &request.ship);
+                    let _ = optimize_history::save_officer_scores(pid, &scores);
+                }
             }
         }
         all_results.extend(
@@ -1212,12 +1224,20 @@ fn build_optimize_response(
             OptimizerStrategy::Exhaustive => "optimizer_v1",
             OptimizerStrategy::Genetic => "genetic",
             OptimizerStrategy::Tiered => "tiered",
+            OptimizerStrategy::LinearEval => "linear_eval",
         }
     };
-    let mut notes = vec![
-        "Results are deterministic for the same ship, hostile, simulation count, and seed.",
-        "Per-crew 95% intervals: Wilson score for win/stall/loss/R1-kill rates; normal approximation for mean hull score per trial (hull fraction on wins, 0 on losses).",
-    ];
+    let mut notes: Vec<&'static str> = if matches!(meta.strategy, OptimizerStrategy::LinearEval) {
+        vec![
+            "Linear eval ranks crews by closed-form expected hull damage over the fight length; win rates were not simulated.",
+            "Results are deterministic for the same ship, hostile, and seed (crew generation only).",
+        ]
+    } else {
+        vec![
+            "Results are deterministic for the same ship, hostile, simulation count, and seed.",
+            "Per-crew 95% intervals: Wilson score for win/stall/loss/R1-kill rates; normal approximation for mean hull score per trial (hull fraction on wins, 0 on losses).",
+        ]
+    };
     if meta.is_seeded_genetic {
         notes.insert(0, "GA population seeded with heuristics crews.");
     } else if meta.fast_discovery {
@@ -1292,6 +1312,12 @@ fn build_optimize_response(
             }
         }
         approximate_notes.push(s);
+    }
+    if matches!(meta.strategy, OptimizerStrategy::LinearEval) {
+        approximate_notes.push(
+            "Linear eval: rankings use closed-form expected hull damage; win rates were not simulated."
+                .to_string(),
+        );
     }
 
     let mut warnings = Vec::new();

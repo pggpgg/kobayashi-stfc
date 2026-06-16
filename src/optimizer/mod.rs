@@ -6,6 +6,7 @@ pub mod crew_generator;
 pub(crate) mod exhaustive_adaptive;
 pub mod genetic;
 pub mod learning_signals;
+pub mod linear_eval;
 pub mod matchup_priors;
 pub mod monte_carlo;
 pub mod officer_learning;
@@ -87,7 +88,7 @@ fn scale_keep_for_per_crew_sims(keep: usize, ref_sims: usize, actual_sims: usize
     keep.saturating_mul(numer) / denom
 }
 
-fn scenario_support_buff_request<'a>(
+pub(crate) fn scenario_support_buff_request<'a>(
     scenario: &'a OptimizationScenario<'a>,
 ) -> crate::data::support_buffs::SupportBuffScenarioRequest<'a> {
     crate::data::support_buffs::SupportBuffScenarioRequest::from_optional_slices(
@@ -338,7 +339,7 @@ pub struct OptimizeRunOutcome {
 pub struct OptimizeProgressTick {
     pub crews_done: u32,
     pub total_crews: u32,
-    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`, `exhaustive_scout`, `exhaustive_confirm`.
+    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`, `exhaustive_scout`, `exhaustive_confirm`, `linear_eval`.
     pub phase: &'static str,
     pub partial_top: Option<Vec<RankedCrewResult>>,
 }
@@ -353,6 +354,8 @@ pub enum OptimizerStrategy {
     Genetic,
     /// Two-pass: cheap scouting sims then full MC on top K.
     Tiered,
+    /// Closed-form expected hull damage only; no Monte Carlo.
+    LinearEval,
 }
 
 #[derive(Debug, Clone)]
@@ -702,6 +705,7 @@ pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewR
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive(scenario),
         OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true, || true),
         OptimizerStrategy::Tiered => optimize_scenario_exhaustive(scenario), // Tiered requires registry; fallback when none
+        OptimizerStrategy::LinearEval => optimize_scenario_exhaustive(scenario), // LinearEval requires registry; fallback when none
     }
 }
 
@@ -804,6 +808,9 @@ pub fn optimize_scenario_with_registry(
             optimize_scenario_genetic_inner(Some(registry), scenario, |_, _, _| true, || true)
         }
         OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
+        OptimizerStrategy::LinearEval => {
+            linear_eval::run_linear_eval_with_registry(registry, scenario, |_| true, || true)
+        }
     }
 }
 
@@ -1009,6 +1016,49 @@ where
     match scenario.strategy {
         OptimizerStrategy::Tiered => {
             // No registry; fall back to exhaustive with progress
+            let scenario_ex = OptimizationScenario {
+                ship: scenario.ship,
+                hostile: scenario.hostile,
+                ship_tier: scenario.ship_tier,
+                ship_level: scenario.ship_level,
+                simulation_count: scenario.simulation_count,
+                seed: scenario.seed,
+                max_candidates: scenario.max_candidates,
+                strategy: OptimizerStrategy::Exhaustive,
+                below_decks_pool_mode: scenario.below_decks_pool_mode,
+                seed_population: scenario.seed_population.clone(),
+                profile_id: scenario.profile_id,
+                tiered_scout_sims: scenario.tiered_scout_sims,
+                tiered_top_k: scenario.tiered_top_k,
+                tiered_scout_uniform: scenario.tiered_scout_uniform,
+                tiered_confirm_budget_cap_mult: scenario.tiered_confirm_budget_cap_mult,
+                tiered_scout_priority_queue: scenario.tiered_scout_priority_queue,
+                tiered_pq_minimal_scout: scenario.tiered_pq_minimal_scout,
+                tiered_pq_selection_mult: scenario.tiered_pq_selection_mult,
+                tiered_pq_abandon_margin: scenario.tiered_pq_abandon_margin,
+                exhaustive_scout_sims: scenario.exhaustive_scout_sims,
+                exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
+                analytical_prefilter_keep: scenario.analytical_prefilter_keep,
+                prune_analytical_hull_fraction: scenario.prune_analytical_hull_fraction,
+                prune_static_gate_max_fraction: scenario.prune_static_gate_max_fraction,
+                below_decks_slots: scenario.below_decks_slots,
+                constraints: scenario.constraints.clone(),
+                support_buffs: scenario.support_buffs.clone(),
+                defender_support_buffs: scenario.defender_support_buffs.clone(),
+                defender_alliance_debuffs: scenario.defender_alliance_debuffs.clone(),
+                chain_grind: scenario.chain_grind.clone(),
+                defender_opponent: scenario.defender_opponent,
+                player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
+                pvp: scenario.pvp.clone(),
+                warm_start: scenario.warm_start.clone(),
+                prior_reference_crews: scenario.prior_reference_crews.clone(),
+                optimize_cache_key: scenario.optimize_cache_key.clone(),
+                enable_learned_pair_prior: scenario.enable_learned_pair_prior,
+                learned_officer_scores: scenario.learned_officer_scores.clone(),
+            };
+            optimize_scenario_with_progress(&scenario_ex, on_progress)
+        }
+        OptimizerStrategy::LinearEval => {
             let scenario_ex = OptimizationScenario {
                 ship: scenario.ship,
                 hostile: scenario.hostile,
@@ -1577,6 +1627,22 @@ where
             exhaustive_adaptive_budget: None,
             optimize_history_confirm_hits: 0,
         },
+        OptimizerStrategy::LinearEval => {
+            let ranked = linear_eval::run_linear_eval_with_registry(
+                registry,
+                scenario,
+                &mut on_progress,
+                &mut eval_should_continue,
+            );
+            OptimizeRunOutcome {
+                ranked,
+                analytical_prefilter: None,
+                tiered_resolved: None,
+                tiered_scout_budget: None,
+                exhaustive_adaptive_budget: None,
+                optimize_history_confirm_hits: 0,
+            }
+        }
     }
 }
 

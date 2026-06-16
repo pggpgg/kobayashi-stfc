@@ -245,4 +245,34 @@ describe("SimResults", () => {
     // The 6th checkbox should not be checked
     expect((checkboxes[5] as HTMLInputElement).checked).toBe(false);
   });
+
+  it("linear eval mode shows expected hull damage column only", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Kirk",
+          bridge: ["Spock", "McCoy"],
+          below_decks: ["Scotty", "Sulu", "Uhura"],
+          win_rate: 0,
+          stall_rate: 0,
+          loss_rate: 0,
+          avg_hull_remaining: 0,
+        }),
+        expected_hull_damage: 125_000,
+      },
+    ];
+    render(
+      <SimResults
+        {...baseProps}
+        recommendations={recs}
+        optimizeEffectiveStrategy="linear_eval"
+      />,
+    );
+    expect(screen.getByText("Expected hull damage")).toBeTruthy();
+    expect(screen.queryByText("Win %")).toBeNull();
+    expect(screen.getByText("125,000")).toBeTruthy();
+    expect(
+      screen.getByText(/Approximate ranking by expected hull damage/i),
+    ).toBeTruthy();
+  });
 });

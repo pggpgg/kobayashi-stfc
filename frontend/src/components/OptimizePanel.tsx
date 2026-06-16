@@ -428,8 +428,22 @@ export default memo(function OptimizePanel({
           <option value="exhaustive">Exhaustive</option>
           <option value="genetic">Genetic</option>
           <option value="tiered">Tiered (scout → confirm)</option>
+          <option value="linear_eval">Linear eval (expected damage)</option>
         </select>
+        {optimizerStrategy === "linear_eval" && (
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: "0.72rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            Fast approximate ranking by closed-form expected hull damage. Does not
+            simulate win rates or multi-round proc variance.
+          </p>
+        )}
       </div>
+      {optimizerStrategy !== "linear_eval" && (
       <label style={checkboxLabelStyle}>
         <input
           type="checkbox"
@@ -442,6 +456,7 @@ export default memo(function OptimizePanel({
           <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
         </span>
       </label>
+      )}
 
       {optimizerStrategy === "tiered" && (
         <>
@@ -536,6 +551,7 @@ export default memo(function OptimizePanel({
         </>
       )}
 
+      {optimizerStrategy !== "linear_eval" && (
       <div>
         <label style={checkboxLabelStyle}>
           <input
@@ -612,9 +628,12 @@ export default memo(function OptimizePanel({
           </>
         )}
       </div>
+      )}
 
       <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>
-        {chainGrindEnabled
+        {optimizerStrategy === "linear_eval"
+          ? "Ranking: descending closed-form expected hull damage (approximate; no Monte Carlo)."
+          : chainGrindEnabled
           ? "Ranking: chain success rate first, then secondary among successful trials."
           : "Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking)."}
       </p>

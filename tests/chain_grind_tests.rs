@@ -121,6 +121,7 @@ fn simulation_result_chain(
             secondary_ci_high: 1.0,
             n_primary_successes: 1,
         }),
+        expected_hull_damage: None,
     }
 }
 

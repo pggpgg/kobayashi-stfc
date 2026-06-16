@@ -662,7 +662,7 @@ Modeling every individual research node is a huge data entry burden and may not 
 
 ## 6. Optimizer Strategies
 
-**Current implementation:** The optimizer supports three strategies, chosen per request (and sometimes by the server when `strategy` is omitted — see below). **Exhaustive:** full (or `max_candidates`-capped) candidate set from the crew generator, full `sims` Monte Carlo per crew, then rank (`strategy: "exhaustive"`). **Genetic:** `src/optimizer/genetic.rs` for very large spaces (`strategy: "genetic"`). **Tiered:** `src/optimizer/tiered.rs` — scout each candidate with fewer simulations (server default **500** per crew, overridable with `tiered_scout_sims`), then run the request’s full `sims` on the top **K** (default **20**, overridable with `tiered_top_k`) (`strategy: "tiered"`). Tiered uses the request’s `ship_tier` / `ship_level` when building the shared scenario. Optional **`warm_start_crews`** prepends deduped crews before generated candidates (used by the SPA for local warm-start).
+**Current implementation:** The optimizer supports four strategies, chosen per request (and sometimes by the server when `strategy` is omitted — see below). **Exhaustive:** full (or `max_candidates`-capped) candidate set from the crew generator, full `sims` Monte Carlo per crew, then rank (`strategy: "exhaustive"`). **Genetic:** `src/optimizer/genetic.rs` for very large spaces (`strategy: "genetic"`). **Tiered:** `src/optimizer/tiered.rs` — scout each candidate with fewer simulations (server default **500** per crew, overridable with `tiered_scout_sims`), then run the request’s full `sims` on the top **K** (default **20**, overridable with `tiered_top_k`) (`strategy: "tiered"`). **Linear eval:** `src/optimizer/linear_eval.rs` — rank all generated candidates by closed-form expected hull damage only; no Monte Carlo (`strategy: "linear_eval"`). Tiered uses the request’s `ship_tier` / `ship_level` when building the shared scenario. Optional **`warm_start_crews`** prepends deduped crews before generated candidates (used by the SPA for local warm-start).
 
 **Pipeline (non-genetic, registry-backed):** `CrewGenerator` → optional **pool narrowing** from `CrewSearchConstraints` (`narrow_officer_pools_for_constraints` in `src/optimizer/crew_generator.rs`) → enumerate candidates → **`prepend_warm_start_dedupe`** → **`filter_candidates`** → optional **analytical prefilter** (`sort_and_analytical_prefilter` in `src/optimizer/mod.rs`) → Monte Carlo or tiered scout/confirm. Group constraints are enforced in **`filter_candidates`** after generation.
 
@@ -681,6 +681,16 @@ Reduce combat to closed-form math: expected damage per round given stats. Skip s
 **Matchup priors (non-genetic paths):** Before optional truncation (`analytical_prefilter_keep` / auto), the optimizer sorts candidates by a composite score: closed-form [`expected_damage`](src/optimizer/analytical.rs) plus small priors from [`src/optimizer/matchup_priors.rs`](src/optimizer/matchup_priors.rs) (static LCARS gate hints vs the defender, encounter heuristics, overlap with client warm-start, persisted `optimize_history` reference crews when `optimize_cache_key` matches — reference crews are **not** prepended to the candidate list — and a **captain–bridge synergy tier** bump from canonical `Officer::group` + `officer`-slot abilities via [`bridge_synergy_prefilter_score`](src/data/heuristics.rs)). The **genetic** strategy does not use this analytical sort.
 
 **Hard pruning** (dropping candidates solely because static gates look “failed”) is intentionally not the default: it can remove true optima when conditions are unknown or abilities are mis-ranked analytically; a future explicit API flag could revisit this.
+
+### 6.2.1 Linear eval (implemented)
+
+**Strategy:** `linear_eval` (`src/optimizer/linear_eval.rs`). Generates the same candidate crews as exhaustive (warm-start, constraints, pool mode), evaluates each with [`expected_damage`](src/optimizer/analytical.rs), and returns a ranked list — **no Monte Carlo**, no analytical prefilter truncation, no matchup priors in the sort key (pure expected hull damage).
+
+**Use case:** Fast “which crew deals the most damage?” scouting over large officer pools before running tiered or exhaustive confirmation.
+
+**API:** Response `engine` is `"linear_eval"`; each recommendation may include `expected_hull_damage`. Win-rate fields are zero. `chain` and `heuristics_only` are rejected at validation. Learned officer scores and optimize_history confirmation reuse are skipped.
+
+**Known limitations:** Same as §6.2 analytical proxy — static stats only; ignores per-round dynamic abilities, morale, burning, defender return fire, and proc/crit variance beyond expectation. Not a win-rate predictor.
 
 ### 6.3 Tiered Simulation (implemented)
 

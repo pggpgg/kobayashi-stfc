@@ -926,6 +926,7 @@ mod workload_tests {
                 value: (win_rate * 0.8 + 0.5 * 0.2) as f32,
             },
             chain: None,
+            expected_hull_damage: None,
         }
     }
 

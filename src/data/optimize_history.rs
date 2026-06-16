@@ -183,6 +183,7 @@ impl OptimizeHistoryCrewRecord {
             avg_defender_hull_remaining_ci_low: self.avg_defender_hull_remaining_ci_low,
             avg_defender_hull_remaining_ci_high: self.avg_defender_hull_remaining_ci_high,
             chain: self.chain.clone(),
+            expected_hull_damage: None,
         }
     }
 }
@@ -349,6 +350,7 @@ fn crew_record_to_ranked_anchor(r: &OptimizeHistoryCrewRecord) -> RankedCrewResu
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
         score: RankingScore { value: score_val },
         chain: r.chain.clone(),
+        expected_hull_damage: None,
     }
 }
 
@@ -574,6 +576,7 @@ fn ranked_to_simulation(r: &RankedCrewResult) -> SimulationResult {
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
         chain: r.chain.clone(),
         trials_run: r.trials_run,
+        expected_hull_damage: r.expected_hull_damage,
     }
 }
 
@@ -902,6 +905,7 @@ mod tests {
             avg_defender_hull_remaining_ci_low: 0.0,
             avg_defender_hull_remaining_ci_high: 0.0,
             chain: None,
+            expected_hull_damage: None,
         }
     }
 

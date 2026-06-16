@@ -1567,6 +1567,14 @@ components:
           items:
             type: object
             additionalProperties: true
+            description: >
+              Ranked crew row. Monte Carlo strategies populate win/stall/loss rates and CIs.
+              `linear_eval` sets `expected_hull_damage` and leaves win-rate fields at zero.
+            properties:
+              expected_hull_damage:
+                type: number
+                description: >
+                  Closed-form expected total hull damage over the fight (linear_eval only).
         duration_ms:
           type: integer
         notes:
@@ -2323,6 +2331,11 @@ components:
           type: integer
         strategy:
           type: string
+          description: >
+            Optimizer strategy: `exhaustive` (full Monte Carlo on candidates),
+            `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC),
+            or `linear_eval` (closed-form expected hull damage only; no Monte Carlo).
+            When omitted, server auto-picks tiered vs exhaustive from candidate count.
         below_decks_pool_mode:
           type: string
           enum: [strict, scored, relaxed]

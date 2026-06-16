@@ -202,6 +202,7 @@ export default function Workspace() {
               optimizeEtaSeconds={ws.optimizeEtaSeconds}
               optimizeThroughput={ws.optimizeThroughput}
               optimizePreview={ws.optimizePreview}
+              optimizeEffectiveStrategy={ws.lastOptimizeEffectiveStrategy}
               compareWorkspace={compareWorkspace}
             />
           </div>

@@ -2354,6 +2354,8 @@ export interface components {
             id: string;
             name: string;
             sync_token: string;
+            /** @description Present and true for the index default profile entry. */
+            is_default?: boolean;
         };
         CreateProfileRequest: {
             id?: string;
@@ -2459,9 +2461,12 @@ export interface components {
             scenario: {
                 [key: string]: unknown;
             };
-            recommendations: {
+            recommendations: ({
+                /** @description Closed-form expected total hull damage over the fight (linear_eval only). */
+                expected_hull_damage?: number;
+            } & {
                 [key: string]: unknown;
-            }[];
+            })[];
             duration_ms?: number;
             notes: string[];
             approximate_notes?: string[];
@@ -2798,6 +2803,7 @@ export interface components {
             /** Format: int64 */
             seed?: number;
             max_candidates?: number;
+            /** @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), or `linear_eval` (closed-form expected hull damage only; no Monte Carlo). When omitted, server auto-picks tiered vs exhaustive from candidate count. */
             strategy?: string;
             /**
              * @description Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers. `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power. Unknown values fall back to strict.
@@ -2809,6 +2815,8 @@ export interface components {
             fast_discovery?: boolean;
             below_decks_strategy?: string;
             analytical_prefilter_keep?: number;
+            /** @description Analytical prefilter only. When false, disables learned pair co-occurrence prior from warm-start/history refs. Omitted defaults to enabled (backward compatible). */
+            enable_learned_pair_prior?: boolean;
             tiered_scout_sims?: number;
             tiered_top_k?: number;
             tiered_scout_uniform?: boolean;
