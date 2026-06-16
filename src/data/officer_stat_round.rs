@@ -7,13 +7,13 @@ use std::collections::HashMap;
 
 use crate::combat::abilities::{CombatContext, TimingWindow};
 use crate::combat::condition::evaluate_ability_condition;
-use crate::combat::CrewOfficerStatTotals;
+use crate::combat::{Combatant, CrewOfficerStatTotals};
 use crate::data::profile::{OfficerStatConditionContext, OfficerStatRuntimeBonus, PlayerProfile};
 use crate::data::ship::{OfficerBonusTable, ShipRecord};
 use crate::lcars::{DynamicOfficerStatContribution, PendingOfficerStatContribution};
 
 /// Per-round delta from a dynamic officer-stat gate relative to the fight-setup baseline.
-#[derive(Debug, Clone, Copy, Default, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct OfficerStatRoundDelta {
     /// Added to outbound `pre_attack_multiplier`: `(1+active.attack_bonus)/(1+baseline.attack_bonus) - 1`.
     pub attack_pre_mult_add: f64,
@@ -22,6 +22,18 @@ pub struct OfficerStatRoundDelta {
     pub defense_dodge_add: f64,
     /// Multiplier on max hull/shield HP for survivability: `(1+active.health_bonus)/(1+baseline.health_bonus)`.
     pub health_max_mult: f64,
+}
+
+impl Default for OfficerStatRoundDelta {
+    fn default() -> Self {
+        Self {
+            attack_pre_mult_add: 0.0,
+            defense_armor_add: 0.0,
+            defense_shield_deflection_add: 0.0,
+            defense_dodge_add: 0.0,
+            health_max_mult: 1.0,
+        }
+    }
 }
 
 impl OfficerStatRoundDelta {
@@ -179,6 +191,56 @@ impl OfficerStatRoundContext {
     }
 }
 
+/// Scale attacker max hull/shield HP for one round of a dynamic officer-stat health gate.
+///
+/// Uses the proportional assumption documented in `docs/OFFICER_STAT_FORMULA.md` § Phase 4d:
+/// current remaining hull/shield scale with max so HP fraction is preserved when the gate turns on.
+///
+/// Returns the pre-apply max hull HP so the combat loop can restore base max at round end while
+/// keeping absolute current HP (incoming damage during the gate is not re-scaled on revert).
+pub(crate) fn apply_health_max_mult_to_attacker(
+    attacker: &mut Combatant,
+    mult: f64,
+    total_attacker_hull_damage: &mut f64,
+    attacker_shield_remaining: &mut f64,
+) -> Option<f64> {
+    if !mult.is_finite() || (mult - 1.0).abs() <= f64::EPSILON {
+        return None;
+    }
+    let base_max_hull = attacker.hull_health;
+    attacker.hull_health *= mult;
+    *total_attacker_hull_damage *= mult;
+    if attacker.shield_health > 0.0 {
+        attacker.shield_health *= mult;
+        *attacker_shield_remaining *= mult;
+    }
+    Some(base_max_hull)
+}
+
+/// Undo a prior [`apply_health_max_mult_to_attacker`] at round end: restore base max hull while
+/// preserving absolute remaining HP/shield from the gated round.
+pub(crate) fn revert_health_max_mult_on_attacker(
+    attacker: &mut Combatant,
+    base_max_hull: f64,
+    mult: f64,
+    total_attacker_hull_damage: &mut f64,
+    attacker_shield_remaining: &mut f64,
+) {
+    if !mult.is_finite() || (mult - 1.0).abs() <= f64::EPSILON {
+        return;
+    }
+    let hull_remaining = (attacker.hull_health - *total_attacker_hull_damage).max(0.0);
+    attacker.hull_health = base_max_hull.max(0.0);
+    *total_attacker_hull_damage = (base_max_hull - hull_remaining).max(0.0);
+
+    if attacker.shield_health > 0.0 {
+        let shield_remaining = attacker_shield_remaining.max(0.0);
+        let base_max_shield = attacker.shield_health / mult;
+        attacker.shield_health = base_max_shield.max(0.0);
+        *attacker_shield_remaining = shield_remaining.min(base_max_shield);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -266,5 +328,39 @@ mod tests {
 
         let delta = ctx.delta_for_timing(&combat_ctx, TimingWindow::RoundStart);
         assert!(delta.is_effectively_zero());
+    }
+
+    #[test]
+    fn health_max_mult_apply_revert_preserves_hull_fraction() {
+        let mut attacker = Combatant {
+            id: "att".into(),
+            hull_health: 10_000.0,
+            shield_health: 4_000.0,
+            ..Combatant::default()
+        };
+        let mut hull_damage = 2_500.0;
+        let mut shield_rem = 1_000.0;
+        let before_frac = (attacker.hull_health - hull_damage) / attacker.hull_health;
+
+        assert!(apply_health_max_mult_to_attacker(
+            &mut attacker,
+            1.25,
+            &mut hull_damage,
+            &mut shield_rem,
+        )
+        .is_some());
+        let mid_frac = (attacker.hull_health - hull_damage) / attacker.hull_health;
+        assert!((mid_frac - before_frac).abs() < 1e-9);
+
+        hull_damage += 2_000.0;
+        revert_health_max_mult_on_attacker(
+            &mut attacker,
+            10_000.0,
+            1.25,
+            &mut hull_damage,
+            &mut shield_rem,
+        );
+        assert!((attacker.hull_health - 10_000.0).abs() < 1e-9);
+        assert!((attacker.hull_health - hull_damage - 7_375.0).abs() < 1e-9);
     }
 }

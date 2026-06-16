@@ -106,21 +106,13 @@ fn test_battleship() -> ShipRecord {
 
 fn kirk_officer_stat_round(buff: &kobayashi::lcars::BuffSet) -> Option<OfficerStatRoundContext> {
     let ship = test_battleship();
-    // Ensure non-zero crew rating so +40% crew_mult can cross a breakpoint tier in the test table.
-    let totals = if buff.officer_stat_totals.attack > 0.0 {
-        buff.officer_stat_totals
-    } else {
-        CrewOfficerStatTotals {
-            attack: 200.0,
-            defense: 200.0,
-            health: 200.0,
-        }
+    // Fixed totals so all three breakpoint tables cross together in synthetic tests.
+    let totals = CrewOfficerStatTotals {
+        attack: 200.0,
+        defense: 200.0,
+        health: 200.0,
     };
-    let bridge = if buff.bridge_officer_stat_totals.attack > 0.0 {
-        buff.bridge_officer_stat_totals
-    } else {
-        totals
-    };
+    let bridge = totals;
     OfficerStatRoundContext::try_from_ship_and_buffs(
         &ship,
         &PlayerProfile::default(),
@@ -362,11 +354,78 @@ fn kirk_leader_duration_round_range_gates_bonus_to_first_round() {
         !active_r1.is_effectively_zero(),
         "round 1 + morale should apply Leader 3-axis bonus"
     );
+    assert!(
+        active_r1.attack_pre_mult_add.abs() > f64::EPSILON,
+        "attack axis should cross a breakpoint when morale gates +40% officer stat all"
+    );
+    assert!(
+        (active_r1.health_max_mult - 1.0).abs() > f64::EPSILON,
+        "health axis should cross a breakpoint when morale gates +40% officer stat all"
+    );
+    assert!(
+        active_r1.defense_armor_add.abs() > f64::EPSILON,
+        "defense axis should cross a breakpoint on battleship when morale gates +40% officer stat all"
+    );
 
     combat_ctx.round_index = 2;
     let active_r2 = ctx.delta_for_timing(&combat_ctx, TimingWindow::RoundStart);
     assert!(
         active_r2.is_effectively_zero(),
         "round 2 should not apply duration-1 Leader bonus even with morale"
+    );
+}
+
+#[test]
+fn kirk_leader_morale_gated_survivability_requires_morale_on_counter_fire() {
+    let Some(buff) = resolve_kirk_buff_set() else {
+        return;
+    };
+    let Some(osr_ctx) = kirk_officer_stat_round(&buff) else {
+        panic!("expected officer stat round context for Kirk + test ship");
+    };
+
+    let mut attacker = minimal_attacker();
+    attacker.hull_health = 80_000.0;
+    attacker.armor = 0.0;
+    let mut defender = minimal_defender();
+    defender.hull_health = 5_000_000.0;
+    defender.mitigation = 0.0;
+    let config = sim_config(1);
+
+    let setup_no_morale = build_combat_setup_with_officer_stat(
+        &attacker,
+        &defender,
+        &config,
+        &crew_with_optional_morale(&buff, false),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Explorer,
+        true,
+        false,
+        &CrewConfiguration::default(),
+        Some(osr_ctx.clone()),
+    );
+    let setup_with_morale = build_combat_setup_with_officer_stat(
+        &attacker,
+        &defender,
+        &config,
+        &crew_with_optional_morale(&buff, true),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Explorer,
+        true,
+        false,
+        &CrewConfiguration::default(),
+        Some(osr_ctx),
+    );
+
+    let without = simulate_combat_from_setup(&setup_no_morale, config.seed);
+    let with = simulate_combat_from_setup(&setup_with_morale, config.seed);
+
+    assert!(
+        with.attacker_hull_remaining > without.attacker_hull_remaining,
+        "round-1 Leader health/defense axes should improve survivability under counter-fire (with={}, without={})",
+        with.attacker_hull_remaining,
+        without.attacker_hull_remaining
     );
 }

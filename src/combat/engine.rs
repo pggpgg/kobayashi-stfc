@@ -439,6 +439,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         shots_bonus_entries: Vec::new(),
         defender_shots_bonus_entries: Vec::new(),
         defender_weapon_fire_delayed_rounds: 0,
+        osr_health_mult_applied: 1.0,
+        osr_health_base_max_hull: 0.0,
     };
 
     // Re-use precomputed effects from setup
@@ -726,6 +728,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 round_index,
                 None,
             );
+        }
+        if (osr_round_delta.health_max_mult - 1.0).abs() > f64::EPSILON {
+            if let Some(base_max) = crate::data::officer_stat_round::apply_health_max_mult_to_attacker(
+                attacker,
+                osr_round_delta.health_max_mult,
+                &mut st.total_attacker_hull_damage,
+                &mut st.attacker_shield_remaining,
+            ) {
+                st.osr_health_base_max_hull = base_max;
+                st.osr_health_mult_applied = osr_round_delta.health_max_mult;
+            }
         }
 
         apply_attacker_round_start_regen(
@@ -1100,6 +1113,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         st.defender_hull_breach_rounds = st.defender_hull_breach_rounds.saturating_sub(1);
         st.attacker_burning_rounds = st.attacker_burning_rounds.saturating_sub(1);
         st.attacker_hull_breach_rounds = st.attacker_hull_breach_rounds.saturating_sub(1);
+        if (st.osr_health_mult_applied - 1.0).abs() > f64::EPSILON {
+            crate::data::officer_stat_round::revert_health_max_mult_on_attacker(
+                attacker,
+                st.osr_health_base_max_hull,
+                st.osr_health_mult_applied,
+                &mut st.total_attacker_hull_damage,
+                &mut st.attacker_shield_remaining,
+            );
+            st.osr_health_mult_applied = 1.0;
+            st.osr_health_base_max_hull = 0.0;
+        }
         st.assimilated_rounds_remaining = st.assimilated_rounds_remaining.saturating_sub(1);
         st.defender_assimilated_rounds_remaining =
             st.defender_assimilated_rounds_remaining.saturating_sub(1);
@@ -3927,6 +3951,10 @@ struct CombatRunState {
     shots_bonus_entries: Vec<(f64, u32)>,
     defender_shots_bonus_entries: Vec<(f64, u32)>,
     defender_weapon_fire_delayed_rounds: u32,
+    /// Phase 4d dynamic officer-stat health gate multiplier applied this round (reverted at round end).
+    osr_health_mult_applied: f64,
+    /// Attacker max hull before [`OfficerStatRoundDelta::health_max_mult`] was applied this round.
+    osr_health_base_max_hull: f64,
 }
 
 /// The per-fight immutable [`CombatContext`] fields, captured once per trial so per-round

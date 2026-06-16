@@ -395,6 +395,12 @@ pub fn lcars_effect_coverage(
         || (effect.effect_type == "tag"
             && crate::lcars::combat_tag_to_stat(effect.tag.as_deref().unwrap_or("")).is_some())
     {
+        if let Some(pathway) = officer_rating_coverage_pathway(effect, officer_id, options) {
+            return LcarsEffectCoverage {
+                tier: MechanicCoverageTier::Implemented,
+                pathway,
+            };
+        }
         return LcarsEffectCoverage {
             tier: MechanicCoverageTier::Partial,
             pathway: "stat_modify_not_modeled_or_timing".to_string(),
@@ -435,7 +441,7 @@ fn condition_is_dynamic(cond: &AbilityConditionSpec) -> bool {
 /// Phase 4d dynamic officer-stat path (e.g. Kirk `morale_active`); mirrors
 /// [`expand_dynamic_officer_stat_effects`].
 fn officer_stat_dynamic_coverage_path(effect: &LcarsEffect) -> Option<&'static str> {
-    if effect.effect_type != "tag" {
+    if effect.effect_type != "tag" && effect.effect_type != "stat_modify" {
         return None;
     }
     let stat = effective_stat_for_effect(effect)?;
@@ -483,9 +489,30 @@ fn officer_rating_tag_coverage_path(
     if stat.eq_ignore_ascii_case("accuracy") {
         return None;
     }
+    officer_rating_coverage_pathway(effect, officer_id, options)
+}
+
+fn officer_rating_coverage_pathway(
+    effect: &LcarsEffect,
+    officer_id: &str,
+    options: &ResolveOptions,
+) -> Option<String> {
+    let stat = effective_stat_for_effect(effect)?;
+    if !is_officer_stat_key(stat) {
+        return None;
+    }
+    if stat.eq_ignore_ascii_case("accuracy") {
+        return None;
+    }
     let trigger_str = effect.trigger.as_deref().map(str::trim).unwrap_or("");
     if !officer_stat_trigger_ok(trigger_str, true) || !officer_stat_duration_ok(effect, true) {
         return None;
+    }
+    if let Some(path) = officer_stat_dynamic_coverage_path(effect) {
+        return Some(path.to_string());
+    }
+    if trigger_str == "on_round_start" {
+        return Some("officer_stat_round_start".to_string());
     }
     let tier = options.tier_for(officer_id);
     let spec = crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec(
@@ -554,14 +581,15 @@ fn random_defender_state_coverage_path(
     Some("random_defender_state_round_start".to_string())
 }
 
-/// Phase 4d: collect officer-stat effects with dynamic conditions for per-round breakpoint
-/// evaluation in the combat loop ([`crate::data::officer_stat_round`]).
+/// Phase 4d: collect officer-stat rows for per-round breakpoint evaluation
+/// ([`crate::data::officer_stat_round`]).
 ///
-/// All three axes (Attack / Defense / Health) flow through the proper §2 breakpoint pipeline
-/// when their compiled runtime condition passes. Static-conditional contributions still use
-/// [`PendingOfficerStatContribution`] + fight-setup evaluation.
+/// Includes:
+/// - `on_round_start` officer-stat rows (Kumak, Strike Team Una captain, …) — static or dynamic gates.
+/// - Other triggers whose conditions depend on round state (Kirk `morale_active`, …).
 ///
-/// `target: enemy` contributions are skipped here (Phase 4c applies them on the opponent side in PvP).
+/// `on_combat_start` rows with fight-setup-only gates stay in [`PendingOfficerStatContribution`].
+/// `target: enemy` rows are skipped (Phase 4c / PvP defender path).
 fn collect_dynamic_officer_stat_contributions(
     officer: &LcarsOfficer,
     ability: &LcarsAbility,
@@ -570,8 +598,8 @@ fn collect_dynamic_officer_stat_contributions(
 ) -> Vec<DynamicOfficerStatContribution> {
     let mut out = Vec::new();
     let officer_tier = options.tier_for(&officer.id);
-    let stats_row = options
-        .level_for(&officer.id)
+    let stats_row = officer
+        .resolve_level(options.level_for(&officer.id), officer_tier)
         .and_then(|lvl| officer.stats_at_level(lvl));
     for (idx, effect) in ability.effects.iter().enumerate() {
         if effect.effect_type != "tag" && effect.effect_type != "stat_modify" {
@@ -583,14 +611,17 @@ fn collect_dynamic_officer_stat_contributions(
         if !is_officer_stat_key(stat) {
             continue;
         }
-        let Some(ref cond_obj) = effect.condition else {
+        let trigger_str = effect.trigger.as_deref().map(str::trim).unwrap_or("");
+        if !officer_stat_trigger_ok(trigger_str, true) {
             continue;
-        };
-        let Ok(cond_spec) = crate::lcars::effect_spec_adapter::lcars_condition_to_spec(cond_obj)
-        else {
-            continue;
-        };
-        if !condition_is_dynamic(&cond_spec) {
+        }
+        let is_round_start = trigger_str == "on_round_start";
+        let condition_is_dynamic_row = effect
+            .condition
+            .as_ref()
+            .and_then(|c| crate::lcars::effect_spec_adapter::lcars_condition_to_spec(c).ok())
+            .is_some_and(|spec| condition_is_dynamic(&spec));
+        if !is_round_start && !condition_is_dynamic_row {
             continue;
         }
         if effect
@@ -637,13 +668,16 @@ fn collect_dynamic_officer_stat_contributions(
             Ok(t) => t,
             Err(_) => continue,
         };
-        let Ok(compiled) =
-            crate::combat::effect_spec_compile::compile_conditions_and(&spec.conditions)
-        else {
-            continue;
+        let runtime_condition = if spec.conditions.is_empty() {
+            None
+        } else {
+            let Ok(compiled) =
+                crate::combat::effect_spec_compile::compile_conditions_and(&spec.conditions)
+            else {
+                continue;
+            };
+            crate::combat::effect_spec_compile::merge_duration_round_condition(compiled, &spec)
         };
-        let runtime_condition =
-            crate::combat::effect_spec_compile::merge_duration_round_condition(compiled, &spec);
         out.push(DynamicOfficerStatContribution {
             stat_key: stat.to_string(),
             value: v,
@@ -778,14 +812,16 @@ pub fn resolve_crew_to_buff_set(
                 _ => OfficerStatOpponentScope::AllCrewed,
             };
 
-            // Phase 4b: officer-stat effects with conditions go into pending_contributions for
-            // fight-setup-time evaluation (TOS McCoy attacker_ship_type_is, Dezoc engagement gate,
-            // Strike Team Una composite, Kras defender_is_player_ship). Effects with no
-            // conditions and target:self take the simpler static_buffs path.
+            // Phase 4b: `on_combat_start` officer-stat rows with fight-setup gates go to pending
+            // (Dezoc armada+faction, Kras PvP, TOS McCoy ship class, …). `on_round_start` rows
+            // are collected for Phase 4d per-round evaluation (Kumak, Strike Team Una captain, Kirk).
             //
             // target:enemy debuffs still skip the attacker's static_buffs path (Phase 4a target
             // filter); the pending list preserves them with target_attacker=false so a future
             // Phase 4c can route them through PvP defender-side compute.
+            if trigger_str == "on_round_start" {
+                continue;
+            }
             if !spec.conditions.is_empty() {
                 // Dynamic (per-round) conditions — morale / burning / hull-breach / round-range /
                 // stat thresholds — are collected for Phase 4d per-round breakpoint evaluation;
@@ -1268,12 +1304,11 @@ mod tests {
     }
 
     #[test]
-    fn officerstat_on_round_start_now_accumulates_into_static_buffs() {
-        // Phase 4a: Kumak pattern — on_round_start trigger with no condition. Previously
-        // dropped from the static-buffs path because trigger != "passive"; now accumulated
-        // because the effective stat is an officer-rating key.
+    fn officerstat_on_round_start_routes_to_dynamic_per_round_path() {
+        // Kumak pattern — on_round_start with no condition uses Phase 4d per-round breakpoint
+        // evaluation, not fight-setup static_buffs.
         let o = officer_with_officerstat_captain(
-            "kumak",
+            "kumak-c5b0db",
             "officerstatall:unmapped",
             0.05,
             "on_round_start",
@@ -1281,13 +1316,24 @@ mod tests {
             None,
         );
         let mut officers = HashMap::new();
-        officers.insert("kumak".to_string(), o);
-        let buff =
-            resolve_crew_to_buff_set("kumak", &[], &[], &officers, &ResolveOptions::default());
-        assert_eq!(
-            buff.static_buffs.get("officer_stat_all").copied(),
-            Some(0.05)
+        officers.insert("kumak-c5b0db".to_string(), o);
+        let buff = resolve_crew_to_buff_set(
+            "kumak-c5b0db",
+            &[],
+            &[],
+            &officers,
+            &ResolveOptions::default(),
         );
+        assert!(
+            !buff.static_buffs.contains_key("officer_stat_all"),
+            "on_round_start must not use static_buffs"
+        );
+        assert_eq!(buff.dynamic_officer_stat_contributions.len(), 1);
+        let row = &buff.dynamic_officer_stat_contributions[0];
+        assert_eq!(row.stat_key, "officer_stat_all");
+        assert!((row.value - 0.05).abs() < 1e-9);
+        assert_eq!(row.timing, TimingWindow::RoundStart);
+        assert!(row.runtime_condition.is_none());
     }
 
     #[test]
@@ -1520,7 +1566,7 @@ mod tests {
             "self",
             None,
         );
-        assert_coverage_implemented(&eff, "kumak-c5b0db", "officer_stat_static_buff");
+        assert_coverage_implemented(&eff, "kumak-c5b0db", "officer_stat_round_start");
     }
 
     #[test]

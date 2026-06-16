@@ -38,7 +38,7 @@ Optional `defender_crew` uses the same shape as attacker `crew` and is merged wi
 
 - Optimizing defender crew (attacker discovery only).
 - Armada / multi-ship fights.
-- Per-round dynamic officer-stat **Defense/Health** axes ship with Phase 4d (2026-06-12). Dynamic `target: enemy` officer-stat debuffs on the defender side remain deferred (no prod LCARS cases). Fight-setup `target: enemy` / `enemy_bridge` officer-stat debuffs **are** applied in PvP (Phase 4c — e.g. Kras “Know Your Enemy” debuffs defender captain + bridge only when `defender_is_player_ship` passes).
+- Per-round dynamic officer-stat debuffs on the defender side remain deferred (no prod LCARS cases). Fight-setup `target: enemy` / `enemy_bridge` officer-stat debuffs **are** applied in PvP (Phase 4c — e.g. Kras “Know Your Enemy” debuffs defender captain + bridge only when `defender_is_player_ship` passes). Phase 4d dynamic gates (Kirk Leader) apply attack, defense (inbound mitigation), and round-scoped max HP on the attacker path.
 
 ## Optimize cache / warm-start
 
