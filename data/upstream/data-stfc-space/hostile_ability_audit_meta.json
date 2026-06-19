@@ -8128,7 +8128,7 @@
       "sample_hostile_id": "2634260020",
       "sample_level": 58,
       "text_snippet": "kemocite weaponry \nat the end of the round, the xindi weapon increases its weapon damage by {0:#.#%} . if it is burning, there is a chance to prevent this. (this ability stacks infinitely)\n\nship abilities always active.",
-      "effect_type": "accumulating_attack_multiplier"
+      "effect_type": "hostile_kemocite_weaponry"
     },
     "3982232193": {
       "bucket": "other_review",

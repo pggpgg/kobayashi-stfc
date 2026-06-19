@@ -11,8 +11,8 @@ This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability covera
 | `1271329828` | 45 | `hostile_crit_damage_reduction` + lethal `extra_seat` | Doomed Species (2R stack) + Particle Beam |
 | `1408273502` | 25 | same pattern | Be Like Water + Xindi Might (9 shots → lethal seat) |
 | `141924765` | 14 | same pattern | Be Like Water + Denticle Blade text + Xindi Might |
-| `2665723295` | 6 | `hostile_lethal_end_of_round` (`round_interval: 8`) | No Mercy — assimilated prevent chance not modeled |
-| `3981152012` | 6 | `accumulating_attack_multiplier` @ `round_start` | Kemocite — burning prevent + infinite stack at round *end* approximated |
+| `2665723295` | 6 | `hostile_lethal_end_of_round` (`round_interval: 8`) | No Mercy — assimilated prevents 100% |
+| `3981152012` | 6 | `hostile_kemocite_weaponry` @ `round_end` | Kemocite — +30%/stack at round end; burning prevents 100% |
 
 See `tests/xindi_hostile_abilities.rs` and [DESIGN.md](DESIGN.md) §3.6 for lethal/crit approximations.
 

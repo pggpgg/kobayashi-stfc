@@ -952,6 +952,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
+                | AbilityEffect::HostileKemociteWeaponry { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1140,6 +1141,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
+                | AbilityEffect::HostileKemociteWeaponry { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1290,6 +1292,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
+                | AbilityEffect::HostileKemociteWeaponry { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1442,6 +1445,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
+                | AbilityEffect::HostileKemociteWeaponry { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1600,6 +1604,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
+                | AbilityEffect::HostileKemociteWeaponry { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1794,6 +1799,7 @@ impl EffectAccumulator {
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
+                | AbilityEffect::HostileKemociteWeaponry { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -2033,7 +2039,8 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
-        AbilityEffect::HostileLethalEndOfRound { .. } => effect,
+        AbilityEffect::HostileLethalEndOfRound { .. }
+        | AbilityEffect::HostileKemociteWeaponry { .. } => effect,
         AbilityEffect::HostileCounterStatDebuff { .. } => effect,
         AbilityEffect::DefenderShieldDrainPerRound { .. } => effect,
         AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,

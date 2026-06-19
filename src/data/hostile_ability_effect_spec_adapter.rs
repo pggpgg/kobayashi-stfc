@@ -121,6 +121,7 @@ mod tests {
             condition_defender_hull_breach: false,
             crit_reduction_additive_points: false,
             crit_debuff_stacks: false,
+            prevent_when_defender_assimilated: false,
             extra_seats: Vec::new(),
         };
         let spec =

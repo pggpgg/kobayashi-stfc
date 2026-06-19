@@ -60,6 +60,8 @@ pub struct HostileAbilityCatalogEntry {
     #[serde(default)]
     pub crit_debuff_stacks: bool,
     #[serde(default)]
+    pub prevent_when_defender_assimilated: bool,
+    #[serde(default)]
     pub extra_seats: Vec<HostileAbilityCatalogEntry>,
 }
 
@@ -174,6 +176,14 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 stacks: false,
             })
         }
+        "hostile_kemocite_weaponry" | "kemocite_weaponry" | "xindi_kemocite" => {
+            if timing != TimingWindow::RoundEnd {
+                return None;
+            }
+            Some(AbilityEffect::HostileKemociteWeaponry {
+                growth_per_stack: value.max(0.0),
+            })
+        }
         "hostile_lethal_end_of_round" | "lethal_end_of_round" | "xindi_lethal_end_of_round" => {
             if timing != TimingWindow::RoundEnd {
                 return None;
@@ -181,6 +191,7 @@ pub(crate) fn hostile_ability_effect_from_catalog(
             Some(AbilityEffect::HostileLethalEndOfRound {
                 round_interval: round_interval.or(duration_rounds).unwrap_or(1).max(1),
                 shots: shots.unwrap_or(1).max(1),
+                prevent_when_defender_assimilated: false,
             })
         }
         "attack_multiplier" | "weapon_damage" | "attack" => {
@@ -259,6 +270,13 @@ fn push_hostile_catalog_seat(
             *additive_percentage_points = true;
             *stacks = entry.crit_debuff_stacks;
         }
+    }
+    if let AbilityEffect::HostileLethalEndOfRound {
+        ref mut prevent_when_defender_assimilated,
+        ..
+    } = effect
+    {
+        *prevent_when_defender_assimilated = entry.prevent_when_defender_assimilated;
     }
     seats.push(CrewSeatContext {
         seat: CrewSeat::Ship,

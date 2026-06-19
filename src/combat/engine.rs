@@ -21,6 +21,7 @@ use crate::combat::abilities::{
     attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
     hostile_crit_damage_reduction_active_at_round, ActiveHostileCritReduction,
+    hostile_kemocite_attack_multiplier_bonus, hostile_kemocite_try_add_stack,
     hostile_lethal_end_of_round_hull_damage,
     opponent_captain_maneuver_multiplier_from_effects, scale_crew_captain_maneuver_effects,
     sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
@@ -460,6 +461,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         shots_bonus_entries: Vec::new(),
         defender_shots_bonus_entries: Vec::new(),
         defender_weapon_fire_delayed_rounds: 0,
+        defender_kemocite_stacks: 0,
         osr_health_mult_applied: 1.0,
         osr_health_base_max_hull: 0.0,
     };
@@ -1001,6 +1003,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     attacker,
                     defender,
                     attacker_crew,
+                    defender_crew,
                     round_index,
                     weapon_index,
                     defender_weapon_attack,
@@ -1119,6 +1122,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             round_end_assimilated_early,
             &mut phase_effects_round,
             &mut st.defender_burning_rounds,
+            &mut st.defender_kemocite_stacks,
             st.attacker_burning_rounds,
             st.defender_assimilated_rounds_remaining,
             &mut st.total_hull_damage,
@@ -1555,6 +1559,7 @@ fn apply_round_end_phase(
     round_end_assimilated_early: bool,
     phase_effects_round: &mut EffectAccumulator,
     defender_burning_rounds: &mut u32,
+    defender_kemocite_stacks: &mut u32,
     attacker_burning_rounds: u32,
     defender_assimilated_rounds_remaining: u32,
     total_hull_damage: &mut f64,
@@ -1623,6 +1628,12 @@ fn apply_round_end_phase(
         &attacker.id,
         None,
         defender_burning_rounds,
+    );
+
+    hostile_kemocite_try_add_stack(
+        defender_crew,
+        *defender_burning_rounds > 0,
+        defender_kemocite_stacks,
     );
 
     let round_end_apex_shred =
@@ -3024,6 +3035,7 @@ struct FireDefenderCounter<'a> {
     attacker: &'a Combatant,
     defender: &'a Combatant,
     attacker_crew: &'a CrewConfiguration,
+    defender_crew: &'a CrewConfiguration,
     round_index: u32,
     weapon_index: usize,
     defender_weapon_attack: f64,
@@ -3074,6 +3086,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker,
         defender,
         attacker_crew,
+        defender_crew,
         round_index,
         weapon_index,
         defender_weapon_attack,
@@ -3214,6 +3227,18 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         false,
         round_index,
     );
+
+    let kemocite_bonus =
+        hostile_kemocite_attack_multiplier_bonus(defender_crew, st.defender_kemocite_stacks);
+    if kemocite_bonus > 0.0 {
+        defender_phase_template.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::AttackMultiplier(kemocite_bonus),
+            defender_weapon_attack,
+            round_index,
+            Some(("hostile_kemocite", None)),
+        );
+    }
 
     let mut counter_hull_damage_this_subround = false;
 
@@ -3996,6 +4021,8 @@ struct CombatRunState {
     shots_bonus_entries: Vec<(f64, u32)>,
     defender_shots_bonus_entries: Vec<(f64, u32)>,
     defender_weapon_fire_delayed_rounds: u32,
+    /// Successful Kemocite Weaponry round-end stacks (Xindi group armadas).
+    defender_kemocite_stacks: u32,
     /// Phase 4d dynamic officer-stat health gate multiplier applied this round (reverted at round end).
     osr_health_mult_applied: f64,
     /// Attacker max hull before [`OfficerStatRoundDelta::health_max_mult`] was applied this round.

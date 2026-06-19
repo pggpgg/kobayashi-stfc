@@ -80,6 +80,7 @@ def modeled(
     shots: int | None = None,
     crit_reduction_additive_points: bool = False,
     crit_debuff_stacks: bool = False,
+    prevent_when_defender_assimilated: bool = False,
     value_override: float | None = None,
     extra_seats: list[dict] | None = None,
 ) -> dict:
@@ -103,6 +104,8 @@ def modeled(
         d["crit_reduction_additive_points"] = True
     if crit_debuff_stacks:
         d["crit_debuff_stacks"] = True
+    if prevent_when_defender_assimilated:
+        d["prevent_when_defender_assimilated"] = True
     if value_override is not None:
         d["value_override"] = value_override
     cap = None if duration_rounds is not None else round_cap
@@ -184,24 +187,35 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             "xindi_crit_debuff",
         )
 
-    # Kemocite Weaponry — cumulative weapon damage each round (burning may prevent; not modeled).
+    # Kemocite Weaponry — Xindi group armadas: +30% weapon damage at round end when not burning.
     if "kemocite" in p or (
         "weapon damage" in p and "stacks infinitely" in p and "end of the round" in p
     ):
         return (
             modeled(
-                "round_start",
-                "accumulating_attack_multiplier",
-                value_is_percentage=True,
-                ignore_upstream_value_is_percentage=False,
+                "round_end",
+                "hostile_kemocite_weaponry",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                value_override=0.3,
             ),
             "xindi_kemocite",
         )
 
-    # Standalone scheduled lethal (No Mercy every 8th round).
-    lethal_only = xindi_lethal_extra_seat(p)
-    if lethal_only and ("no mercy" in p or "every 8th round" in p):
-        return lethal_only, "xindi_lethal_round_end"
+    # Standalone scheduled lethal (No Mercy every 8th round; assimilated prevents 100%).
+    if "no mercy" in p or (
+        "every 8th round" in p and "assimilated" in p and "lethal" in p
+    ):
+        return (
+            modeled(
+                "round_end",
+                "hostile_lethal_end_of_round",
+                round_interval=8,
+                shots=1,
+                prevent_when_defender_assimilated=True,
+            ),
+            "xindi_lethal_round_end",
+        )
 
     # Outpost / station scope (not ship-vs-hostile PvE)
     if "outpost abilities" in p or "outpost ability" in p:

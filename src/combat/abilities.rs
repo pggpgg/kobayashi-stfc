@@ -203,6 +203,15 @@ pub enum AbilityEffect {
     HostileLethalEndOfRound {
         round_interval: u32,
         shots: u32,
+        /// When true (No Mercy), lethal does not fire while the hostile is assimilated (100% prevent).
+        prevent_when_defender_assimilated: bool,
+    },
+    /// Xindi group armada Kemocite Weaponry: at round end, +`growth_per_stack` weapon damage
+    /// (additive on counter-fire `pre_attack_multiplier`) when the hostile is not burning.
+    /// Stacks without ceiling. Applied out of band — see [`hostile_kemocite_try_add_stack`] and
+    /// [`hostile_kemocite_attack_multiplier_bonus`].
+    HostileKemociteWeaponry {
+        growth_per_stack: f64,
     },
     /// Player ship hull ability (Quv'Sompek, B'Rel): reduces hostile counter-fire pierce effectiveness
     /// for the first `duration_rounds` combat rounds. `reduction` is a fraction (0.15 = 15% off pierce,
@@ -837,7 +846,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
                 *reduction = cap_one(*reduction);
             }
         }
-        AbilityEffect::HostileLethalEndOfRound { .. } => {}
+        AbilityEffect::HostileLethalEndOfRound { .. } | AbilityEffect::HostileKemociteWeaponry { .. } => {}
         AbilityEffect::HostileCounterStatDebuff {
             reduction,
             duration_rounds: _,
@@ -965,6 +974,7 @@ pub fn hostile_lethal_end_of_round_hull_damage(
         if let AbilityEffect::HostileLethalEndOfRound {
             round_interval,
             shots: _,
+            prevent_when_defender_assimilated,
         } = s.ability.effect
         {
             if s.ability
@@ -974,6 +984,9 @@ pub fn hostile_lethal_end_of_round_hull_damage(
             {
                 continue;
             }
+            if prevent_when_defender_assimilated && ctx.defender_assimilated_active {
+                continue;
+            }
             let interval = round_interval.max(1);
             if round_index > 0 && round_index.is_multiple_of(interval) {
                 fires = true;
@@ -981,6 +994,43 @@ pub fn hostile_lethal_end_of_round_hull_damage(
         }
     }
     if fires { remaining } else { 0.0 }
+}
+
+/// Per-stack Kemocite growth from hostile defender crew seats (`3981152012`, six Xindi armadas).
+pub fn hostile_kemocite_growth_per_stack(crew: &CrewConfiguration) -> f64 {
+    let mut sum = 0.0_f64;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileKemociteWeaponry { growth_per_stack } = s.ability.effect {
+            if growth_per_stack.is_finite() && growth_per_stack > 0.0 {
+                sum += growth_per_stack;
+            }
+        }
+    }
+    sum
+}
+
+/// Additive counter-fire attack multiplier bonus from Kemocite stacks (`stacks × growth`).
+pub fn hostile_kemocite_attack_multiplier_bonus(crew: &CrewConfiguration, stacks: u32) -> f64 {
+    if stacks == 0 {
+        return 0.0;
+    }
+    let growth = hostile_kemocite_growth_per_stack(crew);
+    if growth <= 0.0 {
+        return 0.0;
+    }
+    stacks as f64 * growth
+}
+
+/// Round-end Kemocite stack tick. Skipped entirely while the hostile is burning (100% prevent).
+pub fn hostile_kemocite_try_add_stack(
+    crew: &CrewConfiguration,
+    defender_burning: bool,
+    stacks: &mut u32,
+) {
+    if defender_burning || hostile_kemocite_growth_per_stack(crew) <= 0.0 {
+        return;
+    }
+    *stacks = stacks.saturating_add(1);
 }
 
 /// Hostile pierce/accuracy debuff from player ship hull abilities (Quv'Sompek, B'Rel).
@@ -2107,6 +2157,61 @@ mod tests {
     }
 
     #[test]
+    fn hostile_kemocite_stacks_when_not_burning_and_skips_when_burning() {
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "3981152012",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::RoundEnd,
+                    AbilityEffect::HostileKemociteWeaponry {
+                        growth_per_stack: 0.3,
+                    },
+                ),
+                None,
+            )],
+        };
+        let mut stacks = 0_u32;
+        hostile_kemocite_try_add_stack(&crew, false, &mut stacks);
+        hostile_kemocite_try_add_stack(&crew, false, &mut stacks);
+        assert_eq!(stacks, 2);
+        hostile_kemocite_try_add_stack(&crew, true, &mut stacks);
+        assert_eq!(stacks, 2);
+        assert!((hostile_kemocite_attack_multiplier_bonus(&crew, stacks) - 0.6).abs() < 1e-12);
+    }
+
+    #[test]
+    fn hostile_lethal_no_mercy_skips_when_defender_assimilated() {
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "no_mercy",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::RoundEnd,
+                    AbilityEffect::HostileLethalEndOfRound {
+                        round_interval: 8,
+                        shots: 1,
+                        prevent_when_defender_assimilated: true,
+                    },
+                ),
+                None,
+            )],
+        };
+        let mut ctx = ctx_default();
+        assert_eq!(
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0),
+            1000.0
+        );
+        ctx.defender_assimilated_active = true;
+        assert_eq!(
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0),
+            0.0
+        );
+    }
+
+    #[test]
     fn hostile_lethal_end_of_round_fires_on_interval() {
         let crew = CrewConfiguration {
             seats: vec![make_seat(
@@ -2118,6 +2223,7 @@ mod tests {
                     AbilityEffect::HostileLethalEndOfRound {
                         round_interval: 8,
                         shots: 1,
+                        prevent_when_defender_assimilated: false,
                     },
                 ),
                 None,

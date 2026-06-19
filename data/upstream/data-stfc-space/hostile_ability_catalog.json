@@ -4231,7 +4231,8 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "round_interval": 8,
-      "shots": 1
+      "shots": 1,
+      "prevent_when_defender_assimilated": true
     },
     "2668838424": {
       "timing": "combat_begin",
@@ -6127,10 +6128,11 @@
       "ignore_upstream_value_is_percentage": true
     },
     "3981152012": {
-      "timing": "round_start",
-      "effect_type": "accumulating_attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_end",
+      "effect_type": "hostile_kemocite_weaponry",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.3
     },
     "3982232193": {
       "timing": "combat_begin",
