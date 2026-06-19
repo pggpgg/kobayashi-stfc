@@ -15,9 +15,10 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::combat::abilities::{
-    Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
     NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
+use crate::combat::condition::combine_optional_and;
 use crate::combat::CrewConfiguration;
 use crate::data::ship_ability_resolve::{
     parse_ship_ability_timing, ship_ability_effect_from_catalog,
@@ -46,6 +47,20 @@ pub struct HostileAbilityCatalogEntry {
     pub value_override: Option<f64>,
     #[serde(default)]
     pub duration_rounds: Option<u32>,
+    #[serde(default)]
+    pub round_interval: Option<u32>,
+    #[serde(default)]
+    pub shots: Option<u32>,
+    #[serde(default)]
+    pub condition_defender_burning: bool,
+    #[serde(default)]
+    pub condition_defender_hull_breach: bool,
+    #[serde(default)]
+    pub crit_reduction_additive_points: bool,
+    #[serde(default)]
+    pub crit_debuff_stacks: bool,
+    #[serde(default)]
+    pub extra_seats: Vec<HostileAbilityCatalogEntry>,
 }
 
 #[derive(Debug, Clone)]
@@ -142,10 +157,32 @@ pub(crate) fn hostile_ability_effect_from_catalog(
     chance: f64,
     value: f64,
     duration_rounds: Option<u32>,
+    round_interval: Option<u32>,
+    shots: Option<u32>,
 ) -> Option<AbilityEffect> {
     // Proc-gated counter-fire multipliers keep upstream `values[].chance` semantics.
     match effect_type.trim().to_lowercase().replace('-', "_").as_str() {
         "combat_noop" | "unmodeled" | "not_applicable" => None,
+        "hostile_crit_damage_reduction" | "reduce_hostile_crit_damage" => {
+            if timing != TimingWindow::CombatBegin && timing != TimingWindow::RoundStart {
+                return None;
+            }
+            Some(AbilityEffect::HostileCritDamageReduction {
+                reduction: value,
+                duration_rounds: duration_rounds.unwrap_or(5).max(1),
+                additive_percentage_points: false,
+                stacks: false,
+            })
+        }
+        "hostile_lethal_end_of_round" | "lethal_end_of_round" | "xindi_lethal_end_of_round" => {
+            if timing != TimingWindow::RoundEnd {
+                return None;
+            }
+            Some(AbilityEffect::HostileLethalEndOfRound {
+                round_interval: round_interval.or(duration_rounds).unwrap_or(1).max(1),
+                shots: shots.unwrap_or(1).max(1),
+            })
+        }
         "attack_multiplier" | "weapon_damage" | "attack" => {
             Some(AbilityEffect::ProcAttackMultiplier {
                 chance: normalize_probability(chance),
@@ -163,6 +200,80 @@ pub(crate) fn hostile_ability_effect_from_catalog(
         | "accuracy_bonus" => None,
         _ => ship_ability_effect_from_catalog(effect_type, timing, value, duration_rounds),
     }
+}
+
+fn ability_condition_from_hostile_entry(
+    entry: &HostileAbilityCatalogEntry,
+) -> Option<AbilityCondition> {
+    let mut parts: Vec<AbilityCondition> = Vec::new();
+    if entry.condition_defender_burning {
+        parts.push(AbilityCondition::DefenderBurning);
+    }
+    if entry.condition_defender_hull_breach {
+        parts.push(AbilityCondition::DefenderHullBreach);
+    }
+    combine_optional_and(parts)
+}
+
+fn push_hostile_catalog_seat(
+    seats: &mut Vec<CrewSeatContext>,
+    parsed: &ResolvedHostileAbility,
+    entry: &HostileAbilityCatalogEntry,
+) {
+    let Some(timing) = parse_ship_ability_timing(&entry.timing) else {
+        return;
+    };
+    let normalized_value = if entry.crit_reduction_additive_points {
+        entry
+            .value_override
+            .unwrap_or(parsed.value)
+    } else {
+        entry.value_override.unwrap_or_else(|| {
+            normalize_catalog_value(
+                entry.value_is_percentage,
+                entry.ignore_upstream_value_is_percentage,
+                parsed.upstream_value_is_percentage,
+                parsed.value,
+            )
+        })
+    };
+    let chance = parsed.chance;
+    let Some(mut effect) = hostile_ability_effect_from_catalog(
+        &entry.effect_type,
+        timing,
+        chance,
+        normalized_value,
+        entry.duration_rounds,
+        entry.round_interval,
+        entry.shots,
+    ) else {
+        return;
+    };
+    if let AbilityEffect::HostileCritDamageReduction {
+        ref mut additive_percentage_points,
+        ref mut stacks,
+        ..
+    } = effect
+    {
+        if entry.crit_reduction_additive_points {
+            *additive_percentage_points = true;
+            *stacks = entry.crit_debuff_stacks;
+        }
+    }
+    seats.push(CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: parsed.id.clone(),
+            class: AbilityClass::ShipAbility,
+            timing,
+            boostable: false,
+            effect,
+            condition: ability_condition_from_hostile_entry(entry),
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    });
 }
 
 /// Collect every unique upstream hostile ability id from cached stfc.space JSON.
@@ -210,41 +321,10 @@ pub fn hostile_abilities_to_defender_crew(
         let Some(entry) = catalog.entries.get(parsed.id.as_str()) else {
             continue;
         };
-        let Some(timing) = parse_ship_ability_timing(&entry.timing) else {
-            continue;
-        };
-        let normalized_value = entry.value_override.unwrap_or_else(|| {
-            normalize_catalog_value(
-                entry.value_is_percentage,
-                entry.ignore_upstream_value_is_percentage,
-                parsed.upstream_value_is_percentage,
-                parsed.value,
-            )
-        });
-        let chance = parsed.chance;
-        let Some(effect) = hostile_ability_effect_from_catalog(
-            &entry.effect_type,
-            timing,
-            chance,
-            normalized_value,
-            entry.duration_rounds,
-        ) else {
-            continue;
-        };
-        seats.push(CrewSeatContext {
-            seat: CrewSeat::Ship,
-            ability: Ability {
-                name: parsed.id.clone(),
-                class: AbilityClass::ShipAbility,
-                timing,
-                boostable: false,
-                effect,
-                condition: None,
-            },
-            boosted: false,
-            officer_id: None,
-            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
-        });
+        push_hostile_catalog_seat(&mut seats, &parsed, entry);
+        for extra in &entry.extra_seats {
+            push_hostile_catalog_seat(&mut seats, &parsed, extra);
+        }
     }
     CrewConfiguration { seats }
 }
@@ -357,6 +437,8 @@ mod tests {
             100.0,
             0.15,
             None,
+            None,
+            None,
         );
         assert!(matches!(iso, Some(AbilityEffect::IsolyticDamageBonus(v)) if (v - 0.15).abs() < 1e-9));
 
@@ -365,6 +447,8 @@ mod tests {
             TimingWindow::CombatBegin,
             100.0,
             5000.0,
+            None,
+            None,
             None,
         );
         assert!(matches!(apex, Some(AbilityEffect::ApexBarrierBonus(v)) if (v - 5000.0).abs() < 1e-9));

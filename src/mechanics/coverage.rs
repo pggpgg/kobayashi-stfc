@@ -156,6 +156,8 @@ fn classify_hostile_catalog_entry(entry: &HostileAbilityCatalogEntry) -> LcarsEf
         chance,
         v,
         entry.duration_rounds,
+        entry.round_interval,
+        entry.shots,
     )
     .is_some()
     {

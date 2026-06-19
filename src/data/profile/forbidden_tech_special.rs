@@ -412,6 +412,8 @@ pub fn borg_operating_table_forbidden_tech_seats(
                         effect: AbilityEffect::HostileCritDamageReduction {
                             reduction: v.clamp(0.0, 0.95),
                             duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                            additive_percentage_points: false,
+                            stacks: false,
                         },
                         condition: Some(conqueror_gate.clone()),
                     },

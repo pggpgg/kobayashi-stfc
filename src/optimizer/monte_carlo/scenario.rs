@@ -234,6 +234,8 @@ fn extend_crew_with_player_crit_damage_reduction_profile_bonus(
             effect: AbilityEffect::HostileCritDamageReduction {
                 reduction: v.clamp(0.0, 0.95),
                 duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                additive_percentage_points: false,
+                stacks: false,
             },
             condition: None,
         },
@@ -274,6 +276,8 @@ fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
             effect: AbilityEffect::HostileCritDamageReduction {
                 reduction: v.clamp(0.0, 0.95),
                 duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                additive_percentage_points: false,
+                stacks: false,
             },
             condition: None,
         },
@@ -3865,6 +3869,8 @@ mod tests {
             AbilityEffect::HostileCritDamageReduction {
                 reduction,
                 duration_rounds,
+                additive_percentage_points: false,
+                stacks: false,
             } => {
                 assert!((reduction - 0.18).abs() < 1e-12);
                 assert_eq!(duration_rounds, crate::combat::types::MAX_COMBAT_ROUNDS);

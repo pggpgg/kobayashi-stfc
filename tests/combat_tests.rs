@@ -2806,6 +2806,8 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
                 effect: AbilityEffect::HostileCritDamageReduction {
                     reduction: 0.5,
                     duration_rounds: 5,
+                    additive_percentage_points: false,
+                    stacks: false,
                 },
                 condition: None,
             },
@@ -4355,6 +4357,8 @@ fn crit_damage_floor_clamps_attacker_outbound_reduction() {
                 effect: AbilityEffect::HostileCritDamageReduction {
                     reduction: 0.80,
                     duration_rounds: 99,
+                    additive_percentage_points: false,
+                    stacks: false,
                 },
                 condition: None,
             },

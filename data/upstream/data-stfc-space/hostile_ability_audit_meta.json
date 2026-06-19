@@ -328,13 +328,13 @@
       "effect_type": "combat_noop"
     },
     "141924765": {
-      "bucket": "pvp_player_target",
+      "bucket": "xindi_crit_debuff",
       "loca_id": 63052,
       "hostile_count": 14,
       "sample_hostile_id": "1043112405",
       "sample_level": 50,
       "text_snippet": "be like water \nat the start of the round this hostile reduces the players critical hit damage by 2500% for 2 rounds\n\ndenticle blade \nat the start of combat this hostile has a 30% chance to fire its heavy artillery on the 5th weapon of each ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_crit_damage_reduction"
     },
     "155308381": {
       "bucket": "other_review",
@@ -2641,13 +2641,13 @@
       "effect_type": "combat_noop"
     },
     "1271329828": {
-      "bucket": "pvp_player_target",
+      "bucket": "xindi_crit_debuff",
       "loca_id": 62051,
       "hostile_count": 45,
       "sample_hostile_id": "1071149465",
       "sample_level": 46,
       "text_snippet": "doomed species \nat the start of the round this hostile reduces the players critical hit damage by {0:#.#%} for 2 rounds. (this ability can stack)\n\nxindi weaponry \nat the end of every round this ship fires a particle beam that deals lethal d",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_crit_damage_reduction"
     },
     "1273665813": {
       "bucket": "other_review",
@@ -2929,13 +2929,13 @@
       "effect_type": "combat_noop"
     },
     "1408273502": {
-      "bucket": "pvp_player_target",
+      "bucket": "xindi_crit_debuff",
       "loca_id": 63051,
       "hostile_count": 25,
       "sample_hostile_id": "1080638426",
       "sample_level": 46,
       "text_snippet": "be like water \nat the start of the round this hostile reduces the players critical hit damage by {0:#.#%} for 2 rounds\n\nxindi might\nat the end of every round this ship fires 9 shots from its super weapon that deals lethal damage to the enem",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_crit_damage_reduction"
     },
     "1409541461": {
       "bucket": "armada_scope",
@@ -5593,13 +5593,13 @@
       "effect_type": "isolytic_damage"
     },
     "2665723295": {
-      "bucket": "other_review",
+      "bucket": "xindi_lethal_round_end",
       "loca_id": 64102,
       "hostile_count": 6,
       "sample_hostile_id": "2634260020",
       "sample_level": 58,
       "text_snippet": "no mercy \nevery 8th round, the xindi weapon fires its super weapon, dealing lethal damage to one ship. if it is assimilated, there is a chance to prevent this.\n\nship abilities always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "2668838424": {
       "bucket": "other_review",
@@ -6637,13 +6637,13 @@
       "effect_type": "combat_noop"
     },
     "3196612078": {
-      "bucket": "other_review",
+      "bucket": "hostile_shield_bypass",
       "loca_id": 63050,
       "hostile_count": 39,
       "sample_hostile_id": "1043112405",
       "sample_level": 50,
       "text_snippet": "strength of the ibix \nthis hostile has 10  shots per weapon and all damage this hostile deals completely ignores player shields.\n\nship abilities always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_mitigation_bypass"
     },
     "3198879611": {
       "bucket": "defense_combat_review",
@@ -7168,13 +7168,13 @@
       "effect_type": "combat_noop"
     },
     "3445799437": {
-      "bucket": "other_review",
+      "bucket": "hostile_shield_bypass",
       "loca_id": 62050,
       "hostile_count": 45,
       "sample_hostile_id": "1071149465",
       "sample_level": 46,
       "text_snippet": "blade's tip \non combat start all damage this hostile deals completely ignores player shields\n\nship abilities always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_mitigation_bypass"
     },
     "3450229444": {
       "bucket": "other_review",
@@ -8122,13 +8122,13 @@
       "effect_type": "apex_barrier"
     },
     "3981152012": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "xindi_kemocite",
       "loca_id": 64100,
       "hostile_count": 6,
       "sample_hostile_id": "2634260020",
       "sample_level": 58,
       "text_snippet": "kemocite weaponry \nat the end of the round, the xindi weapon increases its weapon damage by {0:#.#%} . if it is burning, there is a chance to prevent this. (this ability stacks infinitely)\n\nship abilities always active.",
-      "effect_type": "attack_multiplier"
+      "effect_type": "accumulating_attack_multiplier"
     },
     "3982232193": {
       "bucket": "other_review",

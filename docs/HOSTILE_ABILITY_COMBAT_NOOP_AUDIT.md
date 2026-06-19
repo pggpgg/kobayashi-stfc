@@ -2,7 +2,19 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-06-14):** There are **976** unique upstream hostile ability ids across **2,865** hostiles with non-empty `ability[]` (of 5,384 upstream hostiles). The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **246** modeled for defender-side counter-fire (`defender_crew`), **730** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-06-16):** There are **976** unique upstream hostile ability ids across **2,865** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **250** modeled for defender-side counter-fire (`defender_crew`), **726** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+
+**Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
+
+| Ability id | Hostiles | Primary effect | Notes |
+| --- | ---: | --- | --- |
+| `1271329828` | 45 | `hostile_crit_damage_reduction` + lethal `extra_seat` | Doomed Species (2R stack) + Particle Beam |
+| `1408273502` | 25 | same pattern | Be Like Water + Xindi Might (9 shots → lethal seat) |
+| `141924765` | 14 | same pattern | Be Like Water + Denticle Blade text + Xindi Might |
+| `2665723295` | 6 | `hostile_lethal_end_of_round` (`round_interval: 8`) | No Mercy — assimilated prevent chance not modeled |
+| `3981152012` | 6 | `accumulating_attack_multiplier` @ `round_start` | Kemocite — burning prevent + infinite stack at round *end* approximated |
+
+See `tests/xindi_hostile_abilities.rs` and [DESIGN.md](DESIGN.md) §3.6 for lethal/crit approximations.
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row `loca_id` from `hostiles/*.json ability[]`).
 
@@ -41,17 +53,20 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 976 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 246 |
-| `combat_noop` (catalogued, inert in sim) | 730 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 250 |
+| `combat_noop` (catalogued, inert in sim) | 726 |
 
-**Modeled effect types (246 ids):**
+**Modeled effect types (250 ids):**
 
 | `effect_type` | Ids |
 | --- | ---: |
 | `isolytic_damage` | 91 |
 | `isolytic_defense` | 80 |
 | `apex_barrier` | 55 |
-| `attack_multiplier` | 20 |
+| `attack_multiplier` | 19 |
+| `hostile_crit_damage_reduction` | 3 |
+| `hostile_lethal_end_of_round` | 1 |
+| `accumulating_attack_multiplier` | 1 |
 
 **Not yet modeled (high instance count, remain `combat_noop`):**
 
@@ -101,10 +116,10 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `658066283` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Vulnerability |
 | `986116981` | 53 | other_review | `combat_noop` | Persistence Hunter — burning at combat start |
 | `1745201100` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Maul |
-| `1271329828` | 45 | pvp_player_target | `combat_noop` | Doomed Species — reduces player crit chance |
-| `3445799437` | 45 | other_review | `combat_noop` | Blade's Tip — ignores player shields |
+| `1271329828` | 45 | xindi_crit_debuff | `hostile_crit_damage_reduction` + lethal extra seat | Doomed Species + Particle Beam |
+| `3445799437` | 45 | hostile_shield_bypass | `shield_mitigation_bypass` | Blade's Tip — 100% bypass of player shield mitigation on counter |
 | `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — reduces final damage (review mapping) |
-| `3196612078` | 39 | other_review | `combat_noop` | Strength of the Ibix — extra shots |
+| `3196612078` | 39 | hostile_shield_bypass | `shield_mitigation_bypass` | Strength of the Ibix — 100% bypass (10 shots are weapon components, not this seat) |
 | `1088929105` | 30 | other_review | `combat_noop` | S31 Elite — faction ship gate |
 | `1539285779` | 30 | armada_scope | `combat_noop` | Armada isolytic defense |
 | `1651219904` | 30 | other_review | `combat_noop` | Mo'Kai Elite — faction ship gate |

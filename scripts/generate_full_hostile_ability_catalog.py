@@ -76,6 +76,12 @@ def modeled(
     condition_defender_hull_breach: bool = False,
     condition_defender_burning: bool = False,
     round_cap: int | None = None,
+    round_interval: int | None = None,
+    shots: int | None = None,
+    crit_reduction_additive_points: bool = False,
+    crit_debuff_stacks: bool = False,
+    value_override: float | None = None,
+    extra_seats: list[dict] | None = None,
 ) -> dict:
     d: dict = {
         "timing": timing,
@@ -89,9 +95,21 @@ def modeled(
         d["condition_defender_hull_breach"] = True
     if condition_defender_burning:
         d["condition_defender_burning"] = True
+    if round_interval is not None and round_interval > 0:
+        d["round_interval"] = int(round_interval)
+    if shots is not None and shots > 0:
+        d["shots"] = int(shots)
+    if crit_reduction_additive_points:
+        d["crit_reduction_additive_points"] = True
+    if crit_debuff_stacks:
+        d["crit_debuff_stacks"] = True
+    if value_override is not None:
+        d["value_override"] = value_override
     cap = None if duration_rounds is not None else round_cap
     if cap is not None and cap > 0:
         d["round_cap"] = int(cap)
+    if extra_seats:
+        d["extra_seats"] = extra_seats
     return d
 
 
@@ -120,9 +138,70 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         bucket = kwargs.pop("_bucket", "modeled_combat")
         return modeled(timing, effect_type, **kwargs), bucket
 
-    # PvP-only (default PvE path is ship vs hostile NPC)
-    if "enemy player" in p or "opponent player" in p:
+    # PvP-only (default PvE path is ship vs hostile NPC). Word-boundary match so Xindi NPC
+    # text ("enemy players ship") is not misclassified.
+    if re.search(r"\benemy player\b", p) or re.search(r"\bopponent player\b", p):
         return dict(NOOP), "pvp_player_target"
+
+    def xindi_lethal_extra_seat(p_text: str) -> dict | None:
+        if "lethal damage" not in p_text:
+            return None
+        if "every 8th round" in p_text or "8th round" in p_text:
+            return modeled(
+                "round_end",
+                "hostile_lethal_end_of_round",
+                round_interval=8,
+                shots=1,
+            )
+        if "end of" not in p_text or "round" not in p_text:
+            return None
+        shots = 9 if "9 shots" in p_text else 1
+        return modeled(
+            "round_end",
+            "hostile_lethal_end_of_round",
+            round_interval=1,
+            shots=shots,
+        )
+
+    # Xindi round-start crit debuff on the player (Doomed Species / Be Like Water).
+    if "critical hit damage" in p and "start of the round" in p and "reduces" in p:
+        extra = xindi_lethal_extra_seat(p)
+        extras = [extra] if extra else None
+        stacks = "can stack" in p
+        value_override = 25.0 if "2500" in p else None
+        return (
+            modeled(
+                "round_start",
+                "hostile_crit_damage_reduction",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                value_override=value_override,
+                duration_rounds=2,
+                crit_reduction_additive_points=True,
+                crit_debuff_stacks=stacks,
+                extra_seats=extras,
+            ),
+            "xindi_crit_debuff",
+        )
+
+    # Kemocite Weaponry — cumulative weapon damage each round (burning may prevent; not modeled).
+    if "kemocite" in p or (
+        "weapon damage" in p and "stacks infinitely" in p and "end of the round" in p
+    ):
+        return (
+            modeled(
+                "round_start",
+                "accumulating_attack_multiplier",
+                value_is_percentage=True,
+                ignore_upstream_value_is_percentage=False,
+            ),
+            "xindi_kemocite",
+        )
+
+    # Standalone scheduled lethal (No Mercy every 8th round).
+    lethal_only = xindi_lethal_extra_seat(p)
+    if lethal_only and ("no mercy" in p or "every 8th round" in p):
+        return lethal_only, "xindi_lethal_round_end"
 
     # Outpost / station scope (not ship-vs-hostile PvE)
     if "outpost abilities" in p or "outpost ability" in p:
@@ -264,6 +343,21 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             value_is_percentage=True,
             ignore_upstream_value_is_percentage=False,
             _bucket="weapon_damage_combat",
+        )
+
+    # Hostile counter-fire ignores player shields (Xindi Strength of the Ibix, Blade's Tip, …).
+    if "ignores player shields" in p or (
+        "completely ignores" in p and "player shields" in p
+    ):
+        return (
+            modeled(
+                "combat_begin",
+                "shield_mitigation_bypass",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                value_override=1.0,
+            ),
+            "hostile_shield_bypass",
         )
 
     # Shield-related (drain, restore) — defer unless clear pattern

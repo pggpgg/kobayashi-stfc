@@ -115,6 +115,13 @@ mod tests {
             ignore_upstream_value_is_percentage: false,
             value_override: None,
             duration_rounds: None,
+            round_interval: None,
+            shots: None,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            crit_reduction_additive_points: false,
+            crit_debuff_stacks: false,
+            extra_seats: Vec::new(),
         };
         let spec =
             hostile_ability_to_combat_effect_spec("123", &entry, 100.0, 0.15).expect("should map");

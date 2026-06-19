@@ -320,6 +320,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::Burning { .. }
             | AbilityEffect::ShotsBonus { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
+            | AbilityEffect::HostileLethalEndOfRound { .. }
             | AbilityEffect::HostileCounterStatDebuff { .. }
             | AbilityEffect::DefenderShieldDrainPerRound { .. }
             | AbilityEffect::DefenderFireDelay { .. }
@@ -1159,6 +1160,8 @@ pub fn compile_research_attack_effect(
             Ok(AbilityEffect::HostileCritDamageReduction {
                 reduction: v.clamp(0.0, 0.95),
                 duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                additive_percentage_points: false,
+                stacks: false,
             })
         }
         _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {

@@ -243,11 +243,23 @@
       "value_override": 0.0
     },
     "141924765": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "hostile_crit_damage_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "duration_rounds": 2,
+      "crit_reduction_additive_points": true,
+      "value_override": 25.0,
+      "extra_seats": [
+        {
+          "timing": "round_end",
+          "effect_type": "hostile_lethal_end_of_round",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "round_interval": 1,
+          "shots": 9
+        }
+      ]
     },
     "155308381": {
       "timing": "combat_begin",
@@ -1982,11 +1994,23 @@
       "value_override": 0.0
     },
     "1271329828": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "hostile_crit_damage_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "duration_rounds": 2,
+      "crit_reduction_additive_points": true,
+      "crit_debuff_stacks": true,
+      "extra_seats": [
+        {
+          "timing": "round_end",
+          "effect_type": "hostile_lethal_end_of_round",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "round_interval": 1,
+          "shots": 1
+        }
+      ]
     },
     "1273665813": {
       "timing": "combat_begin",
@@ -2197,11 +2221,22 @@
       "value_override": 0.0
     },
     "1408273502": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "hostile_crit_damage_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "duration_rounds": 2,
+      "crit_reduction_additive_points": true,
+      "extra_seats": [
+        {
+          "timing": "round_end",
+          "effect_type": "hostile_lethal_end_of_round",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "round_interval": 1,
+          "shots": 9
+        }
+      ]
     },
     "1409541461": {
       "timing": "combat_begin",
@@ -4191,11 +4226,12 @@
       "ignore_upstream_value_is_percentage": false
     },
     "2665723295": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_end",
+      "effect_type": "hostile_lethal_end_of_round",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "round_interval": 8,
+      "shots": 1
     },
     "2668838424": {
       "timing": "combat_begin",
@@ -4981,10 +5017,10 @@
     },
     "3196612078": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "shield_mitigation_bypass",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "value_override": 1.0
     },
     "3198879611": {
       "timing": "combat_begin",
@@ -5377,10 +5413,10 @@
     },
     "3445799437": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "shield_mitigation_bypass",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "value_override": 1.0
     },
     "3450229444": {
       "timing": "combat_begin",
@@ -6091,8 +6127,8 @@
       "ignore_upstream_value_is_percentage": true
     },
     "3981152012": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
       "value_is_percentage": true,
       "ignore_upstream_value_is_percentage": false
     },

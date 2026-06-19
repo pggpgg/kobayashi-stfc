@@ -20,7 +20,8 @@ use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
-    hostile_crit_damage_reduction_active_at_round,
+    hostile_crit_damage_reduction_active_at_round, ActiveHostileCritReduction,
+    hostile_lethal_end_of_round_hull_damage,
     opponent_captain_maneuver_multiplier_from_effects, scale_crew_captain_maneuver_effects,
     sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
     sum_breach_cumulative_crit_damage_per_crit, sum_dodge_bonus,
@@ -117,6 +118,26 @@ fn effective_incoming_shield_mitigation(
     // own mitigation when they take counter-fire. Folds in alongside the config-driven
     // `incoming_shield_mitigation_bonus`; final clamp keeps the total in [0, 1].
     (base_sm + extra + attacker_self_bonus).clamp(0.0, 1.0)
+}
+
+/// Attacker shield mitigation when taking hostile counter-fire, after hostile bypass (e.g. Xindi
+/// Strength of the Ibix). Mirrors outbound `mitigation × (1 - bypass)` semantics.
+#[inline]
+fn effective_counter_incoming_shield_mitigation(
+    base_sm: f64,
+    config: &SimulationConfig,
+    round_index: u32,
+    attacker_self_bonus: f64,
+    hostile_bypass_fraction: f64,
+) -> f64 {
+    let pre_bypass = effective_incoming_shield_mitigation(
+        base_sm,
+        config,
+        round_index,
+        attacker_self_bonus,
+    );
+    let bypass = hostile_bypass_fraction.clamp(0.0, 1.0);
+    (pre_bypass * (1.0 - bypass)).clamp(0.0, 1.0)
 }
 
 /// Immutable combat setup precomputed once per crew, reused across multiple trials with different seeds.
@@ -586,13 +607,10 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             },
         );
 
-        // Symmetric attacker-outbound CDR: read `HostileCritDamageReduction` from the
-        // defender's crew (in PvP, the opponent's `player_crit_damage_reduction` profile
-        // bonus is wired in as a `HostileCritDamageReduction` seat in scenario.rs). The
-        // floor clamp at the per-shot crit resolution site limits how low this can drive
-        // the multiplier. The resolver folds in the per-round duration gate, so each
-        // seat contributes only when `round_index` is within its `1..=duration_rounds`
-        // window; overlapping sources stack additively (capped at 0.95).
+        // Attacker-outbound Xindi crit debuff: defender crew seats with additive percentage-point
+        // reduction (Doomed Species / Be Like Water). Player [`Combatant::crit_damage_floor`]
+        // (Critical Damage Floor research) clamps after the debuff. Crozier-style seats on
+        // attacker crew use multiplicative fraction on the counter-fire path instead.
         let effective_attacker_crit_reduction =
             hostile_crit_damage_reduction_active_at_round(defender_crew, &combat_ctx, round_index);
 
@@ -1093,6 +1111,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             round_index,
             attacker,
             defender,
+            defender_crew,
             &combat_ctx,
             round_end_effects,
             defender_round_end_effects,
@@ -1528,6 +1547,7 @@ fn apply_round_end_phase(
     round_index: u32,
     attacker: &Combatant,
     defender: &Combatant,
+    defender_crew: &CrewConfiguration,
     combat_ctx: &CombatContext,
     round_end_effects: &[ActiveAbilityEffect],
     defender_round_end_effects: &[ActiveAbilityEffect],
@@ -1627,6 +1647,15 @@ fn apply_round_end_phase(
     *total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
     *total_attacker_hull_damage += defender.end_of_round_damage;
     *attacker_hull_gross_damage_this_round += defender.end_of_round_damage;
+    let lethal_damage = hostile_lethal_end_of_round_hull_damage(
+        defender_crew,
+        &ctx_after_weapons,
+        round_index,
+        attacker.hull_health.max(0.0),
+        *total_attacker_hull_damage,
+    );
+    *total_attacker_hull_damage += lethal_damage;
+    *attacker_hull_gross_damage_this_round += lethal_damage;
     *total_attacker_hull_damage += attacker_burning_damage * round_end_apex_factor;
     *attacker_hull_gross_damage_this_round += attacker_burning_damage * round_end_apex_factor;
 
@@ -1639,7 +1668,12 @@ fn apply_round_end_phase(
     let hull_heal = hull_regen + hull_regen_frac * attacker.hull_health.max(0.0);
     *attacker_shield_remaining =
         (*attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
-    *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+    // Hull regen only applies while the attacker is still alive after round-end hull damage
+    // (lethal beam, burning, defender end_of_round_damage, etc.). At HHP ≤ 0 the fight ends;
+    // regen must not reduce cumulative damage in the same phase.
+    if *total_attacker_hull_damage < attacker.hull_health.max(0.0) {
+        *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+    }
 
     let defender_round_end_filtered =
         filter_effects_by_condition(defender_round_end_effects, &ctx_after_weapons);
@@ -2222,7 +2256,7 @@ struct FireAttackerWeapon<'a> {
     effective_pierce: f64,
     effective_shots: u32,
     apex_damage_factor: f64,
-    effective_attacker_crit_reduction: f64,
+    effective_attacker_crit_reduction: ActiveHostileCritReduction,
     breach_crit_chance_per_hit: f64,
     breach_crit_damage_per_crit: f64,
     attack_phase_assimilated: bool,
@@ -2504,7 +2538,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 attacker.weapon_crit_multiplier(weapon_index),
                 phase_effects.crit_damage_multiplier(),
                 breach_crit_damage_add,
-                effective_attacker_crit_reduction,
+                effective_attacker_crit_reduction.additive_points,
+                effective_attacker_crit_reduction.multiplicative_fraction,
                 attacker.crit_damage_floor,
                 hull_breach_active,
                 &mut *rng,
@@ -2540,8 +2575,16 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                         Value::from(round_f64(crit.effective_crit_chance)),
                     ),
                     (
-                        "attacker_crit_reduction".to_string(),
-                        Value::from(round_f64(effective_attacker_crit_reduction)),
+                        "attacker_crit_reduction_additive".to_string(),
+                        Value::from(round_f64(
+                            effective_attacker_crit_reduction.additive_points,
+                        )),
+                    ),
+                    (
+                        "attacker_crit_reduction_mult".to_string(),
+                        Value::from(round_f64(
+                            effective_attacker_crit_reduction.multiplicative_fraction,
+                        )),
                     ),
                     (
                         "crit_damage_floor".to_string(),
@@ -3336,7 +3379,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             defender_phase_effects.crit_chance_bonus(),
             defender.weapon_crit_multiplier(weapon_index),
             defender_phase_effects.crit_damage_multiplier(),
-            // No breach-cumulative crit-damage source on the counter-fire path today.
+            0.0,
             0.0,
             0.0,
             0.0,
@@ -3349,8 +3392,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         // Operating Table tech, profile `player_crit_damage_reduction`, …). The
         // per-round duration gate already lives inside the resolver; here we just
         // apply the resolved fraction.
-        if def_is_crit && hostile_crit_reduction > 0.0 {
-            def_crit_mult *= (1.0 - hostile_crit_reduction).max(0.05);
+        if def_is_crit && hostile_crit_reduction.multiplicative_fraction > 0.0 {
+            def_crit_mult *= (1.0 - hostile_crit_reduction.multiplicative_fraction).max(0.05);
         }
         trace.record_if(|| CombatEvent {
             event_type: "crit_resolution".to_string(),
@@ -3406,11 +3449,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 .max(0.0),
         );
         if use_experimental_simd_damage_after_apex_base {
-            let att_mit_for_batch = effective_incoming_shield_mitigation(
+            let att_mit_for_batch = effective_counter_incoming_shield_mitigation(
                 attacker.shield_mitigation,
                 config,
                 round_index,
                 phase_effects.composed_attacker_shield_mitigation_bonus(),
+                defender_phase_effects.composed_shield_mitigation_bypass(),
             );
             counter_simd_damage_batch.push(counter_after_attack_phase);
             counter_simd_isolytic_batch.push(counter_iso_taken);
@@ -3673,11 +3717,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         let counter_after_apex =
             (counter_after_attack_phase + counter_iso_taken) * counter_apex_factor;
         let att_shield_mitigation = if st.attacker_shield_remaining > 0.0 {
-            effective_incoming_shield_mitigation(
+            effective_counter_incoming_shield_mitigation(
                 attacker.shield_mitigation,
                 config,
                 round_index,
                 phase_effects.composed_attacker_shield_mitigation_bonus(),
+                defender_phase_effects.composed_shield_mitigation_bypass(),
             )
         } else {
             0.0

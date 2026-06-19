@@ -178,12 +178,31 @@ pub enum AbilityEffect {
         bonus_pct: f64,
         duration_rounds: u32,
     },
-    /// Reduces damage when the **defender** (e.g. hostile) scores a critical hit on return fire.
-    /// `reduction` is a fraction (0.02 = 2% less damage on that crit). Applied as `crit_mult *= 1.0 - reduction`.
-    /// `duration_rounds`: 1-based combat rounds `1..=duration_rounds` (e.g. Crozier "first 5 rounds").
+    /// Crit damage debuff on the **attacker's** outbound crit multiplier.
+    ///
+    /// When [`Self::additive_percentage_points`] is true (Xindi Doomed Species / Be Like Water),
+    /// `reduction` is subtracted in **percentage-point** units from the composed crit multiplier
+    /// (`weapon_crit × officer_crit + additive bonuses`), then [`Combatant::crit_damage_floor`]
+    /// is applied. Upstream value `5` = −500% display = `5.0` points. When false (e.g. U.S.S.
+    /// Crozier vs hostile counter-fire), `reduction` is a multiplicative fraction (`0.02` = 2% off
+    /// the crit multiplier on the counter path).
+    ///
+    /// [`Self::stacks`]: when true, round-start seats stack up to `duration_rounds` overlapping
+    /// copies; when false, only one copy applies at a time (Be Like Water).
     HostileCritDamageReduction {
         reduction: f64,
         duration_rounds: u32,
+        additive_percentage_points: bool,
+        stacks: bool,
+    },
+    /// Xindi-style round-end lethal weapons (particle beam / super weapon / No Mercy). When active
+    /// on the hostile defender crew, deals unmitigated hull damage equal to the attacker's remaining
+    /// hull at round end. `round_interval`: fire every N combat rounds (1 = each round, 8 = every
+    /// 8th). `shots` is descriptive upstream metadata; lethal outcome is modeled as instant hull
+    /// loss regardless of shot count (uncertainty: per-shot damage formula unknown).
+    HostileLethalEndOfRound {
+        round_interval: u32,
+        shots: u32,
     },
     /// Player ship hull ability (Quv'Sompek, B'Rel): reduces hostile counter-fire pierce effectiveness
     /// for the first `duration_rounds` combat rounds. `reduction` is a fraction (0.15 = 15% off pierce,
@@ -809,7 +828,16 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::HostileCritDamageReduction {
             reduction,
             duration_rounds: _,
-        } => *reduction = cap_one(*reduction),
+            additive_percentage_points,
+            stacks: _,
+        } => {
+            if *additive_percentage_points {
+                *reduction = reduction.max(0.0);
+            } else {
+                *reduction = cap_one(*reduction);
+            }
+        }
+        AbilityEffect::HostileLethalEndOfRound { .. } => {}
         AbilityEffect::HostileCounterStatDebuff {
             reduction,
             duration_rounds: _,
@@ -854,27 +882,33 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
     }
 }
 
-/// Effective hostile crit damage reduction for `round_index` (1-based) from ship hull abilities
-/// (e.g. U.S.S. Crozier) and gated forbidden-tech seats (e.g. Borg Operating Table vs Conqueror
-/// Borg). In-game, CDR sources stack additively per-round, each gated by its own duration window.
+/// Resolved hostile crit debuff for one combat round.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct ActiveHostileCritReduction {
+    /// Subtracted from outbound crit multiplier (percentage-point units, Xindi).
+    pub additive_points: f64,
+    /// Multiplicative fraction applied on counter-fire crits (Crozier-style, `[0, 0.95]` sum).
+    pub multiplicative_fraction: f64,
+}
+
+/// Effective hostile crit damage reduction for `round_index` (1-based).
 ///
-/// This function sums `reduction` across every `HostileCritDamageReduction` seat that
-/// 1. passes its [`AbilityCondition`] against `ctx`, and
-/// 2. has `round_index` within `1..=duration_rounds`.
-///
-/// The folded duration gate replaces the previous tuple `(reduction, duration_rounds)` API; the
-/// engine no longer needs to call [`round_in_inclusive_first_n`] after the resolver. Sum is
-/// clamped to `[0.0, 0.95]`.
+/// Seats on **defender crew** (Xindi) contribute [`ActiveHostileCritReduction::additive_points`]
+/// on the player's outbound crit path. Seats on **attacker crew** (Crozier, forbidden tech)
+/// contribute [`ActiveHostileCritReduction::multiplicative_fraction`] on hostile counter-fire.
 pub fn hostile_crit_damage_reduction_active_at_round(
     crew: &CrewConfiguration,
     ctx: &CombatContext,
     round_index: u32,
-) -> f64 {
-    let mut total = 0.0_f64;
+) -> ActiveHostileCritReduction {
+    let mut additive_points = 0.0_f64;
+    let mut multiplicative_fraction = 0.0_f64;
     for s in &crew.seats {
         if let AbilityEffect::HostileCritDamageReduction {
             reduction: r,
             duration_rounds: d,
+            additive_percentage_points,
+            stacks,
         } = s.ability.effect
         {
             if s.ability
@@ -884,13 +918,69 @@ pub fn hostile_crit_damage_reduction_active_at_round(
             {
                 continue;
             }
-            if !round_in_inclusive_first_n(round_index, d) {
+            let copies = if s.ability.timing == TimingWindow::RoundStart {
+                if stacks {
+                    round_index.min(d).max(0)
+                } else if round_index >= 1 {
+                    1
+                } else {
+                    0
+                }
+            } else if round_in_inclusive_first_n(round_index, d) {
+                1
+            } else {
+                0
+            };
+            if copies == 0 {
                 continue;
             }
-            total += r;
+            let contribution = r * copies as f64;
+            if additive_percentage_points {
+                additive_points += contribution;
+            } else {
+                multiplicative_fraction += contribution;
+            }
         }
     }
-    total.clamp(0.0, 0.95)
+    ActiveHostileCritReduction {
+        additive_points,
+        multiplicative_fraction: multiplicative_fraction.clamp(0.0, 0.95),
+    }
+}
+
+/// Hull damage from Xindi-style lethal round-end weapons on the hostile defender crew.
+pub fn hostile_lethal_end_of_round_hull_damage(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+    round_index: u32,
+    attacker_max_hull: f64,
+    total_attacker_hull_damage: f64,
+) -> f64 {
+    let remaining = (attacker_max_hull - total_attacker_hull_damage).max(0.0);
+    if remaining <= 0.0 {
+        return 0.0;
+    }
+    let mut fires = false;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileLethalEndOfRound {
+            round_interval,
+            shots: _,
+        } = s.ability.effect
+        {
+            if s.ability
+                .condition
+                .as_ref()
+                .is_some_and(|c| !c.evaluate(ctx))
+            {
+                continue;
+            }
+            let interval = round_interval.max(1);
+            if round_index > 0 && round_index.is_multiple_of(interval) {
+                fires = true;
+            }
+        }
+    }
+    if fires { remaining } else { 0.0 }
 }
 
 /// Hostile pierce/accuracy debuff from player ship hull abilities (Quv'Sompek, B'Rel).
@@ -1905,6 +1995,22 @@ mod tests {
             AbilityEffect::HostileCritDamageReduction {
                 reduction,
                 duration_rounds,
+                additive_percentage_points: false,
+                stacks: false,
+            },
+        )
+    }
+
+    fn xindi_crit_debuff_ability(reduction: f64, stacks: bool) -> Ability {
+        make_ability(
+            "xindi",
+            AbilityClass::ShipAbility,
+            TimingWindow::RoundStart,
+            AbilityEffect::HostileCritDamageReduction {
+                reduction,
+                duration_rounds: 2,
+                additive_percentage_points: true,
+                stacks,
             },
         )
     }
@@ -1919,7 +2025,11 @@ mod tests {
             ],
         };
         let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
-        assert!((r - 0.13).abs() < 1e-12, "expected 0.13, got {r}");
+        assert!(
+            (r.multiplicative_fraction - 0.13).abs() < 1e-12,
+            "expected 0.13, got {}",
+            r.multiplicative_fraction
+        );
     }
 
     #[test]
@@ -1933,8 +2043,8 @@ mod tests {
         };
         let r_round_1 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
         let r_round_3 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 3);
-        assert!((r_round_1 - 0.13).abs() < 1e-12);
-        assert!((r_round_3 - 0.08).abs() < 1e-12);
+        assert!((r_round_1.multiplicative_fraction - 0.13).abs() < 1e-12);
+        assert!((r_round_3.multiplicative_fraction - 0.08).abs() < 1e-12);
     }
 
     #[test]
@@ -1945,7 +2055,7 @@ mod tests {
             seats: vec![make_seat(CrewSeat::Ship, ab, None)],
         };
         let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
-        assert!(r.abs() < 1e-12);
+        assert!(r.additive_points.abs() < 1e-12 && r.multiplicative_fraction.abs() < 1e-12);
     }
 
     #[test]
@@ -1959,7 +2069,69 @@ mod tests {
             ],
         };
         let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
-        assert!((r - 0.95).abs() < 1e-12, "expected 0.95, got {r}");
+        assert!(
+            (r.multiplicative_fraction - 0.95).abs() < 1e-12,
+            "expected 0.95, got {}",
+            r.multiplicative_fraction
+        );
+    }
+
+    #[test]
+    fn hostile_crit_reduction_round_start_stacks_within_duration_window() {
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                xindi_crit_debuff_ability(5.0, true),
+                None,
+            )],
+        };
+        let r1 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
+        let r2 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 2);
+        let r3 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 3);
+        assert!((r1.additive_points - 5.0).abs() < 1e-12);
+        assert!((r2.additive_points - 10.0).abs() < 1e-12);
+        assert!((r3.additive_points - 10.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn hostile_crit_reduction_round_start_non_stacking_is_single_copy() {
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                xindi_crit_debuff_ability(25.0, false),
+                None,
+            )],
+        };
+        let r2 = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 2);
+        assert!((r2.additive_points - 25.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn hostile_lethal_end_of_round_fires_on_interval() {
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "no_mercy",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::RoundEnd,
+                    AbilityEffect::HostileLethalEndOfRound {
+                        round_interval: 8,
+                        shots: 1,
+                    },
+                ),
+                None,
+            )],
+        };
+        let ctx = ctx_default();
+        assert_eq!(
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 7, 1000.0, 0.0),
+            0.0
+        );
+        assert_eq!(
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 200.0),
+            800.0
+        );
     }
 
     #[test]
@@ -1969,6 +2141,6 @@ mod tests {
             seats: vec![make_seat(CrewSeat::Ship, cdr_ability(0.5, 0), None)],
         };
         let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
-        assert!(r.abs() < 1e-12);
+        assert!(r.additive_points.abs() < 1e-12 && r.multiplicative_fraction.abs() < 1e-12);
     }
 }

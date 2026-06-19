@@ -93,12 +93,14 @@ pub fn ship_ability_effect_from_catalog(
         // Catalogued for every hull; no combat seat until modeled explicitly.
         "combat_noop" | "unmodeled" | "not_applicable" => None,
         "hostile_crit_damage_reduction" | "reduce_hostile_crit_damage" => {
-            if timing != TimingWindow::CombatBegin {
+            if timing != TimingWindow::CombatBegin && timing != TimingWindow::RoundStart {
                 return None;
             }
             Some(AbilityEffect::HostileCritDamageReduction {
                 reduction: value.clamp(0.0, 0.95),
                 duration_rounds: duration_rounds.unwrap_or(5).max(1),
+                additive_percentage_points: false,
+                stacks: false,
             })
         }
         "hostile_counter_stat_debuff" | "hostile_pierce_accuracy_debuff" => {
@@ -207,6 +209,12 @@ pub fn ship_ability_effect_from_catalog(
         }
 
         "shield_mitigation" => Some(AbilityEffect::ShieldMitigationBonus(value)),
+
+        // Multiplicative bypass of the opponent's shield mitigation on damage dealt (e.g. Harrison
+        // Sabotage on outbound; Xindi Strength of the Ibix / Blade's Tip on counter-fire).
+        "shield_mitigation_bypass" | "shield_bypass" | "ignore_shields" | "ignores_shields" => {
+            Some(AbilityEffect::ShieldMitigationBypassFraction(value.clamp(0.0, 1.0)))
+        }
 
         "morale" => Some(AbilityEffect::Morale(normalize_probability(value))),
 
@@ -751,7 +759,9 @@ mod tests {
                 e,
                 AbilityEffect::HostileCritDamageReduction {
                     reduction: r,
-                    duration_rounds: 5
+                    duration_rounds: 5,
+                    additive_percentage_points: false,
+                    stacks: false,
                 } if (r - 0.02).abs() < 1e-12
             ),
             "{e:?}"
@@ -761,10 +771,10 @@ mod tests {
                 "hostile_crit_damage_reduction",
                 TimingWindow::RoundStart,
                 0.02,
-                Some(5),
+                Some(2),
             )
-            .is_none(),
-            "must be combat_begin only"
+            .is_some(),
+            "round_start Xindi crit debuff must map"
         );
     }
 
