@@ -20,15 +20,15 @@ use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
-    hostile_crit_damage_reduction_active_at_round, ActiveHostileCritReduction,
-    hostile_denticle_blade_gates_weapon, hostile_kemocite_attack_multiplier_bonus,
-    hostile_kemocite_try_add_stack, hostile_lethal_end_of_round_hull_damage,
-    roll_hostile_denticle_blade_at_combat_begin,
-    opponent_captain_maneuver_multiplier_from_effects, scale_crew_captain_maneuver_effects,
+    hostile_crit_damage_reduction_active_at_round, hostile_denticle_blade_gates_weapon,
+    hostile_kemocite_attack_multiplier_bonus, hostile_kemocite_try_add_stack,
+    hostile_lethal_end_of_round_hull_damage, opponent_captain_maneuver_multiplier_from_effects,
+    roll_hostile_denticle_blade_at_combat_begin, scale_crew_captain_maneuver_effects,
     sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
     sum_breach_cumulative_crit_damage_per_crit, sum_dodge_bonus,
     sum_hostile_engagement_defensive_bonus, sum_mitigation_additive, AbilityEffect,
-    ActiveAbilityEffect, CombatContext, CrewConfiguration, TimingWindow,
+    ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext, CrewConfiguration,
+    TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -132,12 +132,8 @@ fn effective_counter_incoming_shield_mitigation(
     attacker_self_bonus: f64,
     hostile_bypass_fraction: f64,
 ) -> f64 {
-    let pre_bypass = effective_incoming_shield_mitigation(
-        base_sm,
-        config,
-        round_index,
-        attacker_self_bonus,
-    );
+    let pre_bypass =
+        effective_incoming_shield_mitigation(base_sm, config, round_index, attacker_self_bonus);
     let bypass = hostile_bypass_fraction.clamp(0.0, 1.0);
     (pre_bypass * (1.0 - bypass)).clamp(0.0, 1.0)
 }
@@ -775,12 +771,14 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             );
         }
         if (osr_round_delta.health_max_mult - 1.0).abs() > f64::EPSILON {
-            if let Some(base_max) = crate::data::officer_stat_round::apply_health_max_mult_to_attacker(
-                attacker,
-                osr_round_delta.health_max_mult,
-                &mut st.total_attacker_hull_damage,
-                &mut st.attacker_shield_remaining,
-            ) {
+            if let Some(base_max) =
+                crate::data::officer_stat_round::apply_health_max_mult_to_attacker(
+                    attacker,
+                    osr_round_delta.health_max_mult,
+                    &mut st.total_attacker_hull_damage,
+                    &mut st.attacker_shield_remaining,
+                )
+            {
                 st.osr_health_base_max_hull = base_max;
                 st.osr_health_mult_applied = osr_round_delta.health_max_mult;
             }
@@ -873,16 +871,14 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             && defender_receive_damage_effects.is_empty();
 
         let (round_hull_hp_mult, round_shield_hp_mult) = {
-            let (mut hull, mut shield) =
-                EffectAccumulator::sum_max_hp_multipliers_from_effects(
-                    &full_round_start,
-                    round_start_assimilated,
-                );
-            let (atk_hull, atk_shield) =
-                EffectAccumulator::sum_max_hp_multipliers_from_effects(
-                    &attack_phase_filtered,
-                    attack_phase_assimilated,
-                );
+            let (mut hull, mut shield) = EffectAccumulator::sum_max_hp_multipliers_from_effects(
+                &full_round_start,
+                round_start_assimilated,
+            );
+            let (atk_hull, atk_shield) = EffectAccumulator::sum_max_hp_multipliers_from_effects(
+                &attack_phase_filtered,
+                attack_phase_assimilated,
+            );
             hull += atk_hull;
             shield += atk_shield;
             (hull, shield)
@@ -2618,9 +2614,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                     ),
                     (
                         "attacker_crit_reduction_additive".to_string(),
-                        Value::from(round_f64(
-                            effective_attacker_crit_reduction.additive_points,
-                        )),
+                        Value::from(round_f64(effective_attacker_crit_reduction.additive_points)),
                     ),
                     (
                         "attacker_crit_reduction_mult".to_string(),

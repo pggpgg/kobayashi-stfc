@@ -898,43 +898,42 @@ fn gather_optimize_simulation_results(
     );
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
 
-    let mut all_results: Vec<SimulationResult> =
-        if heuristics_seeds_nonempty
-            && !is_seeded_genetic
-            && !fast_discovery
-            && strategy != OptimizerStrategy::LinearEval
-        {
-            let h_total = h_candidates.len() as u32;
-            sink.on_heuristics_start(h_total);
-            let h_len = h_candidates.len();
-            let num_batches = monte_carlo_batch_count_for_candidates(h_len).max(1);
-            let ranges = batch_ranges(h_len, num_batches);
-            let mut results: Vec<SimulationResult> = Vec::with_capacity(h_len);
-            for (start, end) in ranges {
-                if sink.job_cancelled() {
-                    warn!("optimize_cancelled");
-                    return Err(OptimizeGatherError::Cancelled);
-                }
-                let batch = &h_candidates[start..end];
-                let batch_results = run_monte_carlo_with_shared(
-                    shared_scenario.clone(),
-                    batch,
-                    sims as usize,
-                    seed,
-                    true,
-                    chain_grind.clone(),
-                );
-                results.extend(batch_results);
+    let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty
+        && !is_seeded_genetic
+        && !fast_discovery
+        && strategy != OptimizerStrategy::LinearEval
+    {
+        let h_total = h_candidates.len() as u32;
+        sink.on_heuristics_start(h_total);
+        let h_len = h_candidates.len();
+        let num_batches = monte_carlo_batch_count_for_candidates(h_len).max(1);
+        let ranges = batch_ranges(h_len, num_batches);
+        let mut results: Vec<SimulationResult> = Vec::with_capacity(h_len);
+        for (start, end) in ranges {
+            if sink.job_cancelled() {
+                warn!("optimize_cancelled");
+                return Err(OptimizeGatherError::Cancelled);
             }
-            sink.on_heuristics_complete(heuristics_only, h_total, &results);
-            info!(
-                heuristic_results = results.len() as u64,
-                "optimize_heuristics_monte_carlo_complete"
+            let batch = &h_candidates[start..end];
+            let batch_results = run_monte_carlo_with_shared(
+                shared_scenario.clone(),
+                batch,
+                sims as usize,
+                seed,
+                true,
+                chain_grind.clone(),
             );
-            results
-        } else {
-            Vec::new()
-        };
+            results.extend(batch_results);
+        }
+        sink.on_heuristics_complete(heuristics_only, h_total, &results);
+        info!(
+            heuristic_results = results.len() as u64,
+            "optimize_heuristics_monte_carlo_complete"
+        );
+        results
+    } else {
+        Vec::new()
+    };
 
     let analytical_prefilter = if !heuristics_only {
         let scenario = OptimizationScenario {

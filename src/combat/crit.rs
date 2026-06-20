@@ -84,7 +84,8 @@ mod tests {
     #[test]
     fn non_crit_yields_unit_multiplier() {
         let mut rng = Rng::new(1);
-        let c = resolve_vehicle_weapon_crit(0.0, 0.0, 2.0, 1.5, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(0.0, 0.0, 2.0, 1.5, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(!c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-12);
     }
@@ -92,7 +93,8 @@ mod tests {
     #[test]
     fn guaranteed_crit_scales_by_weapon_and_officer_crit_damage_mult() {
         let mut rng = Rng::new(2);
-        let c = resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.5, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.5, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 3.0).abs() < 1e-9);
     }
@@ -101,7 +103,8 @@ mod tests {
     fn additive_crit_damage_bonus_adds_percentage_points_to_multiplier() {
         let mut rng = Rng::new(21);
         // weapon × officer = 2.0 × 1.0 = 2.0; additive +0.5 → 2.5 (vs ×1.5 = 3.0 for multiplicative).
-        let c = resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.0, 0.5, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.0, 0.5, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 2.5).abs() < 1e-9);
     }
@@ -109,7 +112,8 @@ mod tests {
     #[test]
     fn additive_crit_damage_bonus_ignored_on_non_crit() {
         let mut rng = Rng::new(22);
-        let c = resolve_vehicle_weapon_crit(0.0, 0.0, 2.0, 1.0, 0.5, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(0.0, 0.0, 2.0, 1.0, 0.5, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(!c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-12);
     }
@@ -126,8 +130,10 @@ mod tests {
     fn same_seed_and_params_yields_identical_resolution() {
         let mut rng_a = Rng::new(42);
         let mut rng_b = Rng::new(42);
-        let a = resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.2, 0.0, 0.0, 0.0, 0.0, false, &mut rng_a);
-        let b = resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.2, 0.0, 0.0, 0.0, 0.0, false, &mut rng_b);
+        let a =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.2, 0.0, 0.0, 0.0, 0.0, false, &mut rng_a);
+        let b =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.2, 0.0, 0.0, 0.0, 0.0, false, &mut rng_b);
         assert_eq!(a.is_crit, b.is_crit);
         assert!((a.roll - b.roll).abs() < 1e-15);
         assert!((a.multiplier - b.multiplier).abs() < 1e-15);
@@ -137,7 +143,8 @@ mod tests {
     fn effective_crit_chance_is_clamped_to_one() {
         let mut rng = Rng::new(7);
         // weapon 0.9 + bonus 0.5 = 1.4 → clamped to 1.0
-        let c = resolve_vehicle_weapon_crit(0.9, 0.5, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(0.9, 0.5, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit); // chance is 1.0, always crits
         assert!((c.effective_crit_chance - 1.0).abs() < 1e-12);
     }
@@ -146,7 +153,8 @@ mod tests {
     fn effective_crit_chance_is_clamped_to_zero() {
         let mut rng = Rng::new(8);
         // weapon 0.0 + bonus -0.5 = -0.5 → clamped to 0.0
-        let c = resolve_vehicle_weapon_crit(0.0, -0.5, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(0.0, -0.5, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(!c.is_crit);
         assert!((c.effective_crit_chance - 0.0).abs() < 1e-12);
     }
@@ -155,7 +163,8 @@ mod tests {
     fn crit_chance_bonus_adds_to_weapon_crit_chance() {
         let mut rng = Rng::new(9);
         // 25% from weapon + 75% from bonus = 100% → always crits
-        let c = resolve_vehicle_weapon_crit(0.25, 0.75, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(0.25, 0.75, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.effective_crit_chance - 1.0).abs() < 1e-12);
     }
@@ -164,9 +173,8 @@ mod tests {
     fn attacker_crit_reduction_additive_subtracts_percentage_points() {
         let mut rng = Rng::new(31);
         // raw 10.0 (+900% bonus); −5.0 points from bonus → 1 + (9 − 5) = 5.0
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.0, 5.0, 0.0, 5.0, 0.0, 0.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 5.0, 0.0, 5.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 5.0).abs() < 1e-9);
     }
@@ -175,9 +183,8 @@ mod tests {
     fn be_like_water_collapses_high_crit_bonus_to_unit_multiplier() {
         let mut rng = Rng::new(34);
         // Enterprise-D export crit damage 3.19; BLW value 25 (−2500% UI) eats the full bonus.
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 1.0, 3.19, 0.0, 25.0, 0.0, 0.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 1.0, 3.19, 0.0, 25.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-9);
     }
@@ -186,9 +193,8 @@ mod tests {
     fn attacker_crit_reduction_additive_only_eats_bonus_not_base_one() {
         let mut rng = Rng::new(35);
         // raw 2.5 (+150% bonus); −5.0 cannot pull below ×1.0 before floor
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 1.0, 2.5, 0.0, 5.0, 0.0, 0.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 1.0, 2.5, 0.0, 5.0, 0.0, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-9);
     }
@@ -196,9 +202,8 @@ mod tests {
     #[test]
     fn attacker_crit_reduction_mult_fraction_on_outbound_after_additive() {
         let mut rng = Rng::new(32);
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.50, 0.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.50, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-9);
     }
@@ -207,9 +212,8 @@ mod tests {
     fn attacker_crit_reduction_shrinks_base_multiplier_when_no_floor() {
         let mut rng = Rng::new(11);
         // legacy mult-only path via attacker_crit_reduction_mult
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.50, 0.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.50, 0.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-9);
     }
@@ -218,18 +222,16 @@ mod tests {
     fn crit_damage_floor_clamps_after_additive_xindi_debuff() {
         let mut rng = Rng::new(33);
         // raw 12.0; −10.0 additive would give 2.0; floor 6.0 protects
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.0, 6.0, 0.0, 10.0, 0.0, 6.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 6.0, 0.0, 10.0, 0.0, 6.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 6.0).abs() < 1e-9);
     }
     #[test]
     fn crit_damage_floor_clamps_below_reduced_multiplier() {
         let mut rng = Rng::new(12);
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.80, 1.5, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.80, 1.5, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 1.5).abs() < 1e-9);
     }
@@ -237,9 +239,8 @@ mod tests {
     #[test]
     fn crit_damage_floor_does_not_clamp_when_reduced_exceeds_floor() {
         let mut rng = Rng::new(13);
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.5, 1.0, 0.0, 0.0, 0.20, 1.0, false, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.5, 1.0, 0.0, 0.0, 0.20, 1.0, false, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 2.0).abs() < 1e-9);
     }
@@ -247,9 +248,8 @@ mod tests {
     #[test]
     fn floor_protects_against_hull_breach_compounding_on_clamped_base() {
         let mut rng = Rng::new(14);
-        let c = resolve_vehicle_weapon_crit(
-            1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.90, 1.0, true, &mut rng,
-        );
+        let c =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.90, 1.0, true, &mut rng);
         assert!(c.is_crit);
         assert!((c.multiplier - 1.0 * HULL_BREACH_CRIT_BONUS).abs() < 1e-9);
     }
@@ -258,7 +258,8 @@ mod tests {
     fn floor_is_a_noop_when_not_crit() {
         let mut rng = Rng::new(15);
         // Even with a high floor, non-crit returns unit multiplier 1.0.
-        let c = resolve_vehicle_weapon_crit(0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.0, 5.0, false, &mut rng);
+        let c =
+            resolve_vehicle_weapon_crit(0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.0, 5.0, false, &mut rng);
         assert!(!c.is_crit);
         assert!((c.multiplier - 1.0).abs() < 1e-12);
     }

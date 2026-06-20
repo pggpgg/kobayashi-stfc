@@ -175,10 +175,7 @@ fn run_recorded_fight(
         .map_err(|e| format!("fight {} parse {}: {e}", fight.id, csv_path.display()))?;
 
     let hostile_id = resolve_fight_hostile_id(fight)?;
-    let profile_id = fight
-        .profile_id
-        .as_deref()
-        .or(suite.profile_id.as_deref());
+    let profile_id = fight.profile_id.as_deref().or(suite.profile_id.as_deref());
 
     let candidate = CrewCandidate {
         captain: fight.captain.clone(),
@@ -209,9 +206,7 @@ fn run_recorded_fight(
     }
 
     let sim_result = replay_to_simulation_result(&replay);
-    let expect_won = fight
-        .expect_attacker_won
-        .or(Some(export.attacker_won));
+    let expect_won = fight.expect_attacker_won.or(Some(export.attacker_won));
 
     Ok(simulation_band_report(
         &fight.id,

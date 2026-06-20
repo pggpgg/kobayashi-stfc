@@ -438,24 +438,26 @@ export default memo(function OptimizePanel({
               color: "var(--text-muted)",
             }}
           >
-            Fast approximate ranking by closed-form expected hull damage. Does not
-            simulate win rates or multi-round proc variance.
+            Fast approximate ranking by closed-form expected hull damage. Does
+            not simulate win rates or multi-round proc variance.
           </p>
         )}
       </div>
       {optimizerStrategy !== "linear_eval" && (
-      <label style={checkboxLabelStyle}>
-        <input
-          type="checkbox"
-          checked={enableLearnedPairPrior}
-          onChange={(e) => onEnableLearnedPairPriorChange(e.target.checked)}
-          style={{ margin: 0 }}
-        />
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-          Learned pair prior
-          <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
-        </span>
-      </label>
+        <label style={checkboxLabelStyle}>
+          <input
+            type="checkbox"
+            checked={enableLearnedPairPrior}
+            onChange={(e) => onEnableLearnedPairPriorChange(e.target.checked)}
+            style={{ margin: 0 }}
+          />
+          <span
+            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+          >
+            Learned pair prior
+            <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
+          </span>
+        </label>
       )}
 
       {optimizerStrategy === "tiered" && (
@@ -552,90 +554,90 @@ export default memo(function OptimizePanel({
       )}
 
       {optimizerStrategy !== "linear_eval" && (
-      <div>
-        <label style={checkboxLabelStyle}>
-          <input
-            type="checkbox"
-            checked={chainGrindEnabled}
-            onChange={(e) => onChainGrindEnabledChange(e.target.checked)}
-            style={{ margin: 0 }}
-          />
-          <span>
-            Chain grind (N wins, hull carries, shields full each fight)
-          </span>
-        </label>
-        {chainGrindEnabled && (
-          <>
-            <label
-              style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}
-            >
-              Kills target (N)
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={chainKillsTarget}
-                onChange={(e) =>
-                  onChainKillsTargetChange(
-                    Math.min(50, Math.max(1, Number(e.target.value) || 1)),
-                  )
-                }
-                style={{
-                  display: "block",
-                  marginTop: 4,
-                  width: "100%",
-                  padding: "0.35rem",
-                  background: "var(--bg)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 4,
-                  color: "var(--text)",
-                }}
-              />
-            </label>
-            <label
-              style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}
-            >
-              Secondary (tie-break after chain success rate)
-              <select
-                value={chainSecondary}
-                onChange={(e) =>
-                  onChainSecondaryChange(
-                    e.target.value as
-                      | "min_hull_damage"
-                      | "max_loot_per_hull_proxy",
-                  )
-                }
-                style={selectStyle}
+        <div>
+          <label style={checkboxLabelStyle}>
+            <input
+              type="checkbox"
+              checked={chainGrindEnabled}
+              onChange={(e) => onChainGrindEnabledChange(e.target.checked)}
+              style={{ margin: 0 }}
+            />
+            <span>
+              Chain grind (N wins, hull carries, shields full each fight)
+            </span>
+          </label>
+          {chainGrindEnabled && (
+            <>
+              <label
+                style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}
               >
-                <option value="min_hull_damage">
-                  Max hull after N kills (min damage)
-                </option>
-                <option value="max_loot_per_hull_proxy">
-                  Loot / hull proxy (placeholder)
-                </option>
-              </select>
-            </label>
-            <p
-              style={{
-                margin: "6px 0 0",
-                fontSize: "0.72rem",
-                color: "var(--text-muted)",
-              }}
-            >
-              Same hostile each link. Analytical prefilter is skipped. Results
-              table labels update for chain metrics.
-            </p>
-          </>
-        )}
-      </div>
+                Kills target (N)
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={chainKillsTarget}
+                  onChange={(e) =>
+                    onChainKillsTargetChange(
+                      Math.min(50, Math.max(1, Number(e.target.value) || 1)),
+                    )
+                  }
+                  style={{
+                    display: "block",
+                    marginTop: 4,
+                    width: "100%",
+                    padding: "0.35rem",
+                    background: "var(--bg)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 4,
+                    color: "var(--text)",
+                  }}
+                />
+              </label>
+              <label
+                style={{ fontSize: "0.85rem", display: "block", marginTop: 8 }}
+              >
+                Secondary (tie-break after chain success rate)
+                <select
+                  value={chainSecondary}
+                  onChange={(e) =>
+                    onChainSecondaryChange(
+                      e.target.value as
+                        | "min_hull_damage"
+                        | "max_loot_per_hull_proxy",
+                    )
+                  }
+                  style={selectStyle}
+                >
+                  <option value="min_hull_damage">
+                    Max hull after N kills (min damage)
+                  </option>
+                  <option value="max_loot_per_hull_proxy">
+                    Loot / hull proxy (placeholder)
+                  </option>
+                </select>
+              </label>
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: "0.72rem",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Same hostile each link. Analytical prefilter is skipped. Results
+                table labels update for chain metrics.
+              </p>
+            </>
+          )}
+        </div>
       )}
 
       <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)" }}>
         {optimizerStrategy === "linear_eval"
           ? "Ranking: descending closed-form expected hull damage (approximate; no Monte Carlo)."
           : chainGrindEnabled
-          ? "Ranking: chain success rate first, then secondary among successful trials."
-          : "Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking)."}
+            ? "Ranking: chain success rate first, then secondary among successful trials."
+            : "Ranking uses server defaults: 80% win rate + 20% avg hull remaining (see optimizer ranking)."}
       </p>
 
       <div style={{ fontSize: "0.85rem", marginTop: 10 }}>

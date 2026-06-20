@@ -254,7 +254,9 @@ describe("OptimizePanel", () => {
     expect(
       screen.getByRole("option", { name: /Linear eval \(expected damage\)/i }),
     ).toBeTruthy();
-    expect(screen.queryByText("Tiered scout sims / crew (optional)")).toBeNull();
+    expect(
+      screen.queryByText("Tiered scout sims / crew (optional)"),
+    ).toBeNull();
     expect(screen.queryByText(/Chain grind/)).toBeNull();
     expect(screen.queryByText("Learned pair prior")).toBeNull();
   });

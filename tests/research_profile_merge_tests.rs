@@ -635,7 +635,10 @@ fn merge_research_dual_gate_hull_shield_skips_flat_and_owner_faction_maps() {
             }],
         }],
     };
-    let imported = vec![ResearchEntry { rid: 9001, level: 1 }];
+    let imported = vec![ResearchEntry {
+        rid: 9001,
+        level: 1,
+    }];
     let mut profile = PlayerProfile::default();
     merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
     assert!(
@@ -676,7 +679,10 @@ fn merge_research_morale_gated_hull_hp_round_start_seat() {
             }],
         }],
     };
-    let imported = vec![ResearchEntry { rid: 9003, level: 1 }];
+    let imported = vec![ResearchEntry {
+        rid: 9003,
+        level: 1,
+    }];
     let mut profile = PlayerProfile::default();
     merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
     assert!(!profile.bonuses.contains_key("hull_hp"));
@@ -720,7 +726,10 @@ fn merge_research_burning_gated_shield_hp_attack_phase_seat() {
             }],
         }],
     };
-    let imported = vec![ResearchEntry { rid: 9004, level: 1 }];
+    let imported = vec![ResearchEntry {
+        rid: 9004,
+        level: 1,
+    }];
     let mut profile = PlayerProfile::default();
     merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
     assert!(!profile.bonuses.contains_key("shield_hp"));

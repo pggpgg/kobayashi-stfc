@@ -938,7 +938,7 @@ pub fn hostile_crit_damage_reduction_active_at_round(
             }
             let copies = if s.ability.timing == TimingWindow::RoundStart {
                 if stacks {
-                    round_index.min(d).max(0)
+                    round_index.min(d)
                 } else if round_index >= 1 {
                     1
                 } else {
@@ -1002,7 +1002,11 @@ pub fn hostile_lethal_end_of_round_hull_damage(
             }
         }
     }
-    if fires { remaining } else { 0.0 }
+    if fires {
+        remaining
+    } else {
+        0.0
+    }
 }
 
 /// Per-stack Kemocite growth from hostile defender crew seats (`3981152012`, six Xindi armadas).
@@ -1038,10 +1042,7 @@ pub fn hostile_denticle_blade_config(crew: &CrewConfiguration) -> Option<(f64, u
             weapon_index_one_based,
         } = s.ability.effect
         {
-            return Some((
-                proc_chance.clamp(0.0, 1.0),
-                weapon_index_one_based.max(1),
-            ));
+            return Some((proc_chance.clamp(0.0, 1.0), weapon_index_one_based.max(1)));
         }
     }
     None
@@ -1049,8 +1050,7 @@ pub fn hostile_denticle_blade_config(crew: &CrewConfiguration) -> Option<(f64, u
 
 /// True when `weapon_index` (0-based) is the Denticle-gated heavy-artillery slot.
 pub fn hostile_denticle_blade_gates_weapon(crew: &CrewConfiguration, weapon_index: usize) -> bool {
-    hostile_denticle_blade_config(crew)
-        .is_some_and(|(_, idx)| weapon_index + 1 == idx as usize)
+    hostile_denticle_blade_config(crew).is_some_and(|(_, idx)| weapon_index + 1 == idx as usize)
 }
 
 /// Combat-start Denticle Blade proc roll. Returns `None` when the crew has no Denticle seat.
@@ -1059,7 +1059,10 @@ pub fn roll_hostile_denticle_blade_at_combat_begin(
     rng: &mut crate::combat::rng::Rng,
 ) -> Option<bool> {
     let (proc_chance, _) = hostile_denticle_blade_config(crew)?;
-    Some(crate::combat::proc::roll_proc_chance_short_circuit(proc_chance, rng))
+    Some(crate::combat::proc::roll_proc_chance_short_circuit(
+        proc_chance,
+        rng,
+    ))
 }
 
 /// Round-end Kemocite stack tick. Skipped entirely while the hostile is burning (100% prevent).

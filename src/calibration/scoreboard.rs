@@ -47,9 +47,7 @@ impl CompositeScoreReport {
 }
 
 /// Run all `drift_*.json` fixtures under `fixtures_dir`.
-pub fn run_drift_suite(
-    fixtures_dir: &Path,
-) -> Result<Vec<DriftRunReport>, String> {
+pub fn run_drift_suite(fixtures_dir: &Path) -> Result<Vec<DriftRunReport>, String> {
     let paths = list_drift_fixture_paths(fixtures_dir)
         .map_err(|e| format!("list drift fixtures in {}: {e}", fixtures_dir.display()))?;
     let mut reports = Vec::with_capacity(paths.len());
@@ -81,7 +79,10 @@ pub fn composite_from_suite_run(
     let drift_fixtures_passed = drift_reports.iter().filter(|r| r.all_ok).count();
     let drift_fixtures_failed = drift_reports.len().saturating_sub(drift_fixtures_passed);
     let recorded_fights_passed = recorded.all_reports.iter().filter(|r| r.all_ok).count();
-    let recorded_fights_failed = recorded.all_reports.len().saturating_sub(recorded_fights_passed);
+    let recorded_fights_failed = recorded
+        .all_reports
+        .len()
+        .saturating_sub(recorded_fights_passed);
     let recorded_iteration_passed = recorded
         .iteration_reports
         .iter()
@@ -93,7 +94,10 @@ pub fn composite_from_suite_run(
         .saturating_sub(recorded_iteration_passed);
 
     let drift_rows = drift_reports.iter().flat_map(|r| r.rows.iter());
-    let recorded_rows = recorded.iteration_reports.iter().flat_map(|r| r.rows.iter());
+    let recorded_rows = recorded
+        .iteration_reports
+        .iter()
+        .flat_map(|r| r.rows.iter());
     composite_from_metric_rows(
         drift_rows.chain(recorded_rows),
         drift_fixtures_passed,
@@ -223,7 +227,9 @@ pub fn format_scoreboard_markdown(
             out.push_str(&format!(
                 "Iteration composite uses **{}** non-holdout fights ({} holdout).\n\n",
                 rec.iteration_reports.len(),
-                rec.all_reports.len().saturating_sub(rec.iteration_reports.len())
+                rec.all_reports
+                    .len()
+                    .saturating_sub(rec.iteration_reports.len())
             ));
             out.push_str(&format_drift_markdown_table(&rec.all_reports));
             if !rec.axis_coverage.is_empty() {
@@ -243,7 +249,10 @@ fn format_composite_footer(composite: &CompositeScoreReport) -> String {
     out.push_str("\n--- composite ---\n");
     out.push_str(&format!(
         "metric_count={} mean_sigma={:.4} max_sigma={:.4} composite_score={:.4}\n",
-        composite.metric_count, composite.mean_sigma, composite.max_sigma, composite.composite_score
+        composite.metric_count,
+        composite.mean_sigma,
+        composite.max_sigma,
+        composite.composite_score
     ));
     if let Some((id, metric, sigma)) = &composite.worst_metric {
         out.push_str(&format!("worst_metric={id} {metric} sigma={sigma:.4}\n"));
@@ -278,7 +287,9 @@ fn format_composite_markdown(composite: &CompositeScoreReport) -> String {
         composite.max_sigma,
     );
     if let Some((id, metric, sigma)) = &composite.worst_metric {
-        s.push_str(&format!("| Worst metric | `{id}` `{metric}` σ={sigma:.4} |\n"));
+        s.push_str(&format!(
+            "| Worst metric | `{id}` `{metric}` σ={sigma:.4} |\n"
+        ));
     }
     s
 }
@@ -333,9 +344,7 @@ pub fn default_manifest_path(repo_root: &Path) -> PathBuf {
 }
 
 /// Full scoreboard run: drift suite + optional recorded manifest.
-pub fn run_calibration_scoreboard(
-    repo_root: &Path,
-) -> Result<CalibrationScoreboardOutput, String> {
+pub fn run_calibration_scoreboard(repo_root: &Path) -> Result<CalibrationScoreboardOutput, String> {
     let fixtures_dir = default_fixtures_dir(repo_root);
     let drift_reports = run_drift_suite(&fixtures_dir)?;
     let manifest_path = default_manifest_path(repo_root);
@@ -364,18 +373,10 @@ pub struct CalibrationScoreboardOutput {
 
 impl CalibrationScoreboardOutput {
     pub fn text_report(&self) -> String {
-        format_scoreboard_text(
-            &self.drift_reports,
-            self.recorded.as_ref(),
-            &self.composite,
-        )
+        format_scoreboard_text(&self.drift_reports, self.recorded.as_ref(), &self.composite)
     }
 
     pub fn markdown_report(&self) -> String {
-        format_scoreboard_markdown(
-            &self.drift_reports,
-            self.recorded.as_ref(),
-            &self.composite,
-        )
+        format_scoreboard_markdown(&self.drift_reports, self.recorded.as_ref(), &self.composite)
     }
 }

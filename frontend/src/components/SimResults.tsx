@@ -804,90 +804,90 @@ export default memo(function SimResults({
                         </td>
                       ) : (
                         <>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatPctWithCi(
-                          r.win_rate,
-                          r.win_rate_ci_low,
-                          r.win_rate_ci_high,
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatPctWithCi(
-                          r.stall_rate,
-                          r.stall_rate_ci_low,
-                          r.stall_rate_ci_high,
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatPctWithCi(
-                          r.loss_rate,
-                          r.loss_rate_ci_low,
-                          r.loss_rate_ci_high,
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatPctWithCi(
-                          r.r1_kill_rate,
-                          r.r1_kill_rate_ci_low,
-                          r.r1_kill_rate_ci_high,
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatPctWithCi(
-                          r.avg_hull_remaining,
-                          r.avg_hull_remaining_ci_low,
-                          r.avg_hull_remaining_ci_high,
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatPctWithCi(
-                          r.avg_defender_hull_remaining,
-                          r.avg_defender_hull_remaining_ci_low,
-                          r.avg_defender_hull_remaining_ci_high,
-                        )}
-                      </td>
+                          <td
+                            style={{
+                              padding: TABLE_NUM_PAD,
+                              textAlign: "right",
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {formatPctWithCi(
+                              r.win_rate,
+                              r.win_rate_ci_low,
+                              r.win_rate_ci_high,
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: TABLE_NUM_PAD,
+                              textAlign: "right",
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {formatPctWithCi(
+                              r.stall_rate,
+                              r.stall_rate_ci_low,
+                              r.stall_rate_ci_high,
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: TABLE_NUM_PAD,
+                              textAlign: "right",
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {formatPctWithCi(
+                              r.loss_rate,
+                              r.loss_rate_ci_low,
+                              r.loss_rate_ci_high,
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: TABLE_NUM_PAD,
+                              textAlign: "right",
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {formatPctWithCi(
+                              r.r1_kill_rate,
+                              r.r1_kill_rate_ci_low,
+                              r.r1_kill_rate_ci_high,
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: TABLE_NUM_PAD,
+                              textAlign: "right",
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {formatPctWithCi(
+                              r.avg_hull_remaining,
+                              r.avg_hull_remaining_ci_low,
+                              r.avg_hull_remaining_ci_high,
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: TABLE_NUM_PAD,
+                              textAlign: "right",
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {formatPctWithCi(
+                              r.avg_defender_hull_remaining,
+                              r.avg_defender_hull_remaining_ci_low,
+                              r.avg_defender_hull_remaining_ci_high,
+                            )}
+                          </td>
                         </>
                       )}
                     </tr>

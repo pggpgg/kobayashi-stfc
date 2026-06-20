@@ -24,10 +24,8 @@ export default defineConfig({
     // Run test files in parallel worker processes for isolation from jsdom leaks.
     pool: "forks",
     isolate: true,
-    poolOptions: {
-      forks: {
-        singleFork: false,
-      },
+    forks: {
+      singleFork: false,
     },
     coverage: {
       provider: "v8",

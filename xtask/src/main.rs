@@ -242,9 +242,8 @@ fn main() -> Result<()> {
                         format!("create scoreboard parent {}", parent.display())
                     })?;
                 }
-                std::fs::write(&md_path, output.markdown_report()).with_context(|| {
-                    format!("write scoreboard {}", md_path.display())
-                })?;
+                std::fs::write(&md_path, output.markdown_report())
+                    .with_context(|| format!("write scoreboard {}", md_path.display()))?;
                 eprintln!("Wrote {}", md_path.display());
             }
             if !output.composite.drift_all_ok() {

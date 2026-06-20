@@ -213,7 +213,9 @@ pub fn ship_ability_effect_from_catalog(
         // Multiplicative bypass of the opponent's shield mitigation on damage dealt (e.g. Harrison
         // Sabotage on outbound; Xindi Strength of the Ibix / Blade's Tip on counter-fire).
         "shield_mitigation_bypass" | "shield_bypass" | "ignore_shields" | "ignores_shields" => {
-            Some(AbilityEffect::ShieldMitigationBypassFraction(value.clamp(0.0, 1.0)))
+            Some(AbilityEffect::ShieldMitigationBypassFraction(
+                value.clamp(0.0, 1.0),
+            ))
         }
 
         "morale" => Some(AbilityEffect::Morale(normalize_probability(value))),

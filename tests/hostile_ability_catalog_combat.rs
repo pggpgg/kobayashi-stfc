@@ -1,11 +1,11 @@
 //! Hostile ability catalog → defender_crew integration (real hostile records).
 
+use kobayashi::combat::abilities::AbilityEffect;
+use kobayashi::combat::types::{OpponentFactionTag, ShipType};
 use kobayashi::combat::{
     simulate_combat_with_defender_faction_and_defender_crew, Combatant, CrewConfiguration,
     SimulationConfig, TraceMode, WeaponStats,
 };
-use kobayashi::combat::abilities::AbilityEffect;
-use kobayashi::combat::types::{OpponentFactionTag, ShipType};
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
     HostileAbilityCatalog,
@@ -170,9 +170,9 @@ fn real_hostile_apex_barrier_ability_builds_defender_crew_seat() {
     let catalog = hostile_ability_catalog_for_default_path();
     let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
     assert!(
-        crew.seats.iter().any(|s| {
-            matches!(s.ability.effect, AbilityEffect::ApexBarrierBonus(v) if v > 0.0)
-        }),
+        crew.seats
+            .iter()
+            .any(|s| { matches!(s.ability.effect, AbilityEffect::ApexBarrierBonus(v) if v > 0.0) }),
         "expected ApexBarrierBonus seat from catalog"
     );
 }

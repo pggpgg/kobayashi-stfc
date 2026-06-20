@@ -967,7 +967,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1086,7 +1087,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1243,7 +1245,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1389,7 +1392,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1508,7 +1512,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1665,7 +1670,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1811,7 +1817,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -1930,7 +1937,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2087,7 +2095,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2233,7 +2242,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2352,7 +2362,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2509,7 +2520,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2685,7 +2697,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2804,7 +2817,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -2961,7 +2975,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3107,7 +3122,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3226,7 +3242,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3383,7 +3400,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3529,7 +3547,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3648,7 +3667,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3805,7 +3825,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -3951,7 +3972,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4070,7 +4092,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4227,7 +4250,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4403,7 +4427,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4522,7 +4547,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4679,7 +4705,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4825,7 +4852,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -4944,7 +4972,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5101,7 +5130,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5247,7 +5277,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5366,7 +5397,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5523,7 +5555,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5669,7 +5702,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5788,7 +5822,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -5945,7 +5980,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6121,7 +6157,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6240,7 +6277,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6397,7 +6435,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6543,7 +6582,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6662,7 +6702,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6819,7 +6860,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -6965,7 +7007,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -7084,7 +7127,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -7241,7 +7285,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -7387,7 +7432,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -7506,7 +7552,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,
@@ -7663,7 +7710,8 @@
             "ship_ability_id": "crit_matrix"
           },
           "values": {
-            "attacker_crit_reduction": 0.0,
+            "attacker_crit_reduction_additive": 0.0,
+            "attacker_crit_reduction_mult": 0.0,
             "crit_damage_floor": 0.0,
             "effective_crit_chance": 0.2,
             "hull_breach_active": false,

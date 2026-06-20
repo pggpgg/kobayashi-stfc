@@ -1492,26 +1492,27 @@ mod tests {
             below_decks: vec!["D".into(), "E".into(), "F".into()],
         };
         let pop = vec![a.clone(), a.clone()];
-        let full = run_monte_carlo_parallel(
+        // Build one immutable scenario snapshot for both paths. Rebuilding the standalone
+        // scenario here makes this test observe profile/environment mutations from unrelated
+        // parallel tests between the two runs, which tests disk timing rather than deduplication.
+        let shared = build_shared_scenario_data_standalone(
             "enterprise",
             "swarm",
+            support_buffs::SupportBuffScenarioRequest::attacker_only(None),
+            DefenderOpponent::Hostile,
+            None,
+        );
+        let full = run_monte_carlo_inner(&shared, &pop, 8, 42, false, None, None);
+        let deduped = run_monte_carlo_parallel_deduped_chunked_with_shared(
+            &shared,
             &pop,
             8,
             42,
             None,
-            None,
-            DefenderOpponent::Hostile,
-        );
-        let deduped = run_monte_carlo_parallel_deduped(
-            "enterprise",
-            "swarm",
-            &pop,
-            8,
-            42,
-            None,
-            None,
-            DefenderOpponent::Hostile,
-        );
+            pop.len(),
+            || true,
+        )
+        .expect("deduped run should complete");
         assert_eq!(full.len(), deduped.len());
         assert_eq!(full[0].win_rate, deduped[0].win_rate);
         assert_eq!(full[1].win_rate, deduped[1].win_rate);

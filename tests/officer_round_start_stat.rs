@@ -271,8 +271,7 @@ fn dezoc_bridge_armada_gate_stays_pending_not_round_start() {
         "Dezoc bridge on_combat_start gate should stay pending"
     );
     assert!(
-        buff
-            .dynamic_officer_stat_contributions
+        buff.dynamic_officer_stat_contributions
             .iter()
             .all(|r| r.stat_key != "officer_stat_all" || r.timing != TimingWindow::CombatBegin),
         "Dezoc bridge officer stat must not duplicate into dynamic round-start path"

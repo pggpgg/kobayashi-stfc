@@ -575,7 +575,13 @@ pub fn simulation_band_report(
     let mut rows = Vec::new();
 
     if let Some(b) = bands.total_damage {
-        push_band(&mut rows, fixture_id, "total_damage", result.total_damage, b);
+        push_band(
+            &mut rows,
+            fixture_id,
+            "total_damage",
+            result.total_damage,
+            b,
+        );
     }
     if let Some(b) = bands.rounds_simulated {
         push_band(

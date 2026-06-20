@@ -27,11 +27,7 @@ fn calibration_scoreboard_drift_suite_all_in_band() {
         reports.len()
     );
     for report in &reports {
-        assert!(
-            report.all_ok,
-            "fixture {} out of band",
-            report.fixture_id
-        );
+        assert!(report.all_ok, "fixture {} out of band", report.fixture_id);
         for row in &report.rows {
             assert!(
                 row.in_band || row.sigma_from_mid <= DRIFT_BAND_SIGMA_TARGET + 1e-9,

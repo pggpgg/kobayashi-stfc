@@ -1,11 +1,11 @@
 //! Xindi hostile ability catalog → combat integration (crit debuff, Kemocite, No Mercy, Ibix bypass).
 
+use kobayashi::combat::abilities::AbilityEffect;
+use kobayashi::combat::types::{OpponentFactionTag, ShipType};
 use kobayashi::combat::{
     simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, Combatant,
     CrewConfiguration, DefenderStats, SimulationConfig, TraceMode, WeaponStats,
 };
-use kobayashi::combat::abilities::AbilityEffect;
-use kobayashi::combat::types::{OpponentFactionTag, ShipType};
 use kobayashi::data::hostile::HostileRecord;
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
@@ -150,7 +150,10 @@ fn be_like_water_catalog_has_no_lethal_extra_seat() {
     );
     assert!(
         !crew.seats.iter().any(|s| {
-            matches!(s.ability.effect, AbilityEffect::HostileLethalEndOfRound { .. })
+            matches!(
+                s.ability.effect,
+                AbilityEffect::HostileLethalEndOfRound { .. }
+            )
         }),
         "Xindi Might text must not add a catalog lethal seat"
     );
@@ -168,7 +171,9 @@ fn be_like_water_catalog_has_no_lethal_extra_seat() {
         .iter()
         .find_map(|s| match s.ability.effect {
             AbilityEffect::HostileCritDamageReduction {
-                reduction, stacks: false, ..
+                reduction,
+                stacks: false,
+                ..
             } => Some(reduction),
             _ => None,
         })

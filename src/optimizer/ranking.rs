@@ -47,88 +47,44 @@ pub struct RankedCrewResult {
     pub expected_hull_damage: Option<f64>,
 }
 
-fn zero_mc_ranked_fields() -> (
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-    f64,
-) {
-    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-}
-
 /// Build ranked rows from linear-eval scores (pure expected hull damage, no Monte Carlo).
 pub fn rank_results_by_expected_damage(scored: Vec<(CrewCandidate, f64)>) -> Vec<RankedCrewResult> {
     let mut scored = scored;
-    scored.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| {
-        a.0.captain.cmp(&b.0.captain)
-    }));
+    scored.sort_by(|a, b| {
+        b.1.total_cmp(&a.1)
+            .then_with(|| a.0.captain.cmp(&b.0.captain))
+    });
 
     scored
         .into_iter()
-        .map(|(candidate, damage)| {
-            let (
-                win_rate,
-                win_rate_ci_low,
-                win_rate_ci_high,
-                stall_rate,
-                stall_rate_ci_low,
-                stall_rate_ci_high,
-                loss_rate,
-                loss_rate_ci_low,
-                loss_rate_ci_high,
-                r1_kill_rate,
-                r1_kill_rate_ci_low,
-                r1_kill_rate_ci_high,
-                avg_hull_remaining,
-                avg_hull_remaining_ci_low,
-                avg_hull_remaining_ci_high,
-                avg_defender_hull_remaining,
-                avg_defender_hull_remaining_ci_low,
-                avg_defender_hull_remaining_ci_high,
-            ) = zero_mc_ranked_fields();
-            RankedCrewResult {
-                captain: candidate.captain,
-                bridge: candidate.bridge,
-                below_decks: candidate.below_decks,
-                trials_run: 0,
-                win_rate,
-                win_rate_ci_low,
-                win_rate_ci_high,
-                stall_rate,
-                stall_rate_ci_low,
-                stall_rate_ci_high,
-                loss_rate,
-                loss_rate_ci_low,
-                loss_rate_ci_high,
-                r1_kill_rate,
-                r1_kill_rate_ci_low,
-                r1_kill_rate_ci_high,
-                avg_hull_remaining,
-                avg_hull_remaining_ci_low,
-                avg_hull_remaining_ci_high,
-                avg_defender_hull_remaining,
-                avg_defender_hull_remaining_ci_low,
-                avg_defender_hull_remaining_ci_high,
-                score: RankingScore {
-                    value: damage as f32,
-                },
-                chain: None,
-                expected_hull_damage: Some(damage),
-            }
+        .map(|(candidate, damage)| RankedCrewResult {
+            captain: candidate.captain,
+            bridge: candidate.bridge,
+            below_decks: candidate.below_decks,
+            trials_run: 0,
+            win_rate: 0.0,
+            win_rate_ci_low: 0.0,
+            win_rate_ci_high: 0.0,
+            stall_rate: 0.0,
+            stall_rate_ci_low: 0.0,
+            stall_rate_ci_high: 0.0,
+            loss_rate: 0.0,
+            loss_rate_ci_low: 0.0,
+            loss_rate_ci_high: 0.0,
+            r1_kill_rate: 0.0,
+            r1_kill_rate_ci_low: 0.0,
+            r1_kill_rate_ci_high: 0.0,
+            avg_hull_remaining: 0.0,
+            avg_hull_remaining_ci_low: 0.0,
+            avg_hull_remaining_ci_high: 0.0,
+            avg_defender_hull_remaining: 0.0,
+            avg_defender_hull_remaining_ci_low: 0.0,
+            avg_defender_hull_remaining_ci_high: 0.0,
+            score: RankingScore {
+                value: damage as f32,
+            },
+            chain: None,
+            expected_hull_damage: Some(damage),
         })
         .collect()
 }
@@ -173,26 +129,25 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
         })
         .collect();
 
-    ranked.sort_by(|left, right| match (
-        left.expected_hull_damage,
-        right.expected_hull_damage,
-    ) {
-        (Some(l), Some(r)) => r
-            .total_cmp(&l)
-            .then_with(|| left.captain.cmp(&right.captain)),
-        _ => match (&left.chain, &right.chain) {
-        (Some(_), Some(_)) => right
-            .win_rate
-            .total_cmp(&left.win_rate)
-            .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
-        _ => right
-            .score
-            .value
-            .total_cmp(&left.score.value)
-            .then_with(|| right.win_rate.total_cmp(&left.win_rate))
-            .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
+    ranked.sort_by(
+        |left, right| match (left.expected_hull_damage, right.expected_hull_damage) {
+            (Some(l), Some(r)) => r
+                .total_cmp(&l)
+                .then_with(|| left.captain.cmp(&right.captain)),
+            _ => match (&left.chain, &right.chain) {
+                (Some(_), Some(_)) => right
+                    .win_rate
+                    .total_cmp(&left.win_rate)
+                    .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
+                _ => right
+                    .score
+                    .value
+                    .total_cmp(&left.score.value)
+                    .then_with(|| right.win_rate.total_cmp(&left.win_rate))
+                    .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
+            },
         },
-    });
+    );
 
     ranked
 }

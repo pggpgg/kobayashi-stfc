@@ -364,7 +364,11 @@ fn officer_stat_magnitude_anchors_use_recorded_fight_manifest_when_present() {
     let anchors: std::collections::BTreeMap<_, _> = suite
         .fights
         .iter()
-        .filter_map(|f| f.officer_anchor.as_ref().map(|a| (a.as_str(), f.id.as_str())))
+        .filter_map(|f| {
+            f.officer_anchor
+                .as_ref()
+                .map(|a| (a.as_str(), f.id.as_str()))
+        })
         .collect();
     // Pre-freeze: empty manifest — test documents hook for post-freeze Kirk/Marla/Kras fights.
     if anchors.is_empty() {

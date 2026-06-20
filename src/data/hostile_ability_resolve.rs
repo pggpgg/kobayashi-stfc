@@ -15,8 +15,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::combat::abilities::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
+    TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::combine_optional_and;
 use crate::combat::CrewConfiguration;
@@ -156,6 +156,7 @@ fn normalize_catalog_value(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn hostile_ability_effect_from_catalog(
     effect_type: &str,
     timing: TimingWindow,
@@ -248,9 +249,7 @@ fn push_hostile_catalog_seat(
         return;
     };
     let normalized_value = if entry.crit_reduction_additive_points {
-        entry
-            .value_override
-            .unwrap_or(parsed.value)
+        entry.value_override.unwrap_or(parsed.value)
     } else {
         entry.value_override.unwrap_or_else(|| {
             normalize_catalog_value(
@@ -325,7 +324,12 @@ pub fn collect_upstream_hostile_ability_ids(hostiles_dir: &Path) -> HashMap<Stri
         let Ok(v) = serde_json::from_str::<Value>(&s) else {
             continue;
         };
-        for raw in v.get("ability").and_then(|a| a.as_array()).into_iter().flatten() {
+        for raw in v
+            .get("ability")
+            .and_then(|a| a.as_array())
+            .into_iter()
+            .flatten()
+        {
             if let Some(parsed) = parse_one_upstream_ability(raw) {
                 *counts.entry(parsed.id).or_insert(0) += 1;
             }
@@ -473,7 +477,9 @@ mod tests {
             None,
             None,
         );
-        assert!(matches!(iso, Some(AbilityEffect::IsolyticDamageBonus(v)) if (v - 0.15).abs() < 1e-9));
+        assert!(
+            matches!(iso, Some(AbilityEffect::IsolyticDamageBonus(v)) if (v - 0.15).abs() < 1e-9)
+        );
 
         let apex = hostile_ability_effect_from_catalog(
             "apex_barrier",
@@ -485,7 +491,9 @@ mod tests {
             None,
             None,
         );
-        assert!(matches!(apex, Some(AbilityEffect::ApexBarrierBonus(v)) if (v - 5000.0).abs() < 1e-9));
+        assert!(
+            matches!(apex, Some(AbilityEffect::ApexBarrierBonus(v)) if (v - 5000.0).abs() < 1e-9)
+        );
     }
 
     /// Parity: spec-path function produces the same count of seats as the direct catalog path.

@@ -528,7 +528,6 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
     }
 }
 
-
 /// Research / building / forbidden-tech bonus `stat` strings are normalized here before merging into
 /// [`PlayerProfile::bonuses`]. Keep in sync with `ALLOWED_COMBAT_STATS` in `scripts/import_stfcspace_research.mjs`
 /// (same engine keys; importer also allows aliases that fold here, e.g. `armor_pierce` → `pierce`).
@@ -1878,7 +1877,6 @@ mod tests {
         );
         assert_eq!(reloaded.bonuses.get("weapon_damage"), Some(&0.1));
     }
-
 
     #[test]
     fn merge_building_bonuses_into_profile_adds_only_combat_keys() {

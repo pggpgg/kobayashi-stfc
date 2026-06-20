@@ -4397,9 +4397,9 @@ fn crit_damage_floor_clamps_attacker_outbound_reduction() {
     let floor = crit_event.values["crit_damage_floor"]
         .as_f64()
         .expect("crit_damage_floor in trace");
-    let reduction = crit_event.values["attacker_crit_reduction"]
+    let reduction = crit_event.values["attacker_crit_reduction_mult"]
         .as_f64()
-        .expect("attacker_crit_reduction in trace");
+        .expect("attacker_crit_reduction_mult in trace");
     approx_eq(floor, 1.5, 1e-6);
     approx_eq(reduction, 0.80, 1e-6);
     assert!(
@@ -4471,9 +4471,9 @@ fn crit_damage_floor_dormant_when_no_attacker_outbound_reduction() {
     let multiplier = crit_event.values["multiplier"]
         .as_f64()
         .expect("multiplier as f64");
-    let reduction = crit_event.values["attacker_crit_reduction"]
+    let reduction = crit_event.values["attacker_crit_reduction_mult"]
         .as_f64()
-        .expect("attacker_crit_reduction in trace");
+        .expect("attacker_crit_reduction_mult in trace");
     approx_eq(reduction, 0.0, 1e-6);
     approx_eq(multiplier, 2.0, 1e-6);
 }

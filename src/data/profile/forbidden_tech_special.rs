@@ -793,9 +793,7 @@ mod tests {
     use super::*;
     use crate::data::forbidden_chaos::{BonusEntry, ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::import::ForbiddenTechEntry;
-    use crate::data::profile::{
-        merge_tech_fids_into_profile_with_level_tier, PlayerProfile,
-    };
+    use crate::data::profile::{merge_tech_fids_into_profile_with_level_tier, PlayerProfile};
     use crate::data::ship::ShipRecord;
 
     #[test]
@@ -1257,5 +1255,4 @@ mod tests {
             .is_none()
         );
     }
-
 }

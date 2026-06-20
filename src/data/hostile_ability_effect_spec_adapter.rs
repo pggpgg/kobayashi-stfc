@@ -92,7 +92,12 @@ mod tests {
 
     #[test]
     fn hostile_ability_effect_type_map_covers_resolved_types() {
-        for effect_type in ["isolytic_damage", "apex_barrier", "crit_damage", "attack_multiplier"] {
+        for effect_type in [
+            "isolytic_damage",
+            "apex_barrier",
+            "crit_damage",
+            "attack_multiplier",
+        ] {
             assert!(
                 hostile_ability_effect_type_to_modifier(effect_type).is_some(),
                 "missing mapping for {effect_type}"
@@ -128,9 +133,6 @@ mod tests {
         let spec =
             hostile_ability_to_combat_effect_spec("123", &entry, 100.0, 0.15).expect("should map");
         assert_eq!(spec.id, "123");
-        assert!(matches!(
-            spec.modifier,
-            AbilityModifierSpec::IsolyticDamage
-        ));
+        assert!(matches!(spec.modifier, AbilityModifierSpec::IsolyticDamage));
     }
 }
