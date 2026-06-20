@@ -2275,29 +2275,45 @@ export interface components {
         MechanicsCoverageResponse: {
             /** @constant */
             status: "ok";
-            lcars_effects: {
-                implemented: number;
-            } & {
-                [key: string]: unknown;
+            lcars_officers_files: number;
+            lcars_effects: components["schemas"]["MechanicsTierCounts"];
+            ship_hull_abilities: components["schemas"]["MechanicsTierCounts"];
+            ships_with_abilities_scanned: number;
+            hostile_catalog_entries: components["schemas"]["MechanicsTierCounts"];
+            hostile_catalog_entry_count: number;
+            hostile_upstream_unique_ability_ids: number;
+            hostile_catalog_modeled_count: number;
+            hostile_catalog_noop_count: number;
+            hostile_upstream_ids_missing_from_catalog: number;
+            lcars_by_effect_type: {
+                [key: string]: components["schemas"]["MechanicsTierCounts"];
             };
-            ship_hull_abilities: {
-                [key: string]: unknown;
-            };
-            hostile_catalog_entries: {
-                [key: string]: unknown;
-            };
-            fidelity_backlog: ({
-                rank: number;
-                area: string;
-                summary: string;
-            } & {
-                [key: string]: unknown;
-            })[];
+            lcars_ignored_samples: string[];
+            fidelity_backlog: components["schemas"]["MechanicsFidelityBacklogItem"][];
+            notes: string[];
+        };
+        MechanicsTierCounts: {
+            implemented: number;
+            partial: number;
+            ignored: number;
+        };
+        MechanicsFidelityBacklogItem: {
+            rank: number;
+            area: string;
+            key: string;
+            ignored: number;
+            partial: number;
+            implemented: number;
+            summary: string;
         };
         DataVersionResponse: {
             officer_version?: string | null;
             hostile_version?: string | null;
             ship_version?: string | null;
+            /**
+             * @deprecated
+             * @description Legacy coarse summary retained for compatibility. Use GET /api/mechanics/coverage for live resolver-backed coverage.
+             */
             mechanics: {
                 name: string;
                 status: string;

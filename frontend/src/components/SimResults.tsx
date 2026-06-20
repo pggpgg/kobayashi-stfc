@@ -130,6 +130,10 @@ function SideBySideHistograms({
 interface SimResultsProps {
   simResult: SimulateStats | null;
   recommendations: CrewRecommendation[];
+  /** Trust/fidelity notices returned by the simulation or optimizer API. */
+  warnings?: string[];
+  /** Officers that contributed no combat effects because LCARS resolution failed. */
+  unresolvedOfficers?: string[];
   loadingSim: boolean;
   loadingOptimize: boolean;
   optimizeProgress: number | null;
@@ -147,6 +151,8 @@ interface SimResultsProps {
 export default memo(function SimResults({
   simResult,
   recommendations,
+  warnings = [],
+  unresolvedOfficers = [],
   loadingSim,
   loadingOptimize,
   optimizeProgress,
@@ -170,6 +176,16 @@ export default memo(function SimResults({
   const [compareDistErr, setCompareDistErr] = useState<string | null>(null);
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
+  const visibleWarnings = unresolvedOfficers.length
+    ? warnings.filter(
+        (warning) =>
+          !warning.startsWith(
+            "Officer(s) with no LCARS combat definition contributed no effects:",
+          ),
+      )
+    : warnings;
+  const hasResultWarnings =
+    visibleWarnings.length > 0 || unresolvedOfficers.length > 0;
 
   const chainMeta = useMemo(
     () => recommendations.find((r) => r.chain)?.chain,
@@ -297,6 +313,35 @@ export default memo(function SimResults({
       }}
     >
       <h2 style={{ margin: "0 0 0.75rem", fontSize: "1rem" }}>SimResults</h2>
+
+      {hasResultWarnings && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            marginBottom: "0.85rem",
+            padding: "0.7rem 0.8rem",
+            background: "rgba(232,149,46,0.12)",
+            border: "1px solid var(--warning)",
+            borderRadius: 6,
+            fontSize: "0.85rem",
+            lineHeight: 1.45,
+          }}
+        >
+          <strong>Review these results</strong>
+          <ul style={{ margin: "0.4rem 0 0", paddingLeft: "1.2rem" }}>
+            {unresolvedOfficers.length > 0 && (
+              <li>
+                Unresolved officers contributed no combat effects:{" "}
+                {unresolvedOfficers.join(", ")}.
+              </li>
+            )}
+            {visibleWarnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {(loadingSim || loadingOptimize) && (
         <div style={{ marginBottom: "0.75rem" }}>

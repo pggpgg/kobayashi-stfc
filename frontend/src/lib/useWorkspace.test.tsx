@@ -134,6 +134,45 @@ describe("useWorkspace", () => {
     expect(result.current.simResult?.n).toBe(100);
   });
 
+  it("preserves simulation warnings and unresolved officers", async () => {
+    apiMocks.mockSimulate.mockResolvedValueOnce({
+      stats: {
+        win_rate: 0.5,
+        stall_rate: 0.1,
+        loss_rate: 0.4,
+        avg_hull_remaining: 0.3,
+        avg_defender_hull_remaining: 0.15,
+        n: 100,
+      },
+      seed: 42,
+      warnings: ["Placeholder combatants were used."],
+      unresolved_officers: ["mystery-officer"],
+    });
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.activeProfileId).toBe("p1");
+    });
+    act(() => {
+      result.current.setShipId("saladin");
+      result.current.setScenarioId("2918121098");
+      result.current.setCrew({
+        captain: "officer-1",
+        bridge: ["bridge-1", null],
+        belowDeck: [null, null, null],
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleRunSim();
+    });
+
+    expect(result.current.resultWarnings).toEqual([
+      "Placeholder combatants were used.",
+    ]);
+    expect(result.current.unresolvedOfficers).toEqual(["mystery-officer"]);
+  });
+
   it("rejects roster-illegal seat assignments before simulate", async () => {
     const { result } = renderHook(() => useWorkspace(), { wrapper });
 
@@ -322,6 +361,28 @@ describe("useWorkspace", () => {
       sessionStorage.getItem("kobayashi_active_optimize_job_v1"),
     ).toBeNull();
     expect(result.current.loadingOptimize).toBe(false);
+  });
+
+  it("preserves warnings from a completed optimize job", async () => {
+    sessionStorage.setItem(
+      "kobayashi_active_optimize_job_v1",
+      JSON.stringify({ jobId: "job-warning-1", profileId: "p1" }),
+    );
+    apiMocks.mockGetOptimizeStatus.mockResolvedValueOnce({
+      ...doneOptimizeStatus,
+      result: {
+        ...doneOptimizeStatus.result,
+        warnings: ["Roster fallback was used."],
+      },
+    });
+
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.resultWarnings).toEqual([
+        "Roster fallback was used.",
+      ]);
+    });
   });
 
   it("trims below-deck slots when ship level decreases", async () => {

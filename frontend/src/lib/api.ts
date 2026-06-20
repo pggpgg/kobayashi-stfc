@@ -1,6 +1,7 @@
 import type {
   DataVersionResponse,
   HostileListItem,
+  MechanicsCoverageResponse,
   OfficerListItem,
   OptimizeEstimate,
   OptimizeStartResponse,
@@ -15,6 +16,8 @@ import type {
 export type {
   DataVersionResponse,
   HostileListItem,
+  MechanicsCoverageResponse,
+  MechanicsTierCounts,
   OfficerListItem,
   OptimizeEstimate,
   OptimizeStartResponse,
@@ -351,6 +354,12 @@ export async function fetchHostiles(): Promise<HostileListItem[]> {
 
 export async function fetchDataVersion(): Promise<DataVersionResponse> {
   const res = await fetch(`${API_BASE}/api/data/version`);
+  await checkOk(res);
+  return res.json();
+}
+
+export async function fetchMechanicsCoverage(): Promise<MechanicsCoverageResponse> {
+  const res = await fetch(`${API_BASE}/api/mechanics/coverage`);
   await checkOk(res);
   return res.json();
 }

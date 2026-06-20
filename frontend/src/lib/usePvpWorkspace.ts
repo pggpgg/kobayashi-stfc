@@ -63,6 +63,8 @@ export function usePvpWorkspace() {
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [simResult, setSimResult] = useState<SimulateStats | null>(null);
   const [loadingSim, setLoadingSim] = useState(false);
+  const [resultWarnings, setResultWarnings] = useState<string[]>([]);
+  const [unresolvedOfficers, setUnresolvedOfficers] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<CrewRecommendation[]>(
     [],
   );
@@ -155,9 +157,14 @@ export function usePvpWorkspace() {
     }
     setLoadingSim(true);
     setError(null);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
     try {
       const res = await simulate(params, activeProfileId);
       setSimResult(res.stats);
+      setRecommendations([]);
+      setResultWarnings(res.warnings ?? []);
+      setUnresolvedOfficers(res.unresolved_officers ?? []);
     } catch (e) {
       setError(formatApiError(e));
     } finally {
@@ -191,6 +198,8 @@ export function usePvpWorkspace() {
     setLoadingOptimize(true);
     setError(null);
     setRecommendations([]);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
     try {
       const cacheKey = optimizeCacheKey();
       const warm = loadWarmStartCrews(cacheKey);
@@ -229,6 +238,9 @@ export function usePvpWorkspace() {
         if (status.status === "done" && status.result) {
           const recs = status.result.recommendations ?? [];
           setRecommendations(recs);
+          setSimResult(null);
+          setResultWarnings(status.result.warnings ?? []);
+          setUnresolvedOfficers([]);
           saveWarmStartFromRecommendations(cacheKey, recs);
           break;
         }
@@ -290,6 +302,8 @@ export function usePvpWorkspace() {
     simsPerCrew,
     setSimsPerCrew,
     simResult,
+    resultWarnings,
+    unresolvedOfficers,
     recommendations,
     loadingSim,
     loadingOptimize,

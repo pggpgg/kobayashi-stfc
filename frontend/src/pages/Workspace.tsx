@@ -208,6 +208,8 @@ export default function Workspace() {
             <SimResults
               simResult={ws.simResult}
               recommendations={ws.recommendations}
+              warnings={ws.resultWarnings}
+              unresolvedOfficers={ws.unresolvedOfficers}
               loadingSim={ws.loadingSim}
               loadingOptimize={ws.loadingOptimize}
               optimizeProgress={ws.optimizeProgress}
