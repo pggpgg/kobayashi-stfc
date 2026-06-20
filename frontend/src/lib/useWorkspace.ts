@@ -554,6 +554,15 @@ export function useWorkspace() {
     }
   };
 
+  const resetResults = () => {
+    setSimResult(null);
+    setRecommendations([]);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
+    setLastOptimizeDurationMs(null);
+    setLastOptimizeEffectiveStrategy(null);
+  };
+
   const applyOptimizeDone = (status: OptimizeStatusResponse) => {
     clearPersistedOptimizeJob();
     setOptimizeStreamMode(null);
@@ -981,6 +990,7 @@ export function useWorkspace() {
     setPins,
     // Simulation
     simResult,
+    resetResults,
     resultWarnings,
     unresolvedOfficers,
     loadingSim,

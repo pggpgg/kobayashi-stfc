@@ -82,4 +82,49 @@ describe("WorkspaceHeader", () => {
     await waitFor(() => expect(api.fetchShips).toHaveBeenCalled());
     expect(screen.getByText(/Fight iterations/i)).toBeTruthy();
   });
+
+  it("shows only scenario controls in guided mode", async () => {
+    localStorage.setItem("kobayashi_workspace_mode", "guided");
+    render(
+      <ProfileProvider>
+        <WorkspaceModeProvider>
+          <WorkspaceHeader
+            shipId="ship1"
+            scenarioId="h1"
+            onShipIdChange={vi.fn()}
+            onScenarioIdChange={vi.fn()}
+            shipTier={1}
+            onShipTierChange={vi.fn()}
+            shipLevel={50}
+            onShipLevelChange={vi.fn()}
+            onBelowDeckUnlockLevelsChange={vi.fn()}
+            crew={emptyCrew}
+            simsPerCrew={1000}
+            onSimsPerCrewChange={vi.fn()}
+            estimate={null}
+            lastOptimizeDurationMs={null}
+            onRunSim={vi.fn()}
+            onRunOptimize={vi.fn()}
+            onCancelOptimize={vi.fn()}
+            onSavePreset={vi.fn()}
+            loadingSim={false}
+            loadingOptimize={false}
+            optimizeProgress={null}
+            optimizeCrewsDone={null}
+            optimizeTotalCrews={null}
+            selectedSupportBuffs={[]}
+            onSelectedSupportBuffsChange={vi.fn()}
+          />
+        </WorkspaceModeProvider>
+      </ProfileProvider>,
+    );
+
+    await waitFor(() => expect(api.fetchShips).toHaveBeenCalled());
+    expect(screen.getByRole("combobox", { name: "Ship" })).toBeTruthy();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Run simulation" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Run optimization" }),
+    ).toBeNull();
+  });
 });

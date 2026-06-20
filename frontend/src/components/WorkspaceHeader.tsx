@@ -93,6 +93,7 @@ export default memo(function WorkspaceHeader({
 }: WorkspaceHeaderProps) {
   const { activeProfileId } = useProfile();
   const { mode, ownedOnly } = useWorkspaceMode();
+  const guided = mode === "guided";
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [shipsLoadState, setShipsLoadState] = useState<
     "idle" | "loading" | "done" | "error"
@@ -311,6 +312,7 @@ export default memo(function WorkspaceHeader({
         </span>
       ) : null}
       <select
+        hidden={guided}
         aria-label="Preset"
         style={{
           padding: "0.4rem 0.6rem",
@@ -323,6 +325,7 @@ export default memo(function WorkspaceHeader({
         <option>Preset</option>
       </select>
       <div
+        hidden={guided}
         style={{
           display: "flex",
           alignItems: "center",
@@ -381,7 +384,10 @@ export default memo(function WorkspaceHeader({
         ))}
       </div>
       {estimate != null && (
-        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+        <span
+          hidden={guided}
+          style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
+        >
           Est. ~
           {estimate.estimated_seconds < 1
             ? "<1"
@@ -392,12 +398,16 @@ export default memo(function WorkspaceHeader({
         </span>
       )}
       {lastOptimizeDurationMs != null && (
-        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+        <span
+          hidden={guided}
+          style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
+        >
           Completed in {(lastOptimizeDurationMs / 1000).toFixed(1)} s
         </span>
       )}
       {loadingOptimize && (
         <div
+          hidden={guided}
           style={{ display: "flex", alignItems: "center", gap: 8 }}
           role="status"
           aria-live="polite"
@@ -520,8 +530,9 @@ export default memo(function WorkspaceHeader({
           </button>
         </div>
       )}
-      <div style={{ flex: 1, minWidth: 8 }} />
+      <div hidden={guided} style={{ flex: 1, minWidth: 8 }} />
       <button
+        hidden={guided}
         type="button"
         onClick={onSavePreset}
         style={{
@@ -535,6 +546,7 @@ export default memo(function WorkspaceHeader({
         Save as Preset
       </button>
       <button
+        hidden={guided}
         type="button"
         onClick={onRunSim}
         disabled={loadingSim || loadingOptimize}
@@ -551,6 +563,7 @@ export default memo(function WorkspaceHeader({
         {loadingSim ? "Running…" : "Run Sim"}
       </button>
       <button
+        hidden={guided}
         type="button"
         onClick={onRunOptimize}
         disabled={loadingSim || loadingOptimize}

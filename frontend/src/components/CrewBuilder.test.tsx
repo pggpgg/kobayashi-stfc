@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { WorkspaceModeProvider } from "../contexts/WorkspaceModeContext";
@@ -32,11 +32,12 @@ describe("CrewBuilder", () => {
     });
   });
 
-  function renderBuilder() {
+  function renderBuilder(guided = false) {
     return render(
       <ProfileProvider>
         <WorkspaceModeProvider>
           <CrewBuilder
+            guided={guided}
             belowDecksSlots={2}
             crew={emptyCrew}
             pins={{ captain: false, bridge: [false, false], belowDeck: [] }}
@@ -55,5 +56,21 @@ describe("CrewBuilder", () => {
   it("renders captain slot label", () => {
     renderBuilder();
     expect(screen.getByText(/captain/i)).toBeTruthy();
+  });
+
+  it("progressively reveals optional below-deck slots in guided mode", () => {
+    renderBuilder(true);
+
+    expect(screen.getByText("Choose your bridge crew")).toBeTruthy();
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: "Pin" })).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add optional below-deck officers (2 slots)",
+      }),
+    );
+
+    expect(screen.getAllByRole("combobox")).toHaveLength(5);
   });
 });

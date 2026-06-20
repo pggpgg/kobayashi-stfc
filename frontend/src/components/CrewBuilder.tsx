@@ -11,6 +11,8 @@ import type { OfficerListItem } from "../lib/api";
 import type { CrewState, PinsState } from "../lib/types";
 
 interface CrewBuilderProps {
+  /** Guided mode hides optimizer-oriented pinning and progressively reveals optional below decks. */
+  guided?: boolean;
   /** Resolved below-decks officer slot count for the current ship level + unlock schedule. */
   belowDecksSlots: number;
   crew: CrewState;
@@ -37,6 +39,7 @@ const boxStyleBase = {
 };
 
 export default memo(function CrewBuilder({
+  guided = false,
   belowDecksSlots,
   crew,
   pins,
@@ -45,6 +48,7 @@ export default memo(function CrewBuilder({
   officerOptions = [],
 }: CrewBuilderProps) {
   const belowN = belowDecksSlots;
+  const [showGuidedBelowDecks, setShowGuidedBelowDecks] = useState(false);
 
   const selectedIds = useMemo(
     () =>
@@ -138,7 +142,9 @@ export default memo(function CrewBuilder({
           marginBottom: "0.75rem",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: "1rem" }}>BRIDGE</h2>
+        <h2 style={{ margin: 0, fontSize: "1rem" }}>
+          {guided ? "Choose your bridge crew" : "BRIDGE"}
+        </h2>
       </div>
 
       {/* Top row: Bridge 1 | Captain (center) | Bridge 2 */}
@@ -169,17 +175,19 @@ export default memo(function CrewBuilder({
               placeholder="Select…"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => togglePin("bridge", 0)}
-            style={{
-              fontSize: "0.7rem",
-              padding: "2px 6px",
-              opacity: pins.bridge[0] ? 1 : 0.6,
-            }}
-          >
-            {pins.bridge[0] ? "Pinned" : "Pin"}
-          </button>
+          {!guided && (
+            <button
+              type="button"
+              onClick={() => togglePin("bridge", 0)}
+              style={{
+                fontSize: "0.7rem",
+                padding: "2px 6px",
+                opacity: pins.bridge[0] ? 1 : 0.6,
+              }}
+            >
+              {pins.bridge[0] ? "Pinned" : "Pin"}
+            </button>
+          )}
         </div>
 
         <div style={{ ...slotStyleBase, maxWidth: 160 }}>
@@ -201,17 +209,19 @@ export default memo(function CrewBuilder({
               placeholder="Select…"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => togglePin("captain")}
-            style={{
-              fontSize: "0.7rem",
-              padding: "2px 6px",
-              opacity: pins.captain ? 1 : 0.6,
-            }}
-          >
-            {pins.captain ? "Pinned" : "Pin"}
-          </button>
+          {!guided && (
+            <button
+              type="button"
+              onClick={() => togglePin("captain")}
+              style={{
+                fontSize: "0.7rem",
+                padding: "2px 6px",
+                opacity: pins.captain ? 1 : 0.6,
+              }}
+            >
+              {pins.captain ? "Pinned" : "Pin"}
+            </button>
+          )}
         </div>
 
         <div style={{ ...slotStyleBase, maxWidth: 140 }}>
@@ -232,72 +242,90 @@ export default memo(function CrewBuilder({
               placeholder="Select…"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => togglePin("bridge", 1)}
-            style={{
-              fontSize: "0.7rem",
-              padding: "2px 6px",
-              opacity: pins.bridge[1] ? 1 : 0.6,
-            }}
-          >
-            {pins.bridge[1] ? "Pinned" : "Pin"}
-          </button>
-        </div>
-      </div>
-
-      {/* Bottom row: Below Deck slots */}
-      <div
-        style={{
-          marginBottom: "0.5rem",
-          fontSize: "0.75rem",
-          color: "var(--text-muted)",
-        }}
-      >
-        Below deck
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-        }}
-      >
-        {crew.belowDeck.slice(0, belowN).map((id, i) => (
-          <div
-            key={i}
-            style={{ ...slotStyleBase, minWidth: 120, maxWidth: 140 }}
-          >
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              Below {i + 1}
-            </span>
-            <div
-              style={{
-                ...boxStyleBase,
-                border: "1px solid var(--border)",
-              }}
-            >
-              <TypeAheadSlot
-                officers={officerOptions}
-                value={id}
-                selectedIds={selectedIds}
-                onChange={(oId) => setBelowDeck(i, oId)}
-                placeholder="Select…"
-              />
-            </div>
+          {!guided && (
             <button
               type="button"
-              onClick={() => togglePin("belowDeck", i)}
+              onClick={() => togglePin("bridge", 1)}
               style={{
                 fontSize: "0.7rem",
                 padding: "2px 6px",
-                opacity: pins.belowDeck[i] ? 1 : 0.6,
+                opacity: pins.bridge[1] ? 1 : 0.6,
               }}
             >
-              {pins.belowDeck[i] ? "Pinned" : "Pin"}
+              {pins.bridge[1] ? "Pinned" : "Pin"}
             </button>
-          </div>
-        ))}
+          )}
+        </div>
+      </div>
+
+      {guided && belowN > 0 && (
+        <button
+          type="button"
+          aria-expanded={showGuidedBelowDecks}
+          onClick={() => setShowGuidedBelowDecks((visible) => !visible)}
+          style={{ marginBottom: "0.65rem" }}
+        >
+          {showGuidedBelowDecks
+            ? "Hide optional below decks"
+            : `Add optional below-deck officers (${belowN} slots)`}
+        </button>
+      )}
+      <div hidden={guided && !showGuidedBelowDecks}>
+        {/* Bottom row: Below Deck slots */}
+        <div
+          style={{
+            marginBottom: "0.5rem",
+            fontSize: "0.75rem",
+            color: "var(--text-muted)",
+          }}
+        >
+          Below deck
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
+          {crew.belowDeck.slice(0, belowN).map((id, i) => (
+            <div
+              key={i}
+              style={{ ...slotStyleBase, minWidth: 120, maxWidth: 140 }}
+            >
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                Below {i + 1}
+              </span>
+              <div
+                style={{
+                  ...boxStyleBase,
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <TypeAheadSlot
+                  officers={officerOptions}
+                  value={id}
+                  selectedIds={selectedIds}
+                  onChange={(oId) => setBelowDeck(i, oId)}
+                  placeholder="Select…"
+                />
+              </div>
+              {!guided && (
+                <button
+                  type="button"
+                  onClick={() => togglePin("belowDeck", i)}
+                  style={{
+                    fontSize: "0.7rem",
+                    padding: "2px 6px",
+                    opacity: pins.belowDeck[i] ? 1 : 0.6,
+                  }}
+                >
+                  {pins.belowDeck[i] ? "Pinned" : "Pin"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <p
