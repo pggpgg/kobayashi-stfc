@@ -122,10 +122,18 @@ Building bonus stats and `conditions` tags only affect simulation when they are 
 combat profile and condition allowlists. Maintainer tooling:
 
 - **`data/buildings/opaque_buff_allowlist.json`** — explicit opt-out for opaque `buff_*` stats that
-  are intentionally not merged (economy, alliance starbase, station defense, etc.). Each entry has a
-  `category` and `reason`.
+  are intentionally not merged (economy/meta only). Each entry has a `category` and `reason`.
+  Allowed categories: `economy_meta`, `unlock_meta`, `reward_meta`, `cost_reduction_meta`,
+  `alliance_starbase_assault`, `defense_platform`, `defense_platform_damage`, `armada_slot_meta`,
+  `outpost_meta`, `solo_armada_meta`. Ship-combat scoped buffs (PvP, armada weapon damage, unmapped hostile bonuses) stay
+  **actionable** until mapped or deferred in docs.
 - **`data/buildings/mapping_gaps_baseline.json`** — regression baseline for **actionable** opaque buff
-  count (distinct `buff_*` rows not in the allowlist). Strict validate fails when the count increases.
+  count (distinct `buff_*` rows not in the allowlist). CI test
+  `tests/building_opaque_buff_baseline.rs` fails when the count increases; strict validate also checks
+  when `KOBAYASHI_REQUIRE_BUILDING_BONUS_MAPS=1`.
+- **`node scripts/seed_building_opaque_allowlist.mjs`** — scan building JSON + translations; propose
+  economy/meta allowlist entries. `--write` merges into the allowlist; `--check` fails when economy
+  buffs lack an entry (run after import).
 - `cargo run --bin report_building_mapping_gaps` — Markdown report with summary counts and **actionable**
   opaque stats only (regenerate `docs/building_gaps.md` after import or allowlist edits).
 - `cargo run --bin report_unknown_mappings` — unified report: canonical conditions, hostile ship types,
@@ -135,7 +143,14 @@ combat profile and condition allowlists. Maintainer tooling:
   regressions to `Error`. Same strict run sets `KOBAYASHI_REQUIRE_FORBIDDEN_TECH_MAPS=1` for
   forbidden-tech catalog bonus routing gaps.
 
-Goal: **Still actionable: 0** for building opaque buffs (allowlist or map each distinct `buff_*`).
+**Triage workflow** when a new upstream `buff_*` appears after import:
+
+1. **Map** — add to `buff_id_to_stat.json` or `buff_id_to_semantics.json` if it affects ship-vs-hostile combat.
+2. **Allowlist** — if economy/meta, run `node scripts/seed_building_opaque_allowlist.mjs --write` (or add manually).
+3. **Leave actionable** — scoped combat stays in `docs/building_gaps.md` until mapped or engine support exists.
+4. Regenerate `docs/building_gaps.md`; refresh `mapping_gaps_baseline.json` only when actionable count **decreases** intentionally.
+
+Goal: economy/meta buffs are allowlisted; **actionable** count tracks real combat backlog (not zero).
 Forbidden-tech catalog bonus rows must route via `forbidden_tech_bonus_combat_route` in `profile/forbidden_tech_special.rs`.
 
 The strict flag also upgrades unmapped canonical officer `conditions`

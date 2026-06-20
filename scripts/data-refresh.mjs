@@ -149,6 +149,11 @@ function runStfcSpace() {
   }
 
   run(
+    "Building opaque buff allowlist check",
+    "node scripts/seed_building_opaque_allowlist.mjs --check",
+  );
+
+  run(
     "Building opaque buff gap report (docs/building_gaps.md)",
     "cargo run --bin report_building_mapping_gaps > docs/building_gaps.md",
     { optional: true },

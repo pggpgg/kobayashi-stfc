@@ -1,0 +1,981 @@
+{
+  "version": 1,
+  "entries": {
+    "buff_1004648085": {
+      "category": "economy_meta",
+      "reason": "Drydock G: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1019151668": {
+      "category": "economy_meta",
+      "reason": "Dilithium Warehouse: The Maximum amount of Σ-Dilithium you can stock from the Generators i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1023059691": {
+      "category": "alliance_starbase_assault",
+      "reason": "Command Control: Increases the maximum number of ships that can take part in your Assa…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1029146233": {
+      "category": "alliance_starbase_assault",
+      "reason": "Tachyon Detector: Enables the detection of cloaked ships when an Assault occurs against…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1031293542": {
+      "category": "economy_meta",
+      "reason": "Outpost Control Center: Storage indicates the base amount of Material Fragments that can be h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1034040906": {
+      "category": "economy_meta",
+      "reason": "Active Plasma Harvester B: The amount of Active Plasma which can be stored within this harvester.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1067035410": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator B: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1085523180": {
+      "category": "economy_meta",
+      "reason": "Tritanium Vault: The amount of Σ-Tritanium that cannot be stolen when your station get…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1088903989": {
+      "category": "unlock_meta",
+      "reason": "Command Center: Additional Fleet Commander slots are unlocked. Slot 1: Command Center…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1121407171": {
+      "category": "alliance_starbase_assault",
+      "reason": "Assembly Chambers: Increases the warp range of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1137049964": {
+      "category": "alliance_starbase_assault",
+      "reason": "Tactical Deck: Increases the Weapon Damage of all alliance members ships when attack…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1145531007": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator A: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1152756547": {
+      "category": "cost_reduction_meta",
+      "reason": "INDEPENDENT ARCHIVES: Increases Cost Efficiency of Sigma [Σ] Parsteel, Sigma [Σ] Tritanium,…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1156618065": {
+      "category": "reward_meta",
+      "reason": "Court of Q: The Protomatter rewarded from completing a Trial is increased each ti…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1200315561": {
+      "category": "unlock_meta",
+      "reason": "Exocomp Factory: Additional Exocomps are unlocked. Exocomps can activate Consumables. …; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1210413935": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator C: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1228706224": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator E: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1232374297": {
+      "category": "alliance_starbase_assault",
+      "reason": "Shield Modulator: Increases the Shield Health of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1233401306": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator B: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1240792636": {
+      "category": "economy_meta",
+      "reason": "Drydock D: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1258794338": {
+      "category": "economy_meta",
+      "reason": "Active Plasma Harvester C: The amount of Active Plasma which can be stored within this harvester.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1260565637": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator F: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1277421908": {
+      "category": "economy_meta",
+      "reason": "Transogen Forge: Increases base Rare Transogen Mining rate.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1287243827": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator G: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1293910107": {
+      "category": "reward_meta",
+      "reason": "Command Center: A one time reward of Uncommon Skill Points is granted each time you u…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1311541559": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator H: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1322427309": {
+      "category": "cost_reduction_meta",
+      "reason": "INDEPENDENT ARCHIVES: Increases Cost Efficiency of Parsteel, Tritanium, and Dilithium for a…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1361889997": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator B: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1384123882": {
+      "category": "economy_meta",
+      "reason": "Treasury: The maximum cargo capacity of all ships is increased when the Treasur…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1393830736": {
+      "category": "alliance_starbase_assault",
+      "reason": "EPS Distributor C: Increase the Damage of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1394822749": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator C: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1400171833": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock C: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1443149197": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator F: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1461707368": {
+      "category": "economy_meta",
+      "reason": "Treasury: The mining speed of Survey ships is increased when the Treasury is up…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_150353432": {
+      "category": "cost_reduction_meta",
+      "reason": "INDEPENDENT ARCHIVES: Increases Cost Efficiency of Tiering up Chaos Tech; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1509056673": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator H: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_156215254": {
+      "category": "economy_meta",
+      "reason": "Parsteel Vault: The amount of Σ-Parsteel that cannot be stolen when your station gets…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1584895739": {
+      "category": "defense_platform",
+      "reason": "Defense Platform A: Defense Platforms protect your Station from other players' attacks.; defense platform; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1587727214": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator B: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1593096695": {
+      "category": "economy_meta",
+      "reason": "Holodeck: Increases base positive FKR reputation received from Hostiles and Arm…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1601530866": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator A: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1605117396": {
+      "category": "defense_platform",
+      "reason": "Defense Platform B: Defense Platforms protect your Station from other players' attacks.; defense platform; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1656851848": {
+      "category": "reward_meta",
+      "reason": "The War Room: Increases base rewards obtained from claiming Warchests (approximativ…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1673044410": {
+      "category": "defense_platform",
+      "reason": "Defense Platform D: Defense Platforms protect your Station from other players' attacks.; defense platform; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1692645168": {
+      "category": "defense_platform_damage",
+      "reason": "Defense Technologies: The Weapon Damage dealt by your Defense Platforms is increased each t…; defense platform damage; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1695075041": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator G: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1712157842": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock A: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1725504841": {
+      "category": "alliance_starbase_assault",
+      "reason": "Collisional Plasma Vault B: The amount of Collisional Plasma that is protected when your Alliance…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1738545464": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator A: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1764042681": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator A: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1768483334": {
+      "category": "economy_meta",
+      "reason": "Drydock F: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1786572787": {
+      "category": "economy_meta",
+      "reason": "Dilithium Vault: The amount of Dilithium that cannot be stolen when your station gets …; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1789222968": {
+      "category": "economy_meta",
+      "reason": "Tritanium Warehouse: The Maximum amount of Tritanium you can stock from the Generators is …; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_179190365": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator H: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1838839573": {
+      "category": "economy_meta",
+      "reason": "Subspace Relay: Increases Warp Speed for all ships; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1847290680": {
+      "category": "defense_platform",
+      "reason": "Defense Platform E: Defense Platforms protect your Station from other players' attacks.; defense platform; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1847534232": {
+      "category": "cost_reduction_meta",
+      "reason": "Shuttle Bay: Increases the cost efficiency of Service Awards when used for research.; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1883114020": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator F: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_189369985": {
+      "category": "alliance_starbase_assault",
+      "reason": "EPS Distributor B: Increase the Damage of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_189836070": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock F: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1911599164": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator F: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1961479139": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator D: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2015738784": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock E: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2026743585": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator H: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2028595564": {
+      "category": "economy_meta",
+      "reason": "Magnetic Plasma Harvester B: The amount of Magnetic Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2092352680": {
+      "category": "economy_meta",
+      "reason": "Collisonal Plasma Harvester C: The amount of Collisional Plasma which can be stored within this harv…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2099277663": {
+      "category": "cost_reduction_meta",
+      "reason": "Starfleet Academy: Remote Campus: Reduces the cost of 7★ Crystal, Gas, and Ore for Station upgrades.; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2105146395": {
+      "category": "economy_meta",
+      "reason": "Recon Locus: Increases base speed of constructing Ships; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2132727674": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator C: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2151753795": {
+      "category": "cost_reduction_meta",
+      "reason": "Holodeck: Increases base Cost Efficiency of Ship Parts in ship components each …; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2180825491": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator D: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2185834164": {
+      "category": "alliance_starbase_assault",
+      "reason": "Active Plasma Vault B: The amount of Active Plasma that is protected when your Alliance Star…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2201489961": {
+      "category": "unlock_meta",
+      "reason": "The Nova Squadron: When upgrading The Nova Squadron you will receive Nova Squadron parti…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2221457125": {
+      "category": "economy_meta",
+      "reason": "Shipyard: The Construction Speed for all ships you construct is increased every…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2235614043": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator E: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2264815824": {
+      "category": "unlock_meta",
+      "reason": "Exocomp Factory: The grade of Exocomp Consumables that can be purchased in the Consuma…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2270080811": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator C: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2291525316": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator D: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2313460695": {
+      "category": "alliance_starbase_assault",
+      "reason": "Plasma Processor: The amount of Active Plasma that can be processed by the Alliance Sta…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2327416739": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock G: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2334409927": {
+      "category": "alliance_starbase_assault",
+      "reason": "Exographic Targeting Array A: Increases the Armor Piercing, Accuracy and Shield Piercing of the All…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_234221410": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator D: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2365854482": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator B: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2383989383": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator A: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2389523082": {
+      "category": "reward_meta",
+      "reason": "Signal Observatory: Upgrade the Signal Observatory to increase the FKR Credits earned fro…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_240592581": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator E: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2437824470": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator E: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2439973925": {
+      "category": "alliance_starbase_assault",
+      "reason": "Exographic Targeting Array C: Increases the Armor Piercing, Accuracy and Shield Piercing of the All…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2467916106": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator G: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2472694527": {
+      "category": "alliance_starbase_assault",
+      "reason": "Active Plasma Vault A: The amount of Active Plasma that is protected when your Alliance Star…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2485849598": {
+      "category": "armada_slot_meta",
+      "reason": "Armada Control Center: Increases the maximum number of ships that can take part in your Arma…; armada slot meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2489366466": {
+      "category": "alliance_starbase_assault",
+      "reason": "Shield Modulator: Increases the Shield Health of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2571750603": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock H: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2591204557": {
+      "category": "reward_meta",
+      "reason": "Artifact Gallery: The amount of Artifact Tokens gained from defeating Formation Armadas…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2594495003": {
+      "category": "armada_slot_meta",
+      "reason": "Armada Control Center: Increases the maximum number of ships that can take part in your Open…; armada slot meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_26008808": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator G: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2608024101": {
+      "category": "alliance_starbase_assault",
+      "reason": "EPS Distributor A: Increase the Damage of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2619837429": {
+      "category": "economy_meta",
+      "reason": "Parsteel Warehouse: The Maximum amount of Parsteel you can stock from the Generators is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2652133459": {
+      "category": "alliance_starbase_assault",
+      "reason": "Magnetic Plasma Vault A: The amount of Magnetic Plasma that is protected when your Alliance St…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2654147167": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator F: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2665414430": {
+      "category": "unlock_meta",
+      "reason": "The Warp Dive Bar: Unlocks Maverick Task Key claim in the Maverick Faction store.; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_266735500": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator H: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_26768571": {
+      "category": "economy_meta",
+      "reason": "Collisonal Plasma Harvester A: The amount of Collisional Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2678382465": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator E: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2708204242": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator F: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2717945152": {
+      "category": "economy_meta",
+      "reason": "Active Plasma Harvester A: The amount of Active Plasma which can be stored within this harvester.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2741881875": {
+      "category": "economy_meta",
+      "reason": "Collisonal Plasma Harvester A: The amount of Collisional Plasma which can be stored within this harv…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2744202021": {
+      "category": "unlock_meta",
+      "reason": "Exocomp Factory: The amount of Axionic Chips that can be claimed daily in the Consumab…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2769496474": {
+      "category": "economy_meta",
+      "reason": "Drydock C: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2779204893": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator B: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2786406413": {
+      "category": "cost_reduction_meta",
+      "reason": "Refinery: Increases the cost efficiency of Crystal, Gas, and Ore when used for …; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2830549382": {
+      "category": "economy_meta",
+      "reason": "Recon Locus: Increases the base speed of Research; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2841294787": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator E: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2886402254": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator G: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2919223790": {
+      "category": "economy_meta",
+      "reason": "Active Plasma Harvester C: The amount of Active Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2993973268": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator H: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3005330147": {
+      "category": "economy_meta",
+      "reason": "Signal Observatory: Upgrade the Signal Observatory to obtain Challenge Track Gifts. Level…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3029261688": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator C: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3053201411": {
+      "category": "economy_meta",
+      "reason": "Drydock A: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3058492167": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator C: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3060982158": {
+      "category": "alliance_starbase_assault",
+      "reason": "Plasma Processor: The amount of Magnetic Plasma that can be processed by the Alliance S…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3069298570": {
+      "category": "reward_meta",
+      "reason": "The Facade: Increases daily Armada Countdown Speed Ups granted by the Armada Quic…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3070785839": {
+      "category": "reward_meta",
+      "reason": "Signal Observatory: Grants the Daily V'ger Bounty Challenge for free each day.; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3072710486": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator G: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3089227077": {
+      "category": "economy_meta",
+      "reason": "Collisonal Plasma Harvester C: The amount of Collisional Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3123707629": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator B: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3129421262": {
+      "category": "economy_meta",
+      "reason": "Mess Hall: Increases Research Speed each time you upgrade the Mess Hall.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3134155780": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator A: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3138264717": {
+      "category": "alliance_starbase_assault",
+      "reason": "Exographic Targeting Array B: Increases the Armor Piercing, Accuracy and Shield Piercing of the All…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3140509951": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator E: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3143956245": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator C: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3154267878": {
+      "category": "defense_platform_damage",
+      "reason": "Subspace Relay: Increases Defense Platform Damage.; defense platform damage; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3185157131": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator D: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3192800019": {
+      "category": "outpost_meta",
+      "reason": "Outpost Control Center: Increases your Outpost Fleet size by 2 at Level 1, and by 1 at Level 40.; outpost meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3206125489": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock B: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3226994667": {
+      "category": "economy_meta",
+      "reason": "Transogen Forge: Increases base Common Transogen Mining rate.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_322840403": {
+      "category": "economy_meta",
+      "reason": "Magnetic Plasma Harvester A: The amount of Magnetic Plasma which can be stored within this harvester.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_325303903": {
+      "category": "economy_meta",
+      "reason": "Parsteel Warehouse: The Maximum amount of Σ-Parsteel you can stock from the Generators is…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3267742511": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator G: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3287388779": {
+      "category": "cost_reduction_meta",
+      "reason": "Astronautics Studio: The Cost Efficiency of all Research for base resources is increased; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3287566361": {
+      "category": "alliance_starbase_assault",
+      "reason": "Diplomatic Relations: Increases the amount of Alliance Reputation that is gained when defea…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3302479690": {
+      "category": "economy_meta",
+      "reason": "Starfleet Academy: Remote Campus: Increases the amount of Σ-Parsteel, Σ-Tritanium, and Σ-Dilithium gain…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3309277866": {
+      "category": "reward_meta",
+      "reason": "District 56: Resets the cooldown and increase rewards of the <color=#ffc926>Distri…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3318715228": {
+      "category": "reward_meta",
+      "reason": "DTI Headquarters: Increases the base amount of Broken Ship Parts dropped from hostiles; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3333967977": {
+      "category": "cost_reduction_meta",
+      "reason": "Shuttle Bay: Increases the cost efficiency of Merits of Honor when used for research.; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3376274396": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator F: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3383388089": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator A: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_341625291": {
+      "category": "crit_mitigation_unmodeled",
+      "reason": "Starfleet Academy: Remote Campus: Increases Critical Mitigation against all Academy [ACAD] hostiles in Academy systems and Duo Wave Defense.; crit_mitigation_unmodeled; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3437453676": {
+      "category": "unlock_meta",
+      "reason": "INDEPENDENT ARCHIVES: Unlocks a free daily claim of Archive Shards in the Building Resource…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3450405443": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator H: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3451685863": {
+      "category": "defense_platform",
+      "reason": "Defense Platform C: Defense Platforms protect your Station from other players' attacks.; defense platform; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3452562264": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator H: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3454214310": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator D: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3461716896": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator H: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3465507458": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator A: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3470553419": {
+      "category": "economy_meta",
+      "reason": "Scrapyard: The Scrapping Speed for all ships you scrap is increased every time y…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3493826101": {
+      "category": "alliance_starbase_assault",
+      "reason": "Shield Modulator: Increases the Armor, Dodge and Shield Deflection of the Alliance Star…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3505066034": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator C: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3539540702": {
+      "category": "economy_meta",
+      "reason": "Drydock H: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3565741267": {
+      "category": "economy_meta",
+      "reason": "Active Plasma Harvester B: The amount of Active Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3569905798": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator G: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3588567631": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator A: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3590595484": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator B: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3608744035": {
+      "category": "alliance_starbase_assault",
+      "reason": "Command Control: Increases the Hull Health of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3629313671": {
+      "category": "economy_meta",
+      "reason": "Outpost Control Center: Capacity indicates the base amount of Material Fragments that can be …; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3637014985": {
+      "category": "economy_meta",
+      "reason": "Parsteel Vault: The amount of Parsteel that cannot be stolen when your station gets a…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3647094777": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator C: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3650968419": {
+      "category": "cost_reduction_meta",
+      "reason": "Signal Observatory: Increases base Cost Efficiency of 7⇵ Uncommon Ore, Gas, and Crystal f…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_366051680": {
+      "category": "alliance_starbase_assault",
+      "reason": "Collisional Plasma Vault A: The amount of Collisional Plasma that is protected when your Alliance…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3670025699": {
+      "category": "solo_armada_meta",
+      "reason": "Armada Control Center: Borg Type 03 Solo Armadas found near <link=\"fleetcommand://link/navig…; solo armada ship limit; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_371097431": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator G: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3725874398": {
+      "category": "cost_reduction_meta",
+      "reason": "The Nova Squadron: Increases base Cost Efficiency of Section 31 Transmitters, Emblems of…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3729540977": {
+      "category": "cost_reduction_meta",
+      "reason": "Mess Hall: Increases Tritanium Cost Efficiency for ship components each time you…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3746868660": {
+      "category": "cost_reduction_meta",
+      "reason": "Refinery: Increases the cost efficiency of Crystal, Gas, and Ore when used for …; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_375224280": {
+      "category": "economy_meta",
+      "reason": "Drydock B: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3814633593": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator G: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3868819963": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator D: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3870591038": {
+      "category": "economy_meta",
+      "reason": "Magnetic Plasma Harvester A: The amount of Magnetic Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3880246977": {
+      "category": "unlock_meta",
+      "reason": "INDEPENDENT ARCHIVES: Unlocks a free daily claim of Enhanced Archive Shards in the Building…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3891125844": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator A: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3908773390": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator D: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3914539627": {
+      "category": "economy_meta",
+      "reason": "Drydock E: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3940777734": {
+      "category": "economy_meta",
+      "reason": "Ship Hangar: The Inventory indicates how many ships you can have in total, includi…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3945032962": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator E: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_3980673100": {
+      "category": "economy_meta",
+      "reason": "Collisonal Plasma Harvester B: The amount of Collisional Plasma which can be stored within this harv…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4007778307": {
+      "category": "economy_meta",
+      "reason": "Treasury: The protected cargo size of Survey ships is increased when the Treasu…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4016535201": {
+      "category": "economy_meta",
+      "reason": "Collisonal Plasma Harvester B: The amount of Collisional Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4020430113": {
+      "category": "cost_reduction_meta",
+      "reason": "The Warp Dive Bar: Increases base Parsteel and Σ-Parsteel cost efficiency for buildings.; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4026284240": {
+      "category": "economy_meta",
+      "reason": "Magnetic Plasma Harvester C: The amount of Magnetic Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4054016168": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator D: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4076943075": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator E: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4081135111": {
+      "category": "defense_platform_damage",
+      "reason": "Defense Technologies: The Armor, Shield Deflection and Dodge of your Defense Platforms is i…; defense platform damage; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4096145473": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator A: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4102292780": {
+      "category": "cost_reduction_meta",
+      "reason": "INDEPENDENT ARCHIVES: Increases Cost Efficiency of Leveling up Chaos Tech; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4102916123": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator C: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4147144843": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator B: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4159642322": {
+      "category": "economy_meta",
+      "reason": "Dilithium Vault: The amount of Σ-Dilithium that cannot be stolen when your station get…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4204537705": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator E: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4227450471": {
+      "category": "economy_meta",
+      "reason": "Shipyard: The Tier Up Speed for all ships you upgrade is increased every time y…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4231534059": {
+      "category": "economy_meta",
+      "reason": "Outpost Control Center: Production indicates the base amount of Material Fragments generated …; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4233854918": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator G: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_430522112": {
+      "category": "open_armada_unmodeled",
+      "reason": "Armada Control Center: Open Armada attack weapon damage; open-armada hostile upstream category not mapped yet — intentionally unmapped"
+    },
+    "buff_43199216": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator H: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_437521644": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator H: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_439527927": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator F: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_439788362": {
+      "category": "defense_platform",
+      "reason": "Defense Platform F: Defense Platforms protect your Station from other players' attacks.; defense platform; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_444879361": {
+      "category": "economy_meta",
+      "reason": "Active Plasma Harvester A: The amount of Active Plasma that can be harvested per hour.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_459056552": {
+      "category": "economy_meta",
+      "reason": "Magnetic Plasma Harvester C: The amount of Magnetic Plasma which can be stored within this harvester.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_503510825": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator G: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_509573507": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator F: The Σ-Dilithium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_550553432": {
+      "category": "economy_meta",
+      "reason": "District 56: Increases the base amount of time a ship can stay in the Mirror Unive…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_555608088": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator F: The Dilithium Storage indicates how much Dilithium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_564195136": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator C: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_572203286": {
+      "category": "economy_meta",
+      "reason": "R&D Department: The Research and Development building increases your Research speed e…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_615973361": {
+      "category": "alliance_starbase_assault",
+      "reason": "Magnetic Plasma Vault B: The amount of Magnetic Plasma that is protected when your Alliance St…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_617151024": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator D: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_624435206": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator B: The base Tritanium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_625098481": {
+      "category": "economy_meta",
+      "reason": "Transogen Forge: Increases base Scrapping Speed.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_633581023": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator C: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_636256484": {
+      "category": "economy_meta",
+      "reason": "Tritanium Warehouse: The Maximum amount of Σ-Tritanium you can stock from the Generators i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_637758986": {
+      "category": "unlock_meta",
+      "reason": "Recon Locus: Unlocks the Orion Syndicate Bomb Prototype Tech; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_638568962": {
+      "category": "alliance_starbase_assault",
+      "reason": "Command Control: Increases the Hull Health of the Alliance Starbase.; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_639634280": {
+      "category": "cost_reduction_meta",
+      "reason": "INDEPENDENT ARCHIVES: Increases Cost Efficiency of Crystal, Gas, and Ore for all Buildings; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_65043874": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator A: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_667990520": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator B: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_673935722": {
+      "category": "reward_meta",
+      "reason": "Signal Observatory: Upgrade the Signal Observatory to increase the Challenge Credits earn…; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_711561428": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator B: The Tritanium Storage indicates how much Tritanium this Generator can…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_727283729": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator F: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_729229730": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator D: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_746818829": {
+      "category": "unlock_meta",
+      "reason": "Transogen Forge: Unlocks a Transogen Exocomp Slot.; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_764445510": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator E: The Σ-Tritanium Storage indicates how much Σ-Tritanium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_776081615": {
+      "category": "economy_meta",
+      "reason": "Transogen Forge: Increases base Uncommon Transogen Mining rate.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_778737357": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator D: The Σ-Parsteel Storage indicates how much Σ-Parsteel this Generator c…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_787978047": {
+      "category": "cost_reduction_meta",
+      "reason": "Drydock D: The Repair Costs for the ship that is affiliated to this Drydock is d…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_802394140": {
+      "category": "economy_meta",
+      "reason": "Dilithium Generator E: The base Dilithium Production Rate Per Hour of this Generator is incr…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_848074636": {
+      "category": "economy_meta",
+      "reason": "Tritanium Vault: The amount of Tritanium that cannot be stolen when your station gets …; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_885203147": {
+      "category": "economy_meta",
+      "reason": "Dilithium Warehouse: The Maximum amount of Dilithium you can stock from the Generators is …; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_891466842": {
+      "category": "economy_meta",
+      "reason": "Magnetic Plasma Harvester B: The amount of Magnetic Plasma which can be stored within this harvester.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_90336722": {
+      "category": "economy_meta",
+      "reason": "Tritanium Generator H: The Σ-Tritanium Production Rate Per Hour of this Generator is increas…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_912296055": {
+      "category": "economy_meta",
+      "reason": "Parsteel Generator F: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_924439393": {
+      "category": "economy_meta",
+      "reason": "Recon Locus: Increases base speed of constructing Station Modules; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_92563433": {
+      "category": "economy_meta",
+      "reason": "Outpost Control Center: Increases the amount of Common, <color=#00ed4b>Uncommon</color> and <…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_934971217": {
+      "category": "alliance_starbase_assault",
+      "reason": "Plasma Processor: The amount of Collisional Plasma that can be processed by the Allianc…; alliance starbase / assault; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_979710652": {
+      "category": "reward_meta",
+      "reason": "Salvage Yard: The amount of additional Cardassian Loot or Superior Cardassian Loot …; reward/meta; intentionally unmapped for ship-vs-hostile sim"
+    }
+  }
+}

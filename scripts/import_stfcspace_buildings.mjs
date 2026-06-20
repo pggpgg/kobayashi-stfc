@@ -461,6 +461,8 @@ async function main() {
   validFileStems.add("buff_id_to_stat");
   validFileStems.add("buff_id_to_semantics");
   validFileStems.add("hull_id_registry");
+  validFileStems.add("opaque_buff_allowlist");
+  validFileStems.add("mapping_gaps_baseline");
   const dirEntries = await fs.readdir(OUT_DIR, { withFileTypes: true });
   for (const dirent of dirEntries) {
     if (!dirent.isFile() || !dirent.name.endsWith(".json")) continue;

@@ -1,0 +1,4 @@
+{
+  "actionable_opaque_buff_stats": 0,
+  "note": "Economy/meta and out-of-simulator-scope buffs allowlisted; actionable = ship-combat mapping backlog. Regenerate: cargo run --bin report_building_mapping_gaps"
+}
