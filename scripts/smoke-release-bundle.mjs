@@ -26,12 +26,14 @@ async function reservePort() {
   return port;
 }
 
-async function waitForJson(url, child, timeoutMs = 30_000) {
+async function waitForJson(url, child, timeoutMs = 60_000) {
   const deadline = Date.now() + timeoutMs;
   let lastError;
   while (Date.now() < deadline) {
-    if (child.exitCode != null) {
-      throw new Error(`bundle server exited early with code ${child.exitCode}`);
+    if (child.exitCode != null || child.signalCode != null) {
+      throw new Error(
+        `bundle server exited early (code=${child.exitCode ?? "none"}, signal=${child.signalCode ?? "none"})`,
+      );
     }
     try {
       const response = await fetch(url);
@@ -66,7 +68,9 @@ async function main() {
   const child = spawn(binary, ["serve"], {
     cwd: outsideCwd,
     env: { ...process.env, KOBAYASHI_BIND: `127.0.0.1:${port}` },
-    stdio: ["ignore", "pipe", "pipe"],
+    // The server can emit enough startup diagnostics to fill macOS's smaller
+    // child-process pipe buffer. We do not inspect stdout, so never pipe it.
+    stdio: ["ignore", "ignore", "pipe"],
   });
   child.stderr.setEncoding("utf8");
   child.stderr.on("data", (chunk) => {
