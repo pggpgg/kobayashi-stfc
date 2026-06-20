@@ -322,6 +322,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
             | AbilityEffect::HostileKemociteWeaponry { .. }
+            | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
             | AbilityEffect::HostileCounterStatDebuff { .. }
             | AbilityEffect::DefenderShieldDrainPerRound { .. }
             | AbilityEffect::DefenderFireDelay { .. }

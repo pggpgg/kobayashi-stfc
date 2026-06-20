@@ -1,11 +1,12 @@
-//! Xindi hostile ability catalog → combat integration (crit debuff stack + lethal round-end).
+//! Xindi hostile ability catalog → combat integration (crit debuff, Kemocite, No Mercy, Ibix bypass).
 
 use kobayashi::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, Combatant, CrewConfiguration,
-    SimulationConfig, TraceMode, WeaponStats,
+    simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, Combatant,
+    CrewConfiguration, DefenderStats, SimulationConfig, TraceMode, WeaponStats,
 };
 use kobayashi::combat::abilities::AbilityEffect;
 use kobayashi::combat::types::{OpponentFactionTag, ShipType};
+use kobayashi::data::hostile::HostileRecord;
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
 };
@@ -96,8 +97,8 @@ fn cfg(rounds: u32, seed: u64) -> SimulationConfig {
 }
 
 #[test]
-fn xindi_doomed_species_catalog_builds_crit_and_lethal_seats() {
-    let rec = resolve_hostile("2277410936").expect("xindi hostile sample");
+fn xindi_doomed_species_catalog_builds_crit_and_particle_beam_lethal_seats() {
+    let rec = resolve_hostile("4012373729").expect("doomed species xindi");
     let catalog = hostile_ability_catalog_for_default_path();
     let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
     assert!(
@@ -125,13 +126,215 @@ fn xindi_doomed_species_catalog_builds_crit_and_lethal_seats() {
                 }
             )
         }),
-        "expected particle-beam lethal seat"
+        "expected Xindi Weaponry particle-beam lethal extra seat"
     );
 }
 
 #[test]
-fn xindi_lethal_particle_beam_kills_at_round_one_end() {
-    let rec = resolve_hostile("2277410936").expect("xindi hostile");
+fn be_like_water_catalog_has_no_lethal_extra_seat() {
+    let rec = resolve_hostile("3988400401").expect("be like water only xindi");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| {
+            matches!(
+                s.ability.effect,
+                AbilityEffect::HostileCritDamageReduction {
+                    additive_percentage_points: true,
+                    stacks: false,
+                    ..
+                }
+            )
+        }),
+        "expected Be Like Water crit debuff seat"
+    );
+    assert!(
+        !crew.seats.iter().any(|s| {
+            matches!(s.ability.effect, AbilityEffect::HostileLethalEndOfRound { .. })
+        }),
+        "Xindi Might text must not add a catalog lethal seat"
+    );
+    assert!(
+        !crew.seats.iter().any(|s| {
+            matches!(
+                s.ability.effect,
+                AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
+            )
+        }),
+        "Be Like Water-only row must not add Denticle Blade seat"
+    );
+}
+
+#[test]
+fn denticle_blade_catalog_builds_combat_begin_seat() {
+    let rec = resolve_hostile("1043112405").expect("denticle xindi");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| {
+            matches!(
+                s.ability.effect,
+                AbilityEffect::HostileDenticleBladeHeavyArtillery {
+                    proc_chance,
+                    weapon_index_one_based: 5,
+                } if (proc_chance - 0.3).abs() < 1e-9
+            )
+        }),
+        "expected Denticle Blade combat-begin seat"
+    );
+}
+
+fn denticle_hostile_defender(rec: &HostileRecord) -> Combatant {
+    let player_defender = DefenderStats::default();
+    let weapons = rec.weapons_for_counter_attack(ShipType::Explorer, player_defender);
+    Combatant {
+        id: rec.id.clone(),
+        attack: 0.0,
+        mitigation: 0.0,
+        armor: 0.0,
+        shield_deflection: 0.0,
+        dodge: 0.0,
+        damage_reduction: 0.0,
+        pierce: rec.counter_pierce_damage_through_bonus(ShipType::Explorer, player_defender),
+        crit_chance: rec.crit_chance.clamp(0.0, 1.0),
+        crit_multiplier: rec.crit_damage.max(1.0),
+        crit_damage_floor: 0.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: rec.hull_health,
+        shield_health: 0.0,
+        shield_mitigation: rec.shield_mitigation.unwrap_or(0.8),
+        apex_barrier: rec.apex_barrier,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: rec.isolytic_defense,
+        weapons,
+        hostile_mitigation_params: None,
+    }
+}
+
+fn denticle_roll_triggered(events: &[CombatEvent]) -> Option<bool> {
+    events
+        .iter()
+        .find(|e| e.event_type == "denticle_blade_roll")
+        .and_then(|e| e.values.get("triggered").and_then(|v| v.as_bool()))
+}
+
+fn counter_fired_at_weapon_index(events: &[CombatEvent], weapon_index: u32) -> bool {
+    events.iter().any(|e| {
+        e.phase == "counter"
+            && e.weapon_index == Some(weapon_index)
+            && (e.event_type == "damage" || e.event_type == "mitigation_calc")
+    })
+}
+
+#[test]
+fn denticle_blade_gates_weapon_five_until_proc() {
+    let rec = resolve_hostile("1043112405").expect("denticle xindi");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let attacker = weak_attacker();
+    let defender = denticle_hostile_defender(&rec);
+
+    let mut fail_seed = None;
+    let mut success_seed = None;
+    for seed in 0..10_000u64 {
+        let mut config = cfg(1, seed);
+        config.trace_mode = TraceMode::Events;
+        let result = simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &config,
+            &CrewConfiguration { seats: vec![] },
+            OpponentFactionTag::Unknown,
+            ShipType::Battleship,
+            ShipType::Explorer,
+            true,
+            false,
+            &defender_crew,
+        );
+        let triggered = denticle_roll_triggered(&result.events);
+        let fired_w5 = counter_fired_at_weapon_index(&result.events, 4);
+        if triggered == Some(false) && !fired_w5 {
+            fail_seed = Some(seed);
+        }
+        if triggered == Some(true) && fired_w5 {
+            success_seed = Some(seed);
+        }
+        if fail_seed.is_some() && success_seed.is_some() {
+            break;
+        }
+    }
+    assert!(
+        fail_seed.is_some(),
+        "expected a seed where Denticle proc fails and weapon 5 counter is skipped"
+    );
+    assert!(
+        success_seed.is_some(),
+        "expected a seed where Denticle proc succeeds and weapon 5 counter fires"
+    );
+}
+
+#[test]
+fn denticle_blade_fires_weapon_five_when_proc_succeeds() {
+    let rec = resolve_hostile("1043112405").expect("denticle xindi");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let attacker = weak_attacker();
+    let defender = denticle_hostile_defender(&rec);
+
+    let mut success_seed = None;
+    for seed in 0..10_000u64 {
+        let mut config = cfg(1, seed);
+        config.trace_mode = TraceMode::Events;
+        let result = simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &config,
+            &CrewConfiguration { seats: vec![] },
+            OpponentFactionTag::Unknown,
+            ShipType::Battleship,
+            ShipType::Explorer,
+            true,
+            false,
+            &defender_crew,
+        );
+        if denticle_roll_triggered(&result.events) == Some(true)
+            && counter_fired_at_weapon_index(&result.events, 4)
+        {
+            success_seed = Some(seed);
+            break;
+        }
+    }
+    let seed = success_seed.expect("expected a proc-success seed within 10k");
+    let mut config = cfg(1, seed);
+    config.trace_mode = TraceMode::Events;
+    let result = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config,
+        &CrewConfiguration { seats: vec![] },
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Explorer,
+        true,
+        false,
+        &defender_crew,
+    );
+    assert!(
+        counter_fired_at_weapon_index(&result.events, 4),
+        "weapon slot 5 counter should fire when Denticle proc succeeds"
+    );
+    assert!(
+        result.attacker_hull_remaining < attacker.hull_health,
+        "heavy artillery counter should damage attacker hull"
+    );
+}
+
+#[test]
+fn doomed_species_particle_beam_lethal_kills_at_round_one_end() {
+    let rec = resolve_hostile("4012373729").expect("doomed species xindi");
     let catalog = hostile_ability_catalog_for_default_path();
     let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
     let attacker = weak_attacker();
@@ -178,19 +381,89 @@ fn xindi_lethal_particle_beam_kills_at_round_one_end() {
     );
     assert!(
         result.attacker_hull_remaining <= 0.0,
-        "lethal round-end should zero attacker hull, got {}",
+        "particle-beam lethal round-end should zero attacker hull, got {}",
         result.attacker_hull_remaining
     );
 }
 
 #[test]
-fn xindi_lethal_is_not_undone_by_attacker_round_end_hull_regen() {
+fn no_mercy_lethal_kills_at_round_eight() {
+    let rec = resolve_hostile("2634260020").expect("xindi group armada");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let attacker = weak_attacker();
+    let defender = Combatant {
+        id: "xindi_armada".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        armor: 0.0,
+        shield_deflection: 0.0,
+        dodge: 0.0,
+        damage_reduction: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        crit_damage_floor: 0.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+        hostile_mitigation_params: None,
+    };
+    let round_seven = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &cfg(7, 7),
+        &CrewConfiguration { seats: vec![] },
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Explorer,
+        true,
+        false,
+        &defender_crew,
+    );
+    let round_eight = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &cfg(8, 7),
+        &CrewConfiguration { seats: vec![] },
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Explorer,
+        true,
+        false,
+        &defender_crew,
+    );
+    assert!(
+        round_seven.attacker_hull_remaining > 0.0,
+        "No Mercy should not fire before round 8"
+    );
+    assert!(
+        round_eight.attacker_hull_remaining <= 0.0,
+        "No Mercy lethal should zero attacker hull on round 8, got {}",
+        round_eight.attacker_hull_remaining
+    );
+}
+
+#[test]
+fn no_mercy_lethal_is_not_undone_by_attacker_round_end_hull_regen() {
     use kobayashi::combat::abilities::{
         Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
         NO_EXPLICIT_CONTRIBUTION_BATCH,
     };
 
-    let rec = resolve_hostile("2277410936").expect("xindi hostile");
+    let rec = resolve_hostile("2634260020").expect("xindi group armada");
     let catalog = hostile_ability_catalog_for_default_path();
     let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
     let attacker_crew = CrewConfiguration {
@@ -242,7 +515,7 @@ fn xindi_lethal_is_not_undone_by_attacker_round_end_hull_regen() {
     let result = simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
         &defender,
-        &cfg(1, 99),
+        &cfg(8, 99),
         &attacker_crew,
         OpponentFactionTag::Unknown,
         ShipType::Battleship,

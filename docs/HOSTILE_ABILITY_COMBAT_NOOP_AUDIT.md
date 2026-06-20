@@ -8,9 +8,9 @@ This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability covera
 
 | Ability id | Hostiles | Primary effect | Notes |
 | --- | ---: | --- | --- |
-| `1271329828` | 45 | `hostile_crit_damage_reduction` + lethal `extra_seat` | Doomed Species (2R stack) + Particle Beam |
-| `1408273502` | 25 | same pattern | Be Like Water + Xindi Might (9 shots → lethal seat) |
-| `141924765` | 14 | same pattern | Be Like Water + Denticle Blade text + Xindi Might |
+| `1271329828` | 45 | `hostile_crit_damage_reduction` + lethal `extra_seat` | Doomed Species (2R stack) + Xindi Weaponry particle beam (round-end lethal) |
+| `1408273502` | 25 | `hostile_crit_damage_reduction` | Be Like Water; Xindi Might text = 9×20B weapon only |
+| `141924765` | 14 | `hostile_crit_damage_reduction` + Denticle extra seat | Be Like Water + **Denticle Blade** (combat-start 30% proc gates weapon slot 5); Xindi Might = weapon only |
 | `2665723295` | 6 | `hostile_lethal_end_of_round` (`round_interval: 8`) | No Mercy — assimilated prevents 100% |
 | `3981152012` | 6 | `hostile_kemocite_weaponry` @ `round_end` | Kemocite — +30%/stack at round end; burning prevents 100% |
 
@@ -116,7 +116,8 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `658066283` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Vulnerability |
 | `986116981` | 53 | other_review | `combat_noop` | Persistence Hunter — burning at combat start |
 | `1745201100` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Maul |
-| `1271329828` | 45 | xindi_crit_debuff | `hostile_crit_damage_reduction` + lethal extra seat | Doomed Species + Particle Beam |
+| `1271329828` | 45 | xindi_crit_debuff | `hostile_crit_damage_reduction` + lethal extra seat | Doomed Species + Xindi Weaponry particle beam |
+| `141924765` | 14 | xindi_crit_debuff | `hostile_crit_damage_reduction` + Denticle extra seat | Be Like Water + Denticle Blade (30% proc gates weapon slot 5) |
 | `3445799437` | 45 | hostile_shield_bypass | `shield_mitigation_bypass` | Blade's Tip — 100% bypass of player shield mitigation on counter |
 | `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — reduces final damage (review mapping) |
 | `3196612078` | 39 | hostile_shield_bypass | `shield_mitigation_bypass` | Strength of the Ibix — 100% bypass (10 shots are weapon components, not this seat) |

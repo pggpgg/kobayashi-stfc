@@ -82,6 +82,7 @@ def modeled(
     crit_debuff_stacks: bool = False,
     prevent_when_defender_assimilated: bool = False,
     value_override: float | None = None,
+    weapon_index: int | None = None,
     extra_seats: list[dict] | None = None,
 ) -> dict:
     d: dict = {
@@ -108,6 +109,8 @@ def modeled(
         d["prevent_when_defender_assimilated"] = True
     if value_override is not None:
         d["value_override"] = value_override
+    if weapon_index is not None and weapon_index > 0:
+        d["weapon_index"] = int(weapon_index)
     cap = None if duration_rounds is not None else round_cap
     if cap is not None and cap > 0:
         d["round_cap"] = int(cap)
@@ -146,32 +149,33 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     if re.search(r"\benemy player\b", p) or re.search(r"\bopponent player\b", p):
         return dict(NOOP), "pvp_player_target"
 
-    def xindi_lethal_extra_seat(p_text: str) -> dict | None:
-        if "lethal damage" not in p_text:
-            return None
-        if "every 8th round" in p_text or "8th round" in p_text:
-            return modeled(
-                "round_end",
-                "hostile_lethal_end_of_round",
-                round_interval=8,
-                shots=1,
-            )
-        if "end of" not in p_text or "round" not in p_text:
-            return None
-        shots = 9 if "9 shots" in p_text else 1
-        return modeled(
-            "round_end",
-            "hostile_lethal_end_of_round",
-            round_interval=1,
-            shots=shots,
-        )
-
-    # Xindi round-start crit debuff on the player (Doomed Species / Be Like Water).
+    # Xindi round-start crit debuff (Doomed Species / Be Like Water).
+    # Doomed Species + Xindi Weaponry particle beam: separate round-end instant lethal seat.
+    # Be Like Water + Xindi Might text: weapon component only (9×20B), no extra lethal seat.
     if "critical hit damage" in p and "start of the round" in p and "reduces" in p:
-        extra = xindi_lethal_extra_seat(p)
-        extras = [extra] if extra else None
         stacks = "can stack" in p
         value_override = 25.0 if "2500" in p else None
+        extras = None
+        if "doomed species" in p and ("xindi weaponry" in p or "particle beam" in p):
+            extras = [
+                modeled(
+                    "round_end",
+                    "hostile_lethal_end_of_round",
+                    round_interval=1,
+                    shots=1,
+                )
+            ]
+        elif "denticle blade" in p and (
+            "heavy artillery" in p or "5th weapon" in p
+        ):
+            extras = [
+                modeled(
+                    "combat_begin",
+                    "hostile_denticle_blade_heavy_artillery",
+                    value_override=0.3,
+                    weapon_index=5,
+                )
+            ]
         return (
             modeled(
                 "round_start",

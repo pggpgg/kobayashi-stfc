@@ -953,6 +953,7 @@ impl EffectAccumulator {
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
                 | AbilityEffect::HostileKemociteWeaponry { .. }
+                | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1142,6 +1143,7 @@ impl EffectAccumulator {
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
                 | AbilityEffect::HostileKemociteWeaponry { .. }
+                | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1293,6 +1295,7 @@ impl EffectAccumulator {
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
                 | AbilityEffect::HostileKemociteWeaponry { .. }
+                | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1446,6 +1449,7 @@ impl EffectAccumulator {
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
                 | AbilityEffect::HostileKemociteWeaponry { .. }
+                | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1605,6 +1609,7 @@ impl EffectAccumulator {
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
                 | AbilityEffect::HostileKemociteWeaponry { .. }
+                | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -1800,6 +1805,7 @@ impl EffectAccumulator {
                 AbilityEffect::HostileCritDamageReduction { .. }
                 | AbilityEffect::HostileLethalEndOfRound { .. }
                 | AbilityEffect::HostileKemociteWeaponry { .. }
+                | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
@@ -2040,7 +2046,8 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
         AbilityEffect::HostileLethalEndOfRound { .. }
-        | AbilityEffect::HostileKemociteWeaponry { .. } => effect,
+        | AbilityEffect::HostileKemociteWeaponry { .. }
+        | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. } => effect,
         AbilityEffect::HostileCounterStatDebuff { .. } => effect,
         AbilityEffect::DefenderShieldDrainPerRound { .. } => effect,
         AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,

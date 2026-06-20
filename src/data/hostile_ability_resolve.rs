@@ -61,6 +61,9 @@ pub struct HostileAbilityCatalogEntry {
     pub crit_debuff_stacks: bool,
     #[serde(default)]
     pub prevent_when_defender_assimilated: bool,
+    /// 1-based weapon sub-round index for Denticle Blade heavy artillery gating.
+    #[serde(default)]
+    pub weapon_index: Option<u32>,
     #[serde(default)]
     pub extra_seats: Vec<HostileAbilityCatalogEntry>,
 }
@@ -161,6 +164,7 @@ pub(crate) fn hostile_ability_effect_from_catalog(
     duration_rounds: Option<u32>,
     round_interval: Option<u32>,
     shots: Option<u32>,
+    weapon_index: Option<u32>,
 ) -> Option<AbilityEffect> {
     // Proc-gated counter-fire multipliers keep upstream `values[].chance` semantics.
     match effect_type.trim().to_lowercase().replace('-', "_").as_str() {
@@ -192,6 +196,15 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 round_interval: round_interval.or(duration_rounds).unwrap_or(1).max(1),
                 shots: shots.unwrap_or(1).max(1),
                 prevent_when_defender_assimilated: false,
+            })
+        }
+        "hostile_denticle_blade_heavy_artillery" | "denticle_blade_heavy_artillery" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileDenticleBladeHeavyArtillery {
+                proc_chance: value.clamp(0.0, 1.0),
+                weapon_index_one_based: weapon_index.unwrap_or(5).max(1),
             })
         }
         "attack_multiplier" | "weapon_damage" | "attack" => {
@@ -257,6 +270,7 @@ fn push_hostile_catalog_seat(
         entry.duration_rounds,
         entry.round_interval,
         entry.shots,
+        entry.weapon_index,
     ) else {
         return;
     };
@@ -457,6 +471,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         );
         assert!(matches!(iso, Some(AbilityEffect::IsolyticDamageBonus(v)) if (v - 0.15).abs() < 1e-9));
 
@@ -465,6 +480,7 @@ mod tests {
             TimingWindow::CombatBegin,
             100.0,
             5000.0,
+            None,
             None,
             None,
             None,

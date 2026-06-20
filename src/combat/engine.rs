@@ -21,8 +21,9 @@ use crate::combat::abilities::{
     attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
     hostile_crit_damage_reduction_active_at_round, ActiveHostileCritReduction,
-    hostile_kemocite_attack_multiplier_bonus, hostile_kemocite_try_add_stack,
-    hostile_lethal_end_of_round_hull_damage,
+    hostile_denticle_blade_gates_weapon, hostile_kemocite_attack_multiplier_bonus,
+    hostile_kemocite_try_add_stack, hostile_lethal_end_of_round_hull_damage,
+    roll_hostile_denticle_blade_at_combat_begin,
     opponent_captain_maneuver_multiplier_from_effects, scale_crew_captain_maneuver_effects,
     sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
     sum_breach_cumulative_crit_damage_per_crit, sum_dodge_bonus,
@@ -462,6 +463,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         defender_shots_bonus_entries: Vec::new(),
         defender_weapon_fire_delayed_rounds: 0,
         defender_kemocite_stacks: 0,
+        defender_denticle_blade_active: false,
         osr_health_mult_applied: 1.0,
         osr_health_base_max_hull: 0.0,
     };
@@ -547,6 +549,31 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         &mut st.defender_weapon_fire_delayed_rounds,
         &mut st.shots_bonus_entries,
     );
+
+    if let Some(active) = roll_hostile_denticle_blade_at_combat_begin(defender_crew, &mut rng) {
+        st.defender_denticle_blade_active = active;
+        trace.record_if(|| CombatEvent {
+            event_type: "denticle_blade_roll".to_string(),
+            round_index: 0,
+            phase: "combat_begin".to_string(),
+            source: EventSource {
+                hostile_ability_id: Some("141924765".to_string()),
+                ..EventSource::default()
+            },
+            weapon_index: None,
+            values: Map::from_iter([
+                ("triggered".to_string(), Value::from(active)),
+                (
+                    "weapon_index_one_based".to_string(),
+                    Value::from(
+                        crate::combat::abilities::hostile_denticle_blade_config(defender_crew)
+                            .map(|(_, idx)| idx)
+                            .unwrap_or(5),
+                    ),
+                ),
+            ]),
+        });
+    }
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     st.shots_bonus_entries
@@ -990,6 +1017,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
             let defender_weapon = defender.weapon_attack(weapon_index);
             if defender_weapon.is_some() && skip_defender_counter_attack {
+                continue;
+            }
+            if defender_weapon.is_some()
+                && hostile_denticle_blade_gates_weapon(defender_crew, weapon_index)
+                && !st.defender_denticle_blade_active
+            {
                 continue;
             }
             if let Some(defender_weapon_attack) = defender_weapon {
@@ -4023,6 +4056,8 @@ struct CombatRunState {
     defender_weapon_fire_delayed_rounds: u32,
     /// Successful Kemocite Weaponry round-end stacks (Xindi group armadas).
     defender_kemocite_stacks: u32,
+    /// Denticle Blade heavy-artillery proc succeeded at combat begin (gates weapon slot 5).
+    defender_denticle_blade_active: bool,
     /// Phase 4d dynamic officer-stat health gate multiplier applied this round (reverted at round end).
     osr_health_mult_applied: f64,
     /// Attacker max hull before [`OfficerStatRoundDelta::health_max_mult`] was applied this round.

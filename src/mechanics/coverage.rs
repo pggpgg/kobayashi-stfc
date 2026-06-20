@@ -158,6 +158,7 @@ fn classify_hostile_catalog_entry(entry: &HostileAbilityCatalogEntry) -> LcarsEf
         entry.duration_rounds,
         entry.round_interval,
         entry.shots,
+        entry.weapon_index,
     )
     .is_some()
     {

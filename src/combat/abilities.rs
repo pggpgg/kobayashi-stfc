@@ -213,6 +213,13 @@ pub enum AbilityEffect {
     HostileKemociteWeaponry {
         growth_per_stack: f64,
     },
+    /// Xindi Denticle Blade (`141924765`): at combat begin, roll `proc_chance` once per fight.
+    /// When successful, counter-fire for weapon slot `weapon_index_one_based` (1-based sub-round
+    /// index; default 5) runs each round; when failed, that slot is skipped entirely.
+    HostileDenticleBladeHeavyArtillery {
+        proc_chance: f64,
+        weapon_index_one_based: u32,
+    },
     /// Player ship hull ability (Quv'Sompek, B'Rel): reduces hostile counter-fire pierce effectiveness
     /// for the first `duration_rounds` combat rounds. `reduction` is a fraction (0.15 = 15% off pierce,
     /// armor pierce, and accuracy — approximated as a uniform pierce multiplier on the counter path).
@@ -846,7 +853,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
                 *reduction = cap_one(*reduction);
             }
         }
-        AbilityEffect::HostileLethalEndOfRound { .. } | AbilityEffect::HostileKemociteWeaponry { .. } => {}
+        AbilityEffect::HostileLethalEndOfRound { .. }
+        | AbilityEffect::HostileKemociteWeaponry { .. }
+        | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. } => {}
         AbilityEffect::HostileCounterStatDebuff {
             reduction,
             duration_rounds: _,
@@ -1019,6 +1028,38 @@ pub fn hostile_kemocite_attack_multiplier_bonus(crew: &CrewConfiguration, stacks
         return 0.0;
     }
     stacks as f64 * growth
+}
+
+/// Denticle Blade proc chance and gated weapon slot (1-based) from hostile defender crew.
+pub fn hostile_denticle_blade_config(crew: &CrewConfiguration) -> Option<(f64, u32)> {
+    for s in &crew.seats {
+        if let AbilityEffect::HostileDenticleBladeHeavyArtillery {
+            proc_chance,
+            weapon_index_one_based,
+        } = s.ability.effect
+        {
+            return Some((
+                proc_chance.clamp(0.0, 1.0),
+                weapon_index_one_based.max(1),
+            ));
+        }
+    }
+    None
+}
+
+/// True when `weapon_index` (0-based) is the Denticle-gated heavy-artillery slot.
+pub fn hostile_denticle_blade_gates_weapon(crew: &CrewConfiguration, weapon_index: usize) -> bool {
+    hostile_denticle_blade_config(crew)
+        .is_some_and(|(_, idx)| weapon_index + 1 == idx as usize)
+}
+
+/// Combat-start Denticle Blade proc roll. Returns `None` when the crew has no Denticle seat.
+pub fn roll_hostile_denticle_blade_at_combat_begin(
+    crew: &CrewConfiguration,
+    rng: &mut crate::combat::rng::Rng,
+) -> Option<bool> {
+    let (proc_chance, _) = hostile_denticle_blade_config(crew)?;
+    Some(crate::combat::proc::roll_proc_chance_short_circuit(proc_chance, rng))
 }
 
 /// Round-end Kemocite stack tick. Skipped entirely while the hostile is burning (100% prevent).
@@ -2209,6 +2250,28 @@ mod tests {
             hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0),
             0.0
         );
+    }
+
+    #[test]
+    fn hostile_denticle_blade_config_reads_first_seat() {
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "141924765",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::HostileDenticleBladeHeavyArtillery {
+                        proc_chance: 0.3,
+                        weapon_index_one_based: 5,
+                    },
+                ),
+                None,
+            )],
+        };
+        assert_eq!(hostile_denticle_blade_config(&crew), Some((0.3, 5)));
+        assert!(hostile_denticle_blade_gates_weapon(&crew, 4));
+        assert!(!hostile_denticle_blade_gates_weapon(&crew, 3));
     }
 
     #[test]

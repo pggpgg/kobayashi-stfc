@@ -252,12 +252,12 @@
       "value_override": 25.0,
       "extra_seats": [
         {
-          "timing": "round_end",
-          "effect_type": "hostile_lethal_end_of_round",
+          "timing": "combat_begin",
+          "effect_type": "hostile_denticle_blade_heavy_artillery",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "round_interval": 1,
-          "shots": 9
+          "value_override": 0.3,
+          "weapon_index": 5
         }
       ]
     },
@@ -2226,17 +2226,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 2,
-      "crit_reduction_additive_points": true,
-      "extra_seats": [
-        {
-          "timing": "round_end",
-          "effect_type": "hostile_lethal_end_of_round",
-          "value_is_percentage": false,
-          "ignore_upstream_value_is_percentage": true,
-          "round_interval": 1,
-          "shots": 9
-        }
-      ]
+      "crit_reduction_additive_points": true
     },
     "1409541461": {
       "timing": "combat_begin",

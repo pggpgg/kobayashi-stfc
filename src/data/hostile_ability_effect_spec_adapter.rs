@@ -122,6 +122,7 @@ mod tests {
             crit_reduction_additive_points: false,
             crit_debuff_stacks: false,
             prevent_when_defender_assimilated: false,
+            weapon_index: None,
             extra_seats: Vec::new(),
         };
         let spec =
