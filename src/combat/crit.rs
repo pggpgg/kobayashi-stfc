@@ -22,7 +22,8 @@ pub(crate) struct VehicleCritResolution {
 ///
 /// **Reduction → floor → hull-breach order.** On crit hits:
 /// 1. Compose `raw_base = weapon_crit × officer_crit + additive_crit_damage_bonus`.
-/// 2. Subtract `attacker_crit_reduction_additive` (Xindi percentage-point debuff).
+/// 2. Subtract `attacker_crit_reduction_additive` percentage points from the crit *bonus* (Xindi
+///    round-start debuff; upstream value 25 → 2500% UI). Stacks sum reduction before subtracting.
 /// 3. Multiply by `(1 - attacker_crit_reduction_mult)` when mult > 0 (Crozier / profile fraction).
 /// 4. Clamp with [`Combatant::crit_damage_floor`] (player Critical Damage Floor research).
 /// 5. Hull-breach amplification last.
@@ -49,8 +50,8 @@ pub(crate) fn resolve_vehicle_weapon_crit(
     let raw_base =
         weapon_crit_multiplier * crit_damage_multiplier + additive_crit_damage_bonus.max(0.0);
     let after_additive = if is_crit && attacker_crit_reduction_additive > 0.0 {
-        // Xindi debuffs subtract percentage points from the crit *bonus* (mult above 1.0), same
-        // family as research/officer crit-damage bonuses that add points to the composed mult.
+        // Xindi debuffs subtract percentage points from the crit *bonus* (mult above 1.0). Upstream
+        // value 25 → 2500% UI → −25 points, collapsing typical player crit toward ×1.0 before floor.
         let crit_bonus = (raw_base - 1.0).max(0.0);
         1.0 + (crit_bonus - attacker_crit_reduction_additive).max(0.0)
     } else {
@@ -171,8 +172,19 @@ mod tests {
     }
 
     #[test]
-    fn attacker_crit_reduction_additive_only_eats_bonus_not_base_one() {
+    fn be_like_water_collapses_high_crit_bonus_to_unit_multiplier() {
         let mut rng = Rng::new(34);
+        // Enterprise-D export crit damage 3.19; BLW value 25 (−2500% UI) eats the full bonus.
+        let c = resolve_vehicle_weapon_crit(
+            1.0, 0.0, 1.0, 3.19, 0.0, 25.0, 0.0, 0.0, false, &mut rng,
+        );
+        assert!(c.is_crit);
+        assert!((c.multiplier - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn attacker_crit_reduction_additive_only_eats_bonus_not_base_one() {
+        let mut rng = Rng::new(35);
         // raw 2.5 (+150% bonus); −5.0 cannot pull below ×1.0 before floor
         let c = resolve_vehicle_weapon_crit(
             1.0, 0.0, 1.0, 2.5, 0.0, 5.0, 0.0, 0.0, false, &mut rng,

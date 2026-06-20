@@ -182,10 +182,10 @@ pub enum AbilityEffect {
     ///
     /// When [`Self::additive_percentage_points`] is true (Xindi Doomed Species / Be Like Water),
     /// `reduction` is subtracted in **percentage-point** units from the composed crit multiplier
-    /// (`weapon_crit × officer_crit + additive bonuses`), then [`Combatant::crit_damage_floor`]
-    /// is applied. Upstream value `5` = −500% display = `5.0` points. When false (e.g. U.S.S.
-    /// Crozier vs hostile counter-fire), `reduction` is a multiplicative fraction (`0.02` = 2% off
-    /// the crit multiplier on the counter path).
+    /// bonus (`weapon_crit × officer_crit + additive bonuses − reduction`, floored at ×1.0), then
+    /// [`Combatant::crit_damage_floor`] is applied. Upstream value `25` → −2500% UI → `25.0` points.
+    /// When false (e.g. U.S.S. Crozier vs hostile counter-fire), `reduction` is a multiplicative
+    /// fraction on the counter path.
     ///
     /// [`Self::stacks`]: when true, round-start seats stack up to `duration_rounds` overlapping
     /// copies; when false, only one copy applies at a time (Be Like Water).
@@ -903,7 +903,7 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
 /// Resolved hostile crit debuff for one combat round.
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct ActiveHostileCritReduction {
-    /// Subtracted from outbound crit multiplier (percentage-point units, Xindi).
+    /// Subtracted from outbound crit bonus in percentage-point units (Xindi upstream magnitude).
     pub additive_points: f64,
     /// Multiplicative fraction applied on counter-fire crits (Crozier-style, `[0, 0.95]` sum).
     pub multiplicative_fraction: f64,

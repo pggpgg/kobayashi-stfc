@@ -16,6 +16,8 @@ This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability covera
 
 See `tests/xindi_hostile_abilities.rs` and [DESIGN.md](DESIGN.md) §3.6 for lethal/crit approximations.
 
+**Be Like Water crit debuff:** upstream value `25` (−2500% UI) subtracts 25 percentage points from the player's outbound crit bonus (typical high-crit builds → ×1.0 before floor). **Critical Damage Floor** then clamps the post-debuff multiplier (`after_mult.max(crit_damage_floor)` in [`crit.rs`](../src/combat/crit.rs)), so outbound crits can still exceed ×1.0 base when floor research is high — e.g. Enterprise-D vs Aquatic Cruiser L51 fight sample crit/non-crit hull ~×1.61 is consistent with BLW collapse plus a floor near that value.
+
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row `loca_id` from `hostiles/*.json ability[]`).
 
 ---

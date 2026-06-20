@@ -636,10 +636,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             },
         );
 
-        // Attacker-outbound Xindi crit debuff: defender crew seats with additive percentage-point
-        // reduction (Doomed Species / Be Like Water). Player [`Combatant::crit_damage_floor`]
-        // (Critical Damage Floor research) clamps after the debuff. Crozier-style seats on
-        // attacker crew use multiplicative fraction on the counter-fire path instead.
+        // Attacker-outbound Xindi crit debuff: defender crew seats subtract percentage points from
+        // crit bonus (Doomed Species / Be Like Water). Player crit_damage_floor clamps after debuff.
         let effective_attacker_crit_reduction =
             hostile_crit_damage_reduction_active_at_round(defender_crew, &combat_ctx, round_index);
 

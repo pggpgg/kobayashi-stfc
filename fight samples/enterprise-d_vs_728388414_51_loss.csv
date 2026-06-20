@@ -1,0 +1,74 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+HiggsBozo	60	DEFEAT	U.S.S. ENTERPRISE-D	55	2551528704	5	Dajash Tolra	Toli	Byr Ch'Kelrer	1995070449	0	2170702380	2170702380	Emissius	2026-06-20 1:01:43 AM
+Xindi-Aquatic Enhanced Cruiser ⇕	51	VICTORY	Xindi-Aquatic Enhanced Cruiser	51	2466497691648	0	Xindi-Aquatic	--	--	2573289139061	2572835406080	1715526092707	1714831134596	Emissius	2026-06-20 1:01:43 AM
+
+Reward Name	Count
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	395817376	148547056	2007164160	Galaxy Class	Safe Cracker	No Locked Doors	The Looking Glass	Excessive Measures	6.5	335580384	3245484	3245484	38715557	0.4	3.19	6.5	1928959	25826336	1954117	6.5	2019258028	1995070449	207	1262	232.32	2653410	0	1	NO	NO
+Enemy Fleet 1	322087550976	2528995	2144407650304	Strength of the Ibix---Be Like Water	--	--	--	--	0	322085322752	195136	347637	195136	0.22	2.5	0	463515	21142	21142	0	1715526041600	2573289127936	25	2	2	0	0	1	NO	NO
+
+Round	Battle Event	Type	Attacker Name	Attacker Alliance	Attacker Ship	Attacker - Is Armada?	Target Name	Target Alliance	Target Ship	Target - Is Armada?	Hyperthermic Decay %	Hyperthermic Stablizer %	Critical Hit?	Hull Damage	Shield Damage	Mitigated Damage	Mitigated Isolytic Damage	Mitigated Apex Barrier	Total Damage	Total Isolytic Damage	Mitigated Critical Damage	Ability Type	Ability Value	Ability Name	Ability Owner Name	Target Defeated	Target Destroyed	Charging Weapons %
+1	1	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.6	Power of the Creator	V'ger Ilia	--	--	--
+1	2	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.45	Three Shots of Something...	Enterprise-E Troi	--	--	--
+1	3	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	4	War's Almost Over	Tom Paris	--	--	--
+1	4	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.25	Protocol 12	SNW Nurse Chapel	--	--	--
+1	5	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	1	Knock it Down	B'Elanna Torres	--	--	--
+1	6	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	1	To the Journey!	Harry Kim	--	--	--
+1	7	Forbidden Tech Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	ForbiddenTechAbility	0.17	--	Quantum Slipstream Drive	--	--	--
+1	8	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	460137	0	1228564	0	36810	1725511	0	0	--	--	--	--	--	--	--
+1	9	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	458245	0	1223514	0	36659	1718418	0	0	--	--	--	--	--	--	--
+1	10	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	472664	0	1262011	0	37813	1772488	0	0	--	--	--	--	--	--	--
+1	11	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	479446	0	1280121	0	38355	1797922	0	0	--	--	--	--	--	--	--
+1	12	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	462061	0	1233703	0	36964	1732728	0	0	--	--	--	--	--	--	--
+1	13	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	458631	0	1224544	0	36690	1719865	0	0	--	--	--	--	--	--	--
+1	14	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	486991	0	1300266	0	38959	1826216	0	0	--	--	--	--	--	--	--
+1	15	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	482068	0	1287120	0	38565	1807753	0	0	--	--	--	--	--	--	--
+1	16	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	451873	0	1206501	0	36149	1694523	0	0	--	--	--	--	--	--	--
+1	17	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	453537	0	1210944	0	36282	1700763	0	0	--	--	--	--	--	--	--
+1	18	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	YES	100322792	153658960	8561935	0	0	49686535	212857152	0	--	--	--	--	--	--	--
+1	19	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	YES	101070384	154804016	8625738	0	0	50056810	214443328	0	--	--	--	--	--	--	--
+1	20	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	NO	57030352	87350288	4867191	0	0	28245239	121002592	0	--	--	--	--	--	--	--
+1	21	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	NO	67256208	103012680	5739905	0	0	33309769	142699024	0	--	--	--	--	--	--	--
+1	22	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	NO	66322144	101582016	5660188	0	0	32847148	140717200	0	--	--	--	--	--	--	--
+1	23	Attack	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	NO	61731096	94550160	5268370	0	0	30573362	130976264	0	--	--	--	--	--	--	--
+1	24	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.05	Excessive Measures	Byr Ch'Kelrer	--	--	--
+1	25	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	477766	0	1275636	0	38221	1791623	0	0	--	--	--	--	--	--	--
+1	26	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	460208	0	1228753	0	36816	1725777	0	0	--	--	--	--	--	--	--
+1	27	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	457721	0	1222114	0	36617	1716452	0	0	--	--	--	--	--	--	--
+1	28	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	474960	0	1268143	0	37996	1781099	0	0	--	--	--	--	--	--	--
+1	29	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	455945	0	1217374	0	36475	1709794	0	0	--	--	--	--	--	--	--
+1	30	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	457534	0	1221616	0	36602	1715752	0	0	--	--	--	--	--	--	--
+1	31	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	484896	0	1294671	0	38791	1818358	0	0	--	--	--	--	--	--	--
+1	32	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	480805	0	1283749	0	38464	1803018	0	0	--	--	--	--	--	--	--
+1	33	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	481732	0	1286223	0	38538	1806493	0	0	--	--	--	--	--	--	--
+1	34	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	473849	0	1265177	0	37907	1776933	0	0	--	--	--	--	--	--	--
+1	35	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+1	36	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.05	Excessive Measures	Byr Ch'Kelrer	--	--	--
+1	37	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	397091	0	1060232	0	31767	1489090	0	0	--	--	--	--	--	--	--
+1	38	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	0	0	0	0	0	0	0	0	--	--	--	--	--	--	--
+1	39	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	406591	0	1085597	0	32527	1524715	0	0	--	--	--	--	--	--	--
+1	40	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	399311	0	1066161	0	31944	1497416	0	0	--	--	--	--	--	--	--
+1	41	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	412309	0	1100865	0	32984	1546158	0	0	--	--	--	--	--	--	--
+1	42	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	404173	0	1079142	0	32333	1515648	0	0	--	--	--	--	--	--	--
+1	43	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	400099	0	1068265	0	32007	1500371	0	0	--	--	--	--	--	--	--
+1	44	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	387421	0	1034413	0	30993	1452827	0	0	--	--	--	--	--	--	--
+1	45	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	388274	0	1036691	0	31061	1456026	0	0	--	--	--	--	--	--	--
+1	46	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	407570	0	1088210	0	32605	1528385	0	0	--	--	--	--	--	--	--
+1	47	Charging Weapons	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+1	48	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.05	Excessive Measures	Byr Ch'Kelrer	--	--	--
+1	49	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	9900423	0	26434128	0	792033	37126584	0	0	--	--	--	--	--	--	--
+1	50	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	10078144	0	26908642	0	806250	37793036	0	0	--	--	--	--	--	--	--
+1	51	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	10373457	0	27697128	0	829875	38900460	0	0	--	--	--	--	--	--	--
+1	52	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	2083676	0	5563413	0	166693	7813782	0	0	--	--	--	--	--	--	--
+1	53	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	10175365	0	27168224	0	814028	38157617	0	0	--	--	--	--	--	--	--
+1	54	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	2051220	0	5476756	0	164097	7692073	0	0	--	--	--	--	--	--	--
+1	55	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	10110143	0	26994078	0	808810	37913031	0	0	--	--	--	--	--	--	--
+1	56	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	9825797	0	26234874	0	786062	36846733	0	0	--	--	--	--	--	--	--
+1	57	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	9965153	0	26606958	0	797211	37369322	0	0	--	--	--	--	--	--	--
+1	58	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	YES	10374465	0	27699820	0	829956	38904241	0	0	--	--	--	--	--	--	--
+1	59	Officer Ability	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.05	Excessive Measures	Byr Ch'Kelrer	--	--	--
+1	60	Charging Weapons	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	100
+1	61	Attack	Xindi-Aquatic Enhanced Cruiser ⇕	--	Xindi-Aquatic Enhanced Cruiser	NO	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	--	--	NO	3733333504	0	9968000000	0	298666368	13999999872	0	0	--	--	--	--	--	--	--
+1	62	Combatant Destroyed	HiggsBozo	INFINITE	U.S.S. ENTERPRISE-D	NO	Xindi-Aquatic Enhanced Cruiser ⇕	--	U.S.S. ENTERPRISE-D	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--
+

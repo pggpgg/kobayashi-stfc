@@ -163,6 +163,20 @@ fn be_like_water_catalog_has_no_lethal_extra_seat() {
         }),
         "Be Like Water-only row must not add Denticle Blade seat"
     );
+    let blw_reduction = crew
+        .seats
+        .iter()
+        .find_map(|s| match s.ability.effect {
+            AbilityEffect::HostileCritDamageReduction {
+                reduction, stacks: false, ..
+            } => Some(reduction),
+            _ => None,
+        })
+        .expect("BLW reduction value");
+    assert!(
+        (blw_reduction - 25.0).abs() < 1e-9,
+        "upstream value at L51 should be 25"
+    );
 }
 
 #[test]
