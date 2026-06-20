@@ -44,14 +44,14 @@ export default function Shell({ children }: { children: ReactNode }) {
           >
             Mode
           </div>
-          <div style={{ display: "flex", gap: 4 }}>
-            {(["roster", "sandbox"] as const).map((m) => (
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+            {(["guided", "roster", "sandbox"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
                 style={{
-                  flex: 1,
+                  flex: "1 1 48px",
                   padding: "0.35rem 0.5rem",
                   fontSize: "0.8rem",
                   background: mode === m ? "var(--accent)" : "var(--bg)",
@@ -61,7 +61,11 @@ export default function Shell({ children }: { children: ReactNode }) {
                   cursor: "pointer",
                 }}
               >
-                {m === "roster" ? "Roster" : "Sandbox"}
+                {m === "guided"
+                  ? "Guided"
+                  : m === "roster"
+                    ? "Roster"
+                    : "Sandbox"}
               </button>
             ))}
           </div>

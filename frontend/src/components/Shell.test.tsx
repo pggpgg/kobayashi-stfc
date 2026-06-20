@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
@@ -39,5 +39,22 @@ describe("Shell", () => {
     expect(screen.getByRole("link", { name: "PvP" }).getAttribute("href")).toBe(
       "/pvp",
     );
+  });
+
+  it("persists guided mode", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProfileProvider>
+          <WorkspaceModeProvider>
+            <Shell>
+              <div>Main content</div>
+            </Shell>
+          </WorkspaceModeProvider>
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Guided" }));
+    expect(localStorage.getItem("kobayashi_workspace_mode")).toBe("guided");
   });
 });

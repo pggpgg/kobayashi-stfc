@@ -9,7 +9,7 @@ import {
 
 const STORAGE_KEY = "kobayashi_workspace_mode";
 
-export type WorkspaceMode = "roster" | "sandbox";
+export type WorkspaceMode = "guided" | "roster" | "sandbox";
 
 interface WorkspaceModeContextValue {
   mode: WorkspaceMode;
@@ -24,7 +24,9 @@ const WorkspaceModeContext = createContext<WorkspaceModeContextValue | null>(
 function loadStoredMode(): WorkspaceMode {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "roster" || stored === "sandbox") return stored;
+    if (stored === "guided" || stored === "roster" || stored === "sandbox") {
+      return stored;
+    }
   } catch {}
   return "roster";
 }
@@ -43,7 +45,7 @@ export function WorkspaceModeProvider({ children }: { children: ReactNode }) {
     () => ({
       mode,
       setMode,
-      ownedOnly: mode === "roster",
+      ownedOnly: mode !== "sandbox",
     }),
     [mode, setMode],
   );

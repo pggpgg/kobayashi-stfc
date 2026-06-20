@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CrewBuilder from "../components/CrewBuilder";
+import GuidedModePanel from "../components/GuidedModePanel";
 import OptimizePanel from "../components/OptimizePanel";
 import SavePresetModal from "../components/SavePresetModal";
 import SimResults from "../components/SimResults";
@@ -14,7 +15,7 @@ import { useWorkspace } from "../lib/useWorkspace";
 export default function Workspace() {
   const ws = useWorkspace();
   const { activeProfileId } = useProfile();
-  const { ownedOnly } = useWorkspaceMode();
+  const { mode, ownedOnly, setMode } = useWorkspaceMode();
   const [officerOptions, setOfficerOptions] = useState<OfficerListItem[]>([]);
 
   useEffect(() => {
@@ -96,6 +97,20 @@ export default function Workspace() {
         selectedSupportBuffs={ws.selectedSupportBuffs}
         onSelectedSupportBuffsChange={ws.setSelectedSupportBuffs}
       />
+      {mode === "guided" && (
+        <GuidedModePanel
+          shipSelected={Boolean(ws.shipId)}
+          targetSelected={Boolean(ws.scenarioId)}
+          crewReady={Boolean(
+            ws.crew.captain && ws.crew.bridge[0] && ws.crew.bridge[1],
+          )}
+          running={ws.loadingSim || ws.loadingOptimize}
+          hasResults={Boolean(ws.simResult || ws.recommendations.length > 0)}
+          onRunSim={ws.handleRunSim}
+          onRunOptimize={ws.handleRunOptimize}
+          onExit={() => setMode("roster")}
+        />
+      )}
       <SavePresetModal
         open={ws.showSavePreset}
         savePresetName={ws.savePresetName}
@@ -189,7 +204,7 @@ export default function Workspace() {
             onPinsChange={ws.setPins}
             officerOptions={officerOptions}
           />
-          <div style={{ flex: 1, minHeight: 200 }}>
+          <div id="guided-results" style={{ flex: 1, minHeight: 200 }}>
             <SimResults
               simResult={ws.simResult}
               recommendations={ws.recommendations}
@@ -207,68 +222,70 @@ export default function Workspace() {
             />
           </div>
         </section>
-        <OptimizePanel
-          collapsed={ws.rightPanelCollapsed}
-          onToggleCollapsed={() =>
-            ws.setRightPanelCollapsed(!ws.rightPanelCollapsed)
-          }
-          officerOptions={officerOptions}
-          crew={ws.crew}
-          loadingOptimize={ws.loadingOptimize}
-          optimizeCrewsDone={ws.optimizeCrewsDone}
-          optimizeTotalCrews={ws.optimizeTotalCrews}
-          optimizePhase={ws.optimizePhase}
-          optimizeEtaSeconds={ws.optimizeEtaSeconds}
-          optimizeThroughput={ws.optimizeThroughput}
-          maxCandidates={ws.maxCandidates}
-          onMaxCandidatesChange={ws.setMaxCandidates}
-          belowDecksPoolMode={ws.belowDecksPoolMode}
-          onBelowDecksPoolModeChange={ws.setBelowDecksPoolMode}
-          availableSeeds={ws.availableSeeds}
-          selectedSeeds={ws.selectedSeeds}
-          onSelectedSeedsChange={ws.setSelectedSeeds}
-          heuristicsOnly={ws.heuristicsOnly}
-          onHeuristicsOnlyChange={ws.setHeuristicsOnly}
-          fastDiscovery={ws.fastDiscovery}
-          onFastDiscoveryChange={ws.setFastDiscovery}
-          belowDecksStrategy={ws.belowDecksStrategy}
-          onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
-          optimizerStrategy={ws.optimizerStrategy}
-          onOptimizerStrategyChange={ws.setOptimizerStrategy}
-          enableLearnedPairPrior={ws.enableLearnedPairPrior}
-          onEnableLearnedPairPriorChange={ws.setEnableLearnedPairPrior}
-          tieredScoutSims={ws.tieredScoutSims}
-          onTieredScoutSimsChange={ws.setTieredScoutSims}
-          tieredTopK={ws.tieredTopK}
-          onTieredTopKChange={ws.setTieredTopK}
-          noveltyLambdaText={ws.noveltyLambdaText}
-          onNoveltyLambdaTextChange={ws.setNoveltyLambdaText}
-          noveltyDiverseTopText={ws.noveltyDiverseTopText}
-          onNoveltyDiverseTopTextChange={ws.setNoveltyDiverseTopText}
-          noveltyPoolText={ws.noveltyPoolText}
-          onNoveltyPoolTextChange={ws.setNoveltyPoolText}
-          noveltyHistoryAnchors={ws.noveltyHistoryAnchors}
-          onNoveltyHistoryAnchorsChange={ws.setNoveltyHistoryAnchors}
-          optimizeMustInclude={ws.optimizeMustInclude}
-          onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
-          optimizeExclude={ws.optimizeExclude}
-          onOptimizeExcludeChange={ws.setOptimizeExclude}
-          optimizeCaptainMust={ws.optimizeCaptainMust}
-          onOptimizeCaptainMustChange={ws.setOptimizeCaptainMust}
-          optimizeBridgeMust={ws.optimizeBridgeMust}
-          onOptimizeBridgeMustChange={ws.setOptimizeBridgeMust}
-          optimizeBelowMust={ws.optimizeBelowMust}
-          onOptimizeBelowMustChange={ws.setOptimizeBelowMust}
-          optimizeGroupsJson={ws.optimizeGroupsJson}
-          onOptimizeGroupsJsonChange={ws.setOptimizeGroupsJson}
-          chainGrindEnabled={ws.chainGrindEnabled}
-          onChainGrindEnabledChange={ws.setChainGrindEnabled}
-          chainKillsTarget={ws.chainKillsTarget}
-          onChainKillsTargetChange={ws.setChainKillsTarget}
-          chainSecondary={ws.chainSecondary}
-          onChainSecondaryChange={ws.setChainSecondary}
-          cachedWarmStartBadge={ws.cachedWarmStartBadge}
-        />
+        {mode !== "guided" && (
+          <OptimizePanel
+            collapsed={ws.rightPanelCollapsed}
+            onToggleCollapsed={() =>
+              ws.setRightPanelCollapsed(!ws.rightPanelCollapsed)
+            }
+            officerOptions={officerOptions}
+            crew={ws.crew}
+            loadingOptimize={ws.loadingOptimize}
+            optimizeCrewsDone={ws.optimizeCrewsDone}
+            optimizeTotalCrews={ws.optimizeTotalCrews}
+            optimizePhase={ws.optimizePhase}
+            optimizeEtaSeconds={ws.optimizeEtaSeconds}
+            optimizeThroughput={ws.optimizeThroughput}
+            maxCandidates={ws.maxCandidates}
+            onMaxCandidatesChange={ws.setMaxCandidates}
+            belowDecksPoolMode={ws.belowDecksPoolMode}
+            onBelowDecksPoolModeChange={ws.setBelowDecksPoolMode}
+            availableSeeds={ws.availableSeeds}
+            selectedSeeds={ws.selectedSeeds}
+            onSelectedSeedsChange={ws.setSelectedSeeds}
+            heuristicsOnly={ws.heuristicsOnly}
+            onHeuristicsOnlyChange={ws.setHeuristicsOnly}
+            fastDiscovery={ws.fastDiscovery}
+            onFastDiscoveryChange={ws.setFastDiscovery}
+            belowDecksStrategy={ws.belowDecksStrategy}
+            onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
+            optimizerStrategy={ws.optimizerStrategy}
+            onOptimizerStrategyChange={ws.setOptimizerStrategy}
+            enableLearnedPairPrior={ws.enableLearnedPairPrior}
+            onEnableLearnedPairPriorChange={ws.setEnableLearnedPairPrior}
+            tieredScoutSims={ws.tieredScoutSims}
+            onTieredScoutSimsChange={ws.setTieredScoutSims}
+            tieredTopK={ws.tieredTopK}
+            onTieredTopKChange={ws.setTieredTopK}
+            noveltyLambdaText={ws.noveltyLambdaText}
+            onNoveltyLambdaTextChange={ws.setNoveltyLambdaText}
+            noveltyDiverseTopText={ws.noveltyDiverseTopText}
+            onNoveltyDiverseTopTextChange={ws.setNoveltyDiverseTopText}
+            noveltyPoolText={ws.noveltyPoolText}
+            onNoveltyPoolTextChange={ws.setNoveltyPoolText}
+            noveltyHistoryAnchors={ws.noveltyHistoryAnchors}
+            onNoveltyHistoryAnchorsChange={ws.setNoveltyHistoryAnchors}
+            optimizeMustInclude={ws.optimizeMustInclude}
+            onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
+            optimizeExclude={ws.optimizeExclude}
+            onOptimizeExcludeChange={ws.setOptimizeExclude}
+            optimizeCaptainMust={ws.optimizeCaptainMust}
+            onOptimizeCaptainMustChange={ws.setOptimizeCaptainMust}
+            optimizeBridgeMust={ws.optimizeBridgeMust}
+            onOptimizeBridgeMustChange={ws.setOptimizeBridgeMust}
+            optimizeBelowMust={ws.optimizeBelowMust}
+            onOptimizeBelowMustChange={ws.setOptimizeBelowMust}
+            optimizeGroupsJson={ws.optimizeGroupsJson}
+            onOptimizeGroupsJsonChange={ws.setOptimizeGroupsJson}
+            chainGrindEnabled={ws.chainGrindEnabled}
+            onChainGrindEnabledChange={ws.setChainGrindEnabled}
+            chainKillsTarget={ws.chainKillsTarget}
+            onChainKillsTargetChange={ws.setChainKillsTarget}
+            chainSecondary={ws.chainSecondary}
+            onChainSecondaryChange={ws.setChainSecondary}
+            cachedWarmStartBadge={ws.cachedWarmStartBadge}
+          />
+        )}
       </div>
     </div>
   );

@@ -92,7 +92,7 @@ export default memo(function WorkspaceHeader({
   onSelectedSupportBuffsChange,
 }: WorkspaceHeaderProps) {
   const { activeProfileId } = useProfile();
-  const { ownedOnly } = useWorkspaceMode();
+  const { mode, ownedOnly } = useWorkspaceMode();
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [shipsLoadState, setShipsLoadState] = useState<
     "idle" | "loading" | "done" | "error"
@@ -236,6 +236,7 @@ export default memo(function WorkspaceHeader({
 
   return (
     <header
+      id="guided-scenario"
       style={{
         display: "flex",
         alignItems: "center",
@@ -305,7 +306,8 @@ export default memo(function WorkspaceHeader({
       />
       {rosterLocksShipProgress ? (
         <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-          Roster mode locks ship tier/level to owned ship data.
+          {mode === "guided" ? "Guided" : "Roster"} mode locks ship tier/level
+          to owned ship data.
         </span>
       ) : null}
       <select

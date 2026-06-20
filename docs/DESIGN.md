@@ -983,6 +983,7 @@ LCARS-inspired UI aesthetic: the iconic Star Trek computer interface with rounde
 | **RosterImportPanel** | Import player-owned officer list (tier/level) for personalization                         |
 | **PlayerProfile**     | Quick mode bonus entry + advanced mode source editor                                      |
 | **OptimizePanel**     | Optimization config (strategy, sims, max crews, tiered scout/top-K when tiered, constraints, chain grind) + live progress |
+| **GuidedModePanel**   | Roster-backed scenario → crew → run → results walkthrough that hides advanced optimizer controls |
 
 
 ### 10.4 API

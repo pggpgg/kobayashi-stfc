@@ -61,6 +61,8 @@ Prebuilt binaries for Linux x86_64, macOS arm64, and Windows x86_64 are publishe
 
 3. Open <http://localhost:3000>.
 
+Choose **Guided** mode in the left rail for a focused scenario → crew → run → results walkthrough. It uses your roster and hides advanced optimizer tuning until you switch back to Roster or Sandbox mode.
+
 To pull your roster from the game in near-real time, set up the [STFC Community Mod sync](docs/SYNC.md). For LAN or internet exposure, read [Deployment & security](docs/DEPLOYMENT_SECURITY.md) — the API has no authentication on its default loopback bind.
 
 ### For contributors

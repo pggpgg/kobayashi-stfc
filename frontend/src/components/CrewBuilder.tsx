@@ -121,6 +121,7 @@ export default memo(function CrewBuilder({
 
   return (
     <section
+      id="guided-crew"
       style={{
         padding: "1rem",
         background: "var(--surface)",
