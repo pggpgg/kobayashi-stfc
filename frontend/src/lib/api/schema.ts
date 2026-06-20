@@ -22,6 +22,10 @@ export type ShipTiersLevels = Schemas["ShipTiersLevelsResponse"];
 export type MechanicStatus =
   Schemas["DataVersionResponse"]["mechanics"][number];
 export type DataVersionResponse = Schemas["DataVersionResponse"];
+export type MechanicsCoverageResponse = Schemas["MechanicsCoverageResponse"];
+export type MechanicsTierCounts = Schemas["MechanicsTierCounts"];
+export type MechanicsFidelityBacklogItem =
+  Schemas["MechanicsFidelityBacklogItem"];
 
 export type SimulateCrew = Schemas["SimulateCrew"];
 export type SimulateStats = Schemas["SimulateStats"];

@@ -62,6 +62,30 @@ describe("SimResults", () => {
     expect(screen.getByText(/Run Sim for current crew/)).toBeTruthy();
   });
 
+  it("shows API warnings and unresolved officers above results", () => {
+    render(
+      <SimResults
+        {...baseProps}
+        warnings={[
+          "Ship data fell back to placeholder stats.",
+          "Officer(s) with no LCARS combat definition contributed no effects: Mystery Officer",
+        ]}
+        unresolvedOfficers={["Mystery Officer"]}
+      />,
+    );
+
+    expect(screen.getByText("Review these results")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Unresolved officers contributed no combat effects: Mystery Officer.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Ship data fell back to placeholder stats."),
+    ).toBeTruthy();
+    expect(screen.getAllByText(/Mystery Officer/)).toHaveLength(1);
+  });
+
   it('shows "Running..." when loadingSim is true', () => {
     render(<SimResults {...baseProps} loadingSim={true} />);
     expect(screen.getByText("Running\u2026")).toBeTruthy();

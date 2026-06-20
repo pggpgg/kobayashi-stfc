@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import CrewBuilder from "../components/CrewBuilder";
-import GuidedModePanel from "../components/GuidedModePanel";
+import GuidedModePanel, {
+  type GuidedStep,
+} from "../components/GuidedModePanel";
 import OptimizePanel from "../components/OptimizePanel";
 import SavePresetModal from "../components/SavePresetModal";
 import SimResults from "../components/SimResults";
@@ -17,6 +19,11 @@ export default function Workspace() {
   const { activeProfileId } = useProfile();
   const { mode, ownedOnly, setMode } = useWorkspaceMode();
   const [officerOptions, setOfficerOptions] = useState<OfficerListItem[]>([]);
+  const [guidedStep, setGuidedStep] = useState<GuidedStep>(0);
+
+  useEffect(() => {
+    if (mode !== "guided") setGuidedStep(0);
+  }, [mode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,48 +74,55 @@ export default function Workspace() {
         minHeight: "100vh",
       }}
     >
-      <WorkspaceHeader
-        shipId={ws.shipId}
-        scenarioId={ws.scenarioId}
-        onShipIdChange={ws.setShipId}
-        onScenarioIdChange={ws.setScenarioId}
-        shipTier={ws.shipTier}
-        onShipTierChange={ws.setShipTier}
-        shipLevel={ws.shipLevel}
-        onShipLevelChange={ws.setShipLevel}
-        onBelowDeckUnlockLevelsChange={ws.setBelowDeckUnlockLevels}
-        crew={ws.crew}
-        simsPerCrew={ws.simsPerCrew}
-        onSimsPerCrewChange={ws.setSimsPerCrew}
-        estimate={ws.estimate}
-        lastOptimizeDurationMs={ws.lastOptimizeDurationMs}
-        onRunSim={ws.handleRunSim}
-        onRunOptimize={ws.handleRunOptimize}
-        onCancelOptimize={ws.handleCancelOptimize}
-        onSavePreset={() => ws.setShowSavePreset(true)}
-        loadingSim={ws.loadingSim}
-        loadingOptimize={ws.loadingOptimize}
-        optimizeProgress={ws.optimizeProgress}
-        optimizeCrewsDone={ws.optimizeCrewsDone}
-        optimizeTotalCrews={ws.optimizeTotalCrews}
-        optimizePhase={ws.optimizePhase}
-        optimizeEtaSeconds={ws.optimizeEtaSeconds}
-        optimizeStreamMode={ws.optimizeStreamMode}
-        selectedSupportBuffs={ws.selectedSupportBuffs}
-        onSelectedSupportBuffsChange={ws.setSelectedSupportBuffs}
-      />
       {mode === "guided" && (
         <GuidedModePanel
+          step={guidedStep}
+          onStepChange={setGuidedStep}
           shipSelected={Boolean(ws.shipId)}
           targetSelected={Boolean(ws.scenarioId)}
           crewReady={Boolean(
             ws.crew.captain && ws.crew.bridge[0] && ws.crew.bridge[1],
           )}
           running={ws.loadingSim || ws.loadingOptimize}
+          optimizing={ws.loadingOptimize}
           hasResults={Boolean(ws.simResult || ws.recommendations.length > 0)}
           onRunSim={ws.handleRunSim}
           onRunOptimize={ws.handleRunOptimize}
+          onCancelOptimize={ws.handleCancelOptimize}
+          onRestart={ws.resetResults}
           onExit={() => setMode("roster")}
+        />
+      )}
+      {(mode !== "guided" || guidedStep === 0) && (
+        <WorkspaceHeader
+          shipId={ws.shipId}
+          scenarioId={ws.scenarioId}
+          onShipIdChange={ws.setShipId}
+          onScenarioIdChange={ws.setScenarioId}
+          shipTier={ws.shipTier}
+          onShipTierChange={ws.setShipTier}
+          shipLevel={ws.shipLevel}
+          onShipLevelChange={ws.setShipLevel}
+          onBelowDeckUnlockLevelsChange={ws.setBelowDeckUnlockLevels}
+          crew={ws.crew}
+          simsPerCrew={ws.simsPerCrew}
+          onSimsPerCrewChange={ws.setSimsPerCrew}
+          estimate={ws.estimate}
+          lastOptimizeDurationMs={ws.lastOptimizeDurationMs}
+          onRunSim={ws.handleRunSim}
+          onRunOptimize={ws.handleRunOptimize}
+          onCancelOptimize={ws.handleCancelOptimize}
+          onSavePreset={() => ws.setShowSavePreset(true)}
+          loadingSim={ws.loadingSim}
+          loadingOptimize={ws.loadingOptimize}
+          optimizeProgress={ws.optimizeProgress}
+          optimizeCrewsDone={ws.optimizeCrewsDone}
+          optimizeTotalCrews={ws.optimizeTotalCrews}
+          optimizePhase={ws.optimizePhase}
+          optimizeEtaSeconds={ws.optimizeEtaSeconds}
+          optimizeStreamMode={ws.optimizeStreamMode}
+          selectedSupportBuffs={ws.selectedSupportBuffs}
+          onSelectedSupportBuffsChange={ws.setSelectedSupportBuffs}
         />
       )}
       <SavePresetModal
@@ -175,6 +189,7 @@ export default function Workspace() {
         </div>
       )}
       <div
+        hidden={mode === "guided" && guidedStep !== 1 && guidedStep !== 3}
         style={{
           display: "flex",
           flex: 1,
@@ -193,34 +208,41 @@ export default function Workspace() {
             padding: "0 1rem",
           }}
         >
-          <CrewBuilder
-            belowDecksSlots={belowDeckSlotCount(
-              ws.shipLevel,
-              ws.belowDeckUnlockLevels,
-            )}
-            crew={ws.crew}
-            pins={ws.pins}
-            onCrewChange={ws.setCrew}
-            onPinsChange={ws.setPins}
-            officerOptions={officerOptions}
-          />
-          <div id="guided-results" style={{ flex: 1, minHeight: 200 }}>
-            <SimResults
-              simResult={ws.simResult}
-              recommendations={ws.recommendations}
-              loadingSim={ws.loadingSim}
-              loadingOptimize={ws.loadingOptimize}
-              optimizeProgress={ws.optimizeProgress}
-              optimizeCrewsDone={ws.optimizeCrewsDone}
-              optimizeTotalCrews={ws.optimizeTotalCrews}
-              optimizePhase={ws.optimizePhase}
-              optimizeEtaSeconds={ws.optimizeEtaSeconds}
-              optimizeThroughput={ws.optimizeThroughput}
-              optimizePreview={ws.optimizePreview}
-              optimizeEffectiveStrategy={ws.lastOptimizeEffectiveStrategy}
-              compareWorkspace={compareWorkspace}
+          {(mode !== "guided" || guidedStep === 1) && (
+            <CrewBuilder
+              guided={mode === "guided"}
+              belowDecksSlots={belowDeckSlotCount(
+                ws.shipLevel,
+                ws.belowDeckUnlockLevels,
+              )}
+              crew={ws.crew}
+              pins={ws.pins}
+              onCrewChange={ws.setCrew}
+              onPinsChange={ws.setPins}
+              officerOptions={officerOptions}
             />
-          </div>
+          )}
+          {(mode !== "guided" || guidedStep === 3) && (
+            <div id="guided-results" style={{ flex: 1, minHeight: 200 }}>
+              <SimResults
+                simResult={ws.simResult}
+                recommendations={ws.recommendations}
+                warnings={ws.resultWarnings}
+                unresolvedOfficers={ws.unresolvedOfficers}
+                loadingSim={ws.loadingSim}
+                loadingOptimize={ws.loadingOptimize}
+                optimizeProgress={ws.optimizeProgress}
+                optimizeCrewsDone={ws.optimizeCrewsDone}
+                optimizeTotalCrews={ws.optimizeTotalCrews}
+                optimizePhase={ws.optimizePhase}
+                optimizeEtaSeconds={ws.optimizeEtaSeconds}
+                optimizeThroughput={ws.optimizeThroughput}
+                optimizePreview={ws.optimizePreview}
+                optimizeEffectiveStrategy={ws.lastOptimizeEffectiveStrategy}
+                compareWorkspace={compareWorkspace}
+              />
+            </div>
+          )}
         </section>
         {mode !== "guided" && (
           <OptimizePanel

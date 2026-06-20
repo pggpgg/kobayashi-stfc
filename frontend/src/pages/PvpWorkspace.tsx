@@ -341,6 +341,8 @@ export default function PvpWorkspace() {
           <SimResults
             simResult={pvp.simResult}
             recommendations={pvp.recommendations}
+            warnings={pvp.resultWarnings}
+            unresolvedOfficers={pvp.unresolvedOfficers}
             loadingSim={pvp.loadingSim}
             loadingOptimize={pvp.loadingOptimize}
             optimizeProgress={null}

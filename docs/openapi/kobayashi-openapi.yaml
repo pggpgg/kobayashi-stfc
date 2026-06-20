@@ -1220,37 +1220,92 @@ components:
 
     MechanicsCoverageResponse:
       type: object
-      required: [status, lcars_effects, ship_hull_abilities, hostile_catalog_entries, fidelity_backlog]
+      required:
+        - status
+        - lcars_officers_files
+        - lcars_effects
+        - ship_hull_abilities
+        - ships_with_abilities_scanned
+        - hostile_catalog_entries
+        - hostile_catalog_entry_count
+        - hostile_upstream_unique_ability_ids
+        - hostile_catalog_modeled_count
+        - hostile_catalog_noop_count
+        - hostile_upstream_ids_missing_from_catalog
+        - lcars_by_effect_type
+        - lcars_ignored_samples
+        - fidelity_backlog
+        - notes
       properties:
         status:
           type: string
           const: ok
+        lcars_officers_files:
+          type: integer
         lcars_effects:
-          type: object
-          required: [implemented]
-          properties:
-            implemented:
-              type: integer
-          additionalProperties: true
+          $ref: "#/components/schemas/MechanicsTierCounts"
         ship_hull_abilities:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/MechanicsTierCounts"
+        ships_with_abilities_scanned:
+          type: integer
         hostile_catalog_entries:
+          $ref: "#/components/schemas/MechanicsTierCounts"
+        hostile_catalog_entry_count:
+          type: integer
+        hostile_upstream_unique_ability_ids:
+          type: integer
+        hostile_catalog_modeled_count:
+          type: integer
+        hostile_catalog_noop_count:
+          type: integer
+        hostile_upstream_ids_missing_from_catalog:
+          type: integer
+        lcars_by_effect_type:
           type: object
-          additionalProperties: true
+          additionalProperties:
+            $ref: "#/components/schemas/MechanicsTierCounts"
+        lcars_ignored_samples:
+          type: array
+          items:
+            type: string
         fidelity_backlog:
           type: array
           items:
-            type: object
-            required: [rank, area, summary]
-            properties:
-              rank:
-                type: integer
-              area:
-                type: string
-              summary:
-                type: string
-            additionalProperties: true
+            $ref: "#/components/schemas/MechanicsFidelityBacklogItem"
+        notes:
+          type: array
+          items:
+            type: string
+
+    MechanicsTierCounts:
+      type: object
+      required: [implemented, partial, ignored]
+      properties:
+        implemented:
+          type: integer
+        partial:
+          type: integer
+        ignored:
+          type: integer
+
+    MechanicsFidelityBacklogItem:
+      type: object
+      required: [rank, area, key, ignored, partial, implemented, summary]
+      properties:
+        rank:
+          type: integer
+        area:
+          type: string
+        key:
+          type: string
+        ignored:
+          type: integer
+        partial:
+          type: integer
+        implemented:
+          type: integer
+        summary:
+          type: string
 
     DataVersionResponse:
       type: object
@@ -1263,6 +1318,10 @@ components:
         ship_version:
           type: ["string", "null"]
         mechanics:
+          deprecated: true
+          description: >-
+            Legacy coarse summary retained for compatibility. Use
+            GET /api/mechanics/coverage for live resolver-backed coverage.
           type: array
           items:
             type: object

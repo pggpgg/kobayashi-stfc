@@ -106,6 +106,8 @@ export function useWorkspace() {
   // Simulation state
   const [simResult, setSimResult] = useState<SimulateStats | null>(null);
   const [loadingSim, setLoadingSim] = useState(false);
+  const [resultWarnings, setResultWarnings] = useState<string[]>([]);
+  const [unresolvedOfficers, setUnresolvedOfficers] = useState<string[]>([]);
 
   // Optimization state
   const [recommendations, setRecommendations] = useState<CrewRecommendation[]>(
@@ -536,16 +538,29 @@ export function useWorkspace() {
     }
     setError(null);
     setWorkspaceInfo(null);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
     setLoadingSim(true);
     try {
       const res = await simulate(simParams, activeProfileId);
       setSimResult(res.stats);
       setRecommendations([]);
+      setResultWarnings(res.warnings ?? []);
+      setUnresolvedOfficers(res.unresolved_officers ?? []);
     } catch (e) {
       setErrorFromApiException(e);
     } finally {
       setLoadingSim(false);
     }
+  };
+
+  const resetResults = () => {
+    setSimResult(null);
+    setRecommendations([]);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
+    setLastOptimizeDurationMs(null);
+    setLastOptimizeEffectiveStrategy(null);
   };
 
   const applyOptimizeDone = (status: OptimizeStatusResponse) => {
@@ -568,6 +583,8 @@ export function useWorkspace() {
     sseAttemptRef.current = 0;
     if (status.status === "done" && status.result) {
       setRecommendations(status.result.recommendations ?? []);
+      setResultWarnings(status.result.warnings ?? []);
+      setUnresolvedOfficers([]);
       setLastOptimizeEffectiveStrategy(
         status.result.scenario?.effective_strategy ?? null,
       );
@@ -795,6 +812,8 @@ export function useWorkspace() {
     setError(null);
     setWorkspaceInfo(null);
     setCachedWarmStartBadge(false);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
     setLoadingOptimize(true);
     setLastOptimizeDurationMs(null);
     setOptimizeProgress(0);
@@ -971,6 +990,9 @@ export function useWorkspace() {
     setPins,
     // Simulation
     simResult,
+    resetResults,
+    resultWarnings,
+    unresolvedOfficers,
     loadingSim,
     handleRunSim,
     // Optimization

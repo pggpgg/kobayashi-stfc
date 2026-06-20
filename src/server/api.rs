@@ -2106,11 +2106,11 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
         },
         MechanicStatus {
             name: "Isolytic".to_string(),
-            status: "planned".to_string(),
+            status: "implemented".to_string(),
         },
         MechanicStatus {
             name: "Apex".to_string(),
-            status: "planned".to_string(),
+            status: "partial".to_string(),
         },
     ];
     let response = DataVersionResponse {
