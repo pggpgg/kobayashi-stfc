@@ -18,7 +18,7 @@ There is no project `AGENTS.md`; agent expectations live in `rules/` and `CLAUDE
 | `00–09` | Always-on project principles |
 | `10–19` | Rust simulator / optimizer (`src/`) |
 | `20–29` | Game data and LCARS |
-| `30–39` | Tests, fixtures, evaluation discipline (`31-benchmark-fixtures.mdc` → `tests/fixtures/`) |
+| `30–39` | Tests, fixtures, evaluation discipline (`31-benchmark-fixtures.mdc` → `tests/fixtures/`; `32-cargo-test-invocation.mdc` → always-on terminal `cargo test` targets) |
 | `40–49` | Importers, scripts, normalization |
 | `50–59` | Combat mechanics (narrow) |
 | `60–69` | Frontend SPA |

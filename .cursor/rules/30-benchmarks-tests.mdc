@@ -20,13 +20,16 @@ When proposing or validating a fix, include:
 - the overfitting risk,
 - the tests or benchmark slices that should change.
 
-## Running Rust tests (avoid false greens)
+## Running Rust tests (avoid false greens and slow builds)
 
 Integration tests live in `tests/<name>.rs` as **separate crates**. The file stem is **not** a `cargo test` name filter.
 
-- **Wrong:** `cargo test officer_reload_speed` — scans all crates for a **function** name containing that string; often runs 0 tests and still exits 0.
+- **Wrong:** `cargo test officer_reload_speed` — no `--test` / `--lib`; Cargo may compile **every** integration test binary while searching for a fn name (very slow). May also report `0 passed; … filtered out` if the fn lives in a different crate.
+- **Wrong:** `cargo test some_fn -- --nocapture 2>&1 | tail -8` — hides compile progress; terminal looks stuck for minutes.
 - **Right (whole file):** `cargo test --test officer_reload_speed`
 - **Right (one fn in that file):** `cargo test --test officer_reload_speed kuron_captain`
-- **Right (lib unit tests):** `cargo test --lib some_fn_name`
+- **Right (lib unit tests in `src/`):** `cargo test --lib some_fn_name`
 
-After a targeted run, confirm output includes `Running tests/<name>.rs` and `N passed` with `N > 0`, or an explicit `test result: ok` for the intended crate—not `0 passed; … filtered out` across many binaries.
+Terminal discipline (always-on): see `32-cargo-test-invocation.mdc`.
+
+After a targeted run, confirm output includes `Running unittests src/lib.rs` or `Running tests/<name>.rs` and `N passed` with `N > 0`, or an explicit `test result: ok` for the intended crate—not `0 passed; … filtered out` across many binaries.

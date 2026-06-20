@@ -1,0 +1,35 @@
+---
+description: Surgical cargo test commands in the agent terminal (lib vs integration, no silent pipes)
+alwaysApply: true
+---
+# Cargo test terminal discipline
+
+When verifying one Rust test from the agent terminal, pick the **narrowest** target so Cargo does not compile every integration test crate.
+
+| Test lives in | Command |
+| --- | --- |
+| `src/` unit test (`#[test] fn foo`) | `cargo test foo --lib` |
+| Integration file `tests/bar.rs` (whole crate) | `cargo test --test bar` |
+| One fn inside that integration file | `cargo test --test bar foo` |
+
+- **Never** bare `cargo test <fn_name>` without `--lib` or `--test <stem>` — Cargo may build/link **all** `tests/*.rs` binaries before running a single lib test (10–25+ minutes on this repo).
+- Integration file stems are **not** fn-name filters; use `--test <stem>` (see `30-benchmarks-tests.mdc`).
+
+## Output and concurrency
+
+- Do **not** pipe `cargo test` through `tail`, `head`, or similar unless you accept **no visible output** until the process exits (looks hung during compiles).
+- Do not launch multiple `cargo test` / `cargo build` commands in parallel in one turn — they block on Cargo's build-directory lock.
+
+## Verify the run
+
+Confirm output includes one of:
+
+- `Running unittests src/lib.rs` (lib unit test), or
+- `Running tests/<stem>.rs` (integration test),
+
+and `N passed` with **N > 0** — not `0 passed; … filtered out` across many binaries.
+
+## Timeouts
+
+- After code changes, first `--lib` compile: allow ~2–3 minutes (`block_until_ms` ≥ 120000).
+- Re-runs with warm artifacts: ~30–60s is usually enough.
