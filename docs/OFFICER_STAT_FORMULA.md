@@ -2,7 +2,7 @@
 
 Canonical reference for how per-officer Attack / Defense / Health stats sum across a crew and feed into a ship's effective combat stats. Authored by the maintainer; consumed by the engine extension that adds first-class officer A/D/H runtime support (see `/Users/pgagnong/.claude/plans/what-should-we-work-recursive-lobster.md`).
 
-Status: **specified and implemented**. The formula below is locked from in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs) and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). The one remaining gap is the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
+Status: **specified and implemented**. The formula below is locked from in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates including attack, defense, and health). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs), [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs), [`tests/officer_round_start_stat.rs`](../tests/officer_round_start_stat.rs), and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). The one remaining gap is the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
 
 ---
 
@@ -291,20 +291,29 @@ Phase 2b can now proceed with the simpler model:
 
 ---
 
-## Phase 4d — dynamic officer-stat conditions (3-axis breakpoint path)
+## Phase 4d — per-round officer-stat conditions (3-axis breakpoint path) — **completed (2026-06-16)**
 
-Officer-stat tags (`officerstatall`, `officer_attack`, …) whose LCARS `condition` depends on **round state** (morale, hull breach, burning, `round_range`, …) cannot be evaluated at fight setup.
+Officer-stat rows whose LCARS `trigger` is **`on_round_start`**, or whose `condition` depends on **round state** (morale, hull breach, burning, `round_range`, …), cannot be evaluated only at fight setup.
 
-**Resolver path** ([`collect_dynamic_officer_stat_contributions`](../src/lcars/resolver.rs)): dynamic `officerstat*` rows are stored on [`BuffSet::dynamic_officer_stat_contributions`](../src/lcars/resolver.rs) with a compiled runtime [`AbilityCondition`](../src/combat/abilities.rs) (including duration `RoundRange` when present).
+**Resolver path** ([`collect_dynamic_officer_stat_contributions`](../src/lcars/resolver.rs)): per-round `officerstat*` rows are stored on [`BuffSet::dynamic_officer_stat_contributions`](../src/lcars/resolver.rs) with a compiled runtime [`AbilityCondition`](../src/combat/abilities.rs) when present (including duration `RoundRange` when present). **`on_combat_start`** rows with fight-setup-only gates (Dezoc armada+faction, Kras PvP, …) stay in [`PendingOfficerStatContribution`](../src/lcars/resolver.rs).
 
-**Combat path** ([`OfficerStatRoundContext`](../src/data/officer_stat_round.rs)): each round after morale/state gates refresh, active dynamic rows are merged into [`compute_officer_stat_runtime_bonus_with_round`](../src/data/profile.rs) and the delta vs fight-setup baseline is applied:
+**Combat path** ([`OfficerStatRoundContext`](../src/data/officer_stat_round.rs)): each round after morale/state gates refresh, active per-round rows are merged into [`compute_officer_stat_runtime_bonus_with_round`](../src/data/profile.rs) and the delta vs fight-setup baseline is applied:
 
-- **Attack:** `attack_pre_mult_add` → outbound `pre_attack_multiplier` (proper breakpoint lookup, not a flat `weapon_damage` proxy).
-- **Defense:** additive armor / shield_deflection / dodge on inbound counter-fire mitigation.
-- **Health:** `health_max_mult` scales effective max hull/shield for survivability (proportional scaling assumption when the gate turns on mid-fight).
+- [x] **Attack:** `attack_pre_mult_add` → outbound `pre_attack_multiplier` (proper breakpoint lookup, not a flat `weapon_damage` proxy).
+- [x] **Defense:** additive armor / shield_deflection / dodge on inbound counter-fire mitigation.
+- [x] **Health:** `health_max_mult` scales max hull/shield at round start; absolute remaining HP is preserved when the gate expires at round end (proportional apply on activation — assumption pending in-game confirmation).
 
-**Production data (2026-05):** only [`kirk-1323b6`](../data/officers/officers.lcars.yaml) captain "Leader" — `officerstatall` +40%, `morale_active`, `on_round_start`, duration 1 round. Bridge "Inspirational" morale proc is separate (standard `Morale` seat).
+**Production examples:**
 
-**Tests:** [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs); resolver unit tests `phase4d_*` in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs); [`src/data/officer_stat_round.rs`](../src/data/officer_stat_round.rs).
+| Officer | Row | Path |
+|---|---|---|
+| [`kirk-1323b6`](../data/officers/officers.lcars.yaml) captain "Leader" | `officerstatall` +40%, `morale_active`, `on_round_start`, 1R | Per-round dynamic (morale gate) |
+| [`kumak-c5b0db`](../data/officers/officers.lcars.yaml) captain "Discipline" | `officerstatall` +5%, unconditional `on_round_start` | Per-round dynamic |
+| [`strike-team-una-5ec6f6`](../data/officers/officers.lcars.yaml) captain "Team Profiling" | `officerstatall`, `on_round_start`, PvP + defender Explorer | Per-round dynamic (static gates compiled to runtime) |
+| [`dezoc-381416`](../data/officers/officers.lcars.yaml) bridge "Chokepoint" | `officerstatall`, `on_combat_start`, solo_armadas + defender hull faction | Pending at fight setup (not Phase 4d) |
 
-**Deferred:** PvP defender-side dynamic `target: enemy` officer-stat debuffs (no prod LCARS cases today); mid-fight health bar proportional heal on gate activation is an explicit assumption pending in-game confirmation.
+Kirk bridge "Inspirational" morale proc is separate (standard `Morale` seat).
+
+**Tests:** [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs); [`tests/officer_round_start_stat.rs`](../tests/officer_round_start_stat.rs); resolver unit tests `phase4d_*` in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs); [`src/data/officer_stat_round.rs`](../src/data/officer_stat_round.rs).
+
+**Still deferred:** PvP defender-side dynamic `target: enemy` officer-stat debuffs (no prod LCARS cases today).
