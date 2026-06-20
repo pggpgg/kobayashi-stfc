@@ -1,7 +1,7 @@
 {
   "id": "building_85",
   "building_name": "Outpost Control Center",
-  "data_version": "stfcspace-2026-06-13",
+  "data_version": "stfcspace-2026-06-20",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -38,11 +38,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -96,11 +99,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 0.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -154,11 +160,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 0.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -212,11 +221,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -270,11 +282,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 1.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -328,11 +343,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 1.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -386,11 +404,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 1.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -444,11 +465,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -502,11 +526,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 2.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -560,11 +587,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 2.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -618,11 +648,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 2.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -676,11 +709,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -734,11 +770,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -792,11 +831,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 3.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -850,11 +892,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 3.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -908,11 +953,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 4,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -966,11 +1014,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 4.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1024,11 +1075,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 4.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1082,11 +1136,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 4.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1140,11 +1197,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1198,11 +1258,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 5.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1256,11 +1319,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1314,11 +1380,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 6.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1372,11 +1441,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1430,11 +1502,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 7.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1488,11 +1563,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1546,11 +1624,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 8.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1604,11 +1685,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1662,11 +1746,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 9.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1720,11 +1807,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 10,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1778,11 +1868,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 10.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1836,11 +1929,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 11,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1894,11 +1990,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 11.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -1952,11 +2051,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 12,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2010,11 +2112,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 12.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2068,11 +2173,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 13,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2126,11 +2234,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 13.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2184,11 +2295,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 14,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2242,11 +2356,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 14.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2300,11 +2417,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2358,11 +2478,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 15.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2416,11 +2539,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 16.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2474,11 +2600,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 17.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2532,11 +2661,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 18,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2590,11 +2722,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 18.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2648,11 +2783,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 19.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2706,11 +2844,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 20.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2764,11 +2905,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 21,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2822,11 +2966,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 21.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2880,11 +3027,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 22.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2938,11 +3088,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 23.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -2996,11 +3149,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 24,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3054,11 +3210,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 24.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3112,11 +3271,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 25.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3170,11 +3332,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 26.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3228,11 +3393,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 27,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3286,11 +3454,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 27.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3344,11 +3515,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 28.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3402,11 +3576,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 29.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3460,11 +3637,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 30,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3518,11 +3698,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 31,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3576,11 +3759,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 32,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3634,11 +3820,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 33,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3692,11 +3881,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 34,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3750,11 +3942,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3808,11 +4003,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 36,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3866,11 +4064,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 37,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3924,11 +4125,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 38,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -3982,11 +4186,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 39,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4040,11 +4247,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 40,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4098,11 +4308,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 41,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4156,11 +4369,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 42,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4214,11 +4430,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 43,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4272,11 +4491,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 44,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4330,11 +4552,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 45,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4388,11 +4613,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 46,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4446,11 +4674,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 47,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4504,11 +4735,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 48,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4562,11 +4796,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 49,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",
@@ -4620,11 +4857,14 @@
           "notes": "auto-imported from data.stfc.space; loca_id=84700"
         },
         {
-          "stat": "buff_1655935815",
+          "stat": "weapon_damage_vs_outpost",
           "value": 50,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=84701"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
         },
         {
           "stat": "hull_hp",

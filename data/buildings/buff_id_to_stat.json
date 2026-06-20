@@ -66,5 +66,7 @@
   "341559099": "weapon_damage",
   "753685799": "shield_hp",
   "4257724198": "shield_hp",
-  "301108821": "isolytic_damage"
+  "301108821": "isolytic_damage",
+  "3380254177": "shield_hp",
+  "4020372601": "hull_hp"
 }

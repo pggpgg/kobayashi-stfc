@@ -1,7 +1,7 @@
 {
   "id": "building_87",
   "building_name": "Starfleet Academy: Remote Campus",
-  "data_version": "stfcspace-2026-06-13",
+  "data_version": "stfcspace-2026-06-20",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -31,18 +31,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -73,18 +79,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -115,18 +127,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -157,18 +175,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -199,18 +223,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -241,18 +271,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -283,18 +319,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -325,18 +367,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -367,18 +415,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -409,18 +463,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -451,18 +511,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -493,18 +559,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -535,18 +607,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -577,18 +655,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -619,18 +703,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -661,18 +751,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -703,18 +799,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -745,18 +847,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -787,18 +895,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -829,18 +943,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -871,18 +991,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -913,18 +1039,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -955,18 +1087,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -997,18 +1135,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1039,18 +1183,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1081,18 +1231,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1123,18 +1279,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1165,18 +1327,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1207,18 +1375,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1249,18 +1423,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5000,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1291,18 +1471,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 500,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5100,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1333,18 +1519,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 520,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5100,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1375,18 +1567,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 520,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5300,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1417,18 +1615,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 540,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5300,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1459,18 +1663,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 540,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5490,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1501,18 +1711,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 560,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5490,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1543,18 +1759,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 560,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5690,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1585,18 +1807,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 580,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5690,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1627,18 +1855,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 580,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5880,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1669,18 +1903,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 600,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 5880,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1711,18 +1951,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 600,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6080,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1753,18 +1999,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 620,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6080,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1795,18 +2047,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 620,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6280,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1837,18 +2095,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 640,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6280,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1879,18 +2143,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 640,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6470,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1921,18 +2191,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 660,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6470,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -1963,18 +2239,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 660,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6670,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2005,18 +2287,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 680,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6670,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2047,18 +2335,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 680,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6860,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2089,18 +2383,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 700,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 6860,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2131,18 +2431,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 700,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7060,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2173,18 +2479,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 720,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7060,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2215,18 +2527,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 720,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7260,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2257,18 +2575,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 740,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7260,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2299,18 +2623,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 740,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7450,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2341,18 +2671,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 760,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7450,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2383,18 +2719,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 760,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7650,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2425,18 +2767,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 780,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7650,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2467,18 +2815,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 780,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7840,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2509,18 +2863,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 800,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 7840,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2551,18 +2911,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 800,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8040,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2593,18 +2959,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 820,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8040,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2635,18 +3007,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 820,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8240,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2677,18 +3055,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 840,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8240,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2719,18 +3103,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 840,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8430,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2761,18 +3151,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 860,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8430,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2803,18 +3199,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 860,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8630,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2845,18 +3247,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 880,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8630,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2887,18 +3295,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 880,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8820,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2929,18 +3343,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 900,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 8820,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -2971,18 +3391,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 900,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9020,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3013,18 +3439,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 920,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9020,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3055,18 +3487,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 920,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9220,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3097,18 +3535,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 940,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9220,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3139,18 +3583,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 940,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9410,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3181,18 +3631,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 960,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9410,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3223,18 +3679,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 960,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9610,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3265,18 +3727,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 980,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9610,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3307,18 +3775,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 980,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 9800,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     },
@@ -3349,18 +3823,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=90101"
         },
         {
-          "stat": "buff_2101517349",
+          "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
           "value": 1000,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90102"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
         },
         {
-          "stat": "buff_3310569940",
+          "stat": "apex_barrier_vs_player_tal_not_on_bridge",
           "value": 10000,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90103"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship"
+          ],
+          "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
         }
       ]
     }

@@ -568,6 +568,11 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         "apex_barrier_vs_player_tal_not_on_bridge" => {
             Some("apex_barrier_vs_player_tal_not_on_bridge")
         }
+        "apex_barrier_vs_npc_hostile_tal_not_on_bridge" => {
+            Some("apex_barrier_vs_npc_hostile_tal_not_on_bridge")
+        }
+        "weapon_damage_vs_outpost" => Some("weapon_damage_vs_outpost"),
+        "weapon_damage_vs_armada_hostile" => Some("weapon_damage_vs_armada_hostile"),
         "hyperthermic_stabilizer_vs_aggregation_hostile" => {
             Some("hyperthermic_stabilizer_vs_aggregation_hostile")
         }
@@ -1811,7 +1816,8 @@ mod tests {
 
     use crate::combat::{AttackerStats, Combatant, ShipType};
     use crate::data::building::{
-        BuildingBonusContext, BuildingIndex, BuildingIndexEntry, BuildingMode,
+        BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingIndex,
+        BuildingIndexEntry, BuildingMode,
     };
     use crate::data::forbidden_chaos::{BonusEntry, ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::import::BuildingEntry;
@@ -3424,6 +3430,337 @@ mod tests {
             "holodeck level 5 should contribute pierce via normalized stat"
         );
         assert!(!profile.bonuses.contains_key("buff_473361651"));
+    }
+
+    #[test]
+    fn merge_building_bonuses_into_profile_merges_facade_hull_and_shield() {
+        let mut profile = PlayerProfile::default();
+        let imported_buildings = vec![BuildingEntry { bid: 77, level: 1 }];
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(77i64, "building_77".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "building_77".to_string(),
+                building_name: "The Facade".to_string(),
+                file: Some("77_the_facade".to_string()),
+                bid: Some(77),
+            }],
+        };
+        let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+        merge_building_bonuses_into_profile(
+            &mut profile,
+            &imported_buildings,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext::default(),
+        );
+        assert_eq!(
+            profile.bonuses.get("hull_hp").copied(),
+            Some(0.1),
+            "facade L1 hull_hp from buff_4020372601"
+        );
+        assert_eq!(
+            profile.bonuses.get("shield_hp").copied(),
+            Some(0.0),
+            "facade L1 shield_hp is zero until higher levels"
+        );
+        assert!(!profile.bonuses.contains_key("buff_4020372601"));
+        assert!(!profile.bonuses.contains_key("buff_3380254177"));
+
+        profile.bonuses.clear();
+        let imported_l71 = vec![BuildingEntry { bid: 77, level: 71 }];
+        merge_building_bonuses_into_profile(
+            &mut profile,
+            &imported_l71,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &BuildingBonusContext::default(),
+        );
+        assert_eq!(
+            profile.bonuses.get("hull_hp").copied(),
+            Some(34.75),
+            "facade L71 hull_hp tier snapshot"
+        );
+        assert_eq!(
+            profile.bonuses.get("shield_hp").copied(),
+            Some(6.0),
+            "facade L71 shield_hp first nonzero tier"
+        );
+    }
+
+    #[test]
+    fn merge_building_bonuses_pvp_only_facade_crit_and_academy_apex_barrier() {
+        let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(77i64, "building_77".to_string());
+        bid_to_id.insert(87i64, "building_87".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![
+                BuildingIndexEntry {
+                    id: "building_77".to_string(),
+                    building_name: "The Facade".to_string(),
+                    file: Some("77_the_facade".to_string()),
+                    bid: Some(77),
+                },
+                BuildingIndexEntry {
+                    id: "building_87".to_string(),
+                    building_name: "Starfleet Academy: Remote Campus".to_string(),
+                    file: Some("87_starfleet_academy_remote_campus".to_string()),
+                    bid: Some(87),
+                },
+            ],
+        };
+        let imported = vec![
+            BuildingEntry { bid: 77, level: 61 },
+            BuildingEntry { bid: 87, level: 30 },
+        ];
+        let pve_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::NpcHostile,
+            ..BuildingBonusContext::default()
+        };
+        let pvp_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::PlayerShip,
+            attacker_faction: BuildingAttackerFaction::Federation,
+            ..BuildingBonusContext::default()
+        };
+        let pvp_non_fkr_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::PlayerShip,
+            attacker_faction: BuildingAttackerFaction::Unknown,
+            ..BuildingBonusContext::default()
+        };
+
+        let mut pve_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pve_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pve_ctx,
+        );
+        assert!(
+            !pve_profile.bonuses.contains_key("crit_damage"),
+            "facade PvP crit_damage must not merge in PvE context"
+        );
+        assert!(
+            !pve_profile
+                .bonuses
+                .contains_key("apex_barrier_vs_player_tal_not_on_bridge"),
+            "academy PvP apex must not merge in PvE context"
+        );
+
+        let mut pvp_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pvp_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pvp_ctx,
+        );
+        assert_eq!(
+            pvp_profile.bonuses.get("crit_damage").copied(),
+            Some(0.5),
+            "facade L61 crit_damage vs players (buff_3171687260)"
+        );
+        assert_eq!(
+            pvp_profile
+                .bonuses
+                .get("apex_barrier_vs_player_tal_not_on_bridge")
+                .copied(),
+            Some(5000.0),
+            "academy L30 apex barrier vs players (buff_3310569940)"
+        );
+        assert!(!pvp_profile.bonuses.contains_key("buff_3171687260"));
+        assert!(!pvp_profile.bonuses.contains_key("buff_3310569940"));
+
+        let mut pvp_non_fkr_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pvp_non_fkr_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pvp_non_fkr_ctx,
+        );
+        assert!(
+            !pvp_non_fkr_profile.bonuses.contains_key("crit_damage"),
+            "facade PvP crit_damage requires FKR (fed/klg/rom) attacker faction"
+        );
+        assert_eq!(
+            pvp_non_fkr_profile
+                .bonuses
+                .get("apex_barrier_vs_player_tal_not_on_bridge")
+                .copied(),
+            Some(5000.0),
+            "academy apex vs players is not FKR-gated"
+        );
+    }
+
+    #[test]
+    fn merge_building_bonuses_academy_npc_apex_and_outpost_weapon_damage() {
+        let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(87i64, "building_87".to_string());
+        bid_to_id.insert(85i64, "building_85".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![
+                BuildingIndexEntry {
+                    id: "building_87".to_string(),
+                    building_name: "Starfleet Academy: Remote Campus".to_string(),
+                    file: Some("87_starfleet_academy_remote_campus".to_string()),
+                    bid: Some(87),
+                },
+                BuildingIndexEntry {
+                    id: "building_85".to_string(),
+                    building_name: "Outpost Control Center".to_string(),
+                    file: Some("85_outpost_control_center".to_string()),
+                    bid: Some(85),
+                },
+            ],
+        };
+        let imported = vec![
+            BuildingEntry { bid: 87, level: 30 },
+            BuildingEntry { bid: 85, level: 1 },
+        ];
+        let pve_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::NpcHostile,
+            ..BuildingBonusContext::default()
+        };
+        let pvp_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::PlayerShip,
+            ..BuildingBonusContext::default()
+        };
+
+        let mut pve_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pve_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pve_ctx,
+        );
+        assert_eq!(
+            pve_profile
+                .bonuses
+                .get("apex_barrier_vs_npc_hostile_tal_not_on_bridge")
+                .copied(),
+            Some(500.0),
+            "academy L30 apex vs non-Armada hostiles (buff_2101517349)"
+        );
+        assert_eq!(
+            pve_profile.bonuses.get("weapon_damage_vs_outpost").copied(),
+            Some(0.25),
+            "outpost control L1 weapon damage vs outposts (buff_1655935815)"
+        );
+        assert!(
+            !pve_profile
+                .bonuses
+                .contains_key("apex_barrier_vs_player_tal_not_on_bridge"),
+            "academy PvP apex must not merge in PvE context"
+        );
+        assert!(
+            !pve_profile.bonuses.contains_key("buff_341625291"),
+            "academy ACAD crit mitigation (buff_341625291) is allowlisted and must not merge"
+        );
+
+        let mut pvp_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pvp_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pvp_ctx,
+        );
+        assert!(
+            !pvp_profile
+                .bonuses
+                .contains_key("apex_barrier_vs_npc_hostile_tal_not_on_bridge"),
+            "academy NPC apex must not merge in PvP context"
+        );
+        assert!(
+            !pvp_profile.bonuses.contains_key("weapon_damage_vs_outpost"),
+            "outpost weapon damage must not merge in PvP context"
+        );
+    }
+
+    #[test]
+    fn merge_building_bonuses_armada_control_weapon_damage_vs_armada_hostile() {
+        let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+        let mut bid_to_id = HashMap::new();
+        bid_to_id.insert(23i64, "building_23".to_string());
+        let building_index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "building_23".to_string(),
+                building_name: "Armada Control Center".to_string(),
+                file: Some("23_armada_control_center".to_string()),
+                bid: Some(23),
+            }],
+        };
+        let imported = vec![BuildingEntry { bid: 23, level: 1 }];
+        let pve_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::NpcHostile,
+            ..BuildingBonusContext::default()
+        };
+        let pvp_ctx = BuildingBonusContext {
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::PlayerShip,
+            ..BuildingBonusContext::default()
+        };
+
+        let mut pve_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pve_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pve_ctx,
+        );
+        assert_eq!(
+            pve_profile
+                .bonuses
+                .get("weapon_damage_vs_armada_hostile")
+                .copied(),
+            Some(0.02),
+            "armada control L1 buff_3401661757"
+        );
+        assert!(!pve_profile.bonuses.contains_key("buff_3401661757"));
+        assert!(!pve_profile.bonuses.contains_key("buff_430522112"));
+
+        let mut pvp_profile = PlayerProfile::default();
+        merge_building_bonuses_into_profile(
+            &mut pvp_profile,
+            &imported,
+            &bid_to_id,
+            &building_index,
+            data_dir.as_path(),
+            &pvp_ctx,
+        );
+        assert!(
+            !pvp_profile
+                .bonuses
+                .contains_key("weapon_damage_vs_armada_hostile"),
+            "armada hostile weapon damage must not merge in PvP context"
+        );
     }
 
     /// Spot-check triangle buildings at L60: Foundry / Science Lab / Engine Technology Lab shield_hp by hull class.

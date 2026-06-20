@@ -1,7 +1,7 @@
 {
   "id": "building_77",
   "building_name": "The Facade",
-  "data_version": "stfcspace-2026-06-13",
+  "data_version": "stfcspace-2026-06-20",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -19,11 +19,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -54,18 +54,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -84,11 +88,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -119,18 +123,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -149,11 +157,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -184,18 +192,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -214,11 +226,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -249,18 +261,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -279,11 +295,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -314,18 +330,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -344,11 +364,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -379,18 +399,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -409,11 +433,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -444,18 +468,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -474,11 +502,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -509,18 +537,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -539,11 +571,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 0.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -574,18 +606,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -604,11 +640,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -639,18 +675,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -669,11 +709,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -704,18 +744,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -734,11 +778,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -769,18 +813,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -799,11 +847,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -834,18 +882,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -864,11 +916,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -899,18 +951,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -929,11 +985,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -964,18 +1020,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -994,11 +1054,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1029,18 +1089,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1059,11 +1123,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1094,18 +1158,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1124,11 +1192,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1159,18 +1227,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1189,11 +1261,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 1.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1224,18 +1296,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1254,11 +1330,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1289,18 +1365,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1319,11 +1399,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1354,18 +1434,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1384,11 +1468,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2.2,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1419,18 +1503,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1449,11 +1537,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1484,18 +1572,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1514,11 +1606,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1549,18 +1641,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1579,11 +1675,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1614,18 +1710,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1644,11 +1744,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 2.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1679,18 +1779,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1709,11 +1813,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 3.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1744,18 +1848,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1774,11 +1882,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 3.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1809,18 +1917,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1839,11 +1951,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 3.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1874,18 +1986,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1904,11 +2020,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 3.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -1939,18 +2055,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -1969,11 +2089,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 3.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2004,18 +2124,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2034,11 +2158,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 4.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2069,18 +2193,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2099,11 +2227,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 4.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2134,18 +2262,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2164,11 +2296,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 4.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2199,18 +2331,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2229,11 +2365,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 4.7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2264,18 +2400,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2294,11 +2434,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 4.9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2329,18 +2469,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2359,11 +2503,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 5.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2394,18 +2538,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2424,11 +2572,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 5.3,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2459,18 +2607,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2489,11 +2641,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 5.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2524,18 +2676,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2554,11 +2710,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 6.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2589,18 +2745,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2619,11 +2779,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 7,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2654,18 +2814,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2684,11 +2848,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 7.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2719,18 +2883,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2749,11 +2917,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 8,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2784,18 +2952,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2814,11 +2986,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 8.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2849,18 +3021,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2879,11 +3055,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2914,18 +3090,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -2944,11 +3124,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 9.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -2979,18 +3159,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3009,11 +3193,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 10,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3044,18 +3228,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3074,11 +3262,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 10.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3109,18 +3297,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3139,11 +3331,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 11,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3174,18 +3366,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3204,11 +3400,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3239,18 +3435,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3269,11 +3469,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 13,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3304,18 +3504,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3334,11 +3538,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 14,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3369,18 +3573,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3399,11 +3607,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3434,18 +3642,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3464,11 +3676,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 16,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3499,18 +3711,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3529,11 +3745,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 17,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3564,18 +3780,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3594,11 +3814,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 18,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3629,18 +3849,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3659,11 +3883,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 19,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3694,18 +3918,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3724,11 +3952,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 20,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3759,18 +3987,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3789,11 +4021,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 21,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3824,18 +4056,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3854,11 +4090,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 22.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3889,18 +4125,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3919,11 +4159,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 23.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -3954,18 +4194,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -3984,11 +4228,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 24.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4019,18 +4263,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0.55,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4049,11 +4297,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 25.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4084,18 +4332,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4114,11 +4366,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 26.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4149,18 +4401,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4179,11 +4435,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 27.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4214,18 +4470,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4244,11 +4504,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 28.6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4279,18 +4539,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 0.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4309,11 +4573,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 29.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4344,18 +4608,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4374,11 +4642,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 30.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4409,18 +4677,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4439,11 +4711,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 32.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4474,18 +4746,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4504,11 +4780,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 33.4,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4539,18 +4815,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1.45,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 0,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4569,11 +4849,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 34.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4604,18 +4884,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 6,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4634,11 +4918,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 36.15,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4669,18 +4953,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1.75,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 9,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4699,11 +4987,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 37.55,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4734,18 +5022,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 1.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 12,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4764,11 +5056,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 39,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4799,18 +5091,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 2.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 16,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4829,11 +5125,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 40.45,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4864,18 +5160,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 2.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 20,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4894,11 +5194,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 41.95,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4929,18 +5229,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 2.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 25,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -4959,11 +5263,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 43.5,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -4994,18 +5298,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 2.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 30,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -5024,11 +5332,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 45.1,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -5059,18 +5367,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 2.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 36,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -5089,11 +5401,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 46.75,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -5124,18 +5436,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 2.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 46,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     },
@@ -5154,11 +5470,11 @@
           "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
         },
         {
-          "stat": "buff_4020372601",
+          "stat": "hull_hp",
           "value": 50,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=61002"
+          "notes": "The Facade: Increases base Hull Health for all ships."
         },
         {
           "stat": "officer_attack",
@@ -5189,18 +5505,22 @@
           "notes": "auto-imported from data.stfc.space; loca_id=61004"
         },
         {
-          "stat": "buff_3171687260",
+          "stat": "crit_damage",
           "value": 3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90401"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_player_ship",
+            "attacker_ship_faction_any_fed_klg_rom"
+          ],
+          "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
         },
         {
-          "stat": "buff_3380254177",
+          "stat": "shield_hp",
           "value": 50,
           "operator": "add",
           "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=90402"
+          "notes": "The Facade: Increases base Shield Health for all ships."
         }
       ]
     }

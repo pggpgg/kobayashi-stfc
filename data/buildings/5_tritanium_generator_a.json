@@ -1,7 +1,7 @@
 {
   "id": "tritanium_generator_a",
   "building_name": "Tritanium Generator A",
-  "data_version": "stfcspace-2026-06-13",
+  "data_version": "stfcspace-2026-06-20",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {

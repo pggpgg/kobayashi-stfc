@@ -244,6 +244,73 @@
       { "stat": "officer_health" }
     ]
   },
+  "3380254177": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The Facade: Increases base Shield Health for all ships."
+  },
+  "4020372601": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The Facade: Increases base Hull Health for all ships."
+  },
+  "3171687260": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship",
+      "attacker_ship_faction_any_fed_klg_rom"
+    ],
+    "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
+  },
+  "3310569940": {
+    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
+  },
+  "2101517349": {
+    "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
+  },
+  "1655935815": {
+    "stat": "weapon_damage_vs_outpost",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
+  },
+  "3401661757": {
+    "stat": "weapon_damage_vs_armada_hostile",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Armada Control Center: weapon damage vs group armada hostiles (upstream ship_type armada target); applies solo or fleet."
+  },
+  "1422729787": {
+    "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
+  },
   "866732757": {
     "stat": "isolytic_defense",
     "operator": "add",
@@ -352,14 +419,5 @@
     "operator": "add",
     "conditions": ["attacker_ship_type_interceptor"],
     "notes": "Engine Technology Lab: Shield Health Bonus for Interceptor-class player ships."
-  },
-  "1422729787": {
-    "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_npc_hostile"
-    ],
-    "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
   }
 }
