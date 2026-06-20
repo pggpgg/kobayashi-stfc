@@ -313,6 +313,10 @@ pub struct SimulationConfig {
     /// (round 1 = first combat round).
     #[serde(default)]
     pub incoming_shield_mitigation_bonus_rounds: u32,
+    /// Net hyperthermic decay fraction applied to player max hull at each round start (after regen).
+    /// Scenario sets `max(0, hostile_decay - stabilizer)` for Aggregation fights.
+    #[serde(default)]
+    pub attacker_hyperthermic_decay_fraction: f64,
     /// When `true` and [`Self::trace_mode`] is [`TraceMode::Events`], emit `state_snapshot` trace rows
     /// ([`crate::combat::snapshot::CombatStateSnapshot`]). Ignored when tracing is off.
     #[serde(default)]
@@ -336,6 +340,7 @@ impl Default for SimulationConfig {
             attacker_roster_officer_ids: Vec::new(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
         }
     }

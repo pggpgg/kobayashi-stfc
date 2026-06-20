@@ -280,6 +280,7 @@ fn rich_engine_aligned_fixture_matches_canonical_sim_trace_subsequence() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
     };
     let crew = CrewConfiguration::default();
@@ -360,6 +361,7 @@ fn emit_state_snapshots_adds_state_snapshot_events() {
         attacker_roster_officer_ids: Default::default(),
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: true,
     };
     let crew = CrewConfiguration::default();

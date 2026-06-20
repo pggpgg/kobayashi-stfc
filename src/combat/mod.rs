@@ -25,7 +25,11 @@ pub mod types;
 
 pub use abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
-    attacker_crew_tal_assigned_captain_or_bridge, can_activate_in_seat, Ability, AbilityClass,
+    attacker_crew_tal_assigned_captain_or_bridge, can_activate_in_seat, defender_shield_drain_per_round_from_crew,
+    hostile_apex_barrier_bonus_from_defender_crew,
+    hostile_crit_damage_floor_bonus_from_defender_crew,
+    hostile_defender_mitigation_additive_factor_from_defender_crew,
+    hostile_hyperthermic_decay_fraction_from_defender_crew, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
     CrewSeat, CrewSeatContext, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH, TAL_OFFICER_LCARS_ID,
 };
@@ -52,8 +56,8 @@ pub use export_csv::{
     export_to_defender, parse_fight_export, ship_type_from_name, FightExport, FightExportEvent,
 };
 pub use hostile_tags::{
-    HOSTILE_TAG_MASK_CONQUEROR_BORG, HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR,
-    HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
+    HOSTILE_TAG_MASK_AGGREGATION_HOSTILE, HOSTILE_TAG_MASK_CONQUEROR_BORG,
+    HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR, HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
 };
 pub use log_import_normalize::{
     expand_collapsed_repeat_events, tag_stats_snapshot_sources_client_default,

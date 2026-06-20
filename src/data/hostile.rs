@@ -22,6 +22,7 @@ use crate::combat::{
     pierce_damage_through_bonus, AttackerStats, DefenderStats, EnemyTypes, OpponentFactionTag,
     ShipType, WeaponStats,
 };
+use crate::data::upstream_hostile_ship_type::upstream_hostile_ship_type_profile;
 
 #[derive(Debug, Clone)]
 pub struct Hostile {
@@ -299,15 +300,29 @@ impl HostileRecord {
     /// [`crate::data::upstream_hostile_ship_type`], returns [`ShipType::Armada`] so armada-tuned
     /// buffs apply even if `ship_class` was inferred as another hull line.
     pub fn ship_type_for_combat(&self) -> ShipType {
-        if super::upstream_hostile_ship_type::upstream_hostile_ship_type_profile(
-            self.upstream_ship_type,
-        )
-        .is_armada_target
-        {
+        if self.is_group_armada_target() {
             ShipType::Armada
         } else {
             self.ship_type()
         }
+    }
+
+    /// Upstream `ship_type` **1** (ARMADA TARGET / group armada hostile). Used for building bonuses
+    /// such as Armada Control Center weapon damage vs armada hostiles (solo or fleet).
+    pub fn is_group_armada_target(&self) -> bool {
+        upstream_hostile_ship_type_profile(self.upstream_ship_type).is_armada_target
+    }
+
+    /// Aggregation faction hostile (faction `loca_id` 82001 or curated `aggregation_hostile` tag).
+    pub fn is_aggregation_hostile(&self) -> bool {
+        self.faction
+            .as_ref()
+            .and_then(|f| f.loca_id)
+            .is_some_and(|loca| loca == 82001)
+            || self
+                .hostile_tags
+                .iter()
+                .any(|t| t == "aggregation_hostile")
     }
 }
 
@@ -811,5 +826,19 @@ mod tests {
             p_weak > p_strong + 1e-9,
             "stronger player defender should reduce counter pierce-through (weak_def={p_weak}, strong_def={p_strong})"
         );
+    }
+
+    #[test]
+    fn is_aggregation_hostile_from_faction_loca_or_tag() {
+        let mut r: HostileRecord = serde_json::from_str(
+            r#"{"id":"1","hostile_name":"H","level":1,"ship_class":"survey","armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":1.0,"shield_health":1.0,"faction":{"id":0,"loca_id":82001}}"#,
+        )
+        .unwrap();
+        assert!(r.is_aggregation_hostile());
+        r.faction = None;
+        r.hostile_tags = vec!["aggregation_hostile".into()];
+        assert!(r.is_aggregation_hostile());
+        r.hostile_tags.clear();
+        assert!(!r.is_aggregation_hostile());
     }
 }

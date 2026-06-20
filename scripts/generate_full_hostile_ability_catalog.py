@@ -252,6 +252,20 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     ):
         return dict(NOOP), "economy"
 
+    # Aggregation family: multi-stat rows are hand-maintained in hostile_ability_catalog.json
+    # (hyperthermic decay + mitigation inflation + offense bundles). Do not first-match-wins here.
+    if "hyperthermic decay" in p and "mitigation stat" in p:
+        return dict(NOOP), "aggregation_hyperthermic_manual"
+    if "hyperthermic decay" in p and "apex barrier" in p:
+        return dict(NOOP), "aggregation_hyperthermic_manual"
+    if (
+        "weapon damage" in p
+        and "isolytic damage" in p
+        and "critical damage" in p
+        and "hyperthermic" not in p
+    ):
+        return dict(NOOP), "aggregation_offense_manual"
+
     # Multi-stat crit rows (Critical Training: chance + damage + floor in one ability)
     if "critical hit chance" in p and "critical hit damage" in p and "critical damage floor" in p:
         return dict(NOOP), "crit_multi_stat_review"

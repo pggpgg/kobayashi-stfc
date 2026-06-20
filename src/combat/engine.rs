@@ -801,6 +801,15 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             st.attacker_shield_gross_damage_last_round,
         );
 
+        if config.attacker_hyperthermic_decay_fraction > 0.0 {
+            let decay =
+                config.attacker_hyperthermic_decay_fraction * attacker.hull_health.max(0.0);
+            if decay > 0.0 {
+                st.total_attacker_hull_damage += decay;
+                st.attacker_hull_gross_damage_this_round += decay;
+            }
+        }
+
         // Prune expired shots bonuses and compute B_shots(r) for this round.
         st.shots_bonus_entries
             .retain(|(_, expires)| *expires >= round_index);

@@ -1106,9 +1106,40 @@
     },
     "667152582": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 66.0,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "isolytic_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 7.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 4.8
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.5
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_chance",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.0
+        }
+      ]
     },
     "672374424": {
       "timing": "combat_begin",
@@ -1473,11 +1504,20 @@
       "value_override": 0.0
     },
     "934639236": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "value_override": 1.5,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_defender_mitigation_multiplier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 40.0
+        }
+      ]
     },
     "949806279": {
       "timing": "combat_begin",
@@ -2705,9 +2745,33 @@
     },
     "1729666920": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 60.0,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "isolytic_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 5.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 3.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.5
+        }
+      ]
     },
     "1729731395": {
       "timing": "combat_begin",
@@ -3382,11 +3446,20 @@
       "value_override": 0.0
     },
     "2146932955": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "value_override": 0.5,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_defender_mitigation_multiplier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 32.0
+        }
+      ]
     },
     "2160121095": {
       "timing": "combat_begin",
@@ -4158,9 +4231,40 @@
     },
     "2640287449": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 125.0,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "isolytic_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 30.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 27.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.5
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_chance",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.0
+        }
+      ]
     },
     "2643951824": {
       "timing": "combat_begin",
@@ -4919,11 +5023,20 @@
       "value_override": 0.0
     },
     "3147230042": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0
+      "value_override": 0.25,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_defender_mitigation_multiplier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 24.0
+        }
+      ]
     },
     "3147525205": {
       "timing": "combat_begin",
@@ -6259,10 +6372,27 @@
       "value_override": 0.0
     },
     "4044713030": {
-      "timing": "combat_begin",
-      "effect_type": "apex_barrier",
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 2.5,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_defender_mitigation_multiplier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 52.5
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "apex_barrier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 300000.0
+        }
+      ]
     },
     "4046084379": {
       "timing": "combat_begin",

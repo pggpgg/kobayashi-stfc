@@ -233,6 +233,21 @@ pub enum AbilityEffect {
         fraction: f64,
         duration_rounds: u32,
     },
+    /// Aggregation / psionic-style hostile ability: at round start, melt `fraction` of the **player
+    /// ship's max hull** (0.50 = 50% of max HHP). Resolved out of band; see
+    /// [`hostile_hyperthermic_decay_fraction_from_defender_crew`].
+    HostileHyperthermicDecay {
+        fraction: f64,
+    },
+    /// Aggregation defense tier: multiply hostile armor / shield deflection / dodge before inbound
+    /// mitigation (`additive_factor` 32.0 = +3200% to all mitigation stats). Applied at scenario
+    /// build on [`crate::combat::types::HostileMitigationParams::defender_stats`].
+    HostileDefenderMitigationMultiplier {
+        additive_factor: f64,
+    },
+    /// Flat bonus to hostile [`crate::combat::types::Combatant::crit_damage_floor`] on counter-fire
+    /// (Aggregation offense bundles). Applied at scenario build.
+    HostileCritDamageFloorBonus(f64),
     /// Player ship hull ability (U.S.S. Intrepid): additive armor / deflection / dodge proxy — same
     /// fraction applied to counter-fire mitigation and dodge bonus sums at combat begin.
     HostileEngagementDefensiveBonus(f64),
@@ -870,7 +885,10 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         }
         AbilityEffect::HostileLethalEndOfRound { .. }
         | AbilityEffect::HostileKemociteWeaponry { .. }
-        | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. } => {}
+        | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
+        | AbilityEffect::HostileHyperthermicDecay { .. }
+        | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+        | AbilityEffect::HostileCritDamageFloorBonus(_) => {}
         AbilityEffect::HostileCounterStatDebuff {
             reduction,
             duration_rounds: _,
@@ -1148,6 +1166,57 @@ pub fn defender_shield_drain_per_round_from_crew(
         }
     }
     (fraction.clamp(0.0, 0.95), rounds)
+}
+
+/// Aggregation-style hyperthermic decay on the player hull from hostile defender crew (round start).
+pub fn hostile_hyperthermic_decay_fraction_from_defender_crew(crew: &CrewConfiguration) -> f64 {
+    let mut fraction = 0.0_f64;
+    for s in &crew.seats {
+        if s.ability.timing != TimingWindow::RoundStart {
+            continue;
+        }
+        if let AbilityEffect::HostileHyperthermicDecay { fraction: f } = s.ability.effect {
+            fraction = fraction.max(f);
+        }
+    }
+    fraction.max(0.0)
+}
+
+/// Sum of hostile mitigation-stat inflation factors from defender crew (Aggregation defense tiers).
+pub fn hostile_defender_mitigation_additive_factor_from_defender_crew(
+    crew: &CrewConfiguration,
+) -> f64 {
+    let mut factor = 0.0_f64;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileDefenderMitigationMultiplier { additive_factor } =
+            s.ability.effect
+        {
+            factor += additive_factor.max(0.0);
+        }
+    }
+    factor.max(0.0)
+}
+
+/// Flat hostile apex barrier bonus from defender crew (Aggregation tier 82107).
+pub fn hostile_apex_barrier_bonus_from_defender_crew(crew: &CrewConfiguration) -> f64 {
+    let mut bonus = 0.0_f64;
+    for s in &crew.seats {
+        if let AbilityEffect::ApexBarrierBonus(v) = s.ability.effect {
+            bonus += v.max(0.0);
+        }
+    }
+    bonus.max(0.0)
+}
+
+/// Flat hostile crit-damage floor bonus from defender crew (Aggregation offense bundles).
+pub fn hostile_crit_damage_floor_bonus_from_defender_crew(crew: &CrewConfiguration) -> f64 {
+    let mut bonus = 0.0_f64;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileCritDamageFloorBonus(v) = s.ability.effect {
+            bonus += v.max(0.0);
+        }
+    }
+    bonus.max(0.0)
 }
 
 /// Intrepid-style defensive bonus vs hostiles (mitigation + dodge proxy).

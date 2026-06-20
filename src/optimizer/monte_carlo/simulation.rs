@@ -367,6 +367,7 @@ fn run_candidate_monte_carlo(
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
+        attacker_hyperthermic_decay_fraction: input.attacker_hyperthermic_decay_fraction,
         emit_state_snapshots: false,
     };
 
@@ -1084,6 +1085,7 @@ pub fn replay_optimize_iteration_with_registry(
         attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
         incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
+        attacker_hyperthermic_decay_fraction: input.attacker_hyperthermic_decay_fraction,
         emit_state_snapshots: false,
     };
 

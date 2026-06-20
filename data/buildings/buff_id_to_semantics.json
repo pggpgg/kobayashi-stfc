@@ -352,5 +352,14 @@
     "operator": "add",
     "conditions": ["attacker_ship_type_interceptor"],
     "notes": "Engine Technology Lab: Shield Health Bonus for Interceptor-class player ships."
+  },
+  "1422729787": {
+    "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
   }
 }

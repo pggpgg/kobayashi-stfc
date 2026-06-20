@@ -7,6 +7,9 @@ pub const HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR: u32 = 1 << 1;
 /// [`crate::combat::conqueror_borg_beams`] — Conqueror Borg Obliterator family (`loca_id` 89053–89055).
 pub const HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR: u32 = 1 << 2;
 
+/// Aggregation faction hostiles (faction `loca_id` 82001); hyperthermic decay + Recon Locus stabilizer.
+pub const HOSTILE_TAG_MASK_AGGREGATION_HOSTILE: u32 = 1 << 3;
+
 /// Map a single data slug (from `ShipAbility` / hostile JSON) to one bit, if known.
 pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
     let s = slug.trim().to_lowercase().replace('-', "_");
@@ -14,6 +17,7 @@ pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
         "conqueror_borg" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG),
         "conqueror_borg_suppressor" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR),
         "conqueror_borg_obliterator" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR),
+        "aggregation_hostile" => Some(HOSTILE_TAG_MASK_AGGREGATION_HOSTILE),
         _ => None,
     }
 }

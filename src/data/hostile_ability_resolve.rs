@@ -208,6 +208,22 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 weapon_index_one_based: weapon_index.unwrap_or(5).max(1),
             })
         }
+        "hostile_hyperthermic_decay" | "hyperthermic_decay" => {
+            if timing != TimingWindow::RoundStart {
+                return None;
+            }
+            Some(AbilityEffect::HostileHyperthermicDecay {
+                fraction: value.max(0.0),
+            })
+        }
+        "hostile_defender_mitigation_multiplier" | "hostile_mitigation_multiplier" => {
+            Some(AbilityEffect::HostileDefenderMitigationMultiplier {
+                additive_factor: value.max(0.0),
+            })
+        }
+        "hostile_crit_damage_floor" | "crit_damage_floor" => {
+            Some(AbilityEffect::HostileCritDamageFloorBonus(value.max(0.0)))
+        }
         "attack_multiplier" | "weapon_damage" | "attack" => {
             Some(AbilityEffect::ProcAttackMultiplier {
                 chance: normalize_probability(chance),

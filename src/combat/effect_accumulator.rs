@@ -956,6 +956,9 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileHyperthermicDecay { .. }
+                | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
@@ -1147,6 +1150,9 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileHyperthermicDecay { .. }
+                | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
@@ -1300,6 +1306,9 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileHyperthermicDecay { .. }
+                | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
@@ -1455,6 +1464,9 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileHyperthermicDecay { .. }
+                | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
@@ -1616,6 +1628,9 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileHyperthermicDecay { .. }
+                | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
@@ -1813,6 +1828,9 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
                 | AbilityEffect::HostileCounterStatDebuff { .. }
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
+                | AbilityEffect::HostileHyperthermicDecay { .. }
+                | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
@@ -2055,7 +2073,10 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::HostileKemociteWeaponry { .. }
         | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. } => effect,
         AbilityEffect::HostileCounterStatDebuff { .. } => effect,
-        AbilityEffect::DefenderShieldDrainPerRound { .. } => effect,
+        AbilityEffect::DefenderShieldDrainPerRound { .. }
+        | AbilityEffect::HostileHyperthermicDecay { .. }
+        | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+        | AbilityEffect::HostileCritDamageFloorBonus(_) => effect,
         AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,
         AbilityEffect::BreachCumulativeCritChancePerHit(_)
         | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => effect,

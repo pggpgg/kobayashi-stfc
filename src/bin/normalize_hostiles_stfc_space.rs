@@ -141,7 +141,11 @@ fn systems_from_values(vals: &[Value]) -> Vec<u64> {
 ///
 /// Sub-tags `conqueror_borg_suppressor` / `conqueror_borg_obliterator` drive combat resonance beams
 /// (`crate::combat::conqueror_borg_beams`).
-fn curated_hostile_tags_for_upstream(id: u64, loca_id: Option<u64>) -> Vec<String> {
+fn curated_hostile_tags_for_upstream(
+    id: u64,
+    loca_id: Option<u64>,
+    faction_loca_id: Option<u64>,
+) -> Vec<String> {
     let mut tags: Vec<String> = Vec::new();
     let mut push_unique = |s: &str| {
         let t = s.to_string();
@@ -149,6 +153,10 @@ fn curated_hostile_tags_for_upstream(id: u64, loca_id: Option<u64>) -> Vec<Strin
             tags.push(t);
         }
     };
+
+    if faction_loca_id == Some(82001) {
+        push_unique("aggregation_hostile");
+    }
 
     const CONQUEROR_BORG_IDS: &[u64] = &[
         316662618, 467189343, 500305250, 622949343, 778146301, 80039078, 864202735, 1117012705,
@@ -191,7 +199,8 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
     };
 
     let shield_mitigation = shield_mitigation_from_components(&raw.components);
-    let hostile_tags = curated_hostile_tags_for_upstream(raw.id, loca_id);
+    let faction_loca_id = raw.faction.as_ref().and_then(|f| f.loca_id);
+    let hostile_tags = curated_hostile_tags_for_upstream(raw.id, loca_id, faction_loca_id);
 
     HostileRecord {
         id: id.clone(),

@@ -6,8 +6,12 @@ use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
     pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyTypes,
-    HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow, MITIGATION_CEILING,
-    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    hostile_apex_barrier_bonus_from_defender_crew,
+    hostile_crit_damage_floor_bonus_from_defender_crew,
+    hostile_defender_mitigation_additive_factor_from_defender_crew,
+    hostile_hyperthermic_decay_fraction_from_defender_crew, HostileMitigationParams,
+    OpponentFactionTag, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
@@ -204,6 +208,52 @@ fn apply_profile_player_apex_barrier_tal_gate(
     if v.is_finite() && v != 0.0 {
         attacker.apex_barrier += v;
     }
+}
+
+/// Academy Remote Campus: Apex Barrier vs non-Armada NPC hostiles when Tal is not on bridge.
+fn apply_profile_npc_hostile_apex_barrier_tal_gate(
+    attacker: &mut Combatant,
+    profile: &PlayerProfile,
+    defender_opponent: DefenderOpponent,
+    defender_ship_type: ShipType,
+    attacker_tal_assigned_captain_or_bridge: bool,
+) {
+    if defender_opponent != DefenderOpponent::Hostile
+        || attacker_tal_assigned_captain_or_bridge
+        || defender_ship_type == ShipType::Armada
+    {
+        return;
+    }
+    let v = profile
+        .bonuses
+        .get("apex_barrier_vs_npc_hostile_tal_not_on_bridge")
+        .copied()
+        .unwrap_or(0.0);
+    if v.is_finite() && v != 0.0 {
+        attacker.apex_barrier += v;
+    }
+}
+
+fn apply_profile_conditional_apex_barrier_gates(
+    attacker: &mut Combatant,
+    profile: &PlayerProfile,
+    defender_opponent: DefenderOpponent,
+    defender_ship_type: ShipType,
+    attacker_tal_assigned_captain_or_bridge: bool,
+) {
+    apply_profile_player_apex_barrier_tal_gate(
+        attacker,
+        profile,
+        defender_opponent,
+        attacker_tal_assigned_captain_or_bridge,
+    );
+    apply_profile_npc_hostile_apex_barrier_tal_gate(
+        attacker,
+        profile,
+        defender_opponent,
+        defender_ship_type,
+        attacker_tal_assigned_captain_or_bridge,
+    );
 }
 
 /// Building/profile conditional effect: reduce incoming crit damage from opponent player ships.
@@ -949,6 +999,8 @@ pub(crate) struct CombatSimulationInput {
     pub attacker_roster_officer_ids: Vec<String>,
     pub incoming_shield_mitigation_bonus: f64,
     pub incoming_shield_mitigation_bonus_rounds: u32,
+    /// Net hostile hyperthermic decay fraction (after stabilizer) for round-start hull melt.
+    pub attacker_hyperthermic_decay_fraction: f64,
     /// Copied into [`crate::combat::SimulationConfig::attacker_owner_faction`].
     pub attacker_owner_faction: OpponentFactionTag,
     /// Phase 4d: per-round officer-stat breakpoint context for the attacker crew.
@@ -1140,6 +1192,16 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         } else {
             let mut d = cached_defender.clone();
             d.mitigation = defender_mitigation;
+            if let Some(ref hostile_rec) = shared.hostile_rec {
+                d = enrich_hostile_defender_for_scenario(
+                    d,
+                    hostile_rec,
+                    ship_rec,
+                    &shared.profile,
+                    &merged_static,
+                    &defender_crew,
+                );
+            }
             apply_support_defender_static_if_pvp(shared, &mut d);
             if !shared.player_defender_static_buffs.is_empty() {
                 let mut dstatic = shared.player_defender_static_buffs.clone();
@@ -1233,10 +1295,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             }
         }
         apply_dual_gate_hull_shield_research(&mut attacker, shared);
-        apply_profile_player_apex_barrier_tal_gate(
+        apply_profile_conditional_apex_barrier_gates(
             &mut attacker,
             &shared.profile,
             shared.defender_opponent,
+            shared.defender_ship_type_for_combat(),
             attacker_tal_assigned_captain_or_bridge,
         );
         if shared.defender_opponent == DefenderOpponent::Hostile {
@@ -1271,8 +1334,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         );
         let weapon_damage_profile_additive_pool =
             weapon_damage_profile_additive_pool_from_env(&shared.profile);
-        let profile_weapon_damage_fraction =
-            profile_weapon_damage_fraction_for_combat(&shared.profile);
+        let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
+            &shared.profile,
+            defender_is_outpost_for_scenario(shared),
+            defender_is_armada_hostile_for_scenario(shared),
+        );
         let opponent_enemy_pending = if shared.is_pvp() {
             shared
                 .defender_pending_officer_stat_contributions
@@ -1292,6 +1358,17 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 &dynamic_officer_stat_contributions,
                 cond_ctx,
             );
+        let hyperthermic = shared
+            .hostile_rec
+            .as_ref()
+            .map(|h| {
+                net_attacker_hyperthermic_decay_fraction(
+                    &defender_crew,
+                    &shared.profile,
+                    h.is_aggregation_hostile(),
+                )
+            })
+            .unwrap_or(0.0);
         return CombatSimulationInput {
             attacker,
             defender,
@@ -1315,6 +1392,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             } else {
                 shared.incoming_shield_mitigation_bonus_rounds
             },
+            attacker_hyperthermic_decay_fraction: hyperthermic,
             attacker_owner_faction: shared.attacker_owner_faction,
             officer_stat_round,
         };
@@ -1369,10 +1447,11 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         }
     }
     apply_dual_gate_hull_shield_research(&mut attacker, shared);
-    apply_profile_player_apex_barrier_tal_gate(
+    apply_profile_conditional_apex_barrier_gates(
         &mut attacker,
         &shared.profile,
         shared.defender_opponent,
+        shared.defender_ship_type_for_combat(),
         attacker_tal_assigned_captain_or_bridge,
     );
     if shared.defender_opponent == DefenderOpponent::Hostile {
@@ -1409,7 +1488,22 @@ pub(crate) fn scenario_to_combat_input_from_shared(
 
     let weapon_damage_profile_additive_pool =
         weapon_damage_profile_additive_pool_from_env(&shared.profile);
-    let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(&shared.profile);
+    let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
+        &shared.profile,
+        defender_is_outpost_for_scenario(shared),
+        defender_is_armada_hostile_for_scenario(shared),
+    );
+    let hyperthermic = shared
+        .hostile_rec
+        .as_ref()
+        .map(|h| {
+            net_attacker_hyperthermic_decay_fraction(
+                &defender_crew,
+                &shared.profile,
+                h.is_aggregation_hostile(),
+            )
+        })
+        .unwrap_or(0.0);
     let mut defender = Combatant {
         id: shared.hostile.clone(),
         attack: 0.0,
@@ -1456,6 +1550,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         attacker_roster_officer_ids,
         incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
+        attacker_hyperthermic_decay_fraction: hyperthermic,
         attacker_owner_faction: shared.attacker_owner_faction,
         officer_stat_round: None,
     }
@@ -1475,13 +1570,146 @@ fn weapon_damage_profile_additive_pool_from_env(profile: &PlayerProfile) -> Opti
     Some(if p.is_finite() { p.max(0.0) } else { 0.0 })
 }
 
-fn profile_weapon_damage_fraction_for_combat(profile: &PlayerProfile) -> f64 {
-    let p = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
-    if p.is_finite() {
-        p.max(0.0)
+fn profile_weapon_damage_fraction_for_combat(
+    profile: &PlayerProfile,
+    defender_is_outpost: bool,
+    defender_is_armada_hostile: bool,
+) -> f64 {
+    let mut p = profile.bonuses.get("weapon_damage").copied().unwrap_or(0.0);
+    if !p.is_finite() {
+        p = 0.0;
     } else {
-        0.0
+        p = p.max(0.0);
     }
+    if defender_is_outpost {
+        let outpost = profile
+            .bonuses
+            .get("weapon_damage_vs_outpost")
+            .copied()
+            .unwrap_or(0.0);
+        if outpost.is_finite() && outpost > 0.0 {
+            p += outpost;
+        }
+    }
+    if defender_is_armada_hostile {
+        let armada = profile
+            .bonuses
+            .get("weapon_damage_vs_armada_hostile")
+            .copied()
+            .unwrap_or(0.0);
+        if armada.is_finite() && armada > 0.0 {
+            p += armada;
+        }
+    }
+    p
+}
+
+fn defender_is_outpost_for_scenario(shared: &SharedScenarioData) -> bool {
+    shared
+        .hostile_rec
+        .as_ref()
+        .is_some_and(|h| h.is_outpost)
+}
+
+fn defender_is_armada_hostile_for_scenario(shared: &SharedScenarioData) -> bool {
+    shared
+        .hostile_rec
+        .as_ref()
+        .is_some_and(|h| h.is_group_armada_target())
+}
+
+fn scale_defender_stats_for_hostile_abilities(
+    stats: DefenderStats,
+    defender_crew: &CrewConfiguration,
+) -> DefenderStats {
+    let factor = hostile_defender_mitigation_additive_factor_from_defender_crew(defender_crew);
+    if factor <= 0.0 {
+        return stats;
+    }
+    let mult = 1.0 + factor;
+    DefenderStats {
+        armor: stats.armor * mult,
+        shield_deflection: stats.shield_deflection * mult,
+        dodge: stats.dodge * mult,
+    }
+}
+
+fn apply_hostile_ability_combatant_bonuses(
+    mut defender: Combatant,
+    defender_crew: &CrewConfiguration,
+) -> Combatant {
+    let apex = hostile_apex_barrier_bonus_from_defender_crew(defender_crew);
+    if apex > 0.0 {
+        defender.apex_barrier += apex;
+    }
+    let cdf = hostile_crit_damage_floor_bonus_from_defender_crew(defender_crew);
+    if cdf > 0.0 {
+        defender.crit_damage_floor += cdf;
+    }
+    defender
+}
+
+/// Net round-start hyperthermic decay on the player after Recon Locus stabilizer (percentage points).
+fn net_attacker_hyperthermic_decay_fraction(
+    defender_crew: &CrewConfiguration,
+    profile: &PlayerProfile,
+    hostile_is_aggregation: bool,
+) -> f64 {
+    let raw = hostile_hyperthermic_decay_fraction_from_defender_crew(defender_crew);
+    if raw <= 0.0 {
+        return 0.0;
+    }
+    let mut net = raw;
+    if hostile_is_aggregation {
+        let stabilizer = profile
+            .bonuses
+            .get("hyperthermic_stabilizer_vs_aggregation_hostile")
+            .copied()
+            .unwrap_or(0.0);
+        if stabilizer.is_finite() && stabilizer > 0.0 {
+            net = (net - stabilizer).max(0.0);
+        }
+    }
+    net
+}
+
+fn enrich_hostile_defender_for_scenario(
+    mut defender: Combatant,
+    hostile_rec: &HostileRecord,
+    ship_rec: &crate::data::ship::ShipRecord,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+    defender_crew: &CrewConfiguration,
+) -> Combatant {
+    defender = apply_hostile_ability_combatant_bonuses(defender, defender_crew);
+    let scaled_stats = scale_defender_stats_for_hostile_abilities(
+        hostile_rec.to_defender_stats(),
+        defender_crew,
+    );
+    let base_attacker_stats = effective_attacker_stats_for_mitigation(
+        ship_rec,
+        profile,
+        static_buffs,
+        hostile_rec.ship_type_for_combat(),
+    );
+    let defender_mitigation = mitigation_for_hostile(
+        scaled_stats,
+        base_attacker_stats,
+        hostile_rec.ship_type_for_combat(),
+        hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+        hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+        hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+    );
+    defender.mitigation = defender_mitigation;
+    defender.hostile_mitigation_params = Some(HostileMitigationParams {
+        defender_stats: scaled_stats,
+        base_attacker_stats,
+        ship_type: hostile_rec.ship_type_for_combat(),
+        mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
+        floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
+        ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
+    });
+    defender
 }
 
 /// Merge `Name (TN)` tier suffixes from the candidate into [`ResolveOptions::officer_tiers`].
@@ -1887,7 +2115,11 @@ pub(crate) fn scenario_to_combat_input(
         );
         let weapon_damage_profile_additive_pool =
             weapon_damage_profile_additive_pool_from_env(profile);
-        let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
+        let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
+            profile,
+            hostile_rec.is_outpost,
+            hostile_rec.is_group_armada_target(),
+        );
         let engagement_enemy_types = hostile_rec.engagement_enemy_types_for_combat();
         let cond_ctx = crate::data::profile::OfficerStatConditionContext {
             attacker_ship_class: Some(ship_rec.ship_class.trim().to_string())
@@ -1917,29 +2149,30 @@ pub(crate) fn scenario_to_combat_input(
                 &dynamic_officer_stat_contributions,
                 cond_ctx,
             );
-        let hostile_mitigation_params = HostileMitigationParams {
-            defender_stats: hostile_rec.to_defender_stats(),
-            base_attacker_stats: effective_attacker_stats_for_mitigation(
-                &ship_rec,
-                profile,
-                &static_buffs,
-                hostile_rec.ship_type_for_combat(),
-            ),
-            ship_type: hostile_rec.ship_type_for_combat(),
-            mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
-            floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
-            ceiling: hostile_rec.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
-        };
+        let hyperthermic = net_attacker_hyperthermic_decay_fraction(
+            &defender_crew,
+            profile,
+            hostile_rec.is_aggregation_hostile(),
+        );
+        let mut defender = defender_combatant_from_hostile_record(
+            hostile,
+            &hostile_rec,
+            defender_mitigation,
+            ship_rec.ship_type(),
+            ship_rec.to_defender_stats(),
+            None,
+        );
+        defender = enrich_hostile_defender_for_scenario(
+            defender,
+            &hostile_rec,
+            &ship_rec,
+            profile,
+            &static_buffs,
+            &defender_crew,
+        );
         return CombatSimulationInput {
             attacker,
-            defender: defender_combatant_from_hostile_record(
-                hostile,
-                &hostile_rec,
-                defender_mitigation,
-                ship_rec.ship_type(),
-                ship_rec.to_defender_stats(),
-                Some(hostile_mitigation_params),
-            ),
+            defender,
             defender_crew,
             crew: CrewConfiguration { seats },
             rounds,
@@ -1952,6 +2185,7 @@ pub(crate) fn scenario_to_combat_input(
             attacker_roster_officer_ids,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            attacker_hyperthermic_decay_fraction: hyperthermic,
             attacker_owner_faction: attacker_owner_faction_from_ship(Some(&ship_rec)),
             officer_stat_round,
         };
@@ -2003,7 +2237,8 @@ pub(crate) fn scenario_to_combat_input(
 
     let defender_crew = CrewConfiguration { seats: Vec::new() };
     let weapon_damage_profile_additive_pool = weapon_damage_profile_additive_pool_from_env(profile);
-    let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(profile);
+    let profile_weapon_damage_fraction =
+        profile_weapon_damage_fraction_for_combat(profile, false, false);
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -2043,6 +2278,7 @@ pub(crate) fn scenario_to_combat_input(
         attacker_roster_officer_ids,
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
+        attacker_hyperthermic_decay_fraction: 0.0,
         attacker_owner_faction: attacker_owner_faction_from_ship(resolve_ship(ship).as_ref()),
         officer_stat_round: None,
     }
@@ -3935,6 +4171,97 @@ mod tests {
             false,
         );
         assert!((attacker.apex_barrier - 0.22).abs() < 1e-12);
+    }
+
+    #[test]
+    fn npc_hostile_apex_barrier_profile_bonus_respects_tal_and_armada_gates() {
+        let mut profile = PlayerProfile::default();
+        profile
+            .bonuses
+            .insert("apex_barrier_vs_npc_hostile_tal_not_on_bridge".to_string(), 500.0);
+        let mut attacker = Combatant {
+            id: "s".into(),
+            attack: 1.0,
+            mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            weapons: vec![],
+            end_of_round_damage: 0.0,
+            hull_health: 1.0,
+            shield_health: 1.0,
+            shield_mitigation: 0.8,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            hostile_mitigation_params: None,
+        };
+
+        apply_profile_npc_hostile_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Player,
+            ShipType::Battleship,
+            false,
+        );
+        assert_eq!(attacker.apex_barrier, 0.0);
+
+        apply_profile_npc_hostile_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Hostile,
+            ShipType::Armada,
+            false,
+        );
+        assert_eq!(attacker.apex_barrier, 0.0);
+
+        apply_profile_npc_hostile_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Hostile,
+            ShipType::Battleship,
+            true,
+        );
+        assert_eq!(attacker.apex_barrier, 0.0);
+
+        apply_profile_npc_hostile_apex_barrier_tal_gate(
+            &mut attacker,
+            &profile,
+            DefenderOpponent::Hostile,
+            ShipType::Battleship,
+            false,
+        );
+        assert!((attacker.apex_barrier - 500.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn profile_weapon_damage_fraction_includes_outpost_bonus_when_flagged() {
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert("weapon_damage".to_string(), 0.1);
+        profile
+            .bonuses
+            .insert("weapon_damage_vs_outpost".to_string(), 0.25);
+        assert!((profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12);
+        assert!((profile_weapon_damage_fraction_for_combat(&profile, true, false) - 0.35).abs() < 1e-12);
+    }
+
+    #[test]
+    fn profile_weapon_damage_fraction_includes_armada_hostile_bonus_when_flagged() {
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert("weapon_damage".to_string(), 0.1);
+        profile
+            .bonuses
+            .insert("weapon_damage_vs_armada_hostile".to_string(), 0.02);
+        assert!((profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12);
+        assert!((profile_weapon_damage_fraction_for_combat(&profile, false, true) - 0.12).abs() < 1e-12);
     }
 
     #[test]

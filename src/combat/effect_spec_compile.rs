@@ -325,6 +325,9 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
             | AbilityEffect::HostileCounterStatDebuff { .. }
             | AbilityEffect::DefenderShieldDrainPerRound { .. }
+            | AbilityEffect::HostileHyperthermicDecay { .. }
+            | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+            | AbilityEffect::HostileCritDamageFloorBonus(_)
             | AbilityEffect::DefenderFireDelay { .. }
             | AbilityEffect::RandomDefenderState { .. }
             | AbilityEffect::DecayingAttackMultiplier { .. }

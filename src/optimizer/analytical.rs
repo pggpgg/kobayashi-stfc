@@ -199,6 +199,7 @@ mod tests {
             attacker_roster_officer_ids: Vec::new(),
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
+            attacker_hyperthermic_decay_fraction: 0.0,
             attacker_owner_faction: OpponentFactionTag::Unknown,
             officer_stat_round: None,
         }

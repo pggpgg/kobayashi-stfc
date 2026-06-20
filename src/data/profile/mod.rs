@@ -568,6 +568,9 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         "apex_barrier_vs_player_tal_not_on_bridge" => {
             Some("apex_barrier_vs_player_tal_not_on_bridge")
         }
+        "hyperthermic_stabilizer_vs_aggregation_hostile" => {
+            Some("hyperthermic_stabilizer_vs_aggregation_hostile")
+        }
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),
         // Defensive clamp: ensures the attacker's effective crit multiplier never drops

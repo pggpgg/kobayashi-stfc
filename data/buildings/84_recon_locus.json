@@ -1,7 +1,7 @@
 {
   "id": "building_84",
   "building_name": "Recon Locus",
-  "data_version": "stfcspace-2026-06-13",
+  "data_version": "stfcspace-2026-06-20",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
@@ -10,11 +10,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -52,11 +55,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -94,11 +100,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -136,11 +145,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -178,11 +190,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.01,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -220,11 +235,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -262,11 +280,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -304,11 +325,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -346,11 +370,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -388,11 +415,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -430,11 +460,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -472,11 +505,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -514,11 +550,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -556,11 +595,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -598,11 +640,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -640,11 +685,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.07,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -682,11 +730,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.07,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -724,11 +775,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.07,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -766,11 +820,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.07,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -808,11 +865,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.07,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -850,11 +910,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -892,11 +955,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -934,11 +1000,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -976,11 +1045,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1018,11 +1090,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1060,11 +1135,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1102,11 +1180,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1144,11 +1225,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1186,11 +1270,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1228,11 +1315,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1270,11 +1360,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1312,11 +1405,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1354,11 +1450,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1396,11 +1495,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1438,11 +1540,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1480,11 +1585,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1522,11 +1630,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1564,11 +1675,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1606,11 +1720,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1648,11 +1765,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1690,11 +1810,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1732,11 +1855,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1774,11 +1900,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1816,11 +1945,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1858,11 +1990,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1900,11 +2035,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1942,11 +2080,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -1984,11 +2125,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2026,11 +2170,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2068,11 +2215,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2110,11 +2260,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2152,11 +2305,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.55,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2194,11 +2350,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2236,11 +2395,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.65,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2278,11 +2440,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2320,11 +2485,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.8,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2362,11 +2530,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 0.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2404,11 +2575,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2446,11 +2620,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2488,11 +2665,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2530,11 +2710,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2572,11 +2755,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1.6,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2614,11 +2800,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2656,11 +2845,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 1.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2698,11 +2890,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 2.1,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2740,11 +2935,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 2.3,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2782,11 +2980,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 2.5,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2824,11 +3025,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 2.7,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2866,11 +3070,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 2.9,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2908,11 +3115,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2950,11 +3160,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -2992,11 +3205,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3034,11 +3250,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3076,11 +3295,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3118,11 +3340,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3160,11 +3385,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3202,11 +3430,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3244,11 +3475,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3286,11 +3520,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
@@ -3328,11 +3565,14 @@
       "ops_max": null,
       "bonuses": [
         {
-          "stat": "buff_1422729787",
+          "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
           "value": 3.25,
           "operator": "add",
-          "conditions": [],
-          "notes": "auto-imported from data.stfc.space; loca_id=82101"
+          "conditions": [
+            "ship_combat_only",
+            "defender_is_npc_hostile"
+          ],
+          "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
         },
         {
           "stat": "buff_924439393",
