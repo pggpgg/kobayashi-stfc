@@ -18,7 +18,7 @@ Sync ingress is **not** covered by `KOBAYASHI_API_KEY` (see below): it keeps its
 
 ## Release binaries and integrity
 
-Prebuilt **GitHub Release** archives (Linux, macOS arm64, Windows) ship the `kobayashi` binary and `frontend/dist/` only; they are meant to be extracted **on top of** a checkout of the same **git tag** so `data/`, `profiles/`, and other repo paths remain available. See [`packaging/RELEASE-BUNDLE-README.txt`](../packaging/RELEASE-BUNDLE-README.txt).
+Prebuilt **GitHub Release** archives (Linux, macOS arm64, Windows) are self-contained. They ship the `kobayashi` binary, built `frontend/dist/`, normalized runtime `data/`, and a starter `profiles/demo/`; no repository checkout or build toolchain is required. Maintenance-only upstream caches and import sources are excluded. See [`packaging/RELEASE-BUNDLE-README.txt`](../packaging/RELEASE-BUNDLE-README.txt).
 
 Each release includes **`SHA256SUMS`** (SHA-256 of every attached archive). After downloading, verify before unpacking, for example:
 

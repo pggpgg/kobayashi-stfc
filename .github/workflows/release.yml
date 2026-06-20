@@ -91,18 +91,21 @@ jobs:
           npm ci
           npm run build
 
-      - name: Assemble bundle
+      - name: Assemble self-contained bundle
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "stage/${STAGE_DIR}/frontend"
           if [ -f target/release/kobayashi.exe ]; then
-            cp target/release/kobayashi.exe "stage/${STAGE_DIR}/"
+            BINARY=target/release/kobayashi.exe
           else
-            cp target/release/kobayashi "stage/${STAGE_DIR}/"
+            BINARY=target/release/kobayashi
           fi
-          cp -R frontend/dist "stage/${STAGE_DIR}/frontend/dist"
-          cp packaging/RELEASE-BUNDLE-README.txt "stage/${STAGE_DIR}/README.txt"
+          node scripts/stage-release-bundle.mjs \
+            --stage-dir "stage/${STAGE_DIR}" \
+            --binary "$BINARY"
+
+      - name: Smoke-test extracted-bundle layout
+        run: node scripts/smoke-release-bundle.mjs --bundle-dir "stage/${{ env.STAGE_DIR }}"
 
       - name: Package (tar.gz)
         if: matrix.ext == 'tar.gz'

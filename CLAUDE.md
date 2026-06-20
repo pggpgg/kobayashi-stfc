@@ -34,7 +34,7 @@ cargo test --lib resolve_crew
 # Lint
 cargo clippy --all-targets
 
-# Start the web server (run from project root so it can find frontend/dist and data/)
+# Start the web server (a checkout root or self-contained release bundle both work)
 ./target/release/kobayashi serve
 # Binds to 127.0.0.1:3000 by default; override with KOBAYASHI_BIND env var
 
@@ -174,7 +174,7 @@ The library is at `src/lib.rs` and exposes these modules:
 - `**src/parallel/`** — Rayon thread pool integration; each thread owns its PRNG instance.
 - `**src/cli.rs**` — CLI dispatch (used by tests via `run_with_args`); `src/main.rs` is the binary entry point.
 
-**Key constraint:** Always run the server from the project root so it resolves `frontend/dist` and `data/` correctly.
+**Runtime assets:** At startup the binary resolves `data/`, `profiles/`, and `frontend/dist/` from `KOBAYASHI_HOME`, the current directory, the executable directory, or the compile-time checkout as a development fallback. Release archives therefore run independently after extraction.
 
 ### Data layout
 
@@ -254,4 +254,3 @@ Community-known crew lists stored in `data/heuristics/*.txt`. Format: `label:Cap
 - **LCARS as source of truth**: officer abilities are defined in YAML, not code. The engine resolves YAML → `BuffSet` before the fight loop; only dynamic effects (decay, accumulate, proc) are evaluated inside the loop.
 - **SplitMix64 PRNG**: deterministic per seed, one instance per Rayon thread. Same seed → same fight outcome.
 - **Data provenance**: `ships_extended/index.json` and `hostiles/index.json` carry `data_version` and `source_note` fields documenting the upstream source.
-

@@ -8,4 +8,5 @@ pub mod mechanics;
 pub mod optimizer;
 pub mod parallel;
 pub(crate) mod perf_log;
+pub mod runtime_paths;
 pub mod server;

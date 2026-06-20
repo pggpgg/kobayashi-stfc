@@ -7,7 +7,7 @@ This uses the same sync protocol as [Spocks.club](https://spocks.club/syncing/);
 ## Requirements
 
 - [STFC Community Mod](https://github.com/netniV/stfc-mod/releases) installed and working with Star Trek Fleet Command (Windows or Wine/macOS as per the mod’s INSTALL.md).
-- Kobayashi server running (e.g. `kobayashi serve`). **Run the server from the project root** so that `data/officers/` and `profiles/` resolve correctly.
+- Kobayashi server running (e.g. `kobayashi serve`) from either a source checkout or an extracted self-contained release. The binary discovers `data/` and `profiles/` beside itself; set `KOBAYASHI_HOME` only when storing those assets elsewhere.
 
 ## Configuration
 

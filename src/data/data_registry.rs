@@ -90,7 +90,7 @@ impl DataRegistry {
             .flatten();
         let hostile_index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
         let hostile_loca_display =
-            load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR")));
+            load_hostile_loca_display_names(crate::runtime_paths::asset_root());
 
         // LCARS is the sole officer ability source, built in-process from canonical (no committed
         // monolith); `None` only if the source data fails to load.
@@ -98,10 +98,9 @@ impl DataRegistry {
 
         let forbidden_chaos_catalog = load_forbidden_chaos(DEFAULT_FORBIDDEN_CHAOS_PATH);
         let research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
-        let support_buffs_catalog = load_support_buff_catalog(
-            Path::new(env!("CARGO_MANIFEST_DIR")).join(DEFAULT_SUPPORT_BUFFS_PATH),
-        )
-        .or_else(|| load_support_buff_catalog(Path::new(DEFAULT_SUPPORT_BUFFS_PATH)));
+        let support_buffs_catalog =
+            load_support_buff_catalog(crate::runtime_paths::resolve(DEFAULT_SUPPORT_BUFFS_PATH))
+                .or_else(|| load_support_buff_catalog(Path::new(DEFAULT_SUPPORT_BUFFS_PATH)));
 
         Ok(Arc::new(DataRegistry {
             officers,

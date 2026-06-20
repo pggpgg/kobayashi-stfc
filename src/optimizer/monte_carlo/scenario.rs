@@ -2187,9 +2187,10 @@ pub(crate) fn build_shared_scenario_data_standalone(
         }
     }
 
-    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let support_cat =
-        SupportBuffCatalog::load(manifest.join(support_buffs::DEFAULT_SUPPORT_BUFFS_PATH)).ok();
+    let support_cat = SupportBuffCatalog::load(crate::runtime_paths::resolve(
+        support_buffs::DEFAULT_SUPPORT_BUFFS_PATH,
+    ))
+    .ok();
     let (resolved_support_buffs, unknown_support_buff_ids) = match (
         support_cat.as_ref(),
         support_buffs.attacker.filter(|r| !r.is_empty()),

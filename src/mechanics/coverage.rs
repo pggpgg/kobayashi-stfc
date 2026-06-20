@@ -83,7 +83,7 @@ pub struct MechanicsCoverageReport {
 }
 
 fn root_dir() -> &'static Path {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+    crate::runtime_paths::asset_root()
 }
 
 fn bump(map: &mut HashMap<String, TierCounts>, key: &str, tier: MechanicCoverageTier) {

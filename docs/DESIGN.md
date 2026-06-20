@@ -38,7 +38,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 
 ### Design Principles
 
-- **Local server + Web UI**: Rust backend using **Tokio + Axum** (`src/server/`). CPU-heavy handlers offload work with `tokio::task::spawn_blocking` and share a process-wide **semaphore** (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`) so many concurrent requests do not oversubscribe the machine; optional bounded queue wait returns HTTP 503 when saturated (`KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`). The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) when the server is run from the project root (via `tower-http` static serving and SPA fallback). No Docker; run from project root so the server finds `frontend/dist` and `data/`.
+- **Local server + Web UI**: Rust backend using **Tokio + Axum** (`src/server/`). CPU-heavy handlers offload work with `tokio::task::spawn_blocking` and share a process-wide **semaphore** (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`) so many concurrent requests do not oversubscribe the machine; optional bounded queue wait returns HTTP 503 when saturated (`KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`). The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) via `tower-http` static serving and SPA fallback. Runtime assets are discovered from `KOBAYASHI_HOME`, the working directory, or beside the executable, allowing release archives to run independently after extraction. No Docker.
 - **Community-driven data**: Officers defined in LCARS (YAML), hostiles and ships in JSON. Community contributes definitions via pull requests. Schema validation catches errors automatically.
 - **Graceful degradation**: Unknown ability types are logged and skipped, not crashed on. Accuracy improves incrementally as more mechanics are supported.
 - **Performance-first**: The combat engine is the hot loop. Zero allocations, no dynamic dispatch, pre-computed buffs. Target: 2–5M simulations/sec/core.
@@ -965,7 +965,7 @@ Since officers are YAML files following the LCARS spec, a GitHub repository can 
 
 ### 10.1 Delivery
 
-The frontend is a React app, built to static files (`npm run build` in `frontend/`). It is **not embedded** in the Rust binary: the server serves it from the filesystem (`frontend/dist` or `dist`) when run from the project root. No separate frontend dev server is needed for production; the same server serves both the API and the SPA.
+The frontend is a React app, built to static files (`npm run build` in `frontend/`). It is **not embedded** in the Rust binary: the server serves it from the filesystem (`frontend/dist` or `dist`) under the discovered runtime asset root. No separate frontend dev server is needed for production; the same server serves both the API and the SPA.
 
 ### 10.2 Styling
 

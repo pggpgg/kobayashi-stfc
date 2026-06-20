@@ -41,7 +41,7 @@ KOBAYASHI solves this by brute force: thousands of fights per crew, every viable
 - Three optimizer strategies — exhaustive sweep, tiered scout→confirm, genetic algorithm — auto-selected from search-space size
 - **LCARS** (Language for Combat Ability Resolution & Simulation): officer abilities live in declarative YAML, no code changes needed to add new officers
 - Player profile bonuses for research, buildings, reputation, artifacts, exocomps, and forbidden tech
-- Local-first: a single binary serves the React web UI from `frontend/dist`; no Docker, no cloud
+- Local-first: release archives bundle the server, web UI, runtime game data, and a starter profile; no Docker, no cloud
 
 ---
 
@@ -51,12 +51,12 @@ KOBAYASHI solves this by brute force: thousands of fights per crew, every viable
 
 Prebuilt binaries for Linux x86_64, macOS arm64, and Windows x86_64 are published on every tagged release.
 
-1. Grab the archive for your OS from [Releases](https://github.com/pggpgg/kobayashi-stfc/releases) **and** check out the repo at the matching tag — the binary needs `data/` and `profiles/` next to it. Verify the `SHA256SUMS` file ([deployment notes](docs/DEPLOYMENT_SECURITY.md)).
-2. From the checkout root:
+1. Grab the archive for your OS from [Releases](https://github.com/pggpgg/kobayashi-stfc/releases), verify it against `SHA256SUMS` ([deployment notes](docs/DEPLOYMENT_SECURITY.md)), and extract it. The archive is self-contained; no repository checkout or build toolchain is required.
+2. From the extracted folder:
 
    ```bash
    ./kobayashi serve
-   # Windows: target\release\kobayashi.exe serve
+   # Windows PowerShell: .\kobayashi.exe serve
    ```
 
 3. Open <http://localhost:3000>.
@@ -116,7 +116,7 @@ kobayashi/
 └── docs/             design, deployment, performance, LCARS, data pipeline
 ```
 
-**Architecture at a glance.** Tokio + Axum 0.7 multi-threaded runtime; REST-first with Server-Sent Events for optimize-job progress; CPU-heavy handlers run under `spawn_blocking` behind a process-wide admission semaphore (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`). The React SPA is built separately and served from `frontend/dist` — run the server from the repo root so it can find that directory and `data/`. Deep dive: [CLAUDE.md § Architecture](CLAUDE.md) and [docs/DESIGN.md](docs/DESIGN.md).
+**Architecture at a glance.** Tokio + Axum 0.7 multi-threaded runtime; REST-first with Server-Sent Events for optimize-job progress; CPU-heavy handlers run under `spawn_blocking` behind a process-wide admission semaphore (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`). The React SPA is built separately and served from `frontend/dist`. At startup the binary discovers runtime assets from `KOBAYASHI_HOME`, the working directory, or the executable directory, so extracted release bundles work without a checkout. Deep dive: [CLAUDE.md § Architecture](CLAUDE.md) and [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 

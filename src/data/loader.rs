@@ -148,7 +148,7 @@ static HOSTILE_LOCA_DISPLAY_NAMES: OnceLock<HashMap<u64, String>> = OnceLock::ne
 
 fn hostile_loca_display_names() -> &'static HashMap<u64, String> {
     HOSTILE_LOCA_DISPLAY_NAMES
-        .get_or_init(|| load_hostile_loca_display_names(Path::new(env!("CARGO_MANIFEST_DIR"))))
+        .get_or_init(|| load_hostile_loca_display_names(crate::runtime_paths::asset_root()))
 }
 
 fn resolve_hostile_by_display_name_uncached(

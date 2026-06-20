@@ -1050,6 +1050,9 @@ battlelogs: kobayashi battlelogs [--profile <id>] [--sample]"
 }
 
 fn main() {
+    if let Err(error) = kobayashi::runtime_paths::activate_asset_root() {
+        eprintln!("warning: could not activate Kobayashi asset root: {error}");
+    }
     let _ = ensure_profile_index_bootstrap();
     let _ = prune_ephemeral_scenario_test_profiles();
     let _ = sync_profile_index_with_disk();
