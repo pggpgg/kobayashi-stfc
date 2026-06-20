@@ -278,6 +278,8 @@ pub enum AbilityEffect {
     },
     /// Multiplier on opponent captain-maneuver seat effects (1.0 = no change; 0.8 = 20% reduction).
     OpponentCaptainManeuverMultiplier(f64),
+    /// Multiplier on this crew's captain-maneuver seat effects (1.0 = no change; 1.04 = +4% effectiveness).
+    CaptainManeuverMultiplier(f64),
     /// Captain-only meta effect (Pike / McCoy / Picard `OffAbilityEffect`). Consumed at combat
     /// setup via [`sum_bridge_ability_effectiveness_add`] + [`scale_crew_bridge_ability_effects`];
     /// not applied per round. Value is the additive bonus (e.g. `0.4` for +40%).
@@ -726,6 +728,19 @@ pub fn opponent_captain_maneuver_multiplier_from_effects(effects: &[ActiveAbilit
     mult
 }
 
+/// Product of [`AbilityEffect::CaptainManeuverMultiplier`] from combat-begin rows (default 1.0).
+pub fn captain_maneuver_multiplier_from_effects(effects: &[ActiveAbilityEffect]) -> f64 {
+    let mut mult = 1.0_f64;
+    for e in effects {
+        if let AbilityEffect::CaptainManeuverMultiplier(m) = e.effect {
+            if m.is_finite() && m > 0.0 {
+                mult *= m;
+            }
+        }
+    }
+    mult
+}
+
 /// Sum additive bridge-ability effectiveness bonuses from combat-begin rows (Pike captain, etc.).
 pub fn sum_bridge_ability_effectiveness_add(effects: &[ActiveAbilityEffect]) -> f64 {
     effects
@@ -875,15 +890,16 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => {}
         AbilityEffect::BridgeAbilityEffectivenessBonus(_)
         | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+        | AbilityEffect::CaptainManeuverMultiplier(_)
         | AbilityEffect::DefenderFireDelay { .. }
         | AbilityEffect::RandomDefenderState { .. }
         | AbilityEffect::ConquerorBorgBeamSuppression => {}
     }
 }
 
-/// Scale captain-maneuver seat effects on `crew` (PvP defender debuff from attacker LCARS).
+/// Scale captain-maneuver seat effects on `crew` (debuff when `multiplier < 1`, buff when `> 1`).
 pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multiplier: f64) {
-    if multiplier >= 1.0 - 1e-12 {
+    if !multiplier.is_finite() || (multiplier - 1.0).abs() < 1e-12 {
         return;
     }
     for seat in &mut crew.seats {

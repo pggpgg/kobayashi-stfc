@@ -989,6 +989,26 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::CaptainManeuverEffectiveness => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let mult = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" => 1.0 + v,
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
+                    (1.0 - v).max(0.0)
+                }
+                _ => 1.0 + v,
+            };
+            Ok((
+                timing,
+                AbilityEffect::CaptainManeuverMultiplier(mult),
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::BridgeAbilityEffectiveness => {
             let v = scalar_fraction(
                 spec.value

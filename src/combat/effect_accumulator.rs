@@ -963,6 +963,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
@@ -1153,6 +1154,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
@@ -1305,6 +1307,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
@@ -1459,6 +1462,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
@@ -1619,6 +1623,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
@@ -1815,6 +1820,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+                | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
@@ -2057,7 +2063,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,
         AbilityEffect::RandomDefenderState { .. } => effect,
-        AbilityEffect::OpponentCaptainManeuverMultiplier(_) => effect,
+        AbilityEffect::OpponentCaptainManeuverMultiplier(_) | AbilityEffect::CaptainManeuverMultiplier(_) => effect,
         AbilityEffect::BridgeAbilityEffectivenessBonus(_) => effect,
         AbilityEffect::AccuracyBonus(_) => effect,
         AbilityEffect::DodgeBonus(_) => effect,

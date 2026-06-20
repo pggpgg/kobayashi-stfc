@@ -202,8 +202,10 @@ pub enum AbilityModifierSpec {
     AttackerWeaponRecharge,
     /// LCARS `addrandomstate` on round start — apply morale, burning, or hull breach at random.
     RandomDefenderState,
-    /// LCARS `cptmaneuvereffect` — scale opponent captain maneuver seat effects (PvP-shaped).
+    /// LCARS `cptmaneuvereffect` on `target: enemy` — scale opponent captain maneuver seat effects (PvP-shaped).
     OpponentCaptainManeuverEffect,
+    /// LCARS `captain_maneuver_effect` on `target: self` — scale this crew's captain maneuver seat (McCoy / Crusher bridge).
+    CaptainManeuverEffectiveness,
     /// LCARS `offabilityeffect` at combat begin (Pike / McCoy / Picard captain) — additive bonus to
     /// bridge officer ability magnitudes: `effective = min(1, base × (1 + bonus))` for capped stats.
     BridgeAbilityEffectiveness,

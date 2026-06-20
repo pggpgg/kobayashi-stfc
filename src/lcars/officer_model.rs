@@ -1138,15 +1138,28 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("officer_health".into(), "multiply".into(), v)
         }
         "OfficerStatAll" => {
-            let v = if op.eq_ignore_ascii_case("MultiplyAdd") {
-                1.0 + val
+            let (operator, v) = if op.eq_ignore_ascii_case("MultiplySub")
+                || op.eq_ignore_ascii_case("MultiplyBaseSub")
+            {
+                ("sub".to_string(), val)
+            } else if op.eq_ignore_ascii_case("MultiplyAdd") {
+                ("multiply".to_string(), 1.0 + val)
             } else {
-                val
+                ("multiply".to_string(), val)
             };
-            MappedEffect::StatModify("officer_stat_all".into(), "multiply".into(), v)
+            MappedEffect::StatModify("officer_stat_all".into(), operator, v)
         }
         "AllReloadSpeed" | "AllLoadSpeed" => MappedEffect::Tag(map_allreloadspeed_tag(a, op)),
-        "CptManeuverEffect" => MappedEffect::Tag("cptmaneuvereffect:unmapped".into()),
+        "CptManeuverEffect" => {
+            let target = map_target(a);
+            let operator = map_lcars_operator(a.operation.as_deref().unwrap_or("Add"));
+            let stat = if target == "enemy" {
+                "opponent_captain_maneuver"
+            } else {
+                "captain_maneuver_effect"
+            };
+            MappedEffect::StatModify(stat.into(), operator, val)
+        }
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
         "AllDefenses" => {

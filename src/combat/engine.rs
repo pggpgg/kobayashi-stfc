@@ -22,7 +22,8 @@ use crate::combat::abilities::{
     filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
     hostile_crit_damage_reduction_active_at_round, hostile_denticle_blade_gates_weapon,
     hostile_kemocite_attack_multiplier_bonus, hostile_kemocite_try_add_stack,
-    hostile_lethal_end_of_round_hull_damage, opponent_captain_maneuver_multiplier_from_effects,
+    hostile_lethal_end_of_round_hull_damage, captain_maneuver_multiplier_from_effects,
+    opponent_captain_maneuver_multiplier_from_effects,
     roll_hostile_denticle_blade_at_combat_begin, scale_crew_captain_maneuver_effects,
     sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
     sum_breach_cumulative_crit_damage_per_crit, sum_dodge_bonus,
@@ -323,6 +324,9 @@ pub fn build_combat_setup_with_officer_stat(
     let attacker_accuracy_bonus = sum_accuracy_bonus(&combat_begin_filtered);
     let attacker_dodge_bonus =
         sum_dodge_bonus(&combat_begin_filtered) + hostile_engagement_defensive;
+    let captain_maneuver_multiplier =
+        captain_maneuver_multiplier_from_effects(&combat_begin_filtered);
+    scale_crew_captain_maneuver_effects(&mut attacker_crew, captain_maneuver_multiplier);
     let opponent_captain_maneuver_multiplier =
         opponent_captain_maneuver_multiplier_from_effects(&combat_begin_filtered);
     scale_crew_captain_maneuver_effects(&mut defender_crew, opponent_captain_maneuver_multiplier);

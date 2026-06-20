@@ -22,7 +22,7 @@ strike-team-ortegas-d9df30: "Bridge AllReloadSpeed vs player on BB: canonical tr
 vixis-9eec06: "Captain enemy_delay 2R at round start; chance rank-scaled."
 zeph-21ee5c: "AddRandomState vs NPC hostiles at round start: rank-scaled proc chance; weighted 8:4:2 Morale / Hull Breach / Burning on defender; defender Morale boosts counter-fire primary pierce (BB/INT)."
 doctor-t-ana-b98f82: "AddRandomState vs player defenders only (PvP); same weighted states and rank proc as Zeph; inactive in default hostile optimize."
-kras-a47042: "CptManeuverEffect + enemy OfficerStatAll are PvP-gated (EnemyPlayer); inactive vs NPC hostiles."
+kras-a47042: "PvP-only: captain Art of War debuffs opponent captain maneuver; bridge Know Your Enemy debuffs enemy bridge officer stats (no-op vs NPC hostiles)."
 pike-1e7d0d: "Captain OffAbilityEffect scales bridge combat abilities by min(1, base×(1+X)) vs hostiles ≤70; SelfBridge only (not captain-seat bridge row)."
 
 # combat_tag_gaps officers (manual fidelity; nc_label stays until economy tags marked :non_combat)
