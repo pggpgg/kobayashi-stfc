@@ -69,7 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
-          cargo xtask bench-check --write-baseline benchmark_results.fresh.log
+          cargo xtask bench-check --baseline benchmark_results.fresh.log --write-baseline
 
       - name: Upload benchmark baseline log artifact
         if: matrix.slug == 'linux-x86_64'
