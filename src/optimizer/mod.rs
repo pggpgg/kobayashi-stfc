@@ -1908,6 +1908,16 @@ mod tests {
             vec![candidate_with("The Doctor")],
         );
         assert!(pvp_loot_officer.is_empty());
+
+        let (pvp_explicitly_banned_officer, _) =
+            enforce_candidate_optimization_eligibility_with_registry(
+                &registry,
+                profile,
+                1,
+                true,
+                vec![candidate_with("SNW La'an")],
+            );
+        assert!(pvp_explicitly_banned_officer.is_empty());
     }
 
     /// Matchup-prior injection from `optimize_history` uses the same legality gate as warm-start

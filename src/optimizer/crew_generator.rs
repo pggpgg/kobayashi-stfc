@@ -1543,7 +1543,8 @@ mod tests {
     use crate::data::data_registry::DataRegistry;
     use crate::data::heuristics::{
         below_decks_combat_relevance_rank, has_loot_below_decks_slot_ability,
-        has_pvp_below_decks_slot_ability, BelowDecksCombatRelevanceRank,
+        has_pvp_below_decks_slot_ability, is_pvp_below_decks_banned,
+        BelowDecksCombatRelevanceRank,
     };
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
@@ -1618,6 +1619,7 @@ mod tests {
 
         let mut pvp_specific_count = 0;
         let mut loot_count = 0;
+        let mut explicitly_banned_count = 0;
         for officer in registry.officers() {
             if has_pvp_below_decks_slot_ability(officer) {
                 pvp_specific_count += 1;
@@ -1627,9 +1629,14 @@ mod tests {
                 loot_count += 1;
                 assert!(!contains(&pvp.below_decks, &officer.name));
             }
+            if is_pvp_below_decks_banned(officer) {
+                explicitly_banned_count += 1;
+                assert!(!contains(&pvp.below_decks, &officer.name));
+            }
         }
         assert!(pvp_specific_count > 0);
         assert!(loot_count > 0);
+        assert_eq!(explicitly_banned_count, 47); // V'Ger Ilia is not in the current catalog.
     }
 
     #[test]

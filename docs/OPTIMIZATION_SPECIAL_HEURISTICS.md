@@ -41,7 +41,7 @@ Before any strategy runs, [`build_officer_pools*`](../src/optimizer/crew_generat
 | Captain ability required | captain | `is_captain_eligible` (captain-slot ability + not banned) |
 | Seat compatibility | bridge / BD | `can_fill_position` from officer `slot` field |
 | Below-decks pool mode | below-decks | [`BelowDecksPoolMode`](../src/data/heuristics.rs): **strict/scored** = must have below-decks ability; **relaxed** = any legal BD seat |
-| Scenario-specific exclusions | below-decks | PvP-only and loot ability filters described below |
+| Scenario-specific exclusions | below-decks | PvP-only and explicit PvP ban filters described below |
 | Below-decks ordering | below-decks | combat relevance rank + LCARS power tiebreak ([`sort_below_decks_by_rank_and_power`](../src/optimizer/crew_generator.rs)) |
 | Search constraints | pools narrowed | [`narrow_officer_pools_for_constraints`](../src/optimizer/crew_generator.rs) — `captain_must_be`, exclude lists, officer groups |
 
@@ -54,7 +54,7 @@ Default API below-decks mode is **strict** ([`BelowDecksPoolMode::default`](../s
 These are hard eligibility rules, not ranking preferences:
 
 - **Outside PvP mode:** never use a below-decks officer whose below-decks ability is PvP-specific (identified by the canonical `EnemyPlayer` condition).
-- **In PvP mode:** never use a below-decks officer whose below-decks ability provides combat loot or post-combat resource drops.
+- **In PvP mode:** never use an officer in `PVP_BELOW_DECKS_BANNED_SOURCE_IDS` below decks. The explicit list includes loot/resource-drop officers plus other officers whose below-decks effects should not enter PvP optimization. Loot classification remains a fallback so newly added loot officers are also excluded before the explicit list is updated.
 
 **PvP mode** means an optimization that simulates combat against a player ship. All other optimization targets are outside PvP mode. [`is_below_decks_eligible_for_optimization`](../src/data/heuristics.rs) defines the classifications. Pool construction applies them before candidate generation, and [`enforce_candidate_optimization_eligibility_with_registry`](../src/optimizer/mod.rs) applies them to heuristic seeds, warm starts, and history references. This keeps the rules hard across exhaustive, sampled, tiered, and genetic strategies rather than merely lowering the affected officers' rank.
 

@@ -8,6 +8,8 @@ pub const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canoni
 #[derive(Debug, Clone, Deserialize)]
 pub struct Officer {
     pub id: String,
+    #[serde(default)]
+    pub source_officer_id: Option<String>,
     pub name: String,
     #[serde(default)]
     pub slot: Option<String>,

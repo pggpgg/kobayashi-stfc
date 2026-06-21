@@ -95,6 +95,18 @@ const LOOT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "XindiHostileLoot",
 ];
 
+/// STFC source ids for officers that must never occupy below-decks seats during PvP optimization.
+const PVP_BELOW_DECKS_BANNED_SOURCE_IDS: &[&str] = &[
+    "2543722471", "3523093667", "2871265794", "4290764940", "1442833808", "802343108",
+    "1022775390", "1421610149", "38768657", "3849424588", "1458469333", "2120397875",
+    "497650232", "3423547423", "2397371699", "507415640", "1903302017", "4114433540",
+    "3221659017", "1039659244", "597303582", "3662189922", "2729881938", "2402639187",
+    "2087036948", "473853704", "3083230680", "3038078185", "4294120304", "2458983580",
+    "2173095604", "1409510538", "3594463469", "3814065186", "2100903263", "807303933",
+    "1352288560", "3242236216", "1738777089", "3339117238", "901708334", "1983933897",
+    "3662990708", "766153048", "3979936827", "2024435434", "390339249", "2500610530",
+];
+
 /// How to assign below-decks officers when the seed lists more candidates than
 /// the ship has slots.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -317,13 +329,22 @@ pub fn has_loot_below_decks_slot_ability(officer: &Officer) -> bool {
     })
 }
 
+/// True when the officer is explicitly banned from below-decks seats in PvP optimization.
+pub fn is_pvp_below_decks_banned(officer: &Officer) -> bool {
+    officer.source_officer_id.as_deref().is_some_and(|source_id| {
+        PVP_BELOW_DECKS_BANNED_SOURCE_IDS
+            .iter()
+            .any(|id| source_id == *id)
+    })
+}
+
 /// Hard optimizer eligibility rule for below-decks officers.
 ///
 /// - Non-PvP optimization excludes PvP-gated below-decks abilities.
 /// - PvP optimization excludes loot-providing below-decks abilities.
 pub fn is_below_decks_eligible_for_optimization(officer: &Officer, pvp_mode: bool) -> bool {
     if pvp_mode {
-        !has_loot_below_decks_slot_ability(officer)
+        !is_pvp_below_decks_banned(officer) && !has_loot_below_decks_slot_ability(officer)
     } else {
         !has_pvp_below_decks_slot_ability(officer)
     }
@@ -711,9 +732,18 @@ mod tests {
         combinations, filter_heuristic_seed_crews, BelowDecksStrategy, ParsedHeuristicsCrew,
     };
 
+    #[test]
+    fn pvp_below_decks_ban_list_has_48_unique_source_ids() {
+        let unique: std::collections::HashSet<_> =
+            super::PVP_BELOW_DECKS_BANNED_SOURCE_IDS.iter().collect();
+        assert_eq!(super::PVP_BELOW_DECKS_BANNED_SOURCE_IDS.len(), 48);
+        assert_eq!(unique.len(), 48);
+    }
+
     fn officer_named(name: &str, group: Option<&str>, ability_slots: &[&str]) -> Officer {
         Officer {
             id: format!("id-{name}"),
+            source_officer_id: None,
             name: name.to_string(),
             slot: None,
             group: group.map(String::from),
