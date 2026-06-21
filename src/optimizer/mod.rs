@@ -23,7 +23,8 @@ use std::collections::{HashMap, HashSet};
 use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
-use crate::data::heuristics::BelowDecksPoolMode;
+use crate::data::heuristics::{is_below_decks_eligible_for_optimization, BelowDecksPoolMode};
+use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
@@ -113,9 +114,26 @@ use crate::parallel::batch_ranges;
 const OPTIMIZE_PROGRESS_BATCH_COUNT: usize = 40;
 
 fn apply_crew_constraints(
-    candidates: Vec<CrewCandidate>,
+    mut candidates: Vec<CrewCandidate>,
     scenario: &OptimizationScenario<'_>,
 ) -> Vec<CrewCandidate> {
+    if let Ok(officers) = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH) {
+        let officer_by_name: HashMap<String, _> = officers
+            .iter()
+            .map(|officer| (normalize_officer_name(&officer.name), officer))
+            .collect();
+        let pvp_mode = scenario.pvp.is_some();
+        candidates.retain(|candidate| {
+            candidate.below_decks.iter().all(|name| {
+                officer_by_name
+                    .get(&normalize_officer_name(name))
+                    .is_none_or(|officer| {
+                        is_below_decks_eligible_for_optimization(officer, pvp_mode)
+                    })
+            })
+        });
+    }
+
     match &scenario.constraints {
         Some(c) => filter_candidates(candidates, c),
         None => candidates,
@@ -135,10 +153,38 @@ pub fn enforce_candidate_legality_with_registry(
     below_decks_slots: usize,
     candidates: Vec<CrewCandidate>,
 ) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
+    enforce_candidate_legality_inner(registry, profile_id, below_decks_slots, None, candidates)
+}
+
+/// Enforce ordinary crew legality plus the hard scenario-specific below-decks optimizer rules.
+pub fn enforce_candidate_optimization_eligibility_with_registry(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    pvp_mode: bool,
+    candidates: Vec<CrewCandidate>,
+) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
+    enforce_candidate_legality_inner(
+        registry,
+        profile_id,
+        below_decks_slots,
+        Some(pvp_mode),
+        candidates,
+    )
+}
+
+fn enforce_candidate_legality_inner(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    pvp_mode: Option<bool>,
+    candidates: Vec<CrewCandidate>,
+) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
     let mut summary = CandidateLegalitySummary::default();
     let Some(pools) = build_officer_pools_from_registry(
         registry,
         BelowDecksPoolMode::Relaxed,
+        pvp_mode,
         profile_id,
         below_decks_slots,
         None,
@@ -597,6 +643,7 @@ fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> Cand
     CandidateStrategy {
         max_candidates: scenario.max_candidates,
         below_decks_pool_mode: scenario.below_decks_pool_mode,
+        pvp_mode: scenario.pvp.is_some(),
         below_decks_slots: scenario.below_decks_slots,
         constraints: scenario.constraints.clone(),
         roster_profile_id: scenario.profile_id.map(String::from),
@@ -964,6 +1011,7 @@ where
     let config = if filtered_seeds.is_empty() {
         GeneticConfig {
             below_decks_pool_mode: scenario.below_decks_pool_mode,
+            pvp_mode: scenario.pvp.is_some(),
             below_decks_slots: scenario.below_decks_slots,
             constraints: scenario.constraints.clone(),
             support_buffs: scenario.support_buffs.clone(),
@@ -979,6 +1027,7 @@ where
     } else {
         let mut cfg = GeneticConfig::seeded(filtered_seeds);
         cfg.below_decks_pool_mode = scenario.below_decks_pool_mode;
+        cfg.pvp_mode = scenario.pvp.is_some();
         cfg.below_decks_slots = scenario.below_decks_slots;
         cfg.constraints = scenario.constraints.clone();
         cfg.support_buffs = scenario.support_buffs.clone();
@@ -1698,14 +1747,16 @@ pub fn optimize_crew(
 mod tests {
     use super::{
         analytical_prefilter_keep_auto, count_effective_optimize_candidates,
-        enforce_candidate_legality_with_registry, optimize_scenario_with_progress_with_registry,
-        AnalyticalPrefilterWorkload, BelowDecksPoolMode, CandidateStrategy, OptimizationScenario,
-        OptimizerStrategy,
+        enforce_candidate_legality_with_registry,
+        enforce_candidate_optimization_eligibility_with_registry,
+        optimize_scenario_with_progress_with_registry, AnalyticalPrefilterWorkload,
+        BelowDecksPoolMode, CandidateStrategy, OptimizationScenario, OptimizerStrategy,
     };
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
     use crate::optimizer::crew_generator::{
-        CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS, NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS,
+        build_officer_pools_from_registry, CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS,
+        NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS,
     };
     use crate::optimizer::matchup_priors::analytical_prefilter_rank_score;
     use crate::optimizer::monte_carlo::scenario::{
@@ -1782,6 +1833,81 @@ mod tests {
         assert!(kept.is_empty(), "invalid candidates should be filtered");
         assert_eq!(summary.dropped_duplicates, 1);
         assert_eq!(summary.dropped_seat_incompatible, 1);
+    }
+
+    #[test]
+    fn injected_optimizer_crews_obey_scenario_specific_below_decks_rules() {
+        let registry = DataRegistry::load().expect("data registry");
+        let profile = Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS);
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Relaxed,
+            None,
+            profile,
+            1,
+            None,
+        )
+        .expect("unrestricted pools");
+        let captain = pools
+            .captains
+            .iter()
+            .find(|captain| pools.bridge.contains(captain))
+            .expect("captain that can occupy bridge")
+            .clone();
+        let candidate_with = |below_decks: &str| {
+            let bridge: Vec<String> = pools
+                .bridge
+                .iter()
+                .filter(|name| *name != &captain && !name.eq_ignore_ascii_case(below_decks))
+                .take(2)
+                .cloned()
+                .collect();
+            assert_eq!(bridge.len(), 2);
+            CrewCandidate {
+                captain: captain.clone(),
+                bridge,
+                below_decks: vec![below_decks.into()],
+            }
+        };
+
+        let (manual, _) = enforce_candidate_legality_with_registry(
+            &registry,
+            profile,
+            1,
+            vec![candidate_with("Academy Doctor")],
+        );
+        assert_eq!(
+            manual.len(),
+            1,
+            "manual simulation legality stays unrestricted"
+        );
+
+        let (pve_pvp_officer, _) = enforce_candidate_optimization_eligibility_with_registry(
+            &registry,
+            profile,
+            1,
+            false,
+            vec![candidate_with("Academy Doctor")],
+        );
+        assert!(pve_pvp_officer.is_empty());
+
+        let (pve_loot_officer, _) = enforce_candidate_optimization_eligibility_with_registry(
+            &registry,
+            profile,
+            1,
+            false,
+            vec![candidate_with("The Doctor")],
+        );
+        assert_eq!(pve_loot_officer.len(), 1);
+
+        let (pvp_loot_officer, _) = enforce_candidate_optimization_eligibility_with_registry(
+            &registry,
+            profile,
+            1,
+            true,
+            vec![candidate_with("The Doctor")],
+        );
+        assert!(pvp_loot_officer.is_empty());
     }
 
     /// Matchup-prior injection from `optimize_history` uses the same legality gate as warm-start

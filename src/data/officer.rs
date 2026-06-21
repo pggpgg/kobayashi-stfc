@@ -22,6 +22,10 @@ pub struct Officer {
 #[derive(Debug, Clone, Deserialize)]
 pub struct OfficerAbility {
     pub slot: String,
+    /// Canonical applicability predicates such as `EnemyPlayer`, used by optimizer
+    /// scenario-specific eligibility filters as well as LCARS generation.
+    #[serde(default)]
+    pub conditions: Vec<String>,
     #[serde(default)]
     pub trigger: Option<String>,
     #[serde(default)]

@@ -73,6 +73,28 @@ const NON_COMBAT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "XindiHostileLoot",
 ];
 
+/// Canonical below-decks modifiers that increase combat loot or post-combat resource drops.
+/// Mining, cargo, travel, repair, and XP modifiers are intentionally not loot abilities.
+const LOOT_BELOW_DECKS_MODIFIERS: &[&str] = &[
+    "ActianVenomAndNanoprobeLoot",
+    "ArmadaLoot",
+    "ArtifactTokenLoot",
+    "BrokenShipPartsLoot",
+    "CombatDilithiumReward",
+    "CombatParsteelReward",
+    "CombatPveRewards",
+    "CombatScavenger",
+    "CombatTritaniumReward",
+    "GornHostileVolatileLoot",
+    "HirogenRelicAndBiotoxinLoot",
+    "HostileLoot",
+    "OutpostMedalsAndPlunderLoot",
+    "PveChestLootMultiplierLimitedResources",
+    "TrelliumRewards",
+    "WokAugmentAllLootRewards",
+    "XindiHostileLoot",
+];
+
 /// How to assign below-decks officers when the seed lists more candidates than
 /// the ship has slots.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -270,6 +292,41 @@ fn canonical_modifier_is_heuristic_non_combat(modifier: &str) -> bool {
     NON_COMBAT_BELOW_DECKS_MODIFIERS
         .iter()
         .any(|m| modifier.eq_ignore_ascii_case(m))
+}
+
+/// True when an officer has a below-decks ability gated on fighting a player ship.
+pub fn has_pvp_below_decks_slot_ability(officer: &Officer) -> bool {
+    officer.abilities.iter().any(|ability| {
+        ability.slot.eq_ignore_ascii_case("below_decks")
+            && ability
+                .conditions
+                .iter()
+                .any(|condition| condition.eq_ignore_ascii_case("EnemyPlayer"))
+    })
+}
+
+/// True when an officer has a below-decks ability that increases combat loot or resource drops.
+pub fn has_loot_below_decks_slot_ability(officer: &Officer) -> bool {
+    officer.abilities.iter().any(|ability| {
+        ability.slot.eq_ignore_ascii_case("below_decks")
+            && ability.modifier.as_deref().is_some_and(|modifier| {
+                LOOT_BELOW_DECKS_MODIFIERS
+                    .iter()
+                    .any(|loot| modifier.eq_ignore_ascii_case(loot))
+            })
+    })
+}
+
+/// Hard optimizer eligibility rule for below-decks officers.
+///
+/// - Non-PvP optimization excludes PvP-gated below-decks abilities.
+/// - PvP optimization excludes loot-providing below-decks abilities.
+pub fn is_below_decks_eligible_for_optimization(officer: &Officer, pvp_mode: bool) -> bool {
+    if pvp_mode {
+        !has_loot_below_decks_slot_ability(officer)
+    } else {
+        !has_pvp_below_decks_slot_ability(officer)
+    }
 }
 
 /// True if the officer has at least one below-decks-slot ability that is not economy-only for seeds.
@@ -664,6 +721,7 @@ mod tests {
                 .iter()
                 .map(|s| OfficerAbility {
                     slot: (*s).to_string(),
+                    conditions: vec![],
                     trigger: None,
                     modifier: None,
                     attributes: None,
@@ -803,6 +861,7 @@ mod tests {
         let mut o_combat = o.clone();
         o_combat.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("AllDamage".into()),
             attributes: None,
@@ -816,6 +875,7 @@ mod tests {
         let mut o_loot = o;
         o_loot.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("HostileLoot".into()),
             attributes: None,
@@ -843,6 +903,7 @@ mod tests {
         let mut loot_only = officer_named("LootOnly", None, &[]);
         loot_only.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("MiningRate".into()),
             attributes: None,
@@ -870,6 +931,7 @@ mod tests {
         let mut combat = officer_named("Combat", None, &[]);
         combat.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("AllDamage".into()),
             attributes: None,
@@ -886,6 +948,7 @@ mod tests {
         let mut ambiguous = officer_named("Ambig", None, &[]);
         ambiguous.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: None,
             attributes: None,
@@ -902,6 +965,7 @@ mod tests {
         let mut economy = officer_named("Econ", None, &[]);
         economy.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("MiningRate".into()),
             attributes: None,
@@ -919,6 +983,7 @@ mod tests {
         let mut mixed = economy.clone();
         mixed.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("AllDamage".into()),
             attributes: None,
@@ -967,6 +1032,7 @@ mod tests {
         let mut loot_only = officer_named("LootOnly", None, &[]);
         loot_only.abilities.push(OfficerAbility {
             slot: "below_decks".into(),
+            conditions: vec![],
             trigger: None,
             modifier: Some("MiningRate".into()),
             attributes: None,

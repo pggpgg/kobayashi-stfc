@@ -41,10 +41,22 @@ Before any strategy runs, [`build_officer_pools*`](../src/optimizer/crew_generat
 | Captain ability required | captain | `is_captain_eligible` (captain-slot ability + not banned) |
 | Seat compatibility | bridge / BD | `can_fill_position` from officer `slot` field |
 | Below-decks pool mode | below-decks | [`BelowDecksPoolMode`](../src/data/heuristics.rs): **strict/scored** = must have below-decks ability; **relaxed** = any legal BD seat |
+| Scenario-specific exclusions | below-decks | PvP-only and loot ability filters described below |
 | Below-decks ordering | below-decks | combat relevance rank + LCARS power tiebreak ([`sort_below_decks_by_rank_and_power`](../src/optimizer/crew_generator.rs)) |
 | Search constraints | pools narrowed | [`narrow_officer_pools_for_constraints`](../src/optimizer/crew_generator.rs) — `captain_must_be`, exclude lists, officer groups |
 
 Default API below-decks mode is **strict** ([`BelowDecksPoolMode::default`](../src/data/heuristics.rs)).
+
+---
+
+## Scenario-specific below-decks exclusions
+
+These are hard eligibility rules, not ranking preferences:
+
+- **Outside PvP mode:** never use a below-decks officer whose below-decks ability is PvP-specific (identified by the canonical `EnemyPlayer` condition).
+- **In PvP mode:** never use a below-decks officer whose below-decks ability provides combat loot or post-combat resource drops.
+
+**PvP mode** means an optimization that simulates combat against a player ship. All other optimization targets are outside PvP mode. [`is_below_decks_eligible_for_optimization`](../src/data/heuristics.rs) defines the classifications. Pool construction applies them before candidate generation, and [`enforce_candidate_optimization_eligibility_with_registry`](../src/optimizer/mod.rs) applies them to heuristic seeds, warm starts, and history references. This keeps the rules hard across exhaustive, sampled, tiered, and genetic strategies rather than merely lowering the affected officers' rank.
 
 ---
 
@@ -72,7 +84,7 @@ Parsed in [`src/data/heuristics.rs`](../src/data/heuristics.rs). Expanded before
 | Name resolution | all seed officers | aliases → exact → unique substring |
 | Bridge synergy filter | bridge officers in seeds | drop bridge unless [`bridge_synergy_strength`](../src/data/heuristics.rs) > `Neither` (same group and/or bridge-slot ability) |
 | Below-decks combat filter | BD candidates in seeds | when strict (server default): drop economy modifiers ([`NON_COMBAT_BELOW_DECKS_MODIFIERS`](../src/data/heuristics.rs)); relaxed when `below_decks_pool_mode = relaxed` |
-| Scenario ability predicates | *not yet applied to BD pool* | Officers whose below-decks (or bridge) abilities require **PvP**, **armada**, **Borg Cube**, or **loot-only** contexts still enter pools for standard ship-vs-hostile fights. Until scenario-conditioned effectiveness gates ship, treat these as **effectiveness = 0** when hand-picking crews (e.g. Borg Queen BD vs NPC hostiles, Mara Dalen / Zefram Cochrane BD vs non-armada, Phlox BD outside Borg Cube fights, Trip Tucker loot vs non–Species-8472/Hirogen). Roadmap: evaluate LCARS `condition` against ship/hostile/defender_opponent before counting a seat toward optimize rank. |
+| Other scenario ability predicates | *not yet applied to BD pool* | The two PvP-mode exclusions above are mandatory. Other contextual predicates—such as **armada**, **Borg Cube**, or target-specific loot conditions—are not yet general-purpose BD pool filters. Until broader scenario-conditioned effectiveness gates ship, treat non-matching abilities as **effectiveness = 0** when hand-picking crews (e.g. Borg Queen BD vs NPC hostiles, Mara Dalen / Zefram Cochrane BD vs non-armada, Phlox BD outside Borg Cube fights, Trip Tucker loot vs non–Species-8472/Hirogen). Roadmap: evaluate LCARS `condition` against ship/hostile/defender_opponent before counting a seat toward optimize rank. |
 | Below-decks expansion | BD list longer than ship slots | **ordered** (first k) or **exploration** (all C(n,k)) via `below_decks_strategy` |
 
 **Server flags** ([`src/server/api/execution.rs`](../src/server/api/execution.rs)):

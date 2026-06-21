@@ -142,6 +142,7 @@ fn load_heuristic_warm_start(
     let pools = build_officer_pools_with_constraints_from_registry(
         registry,
         BelowDecksPoolMode::Strict,
+        false,
         below_decks_slots,
         profile_id,
         None,

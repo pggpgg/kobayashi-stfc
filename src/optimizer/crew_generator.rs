@@ -8,7 +8,8 @@ use lru::LruCache;
 
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
-    below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank, BelowDecksPoolMode,
+    below_decks_combat_relevance_rank, is_below_decks_eligible_for_optimization,
+    BelowDecksCombatRelevanceRank, BelowDecksPoolMode,
 };
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
@@ -137,6 +138,10 @@ fn keep_below_decks_for_mode(officer: &Officer, mode: BelowDecksPoolMode) -> boo
     }
 }
 
+fn keep_below_decks_for_scenario(officer: &Officer, pvp_mode: Option<bool>) -> bool {
+    pvp_mode.is_none_or(|is_pvp| is_below_decks_eligible_for_optimization(officer, is_pvp))
+}
+
 /// Officer power proxy: sum of LCARS Attack+Defense+Health at the officer's max-known level.
 /// Used as a tiebreaker when ranking below-decks officers; defaults to 0.0 when LCARS data is absent
 /// (in tests or for officers without per-level stats yet).
@@ -220,6 +225,7 @@ fn lcars_by_id_from_registry(registry: Option<&DataRegistry>) -> HashMap<&str, &
 pub fn build_officer_pools_from_registry(
     registry: &DataRegistry,
     below_decks_pool_mode: BelowDecksPoolMode,
+    pvp_mode: Option<bool>,
     profile_id: Option<&str>,
     below_decks_slots: usize,
     constraints: Option<&CrewSearchConstraints>,
@@ -256,6 +262,7 @@ pub fn build_officer_pools_from_registry(
         .filter(|officer| {
             can_fill_position(officer, Position::BelowDecks)
                 && keep_below_decks_for_mode(officer, below_decks_pool_mode)
+                && keep_below_decks_for_scenario(officer, pvp_mode)
         })
         .map(|o| o.name.clone())
         .collect();
@@ -594,11 +601,13 @@ pub fn narrow_officer_pools_for_constraints(
 /// Returns `None` if there are not enough officers to form any valid crew.
 pub fn build_officer_pools(
     below_decks_pool_mode: BelowDecksPoolMode,
+    pvp_mode: bool,
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
 ) -> Option<OfficerPools> {
     build_officer_pools_with_constraints(
         below_decks_pool_mode,
+        pvp_mode,
         below_decks_slots,
         roster_profile_id,
         None,
@@ -613,6 +622,7 @@ pub fn build_officer_pools(
 /// if loading fails or an officer has no LCARS row, power sorts as 0.
 pub fn build_officer_pools_with_constraints(
     below_decks_pool_mode: BelowDecksPoolMode,
+    pvp_mode: bool,
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
     constraints: Option<&CrewSearchConstraints>,
@@ -620,6 +630,7 @@ pub fn build_officer_pools_with_constraints(
     build_officer_pools_inner(
         None,
         below_decks_pool_mode,
+        Some(pvp_mode),
         below_decks_slots,
         roster_profile_id,
         constraints,
@@ -632,6 +643,7 @@ pub fn build_officer_pools_with_constraints(
 pub fn build_officer_pools_with_constraints_from_registry(
     registry: &DataRegistry,
     below_decks_pool_mode: BelowDecksPoolMode,
+    pvp_mode: bool,
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
     constraints: Option<&CrewSearchConstraints>,
@@ -639,6 +651,7 @@ pub fn build_officer_pools_with_constraints_from_registry(
     build_officer_pools_inner(
         Some(registry),
         below_decks_pool_mode,
+        Some(pvp_mode),
         below_decks_slots,
         roster_profile_id,
         constraints,
@@ -648,6 +661,7 @@ pub fn build_officer_pools_with_constraints_from_registry(
 fn build_officer_pools_inner(
     registry: Option<&DataRegistry>,
     below_decks_pool_mode: BelowDecksPoolMode,
+    pvp_mode: Option<bool>,
     below_decks_slots: usize,
     roster_profile_id: Option<&str>,
     constraints: Option<&CrewSearchConstraints>,
@@ -695,6 +709,7 @@ fn build_officer_pools_inner(
         .filter(|officer| {
             can_fill_position(officer, Position::BelowDecks)
                 && keep_below_decks_for_mode(officer, below_decks_pool_mode)
+                && keep_below_decks_for_scenario(officer, pvp_mode)
         })
         .map(|o| o.name.clone())
         .collect();
@@ -751,6 +766,8 @@ pub struct CandidateStrategy {
     pub use_seeded_shuffle: bool,
     /// Below-decks pool sizing strategy. See [`BelowDecksPoolMode`].
     pub below_decks_pool_mode: BelowDecksPoolMode,
+    /// True only when optimizing combat against a player ship.
+    pub pvp_mode: bool,
     /// Number of below-decks slots per generated crew (2–5).
     pub below_decks_slots: usize,
     /// When set, officer pools are narrowed before enumeration (exclude, seat eligibility).
@@ -773,6 +790,7 @@ impl Default for CandidateStrategy {
             large_pool_bridge_limit: 12,
             use_seeded_shuffle: true,
             below_decks_pool_mode: BelowDecksPoolMode::default(),
+            pvp_mode: false,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             roster_profile_id: None,
@@ -787,6 +805,7 @@ impl Default for CandidateStrategy {
 struct OfficerPoolCacheKey {
     /// Encoded `BelowDecksPoolMode::as_api_str` so the key remains hashable.
     below_decks_pool_mode: &'static str,
+    pvp_mode: bool,
     below_decks_slots: usize,
     roster_profile_id: String,
     constraints_fingerprint: u64,
@@ -878,6 +897,7 @@ impl CrewGenerator {
     ) -> Option<OfficerPools> {
         let cache_key = OfficerPoolCacheKey {
             below_decks_pool_mode: self.strategy.below_decks_pool_mode.as_api_str(),
+            pvp_mode: self.strategy.pvp_mode,
             below_decks_slots: self.strategy.below_decks_slots,
             roster_profile_id: self.strategy.roster_profile_id.clone().unwrap_or_default(),
             constraints_fingerprint: constraints_fingerprint(self.strategy.constraints.as_ref()),
@@ -897,6 +917,7 @@ impl CrewGenerator {
             build_officer_pools_from_registry(
                 registry?,
                 self.strategy.below_decks_pool_mode,
+                Some(self.strategy.pvp_mode),
                 profile_id,
                 self.strategy.below_decks_slots,
                 self.strategy.constraints.as_ref(),
@@ -904,6 +925,7 @@ impl CrewGenerator {
         } else {
             build_officer_pools_with_constraints(
                 self.strategy.below_decks_pool_mode,
+                self.strategy.pvp_mode,
                 self.strategy.below_decks_slots,
                 self.strategy.roster_profile_id.as_deref(),
                 self.strategy.constraints.as_ref(),
@@ -1520,7 +1542,8 @@ mod tests {
     };
     use crate::data::data_registry::DataRegistry;
     use crate::data::heuristics::{
-        below_decks_combat_relevance_rank, BelowDecksCombatRelevanceRank,
+        below_decks_combat_relevance_rank, has_loot_below_decks_slot_ability,
+        has_pvp_below_decks_slot_ability, BelowDecksCombatRelevanceRank,
     };
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
@@ -1530,6 +1553,7 @@ mod tests {
         let pools = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Strict,
+            None,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
@@ -1560,11 +1584,61 @@ mod tests {
     }
 
     #[test]
+    fn scenario_filters_exclude_pvp_officers_from_pve_and_loot_officers_from_pvp() {
+        let registry = DataRegistry::load().expect("registry");
+        let profile = Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS);
+        let pve = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Relaxed,
+            Some(false),
+            profile,
+            1,
+            None,
+        )
+        .expect("PvE pools");
+        let pvp = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Relaxed,
+            Some(true),
+            profile,
+            1,
+            None,
+        )
+        .expect("PvP pools");
+
+        let contains = |pool: &[String], name: &str| {
+            pool.iter()
+                .any(|candidate| candidate.eq_ignore_ascii_case(name))
+        };
+
+        assert!(!contains(&pve.below_decks, "Academy Doctor"));
+        assert!(contains(&pvp.below_decks, "Academy Doctor"));
+        assert!(contains(&pve.below_decks, "The Doctor"));
+        assert!(!contains(&pvp.below_decks, "The Doctor"));
+
+        let mut pvp_specific_count = 0;
+        let mut loot_count = 0;
+        for officer in registry.officers() {
+            if has_pvp_below_decks_slot_ability(officer) {
+                pvp_specific_count += 1;
+                assert!(!contains(&pve.below_decks, &officer.name));
+            }
+            if has_loot_below_decks_slot_ability(officer) {
+                loot_count += 1;
+                assert!(!contains(&pvp.below_decks, &officer.name));
+            }
+        }
+        assert!(pvp_specific_count > 0);
+        assert!(loot_count > 0);
+    }
+
+    #[test]
     fn narrow_pools_returns_none_for_unknown_captain_must_be() {
         let registry = DataRegistry::load().expect("registry");
         let pools = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
+            None,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
@@ -1585,6 +1659,7 @@ mod tests {
         let pools = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
+            None,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
@@ -1690,6 +1765,7 @@ mod tests {
         let pools = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
+            None,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
@@ -1738,6 +1814,7 @@ mod tests {
         let pools = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
+            None,
             Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
             None,
