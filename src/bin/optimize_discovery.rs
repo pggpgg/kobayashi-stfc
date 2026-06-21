@@ -306,7 +306,7 @@ fn main() {
 
     let tiered_has_winner = outcome.ranked.iter().any(is_winning);
     let mut genetic_ranked = Vec::new();
-    let mut genetic_elapsed = 0.0_f64;
+    let genetic_elapsed;
 
     if !tiered_has_winner && run_genetic {
         eprintln!("\nNo tiered winners — running genetic fallback...");

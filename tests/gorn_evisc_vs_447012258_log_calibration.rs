@@ -233,15 +233,14 @@ fn assert_trace_expectations(replay: &MonteCarloSeedReplay, trace: &TraceExpecta
     let mut saw_vulnerability = false;
 
     for ev in &replay.trace_events {
-        if ev.event_type == "damage_application" {
-            if ev
+        if ev.event_type == "damage_application"
+            && ev
                 .values
                 .get("isolytic_vulnerability")
                 .and_then(|v| v.as_bool())
                 == Some(true)
-            {
-                saw_vulnerability = true;
-            }
+        {
+            saw_vulnerability = true;
         }
     }
 

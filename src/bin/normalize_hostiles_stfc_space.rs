@@ -159,7 +159,7 @@ fn curated_hostile_tags_for_upstream(
     }
 
     // Gorn Hunters: Pteran (65100), Acrocanth (65101), Macronyx (65102) — `translations-navigation.json` marauder_name_only.
-    if matches!(loca_id, Some(65100 | 65101 | 65102)) {
+    if matches!(loca_id, Some(65100..=65102)) {
         push_unique("gorn_hunter");
     }
 
