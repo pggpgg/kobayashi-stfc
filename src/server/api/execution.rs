@@ -32,7 +32,7 @@ use crate::optimizer::monte_carlo::{
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
 use crate::optimizer::tiered::TieredScoutBudgetStats;
 use crate::optimizer::{
-    count_effective_optimize_candidates, enforce_candidate_legality_with_registry,
+    count_effective_optimize_candidates, enforce_candidate_optimization_eligibility_with_registry,
     optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeProgressTick,
     OptimizerStrategy,
 };
@@ -134,6 +134,10 @@ fn resolve_effective_optimize_strategy(
     let strat = CandidateStrategy {
         max_candidates: request.max_candidates.map(|n| n as usize),
         below_decks_pool_mode: below_decks_pool_mode_resolved(request),
+        pvp_mode: request
+            .defender_ship
+            .as_deref()
+            .is_some_and(|ship| !ship.trim().is_empty()),
         below_decks_slots,
         constraints: crew_constraints.cloned(),
         roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
@@ -641,6 +645,10 @@ fn gather_optimize_simulation_results(
         request.below_decks_slots,
     );
     let crew_constraints = build_crew_search_constraints(request);
+    let pvp_mode = request
+        .defender_ship
+        .as_deref()
+        .is_some_and(|ship| !ship.trim().is_empty());
     let cache_key_normalized = request.optimize_cache_key.as_ref().and_then(|s| {
         let t = s.trim();
         if t.is_empty() {
@@ -679,10 +687,11 @@ fn gather_optimize_simulation_results(
     } else {
         Vec::new()
     };
-    let (h_candidates_legal, h_legality) = enforce_candidate_legality_with_registry(
+    let (h_candidates_legal, h_legality) = enforce_candidate_optimization_eligibility_with_registry(
         registry,
         profile_id,
         below_decks_slots,
+        pvp_mode,
         h_candidates,
     );
     h_candidates = h_candidates_legal;
@@ -695,8 +704,13 @@ fn gather_optimize_simulation_results(
     );
 
     let dto_warm = warm_start_crews_from_request_dtos(request);
-    let (dto_warm, warm_legality) =
-        enforce_candidate_legality_with_registry(registry, profile_id, below_decks_slots, dto_warm);
+    let (dto_warm, warm_legality) = enforce_candidate_optimization_eligibility_with_registry(
+        registry,
+        profile_id,
+        below_decks_slots,
+        pvp_mode,
+        dto_warm,
+    );
     let fast_discovery_requested =
         request.fast_discovery == Some(true) && heuristics_seeds_nonempty && !heuristics_only;
     let fast_discovery_no_resolved_crews = fast_discovery_requested && h_candidates.is_empty();
@@ -721,12 +735,14 @@ fn gather_optimize_simulation_results(
         _ => Vec::new(),
     };
     let prior_refs_in = prior_reference_crews_raw.len();
-    let (prior_reference_crews, prior_legality) = enforce_candidate_legality_with_registry(
-        registry,
-        profile_id,
-        below_decks_slots,
-        prior_reference_crews_raw,
-    );
+    let (prior_reference_crews, prior_legality) =
+        enforce_candidate_optimization_eligibility_with_registry(
+            registry,
+            profile_id,
+            below_decks_slots,
+            pvp_mode,
+            prior_reference_crews_raw,
+        );
     let dropped_illegal_prior_refs = prior_legality.dropped_wrong_shape
         + prior_legality.dropped_duplicates
         + prior_legality.dropped_seat_incompatible;

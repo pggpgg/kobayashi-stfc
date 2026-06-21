@@ -120,6 +120,9 @@ pub struct GeneticConfig {
     /// Below-decks pool sizing strategy. See [`crate::data::heuristics::BelowDecksPoolMode`].
     pub below_decks_pool_mode: crate::data::heuristics::BelowDecksPoolMode,
 
+    /// True only when optimizing combat against a player ship.
+    pub pvp_mode: bool,
+
     /// Below-decks slot count for random init, crossover, repair, and mutate.
     pub below_decks_slots: usize,
 
@@ -184,6 +187,7 @@ impl Default for GeneticConfig {
             elitism_count: 2,
             stagnation_limit: Some(10),
             below_decks_pool_mode: crate::data::heuristics::BelowDecksPoolMode::default(),
+            pvp_mode: false,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             seed_population: Vec::new(),
             adaptive_mutation: true,
@@ -643,12 +647,14 @@ pub fn run_genetic_optimizer(
         Some(reg) => build_officer_pools_with_constraints_from_registry(
             reg,
             config.below_decks_pool_mode,
+            config.pvp_mode,
             bd_slots,
             config.roster_profile_id.as_deref(),
             None,
         ),
         None => build_officer_pools(
             config.below_decks_pool_mode,
+            config.pvp_mode,
             bd_slots,
             config.roster_profile_id.as_deref(),
         ),
