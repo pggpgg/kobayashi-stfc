@@ -12,7 +12,7 @@ Treat profile ids like filenames: convenient scoping, not proof of identity.
 
 ### Sync ingress (`POST /api/sync/ingress`)
 
-The [STFC Community Mod](https://github.com/netniV/stfc-mod) sends data using the `**stfc-sync-token`** header (per-profile secret in `profiles/<id>/profile.json`). That token **scopes writes** to the matching profile directory. It is still important to **keep the token secret** and to **not expose** the sync endpoint to untrusted networks without additional controls.
+The [STFC Community Mod](https://github.com/netniV/stfc-mod) sends data using the `**stfc-sync-token`** header (a per-profile secret stored in `profiles/index.json`). That token **scopes writes** to the matching profile directory. It is still important to **keep the token secret** and to **not expose** the sync endpoint to untrusted networks without additional controls.
 
 Sync ingress is **not** covered by `KOBAYASHI_API_KEY` (see below): it keeps its own token-based routing.
 

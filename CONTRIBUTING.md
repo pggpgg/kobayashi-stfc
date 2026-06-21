@@ -58,6 +58,8 @@ To block merges when CI fails, a maintainer should enable branch protection on `
 - `CI / Combat engine (Python)`
 - `CI / E2E smoke (Playwright)`
 
+> CI also runs **`CI / Rust coverage`** and **`CI / Upstream summary drift`**. These are typically left **non-required**: coverage is informational, and the drift check can fail on upstream data.stfc.space changes unrelated to a given PR (see *Upstream summary drift* below).
+
 Also require pull requests before merging if that matches project policy.
 
 ## Pre-commit hooks (recommended)

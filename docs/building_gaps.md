@@ -16,3 +16,7 @@ No actionable opaque `buff_*` stats.
 
 None.
 
+---
+
+_Generated snapshot — regenerate with `cargo run --bin report_building_mapping_gaps`._
+

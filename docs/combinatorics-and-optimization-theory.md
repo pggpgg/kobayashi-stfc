@@ -6,6 +6,8 @@
 
 **Date.** 2026-02-25
 
+> **Correction (2026-06 doc review).** This analysis originally modeled below decks as an *ordered* 7-tuple (`P(N−3, 7)`). The optimizer and engine treat below decks as **unordered** — an officer's below-decks contribution is slot-independent — so the count of distinct evaluable crews uses `C(N−3, 7) = P(N−3, 7) / 7!`. The §1–§5 baseline below is corrected to `C` (≈ 5040× smaller). The §6 optimization-log figures keep their original *ordered* basis and their then-current **N = 277** canonical roster (now 286 officers); divide those totals by 7! (= 5040) for the unordered count. Reduction *factors* in §6 are unaffected — the below-decks term cancels.
+
 ---
 
 ### 1. Constraints (ship crew layout)
@@ -25,7 +27,7 @@ A ship has:
 **Rules.**
 
 - No officer may appear in more than one slot (all 10 must be distinct).
-- Captain: exactly one officer. Bridge: two officers, **order does not matter** (the two slots are interchangeable). Below decks: seven officers, order matters (seven distinct slots).
+- Captain: exactly one officer. Bridge: two officers, **order does not matter** (the two slots are interchangeable). Below decks: seven officers, **order does not matter** (an officer's below-decks contribution is slot-independent; the optimizer enumerates unordered 7-subsets).
 
 ---
 
@@ -41,7 +43,7 @@ For this baseline we assume **no role restrictions**: any officer may be placed 
 
 ### 3. Combinatorics (unrestricted)
 
-We count assignments with **all 10 officers distinct**: captain (1); bridge (unordered pair of 2); below decks (ordered 7-tuple).
+We count assignments with **all 10 officers distinct**: captain (1); bridge (unordered pair of 2); below decks (unordered 7-subset).
 
 1. **Captain**
   Choose 1 from N:  
@@ -50,14 +52,14 @@ We count assignments with **all 10 officers distinct**: captain (1); bridge (uno
   Choose 2 distinct officers from the remaining (N−1); **order does not matter** (combination, not permutation):  
    **C_bridge = C(N−1, 2) = (N−1)(N−2) / 2**
 3. **Below decks**
-  From the remaining (N−3) officers, choose 7 and assign them to the 7 below-deck slots (order matters). That is 7-permutations of (N−3):  
-   **C_below = P(N−3, 7) = (N−3)(N−4)(N−5)(N−6)(N−7)(N−8)(N−9)**
+  From the remaining (N−3) officers, choose 7; **order does not matter** (below-decks contribution is slot-independent). That is 7-combinations of (N−3):  
+   **C_below = C(N−3, 7) = (N−3)(N−4)(N−5)(N−6)(N−7)(N−8)(N−9) / 7!**
 
 **Total combinations:**
 
 ```
-C_total = N × (N−1)(N−2)/2 × P(N−3, 7)
-        = N × (N−1)(N−2)/2 × (N−3)(N−4)(N−5)(N−6)(N−7)(N−8)(N−9)
+C_total = N × (N−1)(N−2)/2 × C(N−3, 7)
+        = N × (N−1)(N−2)/2 × (N−3)(N−4)(N−5)(N−6)(N−7)(N−8)(N−9) / 7!
 ```
 
 With **N = 231**:
@@ -67,13 +69,13 @@ With **N = 231**:
 | ------------------- | ---------------------------------------- |
 | C_captain           | 231                                      |
 | C_bridge            | C(230, 2) = 230×229/2 = 26,335           |
-| C_below = P(228, 7) | 228×227×226×225×224×223×222 ≈ 2.918×10¹⁶ |
+| C_below = C(228, 7) | P(228,7)/7! = 5,790,645,531,360 ≈ 5.791×10¹² |
 
 
 **Baseline total:**
 
-**C_total = 177,542,699,875,593,966,144,000**  
-**(≈ 1.775 × 10²³)**
+**C_total = 35,226,726,165,792,453,600**  
+**(≈ 3.523 × 10¹⁹)**
 
 ---
 
@@ -85,8 +87,8 @@ With **N = 231**:
 | Officers (N)                | 231 (owned)                         |
 | Captain choices             | N = 231                             |
 | Bridge (unordered pair)     | C(N−1, 2) = 26,335                  |
-| Below-deck 7-tuples         | P(N−3, 7) ≈ 2.918×10¹⁶              |
-| **Total crew combinations** | **177,542,699,875,593,966,144,000** |
+| Below-deck 7-subsets        | C(N−3, 7) ≈ 5.791×10¹²              |
+| **Total crew combinations** | **35,226,726,165,792,453,600**      |
 
 
 This is the **baseline** combination space. Any constraint (e.g. role eligibility, "below decks: only 7 highest-power if no below-decks ability") will reduce this number; the reduction can be computed and recorded below.
@@ -109,11 +111,11 @@ If we **simulate one combat per crew combination** to evaluate it, the total num
 
 | Throughput | Time (seconds)  | Time (years)             |
 | ---------- | --------------- | ------------------------ |
-| 829,736 /s | ≈ 2.14 × 10¹⁷ s | **≈ 6.8 billion years**  |
-| 513,081 /s | ≈ 3.46 × 10¹⁷ s | **≈ 11.0 billion years** |
+| 829,736 /s | ≈ 4.25 × 10¹³ s | **≈ 1.35 million years** |
+| 513,081 /s | ≈ 6.87 × 10¹³ s | **≈ 2.18 million years** |
 
 
-So exhausting all **177.5 × 10²¹** combinations at current benchmark speeds is on the order of **billions of years** (far beyond the age of the Universe). This motivates reducing the combination space with the optimizations in §6 (e.g. role restrictions, below-decks pruning) and/or not enumerating all combinations (e.g. sampling, search, heuristics).
+So exhausting all **35.2 × 10¹⁸** combinations at current benchmark speeds is on the order of **millions of years** (still far beyond any practical budget). This motivates reducing the combination space with the optimizations in §6 (e.g. role restrictions, below-decks pruning) and/or not enumerating all combinations (e.g. sampling, search, heuristics).
 
 **If we run *k* iterations per combination** (e.g. Monte Carlo with *k* = 1000 for win-rate estimates), the time above is multiplied by *k*.
 
@@ -153,4 +155,4 @@ So exhausting all **177.5 × 10²¹** combinations at current benchmark speeds i
 
 ---
 
-*Document version: baseline established 2026-02-25; §6.1 bridge–captain synergy, §6.2 captain-ability filter added. Optimizations to be appended in §6.*
+*Document version: baseline established 2026-02-25; §6.1 bridge–captain synergy, §6.2 captain-ability filter added. Corrected 2026-06 to use unordered below-decks `C(N−3, 7)` in §1–§5 (see top note). Optimizations to be appended in §6.*

@@ -188,7 +188,8 @@ The simulator tracks implementation status per combat mechanic. LCARS validation
 | `set`            | Override stat to exact value                 |
 | `min`            | Set a floor                                  |
 | `max`            | Set a ceiling                                |
-| `add_pct_of_max` | Add a percentage of the stat's maximum value |
+
+> Note: there is no "percentage of max" operator. "% of the stat's max" effects are modeled with dedicated stats (e.g. `shield_regen_max_fraction`, `hull_hp_repair_max_fraction`), not an operator. Any unrecognized operator falls through to `add`.
 
 
 #### Duration
@@ -487,7 +488,7 @@ Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon 
 ### 3.7 Stacking Rules
 
 - Same stat, same operator from different sources: all apply
-- Resolution order: base → flat adds → pct adds → multipliers → caps
+- Resolution order: per category, `base × (1 + Σ pct) + Σ flat` (flat/pct order-independent within a category), then damage-channel multipliers, then caps/clamps
 - `set` overrides everything (last `set` wins)
 - `min` and `max` applied after all other operations
 
@@ -1047,9 +1048,8 @@ kobayashi/
 │   │   ├── mod.rs
 │   │   ├── engine.rs                # Fight loop (hot path)
 │   │   ├── abilities.rs             # Effect evaluation, triggers
-│   │   ├── buffs.rs
-│   │   ├── stacking.rs
-│   │   ├── effect_accumulator.rs
+│   │   ├── stacking.rs              # Per-category composition (base/pct/flat)
+│   │   ├── effect_accumulator.rs    # Channel multipliers + caps
 │   │   ├── damage.rs, mitigation.rs, condition.rs, types.rs, events.rs, rng.rs, …
 │   │
 │   ├── optimizer/
@@ -1116,7 +1116,7 @@ The combat engine uses a built-in **SplitMix64** implementation (not `rand` on t
 - **Chain grinding (simulator)**: Implemented in the optimizer as an optional mode: **N** consecutive wins against the **same** hostile template; **attacker hull HP carries** between links; **attacker shields reset to full** at the start of each new fight (models fast post-fight shield regen). Ranking is **lexicographic**: primary = Wilson-scored chain completion rate; secondary = conditional mean (hull remaining after the Nth win, or a **documented loot/hull placeholder** until real loot is resolved from LCARS/combat). **Between-fight hull repair** (e.g. Mudd-style) is out of scope until explicitly modeled. Round-limit “stall” outcomes on a link abort the chain (same stall semantics as single-fight MC for that link).
 - **Armada mode**: Multi-ship combat with ally-targeting abilities.
 - **Per-weapon pierce/crit/proc**: When STFC or upstream data differentiates pierce/crit/proc by weapon, add optional per-weapon fields to data and engine (partially implemented today via `WeaponStats` / ship and hostile normalizers; engine caveats remain around tier-averaged mitigation and counter-fire richness).
-- **After-shot effects affecting next shot(s)**: Officer effects that trigger after a shot and modify the next shot(s) in the same round (e.g. +crit chance for next shot). Requires SubroundEnd or “after shot” timing and carrying buff state between sub-rounds.
+- ~~After-shot effects affecting next shot(s)~~ — **implemented**: `after_shot` / `subround_end` triggers map to `TimingWindow::AfterSubround`, and buff state carries between sub-rounds via `after_subround_carry` ([src/combat/engine.rs](../src/combat/engine.rs)).
 - **Sensitivity analysis**: "What if I promote officer X to the next rank? How much does my best crew improve?"
 - **Auto-updater**: Check for new LCARS definitions on GitHub and pull updates.
 - **GPU acceleration**: Port combat engine to CUDA/WebGPU for billions of sims. Probably overkill but fun.

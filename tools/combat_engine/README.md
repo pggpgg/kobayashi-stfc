@@ -19,7 +19,7 @@ When changing formulas here, update the matching Rust sources and vice versa. Go
 
 ## Mitigation model
 
-This module implements the first combat-engine task from [IMPLEMENTATION_PLAN_COMBAT_ENGINE.md](../../docs/IMPLEMENTATION_PLAN_COMBAT_ENGINE.md).
+This module implements the mitigation model documented in [DESIGN.md](../../docs/DESIGN.md) (combat math), mirrored by the Rust engine in [`src/combat/mitigation.rs`](../../src/combat/mitigation.rs).
 
 ### Formula
 

@@ -11,16 +11,11 @@ This uses the same sync protocol as [Spocks.club](https://spocks.club/syncing/);
 
 ## Configuration
 
-### 1. Kobayashi (optional token)
+### 1. Kobayashi (per-profile sync token)
 
-- `**KOBAYASHI_SYNC_TOKEN`** (optional): If set, the server will require the `stfc-sync-token` request header to match this value for `POST /api/sync/ingress`. If unset, any request is accepted (suitable for local-only use).
+Sync auth is **per profile**, not a global env var. Each Kobayashi profile owns its own `sync_token` (a secret stored in `profiles/index.json`). The mod sends that exact token in the `stfc-sync-token` request header, and the server uses it to identify which profile to write to.
 
-Example (PowerShell):
-
-```powershell
-$env:KOBAYASHI_SYNC_TOKEN = "your-secret-token"
-kobayashi serve
-```
+A token is **always required**: `POST /api/sync/ingress` returns **401** whenever the header is missing or matches no profile — there is no "accept anything" mode. Find or manage per-profile tokens via `GET /api/profiles` (or the profile UI).
 
 ### 2. Community Mod (add Kobayashi as a sync target)
 
@@ -31,7 +26,7 @@ Edit `community_patch_settings.toml` in your **game install folder** (the same d
 syncpatches = true
 
 [sync]
-# Optional: use the same token as KOBAYASHI_SYNC_TOKEN if you set it
+# Top-level token/url are for your default sync target (e.g. Spocks.club).
 token = ""
 url = ""
 
@@ -44,10 +39,10 @@ ships = true
 
 [sync.targets.kobayashi]
 url = "http://localhost:3000/api/sync/ingress"
-token = "your-secret-token"
+token = "<your Kobayashi profile's sync_token>"
 ```
 
-Use the same value for `token` as for `KOBAYASHI_SYNC_TOKEN` if you set the env var. If you run Kobayashi without `KOBAYASHI_SYNC_TOKEN`, you can leave `token` empty or set any value.
+Set the Kobayashi target's `token` to the `sync_token` of the profile you want to sync into (find it via `GET /api/profiles` or the profile UI). A missing or unmatched token is rejected with **401**.
 
 Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1.10:3000/api/sync/ingress`).
 
@@ -90,11 +85,11 @@ To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the 
 ## API
 
 - **Endpoint**: `POST /api/sync/ingress`
-- **Headers**: `Content-Type: application/json`; optional `stfc-sync-token: <token>` (required if `KOBAYASHI_SYNC_TOKEN` is set).
+- **Headers**: `Content-Type: application/json`; `stfc-sync-token: <profile sync_token>` (**required** — it identifies the target profile; missing or unmatched → 401).
 - **Body**: JSON array of objects. Each object has a `type` field; the first element’s `type` determines how the payload is handled (officer, research, buildings, ships, etc.). Shape per type matches the [Community Mod sync payloads](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc).
-- **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; 401 if token is required and missing/invalid; 400 if body is not a JSON array.
+- **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; **401** if the `stfc-sync-token` is missing or matches no profile; **400** if the body is not a JSON array; **500** on a persist failure.
 - **Endpoint**: `GET /api/sync/status`
-- **Response**: 200 with JSON paths for the selected profile (`X-Profile-Id` / `?profile=`, else effective default): `roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, `battlelogs_path`, each with `*_last_modified_iso` (ISO8601 or null if file missing), plus `last_mod_sync_utc` when the mod has persisted a batch.
+- **Response**: 200 with, for the selected profile (`X-Profile-Id` / `?profile=`, else effective default): `profile_id`; the seven `*_path` fields (`roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, `battlelogs_path`); a last-modified timestamp per file — `last_modified_iso` for the roster and `<type>_last_modified_iso` for the rest (ISO8601 or null if the file is missing); `last_mod_sync_utc` when the mod has persisted a batch; and `research_catalog_loaded` / `research_catalog_item_count`.
 
 ## Sync payload reference
 
@@ -103,7 +98,7 @@ The request body is a JSON array; the first element’s `type` field determines 
 
 | Type                       | Keys per item                                                                                                          | Notes                                                                                                                                                        |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **officer**                | `type`, `oid` (game id), `rank`, `level`, optional `shard_count`                                                       | Merged into `profiles/{id}/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`.                                                         |
+| **officer**                | `type`, `oid` (game id), `rank`, optional `tier` (preferred over `rank` when present), `level`, optional `shard_count` | Merged into `profiles/{id}/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`.                                                         |
 | **research**               | `type`, `rid` (int64), `level` (int32)                                                                                 | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present.    |
 | **buildings** / **module** | `type`, `bid` (int64), `level` (int32)                                                                                 | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `profiles/{id}/buildings.imported.json`. |
 | **ships** / **ship**       | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `profiles/{id}/ships.imported.json`.         |

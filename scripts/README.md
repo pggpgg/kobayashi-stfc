@@ -148,5 +148,3 @@ The `--stfccommunity` flag runs this sequence for you. Manual equivalent:
 3. **Optional:** Set `STFC_DATA_VERSION` (e.g. a git commit) when running the normalizer to record the source.
 
 Upstream is treated as a read-only baseline (repo is outdated ~3y). Newer entries can be added under `data/hostiles/` with the same schema. Ships use `data/ships_extended/` (see data/README.md).
-</think><｜tool▁call▁begin｜>
-Shell

@@ -2,7 +2,7 @@
 
 `data/officers/officers.canonical.json` stores PascalCase `conditions` on abilities. `generate_lcars` maps each token to an LCARS `condition` tree when the combat engine can evaluate it; unmapped tokens log `skipping unmapped canonical condition` and the emitted ability may be **weaker** than in-game (subset `and` of only the mapped arms).
 
-See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)`, and `[resolve_lcars_condition](../src/lcars/resolver.rs)`.
+See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)`, and `[lcars_condition_to_spec](../src/lcars/effect_spec_adapter.rs)`.
 
 ## Triage (frequency × feasibility)
 
@@ -57,9 +57,9 @@ These tokens have **no dedicated `CombatContext` field** (or no field for the ov
 
 ## Updates (engine + LCARS)
 
-- **`literal_true` / `literal_false`**: fixed boolean gates for scenario-literal canonical tokens above; resolve to `[AbilityCondition::LiteralBool](../src/combat/abilities.rs)` (`[resolve_lcars_condition](../src/lcars/resolver.rs)`).
+- **`literal_true` / `literal_false`**: fixed boolean gates for scenario-literal canonical tokens above; resolve to `[AbilityCondition::LiteralBool](../src/combat/abilities.rs)` (`[lcars_condition_to_spec](../src/lcars/effect_spec_adapter.rs)`).
 - **`engagement_includes`**: already used for `TargetNotSoloArmada` / `EnemyGroupArmadas` (group armadas); extended for **`SelfAtSoloArmada`** → `solo_armadas`.
-- `**not`**: `[AbilityCondition::Not](../src/combat/abilities.rs)` + LCARS `type: not` with exactly one child (`[resolve_lcars_condition](../src/lcars/resolver.rs)`).
+- `**not`**: `[AbilityCondition::Not](../src/combat/abilities.rs)` + LCARS `type: not` with exactly one child (`[lcars_condition_to_spec](../src/lcars/effect_spec_adapter.rs)`).
 - `**TargetIsArmada` / `TargetNotArmada`**: canonical aliases for armada gating (see roadmap “canonical condition tokens”).
 - `**TargetHasAssimilated`**: LCARS `defender_assimilated`; opponent-side assimilate duration (`defender_assimilated_active`), driven by defender crew assimilate procs in `[engine.rs](../src/combat/engine.rs)` (canonical data pairs with `EnemyPlayer` for PvP vs assimilating opponents).
 - **`EnemyHullFaction`**: not in `map_canonical_condition_token` alone; `generate_lcars` strips the token, reads `faction_id=` from `attributes`, and emits LCARS `defender_hull_faction_id`. This matches upstream hostile `faction.id` exactly (distinct from coarse `[OpponentFactionTag](../src/combat/types.rs)` / `defender_faction_is`, where e.g. Eclipse may be `Unknown`).
