@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kobayashi Exhaustive Search Calculator</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b0e13; --panel:#131923; --panel2:#192231; --line:#2c394b; --text:#eef3fa; --muted:#9eacbd; --orange:#ff9f43; --blue:#56b4ff; --green:#62d394; --red:#ff6b6b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 80% 0,#18263a 0,transparent 34%),var(--bg); color:var(--text); font:15px/1.45 Inter,ui-sans-serif,system-ui,sans-serif; }
+    main { width:min(1180px,calc(100% - 32px)); margin:0 auto; padding:42px 0 64px; }
+    header { margin-bottom:28px; }
+    .eyebrow { color:var(--orange); text-transform:uppercase; letter-spacing:.15em; font-size:12px; font-weight:800; }
+    h1 { margin:7px 0 8px; font-size:clamp(30px,5vw,52px); line-height:1.02; letter-spacing:-.035em; }
+    header p { max-width:760px; margin:0; color:var(--muted); font-size:16px; }
+    .layout { display:grid; grid-template-columns:340px 1fr; gap:18px; align-items:start; }
+    .panel { border:1px solid var(--line); border-radius:15px; background:linear-gradient(145deg,rgba(25,34,49,.96),rgba(15,20,29,.96)); box-shadow:0 18px 50px rgba(0,0,0,.22); }
+    .controls { padding:20px; position:sticky; top:16px; }
+    .controls h2,.chart-panel h2 { margin:0 0 4px; font-size:18px; }
+    .hint { color:var(--muted); font-size:12px; margin-bottom:18px; }
+    .control { margin:0 0 18px; }
+    .control-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:7px; }
+    label { font-weight:700; }
+    input[type=number],select { width:104px; border:1px solid var(--line); border-radius:7px; background:#0d131c; color:var(--text); padding:6px 8px; }
+    select { width:auto; max-width:100%; }
+    input[type=range] { width:100%; accent-color:var(--orange); }
+    .range-ends { display:flex; justify-content:space-between; color:var(--muted); font-size:10px; }
+    .results { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+    .metric { min-height:112px; padding:17px; }
+    .metric .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+    .metric strong { display:block; margin:7px 0 2px; font-size:clamp(22px,3vw,34px); line-height:1.05; letter-spacing:-.03em; }
+    .metric small { color:var(--muted); }
+    .chart-panel { padding:20px; }
+    .chart-head { display:flex; justify-content:space-between; gap:18px; align-items:start; margin-bottom:8px; }
+    #chart { width:100%; height:auto; display:block; overflow:visible; }
+    .grid { stroke:var(--line); stroke-width:1; }
+    .axis-label { fill:var(--muted); font-size:11px; }
+    .area { fill:url(#areaFill); }
+    .series { fill:none; stroke:var(--blue); stroke-width:3; stroke-linejoin:round; }
+    .selected-line { stroke:var(--orange); stroke-width:2; stroke-dasharray:5 5; }
+    .selected-dot { fill:var(--orange); stroke:#fff; stroke-width:2; }
+    .hover-dot { fill:var(--blue); stroke:#fff; stroke-width:2; pointer-events:none; }
+    .hit { fill:transparent; cursor:crosshair; }
+    .tooltip { position:fixed; z-index:5; display:none; min-width:220px; pointer-events:none; padding:11px 13px; border:1px solid var(--line); border-radius:9px; background:rgba(8,12,18,.96); box-shadow:0 12px 35px rgba(0,0,0,.4); font-size:12px; }
+    .tooltip strong { display:block; font-size:14px; margin-bottom:4px; }
+    .delta-good { color:var(--green); } .delta-bad { color:var(--red); } .delta-same { color:var(--muted); }
+    .note { margin-top:14px; padding:13px 15px; border-left:3px solid var(--orange); border-radius:5px; background:rgba(255,159,67,.08); color:var(--muted); font-size:12px; }
+    .formula { margin-top:12px; color:var(--muted); font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; overflow-wrap:anywhere; }
+    @media (max-width:840px) { .layout { grid-template-columns:1fr; } .controls { position:static; } .results { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">PvE theorycrafting</div>
+    <h1>Exhaustive search budget</h1>
+    <p>Estimate how captain bans and below-decks filtering change the cost of checking every practical PvE crew. Every legal crew is simulated; there is no candidate cap.</p>
+  </header>
+  <div class="layout">
+    <section class="panel controls" aria-label="Calculator inputs">
+      <h2>Search inputs</h2>
+      <div class="hint">Numbers update immediately. Defaults match the measured demo PvE pools.</div>
+      <div id="controls"></div>
+      <div class="control">
+        <div class="control-head"><label for="projection">Chart projection</label></div>
+        <select id="projection">
+          <option value="all">Scale all officer pools</option>
+          <option value="captains">Captain pool only</option>
+          <option value="bridge">Bridge pool only</option>
+          <option value="below">Below-decks pool only</option>
+        </select>
+      </div>
+    </section>
+    <div>
+      <section class="results" aria-live="polite">
+        <article class="panel metric"><div class="label">Legal crews</div><strong id="crewCount">—</strong><small id="crewDetail"></small></article>
+        <article class="panel metric"><div class="label">Projected runtime</div><strong id="runtime">—</strong><small id="runtimeDetail"></small></article>
+        <article class="panel metric"><div class="label">Crews / second</div><strong id="crewRate">—</strong><small>after sims-per-crew</small></article>
+      </section>
+      <section class="panel chart-panel">
+        <div class="chart-head"><div><h2>Officer-pool sensitivity</h2><div class="hint" id="chartSubtitle"></div></div></div>
+        <svg id="chart" viewBox="0 0 760 390" role="img" aria-label="Projected exhaustive simulation time by officer pool size"></svg>
+        <div class="formula" id="formula"></div>
+        <div class="note">This is a planning estimate. “Valid crew factor” accounts for cross-role duplicates and other legality losses. The default is calibrated to the measured 65.76B three-below-decks baseline. Real runtime also includes candidate generation and ranking; a search this large must stream candidates instead of storing them all.</div>
+      </section>
+    </div>
+  </div>
+</main>
+<div class="tooltip" id="tooltip"></div>
+<script>
+  const specs = [
+    {id:'captains',label:'Captain-eligible officers',min:1,max:300,value:189,step:1},
+    {id:'bridge',label:'Bridge-eligible officers',min:2,max:350,value:242,step:1},
+    {id:'below',label:'Combat-relevant below decks',min:0,max:120,value:43,step:1},
+    {id:'slots',label:'Below-decks slots',min:0,max:7,value:3,step:1},
+    {id:'validity',label:'Valid crew factor (%)',min:50,max:100,value:96.6791,step:.0001},
+    {id:'sims',label:'Simulations per crew',min:1,max:5000,value:1,step:1},
+    {id:'throughput',label:'Combat simulations / sec',min:100000,max:2500000,value:1810000,step:10000}
+  ];
+  const values = Object.fromEntries(specs.map(s=>[s.id,s.value]));
+  const controls = document.querySelector('#controls');
+  const fmtInt = new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+  const fmtCompact = new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2});
+
+  for (const s of specs) {
+    const wrap=document.createElement('div'); wrap.className='control';
+    wrap.innerHTML=`<div class="control-head"><label for="${s.id}-range">${s.label}</label><input id="${s.id}-number" aria-label="${s.label} value" type="number" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"></div><input id="${s.id}-range" aria-label="${s.label}" type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"><div class="range-ends"><span>${fmtInt.format(s.min)}</span><span>${fmtInt.format(s.max)}</span></div>`;
+    controls.append(wrap);
+    const range=wrap.querySelector('input[type=range]'), number=wrap.querySelector('input[type=number]');
+    const sync=(source,target)=>{ const v=Math.max(s.min,Math.min(s.max,Number(source.value)||s.min)); values[s.id]=v; target.value=v; render(); };
+    range.addEventListener('input',()=>sync(range,number)); number.addEventListener('input',()=>sync(number,range));
+  }
+
+  function choose(n,k){ n=Math.floor(n); k=Math.floor(k); if(k<0||n<k)return 0; k=Math.min(k,n-k); let v=1; for(let i=1;i<=k;i++)v=v*(n-k+i)/i; return v; }
+  function estimate(v){
+    const raw=v.captains*choose(v.bridge,2)*choose(v.below,v.slots);
+    const crews=raw*(v.validity/100);
+    return {raw,crews,seconds:crews*Math.max(1,v.sims)/Math.max(1,v.throughput)};
+  }
+  function duration(sec){
+    if(!Number.isFinite(sec))return '∞'; if(sec<1)return `${sec.toFixed(2)} sec`; if(sec<60)return `${sec.toFixed(1)} sec`;
+    if(sec<3600)return `${(sec/60).toFixed(1)} min`; if(sec<86400)return `${(sec/3600).toFixed(1)} hr`;
+    if(sec<31557600)return `${(sec/86400).toFixed(1)} days`; return `${(sec/31557600).toFixed(2)} years`;
+  }
+  function render(){
+    const r=estimate(values);
+    crewCount.textContent=fmtCompact.format(r.crews); crewDetail.textContent=`${fmtInt.format(r.crews)} estimated crews`;
+    runtime.textContent=duration(r.seconds); runtimeDetail.textContent=`${fmtCompact.format(r.crews*Math.max(1,values.sims))} total combat simulations`;
+    crewRate.textContent=fmtCompact.format(values.throughput/Math.max(1,values.sims));
+    formula.textContent=`${fmtInt.format(values.captains)} × C(${fmtInt.format(values.bridge)}, 2) × C(${fmtInt.format(values.below)}, ${values.slots}) × ${(values.validity/100).toFixed(4)} = ${fmtInt.format(r.crews)} crews`;
+    drawChart();
+  }
+
+  const svg=document.querySelector('#chart'), tooltip=document.querySelector('#tooltip');
+  projection.addEventListener('change',render);
+  function drawChart(){
+    const mode=projection.value, base=estimate(values), points=[];
+    for(let pct=25;pct<=175;pct+=2.5){
+      const v={...values}, f=pct/100;
+      if(mode==='all'||mode==='captains')v.captains=Math.max(1,Math.round(values.captains*f));
+      if(mode==='all'||mode==='bridge')v.bridge=Math.max(2,Math.round(values.bridge*f));
+      if(mode==='all'||mode==='below')v.below=Math.max(values.slots,Math.round(values.below*f));
+      points.push({pct,...estimate(v),v});
+    }
+    chartSubtitle.textContent=`Hover to compare against the selected pools (100%). Projection: ${projection.options[projection.selectedIndex].text.toLowerCase()}.`;
+    const W=760,H=390,m={l:72,r:20,t:18,b:50}, iw=W-m.l-m.r,ih=H-m.t-m.b;
+    const logs=points.map(p=>Math.log10(Math.max(.001,p.seconds))), lo=Math.floor(Math.min(...logs)), hi=Math.ceil(Math.max(...logs));
+    const x=p=>m.l+(p-25)/150*iw, y=s=>m.t+(hi-Math.log10(Math.max(.001,s)))/Math.max(1,hi-lo)*ih;
+    const line=points.map((p,i)=>`${i?'L':'M'}${x(p.pct).toFixed(1)},${y(p.seconds).toFixed(1)}`).join(' ');
+    let html=`<defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#56b4ff" stop-opacity=".30"/><stop offset="1" stop-color="#56b4ff" stop-opacity=".02"/></linearGradient></defs>`;
+    for(let e=lo;e<=hi;e++){ const yy=y(10**e); html+=`<line class="grid" x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}"/><text class="axis-label" x="${m.l-10}" y="${yy+4}" text-anchor="end">${duration(10**e)}</text>`; }
+    [25,50,75,100,125,150,175].forEach(p=>{html+=`<text class="axis-label" x="${x(p)}" y="${H-18}" text-anchor="middle">${p}%</text>`});
+    html+=`<path class="area" d="${line} L${x(175)},${m.t+ih} L${x(25)},${m.t+ih} Z"/><path class="series" d="${line}"/><line class="selected-line" x1="${x(100)}" x2="${x(100)}" y1="${m.t}" y2="${m.t+ih}"/><circle class="selected-dot" cx="${x(100)}" cy="${y(base.seconds)}" r="6"/><circle id="hoverDot" class="hover-dot" cx="0" cy="0" r="5" visibility="hidden"/><rect class="hit" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}"/>`;
+    svg.innerHTML=html;
+    const hit=svg.querySelector('.hit'), dot=svg.querySelector('#hoverDot');
+    hit.addEventListener('mousemove',e=>{
+      const rect=svg.getBoundingClientRect(), sx=W/rect.width, localX=(e.clientX-rect.left)*sx;
+      const pct=Math.max(25,Math.min(175,25+(localX-m.l)/iw*150));
+      const p=points.reduce((a,b)=>Math.abs(b.pct-pct)<Math.abs(a.pct-pct)?b:a);
+      dot.setAttribute('cx',x(p.pct)); dot.setAttribute('cy',y(p.seconds)); dot.setAttribute('visibility','visible');
+      const delta=p.seconds-base.seconds, cls=delta<0?'delta-good':delta>0?'delta-bad':'delta-same';
+      const comparison=delta<0?`${duration(-delta)} saved`:delta>0?`${duration(delta)} added`:'Same as selected';
+      tooltip.innerHTML=`<strong>${p.pct}% pool projection</strong>${fmtCompact.format(p.crews)} crews · ${duration(p.seconds)}<br><span class="${cls}">${comparison}</span><br><span style="color:var(--muted)">C ${p.v.captains} · B ${p.v.bridge} · BD ${p.v.below}</span>`;
+      tooltip.style.display='block'; tooltip.style.left=`${Math.min(innerWidth-240,e.clientX+14)}px`; tooltip.style.top=`${Math.max(8,e.clientY-72)}px`;
+    });
+    hit.addEventListener('mouseleave',()=>{ dot.setAttribute('visibility','hidden'); tooltip.style.display='none'; });
+  }
+  render();
+</script>
+</body>
+</html>
