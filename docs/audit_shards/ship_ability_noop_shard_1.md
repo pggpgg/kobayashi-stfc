@@ -2,6 +2,8 @@
 
 Track D batch. 10 ability ids.
 
+> **Status note (historical snapshot):** some rows below marked `extend_resolver` are now **modeled** — see [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](../SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) §6.1 (e.g. the Quv'Sompek hostile-debuff ability, modeled in D2). These shards are a frozen Track-D snapshot and are not auto-regenerated.
+
 | id | ships | loca_text (excerpt) | current_bucket | recommendation | engine_touch | evidence | test_plan | in_game_verify |
 |---:|---|---|---|---|---|---|---|---|
 | 34867572 | 34867572 | enhanced hull

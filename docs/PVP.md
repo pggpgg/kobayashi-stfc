@@ -40,6 +40,17 @@ Optional `defender_crew` uses the same shape as attacker `crew` and is merged wi
 - Armada / multi-ship fights.
 - Per-round dynamic officer-stat debuffs on the defender side remain deferred (no prod LCARS cases). Fight-setup `target: enemy` / `enemy_bridge` officer-stat debuffs **are** applied in PvP (Phase 4c — e.g. Kras “Know Your Enemy” debuffs defender captain + bridge only when `defender_is_player_ship` passes). Phase 4d dynamic gates (Kirk Leader) apply attack, defense (inbound mitigation), and round-scoped max HP on the attacker path.
 
+## Optimizer eligibility (PvP vs PvE)
+
+Below-decks officer eligibility is **scenario-specific**:
+
+- **PvP** (attacker vs. player): a fixed list of **48 officers** (by upstream `source_officer_id` — `PVP_BELOW_DECKS_BANNED_SOURCE_IDS` in `src/data/heuristics.rs`) is banned from below-decks seats, and loot-only below-decks officers are excluded.
+- **PvE**: below-decks abilities gated on `EnemyPlayer` are excluded instead.
+
+The filter is enforced on generated candidates, heuristics seeds, and warm-start/history crews alike (`enforce_candidate_optimization_eligibility_*`).
+
+**Captain ban (both modes):** captains listed in `data/optimizer/captain_ban_list.json` are dropped from captain enumeration regardless of PvE/PvP.
+
 ## Optimize cache / warm-start
 
 The SPA includes a defender fingerprint in `optimize_cache_key` so warm-start history does not collide across different opponent setups.

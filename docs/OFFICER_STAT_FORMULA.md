@@ -50,7 +50,7 @@ Each ship has three breakpoint tables — one each for attack/defense/health —
 bonus(rating) = max({ bp.bonus for bp in table if rating >= bp.value }, default=0)
 ```
 
-**Source data — already in upstream cache, NOT yet in ships_extended.** Every ship JSON under [data/upstream/data-stfc-space/ships/<id>.json](../data/upstream/data-stfc-space/ships/) carries:
+**Source data — present in the upstream cache and copied into the normalized `ships_extended` schema.** Every ship JSON under [data/upstream/data-stfc-space/ships/<id>.json](../data/upstream/data-stfc-space/ships/) carries:
 
 ```json
 "officer_bonus": {
@@ -62,7 +62,7 @@ bonus(rating) = max({ bp.bonus for bp in table if rating >= bp.value }, default=
 
 (Concrete example from ship `1027217748.json`: 10 breakpoints, max at rating 21,000 → bonus 4.0 = 400%. The Cerritos has its own table topping out at 45,000 → 500%.)
 
-**Engine implication:** [src/bin/normalize_data_stfc_space.rs](../src/bin/normalize_data_stfc_space.rs) must be extended to copy `officer_bonus` from the upstream JSON into the normalized `data/ships_extended/<id>.json` schema. Today the normalized format ([data/ships_extended/admonition.json](../data/ships_extended/admonition.json) etc.) has only `id, ship_name, ship_class, faction, tiers, levels, crew_slots, abilities` — `officer_bonus` is dropped during normalization. Re-running the normalizer is part of Phase 1.
+**Engine implication:** [src/bin/normalize_data_stfc_space.rs](../src/bin/normalize_data_stfc_space.rs) copies `officer_bonus` from the upstream JSON into the normalized `data/ships_extended/<id>.json` schema. The normalized format ([data/ships_extended/admonition.json](../data/ships_extended/admonition.json) etc.) now carries `id, ship_name, ship_class, faction, tiers, levels, crew_slots, abilities, officer_bonus`.
 
 ### 2b. Attack — bonus is a multiplier on the weapon damage channel only
 

@@ -124,6 +124,8 @@ When the client omits `strategy`, the server picks **tiered** vs **exhaustive** 
 
 Genetic and explicit strategy requests bypass auto-routing. Response field `strategy_auto` indicates auto selection.
 
+Explicit `strategy` values: `tiered`, `exhaustive`, `genetic`, and `linear_eval` — a single analytical ranking pass with no Monte Carlo and no prefilter ([`parse_strategy`](../src/server/api/requests.rs); see [`DESIGN.md`](DESIGN.md) §6.2.1).
+
 ---
 
 ## Tiered scout → confirm

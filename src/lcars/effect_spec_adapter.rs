@@ -279,7 +279,7 @@ pub fn combat_tag_to_stat_for_effect(effect: &LcarsEffect) -> Option<&'static st
     None
 }
 
-/// LCARS condition → spec IR (same coverage as [`crate::lcars::resolver::resolve_lcars_condition`]).
+/// LCARS condition → spec IR (canonical tokens via [`crate::lcars::map_canonical_condition_token`]).
 pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpec, String> {
     let ty = c.condition_type.trim().to_lowercase().replace('-', "_");
     match ty.as_str() {

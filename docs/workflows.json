@@ -144,7 +144,7 @@
       "title": "Sync from STFC Community Mod",
       "description": "Quasi-real-time sync: the game mod posts roster/research deltas to /api/sync/ingress; server routes by type and writes to disk.",
       "steps": [
-        { "from": "ext-stfc-mod",   "to": "api-sync",       "label": "POST /api/sync/ingress",       "detail": "Body = JSON array; type-specific. Header stfc-sync-token must match KOBAYASHI_SYNC_TOKEN if set." },
+        { "from": "ext-stfc-mod",   "to": "api-sync",       "label": "POST /api/sync/ingress",       "detail": "Body = JSON array; type-specific. Header stfc-sync-token must match a profile's sync_token (always required; else 401)." },
         { "from": "api-sync",       "to": "mod-sync",       "label": "ingress_payload()",             "detail": "src/server/sync.rs:79. Logs body_len, identifies sync_type, routes." },
         { "from": "mod-sync",       "to": "data-profiles",  "label": "resolve profile by token",      "detail": "Matches stfc-sync-token to a profile entry; 401 otherwise." },
         { "from": "mod-sync",       "to": "mod-data",       "label": "apply officer/research batch",  "detail": "Updates owned-officer levels or research state for the resolved profile." },

@@ -1,6 +1,6 @@
 //! Map maintainer-curated canonical officer `conditions` tokens to LCARS condition trees.
 //!
-//! Used by `generate_lcars` and reporting tools. See [`crate::lcars::resolve_lcars_condition`].
+//! Used by `generate_lcars` and reporting tools. See [`crate::lcars::map_canonical_condition_token`].
 
 use super::LcarsCondition;
 use crate::combat::ShipType;
@@ -31,7 +31,7 @@ fn lcars_defender_ship_type_is(slug: &str) -> LcarsCondition {
     c
 }
 
-/// LCARS `not` with exactly one child (see [`crate::lcars::resolve_lcars_condition`]).
+/// LCARS `not` with exactly one child (see [`crate::lcars::lcars_condition_to_spec`]).
 fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
     LcarsCondition {
         condition_type: "not".to_string(),
@@ -114,7 +114,7 @@ fn map_self_hull_suffix_to_lcars(rest: &str) -> Option<LcarsCondition> {
 }
 
 /// Maps one RawOfficers / canonical condition token to LCARS when the resolver already supports it.
-/// See [`crate::lcars::resolve_lcars_condition`].
+/// See [`crate::lcars::lcars_condition_to_spec`].
 pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
     let t = token.trim();
     if t.is_empty() {
