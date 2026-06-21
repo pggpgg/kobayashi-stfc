@@ -58,6 +58,7 @@ pub use export_csv::{
 pub use hostile_tags::{
     HOSTILE_TAG_MASK_AGGREGATION_HOSTILE, HOSTILE_TAG_MASK_CONQUEROR_BORG,
     HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR, HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
+    HOSTILE_TAG_MASK_GORN_HUNTER,
 };
 pub use log_import_normalize::{
     expand_collapsed_repeat_events, tag_stats_snapshot_sources_client_default,

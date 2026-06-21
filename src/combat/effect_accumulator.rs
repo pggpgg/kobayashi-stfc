@@ -962,6 +962,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
+                | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1156,6 +1157,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
+                | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1312,6 +1314,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
+                | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1470,6 +1473,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
+                | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1634,6 +1638,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
+                | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1834,6 +1839,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
+                | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -2081,7 +2087,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::BreachCumulativeCritChancePerHit(_)
         | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
-        AbilityEffect::ConquerorBorgBeamSuppression => effect,
+        AbilityEffect::HostileIsolyticVulnerability | AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,
         AbilityEffect::RandomDefenderState { .. } => effect,
         AbilityEffect::OpponentCaptainManeuverMultiplier(_) | AbilityEffect::CaptainManeuverMultiplier(_) => effect,

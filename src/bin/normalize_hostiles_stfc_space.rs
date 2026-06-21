@@ -158,6 +158,11 @@ fn curated_hostile_tags_for_upstream(
         push_unique("aggregation_hostile");
     }
 
+    // Gorn Hunters: Pteran (65100), Acrocanth (65101), Macronyx (65102) — `translations-navigation.json` marauder_name_only.
+    if matches!(loca_id, Some(65100 | 65101 | 65102)) {
+        push_unique("gorn_hunter");
+    }
+
     const CONQUEROR_BORG_IDS: &[u64] = &[
         316662618, 467189343, 500305250, 622949343, 778146301, 80039078, 864202735, 1117012705,
         1137196075, 1361645982, 1361807236, 1379653470, 1458200336, 1472989983, 1851381248,

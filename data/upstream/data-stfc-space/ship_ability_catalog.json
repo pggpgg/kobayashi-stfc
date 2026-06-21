@@ -327,7 +327,11 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": [
+        "gorn_hunter"
+      ]
     },
     "1279606467": {
       "timing": "combat_begin",

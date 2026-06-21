@@ -184,6 +184,8 @@ pub struct MetricBands {
     pub defender_shield_remaining: Option<[f64; 2]>,
     #[serde(default)]
     pub attacker_hull_remaining: Option<[f64; 2]>,
+    #[serde(default)]
+    pub total_isolytic_damage: Option<[f64; 2]>,
 }
 
 fn crew_for_drift(
@@ -617,6 +619,15 @@ pub fn simulation_band_report(
             fixture_id,
             "attacker_hull_remaining",
             result.attacker_hull_remaining,
+            b,
+        );
+    }
+    if let Some(b) = bands.total_isolytic_damage {
+        push_band(
+            &mut rows,
+            fixture_id,
+            "total_isolytic_damage",
+            result.total_isolytic_damage,
             b,
         );
     }

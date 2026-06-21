@@ -387,6 +387,17 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             ignore_upstream_value_is_percentage=True,
         )
 
+    # Gorn Eviscerator — Hunt the Hunters (isolytic vs Pteran / Acrocanth / Macronyx only).
+    if "gorn hunter" in p and "isolytic" in p and "increas" in p:
+        return m(
+            "combat_begin",
+            "isolytic_damage",
+            value_is_percentage=False,
+            ignore_upstream_value_is_percentage=True,
+            values_scale_with_ship_level=True,
+            condition_opponent_hostile_tags=["gorn_hunter"],
+        )
+
     # Isolytic
     if "isolytic" in p and ("defense" in p or "defence" in p):
         return m(

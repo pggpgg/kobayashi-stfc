@@ -1,0 +1,23 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+HiggsBozo	60	VICTORY	GORN EVISCERATOR	50	195751616	0	Christopher Pike	Marlena Moreau	T'Laan	84774534	79028643	101494281	74406508	Cirriped	2026-06-20 11:05:08 PM
+Acrocanth	60	DEFEAT	Acrocanth	60	480558048	0	Acrocanth Captain	--	--	178272182	0	132956074	0	Cirriped	2026-06-20 11:05:08 PM
+
+Reward Name	Count
+Apex Isomatter	22806
+Volatile Isomatter	472
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	75021512	27595700	93134408	Hunt the Hunters---Rigorous Extraction	Teaching Moments	Advanced Training	No Fear	Objective Defense	5	70130456	8032658	630522	325393	0.22	3.19	5	956264	1183953	3378923	5	101494281	84774534	232	611	281.32	15752880	0	1	NO	NO
+Enemy Fleet 1	285152672	39791240	155614128	Isolytic Maul---Isolytic Vulnerability---Damage Spike	--	--	--	--	0	252958768	2626370	5478556	2626370	0	1.5	0	6934476	628403	395369	0	132956072	178272176	40	2	2	0	0	1	NO	NO
+
+Round	Battle Event	Type	Attacker Name	Attacker Alliance	Attacker Ship	Attacker - Is Armada?	Target Name	Target Alliance	Target Ship	Target - Is Armada?	Hyperthermic Decay %	Hyperthermic Stablizer %	Critical Hit?	Hull Damage	Shield Damage	Mitigated Damage	Mitigated Isolytic Damage	Mitigated Apex Barrier	Total Damage	Total Isolytic Damage	Mitigated Critical Damage	Ability Type	Ability Value	Ability Name	Ability Owner Name	Target Defeated	Target Destroyed	Charging Weapons %
+1	1	Officer Ability	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	--	--	GORN EVISCERATOR	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	1.2	Teaching Moments	Christopher Pike	--	--	--
+1	2	Officer Ability	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	--	--	GORN EVISCERATOR	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.7	No Fear	Marlena Moreau	--	--	--
+1	3	Forbidden Tech Ability	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	--	--	GORN EVISCERATOR	NO	--	--	--	--	--	--	--	--	--	--	--	ForbiddenTechAbility	62	--	Enaran Execution Post	--	--	--
+1	4	Forbidden Tech Ability	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	--	--	GORN EVISCERATOR	NO	--	--	--	--	--	--	--	--	--	--	--	ForbiddenTechAbility	0.7	--	Enaran Execution Post	--	--	--
+1	5	Attack	Acrocanth	--	Acrocanth	NO	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	--	--	NO	2920541	13768263	3579229	11054666	1335102	16328900	16328901	0	--	--	--	--	--	--	--
+1	6	Attack	Acrocanth	--	Acrocanth	NO	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	--	--	NO	2825350	13319510	3462570	10694358	1291587	15796687	15796688	0	--	--	--	--	--	--	--
+1	7	Attack	HiggsBozo	INFINITE	GORN EVISCERATOR	NO	Acrocanth	--	Acrocanth	NO	--	--	YES	2758163968	9500342272	99186880	0	0	99186368	12258506752	0	--	--	--	--	--	--	--
+1	8	Shield Depleted	Acrocanth	--	Acrocanth	NO	HiggsBozo	INFINITE	Acrocanth	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--	--
+1	9	Combatant Destroyed	Acrocanth	--	Acrocanth	NO	HiggsBozo	INFINITE	Acrocanth	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--
+

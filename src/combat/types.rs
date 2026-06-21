@@ -370,6 +370,10 @@ pub struct SimulationResult {
     /// When true, attacker combat-begin effects included [`AbilityEffect::ConquerorBorgBeamSuppression`] vs a tagged Conqueror Borg defender. Instant-kill beam resolution reads this when implemented.
     #[serde(default)]
     pub conqueror_borg_beam_suppression: bool,
+    /// Sum of isolytic damage applied to the defender (isolytic leg × apex factor, per outbound hit).
+    /// Comparable to game log **Total Isolytic Damage** columns for calibration.
+    #[serde(default)]
+    pub total_isolytic_damage: f64,
 }
 
 /// Per-weapon stats for sub-round resolution. Optional fields override [`Combatant`] ship-level

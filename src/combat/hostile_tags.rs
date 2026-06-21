@@ -9,6 +9,8 @@ pub const HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR: u32 = 1 << 2;
 
 /// Aggregation faction hostiles (faction `loca_id` 82001); hyperthermic decay + Recon Locus stabilizer.
 pub const HOSTILE_TAG_MASK_AGGREGATION_HOSTILE: u32 = 1 << 3;
+/// Gorn Hunter hostiles (Pteran, Acrocanth, Macronyx — `loca_id` 65100–65102); Gorn Eviscerator Hunt the Hunters.
+pub const HOSTILE_TAG_MASK_GORN_HUNTER: u32 = 1 << 4;
 
 /// Map a single data slug (from `ShipAbility` / hostile JSON) to one bit, if known.
 pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
@@ -18,6 +20,7 @@ pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
         "conqueror_borg_suppressor" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR),
         "conqueror_borg_obliterator" => Some(HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR),
         "aggregation_hostile" => Some(HOSTILE_TAG_MASK_AGGREGATION_HOSTILE),
+        "gorn_hunter" => Some(HOSTILE_TAG_MASK_GORN_HUNTER),
         _ => None,
     }
 }

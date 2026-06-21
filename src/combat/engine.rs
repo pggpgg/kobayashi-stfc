@@ -40,6 +40,7 @@ use crate::combat::crit::resolve_vehicle_weapon_crit;
 use crate::combat::damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
     compute_isolytic_taken,
+    combine_outbound_damage_before_apex,
 };
 use crate::combat::effect_accumulator::{
     record_ability_activations, scale_effect, sum_on_kill_hull_regen, EffectAccumulator,
@@ -186,6 +187,8 @@ pub struct PreCombatSetup {
     pub effective_conqueror_borg_beam_suppression: bool,
     pub quantum_beam_instant_loss: bool,
     pub evo_assim_instant_loss: bool,
+    /// Hostile **Isolytic Vulnerability**: player outbound hits apply only the isolytic leg to defender HP.
+    pub defender_isolytic_vulnerability: bool,
     /// Pre-allocated Arc for attacker ship id slug — avoids String clone per construction.
     pub attacker_ship_id_arc: std::sync::Arc<str>,
     /// Pre-allocated Arc for engagement enemy types — avoids EnemyTypes clone per construction.
@@ -363,6 +366,9 @@ pub fn build_combat_setup_with_officer_stat(
     let defender_receive_damage_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::ReceiveDamage);
 
+    let defender_isolytic_vulnerability =
+        crate::combat::abilities::hostile_isolytic_vulnerability_active(&defender_crew);
+
     PreCombatSetup {
         attacker: attacker.clone(),
         defender: defender.clone(),
@@ -385,6 +391,7 @@ pub fn build_combat_setup_with_officer_stat(
         effective_conqueror_borg_beam_suppression,
         quantum_beam_instant_loss,
         evo_assim_instant_loss,
+        defender_isolytic_vulnerability,
         round_start_effects,
         attack_phase_effects,
         defense_phase_effects,
@@ -443,6 +450,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let mut st = CombatRunState {
         total_hull_damage: 0.0,
         total_shield_damage: 0.0,
+        total_isolytic_damage: 0.0,
         defender_shield_remaining: defender.shield_health.max(0.0),
         attacker_shield_remaining: attacker.shield_health.max(0.0),
         total_attacker_hull_damage: config.initial_attacker_hull_damage.clamp(0.0, max_att_hull),
@@ -525,6 +533,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let attacker_hull_remaining = (attacker.hull_health - instant_loss_hull).max(0.0);
         return SimulationResult {
             total_damage: 0.0,
+            total_isolytic_damage: 0.0,
             attacker_won: false,
             winner_by_round_limit: false,
             rounds_simulated: 0,
@@ -997,6 +1006,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 hull_breach_effects,
                 defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
                 defender_receive_damage_effects,
+                defender_isolytic_vulnerability: setup.defender_isolytic_vulnerability,
             });
 
             let shield_broke_this_round =
@@ -1341,6 +1351,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     SimulationResult {
         total_damage: round_f64(total_damage),
+        total_isolytic_damage: round_f64(st.total_isolytic_damage),
         attacker_won,
         winner_by_round_limit,
         rounds_simulated: rounds_completed,
@@ -2318,6 +2329,7 @@ struct FireAttackerWeapon<'a> {
     hull_breach_effects: &'a [ActiveAbilityEffect],
     defender_inbound_defense_filtered: &'a [ActiveAbilityEffect],
     defender_receive_damage_effects: &'a [ActiveAbilityEffect],
+    defender_isolytic_vulnerability: bool,
 }
 
 /// Attacker outbound fire for one weapon sub-round: the per-shot hit loop (attack roll, mitigation,
@@ -2358,6 +2370,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         hull_breach_effects,
         defender_inbound_defense_filtered,
         defender_receive_damage_effects,
+        defender_isolytic_vulnerability,
     } = p;
     let weapon_index_u = weapon_index as u32;
     let mut simd_damage_batch: Vec<f64> = if use_simd_outbound_weapon_path && effective_shots > 0 {
@@ -2884,8 +2897,13 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 effective_isolytic_cascade,
             );
 
-            // Apex barrier: apply once to combined pool (standard_net + isolytic_taken).
-            let damage_before_apex = damage + isolytic_taken;
+            // Apex barrier: apply once to combined pool (standard_net + isolytic_taken), unless the
+            // defender has Isolytic Vulnerability — then only the isolytic leg depletes HP.
+            let damage_before_apex = combine_outbound_damage_before_apex(
+                damage,
+                isolytic_taken,
+                defender_isolytic_vulnerability,
+            );
             let damage_after_apex = damage_before_apex * apex_damage_factor;
 
             // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
@@ -2925,9 +2943,12 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                         &simd_damage_batch,
                         &simd_isolytic_batch,
                         apex_damage_factor,
+                        defender_isolytic_vulnerability,
                         &mut simd_damage_after_apex_batch,
                     );
                     for lane in 0..simd_damage_after_apex_batch.len() {
+                        st.total_isolytic_damage += simd_isolytic_batch[lane].max(0.0)
+                            * apex_damage_factor;
                         let lane_shield_mitigation = if st.defender_shield_remaining > 0.0 {
                             simd_shield_mitigation_batch[lane]
                         } else {
@@ -2950,6 +2971,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 }
                 continue;
             }
+
+            st.total_isolytic_damage += isolytic_taken.max(0.0) * apex_damage_factor;
 
             let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
                 damage_after_apex,
@@ -3003,6 +3026,14 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                     (
                         "damage_after_apex".to_string(),
                         Value::from(round_f64(damage_after_apex)),
+                    ),
+                    (
+                        "isolytic_component".to_string(),
+                        Value::from(round_f64(isolytic_taken)),
+                    ),
+                    (
+                        "isolytic_vulnerability".to_string(),
+                        Value::Bool(defender_isolytic_vulnerability),
                     ),
                     (
                         "shield_mitigation".to_string(),
@@ -3532,6 +3563,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                     &counter_simd_damage_batch,
                     &counter_simd_isolytic_batch,
                     counter_apex_factor,
+                    false,
                     &mut counter_simd_after_apex_batch,
                 );
                 for lane in 0..counter_simd_after_apex_batch.len() {
@@ -4040,6 +4072,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
 struct CombatRunState {
     total_hull_damage: f64,
     total_shield_damage: f64,
+    total_isolytic_damage: f64,
     defender_shield_remaining: f64,
     attacker_shield_remaining: f64,
     total_attacker_hull_damage: f64,

@@ -4,6 +4,8 @@
 //! so we can benchmark speedup and verify numerical parity before considering
 //! engine integration.
 
+use crate::combat::damage::combine_outbound_damage_before_apex;
+
 use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -244,6 +246,7 @@ pub fn compute_damage_after_apex_batch_scalar(
     damage_after_attack_phase: &[f64],
     isolytic_taken: &[f64],
     apex_damage_factor: f64,
+    defender_isolytic_vulnerability: bool,
     output_damage_after_apex: &mut [f64],
 ) -> Result<(), DamageKernelBatchError> {
     let len = damage_after_attack_phase.len();
@@ -251,8 +254,11 @@ pub fn compute_damage_after_apex_batch_scalar(
         return Err(DamageKernelBatchError::LengthMismatch);
     }
     for idx in 0..len {
-        output_damage_after_apex[idx] =
-            (damage_after_attack_phase[idx] + isolytic_taken[idx]) * apex_damage_factor;
+        output_damage_after_apex[idx] = combine_outbound_damage_before_apex(
+            damage_after_attack_phase[idx],
+            isolytic_taken[idx],
+            defender_isolytic_vulnerability,
+        ) * apex_damage_factor;
     }
     Ok(())
 }
@@ -261,6 +267,7 @@ pub fn compute_damage_after_apex_batch(
     damage_after_attack_phase: &[f64],
     isolytic_taken: &[f64],
     apex_damage_factor: f64,
+    defender_isolytic_vulnerability: bool,
     output_damage_after_apex: &mut [f64],
 ) -> Result<KernelExecutionPath, DamageKernelBatchError> {
     let len = damage_after_attack_phase.len();
@@ -272,6 +279,7 @@ pub fn compute_damage_after_apex_batch(
             damage_after_attack_phase,
             isolytic_taken,
             apex_damage_factor,
+            defender_isolytic_vulnerability,
             output_damage_after_apex,
         )?;
         Ok(KernelExecutionPath::Avx2)
@@ -280,6 +288,7 @@ pub fn compute_damage_after_apex_batch(
             damage_after_attack_phase,
             isolytic_taken,
             apex_damage_factor,
+            defender_isolytic_vulnerability,
             output_damage_after_apex,
         )?;
         Ok(KernelExecutionPath::Scalar)
@@ -290,6 +299,7 @@ pub fn compute_damage_after_apex_batch_avx2(
     damage_after_attack_phase: &[f64],
     isolytic_taken: &[f64],
     apex_damage_factor: f64,
+    defender_isolytic_vulnerability: bool,
     output_damage_after_apex: &mut [f64],
 ) -> Result<(), DamageKernelBatchError> {
     let len = damage_after_attack_phase.len();
@@ -310,6 +320,7 @@ pub fn compute_damage_after_apex_batch_avx2(
                 damage_after_attack_phase,
                 isolytic_taken,
                 apex_damage_factor,
+                defender_isolytic_vulnerability,
                 output_damage_after_apex,
             )
         };
@@ -320,6 +331,7 @@ pub fn compute_damage_after_apex_batch_avx2(
         let _ = damage_after_attack_phase;
         let _ = isolytic_taken;
         let _ = apex_damage_factor;
+        let _ = defender_isolytic_vulnerability;
         let _ = output_damage_after_apex;
         Err(DamageKernelBatchError::UnsupportedSimd)
     }
@@ -331,8 +343,17 @@ unsafe fn compute_damage_after_apex_batch_avx2_impl(
     damage_after_attack_phase: &[f64],
     isolytic_taken: &[f64],
     apex_damage_factor: f64,
+    defender_isolytic_vulnerability: bool,
     output_damage_after_apex: &mut [f64],
 ) {
+    if defender_isolytic_vulnerability {
+        let len = isolytic_taken.len();
+        for idx in 0..len {
+            output_damage_after_apex[idx] = isolytic_taken[idx].max(0.0) * apex_damage_factor;
+        }
+        return;
+    }
+
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
@@ -521,6 +542,7 @@ mod tests {
             &damage_after_attack_phase,
             &isolytic_taken,
             apex_damage_factor,
+            false,
             &mut output,
         )
         .unwrap();
@@ -530,6 +552,26 @@ mod tests {
                 (damage_after_attack_phase[idx] + isolytic_taken[idx]) * apex_damage_factor;
             assert!(approx_eq(output[idx], expected, 1e-12));
         }
+    }
+
+    #[test]
+    fn damage_after_apex_batch_isolytic_vulnerability_uses_isolytic_only() {
+        let damage_after_attack_phase = vec![100.0_f64, 150.0];
+        let isolytic_taken = vec![2.0_f64, 10.0];
+        let apex_damage_factor = 0.5_f64;
+        let mut output = vec![0.0_f64; 2];
+
+        let _ = compute_damage_after_apex_batch(
+            &damage_after_attack_phase,
+            &isolytic_taken,
+            apex_damage_factor,
+            true,
+            &mut output,
+        )
+        .unwrap();
+
+        assert!(approx_eq(output[0], 1.0, 1e-12));
+        assert!(approx_eq(output[1], 5.0, 1e-12));
     }
 
     #[test]

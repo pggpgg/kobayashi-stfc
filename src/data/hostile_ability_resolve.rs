@@ -234,6 +234,12 @@ pub(crate) fn hostile_ability_effect_from_catalog(
             chance: normalize_probability(chance),
             bonus: value,
         }),
+        "hostile_isolytic_vulnerability" | "isolytic_vulnerability" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileIsolyticVulnerability)
+        }
         // Attacker-only hull abilities that must not apply on hostile defender crew.
         "conqueror_borg_beam_suppression"
         | "borg_conqueror_beam_suppression"
@@ -483,6 +489,18 @@ mod tests {
 
     #[test]
     fn hostile_catalog_delegates_isolytic_and_apex_to_ship_resolver() {
+        let vuln = hostile_ability_effect_from_catalog(
+            "hostile_isolytic_vulnerability",
+            TimingWindow::CombatBegin,
+            100.0,
+            1.0,
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(matches!(vuln, Some(AbilityEffect::HostileIsolyticVulnerability)));
+
         let iso = hostile_ability_effect_from_catalog(
             "isolytic_damage",
             TimingWindow::CombatBegin,

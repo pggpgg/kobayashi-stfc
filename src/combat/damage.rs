@@ -55,6 +55,21 @@ pub fn compute_isolytic_taken(
     isolytic_component / (1.0 + effective_isolytic_defense)
 }
 
+/// Combine standard weapon damage and isolytic for the pre-apex pool applied to defender HP.
+/// When [`defender_isolytic_vulnerability`] is active, only the isolytic leg depletes shields/hull.
+#[inline]
+pub fn combine_outbound_damage_before_apex(
+    standard_damage: f64,
+    isolytic_taken: f64,
+    defender_isolytic_vulnerability: bool,
+) -> f64 {
+    if defender_isolytic_vulnerability {
+        isolytic_taken.max(0.0)
+    } else {
+        (standard_damage + isolytic_taken).max(0.0)
+    }
+}
+
 /// Shield/hull split: returns (actual_shield_damage, hull_damage_this_round).
 /// When shield_remaining is 0, shield_mitigation is treated as 0 (all damage to hull).
 #[inline]

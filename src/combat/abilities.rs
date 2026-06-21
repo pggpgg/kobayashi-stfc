@@ -272,6 +272,10 @@ pub enum AbilityEffect {
     /// out of band via [`sum_breach_cumulative_crit_damage_per_crit`]; a no-op in the per-timing
     /// accumulator.
     BreachCumulativeCritDamagePerCrit(f64),
+    /// Hostile **Isolytic Vulnerability** (loca 65101 family): defender takes **only** the isolytic
+    /// component of player outbound weapon damage (standard weapon damage does not deplete shields/hull).
+    /// Detected at combat setup; resolved out of band in the weapon loop (not in [`EffectAccumulator`]).
+    HostileIsolyticVulnerability,
     /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables the
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
@@ -911,6 +915,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::CaptainManeuverMultiplier(_)
         | AbilityEffect::DefenderFireDelay { .. }
         | AbilityEffect::RandomDefenderState { .. }
+        | AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::ConquerorBorgBeamSuppression => {}
     }
 }
@@ -1066,6 +1071,16 @@ pub fn hostile_kemocite_attack_multiplier_bonus(crew: &CrewConfiguration, stacks
         return 0.0;
     }
     stacks as f64 * growth
+}
+
+/// True when the hostile defender crew carries **Isolytic Vulnerability** (only isolytic damage applies).
+pub fn hostile_isolytic_vulnerability_active(crew: &CrewConfiguration) -> bool {
+    crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::HostileIsolyticVulnerability
+        )
+    })
 }
 
 /// Denticle Blade proc chance and gated weapon slot (1-based) from hostile defender crew.

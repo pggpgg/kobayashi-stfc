@@ -1086,9 +1086,10 @@
     },
     "658066283": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "effect_type": "hostile_isolytic_vulnerability",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.0
     },
     "658172375": {
       "timing": "combat_begin",

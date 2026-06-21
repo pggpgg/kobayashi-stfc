@@ -39,7 +39,9 @@
   "shield_piercing": 5545360.0,
   "crit_chance": 0.01,
   "crit_damage": 1.5,
-  "hostile_tags": [],
+  "hostile_tags": [
+    "gorn_hunter"
+  ],
   "engagement_enemy_types": null,
   "components": [
     {

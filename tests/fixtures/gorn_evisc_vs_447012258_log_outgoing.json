@@ -1,0 +1,61 @@
+{
+  "description": "Parsed from fight samples/gorn-evisc_vs_447012258_60_easywin_trivial.csv — Gorn Eviscerator T10 L50 vs Acrocanth L60 (hostile 447012258), Pike/Moreau/T'Laan, round-1 win.",
+  "source_csv": "fight samples/gorn-evisc_vs_447012258_60_easywin_trivial.csv",
+  "hostile_id": "447012258",
+  "hostile_display_name": "Acrocanth",
+  "hostile_hull_match_note": "Enemy row hull 178272182 matches bundled hostile 447012258.",
+  "ship_kobayashi_id": "gorn_eviscerator",
+  "ship_tier": 10,
+  "ship_level": 50,
+  "profile_id": "demo",
+  "scenario_seed": 0,
+  "sim_index": 0,
+  "crew": {
+    "captain": "pike-1e7d0d",
+    "bridge": ["moreau-23ddb4", "t-laan-c4627b"],
+    "below_decks": []
+  },
+  "attacker_won": true,
+  "round_count": 1,
+  "player_outgoing_attack_events": 1,
+  "total_outgoing_damage": 99186368.0,
+  "total_outgoing_isolytic_damage": 12258506752.0,
+  "decisive_attack_critical": true,
+  "defender_kill_damage_from_summary": 311228248.0,
+  "attacker_hull_remaining": 79028643.0,
+  "attacker_hull_max": 84774534.0,
+  "attacker_hull_remaining_fraction": 0.9321,
+  "enemy_incoming_attack_total_damage": 32125587.0,
+  "per_round_outgoing_total_damage": {
+    "1": 99186368.0
+  },
+  "sim_bands": {
+    "rounds_simulated": [1, 3],
+    "total_damage": [520000000, 620000000],
+    "total_isolytic_damage": [520000000, 620000000],
+    "defender_hull_remaining": [0, 0],
+    "defender_shield_remaining": [0, 0]
+  },
+  "log_sim_ratio_bands": {
+    "total_damage_vs_log_kill_summary": { "min": 1.65, "max": 2.05 },
+    "total_isolytic_vs_log_attack_isolytic_column": { "min": 0.04, "max": 0.055 },
+    "total_damage_vs_log_attack_total_damage_column": { "min": 5.0, "max": 6.5 }
+  },
+  "monte_carlo": {
+    "iterations": 2000,
+    "seed": 0,
+    "min_win_rate": 0.99,
+    "min_r1_kill_rate": 0.08,
+    "min_avg_hull_remaining": 0.9
+  },
+  "trace_expectations": {
+    "min_hunt_the_hunters_isolytic_bonus_composed": 55.0,
+    "require_isolytic_vulnerability_on_damage_application": true
+  },
+  "calibration_notes": [
+    "Profile is bundled demo, not the player's synced roster — attacker hull remaining is not a log gauge.",
+    "Log Attack-row Total Damage column != sim hull+shield accounting (different scale); use ratio bands.",
+    "Log Total Isolytic Damage column is raw/pre-mitigation; sim total_isolytic_damage is applied isolytic leg.",
+    "Acrocanth Isolytic Vulnerability: sim total_isolytic_damage should match total_damage."
+  ]
+}

@@ -251,6 +251,7 @@ fn replay_to_simulation_result(replay: &MonteCarloSeedReplay) -> SimulationResul
         winner_by_round_limit: replay.winner_by_round_limit,
         rounds_simulated: replay.rounds_simulated,
         total_damage: replay.total_damage,
+        total_isolytic_damage: replay.total_isolytic_damage,
         attacker_hull_remaining: replay.attacker_hull_remaining,
         defender_hull_remaining: replay.defender_hull_remaining,
         defender_shield_remaining: replay.defender_shield_remaining,
