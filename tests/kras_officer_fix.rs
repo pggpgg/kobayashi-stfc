@@ -32,10 +32,7 @@ fn production_kras_captain_opponent_maneuver_debuff_seat() {
         .and_then(|a| a.effects.first())
         .expect("captain effect");
     assert_eq!(cap_eff.effect_type, "stat_modify");
-    assert_eq!(
-        cap_eff.stat.as_deref(),
-        Some("opponent_captain_maneuver")
-    );
+    assert_eq!(cap_eff.stat.as_deref(), Some("opponent_captain_maneuver"));
     assert_eq!(cap_eff.operator.as_deref(), Some("sub"));
 
     let buff = resolve_crew_to_buff_set("kras-a47042", &[], &[], &officers, &opts);

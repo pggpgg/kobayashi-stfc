@@ -18,18 +18,17 @@ use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
-    attacker_crew_tal_assigned_captain_or_bridge, defender_shield_drain_per_round_from_crew,
-    filter_effects_by_condition, hostile_counter_stat_debuff_from_crew,
-    hostile_crit_damage_reduction_active_at_round, hostile_denticle_blade_gates_weapon,
-    hostile_kemocite_attack_multiplier_bonus, hostile_kemocite_try_add_stack,
-    hostile_lethal_end_of_round_hull_damage, captain_maneuver_multiplier_from_effects,
-    opponent_captain_maneuver_multiplier_from_effects,
-    roll_hostile_denticle_blade_at_combat_begin, scale_crew_captain_maneuver_effects,
-    sum_accuracy_bonus, sum_breach_cumulative_crit_chance_per_hit,
-    sum_breach_cumulative_crit_damage_per_crit, sum_dodge_bonus,
-    sum_hostile_engagement_defensive_bonus, sum_mitigation_additive, AbilityEffect,
-    ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext, CrewConfiguration,
-    TimingWindow,
+    attacker_crew_tal_assigned_captain_or_bridge, captain_maneuver_multiplier_from_effects,
+    defender_shield_drain_per_round_from_crew, filter_effects_by_condition,
+    hostile_counter_stat_debuff_from_crew, hostile_crit_damage_reduction_active_at_round,
+    hostile_denticle_blade_gates_weapon, hostile_kemocite_attack_multiplier_bonus,
+    hostile_kemocite_try_add_stack, hostile_lethal_end_of_round_hull_damage,
+    opponent_captain_maneuver_multiplier_from_effects, roll_hostile_denticle_blade_at_combat_begin,
+    scale_crew_captain_maneuver_effects, sum_accuracy_bonus,
+    sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
+    sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
+    AbilityEffect, ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext,
+    CrewConfiguration, TimingWindow,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -38,9 +37,8 @@ use crate::combat::conqueror_borg_beams::{
 };
 use crate::combat::crit::resolve_vehicle_weapon_crit;
 use crate::combat::damage::{
-    apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,
-    compute_isolytic_taken,
-    combine_outbound_damage_before_apex,
+    apply_shield_hull_split, combine_outbound_damage_before_apex, compute_apex_damage_factor,
+    compute_damage_through_factor, compute_isolytic_taken,
 };
 use crate::combat::effect_accumulator::{
     record_ability_activations, scale_effect, sum_on_kill_hull_regen, EffectAccumulator,
@@ -811,8 +809,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         );
 
         if config.attacker_hyperthermic_decay_fraction > 0.0 {
-            let decay =
-                config.attacker_hyperthermic_decay_fraction * attacker.hull_health.max(0.0);
+            let decay = config.attacker_hyperthermic_decay_fraction * attacker.hull_health.max(0.0);
             if decay > 0.0 {
                 st.total_attacker_hull_damage += decay;
                 st.attacker_hull_gross_damage_this_round += decay;
@@ -2947,8 +2944,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                         &mut simd_damage_after_apex_batch,
                     );
                     for lane in 0..simd_damage_after_apex_batch.len() {
-                        st.total_isolytic_damage += simd_isolytic_batch[lane].max(0.0)
-                            * apex_damage_factor;
+                        st.total_isolytic_damage +=
+                            simd_isolytic_batch[lane].max(0.0) * apex_damage_factor;
                         let lane_shield_mitigation = if st.defender_shield_remaining > 0.0 {
                             simd_shield_mitigation_batch[lane]
                         } else {

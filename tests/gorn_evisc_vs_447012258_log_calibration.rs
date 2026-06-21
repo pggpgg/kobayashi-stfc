@@ -234,7 +234,8 @@ fn assert_trace_expectations(replay: &MonteCarloSeedReplay, trace: &TraceExpecta
 
     for ev in &replay.trace_events {
         if ev.event_type == "damage_application" {
-            if ev.values
+            if ev
+                .values
                 .get("isolytic_vulnerability")
                 .and_then(|v| v.as_bool())
                 == Some(true)
@@ -268,7 +269,10 @@ fn print_calibration_report(
     csv: &CsvAttackTotals,
     band_report: &kobayashi::calibration::DriftRunReport,
 ) {
-    eprintln!("=== gorn447012258 log vs sim calibration (seed={}) ===", f.scenario_seed);
+    eprintln!(
+        "=== gorn447012258 log vs sim calibration (seed={}) ===",
+        f.scenario_seed
+    );
     eprintln!(
         "sim: rounds={} total_damage={:.0} total_isolytic={:.0} won={} hull_rem={:.0}",
         replay.rounds_simulated,
@@ -314,7 +318,10 @@ fn gorn_evisc_fight_export_parses_and_matches_fixture() {
     assert_eq!(export.defender_hull_remaining, 0.0);
     assert_eq!(export.defender_shield_remaining, 0.0);
     assert_eq!(export.player_ship_name.as_deref(), Some("GORN EVISCERATOR"));
-    assert_eq!(export.player_officer_one.as_deref(), Some("Christopher Pike"));
+    assert_eq!(
+        export.player_officer_one.as_deref(),
+        Some("Christopher Pike")
+    );
     assert_eq!(export.player_officer_two.as_deref(), Some("Marlena Moreau"));
     assert_eq!(export.player_officer_three.as_deref(), Some("T'Laan"));
     assert_eq!(export.enemy_player_name.as_deref(), Some("Acrocanth"));
@@ -345,7 +352,8 @@ fn gorn_evisc_fight_export_parses_and_matches_fixture() {
         f.defender_kill_damage_from_summary
     );
     assert_eq!(
-        csv.player_outgoing_attack_events, f.player_outgoing_attack_events
+        csv.player_outgoing_attack_events,
+        f.player_outgoing_attack_events
     );
 
     let crit = export
@@ -404,7 +412,11 @@ fn gorn_evisc_log_vs_sim_calibration() {
     assert!(
         band_report.all_ok,
         "sim band report failed: {:?}",
-        band_report.rows.iter().filter(|r| !r.in_band).collect::<Vec<_>>()
+        band_report
+            .rows
+            .iter()
+            .filter(|r| !r.in_band)
+            .collect::<Vec<_>>()
     );
 
     assert!(

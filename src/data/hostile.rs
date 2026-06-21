@@ -319,10 +319,7 @@ impl HostileRecord {
             .as_ref()
             .and_then(|f| f.loca_id)
             .is_some_and(|loca| loca == 82001)
-            || self
-                .hostile_tags
-                .iter()
-                .any(|t| t == "aggregation_hostile")
+            || self.hostile_tags.iter().any(|t| t == "aggregation_hostile")
     }
 }
 

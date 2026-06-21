@@ -499,7 +499,10 @@ mod tests {
             None,
             None,
         );
-        assert!(matches!(vuln, Some(AbilityEffect::HostileIsolyticVulnerability)));
+        assert!(matches!(
+            vuln,
+            Some(AbilityEffect::HostileIsolyticVulnerability)
+        ));
 
         let iso = hostile_ability_effect_from_catalog(
             "isolytic_damage",

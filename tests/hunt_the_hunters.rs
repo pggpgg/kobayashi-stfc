@@ -1,11 +1,13 @@
 //! Gorn Eviscerator Hunt the Hunters: level-scaled isolytic vs gorn_hunter-tagged hostiles only.
 
 use kobayashi::combat::HOSTILE_TAG_MASK_GORN_HUNTER;
+use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::loader::{resolve_hostile, resolve_ship_with_tier_level};
 use kobayashi::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
-use kobayashi::optimizer::monte_carlo::{replay_optimize_iteration_with_registry, DefenderOpponent};
 use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::data::data_registry::DataRegistry;
+use kobayashi::optimizer::monte_carlo::{
+    replay_optimize_iteration_with_registry, DefenderOpponent,
+};
 use std::sync::Arc;
 
 #[test]
@@ -34,12 +36,10 @@ fn gorn_eviscerator_hunt_the_hunters_scales_with_ship_level() {
         "L50 Hunt the Hunters isolytic bonus should be 60 (6000% in UI), got {}",
         hunt.value
     );
-    assert!(
-        hunt
-            .condition_opponent_hostile_tags
-            .as_ref()
-            .is_some_and(|t| t == &["gorn_hunter".to_string()])
-    );
+    assert!(hunt
+        .condition_opponent_hostile_tags
+        .as_ref()
+        .is_some_and(|t| t == &["gorn_hunter".to_string()]));
 }
 
 #[test]

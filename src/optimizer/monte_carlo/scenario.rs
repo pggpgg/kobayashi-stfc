@@ -3,15 +3,14 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
-    attacker_crew_tal_assigned_captain_or_bridge, mitigation, mitigation_for_hostile,
-    pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyTypes,
-    hostile_apex_barrier_bonus_from_defender_crew,
+    attacker_crew_tal_assigned_captain_or_bridge, hostile_apex_barrier_bonus_from_defender_crew,
     hostile_crit_damage_floor_bonus_from_defender_crew,
     hostile_defender_mitigation_additive_factor_from_defender_crew,
-    hostile_hyperthermic_decay_fraction_from_defender_crew, HostileMitigationParams,
-    OpponentFactionTag, ShipType, TimingWindow, MITIGATION_CEILING, MITIGATION_FLOOR,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    hostile_hyperthermic_decay_fraction_from_defender_crew, mitigation, mitigation_for_hostile,
+    pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyTypes,
+    HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow, MITIGATION_CEILING,
+    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
@@ -1605,10 +1604,7 @@ fn profile_weapon_damage_fraction_for_combat(
 }
 
 fn defender_is_outpost_for_scenario(shared: &SharedScenarioData) -> bool {
-    shared
-        .hostile_rec
-        .as_ref()
-        .is_some_and(|h| h.is_outpost)
+    shared.hostile_rec.as_ref().is_some_and(|h| h.is_outpost)
 }
 
 fn defender_is_armada_hostile_for_scenario(shared: &SharedScenarioData) -> bool {
@@ -1682,10 +1678,8 @@ fn enrich_hostile_defender_for_scenario(
     defender_crew: &CrewConfiguration,
 ) -> Combatant {
     defender = apply_hostile_ability_combatant_bonuses(defender, defender_crew);
-    let scaled_stats = scale_defender_stats_for_hostile_abilities(
-        hostile_rec.to_defender_stats(),
-        defender_crew,
-    );
+    let scaled_stats =
+        scale_defender_stats_for_hostile_abilities(hostile_rec.to_defender_stats(), defender_crew);
     let base_attacker_stats = effective_attacker_stats_for_mitigation(
         ship_rec,
         profile,
@@ -4176,9 +4170,10 @@ mod tests {
     #[test]
     fn npc_hostile_apex_barrier_profile_bonus_respects_tal_and_armada_gates() {
         let mut profile = PlayerProfile::default();
-        profile
-            .bonuses
-            .insert("apex_barrier_vs_npc_hostile_tal_not_on_bridge".to_string(), 500.0);
+        profile.bonuses.insert(
+            "apex_barrier_vs_npc_hostile_tal_not_on_bridge".to_string(),
+            500.0,
+        );
         let mut attacker = Combatant {
             id: "s".into(),
             attack: 1.0,
@@ -4249,8 +4244,12 @@ mod tests {
         profile
             .bonuses
             .insert("weapon_damage_vs_outpost".to_string(), 0.25);
-        assert!((profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12);
-        assert!((profile_weapon_damage_fraction_for_combat(&profile, true, false) - 0.35).abs() < 1e-12);
+        assert!(
+            (profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12
+        );
+        assert!(
+            (profile_weapon_damage_fraction_for_combat(&profile, true, false) - 0.35).abs() < 1e-12
+        );
     }
 
     #[test]
@@ -4260,8 +4259,12 @@ mod tests {
         profile
             .bonuses
             .insert("weapon_damage_vs_armada_hostile".to_string(), 0.02);
-        assert!((profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12);
-        assert!((profile_weapon_damage_fraction_for_combat(&profile, false, true) - 0.12).abs() < 1e-12);
+        assert!(
+            (profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12
+        );
+        assert!(
+            (profile_weapon_damage_fraction_for_combat(&profile, false, true) - 0.12).abs() < 1e-12
+        );
     }
 
     #[test]

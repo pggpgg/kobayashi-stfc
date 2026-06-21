@@ -2087,10 +2087,12 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::BreachCumulativeCritChancePerHit(_)
         | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
-        AbilityEffect::HostileIsolyticVulnerability | AbilityEffect::ConquerorBorgBeamSuppression => effect,
+        AbilityEffect::HostileIsolyticVulnerability
+        | AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,
         AbilityEffect::RandomDefenderState { .. } => effect,
-        AbilityEffect::OpponentCaptainManeuverMultiplier(_) | AbilityEffect::CaptainManeuverMultiplier(_) => effect,
+        AbilityEffect::OpponentCaptainManeuverMultiplier(_)
+        | AbilityEffect::CaptainManeuverMultiplier(_) => effect,
         AbilityEffect::BridgeAbilityEffectivenessBonus(_) => effect,
         AbilityEffect::AccuracyBonus(_) => effect,
         AbilityEffect::DodgeBonus(_) => effect,

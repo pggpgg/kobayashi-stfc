@@ -18,10 +18,10 @@ use std::collections::HashSet;
 use std::time::Instant;
 
 use kobayashi::data::data_registry::DataRegistry;
+use kobayashi::data::heuristics::BelowDecksPoolMode;
 use kobayashi::data::heuristics::{
     expand_crews, list_heuristics_seeds, load_seed_file, BelowDecksStrategy, DEFAULT_HEURISTICS_DIR,
 };
-use kobayashi::data::heuristics::BelowDecksPoolMode;
 use kobayashi::optimizer::crew_generator::{
     build_officer_pools_with_constraints_from_registry, resolve_below_decks_slots_for_ship,
     CrewCandidate, OfficerPools,
@@ -83,7 +83,11 @@ fn is_winning(r: &RankedCrewResult) -> bool {
 }
 
 fn print_winners(title: &str, ranked: &[RankedCrewResult], limit: usize, expected_bd: usize) {
-    let winners: Vec<_> = ranked.iter().filter(|r| is_winning(r)).take(limit).collect();
+    let winners: Vec<_> = ranked
+        .iter()
+        .filter(|r| is_winning(r))
+        .take(limit)
+        .collect();
     println!("\n{title} ({} with win_rate > 0):", winners.len());
     if winners.is_empty() {
         println!("  (none)");
@@ -147,11 +151,7 @@ fn load_heuristic_warm_start(
     let mut out = Vec::new();
     for name in seeds {
         let parsed = load_seed_file(&name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
-        let expanded = expand_crews(
-            parsed,
-            below_decks_slots,
-            BelowDecksStrategy::Ordered,
-        );
+        let expanded = expand_crews(parsed, below_decks_slots, BelowDecksStrategy::Ordered);
         for c in expanded {
             let mut crew = CrewCandidate {
                 captain: c.captain,
@@ -296,12 +296,7 @@ fn main() {
     );
 
     let tiered_elapsed = t_run.elapsed().as_secs_f64();
-    print_winners(
-        "Tiered top winners",
-        &outcome.ranked,
-        15,
-        below_decks_slots,
-    );
+    print_winners("Tiered top winners", &outcome.ranked, 15, below_decks_slots);
 
     if let Some((n, scout, top_k)) = outcome.tiered_resolved {
         println!(

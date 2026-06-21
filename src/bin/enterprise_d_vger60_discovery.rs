@@ -60,7 +60,11 @@ fn is_winning(r: &RankedCrewResult) -> bool {
 }
 
 fn print_winners(title: &str, ranked: &[RankedCrewResult], limit: usize) {
-    let winners: Vec<_> = ranked.iter().filter(|r| is_winning(r)).take(limit).collect();
+    let winners: Vec<_> = ranked
+        .iter()
+        .filter(|r| is_winning(r))
+        .take(limit)
+        .collect();
     println!("\n{title} ({} with win_rate > 0):", winners.len());
     if winners.is_empty() {
         println!("  (none)");
@@ -241,7 +245,10 @@ fn main() {
     if let Some(b) = outcome.tiered_scout_budget {
         println!(
             "Scout trials: coarse={} refine={} final={} confirm={}",
-            b.coarse_pass_trials, b.refine_pass_trials, b.scout_trials_final, b.confirm_trials_total
+            b.coarse_pass_trials,
+            b.refine_pass_trials,
+            b.scout_trials_final,
+            b.confirm_trials_total
         );
     }
 
@@ -307,10 +314,7 @@ fn main() {
     }
     println!("Total wall time: {total_elapsed:.1}s (tiered={tiered_elapsed:.1}s genetic={genetic_elapsed:.1}s)");
 
-    let best = outcome
-        .ranked
-        .first()
-        .or(genetic_ranked.first());
+    let best = outcome.ranked.first().or(genetic_ranked.first());
     if let Some(b) = best {
         println!("\nBest crew overall (by rank):");
         println!(

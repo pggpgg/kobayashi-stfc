@@ -1,8 +1,8 @@
 pub mod budget_telemetry;
-pub mod captain_ban;
 pub mod building;
 pub mod building_bid_resolver;
 pub mod building_summary;
+pub mod captain_ban;
 pub mod combat_effect_spec;
 pub mod combat_effect_spec_validate;
 pub mod data_registry;

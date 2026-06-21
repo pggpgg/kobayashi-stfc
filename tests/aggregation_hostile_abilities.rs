@@ -6,8 +6,8 @@ use kobayashi::combat::{
     hostile_defender_mitigation_additive_factor_from_defender_crew,
     hostile_hyperthermic_decay_fraction_from_defender_crew, mitigation_for_hostile,
     simulate_combat_with_defender_faction_and_defender_crew, AttackerStats, Combatant,
-    CrewConfiguration, MITIGATION_CEILING, MITIGATION_FLOOR, SimulationConfig, TraceMode,
-    WeaponStats,
+    CrewConfiguration, SimulationConfig, TraceMode, WeaponStats, MITIGATION_CEILING,
+    MITIGATION_FLOOR,
 };
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
@@ -126,7 +126,10 @@ fn aggregation_defender(rec: &kobayashi::data::hostile::HostileRecord) -> Combat
 #[test]
 fn aggregation_hostile_260810365_is_tagged_and_resolves_catalog_seats() {
     let rec = resolve_hostile(AGGREGATION_HOSTILE_ID).expect("aggregation hostile");
-    assert!(rec.is_aggregation_hostile(), "expected aggregation faction tag");
+    assert!(
+        rec.is_aggregation_hostile(),
+        "expected aggregation faction tag"
+    );
     let catalog = hostile_ability_catalog_for_default_path();
     let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
     assert!(
@@ -139,8 +142,7 @@ fn aggregation_hostile_260810365_is_tagged_and_resolves_catalog_seats() {
         "expected 50% hyperthermic decay seat (loca 82103 tier)"
     );
     assert!(
-        (hostile_defender_mitigation_additive_factor_from_defender_crew(&crew) - 32.0).abs()
-            < 1e-9,
+        (hostile_defender_mitigation_additive_factor_from_defender_crew(&crew) - 32.0).abs() < 1e-9,
         "expected +3200% mitigation inflation (+32 additive factor)"
     );
     assert!(
@@ -236,9 +238,10 @@ fn recon_locus_stabilizer_reduces_net_hyperthermic_decay() {
     assert!((raw - 0.5).abs() < 1e-9);
 
     let mut profile = PlayerProfile::default();
-    profile
-        .bonuses
-        .insert("hyperthermic_stabilizer_vs_aggregation_hostile".into(), 0.15);
+    profile.bonuses.insert(
+        "hyperthermic_stabilizer_vs_aggregation_hostile".into(),
+        0.15,
+    );
     let net = (raw
         - profile
             .bonuses

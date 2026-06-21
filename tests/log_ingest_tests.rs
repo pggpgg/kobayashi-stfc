@@ -99,6 +99,7 @@ fn parity_within_tolerance_matches_when_close() {
         attacker_shield_remaining: 0.0,
         events: vec![],
         conqueror_borg_beam_suppression: false,
+        total_isolytic_damage: 0.0,
     };
     assert!(parity_within_tolerance(&sim, &log, 1.0, 1.0));
 }
