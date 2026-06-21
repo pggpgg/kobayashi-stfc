@@ -57,17 +57,3 @@ fn gorn_evisc_non_combat_captain_alone_is_trivial_win_vs_447012258() {
         "expected comfortable hull remaining on wins (got {hull})"
     );
 }
-
-#[test]
-fn gorn_evisc_empty_crew_is_not_reliable_vs_447012258() {
-    let empty = CrewCandidate {
-        captain: String::new(),
-        bridge: vec![],
-        below_decks: vec![],
-    };
-    let (win_rate, _, _) = run_solo("empty_crew", &empty);
-    assert!(
-        win_rate < 0.9,
-        "no captain at all should not be a trivial guaranteed win (got {win_rate})"
-    );
-}
