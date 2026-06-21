@@ -1112,6 +1112,7 @@ fn is_captain_eligible(officer: &Officer) -> bool {
         .abilities
         .iter()
         .any(|ability| ability.slot == "captain")
+        && !crate::data::captain_ban::is_captain_banned(&officer.id)
 }
 
 /// True if `name` equals captain or any bridge officer (distinct-officer checks).
@@ -1680,6 +1681,75 @@ mod tests {
             candidates.len() >= 10,
             "expected at least 10 candidates, got {}",
             candidates.len()
+        );
+    }
+
+    #[test]
+    fn quark_excluded_from_captain_pool() {
+        let registry = DataRegistry::load().expect("registry");
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Relaxed,
+            Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            3,
+            None,
+        )
+        .expect("pools");
+
+        assert!(
+            !pools
+                .captains
+                .iter()
+                .any(|n| pool_display_name_norm(n) == "quark"),
+            "Quark must not appear in captain pool (captain ban list)"
+        );
+
+        let quark = registry
+            .officers()
+            .iter()
+            .find(|o| o.id == "quark-2fd57b")
+            .expect("Quark in catalog");
+        assert!(
+            quark.abilities.iter().any(|a| a.slot == "captain"),
+            "fixture: Quark has a captain-slot ability"
+        );
+        assert!(
+            !super::is_captain_eligible(quark),
+            "captain ban applies even when officer has captain ability"
+        );
+
+        let generator = CrewGenerator::with_strategy(CandidateStrategy {
+            max_candidates: Some(64),
+            roster_profile_id: Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS.into()),
+            ..CandidateStrategy::default()
+        });
+        let candidates = generator.generate_candidates("enterprise", "swarm", 42);
+        assert!(
+            !candidates
+                .iter()
+                .any(|c| pool_display_name_norm(&c.captain) == "quark"),
+            "generated optimize candidates must not use Quark as captain"
+        );
+    }
+
+    #[test]
+    fn airiam_excluded_from_captain_pool() {
+        let registry = DataRegistry::load().expect("registry");
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Relaxed,
+            Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            3,
+            None,
+        )
+        .expect("pools");
+
+        assert!(
+            !pools
+                .captains
+                .iter()
+                .any(|n| pool_display_name_norm(n) == "airiam"),
+            "Airiam must not appear in captain pool (captain ban list)"
         );
     }
 

@@ -1,5 +1,7 @@
 # Optimization Heuristics for Crew Search
 
+> **Implemented today:** see [`OPTIMIZATION_SPECIAL_HEURISTICS.md`](OPTIMIZATION_SPECIAL_HEURISTICS.md) for captain ban, pool filters, analytical prefilter, tiered scout, seeds, and other heuristics wired into the optimizer. This file remains a research backlog of additional ideas.
+
 ## Category: Exact Search-Space Reduction
 
 1. **Precompile Legal Crew Domains**

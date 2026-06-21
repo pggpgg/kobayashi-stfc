@@ -1,4 +1,5 @@
 pub mod budget_telemetry;
+pub mod captain_ban;
 pub mod building;
 pub mod building_bid_resolver;
 pub mod building_summary;

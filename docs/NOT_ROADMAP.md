@@ -38,3 +38,13 @@ Verify every sim input — including artifacts, syndicate, and exocomp-class bon
 - **Out-of-simulator-scope building buffs** — Alliance starbase assault mechanics, defense platforms, armada slot caps, solo armada ship limits, defense platform damage, outpost fleet size, and broken-ship-parts drop rates are also allowlisted as intentionally unmapped for the default ship-vs-hostile optimizer.
 - **Scoped combat building buffs** — Actionable opaque backlog is cleared (see `docs/building_gaps.md`). Allowlisted rows include armada-fleet participant weapon damage and Academy crit mitigation (`buff_341625291` / Remote Campus — no `crit_mitigation` engine stat). Aggregation hyperthermic stabilizer (`buff_1422729787` / Recon Locus) is modeled vs Aggregation hostiles. Station-defense mode remains future work.
 - **Conditions for station defense** — When station/starbase defense is in scope: populate `BonusEntry.conditions` (e.g. `defense_platform_only`, `ship_combat_only`) from import or mapping; support `BuildingMode::StationDefense` in the optimizer.
+
+---
+
+## Empty or incomplete crew (game rule vs simulator)
+
+**Game rule:** In STFC you cannot start a fight with an empty crew. The client requires a legal roster — at minimum a **captain** and **bridge officers** in filled slots before combat begins. Below-decks slots may be unfilled only when the ship has not unlocked them yet; you still cannot launch with zero officers assigned.
+
+**Simulator behavior today:** Kobayashi accepts empty or partial crews in simulate/optimize paths (e.g. captain-only with no bridge, or an empty captain string). Empty bridge/below-decks slots are skipped in LCARS resolution ([`crew_resolution.rs`](../src/optimizer/monte_carlo/crew_resolution.rs)). This is intentional for **analysis** — e.g. probing whether a hostile is trivial with ship stats + profile alone ([`tests/gorn_evisc_solo_crew_trivial.rs`](../tests/gorn_evisc_solo_crew_trivial.rs)).
+
+**Not planned:** mirroring the in-game UI gate by rejecting empty or incomplete crews at API/CLI ingress. Maintainers may use partial crews as a deliberate test harness; production optimize assumes roster-legal full crews from the generator, not player-empty submissions.

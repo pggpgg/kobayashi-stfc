@@ -72,6 +72,14 @@ path = "src/bin/stfc_cc_cheat_sheet_report.rs"
 name = "genetic_one_minute"
 path = "src/bin/genetic_one_minute.rs"
 
+[[bin]]
+name = "optimize_discovery"
+path = "src/bin/optimize_discovery.rs"
+
+[[bin]]
+name = "enterprise_d_vger60_discovery"
+path = "src/bin/enterprise_d_vger60_discovery.rs"
+
 [[bench]]
 name = "simulator"
 harness = false
