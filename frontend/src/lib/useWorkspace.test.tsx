@@ -48,6 +48,9 @@ const { apiMocks, doneOptimizeStatus } = vi.hoisted(() => {
       { id: "below-1", name: "Below 1", slot: "below_decks" },
       { id: "cerritos_support", name: "Dummy", slot: "bridge" },
     ]),
+    mockFetchEligibility: vi
+      .fn()
+      .mockResolvedValue({ scenarios: [], matrix: {}, officer_abilities: {} }),
     mockOptimizeStart: vi
       .fn()
       .mockRejectedValue(new Error("skip optimize in test")),
@@ -71,6 +74,7 @@ vi.mock("./api", () => ({
   getOptimizeEstimate: apiMocks.mockGetEstimate,
   fetchHeuristics: apiMocks.mockFetchHeuristics,
   fetchOfficers: apiMocks.mockFetchOfficers,
+  fetchOfficerEligibility: apiMocks.mockFetchEligibility,
   optimizeStart: apiMocks.mockOptimizeStart,
   getOptimizeStatus: apiMocks.mockGetOptimizeStatus,
   getOptimizeStreamUrl: vi.fn(() => "http://test/stream"),

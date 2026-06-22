@@ -97,6 +97,30 @@ fn merge_fast_discovery_warm_start(
     (out, cap_hit)
 }
 
+/// Resolve the combat scenario for eligibility filtering from a request: explicit `enemy_type`
+/// wins; else PvP → PvpSpace; else infer from the (cached) hostile record; else RedMovingSpace.
+/// The hostile is only resolved when inference is actually needed.
+fn resolve_request_enemy_type(
+    registry: &DataRegistry,
+    request: &OptimizeRequest,
+) -> crate::combat::EnemyType {
+    let explicit = request.enemy_type.as_deref();
+    let pvp = request
+        .defender_ship
+        .as_deref()
+        .is_some_and(|ship| !ship.trim().is_empty());
+    let infer_from_hostile = !pvp
+        && explicit
+            .and_then(crate::data::officer_eligibility::enemy_type_from_str)
+            .is_none();
+    let hostile = if infer_from_hostile {
+        registry.resolve_hostile(request.hostile.trim())
+    } else {
+        None
+    };
+    crate::data::officer_eligibility::resolve_enemy_type(explicit, pvp, hostile.as_ref())
+}
+
 /// Resolve effective optimizer strategy; `strategy_auto` is true only when the client omitted `strategy`
 /// and we picked tiered vs exhaustive from candidate volume (not used for genetic or heuristics-only).
 #[allow(clippy::too_many_arguments)]
@@ -138,6 +162,7 @@ fn resolve_effective_optimize_strategy(
             .defender_ship
             .as_deref()
             .is_some_and(|ship| !ship.trim().is_empty()),
+        enemy_type: resolve_request_enemy_type(registry, request),
         below_decks_slots,
         constraints: crew_constraints.cloned(),
         roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
@@ -645,10 +670,8 @@ fn gather_optimize_simulation_results(
         request.below_decks_slots,
     );
     let crew_constraints = build_crew_search_constraints(request);
-    let pvp_mode = request
-        .defender_ship
-        .as_deref()
-        .is_some_and(|ship| !ship.trim().is_empty());
+    // Resolve the combat scenario for eligibility filtering (explicit `enemy_type`, else inferred).
+    let enemy_type = resolve_request_enemy_type(registry, request);
     let cache_key_normalized = request.optimize_cache_key.as_ref().and_then(|s| {
         let t = s.trim();
         if t.is_empty() {
@@ -691,7 +714,7 @@ fn gather_optimize_simulation_results(
         registry,
         profile_id,
         below_decks_slots,
-        pvp_mode,
+        enemy_type,
         h_candidates,
     );
     h_candidates = h_candidates_legal;
@@ -708,7 +731,7 @@ fn gather_optimize_simulation_results(
         registry,
         profile_id,
         below_decks_slots,
-        pvp_mode,
+        enemy_type,
         dto_warm,
     );
     let fast_discovery_requested =
@@ -740,7 +763,7 @@ fn gather_optimize_simulation_results(
             registry,
             profile_id,
             below_decks_slots,
-            pvp_mode,
+            enemy_type,
             prior_reference_crews_raw,
         );
     let dropped_illegal_prior_refs = prior_legality.dropped_wrong_shape
@@ -1002,6 +1025,7 @@ fn gather_optimize_simulation_results(
             },
             player_defender_officer_crew: player_defender_officer_crew.clone(),
             pvp: pvp.clone(),
+            enemy_type,
             warm_start: scenario_warm_start,
             prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),

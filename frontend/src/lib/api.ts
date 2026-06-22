@@ -364,6 +364,43 @@ export async function fetchMechanicsCoverage(): Promise<MechanicsCoverageRespons
   return res.json();
 }
 
+/** Per-ability, per-scenario eligibility verdict (mirrors backend `EligibilityVerdict`). */
+export type EligibilityVerdict = "works" | "conditional" | "does_not_work";
+
+export interface AbilityScenarioVerdict {
+  verdict: EligibilityVerdict;
+  reason?: string;
+}
+
+export interface AbilityEligibilityEntry {
+  ability_id: string;
+  slot: string;
+  /** enemy_type id -> verdict (also includes `loot`/`utility`). */
+  scenarios: Record<string, AbilityScenarioVerdict>;
+}
+
+export interface OfficerSeatAbilities {
+  captain?: string;
+  officer?: string[];
+  below_decks?: string;
+}
+
+export interface OfficerEligibilityResponse {
+  /** Combat scenario ids in display order. */
+  scenarios: string[];
+  /** ability_id -> per-scenario verdicts. */
+  matrix: Record<string, AbilityEligibilityEntry>;
+  /** officer id -> seat -> ability id(s). */
+  officer_abilities: Record<string, OfficerSeatAbilities>;
+}
+
+/** GET /api/eligibility: officer eligibility matrix for live crew-builder badges. */
+export async function fetchOfficerEligibility(): Promise<OfficerEligibilityResponse> {
+  const res = await fetch(`${API_BASE}/api/eligibility`);
+  await checkOk(res);
+  return res.json();
+}
+
 export async function simulate(
   params: {
     ship: string;
@@ -373,6 +410,7 @@ export async function simulate(
     ship_tier?: number | null;
     ship_level?: number | null;
     support_buffs?: string[];
+    enemy_type?: string;
   },
   profileId?: string | null,
 ): Promise<SimulateResponse> {
@@ -390,6 +428,9 @@ export async function simulate(
   }
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
+  }
+  if (params.enemy_type) {
+    body.enemy_type = params.enemy_type;
   }
   const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/simulate`, {
     method: "POST",
@@ -763,6 +804,7 @@ export async function optimizeStart(
     novelty_lambda?: number;
     novelty_diverse_top?: number;
     novelty_pool?: number;
+    enemy_type?: string;
   },
   profileId?: string | null,
   options?: OptimizeStartOptions,
@@ -773,6 +815,9 @@ export async function optimizeStart(
     sims: params.sims ?? 5000,
     seed: params.seed,
   };
+  if (params.enemy_type) {
+    body.enemy_type = params.enemy_type;
+  }
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
   }

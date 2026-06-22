@@ -6,6 +6,7 @@ use std::sync::{Mutex, OnceLock};
 
 use lru::LruCache;
 
+use crate::combat::EnemyType;
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
     below_decks_combat_relevance_rank, is_below_decks_eligible_for_optimization,
@@ -14,6 +15,7 @@ use crate::data::heuristics::{
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::officer_eligibility::is_eligible_for_optimization;
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
 use crate::lcars::LcarsOfficer;
@@ -225,7 +227,7 @@ fn lcars_by_id_from_registry(registry: Option<&DataRegistry>) -> HashMap<&str, &
 pub fn build_officer_pools_from_registry(
     registry: &DataRegistry,
     below_decks_pool_mode: BelowDecksPoolMode,
-    pvp_mode: Option<bool>,
+    enemy_type: Option<EnemyType>,
     profile_id: Option<&str>,
     below_decks_slots: usize,
     constraints: Option<&CrewSearchConstraints>,
@@ -247,14 +249,31 @@ pub fn build_officer_pools_from_registry(
         return None;
     }
 
+    // Scenario eligibility: prune officers whose seat ability does-not-work vs `enemy_type`, across
+    // all seats. `None` skips filtering. Coverage gaps fall back to the legacy heuristic inside
+    // `is_eligible_for_optimization`. Pruning here (not just post-generation) shrinks the search
+    // space and prevents small candidate batches from being emptied by the post-filter.
+    let eligibility_matrix = registry.eligibility_matrix().map(|m| m.as_ref());
+    let pvp_mode = matches!(
+        enemy_type,
+        Some(EnemyType::PvpSpace | EnemyType::PvpStation)
+    );
+    let scenario_eligible = |officer: &Officer, slot: &str| -> bool {
+        enemy_type.is_none_or(|enemy| {
+            is_eligible_for_optimization(officer, slot, enemy, eligibility_matrix, pvp_mode)
+        })
+    };
+
     let captains: Vec<String> = officers
         .iter()
-        .filter(|officer| is_captain_eligible(officer))
+        .filter(|officer| is_captain_eligible(officer) && scenario_eligible(officer, "captain"))
         .map(|o| o.name.clone())
         .collect();
     let bridge: Vec<String> = officers
         .iter()
-        .filter(|officer| can_fill_position(officer, Position::Bridge))
+        .filter(|officer| {
+            can_fill_position(officer, Position::Bridge) && scenario_eligible(officer, "officer")
+        })
         .map(|o| o.name.clone())
         .collect();
     let mut below_decks: Vec<String> = officers
@@ -262,7 +281,7 @@ pub fn build_officer_pools_from_registry(
         .filter(|officer| {
             can_fill_position(officer, Position::BelowDecks)
                 && keep_below_decks_for_mode(officer, below_decks_pool_mode)
-                && keep_below_decks_for_scenario(officer, pvp_mode)
+                && scenario_eligible(officer, "below_decks")
         })
         .map(|o| o.name.clone())
         .collect();
@@ -768,6 +787,9 @@ pub struct CandidateStrategy {
     pub below_decks_pool_mode: BelowDecksPoolMode,
     /// True only when optimizing combat against a player ship.
     pub pvp_mode: bool,
+    /// Resolved combat scenario for all-seats eligibility pool pruning. Defaults to
+    /// [`EnemyType::RedMovingSpace`] (generic hostiles).
+    pub enemy_type: EnemyType,
     /// Number of below-decks slots per generated crew (2–5).
     pub below_decks_slots: usize,
     /// When set, officer pools are narrowed before enumeration (exclude, seat eligibility).
@@ -791,6 +813,7 @@ impl Default for CandidateStrategy {
             use_seeded_shuffle: true,
             below_decks_pool_mode: BelowDecksPoolMode::default(),
             pvp_mode: false,
+            enemy_type: EnemyType::RedMovingSpace,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             roster_profile_id: None,
@@ -806,6 +829,7 @@ struct OfficerPoolCacheKey {
     /// Encoded `BelowDecksPoolMode::as_api_str` so the key remains hashable.
     below_decks_pool_mode: &'static str,
     pvp_mode: bool,
+    enemy_type: EnemyType,
     below_decks_slots: usize,
     roster_profile_id: String,
     constraints_fingerprint: u64,
@@ -898,6 +922,7 @@ impl CrewGenerator {
         let cache_key = OfficerPoolCacheKey {
             below_decks_pool_mode: self.strategy.below_decks_pool_mode.as_api_str(),
             pvp_mode: self.strategy.pvp_mode,
+            enemy_type: self.strategy.enemy_type,
             below_decks_slots: self.strategy.below_decks_slots,
             roster_profile_id: self.strategy.roster_profile_id.clone().unwrap_or_default(),
             constraints_fingerprint: constraints_fingerprint(self.strategy.constraints.as_ref()),
@@ -917,7 +942,7 @@ impl CrewGenerator {
             build_officer_pools_from_registry(
                 registry?,
                 self.strategy.below_decks_pool_mode,
-                Some(self.strategy.pvp_mode),
+                Some(self.strategy.enemy_type),
                 profile_id,
                 self.strategy.below_decks_slots,
                 self.strategy.constraints.as_ref(),
@@ -1543,8 +1568,7 @@ mod tests {
     use crate::data::data_registry::DataRegistry;
     use crate::data::heuristics::{
         below_decks_combat_relevance_rank, has_loot_below_decks_slot_ability,
-        has_pvp_below_decks_slot_ability, is_pvp_below_decks_banned,
-        BelowDecksCombatRelevanceRank,
+        has_pvp_below_decks_slot_ability, is_pvp_below_decks_banned, BelowDecksCombatRelevanceRank,
     };
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
@@ -1591,7 +1615,7 @@ mod tests {
         let pve = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
-            Some(false),
+            Some(crate::combat::EnemyType::RedMovingSpace),
             profile,
             1,
             None,
@@ -1600,7 +1624,7 @@ mod tests {
         let pvp = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
-            Some(true),
+            Some(crate::combat::EnemyType::PvpSpace),
             profile,
             1,
             None,

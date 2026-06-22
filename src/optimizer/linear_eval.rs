@@ -168,6 +168,7 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
             pvp: None,
+            enemy_type: crate::combat::EnemyType::RedMovingSpace,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,

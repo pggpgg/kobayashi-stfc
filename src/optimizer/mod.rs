@@ -22,9 +22,14 @@ use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use tracing::info;
 
+use crate::combat::EnemyType;
 use crate::data::data_registry::DataRegistry;
-use crate::data::heuristics::{is_below_decks_eligible_for_optimization, BelowDecksPoolMode};
+use crate::data::heuristics::BelowDecksPoolMode;
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
+use crate::data::officer_eligibility::{
+    is_eligible_for_optimization, load_eligibility_matrix, EligibilityMatrix,
+    DEFAULT_ELIGIBILITY_MATRIX_PATH,
+};
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
@@ -123,14 +128,26 @@ fn apply_crew_constraints(
             .map(|officer| (normalize_officer_name(&officer.name), officer))
             .collect();
         let pvp_mode = scenario.pvp.is_some();
+        let enemy = scenario.enemy_type;
+        // Eligibility matrix (per-ability scenario verdicts). Absent → `is_eligible_for_optimization`
+        // falls back to the legacy below-decks heuristic, preserving prior behavior. Loaded once
+        // per call, mirroring the canonical-officer load above.
+        let matrix = load_optimization_eligibility_matrix();
+        let matrix_ref = matrix.as_ref();
+        let seat_eligible = |name: &str, slot: &str| -> bool {
+            officer_by_name
+                .get(&normalize_officer_name(name))
+                .is_none_or(|officer| {
+                    is_eligible_for_optimization(officer, slot, enemy, matrix_ref, pvp_mode)
+                })
+        };
         candidates.retain(|candidate| {
-            candidate.below_decks.iter().all(|name| {
-                officer_by_name
-                    .get(&normalize_officer_name(name))
-                    .is_none_or(|officer| {
-                        is_below_decks_eligible_for_optimization(officer, pvp_mode)
-                    })
-            })
+            seat_eligible(&candidate.captain, "captain")
+                && candidate.bridge.iter().all(|n| seat_eligible(n, "officer"))
+                && candidate
+                    .below_decks
+                    .iter()
+                    .all(|n| seat_eligible(n, "below_decks"))
         });
     }
 
@@ -138,6 +155,15 @@ fn apply_crew_constraints(
         Some(c) => filter_candidates(candidates, c),
         None => candidates,
     }
+}
+
+/// Load the eligibility matrix from the runtime path (then the compile-time default). Returns
+/// `None` if the file is absent, in which case callers fall back to the legacy heuristics.
+fn load_optimization_eligibility_matrix() -> Option<EligibilityMatrix> {
+    load_eligibility_matrix(crate::runtime_paths::resolve(
+        DEFAULT_ELIGIBILITY_MATRIX_PATH,
+    ))
+    .or_else(|| load_eligibility_matrix(std::path::Path::new(DEFAULT_ELIGIBILITY_MATRIX_PATH)))
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -161,14 +187,14 @@ pub fn enforce_candidate_optimization_eligibility_with_registry(
     registry: &DataRegistry,
     profile_id: Option<&str>,
     below_decks_slots: usize,
-    pvp_mode: bool,
+    enemy_type: EnemyType,
     candidates: Vec<CrewCandidate>,
 ) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
     enforce_candidate_legality_inner(
         registry,
         profile_id,
         below_decks_slots,
-        Some(pvp_mode),
+        Some(enemy_type),
         candidates,
     )
 }
@@ -177,14 +203,16 @@ fn enforce_candidate_legality_inner(
     registry: &DataRegistry,
     profile_id: Option<&str>,
     below_decks_slots: usize,
-    pvp_mode: Option<bool>,
+    enemy_type: Option<EnemyType>,
     candidates: Vec<CrewCandidate>,
 ) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
     let mut summary = CandidateLegalitySummary::default();
+    // The pool builder prunes ineligible officers across all seats for `enemy_type` (when set), so
+    // the seat-membership check below also enforces scenario eligibility. `None` = legality only.
     let Some(pools) = build_officer_pools_from_registry(
         registry,
         BelowDecksPoolMode::Relaxed,
-        pvp_mode,
+        enemy_type,
         profile_id,
         below_decks_slots,
         None,
@@ -481,6 +509,9 @@ pub struct OptimizationScenario<'a> {
     pub player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     /// Ship-vs-ship PvP: fixed defender ship + opponent profile (optimize searches attacker crews only).
     pub pvp: Option<crate::optimizer::monte_carlo::scenario::PvpScenarioParams>,
+    /// Resolved combat scenario (explicit `enemy_type` request field, else inferred from the
+    /// target). Drives the eligibility-matrix hard filter in [`apply_crew_constraints`].
+    pub enemy_type: crate::combat::EnemyType,
     /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
     pub warm_start: Vec<CrewCandidate>,
     /// Crews used only for matchup priors in analytical ranking (not prepended to the candidate list).
@@ -533,6 +564,7 @@ impl Default for OptimizationScenario<'_> {
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
             pvp: None,
+            enemy_type: crate::combat::EnemyType::RedMovingSpace,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -644,6 +676,7 @@ fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> Cand
         max_candidates: scenario.max_candidates,
         below_decks_pool_mode: scenario.below_decks_pool_mode,
         pvp_mode: scenario.pvp.is_some(),
+        enemy_type: scenario.enemy_type,
         below_decks_slots: scenario.below_decks_slots,
         constraints: scenario.constraints.clone(),
         roster_profile_id: scenario.profile_id.map(String::from),
@@ -1099,6 +1132,7 @@ where
                 defender_opponent: scenario.defender_opponent,
                 player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
                 pvp: scenario.pvp.clone(),
+                enemy_type: scenario.enemy_type,
                 warm_start: scenario.warm_start.clone(),
                 prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
@@ -1142,6 +1176,7 @@ where
                 defender_opponent: scenario.defender_opponent,
                 player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
                 pvp: scenario.pvp.clone(),
+                enemy_type: scenario.enemy_type,
                 warm_start: scenario.warm_start.clone(),
                 prior_reference_crews: scenario.prior_reference_crews.clone(),
                 optimize_cache_key: scenario.optimize_cache_key.clone(),
@@ -1735,6 +1770,7 @@ pub fn optimize_crew(
         defender_opponent: DefenderOpponent::Hostile,
         player_defender_officer_crew: None,
         pvp: None,
+        enemy_type: crate::combat::EnemyType::RedMovingSpace,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
@@ -1752,6 +1788,7 @@ mod tests {
         optimize_scenario_with_progress_with_registry, AnalyticalPrefilterWorkload,
         BelowDecksPoolMode, CandidateStrategy, OptimizationScenario, OptimizerStrategy,
     };
+    use crate::combat::EnemyType;
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
     use crate::optimizer::crew_generator::{
@@ -1839,15 +1876,17 @@ mod tests {
     fn injected_optimizer_crews_obey_scenario_specific_below_decks_rules() {
         let registry = DataRegistry::load().expect("data registry");
         let profile = Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS);
+        // Pick filler captain/bridge eligible for the PvE scenario so the kept-case assertion below
+        // isolates the below-decks rule (all seats are now scenario-filtered, not just below-decks).
         let pools = build_officer_pools_from_registry(
             &registry,
             BelowDecksPoolMode::Relaxed,
-            None,
+            Some(EnemyType::RedMovingSpace),
             profile,
             1,
             None,
         )
-        .expect("unrestricted pools");
+        .expect("red-scenario pools");
         let captain = pools
             .captains
             .iter()
@@ -1886,7 +1925,7 @@ mod tests {
             &registry,
             profile,
             1,
-            false,
+            EnemyType::RedMovingSpace,
             vec![candidate_with("Academy Doctor")],
         );
         assert!(pve_pvp_officer.is_empty());
@@ -1895,7 +1934,7 @@ mod tests {
             &registry,
             profile,
             1,
-            false,
+            EnemyType::RedMovingSpace,
             vec![candidate_with("The Doctor")],
         );
         assert_eq!(pve_loot_officer.len(), 1);
@@ -1904,7 +1943,7 @@ mod tests {
             &registry,
             profile,
             1,
-            true,
+            EnemyType::PvpSpace,
             vec![candidate_with("The Doctor")],
         );
         assert!(pvp_loot_officer.is_empty());
@@ -1914,7 +1953,7 @@ mod tests {
                 &registry,
                 profile,
                 1,
-                true,
+                EnemyType::PvpSpace,
                 vec![candidate_with("SNW La'an")],
             );
         assert!(pvp_explicitly_banned_officer.is_empty());
@@ -2045,6 +2084,7 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
             pvp: None,
+            enemy_type: crate::combat::EnemyType::RedMovingSpace,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2200,6 +2240,7 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
             pvp: None,
+            enemy_type: crate::combat::EnemyType::RedMovingSpace,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2274,6 +2315,7 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
             pvp: None,
+            enemy_type: crate::combat::EnemyType::RedMovingSpace,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -2342,6 +2384,7 @@ mod tests {
             defender_opponent: DefenderOpponent::Hostile,
             player_defender_officer_crew: None,
             pvp: None,
+            enemy_type: crate::combat::EnemyType::RedMovingSpace,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,

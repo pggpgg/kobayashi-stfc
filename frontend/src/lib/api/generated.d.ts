@@ -622,6 +622,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/profile/forbidden-tech-imported": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Synced forbidden/chaos tech inventory (imported) */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Profile id (alternative to X-Profile-Id) */
+                    profile?: components["parameters"]["QueryProfile"];
+                };
+                header?: {
+                    "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/profile/research-summary": {
         parameters: {
             query?: never;
@@ -1255,6 +1297,13 @@ export interface paths {
                 };
                 /** @description Invalid or missing sync token for persistence */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Failed to persist the synced payload */
+                500: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2520,6 +2569,8 @@ export interface components {
             defender_ship_level?: number;
             /** @description Opponent profile id when `defender_ship` is set. */
             defender_profile_id?: string;
+            /** @description Combat scenario for officer eligibility (snake_case EnemyType, e.g. `mission_bosses`, `solo_armadas`, `pvp_space`). Inferred from the target when unset. */
+            enemy_type?: string;
         };
         SimulateStats: {
             win_rate: number;
@@ -2538,6 +2589,14 @@ export interface components {
             warnings?: string[];
             /** @description Crew officers that did not resolve to an LCARS combat definition (so they contributed no effects). Omitted when empty; a non-empty list signals a canonical-to-LCARS gap rather than normal operation. */
             unresolved_officers?: string[];
+            /** @description Per-officer eligibility verdicts for the resolved scenario (does-not-work or conditional). Interpretability only — never affects the simulation. Omitted when empty. */
+            eligibility_notes?: {
+                officer?: string;
+                slot?: string;
+                verdict?: string;
+                reason?: string;
+                ability_id?: string;
+            }[];
         };
         SensitivityRequest: {
             /** @description Ship id (e.g. `uss_enterprise_d`). */
@@ -2859,6 +2918,8 @@ export interface components {
             defender_ship_tier?: number;
             defender_ship_level?: number;
             defender_profile_id?: string;
+            /** @description Combat scenario for officer eligibility filtering (snake_case EnemyType). Inferred from the target when unset. */
+            enemy_type?: string;
             novelty_lambda?: number;
             novelty_diverse_top?: number;
             novelty_pool?: number;

@@ -99,6 +99,8 @@ export default function Workspace() {
           scenarioId={ws.scenarioId}
           onShipIdChange={ws.setShipId}
           onScenarioIdChange={ws.setScenarioId}
+          enemyType={ws.enemyType}
+          onEnemyTypeChange={ws.setEnemyType}
           shipTier={ws.shipTier}
           onShipTierChange={ws.setShipTier}
           shipLevel={ws.shipLevel}
@@ -220,6 +222,8 @@ export default function Workspace() {
               onCrewChange={ws.setCrew}
               onPinsChange={ws.setPins}
               officerOptions={officerOptions}
+              enemyType={ws.enemyType}
+              eligibility={ws.eligibility}
             />
           )}
           {(mode !== "guided" || guidedStep === 3) && (
