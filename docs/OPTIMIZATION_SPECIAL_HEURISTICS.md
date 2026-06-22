@@ -41,7 +41,7 @@ Before any strategy runs, [`build_officer_pools*`](../src/optimizer/crew_generat
 | Captain ability required | captain | `is_captain_eligible` (captain-slot ability + not banned) |
 | Seat compatibility | bridge / BD | `can_fill_position` from officer `slot` field |
 | Below-decks pool mode | below-decks | [`BelowDecksPoolMode`](../src/data/heuristics.rs): **strict/scored** = must have below-decks ability; **relaxed** = any legal BD seat |
-| Scenario-specific exclusions | below-decks | PvP-only and explicit PvP ban filters described below |
+| Scenario eligibility (matrix) | all seats | [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) — drop officers whose seat ability is `does_not_work` for the scenario; legacy fallback for coverage gaps (see below) |
 | Below-decks ordering | below-decks | combat relevance rank + LCARS power tiebreak ([`sort_below_decks_by_rank_and_power`](../src/optimizer/crew_generator.rs)) |
 | Search constraints | pools narrowed | [`narrow_officer_pools_for_constraints`](../src/optimizer/crew_generator.rs) — `captain_must_be`, exclude lists, officer groups |
 
@@ -49,14 +49,36 @@ Default API below-decks mode is **strict** ([`BelowDecksPoolMode::default`](../s
 
 ---
 
-## Scenario-specific below-decks exclusions
+## Officer eligibility matrix (scenario filter)
 
-These are hard eligibility rules, not ranking preferences:
+The primary scenario-eligibility filter is **data-driven**, not hand-coded. It answers one question: *does this officer's seat ability actually function against the target?* — and prunes officers whose ability does nothing, across **all seats** (captain / bridge / below-decks).
 
-- **Outside PvP mode:** never use a below-decks officer whose below-decks ability is PvP-specific (identified by the canonical `EnemyPlayer` condition).
-- **In PvP mode:** never use an officer in `PVP_BELOW_DECKS_BANNED_SOURCE_IDS` below decks. The explicit list includes loot/resource-drop officers plus other officers whose below-decks effects should not enter PvP optimization. Loot classification remains a fallback so newly added loot officers are also excluded before the explicit list is updated.
+**Source & generation.** The community cheat-sheet (`data/upstream/cheat-sheet/raw-officers-*.csv`, one row per ability) is normalized into [`data/officers/eligibility_matrix.json`](../data/officers/eligibility_matrix.json) by [`cargo run --bin import_officer_eligibility`](../src/bin/import_officer_eligibility.rs). The matrix is keyed by **`ability_id`** (CSV `AbilityID` == [`OfficerAbility.ability_id`](../src/data/officer.rs)); the officer is joined via `source_officer_id` → `data/officers/id_registry.json`. Output is deterministic (sorted), so re-running after a cheat-sheet refresh produces a clean diff.
 
-**PvP mode** means an optimization that simulates combat against a player ship. All other optimization targets are outside PvP mode. [`is_below_decks_eligible_for_optimization`](../src/data/heuristics.rs) defines the classifications. Pool construction applies them before candidate generation, and [`enforce_candidate_optimization_eligibility_with_registry`](../src/optimizer/mod.rs) applies them to heuristic seeds, warm starts, and history references. This keeps the rules hard across exhaustive, sampled, tiered, and genetic strategies rather than merely lowering the affected officers' rank.
+**Verdicts.** Each ability carries a per-scenario verdict + reason for the 12 combat scenarios ([`EnemyType`](../src/combat/types.rs)):
+
+| glyph | verdict | optimizer effect |
+| --- | --- | --- |
+| ✅ | `works` | eligible |
+| ✴️ | `conditional` — works only if in-combat conditions are met (morale up, target burning, …) | **eligible** (the engine resolves the condition dynamically) |
+| ➖ | `does_not_work` — non-combat/loot, wrong target class, PvP-only, … | **excluded** (this is the hard filter) |
+
+**Scenario resolution.** The scenario comes from the optional `enemy_type` request field (snake_case `EnemyType`); when unset it is inferred from the target (PvP → `pvp_space`; group-armada hostile → `group_armadas`; outpost → `outpost_armadas`; else `red_moving_space`). See [`resolve_enemy_type`](../src/data/officer_eligibility.rs).
+
+**Where applied.** [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) is the shared predicate. Pool construction prunes ineligible officers per seat before generation ([`build_officer_pools_from_registry`](../src/optimizer/crew_generator.rs)); [`apply_crew_constraints`](../src/optimizer/mod.rs) and [`enforce_candidate_legality_inner`](../src/optimizer/mod.rs) re-apply it to generated, seed, warm-start, and history crews so the rule is hard across exhaustive, sampled, tiered, and genetic strategies. In simulation it is interpretability-only: [`simulate_payload`](../src/server/api.rs) emits `eligibility_notes` + warnings and never rejects the player's crew.
+
+**Coverage & fallback.** Officers/abilities **absent from the cheat-sheet** fall back to the legacy heuristics in [`src/data/heuristics.rs`](../src/data/heuristics.rs) (`EnemyPlayer` below-decks exclusion outside PvP, `NON_COMBAT_BELOW_DECKS_MODIFIERS`, and the ban list below). As of cheat-sheet `m88-17rc` vs catalog `m86`, the matrix covers 559/574 catalog abilities; the gaps are 7 officers the community sheet does not yet rate (Academy Doctor, Caleb Mir, Chancellor Ake, Deidamia, Genesis Lythe, Jirali, Mara Dalen) plus V'Ger Ilia (an `m88` officer not yet in the `m86` catalog). These use the heuristic fallback until the catalog is refreshed to `m88` or the sheet adds them. The importer prints the current coverage report to stderr.
+
+---
+
+## Ban lists (curation opt-out)
+
+The ban lists are **not** functional-eligibility filters — they are a curation layer for officers whose abilities *technically* function but are too weak to be worth spending simulation budget on. They are intentionally kept alongside the matrix.
+
+- **Captain ban list** — [`data/optimizer/captain_ban_list.json`](../data/optimizer/captain_ban_list.json), removed from the **captain pool only** ([`captain_ban.rs`](../src/data/captain_ban.rs)); see the first section above.
+- **`PVP_BELOW_DECKS_BANNED_SOURCE_IDS`** ([`src/data/heuristics.rs`](../src/data/heuristics.rs)) — curated below-decks opt-outs for PvP. Keyed by upstream `source_officer_id`.
+
+> **Note (current behavior vs intent):** the below-decks ban list is presently consulted only through the legacy fallback in [`is_below_decks_eligible_for_optimization`](../src/data/heuristics.rs), i.e. for officers **not** covered by the matrix. For a matrix-covered officer it does not currently override a `works`/`conditional` verdict. Promoting the ban list to an always-on opt-out layer **on top of** the matrix (banned ⇒ excluded regardless of verdict) is a small, recommended follow-up if the intent is to suppress weak-but-functional officers globally.
 
 ---
 
@@ -84,7 +106,7 @@ Parsed in [`src/data/heuristics.rs`](../src/data/heuristics.rs). Expanded before
 | Name resolution | all seed officers | aliases → exact → unique substring |
 | Bridge synergy filter | bridge officers in seeds | drop bridge unless [`bridge_synergy_strength`](../src/data/heuristics.rs) > `Neither` (same group and/or bridge-slot ability) |
 | Below-decks combat filter | BD candidates in seeds | when strict (server default): drop economy modifiers ([`NON_COMBAT_BELOW_DECKS_MODIFIERS`](../src/data/heuristics.rs)); relaxed when `below_decks_pool_mode = relaxed` |
-| Other scenario ability predicates | *not yet applied to BD pool* | The two PvP-mode exclusions above are mandatory. Other contextual predicates—such as **armada**, **Borg Cube**, or target-specific loot conditions—are not yet general-purpose BD pool filters. Until broader scenario-conditioned effectiveness gates ship, treat non-matching abilities as **effectiveness = 0** when hand-picking crews (e.g. Borg Queen BD vs NPC hostiles, Mara Dalen / Zefram Cochrane BD vs non-armada, Phlox BD outside Borg Cube fights, Trip Tucker loot vs non–Species-8472/Hirogen). Roadmap: evaluate LCARS `condition` against ship/hostile/defender_opponent before counting a seat toward optimize rank. |
+| Scenario effectiveness gates | all seats (matrix-covered officers) | Now provided by the **officer eligibility matrix** above — officers whose ability is `does_not_work` for the scenario (armada vs non-armada, loot vs combat, PvP-only, Borg-Cube-only, etc.) are pruned across all seats. Officers **absent from the cheat-sheet** (see *Coverage & fallback*, e.g. Mara Dalen vs non-armada) still rely on the heuristic fallback — treat non-matching abilities as **effectiveness = 0** when hand-picking those. |
 | Below-decks expansion | BD list longer than ship slots | **ordered** (first k) or **exploration** (all C(n,k)) via `below_decks_strategy` |
 
 **Server flags** ([`src/server/api/execution.rs`](../src/server/api/execution.rs)):

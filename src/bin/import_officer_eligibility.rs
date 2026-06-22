@@ -8,7 +8,7 @@
 //!
 //! Usage: `cargo run --bin import_officer_eligibility [path/to/raw-officers.csv]`
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let mut abilities: HashMap<String, AbilityEligibility> = HashMap::new();
+    let mut abilities: BTreeMap<String, AbilityEligibility> = BTreeMap::new();
     let mut rows = 0usize;
     let mut skipped_blank_id = 0usize;
     let mut skipped_unknown_type = 0usize;
@@ -161,7 +161,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .filter(|s| !s.is_empty())
             .map(str::to_string);
 
-        let mut scenarios: HashMap<String, ScenarioVerdict> = HashMap::new();
+        let mut scenarios: BTreeMap<String, ScenarioVerdict> = BTreeMap::new();
         for (scn, tag_i, reason_i) in &scenario_cols {
             let cell = rec.get(*tag_i).unwrap_or("");
             match verdict_from_glyph(cell) {
