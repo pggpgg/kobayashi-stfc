@@ -17,6 +17,7 @@ import type { SupportBuffId } from "../lib/supportBuffs";
 import type { CrewState } from "../lib/types";
 import { DEFAULT_BELOW_DECK_UNLOCK_LEVELS } from "../lib/types";
 import HostilePicker from "./HostilePicker";
+import { ScenarioSelect } from "./ScenarioSelect";
 import SupportBuffSelect from "./SupportBuffSelect";
 
 const SIMS_PRESETS = [1000, 5000, 10000, 50000] as const;
@@ -34,6 +35,8 @@ interface WorkspaceHeaderProps {
   scenarioId: string;
   onShipIdChange: (id: string) => void;
   onScenarioIdChange: (id: string) => void;
+  enemyType: string;
+  onEnemyTypeChange: (id: string) => void;
   shipTier: number;
   onShipTierChange: (tier: number) => void;
   shipLevel: number;
@@ -67,6 +70,8 @@ export default memo(function WorkspaceHeader({
   scenarioId,
   onShipIdChange,
   onScenarioIdChange,
+  enemyType,
+  onEnemyTypeChange,
   shipTier,
   onShipTierChange,
   shipLevel,
@@ -301,6 +306,7 @@ export default memo(function WorkspaceHeader({
         value={scenarioId}
         onChange={onScenarioIdChange}
       />
+      <ScenarioSelect value={enemyType} onChange={onEnemyTypeChange} />
       <SupportBuffSelect
         selected={selectedSupportBuffs}
         onChange={onSelectedSupportBuffsChange}

@@ -395,6 +395,10 @@ pub struct SimulateRequest {
     /// Opponent profile id when `defender_ship` is set (not the attacker profile header).
     #[serde(default)]
     pub defender_profile_id: Option<String>,
+    /// Combat scenario for officer eligibility interpretability (e.g. `"mission_bosses"`). Snake_case
+    /// [`crate::combat::EnemyType`]. When unset/invalid, inferred from the target.
+    #[serde(default)]
+    pub enemy_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
@@ -404,6 +408,24 @@ pub struct SimulateCrew {
     pub bridge: Option<Vec<Option<String>>>,
     /// Below-deck officer IDs; null entries mean "no officer" in that slot.
     pub below_deck: Option<Vec<Option<String>>>,
+}
+
+/// One per-officer eligibility verdict for the resolved scenario. Interpretability only — this
+/// never changes the simulation. Emitted for `does_not_work` and `conditional` verdicts (a
+/// `works` verdict produces no note).
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
+pub struct EligibilityNote {
+    /// Crew officer display name.
+    pub officer: String,
+    /// Seat the officer occupies: `captain` | `officer` (bridge) | `below_decks`.
+    pub slot: String,
+    pub verdict: crate::data::officer_eligibility::EligibilityVerdict,
+    /// Cheat-sheet reason text (gating condition for `conditional`, non-combat modifier for
+    /// `does_not_work`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ability_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -417,6 +439,94 @@ pub struct SimulateResponse {
     /// effects). Empty for any roster-legal crew; a non-empty list signals a canonical↔LCARS gap.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub unresolved_officers: Vec<String>,
+    /// Per-officer eligibility verdicts for the resolved scenario (does-not-work / conditional).
+    /// Interpretability only — never affects the simulation. Empty when every crew ability works
+    /// (or the eligibility matrix is unavailable).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub eligibility_notes: Vec<EligibilityNote>,
+}
+
+/// Human-friendly label for a combat scenario (used in eligibility warning strings).
+fn enemy_type_label(e: crate::combat::EnemyType) -> &'static str {
+    use crate::combat::EnemyType::*;
+    match e {
+        PvpSpace => "PvP (space)",
+        PvpStation => "PvP (station)",
+        RedMovingSpace => "hostiles",
+        Waves => "wave defense",
+        MissionBosses => "mission bosses",
+        QTrial => "Q's Trial",
+        SoloArmadas => "solo armadas",
+        GroupArmadas => "group armadas",
+        Assaults => "assaults",
+        InvadingEntities => "invading entities",
+        OutpostArmadas => "outpost armadas",
+        OutpostRetaliationAttackers => "outpost retaliators",
+    }
+}
+
+/// Resolve one crew member's eligibility for `slot` against `enemy`; when the verdict is
+/// `conditional` or `does_not_work`, append a structured note and a human-readable warning.
+/// A `works` verdict (or an officer/ability absent from the matrix) produces nothing.
+fn collect_eligibility_note(
+    matrix: &crate::data::officer_eligibility::EligibilityMatrix,
+    officer_index: &std::collections::HashMap<String, crate::data::officer::Officer>,
+    display_name: &str,
+    slot: &str,
+    enemy: crate::combat::EnemyType,
+    notes: &mut Vec<EligibilityNote>,
+    warnings: &mut Vec<String>,
+) {
+    use crate::data::officer_eligibility::EligibilityVerdict;
+    if display_name.trim().is_empty() {
+        return;
+    }
+    let key = crate::data::officer::normalize_officer_lookup_key(display_name);
+    let Some(officer) = officer_index.get(&key) else {
+        return;
+    };
+    let Some((verdict, reason)) =
+        crate::data::officer_eligibility::seat_best_verdict(matrix, officer, slot, enemy)
+    else {
+        return;
+    };
+    if verdict == EligibilityVerdict::Works {
+        return;
+    }
+    let ability_id = officer
+        .abilities
+        .iter()
+        .find(|a| a.slot.eq_ignore_ascii_case(slot))
+        .and_then(|a| a.ability_id.clone());
+    let seat_label = match slot {
+        "captain" => "captain",
+        "officer" => "bridge",
+        _ => "below decks",
+    };
+    let scenario_label = enemy_type_label(enemy);
+    let message = match (verdict, reason.as_deref()) {
+        (EligibilityVerdict::DoesNotWork, Some(r)) => {
+            format!("{display_name} ({seat_label}) may not work vs {scenario_label}: {r}")
+        }
+        (EligibilityVerdict::DoesNotWork, None) => {
+            format!("{display_name} ({seat_label}) may not work vs {scenario_label}")
+        }
+        (EligibilityVerdict::Conditional, Some(r)) => format!(
+            "{display_name} ({seat_label}) only works vs {scenario_label} if conditions are met ({r})"
+        ),
+        (EligibilityVerdict::Conditional, None) => format!(
+            "{display_name} ({seat_label}) only works vs {scenario_label} if conditions are met"
+        ),
+        (EligibilityVerdict::Works, _) => return,
+    };
+    warnings.push(message);
+    notes.push(EligibilityNote {
+        officer: display_name.to_string(),
+        slot: slot.to_string(),
+        verdict,
+        reason,
+        ability_id,
+    });
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -701,6 +811,8 @@ pub fn simulate_payload(
         .as_ref()
         .map(|p| p.defender_ship.clone())
         .unwrap_or_else(|| req.hostile.trim().to_string());
+    // Captured before `pvp` is moved into the simulation; reused by eligibility interpretability.
+    let is_pvp = pvp.is_some();
     let defender_opponent = if pvp.is_some() {
         DefenderOpponent::Player
     } else {
@@ -887,6 +999,54 @@ pub fn simulate_payload(
         warnings.push(message);
     }
 
+    // Eligibility interpretability (never affects the simulation): flag any crew member whose seat
+    // ability does-not-work / is-conditional vs the resolved scenario, per the eligibility matrix.
+    let mut eligibility_notes: Vec<EligibilityNote> = Vec::new();
+    if let Some(matrix) = registry.eligibility_matrix() {
+        let hostile_for_scenario = if is_pvp {
+            None
+        } else {
+            registry.resolve_hostile(scenario_hostile.trim())
+        };
+        let enemy = crate::data::officer_eligibility::resolve_enemy_type(
+            req.enemy_type.as_deref(),
+            is_pvp,
+            hostile_for_scenario.as_ref(),
+        );
+        let officer_index = registry.officer_index();
+        collect_eligibility_note(
+            matrix,
+            officer_index,
+            &result.candidate.captain,
+            "captain",
+            enemy,
+            &mut eligibility_notes,
+            &mut warnings,
+        );
+        for name in &result.candidate.bridge {
+            collect_eligibility_note(
+                matrix,
+                officer_index,
+                name,
+                "officer",
+                enemy,
+                &mut eligibility_notes,
+                &mut warnings,
+            );
+        }
+        for name in &result.candidate.below_decks {
+            collect_eligibility_note(
+                matrix,
+                officer_index,
+                name,
+                "below_decks",
+                enemy,
+                &mut eligibility_notes,
+                &mut warnings,
+            );
+        }
+    }
+
     let response = SimulateResponse {
         status: "ok",
         stats: SimulateStats {
@@ -901,6 +1061,7 @@ pub fn simulate_payload(
         seed,
         warnings,
         unresolved_officers,
+        eligibility_notes,
     };
     serde_json::to_string(&response).map_err(SimulateError::Parse)
 }
@@ -2126,6 +2287,61 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
 pub fn heuristics_list_payload() -> Result<String, serde_json::Error> {
     let seeds = list_heuristics_seeds(DEFAULT_HEURISTICS_DIR);
     serde_json::to_string(&serde_json::json!({ "seeds": seeds }))
+}
+
+/// Per-officer ability ids by seat, so the client can map a crew slot to the relevant ability.
+/// The `officer` (bridge) seat may hold up to two abilities; the client takes the best verdict.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct OfficerSeatAbilities {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub captain: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub officer: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub below_decks: Option<String>,
+}
+
+/// GET /api/eligibility: the officer eligibility matrix for the frontend (live crew badges).
+/// Returns ability-keyed per-scenario verdicts plus an officer→seat→ability_id index. The `matrix`
+/// is empty when the eligibility file is not loaded (badges then simply don't render).
+pub fn eligibility_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
+    use crate::data::officer_eligibility::EligibilityScenario;
+    let scenarios: Vec<&'static str> = EligibilityScenario::ALL
+        .iter()
+        .filter(|s| !matches!(s, EligibilityScenario::Loot | EligibilityScenario::Utility))
+        .map(|s| s.as_key())
+        .collect();
+
+    let mut officer_abilities: HashMap<String, OfficerSeatAbilities> = HashMap::new();
+    for officer in registry.officers() {
+        let mut seats = OfficerSeatAbilities::default();
+        for ability in &officer.abilities {
+            let Some(id) = ability.ability_id.clone() else {
+                continue;
+            };
+            match ability.slot.as_str() {
+                "captain" => seats.captain = Some(id),
+                "officer" => seats.officer.push(id),
+                "below_decks" => seats.below_decks = Some(id),
+                _ => {}
+            }
+        }
+        if seats.captain.is_some() || !seats.officer.is_empty() || seats.below_decks.is_some() {
+            officer_abilities.insert(officer.id.clone(), seats);
+        }
+    }
+
+    let matrix_abilities = registry
+        .eligibility_matrix()
+        .map(|m| &m.abilities)
+        .cloned()
+        .unwrap_or_default();
+
+    serde_json::to_string(&serde_json::json!({
+        "scenarios": scenarios,
+        "matrix": matrix_abilities,
+        "officer_abilities": officer_abilities,
+    }))
 }
 
 /// GET /api/forbidden-tech: returns the forbidden/chaos tech catalog for UI dropdown.

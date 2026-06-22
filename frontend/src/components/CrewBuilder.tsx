@@ -7,8 +7,13 @@ import {
   useRef,
   useState,
 } from "react";
-import type { OfficerListItem } from "../lib/api";
+import type {
+  EligibilityVerdict,
+  OfficerEligibilityResponse,
+  OfficerListItem,
+} from "../lib/api";
 import type { CrewState, PinsState } from "../lib/types";
+import { EligibilityBadge } from "./EligibilityBadge";
 
 interface CrewBuilderProps {
   /** Guided mode hides optimizer-oriented pinning and progressively reveals optional below decks. */
@@ -20,6 +25,10 @@ interface CrewBuilderProps {
   onCrewChange: (crew: CrewState) => void;
   onPinsChange: (pins: PinsState) => void;
   officerOptions?: OfficerListItem[];
+  /** Selected combat scenario (""=Auto → defaults badges to generic hostiles). */
+  enemyType?: string;
+  /** Officer eligibility matrix for per-slot badges; null until loaded. */
+  eligibility?: OfficerEligibilityResponse | null;
 }
 
 const slotStyleBase = {
@@ -46,9 +55,52 @@ export default memo(function CrewBuilder({
   onCrewChange,
   onPinsChange,
   officerOptions = [],
+  enemyType = "",
+  eligibility = null,
 }: CrewBuilderProps) {
   const belowN = belowDecksSlots;
   const [showGuidedBelowDecks, setShowGuidedBelowDecks] = useState(false);
+
+  // Live eligibility badges: best verdict across a seat's ability ids for the current scenario.
+  // "" (Auto) falls back to generic hostiles so badges still render before a scenario is chosen.
+  const scenarioKey = enemyType || "red_moving_space";
+  const seatVerdict = useCallback(
+    (
+      officerId: string | null | undefined,
+      seat: "captain" | "officer" | "below_decks",
+    ): { verdict: EligibilityVerdict; reason?: string } | null => {
+      if (!eligibility || !officerId) return null;
+      const seats = eligibility.officer_abilities[officerId];
+      if (!seats) return null;
+      const ids =
+        seat === "officer"
+          ? (seats.officer ?? [])
+          : seats[seat]
+            ? [seats[seat] as string]
+            : [];
+      const rank = { works: 2, conditional: 1, does_not_work: 0 } as const;
+      let best: { verdict: EligibilityVerdict; reason?: string } | null = null;
+      for (const id of ids) {
+        const sv = eligibility.matrix[id]?.scenarios?.[scenarioKey];
+        if (!sv) continue;
+        if (!best || rank[sv.verdict] > rank[best.verdict]) best = sv;
+      }
+      return best;
+    },
+    [eligibility, scenarioKey],
+  );
+  const renderBadge = useCallback(
+    (
+      officerId: string | null | undefined,
+      seat: "captain" | "officer" | "below_decks",
+    ) => {
+      const v = seatVerdict(officerId, seat);
+      return (
+        <EligibilityBadge verdict={v?.verdict ?? null} reason={v?.reason} />
+      );
+    },
+    [seatVerdict],
+  );
 
   const selectedIds = useMemo(
     () =>
@@ -175,6 +227,7 @@ export default memo(function CrewBuilder({
               placeholder="Select…"
             />
           </div>
+          {renderBadge(crew.bridge[0], "officer")}
           {!guided && (
             <button
               type="button"
@@ -209,6 +262,7 @@ export default memo(function CrewBuilder({
               placeholder="Select…"
             />
           </div>
+          {renderBadge(crew.captain, "captain")}
           {!guided && (
             <button
               type="button"
@@ -242,6 +296,7 @@ export default memo(function CrewBuilder({
               placeholder="Select…"
             />
           </div>
+          {renderBadge(crew.bridge[1], "officer")}
           {!guided && (
             <button
               type="button"
@@ -310,6 +365,7 @@ export default memo(function CrewBuilder({
                   placeholder="Select…"
                 />
               </div>
+              {renderBadge(id, "below_decks")}
               {!guided && (
                 <button
                   type="button"

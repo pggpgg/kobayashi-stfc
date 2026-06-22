@@ -1752,6 +1752,11 @@ components:
         defender_profile_id:
           type: string
           description: Opponent profile id when `defender_ship` is set.
+        enemy_type:
+          type: string
+          description: >-
+            Combat scenario for officer eligibility (snake_case EnemyType, e.g.
+            `mission_bosses`, `solo_armadas`, `pvp_space`). Inferred from the target when unset.
 
     SimulateStats:
       type: object
@@ -1805,6 +1810,24 @@ components:
             canonical-to-LCARS gap rather than normal operation.
           items:
             type: string
+        eligibility_notes:
+          type: array
+          description: >-
+            Per-officer eligibility verdicts for the resolved scenario (does-not-work or
+            conditional). Interpretability only — never affects the simulation. Omitted when empty.
+          items:
+            type: object
+            properties:
+              officer:
+                type: string
+              slot:
+                type: string
+              verdict:
+                type: string
+              reason:
+                type: string
+              ability_id:
+                type: string
 
     SensitivityRequest:
       type: object
@@ -2510,6 +2533,11 @@ components:
           type: integer
         defender_profile_id:
           type: string
+        enemy_type:
+          type: string
+          description: >-
+            Combat scenario for officer eligibility filtering (snake_case EnemyType). Inferred
+            from the target when unset.
         novelty_lambda:
           type: number
         novelty_diverse_top:

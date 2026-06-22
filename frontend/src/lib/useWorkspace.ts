@@ -8,11 +8,13 @@ import {
   type CrewRecommendation,
   cancelOptimizeJob,
   fetchHeuristics,
+  fetchOfficerEligibility,
   fetchOfficers,
   formatApiError,
   getOptimizeEstimate,
   getOptimizeStatus,
   getOptimizeStreamUrl,
+  type OfficerEligibilityResponse,
   type OptimizeEstimate,
   type OptimizeStatusResponse,
   optimizeStart,
@@ -90,6 +92,11 @@ export function useWorkspace() {
   const [shipLevel, setShipLevel] = useState(50);
   const [shipId, setShipId] = useState("");
   const [scenarioId, setScenarioId] = useState("");
+  /** Combat scenario for officer eligibility (empty = let the server infer from the target). */
+  const [enemyType, setEnemyType] = useState("");
+  /** Officer eligibility matrix for live crew-builder badges (fetched once; null until loaded). */
+  const [eligibility, setEligibility] =
+    useState<OfficerEligibilityResponse | null>(null);
   /** Per-ship below-decks unlock levels from API `crew_slots`; default matches typical STFC progression. */
   const [belowDeckUnlockLevels, setBelowDeckUnlockLevels] = useState<number[]>(
     () => [...DEFAULT_BELOW_DECK_UNLOCK_LEVELS],
@@ -366,6 +373,13 @@ export function useWorkspace() {
       .catch(() => setAvailableSeeds([]));
   }, []);
 
+  // Fetch the officer eligibility matrix once (static, profile-independent) for crew badges.
+  useEffect(() => {
+    fetchOfficerEligibility()
+      .then(setEligibility)
+      .catch(() => setEligibility(null));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setRosterLoadState("loading");
@@ -531,6 +545,7 @@ export function useWorkspace() {
       shipTier,
       shipLevel,
       supportBuffs: selectedSupportBuffs,
+      enemyType: enemyType || undefined,
     });
     if (!simParams) {
       setError("Select a captain first");
@@ -840,6 +855,7 @@ export function useWorkspace() {
           shipLevel,
           belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
           supportBuffs: selectedSupportBuffs,
+          enemyType: enemyType || undefined,
           optimizeConstraints: {
             mustIncludeComma: optimizeMustInclude,
             excludeComma: optimizeExclude,
@@ -977,6 +993,9 @@ export function useWorkspace() {
     setShipId,
     scenarioId,
     setScenarioId,
+    enemyType,
+    setEnemyType,
+    eligibility,
     shipTier,
     setShipTier,
     shipLevel,

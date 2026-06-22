@@ -75,6 +75,8 @@ pub enum EnemyType {
     Waves,
     /// Mission bosses (“yellows”).
     MissionBosses,
+    /// Q's Trial / "QTrial" event encounters.
+    QTrial,
     GroupArmadas,
     SoloArmadas,
     InvadingEntities,

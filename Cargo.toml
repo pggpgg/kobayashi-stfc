@@ -21,6 +21,10 @@ name = "import_forbidden_chaos"
 path = "src/bin/import_forbidden_chaos.rs"
 
 [[bin]]
+name = "import_officer_eligibility"
+path = "src/bin/import_officer_eligibility.rs"
+
+[[bin]]
 name = "import_syndicate_reputation"
 path = "src/bin/import_syndicate_reputation.rs"
 

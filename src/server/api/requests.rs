@@ -212,6 +212,11 @@ pub struct OptimizeRequest {
     pub defender_ship_level: Option<u32>,
     #[serde(default)]
     pub defender_profile_id: Option<String>,
+    /// Combat scenario for officer eligibility filtering (e.g. `"mission_bosses"`, `"solo_armadas"`,
+    /// `"pvp_space"`). Snake_case [`crate::combat::EnemyType`]. When unset/invalid, the server infers
+    /// it from the target (PvP, group armada, outpost) defaulting to `"red_moving_space"`.
+    #[serde(default)]
+    pub enemy_type: Option<String>,
 }
 
 /// Resolve the effective [`BelowDecksPoolMode`] for a request. Unrecognized or unset

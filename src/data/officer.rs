@@ -24,6 +24,11 @@ pub struct Officer {
 #[derive(Debug, Clone, Deserialize)]
 pub struct OfficerAbility {
     pub slot: String,
+    /// Upstream ability id (matches `AbilityID` in the cheat-sheet CSV and other data sources).
+    /// Used to join per-ability data such as the officer eligibility matrix
+    /// ([`crate::data::officer_eligibility`]). Optional: not every source populates it.
+    #[serde(default)]
+    pub ability_id: Option<String>,
     /// Canonical applicability predicates such as `EnemyPlayer`, used by optimizer
     /// scenario-specific eligibility filters as well as LCARS generation.
     #[serde(default)]

@@ -216,6 +216,7 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/presets", get(handle_presets_list))
         .route("/api/presets/:id", get(handle_preset_get))
         .route("/api/heuristics", get(handle_heuristics))
+        .route("/api/eligibility", get(handle_eligibility))
         .route("/api/optimize/estimate", get(handle_optimize_estimate))
         .route("/api/optimize/status/:job_id", get(handle_optimize_status))
         .route(
@@ -617,6 +618,13 @@ async fn handle_hostiles(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn handle_heuristics() -> impl IntoResponse {
     match api::heuristics_list_payload() {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_eligibility(State(state): State<AppState>) -> impl IntoResponse {
+    match api::eligibility_payload(state.registry.as_ref()) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

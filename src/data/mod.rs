@@ -17,6 +17,7 @@ pub mod import;
 pub mod loader;
 pub mod mapping_gap_report;
 pub mod officer;
+pub mod officer_eligibility;
 pub mod officer_stat_round;
 pub mod optimize_history;
 pub mod profile;

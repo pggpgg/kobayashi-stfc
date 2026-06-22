@@ -101,6 +101,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         defender_opponent: DefenderOpponent::Hostile,
         player_defender_officer_crew: None,
         pvp: None,
+        enemy_type: kobayashi::combat::EnemyType::RedMovingSpace,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,

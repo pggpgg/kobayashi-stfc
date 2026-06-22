@@ -20,6 +20,9 @@ use crate::data::loader::normalize_lookup;
 use crate::data::officer::{
     load_canonical_officers, normalize_officer_lookup_key, Officer, DEFAULT_CANONICAL_OFFICERS_PATH,
 };
+use crate::data::officer_eligibility::{
+    load_eligibility_matrix, EligibilityMatrix, DEFAULT_ELIGIBILITY_MATRIX_PATH,
+};
 use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
@@ -71,6 +74,9 @@ pub struct DataRegistry {
     pub research_catalog: Option<ResearchCatalog>,
     /// Support buff definitions (alliance / ship toggles from API); optional if file missing.
     pub support_buffs_catalog: Option<Arc<SupportBuffCatalog>>,
+    /// Officer eligibility matrix (per-ability, per-scenario combat verdicts); `None` if the file
+    /// is missing — consumers then fall back to the legacy heuristics.
+    pub eligibility_matrix: Option<Arc<EligibilityMatrix>>,
     /// LRU cache for per-hostile record JSON files to avoid repeated disk I/O.
     hostile_record_cache: Mutex<LruCache<String, HostileRecord>>,
     /// LRU cache for per-ship extended record JSON files to avoid repeated disk I/O.
@@ -101,6 +107,11 @@ impl DataRegistry {
         let support_buffs_catalog =
             load_support_buff_catalog(crate::runtime_paths::resolve(DEFAULT_SUPPORT_BUFFS_PATH))
                 .or_else(|| load_support_buff_catalog(Path::new(DEFAULT_SUPPORT_BUFFS_PATH)));
+        let eligibility_matrix = load_eligibility_matrix(crate::runtime_paths::resolve(
+            DEFAULT_ELIGIBILITY_MATRIX_PATH,
+        ))
+        .or_else(|| load_eligibility_matrix(Path::new(DEFAULT_ELIGIBILITY_MATRIX_PATH)))
+        .map(Arc::new);
 
         Ok(Arc::new(DataRegistry {
             officers,
@@ -111,6 +122,7 @@ impl DataRegistry {
             forbidden_chaos_catalog,
             research_catalog,
             support_buffs_catalog,
+            eligibility_matrix,
             hostile_record_cache: Mutex::new(LruCache::new(
                 NonZeroUsize::new(256).expect("256 > 0"),
             )),
@@ -132,6 +144,11 @@ impl DataRegistry {
     /// Research catalog for merging with synced research levels into profile.
     pub fn research_catalog(&self) -> Option<&ResearchCatalog> {
         self.research_catalog.as_ref()
+    }
+
+    /// Officer eligibility matrix (per-ability, per-scenario combat verdicts). `None` if not loaded.
+    pub fn eligibility_matrix(&self) -> Option<&Arc<EligibilityMatrix>> {
+        self.eligibility_matrix.as_ref()
     }
 
     /// Support buff catalog for API-selected alliance/ship buffs.

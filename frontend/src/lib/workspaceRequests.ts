@@ -16,6 +16,7 @@ export function buildWorkspaceSimulateParams(args: {
   shipTier: number;
   shipLevel: number;
   supportBuffs?: readonly string[];
+  enemyType?: string;
 }): {
   ship: string;
   hostile: string;
@@ -28,6 +29,7 @@ export function buildWorkspaceSimulateParams(args: {
   ship_tier: number;
   ship_level: number;
   support_buffs?: string[];
+  enemy_type?: string;
 } | null {
   if (!args.crew.captain) return null;
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
@@ -43,6 +45,7 @@ export function buildWorkspaceSimulateParams(args: {
     ship_tier: args.shipTier,
     ship_level: args.shipLevel,
     ...(support_buffs.length > 0 ? { support_buffs } : {}),
+    ...(args.enemyType ? { enemy_type: args.enemyType } : {}),
   };
 }
 
@@ -227,6 +230,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   optimizeCacheKey?: string | null;
   /** Analytical prefilter: learned pair co-occurrence prior toggle (default true). */
   enableLearnedPairPrior?: boolean;
+  /** Combat scenario for officer eligibility filtering (snake_case EnemyType). */
+  enemyType?: string;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -237,6 +242,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   return {
     ship: args.shipId || "Saladin",
     hostile: args.scenarioId || "2918121098",
+    ...(args.enemyType ? { enemy_type: args.enemyType } : {}),
     sims: args.simsPerCrew,
     max_candidates: args.maxCandidates ?? undefined,
     strategy: args.optimizerStrategy,

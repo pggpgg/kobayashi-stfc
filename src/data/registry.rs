@@ -22,9 +22,21 @@ pub type Registry = HashMap<String, DataSetEntry>;
 pub const DEFAULT_REGISTRY_PATH: &str = "data/registry.json";
 
 /// Merge-update one dataset row in `data/registry.json`, preserving unrelated entries.
+/// Source defaults to `"data-stfc-space"`; use [`merge_registry_entry_with_source`] for others.
 pub fn merge_registry_entry(
     repo: &Path,
     key: &str,
+    data_version: &str,
+    index_path: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    merge_registry_entry_with_source(repo, key, "data-stfc-space", data_version, index_path)
+}
+
+/// Like [`merge_registry_entry`] but with an explicit `source` (e.g. `"community_spreadsheet"`).
+pub fn merge_registry_entry_with_source(
+    repo: &Path,
+    key: &str,
+    source: &str,
     data_version: &str,
     index_path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -39,7 +51,7 @@ pub fn merge_registry_entry(
     reg.insert(
         key.to_string(),
         DataSetEntry {
-            source: "data-stfc-space".to_string(),
+            source: source.to_string(),
             data_version: Some(data_version.to_string()),
             last_updated: Some(last_updated),
             path: index_path.to_string(),
