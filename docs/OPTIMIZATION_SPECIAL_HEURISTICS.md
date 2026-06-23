@@ -20,6 +20,8 @@ For player-provided seed crews (`data/heuristics/*.txt`), see also the **Heurist
 
 `officer_name` is informational; the join key is `officer_id`. Officers with no row (or all-empty flags) are not banned. To ban an officer, set `x` in the relevant cell(s) and restart (cached for the process lifetime).
 
+Today only economy captains are listed (Quark, Airiam). Bridge/below-decks columns are intentionally empty: the [eligibility matrix](#officer-eligibility-matrix-scenario-filter) already removes functionally non-combat officers from those seats, so the ban list is reserved for officers the matrix rates **functional** that you nonetheless want skipped.
+
 **Behavior:**
 - **Always-on, overrides the matrix.** A banned `(officer, seat, mode)` is excluded during optimization regardless of its matrix verdict (even `works`/`conditional`) — via [`officer_ban::is_banned`](../src/data/officer_ban.rs) inside [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) at generation, `apply_crew_constraints`, and `enforce_*`. **Optimization-only**: simulation still reports the true matrix verdict as an eligibility note.
 - The captain seat is additionally pruned at pool-build time by [`is_captain_eligible`](../src/optimizer/crew_generator.rs) — mode-agnostic (banned in *either* mode ⇒ out of the captain pool across all builders, even pool builds with no resolved scenario). Bridge/below-decks bans apply per-mode through the predicate above.
