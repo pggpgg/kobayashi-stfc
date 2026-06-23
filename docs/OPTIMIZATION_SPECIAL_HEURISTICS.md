@@ -80,7 +80,7 @@ The ban lists are **not** functional-eligibility filters — they are a curation
 - **Captain ban list** — [`data/optimizer/captain_ban_list.json`](../data/optimizer/captain_ban_list.json), removed from the **captain pool only** ([`captain_ban.rs`](../src/data/captain_ban.rs)); see the first section above.
 - **`PVP_BELOW_DECKS_BANNED_SOURCE_IDS`** ([`src/data/heuristics.rs`](../src/data/heuristics.rs)) — curated below-decks opt-outs for PvP. Keyed by upstream `source_officer_id`.
 
-> **Note (current behavior vs intent):** the below-decks ban list is presently consulted only through the legacy fallback in [`is_below_decks_eligible_for_optimization`](../src/data/heuristics.rs), i.e. for officers **not** covered by the matrix. For a matrix-covered officer it does not currently override a `works`/`conditional` verdict. Promoting the ban list to an always-on opt-out layer **on top of** the matrix (banned ⇒ excluded regardless of verdict) is a small, recommended follow-up if the intent is to suppress weak-but-functional officers globally.
+> **Always-on (overrides the matrix):** the PvP below-decks ban is applied **on top of** the matrix in [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) — a banned officer is excluded from PvP below-decks regardless of its matrix verdict, *even `works`/`conditional`*. That is precisely what makes it a curation opt-out (suppress weak-but-functional officers) rather than a functional filter. It is **optimization-only**: simulation still reports the true matrix verdict as an eligibility note, so the player always sees ground truth.
 
 ---
 

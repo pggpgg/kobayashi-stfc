@@ -294,6 +294,17 @@ pub fn is_eligible_for_optimization(
     matrix: Option<&EligibilityMatrix>,
     pvp_mode: bool,
 ) -> bool {
+    // Curation opt-out (always-on, independent of the functional matrix): an officer explicitly
+    // banned from PvP below-decks is never simulated there, even if its ability technically
+    // `works`. This intentionally overrides the matrix verdict — it suppresses weak-but-functional
+    // officers that are not worth spending optimization budget on, which is distinct from the
+    // matrix's "does it function at all?" question.
+    if pvp_mode
+        && slot.eq_ignore_ascii_case("below_decks")
+        && crate::data::heuristics::is_pvp_below_decks_banned(officer)
+    {
+        return false;
+    }
     if let Some(matrix) = matrix {
         if let Some((verdict, _)) = seat_best_verdict(matrix, officer, slot, enemy) {
             return verdict != EligibilityVerdict::DoesNotWork;
@@ -606,5 +617,42 @@ mod tests {
         );
         assert_eq!(enemy_type_from_str("PVP_Space"), Some(EnemyType::PvpSpace));
         assert_eq!(enemy_type_from_str("nope"), None);
+    }
+
+    #[test]
+    fn pvp_below_decks_ban_overrides_matrix_works_verdict() {
+        // A source id from PVP_BELOW_DECKS_BANNED_SOURCE_IDS.
+        let banned_sid = "2543722471";
+        let mut o = officer(vec![ability("below_decks", Some("x"))]);
+        o.source_officer_id = Some(banned_sid.to_string());
+        assert!(crate::data::heuristics::is_pvp_below_decks_banned(&o));
+
+        // Matrix says the ability WORKS in both PvP and PvE.
+        let mut scenarios = BTreeMap::new();
+        for scn in [EligibilityScenario::PvpSpace, EligibilityScenario::RedMovingSpace] {
+            scenarios.insert(
+                scn.as_key().to_string(),
+                ScenarioVerdict { verdict: EligibilityVerdict::Works, reason: None },
+            );
+        }
+        let mut abilities = BTreeMap::new();
+        abilities.insert(
+            "x".to_string(),
+            AbilityEligibility {
+                ability_id: "x".to_string(),
+                source_officer_id: None,
+                canonical_officer_id: None,
+                ability_type: "BDA".to_string(),
+                slot: "below_decks".to_string(),
+                conditional_reason: None,
+                scenarios,
+            },
+        );
+        let m = EligibilityMatrix { abilities, ..Default::default() };
+
+        // PvP below-decks: the always-on ban overrides the matrix `works` verdict.
+        assert!(!is_eligible_for_optimization(&o, "below_decks", EnemyType::PvpSpace, Some(&m), true));
+        // Non-PvP: the ban does not apply → matrix `works` → eligible.
+        assert!(is_eligible_for_optimization(&o, "below_decks", EnemyType::RedMovingSpace, Some(&m), false));
     }
 }
