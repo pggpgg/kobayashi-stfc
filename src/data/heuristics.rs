@@ -95,7 +95,6 @@ const LOOT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "XindiHostileLoot",
 ];
 
-
 /// How to assign below-decks officers when the seed lists more candidates than
 /// the ship has slots.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -317,7 +316,6 @@ pub fn has_loot_below_decks_slot_ability(officer: &Officer) -> bool {
             })
     })
 }
-
 
 /// Hard optimizer eligibility rule for below-decks officers.
 ///
@@ -712,7 +710,6 @@ mod tests {
     use super::{
         combinations, filter_heuristic_seed_crews, BelowDecksStrategy, ParsedHeuristicsCrew,
     };
-
 
     fn officer_named(name: &str, group: Option<&str>, ability_slots: &[&str]) -> Officer {
         Officer {

@@ -62,7 +62,15 @@ fn load() -> HashMap<String, BanFlags> {
         return map;
     };
     let col = |name: &str| headers.iter().position(|h| h.trim() == name);
-    let (Some(i_id), Some(i_pvec), Some(i_pveb), Some(i_pvebd), Some(i_pvpc), Some(i_pvpb), Some(i_pvpbd)) = (
+    let (
+        Some(i_id),
+        Some(i_pvec),
+        Some(i_pveb),
+        Some(i_pvebd),
+        Some(i_pvpc),
+        Some(i_pvpb),
+        Some(i_pvpbd),
+    ) = (
         col("officer_id"),
         col("pve_captain"),
         col("pve_bridge"),
@@ -70,7 +78,8 @@ fn load() -> HashMap<String, BanFlags> {
         col("pvp_captain"),
         col("pvp_bridge"),
         col("pvp_below_decks"),
-    ) else {
+    )
+    else {
         eprintln!("warning: officer_ban_list.csv missing required columns; bans disabled");
         return map;
     };

@@ -623,10 +623,16 @@ mod tests {
 
         // The matrix says the captain ability WORKS in both PvP and PvE.
         let mut scenarios = BTreeMap::new();
-        for scn in [EligibilityScenario::PvpSpace, EligibilityScenario::RedMovingSpace] {
+        for scn in [
+            EligibilityScenario::PvpSpace,
+            EligibilityScenario::RedMovingSpace,
+        ] {
             scenarios.insert(
                 scn.as_key().to_string(),
-                ScenarioVerdict { verdict: EligibilityVerdict::Works, reason: None },
+                ScenarioVerdict {
+                    verdict: EligibilityVerdict::Works,
+                    reason: None,
+                },
             );
         }
         let mut abilities = BTreeMap::new();
@@ -642,10 +648,25 @@ mod tests {
                 scenarios,
             },
         );
-        let m = EligibilityMatrix { abilities, ..Default::default() };
+        let m = EligibilityMatrix {
+            abilities,
+            ..Default::default()
+        };
 
         // The always-on ban overrides the matrix `works` verdict, in both modes.
-        assert!(!is_eligible_for_optimization(&o, "captain", EnemyType::PvpSpace, Some(&m), true));
-        assert!(!is_eligible_for_optimization(&o, "captain", EnemyType::RedMovingSpace, Some(&m), false));
+        assert!(!is_eligible_for_optimization(
+            &o,
+            "captain",
+            EnemyType::PvpSpace,
+            Some(&m),
+            true
+        ));
+        assert!(!is_eligible_for_optimization(
+            &o,
+            "captain",
+            EnemyType::RedMovingSpace,
+            Some(&m),
+            false
+        ));
     }
 }
