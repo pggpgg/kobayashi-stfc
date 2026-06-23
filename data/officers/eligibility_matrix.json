@@ -16541,6 +16541,7 @@
     "2603365190": {
       "ability_id": "2603365190",
       "source_officer_id": "3662990708",
+      "canonical_officer_id": "v-ger-ilia-25aa9f",
       "ability_type": "BDA",
       "slot": "below_decks",
       "scenarios": {
@@ -28867,6 +28868,7 @@
     "4068960433": {
       "ability_id": "4068960433",
       "source_officer_id": "3662990708",
+      "canonical_officer_id": "v-ger-ilia-25aa9f",
       "ability_type": "OA",
       "slot": "officer",
       "conditional_reason": "TargetStateAny",

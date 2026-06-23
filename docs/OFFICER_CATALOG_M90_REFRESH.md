@@ -1,6 +1,6 @@
 # Scoping: refresh the canonical officer catalog m86 → m90
 
-**Status:** scoped, not started. **Recommendation:** run as a dedicated, calibration-gated task (see §Risk) — not bundled with feature work.
+**Status:** additive-first slice **done** (2026-06-23) — V'Ger Ilia added (§Suggested phasing #3). The higher-risk stat-update phase (#4) remains **deferred** to the calibration snapshot-freeze sitting. **Recommendation:** run the remaining stat refresh as a dedicated, calibration-gated task (see §Risk) — not bundled with feature work.
 
 ## Why
 
@@ -62,7 +62,7 @@ Any stat/ability change to an officer that appears in a recorded/anchored fixtur
 
 1. **Baseline** — confirm the calibration suite is green on `main` first (so any post-refresh failure is attributable to the refresh).
 2. **Enumerate the delta** (§above) — produces a bounded checklist.
-3. **Additive-first** — add the new officers (V'Ger Ilia, …) without touching existing officers' stats; regen LCARS; `validate_data --strict`; run calibration. This closes the orphan with minimal calibration risk.
+3. **Additive-first** ✅ **done (2026-06-23)** — the catalog delta was exactly one officer: **V'Ger Ilia** (`v-ger-ilia-25aa9f`, source `3662990708`), added without touching existing stats (upstream `summary-officer.json` had 287 officers vs the catalog's 286). Its OA (`IsolyticDamage`) and BDA (`CritDamage`) map cleanly; LCARS rebuilt in-process clean, `validate` errors=0, full test suite + calibration green, eligibility-matrix orphan closed (importer reports **0** CSV ids missing from the catalog). `data_version` marked `m86-04763f1697f5+vger-ilia` (still m86-based — only one m90 officer added).
 4. **Stat updates** (higher risk) — apply m90 stat/ability changes to existing officers; rerun calibration; re-anchor or justify any drift during the recording sitting.
 5. **Finalize** — bump `data_version`/`imported_at`, refresh `officer_modeling_fidelity.yaml` + scorecard, update docs.
 
