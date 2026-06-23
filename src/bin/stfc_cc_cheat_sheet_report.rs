@@ -1,7 +1,7 @@
 //! Report stfc.cc cheat-sheet → [`kobayashi::data::combat_effect_spec::CombatEffectSpec`] mapping coverage.
 //!
-//! Usage: `stfc_cc_cheat_sheet_report [--json] [path/to/raw-officers-m88-17rc.csv]`
-//! Default path: `data/upstream/cheat-sheet/raw-officers-m88-17rc.csv` (run from repo root).
+//! Usage: `stfc_cc_cheat_sheet_report [--json] [path/to/raw-officers-m90-17rc.csv]`
+//! Default path: `data/upstream/cheat-sheet/raw-officers-m90-17rc.csv` (run from repo root).
 
 use std::env;
 use std::fs::File;
@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     let path =
-        path.unwrap_or_else(|| "data/upstream/cheat-sheet/raw-officers-m88-17rc.csv".to_string());
+        path.unwrap_or_else(|| "data/upstream/cheat-sheet/raw-officers-m90-17rc.csv".to_string());
     let f = File::open(&path)?;
     let summary = scan_stfc_cc_cheat_sheet_csv(f)?;
     let full_coverage = summary.rows_full_convert == summary.rows_total;

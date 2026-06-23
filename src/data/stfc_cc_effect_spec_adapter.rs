@@ -1,5 +1,5 @@
 //! Ingestion helpers for stfc.cc–style cheat-sheet columns into [`CombatEffectSpec`].
-//! Column names match `data/upstream/cheat-sheet/raw-officers-m88-17rc.csv`. This is **optional**
+//! Column names match `data/upstream/cheat-sheet/raw-officers-m90-17rc.csv`. This is **optional**
 //! tooling — the engine still uses LCARS + research catalogs at runtime.
 
 use std::collections::HashMap;
@@ -115,6 +115,12 @@ pub fn map_stfc_cc_modifier(raw: &str) -> Result<AbilityModifierSpec, String> {
         | "Omega13Cooldown"
         | "SkillCuttingBeamPvPBaseDamagePercentage"
         | "CombatScavenger"
+        // M90 additions — non-combat (loot / repair / cutting-beam utility), treated as no-op tags.
+        | "RepairCostsCascade"
+        | "RepairTimeCascade"
+        | "BorgCubeLoot"
+        | "SoloOutpostMedalsPlunderLoot"
+        | "SkillCuttingBeamAccumulateBeams"
         | "OfficerStatAll" => Ok(AbilityModifierSpec::TagOnly),
         _ => Err(format!("unmapped_modifier:{s}")),
     }
@@ -910,7 +916,7 @@ mod tests {
 
     #[test]
     fn scan_bundled_cheat_sheet_csv_runs() {
-        let f = std::fs::File::open("data/upstream/cheat-sheet/raw-officers-m88-17rc.csv")
+        let f = std::fs::File::open("data/upstream/cheat-sheet/raw-officers-m90-17rc.csv")
             .expect("open bundled cheat-sheet (run tests from crate root)");
         let s = scan_stfc_cc_cheat_sheet_csv(f).expect("scan");
         assert!(s.rows_total > 100);

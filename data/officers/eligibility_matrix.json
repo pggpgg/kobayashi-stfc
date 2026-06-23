@@ -1,8 +1,8 @@
 {
-  "data_version": "cheat-sheet-m88-17rc",
+  "data_version": "cheat-sheet-m90-17rc",
   "source": "community_spreadsheet",
-  "source_note": "raw-officers-m88-17rc.csv",
-  "imported_at": "2026-06-22",
+  "source_note": "raw-officers-m90-17rc.csv",
+  "imported_at": "2026-06-23",
   "abilities": {
     "1001707675": {
       "ability_id": "1001707675",
@@ -579,58 +579,58 @@
       "scenarios": {
         "assaults": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "group_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "invading_entities": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "loot": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "mission_bosses": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "outpost_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "outpost_retaliation_attackers": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "pvp_space": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "pvp_station": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "q_trial": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "red_moving_space": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "solo_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "utility": {
           "verdict": "works"
         },
         "waves": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         }
       }
     },
@@ -956,58 +956,58 @@
       "scenarios": {
         "assaults": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "group_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "invading_entities": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "loot": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "mission_bosses": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "outpost_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "outpost_retaliation_attackers": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "pvp_space": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "pvp_station": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "q_trial": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "red_moving_space": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "solo_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "utility": {
           "verdict": "works"
         },
         "waves": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         }
       }
     },
@@ -1574,6 +1574,70 @@
         }
       }
     },
+    "1166619300": {
+      "ability_id": "1166619300",
+      "source_officer_id": "2024435434",
+      "canonical_officer_id": "genesis-lythe-82d460",
+      "ability_type": "OA",
+      "slot": "officer",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "ShieldHPRepair"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "ShieldHPRepair"
+        },
+        "waves": {
+          "verdict": "works"
+        }
+      }
+    },
     "1166803": {
       "ability_id": "1166803",
       "source_officer_id": "3013113875",
@@ -2000,6 +2064,69 @@
         "waves": {
           "verdict": "does_not_work",
           "reason": "FactionPointsGain"
+        }
+      }
+    },
+    "1236877459": {
+      "ability_id": "1236877459",
+      "source_officer_id": "3979936827",
+      "canonical_officer_id": "mara-dalen-6827",
+      "ability_type": "BDA",
+      "slot": "below_decks",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "group_armadas": {
+          "verdict": "works"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "ShieldHPRepair"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
+        },
+        "solo_armadas": {
+          "verdict": "works"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "ShieldHPRepair"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "TargetIsArmada"
         }
       }
     },
@@ -3183,6 +3310,72 @@
         }
       }
     },
+    "1396937009": {
+      "ability_id": "1396937009",
+      "source_officer_id": "3718842126",
+      "canonical_officer_id": "academy-doctor-bc8e69",
+      "ability_type": "OA",
+      "slot": "officer",
+      "conditional_reason": "EnemyExplorer",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "IsolyticDamage"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfAtWaveDefenseChallenge, EnemyExplorer"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "IsolyticDamage"
+        },
+        "waves": {
+          "verdict": "conditional",
+          "reason": "EnemyExplorer"
+        }
+      }
+    },
     "1411083962": {
       "ability_id": "1411083962",
       "source_officer_id": "423029416",
@@ -3252,17 +3445,18 @@
       "canonical_officer_id": "sela-bd6e1b",
       "ability_type": "CM",
       "slot": "captain",
+      "conditional_reason": "SelfCloaked",
       "scenarios": {
         "assaults": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "group_armadas": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "invading_entities": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "loot": {
@@ -3270,34 +3464,34 @@
           "reason": "CritDamage"
         },
         "mission_bosses": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "outpost_armadas": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "outpost_retaliation_attackers": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "pvp_space": {
           "verdict": "works"
         },
         "pvp_station": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "q_trial": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "red_moving_space": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "solo_armadas": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "utility": {
@@ -3305,7 +3499,7 @@
           "reason": "CritDamage"
         },
         "waves": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         }
       }
@@ -6785,6 +6979,68 @@
         },
         "waves": {
           "verdict": "works"
+        }
+      }
+    },
+    "1768055716": {
+      "ability_id": "1768055716",
+      "source_officer_id": "390339249",
+      "canonical_officer_id": "caleb-mir-3588ed",
+      "ability_type": "BDA",
+      "slot": "below_decks",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "AllDamage"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "outpost_armadas": {
+          "verdict": "works"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "works"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "red_moving_space": {
+          "verdict": "works"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "AllDamage"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
         }
       }
     },
@@ -14869,58 +15125,58 @@
       "scenarios": {
         "assaults": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "group_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "invading_entities": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "loot": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "mission_bosses": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "outpost_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "outpost_retaliation_attackers": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "pvp_space": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "pvp_station": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "q_trial": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "red_moving_space": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "solo_armadas": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         },
         "utility": {
           "verdict": "works"
         },
         "waves": {
           "verdict": "does_not_work",
-          "reason": "RepairCostsPost"
+          "reason": "RepairCostsCascade"
         }
       }
     },
@@ -17149,6 +17405,59 @@
         "utility": {
           "verdict": "does_not_work",
           "reason": "AddState"
+        },
+        "waves": {
+          "verdict": "works"
+        }
+      }
+    },
+    "2658253664": {
+      "ability_id": "2658253664",
+      "source_officer_id": "2500610530",
+      "canonical_officer_id": "jirali-551c28",
+      "ability_type": "OA",
+      "slot": "officer",
+      "scenarios": {
+        "assaults": {
+          "verdict": "works"
+        },
+        "group_armadas": {
+          "verdict": "works"
+        },
+        "invading_entities": {
+          "verdict": "works"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "BorgCubeLoot"
+        },
+        "mission_bosses": {
+          "verdict": "works"
+        },
+        "outpost_armadas": {
+          "verdict": "works"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "works"
+        },
+        "pvp_space": {
+          "verdict": "works"
+        },
+        "pvp_station": {
+          "verdict": "works"
+        },
+        "q_trial": {
+          "verdict": "works"
+        },
+        "red_moving_space": {
+          "verdict": "works"
+        },
+        "solo_armadas": {
+          "verdict": "works"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "BorgCubeLoot"
         },
         "waves": {
           "verdict": "works"
@@ -23419,6 +23728,70 @@
         }
       }
     },
+    "3471920737": {
+      "ability_id": "3471920737",
+      "source_officer_id": "2500610530",
+      "canonical_officer_id": "jirali-551c28",
+      "ability_type": "BDA",
+      "slot": "below_decks",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        },
+        "utility": {
+          "verdict": "works"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "RepairTimeCascade"
+        }
+      }
+    },
     "3479467907": {
       "ability_id": "3479467907",
       "source_officer_id": "3458822900",
@@ -26049,6 +26422,71 @@
         }
       }
     },
+    "3778044537": {
+      "ability_id": "3778044537",
+      "source_officer_id": "2024435434",
+      "canonical_officer_id": "genesis-lythe-82d460",
+      "ability_type": "BDA",
+      "slot": "below_decks",
+      "conditional_reason": "SoloOutpostMedalsPlunderLoot",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "loot": {
+          "verdict": "works"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "red_moving_space": {
+          "verdict": "conditional",
+          "reason": "see description"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "SoloOutpostMedalsPlunderLoot"
+        }
+      }
+    },
     "3778774634": {
       "ability_id": "3778774634",
       "source_officer_id": "2100903263",
@@ -26440,6 +26878,67 @@
         "waves": {
           "verdict": "conditional",
           "reason": "SelfExplorer, SelfHasMorale"
+        }
+      }
+    },
+    "3851967764": {
+      "ability_id": "3851967764",
+      "source_officer_id": "390339249",
+      "canonical_officer_id": "caleb-mir-3588ed",
+      "ability_type": "OA",
+      "slot": "officer",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "ShieldHPRepair"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "outpost_armadas": {
+          "verdict": "works"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "works"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "red_moving_space": {
+          "verdict": "works"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "CombatBattleType"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "ShieldHPRepair"
+        },
+        "waves": {
+          "verdict": "works"
         }
       }
     },
@@ -27690,17 +28189,18 @@
       "canonical_officer_id": "tomalak-0ff09c",
       "ability_type": "CM",
       "slot": "captain",
+      "conditional_reason": "SelfCloaked",
       "scenarios": {
         "assaults": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "group_armadas": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "invading_entities": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "loot": {
@@ -27708,34 +28208,34 @@
           "reason": "AllPiercing"
         },
         "mission_bosses": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "outpost_armadas": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "outpost_retaliation_attackers": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "pvp_space": {
           "verdict": "works"
         },
         "pvp_station": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "q_trial": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "red_moving_space": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "solo_armadas": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         },
         "utility": {
@@ -27743,7 +28243,7 @@
           "reason": "AllPiercing"
         },
         "waves": {
-          "verdict": "does_not_work",
+          "verdict": "conditional",
           "reason": "SelfCloaked"
         }
       }
@@ -28122,6 +28622,70 @@
         "waves": {
           "verdict": "does_not_work",
           "reason": "EnemyPlayer, TargetHasHullBreach"
+        }
+      }
+    },
+    "4046135163": {
+      "ability_id": "4046135163",
+      "source_officer_id": "3979936827",
+      "canonical_officer_id": "mara-dalen-6827",
+      "ability_type": "OA",
+      "slot": "officer",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "group_armadas": {
+          "verdict": "works"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "IsolyticDefense"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "IsolyticDefense"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "TargetNotSoloArmada, TargetIsArmada"
         }
       }
     },
@@ -28922,6 +29486,71 @@
         "waves": {
           "verdict": "does_not_work",
           "reason": "EnemyPlayer"
+        }
+      }
+    },
+    "4123306445": {
+      "ability_id": "4123306445",
+      "source_officer_id": "2500610530",
+      "canonical_officer_id": "jirali-551c28",
+      "ability_type": "CM",
+      "slot": "captain",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "SkillCuttingBeamAccumulateBeams"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "pvp_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "pvp_station": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "SkillCuttingBeamAccumulateBeams"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "SelfHullBorgCube"
         }
       }
     },
@@ -34027,6 +34656,72 @@
         "waves": {
           "verdict": "conditional",
           "reason": "ModuleKinetic"
+        }
+      }
+    },
+    "884912451": {
+      "ability_id": "884912451",
+      "source_officer_id": "3718842126",
+      "canonical_officer_id": "academy-doctor-bc8e69",
+      "ability_type": "BDA",
+      "slot": "below_decks",
+      "conditional_reason": "SelfInterceptor",
+      "scenarios": {
+        "assaults": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "group_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "invading_entities": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "loot": {
+          "verdict": "does_not_work",
+          "reason": "CritChance"
+        },
+        "mission_bosses": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "outpost_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "outpost_retaliation_attackers": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "pvp_space": {
+          "verdict": "conditional",
+          "reason": "SelfInterceptor"
+        },
+        "pvp_station": {
+          "verdict": "conditional",
+          "reason": "SelfInterceptor"
+        },
+        "q_trial": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "red_moving_space": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "solo_armadas": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
+        },
+        "utility": {
+          "verdict": "does_not_work",
+          "reason": "CritChance"
+        },
+        "waves": {
+          "verdict": "does_not_work",
+          "reason": "SelfInterceptor, EnemyPlayer"
         }
       }
     },

@@ -19,7 +19,7 @@ use kobayashi::data::officer_eligibility::{
 };
 use kobayashi::data::registry::merge_registry_entry_with_source;
 
-const DEFAULT_CSV_REL: &str = "data/upstream/cheat-sheet/raw-officers-m88-17rc.csv";
+const DEFAULT_CSV_REL: &str = "data/upstream/cheat-sheet/raw-officers-m90-17rc.csv";
 
 /// Map the cheat-sheet `AbilityType` to our ability `slot` vocabulary.
 fn slot_for_ability_type(ability_type: &str) -> Option<&'static str> {
@@ -32,7 +32,7 @@ fn slot_for_ability_type(ability_type: &str) -> Option<&'static str> {
 }
 
 /// Derive a stable `data_version` from the CSV file stem
-/// (`raw-officers-m88-17rc` -> `cheat-sheet-m88-17rc`).
+/// (`raw-officers-m90-17rc` -> `cheat-sheet-m90-17rc`).
 fn data_version_from_stem(stem: &str) -> String {
     match stem.strip_prefix("raw-officers-") {
         Some(rest) => format!("cheat-sheet-{rest}"),

@@ -9,12 +9,12 @@ When used carefully as a reference (not as automatic ground truth for in-game be
 
 | File                            | Role                                                                                                                                                                                          |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `raw-officers-m88-17rc.csv`     | **Source / machine-oriented export** — complete data in the form most suitable for scripts, diffing, and automated ingestion. Treat this as the primary tabular source when building tooling. |
-| `master-officers-m88-17rc.csv`  | **Complete, human-oriented export** — same coverage as raw, laid out for reading and manual review.                                                                                           |
-| `compact-officers-m88-17rc.csv` | **Truncated summary** — very short; useful for quick scans, not for full modeling.                                                                                                            |
+| `raw-officers-m90-17rc.csv`     | **Source / machine-oriented export** — complete data in the form most suitable for scripts, diffing, and automated ingestion. Treat this as the primary tabular source when building tooling. |
+| `master-officers-m90-17rc.csv`  | **Complete, human-oriented export** — same coverage as raw, laid out for reading and manual review.                                                                                           |
+| `compact-officers-m90-17rc.csv` | **Truncated summary** — very short; useful for quick scans, not for full modeling.                                                                                                            |
 
 
-Version suffixes in the filenames (e.g. `m88-17rc`) refer to the spreadsheet **milestone / release** the export was taken from; replace or add files when the community sheet updates.
+Version suffixes in the filenames (e.g. `m90-17rc`) refer to the spreadsheet **milestone / release** the export was taken from; replace or add files when the community sheet updates.
 
 ## Relationship to Kobayashi
 
