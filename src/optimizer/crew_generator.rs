@@ -1159,7 +1159,7 @@ fn is_captain_eligible(officer: &Officer) -> bool {
         .abilities
         .iter()
         .any(|ability| ability.slot == "captain")
-        && !crate::data::captain_ban::is_captain_banned(&officer.id)
+        && !crate::data::officer_ban::is_captain_banned_any_mode(&officer.id)
 }
 
 /// True if `name` equals captain or any bridge officer (distinct-officer checks).
@@ -1568,7 +1568,7 @@ mod tests {
     use crate::data::data_registry::DataRegistry;
     use crate::data::heuristics::{
         below_decks_combat_relevance_rank, has_loot_below_decks_slot_ability,
-        has_pvp_below_decks_slot_ability, is_pvp_below_decks_banned, BelowDecksCombatRelevanceRank,
+        has_pvp_below_decks_slot_ability, BelowDecksCombatRelevanceRank,
     };
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
 
@@ -1653,7 +1653,7 @@ mod tests {
                 loot_count += 1;
                 assert!(!contains(&pvp.below_decks, &officer.name));
             }
-            if is_pvp_below_decks_banned(officer) {
+            if crate::data::officer_ban::is_banned(&officer.id, "below_decks", true) {
                 explicitly_banned_count += 1;
                 assert!(!contains(&pvp.below_decks, &officer.name));
             }

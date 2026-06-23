@@ -44,9 +44,9 @@ Optional `defender_crew` uses the same shape as attacker `crew` and is merged wi
 
 Officer eligibility is now **data-driven** from the community cheat-sheet (the officer eligibility matrix), filtering officers whose ability does not function against the target across **all seats** (captain / bridge / below-decks). PvP is just one of the 12 scenarios (`pvp_space` / `pvp_station`). For the full mechanism — verdicts, scenario resolution (`enemy_type`), coverage, and fallback — see [`OPTIMIZATION_SPECIAL_HEURISTICS.md` → Officer eligibility matrix](OPTIMIZATION_SPECIAL_HEURISTICS.md#officer-eligibility-matrix-scenario-filter).
 
-The filter is enforced on generated candidates, heuristics seeds, and warm-start/history crews alike (`enforce_candidate_optimization_eligibility_*`). For officers not yet covered by the matrix, the legacy fallback still applies (PvP → `PVP_BELOW_DECKS_BANNED_SOURCE_IDS` + loot exclusion; non-PvP → `EnemyPlayer` below-decks exclusion).
+The filter is enforced on generated candidates, heuristics seeds, and warm-start/history crews alike (`enforce_candidate_optimization_eligibility_*`). For officers not yet covered by the matrix, the legacy fallback still applies (PvP → loot exclusion; non-PvP → `EnemyPlayer` below-decks exclusion).
 
-**Ban lists (curation, both modes):** the captain ban (`data/optimizer/captain_ban_list.json`) and the PvP below-decks ban (`PVP_BELOW_DECKS_BANNED_SOURCE_IDS`) are curation opt-outs for weak-but-functional officers, distinct from the functional matrix — see [`OPTIMIZATION_SPECIAL_HEURISTICS.md` → Ban lists](OPTIMIZATION_SPECIAL_HEURISTICS.md#ban-lists-curation-opt-out).
+**Ban list (curation):** the centralized [`officer_ban_list.csv`](../data/optimizer/officer_ban_list.csv) (one row per officer; PvE/PvP × captain/bridge/below-decks) is an **always-on** opt-out for weak-but-functional officers, distinct from the functional matrix and overriding it — see [`OPTIMIZATION_SPECIAL_HEURISTICS.md` → Ban list](OPTIMIZATION_SPECIAL_HEURISTICS.md#ban-list-curation-opt-out).
 
 ## Optimize cache / warm-start
 

@@ -6,27 +6,25 @@ For player-provided seed crews (`data/heuristics/*.txt`), see also the **Heurist
 
 ---
 
-## Captain ban list
+## Ban list (curation opt-out)
 
-**Purpose:** Until a winning crew is found, simulation budget is better spent on captains whose abilities affect combat, not economy or logistics officers like Quark.
+**Purpose:** Opt out of *simulating* officers that aren't worth optimization budget in a given seat/mode — even if their ability technically works (e.g. economy/logistics captains like Quark). This is **curation**, distinct from the functional [eligibility matrix](#officer-eligibility-matrix-scenario-filter) ("does the ability work at all?").
 
-**Behavior:** Officers on the ban list are removed from the **captain pool only**. They may still appear on bridge or below-decks when seat rules allow.
+**Data:** [`data/optimizer/officer_ban_list.csv`](../data/optimizer/officer_ban_list.csv) — **one row per officer**, keyed by canonical `officer_id`, with six flags (`x` = banned, empty = allowed):
 
-**Data:** [`data/optimizer/captain_ban_list.json`](../data/optimizer/captain_ban_list.json)
+| column | bans the officer from… |
+| --- | --- |
+| `pve_captain` / `pvp_captain` | captain seat in PvE / PvP |
+| `pve_bridge` / `pvp_bridge` | bridge seat in PvE / PvP |
+| `pve_below_decks` / `pvp_below_decks` | below-decks seat in PvE / PvP |
 
-```json
-{
-  "canonical_ids": ["quark-2fd57b", "airiam-9265fc"],
-  "names": []
-}
-```
+`officer_name` is informational; the join key is `officer_id`. Officers with no row (or all-empty flags) are not banned. To ban an officer, set `x` in the relevant cell(s) and restart (cached for the process lifetime).
 
-- **`canonical_ids`** — ids from `data/officers/officers.canonical.json` (preferred).
-- **`names`** — optional display names resolved via the canonical catalog (same normalization as roster import).
+**Behavior:**
+- **Always-on, overrides the matrix.** A banned `(officer, seat, mode)` is excluded during optimization regardless of its matrix verdict (even `works`/`conditional`) — via [`officer_ban::is_banned`](../src/data/officer_ban.rs) inside [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) at generation, `apply_crew_constraints`, and `enforce_*`. **Optimization-only**: simulation still reports the true matrix verdict as an eligibility note.
+- The captain seat is additionally pruned at pool-build time by [`is_captain_eligible`](../src/optimizer/crew_generator.rs) — mode-agnostic (banned in *either* mode ⇒ out of the captain pool across all builders, even pool builds with no resolved scenario). Bridge/below-decks bans apply per-mode through the predicate above.
 
-**Code:** loaded in [`src/data/captain_ban.rs`](../src/data/captain_ban.rs); applied in [`is_captain_eligible`](../src/optimizer/crew_generator.rs) when building officer pools.
-
-**Extending:** add a canonical id or name to the JSON and restart the server/process (list is cached for the process lifetime).
+This single CSV replaces the former `captain_ban_list.json` and the hard-coded `PVP_BELOW_DECKS_BANNED_SOURCE_IDS`.
 
 ---
 
@@ -67,20 +65,9 @@ The primary scenario-eligibility filter is **data-driven**, not hand-coded. It a
 
 **Where applied.** [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) is the shared predicate. Pool construction prunes ineligible officers per seat before generation ([`build_officer_pools_from_registry`](../src/optimizer/crew_generator.rs)); [`apply_crew_constraints`](../src/optimizer/mod.rs) and [`enforce_candidate_legality_inner`](../src/optimizer/mod.rs) re-apply it to generated, seed, warm-start, and history crews so the rule is hard across exhaustive, sampled, tiered, and genetic strategies. In simulation it is interpretability-only: [`simulate_payload`](../src/server/api.rs) emits `eligibility_notes` + warnings and never rejects the player's crew.
 
-**Coverage & fallback.** Officers/abilities **absent from the cheat-sheet** fall back to the legacy heuristics in [`src/data/heuristics.rs`](../src/data/heuristics.rs) (`EnemyPlayer` below-decks exclusion outside PvP, `NON_COMBAT_BELOW_DECKS_MODIFIERS`, and the ban list below). As of cheat-sheet `m90-17rc` vs catalog `m86`, the matrix covers **570/574** catalog abilities; the only gaps are 2 officers the community sheet does not yet rate — **Chancellor Ake** and **Deidamia** (officer + below-decks) — which use the heuristic fallback until the sheet adds them. Separately, **V'Ger Ilia** is present in the sheet but not yet in the `m86` catalog (it appears as an orphan in the importer's coverage report); it joins once the canonical catalog is refreshed to `m90`. The importer prints the current coverage report to stderr.
+**Coverage & fallback.** Officers/abilities **absent from the cheat-sheet** fall back to the legacy heuristics in [`src/data/heuristics.rs`](../src/data/heuristics.rs) (`EnemyPlayer` below-decks exclusion outside PvP, plus `NON_COMBAT_BELOW_DECKS_MODIFIERS` loot/economy exclusion). The [ban list](#ban-list-curation-opt-out) is applied separately and always-on, regardless of matrix coverage. As of cheat-sheet `m90-17rc` vs catalog `m86`, the matrix covers **570/574** catalog abilities; the only gaps are 2 officers the community sheet does not yet rate — **Chancellor Ake** and **Deidamia** (officer + below-decks) — which use the heuristic fallback until the sheet adds them. Separately, **V'Ger Ilia** is present in the sheet but not yet in the `m86` catalog (it appears as an orphan in the importer's coverage report); it joins once the canonical catalog is refreshed to `m90`. The importer prints the current coverage report to stderr.
 
 **Refreshing.** When the upstream cheat-sheet updates, re-export its `RawOfficers` / `MasterOfficers` / `Officers Compact` sheets to `data/upstream/cheat-sheet/*-<version>.csv` (see that directory's `README.md`), point `DEFAULT_CSV_REL` in [`import_officer_eligibility.rs`](../src/bin/import_officer_eligibility.rs) at the new `raw-officers-*.csv`, and re-run `cargo run --bin import_officer_eligibility`. Output is sorted/deterministic, so the matrix diff is clean.
-
----
-
-## Ban lists (curation opt-out)
-
-The ban lists are **not** functional-eligibility filters — they are a curation layer for officers whose abilities *technically* function but are too weak to be worth spending simulation budget on. They are intentionally kept alongside the matrix.
-
-- **Captain ban list** — [`data/optimizer/captain_ban_list.json`](../data/optimizer/captain_ban_list.json), removed from the **captain pool only** ([`captain_ban.rs`](../src/data/captain_ban.rs)); see the first section above.
-- **`PVP_BELOW_DECKS_BANNED_SOURCE_IDS`** ([`src/data/heuristics.rs`](../src/data/heuristics.rs)) — curated below-decks opt-outs for PvP. Keyed by upstream `source_officer_id`.
-
-> **Always-on (overrides the matrix):** the PvP below-decks ban is applied **on top of** the matrix in [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) — a banned officer is excluded from PvP below-decks regardless of its matrix verdict, *even `works`/`conditional`*. That is precisely what makes it a curation opt-out (suppress weak-but-functional officers) rather than a functional filter. It is **optimization-only**: simulation still reports the true matrix verdict as an eligibility note, so the player always sees ground truth.
 
 ---
 
