@@ -1,0 +1,25 @@
+# Curated below-decks officer priority for the crew optimizer (strongest first).
+#
+# Purpose: ensure optimization always *reaches* a proven-strong below-decks lineup.
+# These officers are floated to the top of the below-decks pool ordering
+# (see sort_below_decks_by_rank_and_power) and seed a guaranteed "proven crew"
+# warm-start (see curated_proven_warm_start_crew). The optimizer still searches
+# freely; this only guarantees a strong starting point so a low max_candidates +
+# many below-decks slots never starves the search of a viable crew.
+#
+# Format: one canonical officer name per line, ranked best-first. Blank lines and
+# lines starting with '#' are ignored. Names are matched case-insensitively against
+# the officer catalog; an unmatched name is simply skipped (no priority bump), so a
+# stale entry degrades gracefully. Use the canonical catalog name (e.g. the SNW
+# Chapel below-decks officer is "SNW Nurse Chapel").
+B'Elanna Torres
+Neelix
+Harry Kim
+Tom Paris
+SNW Nurse Chapel
+Hugh
+PIC Hugh
+SNW Hemmer
+D'Vana Tendi
+Phlox
+The Doctor

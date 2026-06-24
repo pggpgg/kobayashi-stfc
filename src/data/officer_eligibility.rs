@@ -16,7 +16,7 @@
 //! [`seat_best_verdict`] (simulate interpretability). Officers/abilities absent from the matrix
 //! (coverage gaps) fall back to the legacy heuristics in [`crate::data::heuristics`].
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
@@ -75,7 +75,7 @@ pub struct AbilityEligibility {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conditional_reason: Option<String>,
     /// Keyed by [`EligibilityScenario::as_key`] (12 combat scenarios + `loot` + `utility`).
-    pub scenarios: HashMap<String, ScenarioVerdict>,
+    pub scenarios: BTreeMap<String, ScenarioVerdict>,
 }
 
 /// The full matrix as loaded from `eligibility_matrix.json`.
@@ -90,7 +90,7 @@ pub struct EligibilityMatrix {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub imported_at: Option<String>,
     #[serde(default)]
-    pub abilities: HashMap<String, AbilityEligibility>,
+    pub abilities: BTreeMap<String, AbilityEligibility>,
 }
 
 impl EligibilityMatrix {
@@ -294,6 +294,13 @@ pub fn is_eligible_for_optimization(
     matrix: Option<&EligibilityMatrix>,
     pvp_mode: bool,
 ) -> bool {
+    // Always-on curation opt-out (overrides the functional matrix below), per seat and mode:
+    // an officer banned for this (seat, mode) is never simulated there, even if its ability
+    // technically `works`. This is distinct from the matrix's "does it function?" question and
+    // suppresses weak-but-functional officers. Source: data/optimizer/officer_ban_list.csv.
+    if crate::data::officer_ban::is_banned(&officer.id, slot, pvp_mode) {
+        return false;
+    }
     if let Some(matrix) = matrix {
         if let Some((verdict, _)) = seat_best_verdict(matrix, officer, slot, enemy) {
             return verdict != EligibilityVerdict::DoesNotWork;
@@ -389,7 +396,7 @@ mod tests {
         scenario: EligibilityScenario,
         verdict: EligibilityVerdict,
     ) -> EligibilityMatrix {
-        let mut scenarios = HashMap::new();
+        let mut scenarios = BTreeMap::new();
         scenarios.insert(
             scenario.as_key().to_string(),
             ScenarioVerdict {
@@ -397,7 +404,7 @@ mod tests {
                 reason: Some("because".to_string()),
             },
         );
-        let mut abilities = HashMap::new();
+        let mut abilities = BTreeMap::new();
         abilities.insert(
             ability_id.to_string(),
             AbilityEligibility {
@@ -511,7 +518,7 @@ mod tests {
     #[test]
     fn seat_eligible_when_any_officer_ability_works() {
         // officer slot can hold two abilities; eligible if not all DoesNotWork.
-        let mut scenarios_bad = HashMap::new();
+        let mut scenarios_bad = BTreeMap::new();
         scenarios_bad.insert(
             EligibilityScenario::RedMovingSpace.as_key().to_string(),
             ScenarioVerdict {
@@ -519,7 +526,7 @@ mod tests {
                 reason: None,
             },
         );
-        let mut scenarios_good = HashMap::new();
+        let mut scenarios_good = BTreeMap::new();
         scenarios_good.insert(
             EligibilityScenario::RedMovingSpace.as_key().to_string(),
             ScenarioVerdict {
@@ -527,7 +534,7 @@ mod tests {
                 reason: None,
             },
         );
-        let mut abilities = HashMap::new();
+        let mut abilities = BTreeMap::new();
         abilities.insert(
             "bad".to_string(),
             AbilityEligibility {
@@ -606,5 +613,60 @@ mod tests {
         );
         assert_eq!(enemy_type_from_str("PVP_Space"), Some(EnemyType::PvpSpace));
         assert_eq!(enemy_type_from_str("nope"), None);
+    }
+
+    #[test]
+    fn ban_list_overrides_matrix_works_verdict() {
+        // Quark is captain-banned in both modes in officer_ban_list.csv.
+        let mut o = officer(vec![ability("captain", Some("x"))]);
+        o.id = "quark-2fd57b".to_string();
+
+        // The matrix says the captain ability WORKS in both PvP and PvE.
+        let mut scenarios = BTreeMap::new();
+        for scn in [
+            EligibilityScenario::PvpSpace,
+            EligibilityScenario::RedMovingSpace,
+        ] {
+            scenarios.insert(
+                scn.as_key().to_string(),
+                ScenarioVerdict {
+                    verdict: EligibilityVerdict::Works,
+                    reason: None,
+                },
+            );
+        }
+        let mut abilities = BTreeMap::new();
+        abilities.insert(
+            "x".to_string(),
+            AbilityEligibility {
+                ability_id: "x".to_string(),
+                source_officer_id: None,
+                canonical_officer_id: None,
+                ability_type: "CM".to_string(),
+                slot: "captain".to_string(),
+                conditional_reason: None,
+                scenarios,
+            },
+        );
+        let m = EligibilityMatrix {
+            abilities,
+            ..Default::default()
+        };
+
+        // The always-on ban overrides the matrix `works` verdict, in both modes.
+        assert!(!is_eligible_for_optimization(
+            &o,
+            "captain",
+            EnemyType::PvpSpace,
+            Some(&m),
+            true
+        ));
+        assert!(!is_eligible_for_optimization(
+            &o,
+            "captain",
+            EnemyType::RedMovingSpace,
+            Some(&m),
+            false
+        ));
     }
 }

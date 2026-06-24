@@ -1,5 +1,5 @@
 {
-  "data_version": "m86-04763f1697f5",
+  "data_version": "m86-04763f1697f5+vger-ilia",
   "imported_at": "2026-02-19T00:56:35.660624+00:00",
   "officers": [
     {
@@ -18622,6 +18622,81 @@
     {
       "abilities": [
         {
+          "ability_id": "4068960433",
+          "attributes": "battle_types=[17, 18, 2, 5, 6, 9], num_rounds=5",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "CombatBattleType",
+            "TargetStateAny"
+          ],
+          "description": "On round start vs non-Armada Hostiles, Outposts and Outpost Retaliation Ships, if target has any state applied, V'ger Ilia increases your ship's Isolytic Cascade Damage by X (X at rank X) for 5 rounds.",
+          "modifier": "IsolyticDamage",
+          "operation": "MultiplyAdd",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "RoundStart",
+          "value_by_rank": [
+            0.03,
+            0.05,
+            0.07,
+            0.1,
+            0.15
+          ]
+        },
+        {
+          "ability_id": "2603365190",
+          "attributes": "battle_types=[17, 18, 2, 5, 6, 9]",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "CombatBattleType"
+          ],
+          "description": "V'ger Ilia increases Critical Damage by X (X at rank X) against non-Armada Hostiles, Outposts and Outpost Retaliation Ships.",
+          "modifier": "CritDamage",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ]
+        }
+      ],
+      "faction": "Independent",
+      "group": "THE MOTION PICTURES",
+      "id": "v-ger-ilia-25aa9f",
+      "name": "V'Ger Ilia",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3662990708"
+    },
+    {
+      "abilities": [
+        {
           "ability_id": "913371453",
           "attributes": "",
           "chance_by_rank": [
@@ -20051,7 +20126,7 @@
     {
       "abilities": [
         {
-          "ability_id": "0",
+          "ability_id": "2582526682",
           "attributes": "",
           "chance_by_rank": [
             1.0,
@@ -20078,7 +20153,7 @@
           ]
         },
         {
-          "ability_id": "0",
+          "ability_id": "1291773960",
           "attributes": "",
           "chance_by_rank": [
             1.0,

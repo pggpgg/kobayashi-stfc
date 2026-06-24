@@ -12,8 +12,8 @@
   },
   "officer_eligibility": {
     "source": "community_spreadsheet",
-    "data_version": "cheat-sheet-m88-17rc",
-    "last_updated": "2026-06-22",
+    "data_version": "cheat-sheet-m90-17rc",
+    "last_updated": "2026-06-23",
     "path": "officers/eligibility_matrix.json"
   },
   "hostiles": {
