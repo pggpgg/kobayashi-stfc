@@ -162,12 +162,14 @@ fn officer_lcars_power_for_default_level(
 
 /// Sort below-decks pool names for optimizer enumeration priority.
 ///
+/// The top tier is the curated priority list (`data/optimizer/below_decks_priority.txt`, in list
+/// order); officers not on it fall back to the mode-specific ordering below:
 /// - **`Strict`:** tier 0 = known combat below-decks modifier, tier 1 = ambiguous or economy-only;
 ///   within each tier, descending LCARS attack+defense+health then name.
 /// - **`Scored`:** ascending combat relevance rank (combat → ambiguous → economy-only), then power, then name.
 /// - **`Relaxed`:** power descending, then name.
 ///
-/// Names missing from `officers` sort last (`tier=u8::MAX`, power 0).
+/// Names missing from `officers` sort last within their curated tier (`tier=u8::MAX`, power 0).
 fn sort_below_decks_by_rank_and_power(
     below_decks: &mut [String],
     officers: &[Officer],
@@ -181,9 +183,21 @@ fn sort_below_decks_by_rank_and_power(
         .iter()
         .map(|o| (pool_display_name_norm(&o.name), o))
         .collect();
-    let key = |name: &str| -> (u8, std::cmp::Reverse<i64>) {
-        let Some(off) = officer_by_norm.get(&pool_display_name_norm(name)) else {
-            return (u8::MAX, std::cmp::Reverse(0));
+    // Curated priority: float community-proven below-decks officers to the front (in list order)
+    // so a limited `max_candidates` over a many-slot ship still reaches a strong lineup. Officers
+    // absent from the curated list keep today's combat-relevance/power ordering. See
+    // `data/optimizer/below_decks_priority.txt`.
+    let curated_rank: HashMap<String, u32> =
+        crate::data::below_decks_priority::curated_below_decks_priority()
+            .iter()
+            .enumerate()
+            .map(|(i, name)| (pool_display_name_norm(name), i as u32))
+            .collect();
+    let key = |name: &str| -> (u32, u8, std::cmp::Reverse<i64>) {
+        let norm = pool_display_name_norm(name);
+        let curated = curated_rank.get(&norm).copied().unwrap_or(u32::MAX);
+        let Some(off) = officer_by_norm.get(&norm) else {
+            return (curated, u8::MAX, std::cmp::Reverse(0));
         };
         let primary_rank = match mode {
             BelowDecksPoolMode::Strict => {
@@ -200,7 +214,7 @@ fn sort_below_decks_by_rank_and_power(
         let power = officer_lcars_power_for_default_level(lcars_by_id, off);
         // Map power into integer for stable Ord; 1e-3 resolution keeps officers distinguishable.
         let power_int = (power * 1000.0).round() as i64;
-        (primary_rank, std::cmp::Reverse(power_int))
+        (curated, primary_rank, std::cmp::Reverse(power_int))
     };
     below_decks.sort_by(|a, b| key(a).cmp(&key(b)).then_with(|| a.cmp(b)));
 }
@@ -1591,11 +1605,20 @@ mod tests {
             .map(|o| (pool_display_name_norm(&o.name), o))
             .collect();
 
+        // Curated-priority officers are floated to the very top regardless of combat-relevance
+        // tier, so the combat-before-other invariant only applies among non-curated officers.
+        let curated: std::collections::HashSet<String> =
+            crate::data::below_decks_priority::curated_below_decks_priority()
+                .iter()
+                .map(|n| pool_display_name_norm(n))
+                .collect();
         let mut seen_non_combat_tier = false;
         for name in &pools.below_decks {
-            let off = by_norm
-                .get(&pool_display_name_norm(name))
-                .expect("below-decks pool name resolves");
+            let norm = pool_display_name_norm(name);
+            if curated.contains(&norm) {
+                continue;
+            }
+            let off = by_norm.get(&norm).expect("below-decks pool name resolves");
             let rank = below_decks_combat_relevance_rank(off);
             if rank == BelowDecksCombatRelevanceRank::Combat {
                 assert!(
@@ -1606,6 +1629,63 @@ mod tests {
                 seen_non_combat_tier = true;
             }
         }
+    }
+
+    #[test]
+    fn curated_below_decks_officers_float_to_front_in_priority_order() {
+        let registry = DataRegistry::load().expect("registry");
+        let pools = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Strict,
+            None,
+            Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            3,
+            None,
+        )
+        .expect("pools");
+
+        let curated_order: Vec<String> =
+            crate::data::below_decks_priority::curated_below_decks_priority()
+                .iter()
+                .map(|n| pool_display_name_norm(n))
+                .collect();
+        assert!(!curated_order.is_empty(), "curated list should load");
+
+        // The curated officers present in the pool must form a prefix, in curated order, before
+        // any non-curated officer.
+        let pool_norm: Vec<String> = pools
+            .below_decks
+            .iter()
+            .map(|n| pool_display_name_norm(n))
+            .collect();
+        let present_curated: Vec<String> = curated_order
+            .iter()
+            .filter(|c| pool_norm.contains(c))
+            .cloned()
+            .collect();
+        assert!(
+            !present_curated.is_empty(),
+            "at least one curated below-decks officer should be in the catalog pool"
+        );
+        let prefix: Vec<String> = pool_norm
+            .iter()
+            .take(present_curated.len())
+            .cloned()
+            .collect();
+        assert_eq!(
+            prefix, present_curated,
+            "curated below-decks officers must lead the pool in curated order"
+        );
+        // First non-curated officer must come after every curated one.
+        let first_noncurated = pool_norm
+            .iter()
+            .position(|n| !curated_order.contains(n))
+            .expect("pool has non-curated officers");
+        assert_eq!(
+            first_noncurated,
+            present_curated.len(),
+            "no curated officer may appear after a non-curated one"
+        );
     }
 
     #[test]

@@ -22,7 +22,8 @@ use crate::data::support_buffs;
 use crate::lcars::LcarsOfficer;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
-    resolve_below_decks_slots_for_ship, CandidateStrategy, CrewCandidate,
+    build_officer_pools_from_registry, resolve_below_decks_slots_for_ship, CandidateStrategy,
+    CrewCandidate, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     run_monte_carlo_with_shared,
@@ -81,6 +82,67 @@ fn warm_start_crews_from_request_dtos(request: &OptimizeRequest) -> Vec<CrewCand
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// Build a guaranteed "proven" warm-start crew so candidate generation always *reaches* a strong
+/// below-decks lineup — a low `max_candidates` over a many-slot ship (or a tightened eligibility
+/// pool) can otherwise fail to generate any viable crew even when one exists.
+///
+/// Uses the same `Relaxed`-mode, scenario- and roster-filtered pools as legality enforcement (so the
+/// crew is eligible by construction), honoring `constraints`. The below-decks pool is curated-first
+/// (see `data/optimizer/below_decks_priority.txt`), so this picks the strongest eligible captain, two
+/// distinct bridge officers, and the top curated below-decks officers. Returns `None` when no legal
+/// crew can be formed (e.g. `below_decks_slots == 0` or too few eligible officers) — behavior is then
+/// identical to today. The returned crew is prepended to the warm-start set and revalidated/deduped
+/// downstream like any other warm-start crew.
+fn curated_proven_warm_start_crew(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    enemy_type: crate::combat::EnemyType,
+    constraints: Option<&CrewSearchConstraints>,
+) -> Option<CrewCandidate> {
+    if below_decks_slots == 0 {
+        return None;
+    }
+    let pools = build_officer_pools_from_registry(
+        registry,
+        crate::data::heuristics::BelowDecksPoolMode::Relaxed,
+        Some(enemy_type),
+        profile_id,
+        below_decks_slots,
+        constraints,
+    )?;
+    let mut used: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut take_distinct = |pool: &[String], n: usize| -> Vec<String> {
+        let mut out = Vec::with_capacity(n);
+        for name in pool {
+            if out.len() == n {
+                break;
+            }
+            let key = name.trim().to_ascii_lowercase();
+            if key.is_empty() || used.contains(&key) {
+                continue;
+            }
+            used.insert(key);
+            out.push(name.clone());
+        }
+        out
+    };
+    let captain = take_distinct(&pools.captains, 1).pop()?;
+    let bridge = take_distinct(&pools.bridge, BRIDGE_SLOTS);
+    if bridge.len() != BRIDGE_SLOTS {
+        return None;
+    }
+    let below_decks = take_distinct(&pools.below_decks, below_decks_slots);
+    if below_decks.len() != below_decks_slots {
+        return None;
+    }
+    Some(CrewCandidate {
+        captain,
+        bridge,
+        below_decks,
+    })
 }
 
 /// Heuristic template crews first, then client `warm_start_crews` (dedupe happens later in the optimizer).
@@ -726,7 +788,19 @@ fn gather_optimize_simulation_results(
         "optimize_heuristics_candidates_ready"
     );
 
-    let dto_warm = warm_start_crews_from_request_dtos(request);
+    let mut dto_warm = warm_start_crews_from_request_dtos(request);
+    // Prepend a guaranteed proven-strong crew so candidate generation always reaches a viable
+    // below-decks lineup (a low max_candidates over a many-slot ship can otherwise generate none).
+    // The enforce call below validates/rejects it; it is deduped against generated crews downstream.
+    if let Some(crew) = curated_proven_warm_start_crew(
+        registry,
+        profile_id,
+        below_decks_slots,
+        enemy_type,
+        crew_constraints.as_ref(),
+    ) {
+        dto_warm.insert(0, crew);
+    }
     let (dto_warm, warm_legality) = enforce_candidate_optimization_eligibility_with_registry(
         registry,
         profile_id,
@@ -1793,3 +1867,52 @@ pub fn patch_optimize_job_for_tests(
 // Note: the previous `parse_job_timestamp_reads_opt_prefix` and
 // `prune_drops_oldest_completed_first` unit tests covered helpers that have moved into
 // the shared `crate::server::job_registry` module; equivalent tests live there.
+
+#[cfg(test)]
+mod curated_warm_start_tests {
+    use super::*;
+    use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
+
+    #[test]
+    fn curated_proven_warm_start_crew_is_wellformed_distinct_and_curated_led() {
+        let registry = DataRegistry::load().expect("registry");
+        let crew = curated_proven_warm_start_crew(
+            &registry,
+            Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            3,
+            crate::combat::EnemyType::RedMovingSpace,
+            None,
+        )
+        .expect("curated crew forms for a 3-slot ship over the full catalog");
+        assert_eq!(crew.bridge.len(), BRIDGE_SLOTS);
+        assert_eq!(crew.below_decks.len(), 3);
+        // All seats are distinct officers.
+        let mut all = vec![crew.captain.to_ascii_lowercase()];
+        all.extend(crew.bridge.iter().map(|s| s.to_ascii_lowercase()));
+        all.extend(crew.below_decks.iter().map(|s| s.to_ascii_lowercase()));
+        let distinct: std::collections::HashSet<&String> = all.iter().collect();
+        assert_eq!(distinct.len(), all.len(), "all crew seats must be distinct");
+        // At least one curated below-decks officer leads the seeded below-decks crew.
+        let curated = crate::data::below_decks_priority::curated_below_decks_priority();
+        assert!(
+            crew.below_decks
+                .iter()
+                .any(|n| curated.iter().any(|c| c.eq_ignore_ascii_case(n))),
+            "seeded below-decks crew should include curated officers"
+        );
+    }
+
+    #[test]
+    fn curated_proven_warm_start_crew_none_for_zero_below_decks_slots() {
+        let registry = DataRegistry::load().expect("registry");
+        assert!(curated_proven_warm_start_crew(
+            &registry,
+            Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            0,
+            crate::combat::EnemyType::RedMovingSpace,
+            None,
+        )
+        .is_none());
+    }
+}

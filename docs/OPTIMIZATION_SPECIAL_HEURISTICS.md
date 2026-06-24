@@ -42,7 +42,7 @@ Before any strategy runs, [`build_officer_pools*`](../src/optimizer/crew_generat
 | Seat compatibility | bridge / BD | `can_fill_position` from officer `slot` field |
 | Below-decks pool mode | below-decks | [`BelowDecksPoolMode`](../src/data/heuristics.rs): **strict/scored** = must have below-decks ability; **relaxed** = any legal BD seat |
 | Scenario eligibility (matrix) | all seats | [`is_eligible_for_optimization`](../src/data/officer_eligibility.rs) — drop officers whose seat ability is `does_not_work` for the scenario; legacy fallback for coverage gaps (see below) |
-| Below-decks ordering | below-decks | combat relevance rank + LCARS power tiebreak ([`sort_below_decks_by_rank_and_power`](../src/optimizer/crew_generator.rs)) |
+| Below-decks ordering | below-decks | **curated priority** ([`below_decks_priority.txt`](../data/optimizer/below_decks_priority.txt)) first, then combat relevance rank + LCARS power tiebreak ([`sort_below_decks_by_rank_and_power`](../src/optimizer/crew_generator.rs)) |
 | Search constraints | pools narrowed | [`narrow_officer_pools_for_constraints`](../src/optimizer/crew_generator.rs) — `captain_must_be`, exclude lists, officer groups |
 
 Default API below-decks mode is **strict** ([`BelowDecksPoolMode::default`](../src/data/heuristics.rs)).
@@ -85,6 +85,17 @@ The primary scenario-eligibility filter is **data-driven**, not hand-coded. It a
 | Learned BD sampling | sampled path + `learned_officer_scores` | epsilon-greedy weighted below-decks picks ([`officer_learning.rs`](../src/optimizer/officer_learning.rs)) |
 | Warm-start prepend | all non-genetic paths | [`prepend_warm_start_dedupe`](../src/optimizer/mod.rs) — client / history crews first, deduped by stable hash |
 | Crew constraints | post-generation | [`filter_candidates`](../src/optimizer/constraints.rs) |
+
+---
+
+## Below-decks priority & proven-crew seed (reachability guarantee)
+
+For ships with many below-decks slots, a low `max_candidates` (or a tightened eligibility pool) can leave candidate generation unable to *produce* a winning crew even when one exists in the pool. Two mechanisms guarantee a strong below-decks lineup is always **reachable**:
+
+- **Curated priority ordering.** [`data/optimizer/below_decks_priority.txt`](../data/optimizer/below_decks_priority.txt) lists community-proven below-decks officers, strongest first. [`sort_below_decks_by_rank_and_power`](../src/optimizer/crew_generator.rs) floats these to the front of the below-decks pool (above the combat-relevance/power tiers), so the first enumerated/sampled combinations use proven officers. Officers not on the list keep the existing ordering; an unmatched or renamed entry is simply skipped (graceful — use the canonical catalog name).
+- **Proven-crew warm-start.** [`curated_proven_warm_start_crew`](../src/server/api/execution.rs) builds one crew — strongest eligible captain + two bridge + the top curated below-decks officers, from the same `Relaxed`, scenario/roster/constraint-filtered pools used by legality enforcement — and prepends it to the warm-start set. It is then eligibility-validated and deduped like any client warm-start crew, and survives the analytical prefilter (which is blind to timed below-decks abilities). Returns nothing (no behavior change) when no legal crew can be formed (e.g. 0 below-decks slots, or too few eligible officers).
+
+This is a **search-quality / reachability nudge only** — it changes candidate ordering and seeding, never combat math or officer eligibility. The optimizer still searches freely and ranks the seeded crew against all others.
 
 ---
 
