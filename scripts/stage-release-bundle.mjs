@@ -11,6 +11,7 @@ const EXCLUDED_DATA_ENTRIES = new Set(["import", "import_logs", "raw", "upstream
 const RUNTIME_UPSTREAM_ENTRIES = [
   "hostile_ability_catalog.json",
   "officers",
+  "ships",
   "ship_ability_catalog.json",
   "ship_id_registry.json",
   "summary-officer.json",
@@ -106,6 +107,9 @@ async function verifyBundle(stageDir, binaryName) {
   await assertDirectory(path.join(stageDir, "frontend", "dist", "assets"));
   await assertDirectory(
     path.join(stageDir, "data", "upstream", "data-stfc-space", "officers"),
+  );
+  await assertDirectory(
+    path.join(stageDir, "data", "upstream", "data-stfc-space", "ships"),
   );
 
   for (const excluded of EXCLUDED_DATA_ENTRIES) {

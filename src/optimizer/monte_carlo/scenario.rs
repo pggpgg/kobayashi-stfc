@@ -44,7 +44,7 @@ use crate::data::profile::{
 };
 use crate::data::profile_index::{
     self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
-    RESEARCH_IMPORTED, ROSTER_IMPORTED,
+    RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research::{
     cumulative_dual_gate_hull_shield_research_fractions, load_research_canonical_overrides,
@@ -2821,6 +2821,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let roster_path = profile_path(&pid, ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
+    let ships_path = profile_path(&pid, SHIPS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
     let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
         .to_string_lossy()
         .to_string();
@@ -3027,7 +3030,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         })
         .unwrap_or_default();
 
-    let ship_rec = registry.resolve_ship_with_tier_level(ship, ship_tier, ship_level);
+    let imported_ships = import::load_imported_ships(&ships_path).unwrap_or_default();
+    let ship_rec = registry.resolve_ship_with_tier_level_and_imported_components(
+        ship,
+        ship_tier,
+        ship_level,
+        &imported_ships,
+    );
     let hostile_rec = if pvp.is_some() {
         None
     } else {
@@ -3039,10 +3048,16 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         defender_incoming_shield_mitigation_bonus,
         defender_incoming_shield_mitigation_bonus_rounds,
     ) = if let Some(ref pvp_cfg) = pvp {
-        let def_rec = registry.resolve_ship_with_tier_level(
+        let defender_ships_path = profile_path(&pvp_cfg.defender_profile_id, SHIPS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
+        let defender_imported_ships =
+            import::load_imported_ships(&defender_ships_path).unwrap_or_default();
+        let def_rec = registry.resolve_ship_with_tier_level_and_imported_components(
             &pvp_cfg.defender_ship,
             pvp_cfg.defender_ship_tier,
             pvp_cfg.defender_ship_level,
+            &defender_imported_ships,
         );
         let (def_prof, ism, ismr) = load_defender_profile_for_pvp(
             registry,
