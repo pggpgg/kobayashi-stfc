@@ -56,6 +56,8 @@ cargo clippy --all-targets
 ./target/release/kobayashi optimize --ship <id> --hostile <id> --sims <n> [--max-candidates <n>]
 ./target/release/kobayashi import <path.txt|path.json>
 ./target/release/kobayashi validate [data/officers/officers.canonical.json]
+# Crew-search-space reduction report (officer-pool sizes + legal crew counts per filter stage); see docs/PVE_CREW_SEARCH_SPACE_REDUCTION.md
+./target/release/kobayashi search-space-report [--enemy-type <scenario>] [--below-decks-slots <n>] [--mode strict|scored|relaxed] [--sims <n>] [--json]
 
 # Validate LCARS officer definitions
 ./target/release/kobayashi validate data/officers

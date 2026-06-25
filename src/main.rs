@@ -34,6 +34,7 @@ enum Command {
     MorrisSensitivity,
     SobolSensitivity,
     Battlelogs,
+    SearchSpaceReport,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -75,6 +76,7 @@ fn parse_command() -> Option<Command> {
         Some("morris-sensitivity") => Some(Command::MorrisSensitivity),
         Some("sobol-sensitivity") => Some(Command::SobolSensitivity),
         Some("battlelogs") => Some(Command::Battlelogs),
+        Some("search-space-report") => Some(Command::SearchSpaceReport),
         _ => None,
     }
 }
@@ -1033,9 +1035,77 @@ fn sobol_sensitivity_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+/// `kobayashi search-space-report` — report the crew-search-space reduction (officer-pool sizes and
+/// legal crew counts) at each optimizer filter stage, per combat scenario. Closes roadmap item #1's
+/// "measure and track each reduction's effect" sub-bullet; see docs/PVE_CREW_SEARCH_SPACE_REDUCTION.md.
+fn search_space_report_command(args: &[String]) -> Result<(), String> {
+    use kobayashi::combat::EnemyType;
+    use kobayashi::data::data_registry::DataRegistry;
+    use kobayashi::data::heuristics::BelowDecksPoolMode;
+    use kobayashi::data::officer_eligibility::enemy_type_from_str;
+    use kobayashi::optimizer::crew_generator::{
+        render_search_space_report_markdown, search_space_reduction_report, SearchSpaceReport,
+    };
+
+    let below_decks_slots = parse_named_string_arg_main(args, "--below-decks-slots")
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(3);
+    let sims = parse_named_string_arg_main(args, "--sims")
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(50);
+    let mode = match parse_named_string_arg_main(args, "--mode").as_deref() {
+        Some("scored") => BelowDecksPoolMode::Scored,
+        Some("relaxed") => BelowDecksPoolMode::Relaxed,
+        Some("strict") | None => BelowDecksPoolMode::Strict,
+        Some(other) => {
+            return Err(format!(
+                "unknown --mode '{other}' (expected strict|scored|relaxed)"
+            ))
+        }
+    };
+    let as_json = args.iter().any(|a| a == "--json");
+
+    let all_scenarios = [
+        EnemyType::PvpSpace,
+        EnemyType::PvpStation,
+        EnemyType::RedMovingSpace,
+        EnemyType::Waves,
+        EnemyType::MissionBosses,
+        EnemyType::QTrial,
+        EnemyType::SoloArmadas,
+        EnemyType::GroupArmadas,
+        EnemyType::Assaults,
+        EnemyType::InvadingEntities,
+        EnemyType::OutpostArmadas,
+        EnemyType::OutpostRetaliationAttackers,
+    ];
+    let scenarios: Vec<EnemyType> = match parse_named_string_arg_main(args, "--enemy-type") {
+        Some(s) => {
+            vec![enemy_type_from_str(&s).ok_or_else(|| format!("unknown --enemy-type '{s}'"))?]
+        }
+        None => all_scenarios.to_vec(),
+    };
+
+    let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
+    let reports: Vec<SearchSpaceReport> = scenarios
+        .iter()
+        .map(|&et| search_space_reduction_report(&registry, et, mode, below_decks_slots))
+        .collect();
+
+    if as_json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&reports).map_err(|e| format!("serialize: {e}"))?
+        );
+    } else {
+        print!("{}", render_search_space_report_markdown(&reports, sims));
+    }
+    Ok(())
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|morris-sensitivity|sobol-sensitivity|battlelogs> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|morris-sensitivity|sobol-sensitivity|battlelogs|search-space-report> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
@@ -1046,7 +1116,8 @@ mitigation-sensitivity: kobayashi mitigation-sensitivity <ship> <hostile> [--del
 sensitivity: kobayashi sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--sims <n>] [--seed <n>] [--profile <id>]\n\
 morris-sensitivity: kobayashi morris-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--sims <n>] [--r <trajectories>] [--seed <n>] [--profile <id>]\n\
 sobol-sensitivity: kobayashi sobol-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--n <samples>] [--seed <n>] [--profile <id>]\n\
-battlelogs: kobayashi battlelogs [--profile <id>] [--sample]"
+battlelogs: kobayashi battlelogs [--profile <id>] [--sample]\n\
+search-space-report: kobayashi search-space-report [--enemy-type <scenario>] [--below-decks-slots <n>] [--mode strict|scored|relaxed] [--sims <n>] [--json]"
     );
 }
 
@@ -1132,6 +1203,13 @@ fn main() {
         Some(Command::Battlelogs) => {
             if let Err(err) = battlelogs_command(&command_args) {
                 eprintln!("battlelogs error: {err}");
+                print_usage();
+                exit_code = 2;
+            }
+        }
+        Some(Command::SearchSpaceReport) => {
+            if let Err(err) = search_space_report_command(&command_args) {
+                eprintln!("search-space-report error: {err}");
                 print_usage();
                 exit_code = 2;
             }

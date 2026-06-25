@@ -1162,17 +1162,279 @@ impl CrewGenerator {
     }
 }
 
+/// Projected wall-clock seconds per (candidate × simulation) for an exhaustive sweep. Single
+/// source of truth for the optimize/estimate cost model and the search-space report; mirrors the
+/// `/api/optimize/estimate` projection.
+pub const EXHAUSTIVE_SEC_PER_CANDIDATE_SIM: f64 = 4e-9;
+
+/// Exact binomial coefficient C(n, k) in `u128`. Computed incrementally so partial products stay
+/// integer-valued and small (no overflow for the few-hundred-officer pools we report on).
+fn binomial(n: usize, k: usize) -> u128 {
+    if k > n {
+        return 0;
+    }
+    let k = k.min(n - k);
+    let mut acc: u128 = 1;
+    for i in 0..k {
+        acc = acc * (n - i) as u128 / (i as u128 + 1);
+    }
+    acc
+}
+
+/// Legal crew combinations for the given pool sizes: `captains × C(bridge, 2) × C(below, slots)`.
+/// This is an upper bound on distinct crews — it ignores the small loss from crews that would
+/// reuse the same officer across seats (the optimizer's exact enumerator prunes those). It never
+/// saturates, so it stays comparable across stages even when the raw space is astronomically large
+/// (unlike the 2M-capped exact counter used by the estimate endpoint).
+fn crew_combinations(captains: usize, bridge: usize, below_decks: usize, slots: usize) -> u128 {
+    (captains as u128) * binomial(bridge, 2) * binomial(below_decks, slots)
+}
+
+/// One progressive filter stage in a [`SearchSpaceReport`].
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SearchSpaceStage {
+    /// Human-readable stage label (e.g. `"raw (legality only)"`).
+    pub label: String,
+    /// Captain-pool size after this stage's filters.
+    pub captains: usize,
+    /// Bridge-pool size after this stage's filters.
+    pub bridge: usize,
+    /// Below-decks-pool size after this stage's filters.
+    pub below_decks: usize,
+    /// Legal crew combinations at this stage (see [`crew_combinations`]).
+    pub candidates: u128,
+}
+
+/// Crew-search-space reduction for one combat scenario: officer-pool sizes and the resulting legal
+/// crew count at each progressive optimizer filter — raw legality, then the curation ban list, then
+/// the functional eligibility matrix (with its below-decks heuristic fallback). The stages are
+/// monotonic (each pool ⊆ the previous), so adjacent differences are the marginal effect of that
+/// reduction. Used by the `search-space-report` CLI to document roadmap item #1.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SearchSpaceReport {
+    /// Scenario key (snake_case `EnemyType`, e.g. `"red_moving_space"`).
+    pub enemy_type: String,
+    /// Below-decks slots assumed for the crew-count combinatorics.
+    pub below_decks_slots: usize,
+    /// Below-decks pool mode used for membership (`strict` is the API default).
+    pub pool_mode: String,
+    /// `[raw, + ban list, + eligibility]`, in reduction order.
+    pub stages: Vec<SearchSpaceStage>,
+}
+
+impl SearchSpaceReport {
+    /// First (raw) stage.
+    pub fn raw(&self) -> &SearchSpaceStage {
+        &self.stages[0]
+    }
+
+    /// Last (fully filtered, production) stage.
+    pub fn final_stage(&self) -> &SearchSpaceStage {
+        &self.stages[self.stages.len() - 1]
+    }
+
+    /// Projected wall-clock seconds for an exhaustive sweep of the final stage at `sims` per crew.
+    pub fn projected_exhaustive_seconds(&self, sims: u32) -> f64 {
+        (self.final_stage().candidates as f64) * (sims as f64) * EXHAUSTIVE_SEC_PER_CANDIDATE_SIM
+    }
+}
+
+/// Compute the [`SearchSpaceReport`] for one scenario from the live registry, applying exactly the
+/// same per-seat predicates the optimizer's pool builder uses ([`build_officer_pools_from_registry`]):
+/// seat legality, the ban list, and the eligibility matrix. No roster filter is applied, so this
+/// reports the full-catalog space (the per-profile owned-roster narrowing is a separate reducer).
+pub fn search_space_reduction_report(
+    registry: &DataRegistry,
+    enemy: EnemyType,
+    mode: BelowDecksPoolMode,
+    below_decks_slots: usize,
+) -> SearchSpaceReport {
+    let officers: Vec<&Officer> = registry
+        .officers()
+        .iter()
+        .filter(|o| !o.name.trim().is_empty())
+        .collect();
+
+    let pvp_mode = matches!(enemy, EnemyType::PvpSpace | EnemyType::PvpStation);
+    let matrix = registry.eligibility_matrix().map(|m| m.as_ref());
+
+    let raw_captain = |o: &Officer| officer_has_captain_ability(o);
+    let raw_bridge = |o: &Officer| can_fill_position(o, Position::Bridge);
+    let raw_below = |o: &Officer| {
+        can_fill_position(o, Position::BelowDecks) && keep_below_decks_for_mode(o, mode)
+    };
+
+    let count = |pred: &dyn Fn(&Officer) -> bool| officers.iter().filter(|o| pred(o)).count();
+
+    let stage = |label: &str,
+                 cap: &dyn Fn(&Officer) -> bool,
+                 brg: &dyn Fn(&Officer) -> bool,
+                 bd: &dyn Fn(&Officer) -> bool|
+     -> SearchSpaceStage {
+        let captains = count(cap);
+        let bridge = count(brg);
+        let below_decks = count(bd);
+        SearchSpaceStage {
+            label: label.to_string(),
+            captains,
+            bridge,
+            below_decks,
+            candidates: crew_combinations(captains, bridge, below_decks, below_decks_slots),
+        }
+    };
+
+    // Stage 1 — raw legality only (no bans, no eligibility).
+    let raw = stage("raw (legality only)", &raw_captain, &raw_bridge, &raw_below);
+
+    // Stage 2 — + curation ban list, per seat and mode (data/optimizer/officer_ban_list.csv).
+    let banned = |slot: &'static str| {
+        move |o: &Officer| !crate::data::officer_ban::is_banned(&o.id, slot, pvp_mode)
+    };
+    let bans = stage(
+        "+ ban list",
+        &|o| raw_captain(o) && banned("captain")(o),
+        &|o| raw_bridge(o) && banned("officer")(o),
+        &|o| raw_below(o) && banned("below_decks")(o),
+    );
+
+    // Stage 3 — + functional eligibility (matrix verdict + below-decks heuristic fallback). This is
+    // the production pool. `is_eligible_for_optimization` also re-applies the ban check.
+    let eligible =
+        |o: &Officer, slot: &str| is_eligible_for_optimization(o, slot, enemy, matrix, pvp_mode);
+    let eligibility = stage(
+        "+ eligibility (matrix + heuristic)",
+        &|o| raw_captain(o) && eligible(o, "captain"),
+        &|o| raw_bridge(o) && eligible(o, "officer"),
+        &|o| raw_below(o) && eligible(o, "below_decks"),
+    );
+
+    SearchSpaceReport {
+        enemy_type: crate::data::officer_eligibility::EligibilityScenario::from_enemy_type(enemy)
+            .as_key()
+            .to_string(),
+        below_decks_slots,
+        pool_mode: format!("{mode:?}").to_lowercase(),
+        stages: vec![raw, bans, eligibility],
+    }
+}
+
+/// Abbreviate a large count with a magnitude suffix (K/M/B/T/Q); exact below 1,000.
+fn abbrev_count(n: u128) -> String {
+    let f = n as f64;
+    let (div, suffix) = if f >= 1e15 {
+        (1e15, "Q")
+    } else if f >= 1e12 {
+        (1e12, "T")
+    } else if f >= 1e9 {
+        (1e9, "B")
+    } else if f >= 1e6 {
+        (1e6, "M")
+    } else if f >= 1e3 {
+        (1e3, "K")
+    } else {
+        return n.to_string();
+    };
+    format!("{:.2} {suffix}", f / div)
+}
+
+/// Human-readable wall-clock duration from seconds (s → min → h → days → years).
+fn human_duration(seconds: f64) -> String {
+    if seconds < 90.0 {
+        format!("{seconds:.1} s")
+    } else if seconds < 5_400.0 {
+        format!("{:.1} min", seconds / 60.0)
+    } else if seconds < 172_800.0 {
+        format!("{:.1} h", seconds / 3_600.0)
+    } else if seconds < 63_072_000.0 {
+        format!("{:.1} days", seconds / 86_400.0)
+    } else {
+        format!("{:.1} years", seconds / 31_536_000.0)
+    }
+}
+
+/// Render per-scenario [`SearchSpaceReport`]s as a Markdown fragment: a header line, a legal-crews
+/// table (raw → ban list → eligibility, with the reduction factor and projected exhaustive runtime
+/// at `sims` per crew), and an officer-pool table (raw → final per seat). Shared by the
+/// `search-space-report` CLI so the committed measurement doc is reproducible from one command.
+pub fn render_search_space_report_markdown(reports: &[SearchSpaceReport], sims: u32) -> String {
+    use std::fmt::Write as _;
+    let mut out = String::new();
+    let Some(first) = reports.first() else {
+        return "_(no scenarios)_\n".to_string();
+    };
+    let per_candidate_sim = EXHAUSTIVE_SEC_PER_CANDIDATE_SIM;
+    let _ = writeln!(
+        out,
+        "Below-decks slots: {} · pool mode: {} · exhaustive runtime @ {sims} sims/crew \
+         ({per_candidate_sim:e} s per candidate-sim).\n",
+        first.below_decks_slots, first.pool_mode
+    );
+
+    let _ = writeln!(out, "### Legal crews per stage\n");
+    let _ = writeln!(
+        out,
+        "| Scenario | Raw | + ban list | + eligibility | Reduction | Exhaustive time |"
+    );
+    let _ = writeln!(out, "|---|--:|--:|--:|--:|--:|");
+    for r in reports {
+        let raw = r.raw().candidates;
+        let banned = r.stages[1].candidates;
+        let final_c = r.final_stage().candidates;
+        let reduction = if final_c == 0 {
+            "—".to_string()
+        } else {
+            format!("{:.1}×", raw as f64 / final_c as f64)
+        };
+        let _ = writeln!(
+            out,
+            "| {} | {} | {} | {} | {} | {} |",
+            r.enemy_type,
+            abbrev_count(raw),
+            abbrev_count(banned),
+            abbrev_count(final_c),
+            reduction,
+            human_duration(r.projected_exhaustive_seconds(sims)),
+        );
+    }
+
+    let _ = writeln!(out, "\n### Officer-pool sizes (raw → final)\n");
+    let _ = writeln!(out, "| Scenario | Captains | Bridge | Below-decks |");
+    let _ = writeln!(out, "|---|--:|--:|--:|");
+    for r in reports {
+        let raw = r.raw();
+        let fin = r.final_stage();
+        let _ = writeln!(
+            out,
+            "| {} | {} → {} | {} → {} | {} → {} |",
+            r.enemy_type,
+            raw.captains,
+            fin.captains,
+            raw.bridge,
+            fin.bridge,
+            raw.below_decks,
+            fin.below_decks,
+        );
+    }
+
+    out
+}
+
 #[derive(Copy, Clone)]
 enum Position {
     Bridge,
     BelowDecks,
 }
 
-fn is_captain_eligible(officer: &Officer) -> bool {
+/// True if the officer has at least one captain-slot ability (raw legality; ignores bans).
+fn officer_has_captain_ability(officer: &Officer) -> bool {
     officer
         .abilities
         .iter()
         .any(|ability| ability.slot == "captain")
+}
+
+fn is_captain_eligible(officer: &Officer) -> bool {
+    officer_has_captain_ability(officer)
         && !crate::data::officer_ban::is_captain_banned_any_mode(&officer.id)
 }
 
@@ -1585,6 +1847,107 @@ mod tests {
         has_pvp_below_decks_slot_ability, BelowDecksCombatRelevanceRank,
     };
     use crate::optimizer::constraints::{CrewSearchConstraints, OfficerGroupConstraint};
+
+    #[test]
+    fn binomial_matches_known_values() {
+        assert_eq!(super::binomial(5, 0), 1);
+        assert_eq!(super::binomial(5, 5), 1);
+        assert_eq!(super::binomial(5, 2), 10);
+        assert_eq!(super::binomial(10, 3), 120);
+        assert_eq!(super::binomial(242, 2), 29_161);
+        // k > n is empty.
+        assert_eq!(super::binomial(3, 5), 0);
+        // Symmetry C(n,k) == C(n,n-k).
+        assert_eq!(super::binomial(50, 3), super::binomial(50, 47));
+    }
+
+    #[test]
+    fn crew_combinations_is_product_of_seat_choices() {
+        // captains × C(bridge,2) × C(below,slots)
+        assert_eq!(super::crew_combinations(10, 10, 10, 3), 10 * 45 * 120);
+        // Too few below-decks officers for the slots → zero legal crews.
+        assert_eq!(super::crew_combinations(10, 10, 2, 3), 0);
+    }
+
+    #[test]
+    fn search_space_report_stages_are_monotonic_and_reduce() {
+        let registry = DataRegistry::load().expect("registry");
+        let report = super::search_space_reduction_report(
+            &registry,
+            crate::combat::EnemyType::RedMovingSpace,
+            BelowDecksPoolMode::Strict,
+            3,
+        );
+        assert_eq!(report.stages.len(), 3, "raw, +bans, +eligibility");
+        assert_eq!(report.enemy_type, "red_moving_space");
+
+        // Each filter stage is a subset of the previous: pool sizes and crew counts never grow.
+        for win in report.stages.windows(2) {
+            let (prev, next) = (&win[0], &win[1]);
+            assert!(next.captains <= prev.captains, "captains monotonic");
+            assert!(next.bridge <= prev.bridge, "bridge monotonic");
+            assert!(
+                next.below_decks <= prev.below_decks,
+                "below-decks monotonic"
+            );
+            assert!(next.candidates <= prev.candidates, "crew count monotonic");
+        }
+
+        // The ban list removes at least the known PvE captain bans (Quark, Airiam), so the captain
+        // pool strictly shrinks from raw → after-bans; the final space stays non-empty and smaller.
+        assert!(
+            report.stages[1].captains < report.raw().captains,
+            "ban list trims the captain pool"
+        );
+        assert!(report.final_stage().candidates > 0, "final space non-empty");
+        assert!(
+            report.final_stage().candidates < report.raw().candidates,
+            "filters reduce the overall search space"
+        );
+    }
+
+    #[test]
+    fn formatting_helpers_are_human_readable() {
+        assert_eq!(super::abbrev_count(999), "999");
+        assert_eq!(super::abbrev_count(1_500), "1.50 K");
+        assert_eq!(super::abbrev_count(15_000_000_000_000), "15.00 T");
+        assert_eq!(super::human_duration(30.0), "30.0 s");
+        assert_eq!(super::human_duration(259_200.0), "3.0 days");
+        assert!(super::human_duration(2.0e9).ends_with("years"));
+    }
+
+    #[test]
+    fn render_markdown_has_tables_and_per_seat_transition() {
+        let stage = |captains, bridge, below| super::SearchSpaceStage {
+            label: String::new(),
+            captains,
+            bridge,
+            below_decks: below,
+            candidates: super::crew_combinations(captains, bridge, below, 3),
+        };
+        let report = super::SearchSpaceReport {
+            enemy_type: "red_moving_space".to_string(),
+            below_decks_slots: 3,
+            pool_mode: "strict".to_string(),
+            stages: vec![
+                stage(100, 200, 150),
+                stage(98, 198, 120),
+                stage(90, 150, 60),
+            ],
+        };
+        let md = super::render_search_space_report_markdown(&[report], 50);
+        assert!(md.contains("### Legal crews per stage"));
+        assert!(md.contains("### Officer-pool sizes"));
+        assert!(md.contains("red_moving_space"));
+        assert!(
+            md.contains("100 → 90"),
+            "captain raw→final transition shown"
+        );
+        assert!(
+            md.contains("150 → 60"),
+            "below-decks raw→final transition shown"
+        );
+    }
 
     #[test]
     fn strict_below_decks_orders_combat_before_other_ranks() {

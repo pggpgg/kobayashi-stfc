@@ -2,17 +2,11 @@
 
 What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](NOT_ROADMAP.md).
 
-_Last updated 2026-06-21. The June 2026 audit backlog (engine decomposition, assurance gates, upstream drift automation, June patch content, import faction resolution, and related prep) is **shipped**. Durable design detail lives in linked docs, not here._
+_Last updated 2026-06-24. The June 2026 audit backlog (engine decomposition, assurance gates, upstream drift automation, June patch content, import faction resolution, and related prep) is **shipped**, as is PvE crew-search-space reduction — captain/below-decks bans, the eligibility-matrix filter, and the [`search-space-report`](PVE_CREW_SEARCH_SPACE_REDUCTION.md) measurement harness (bans + eligibility cut the full-catalog space 46×–5,400× by scenario). Durable design detail lives in linked docs, not here._
 
 ## Planned
 
-- **Make exhaustive PvE hostile searches feasible by reducing the crew search space** — This is the next main goal. Progressively shrink the pool of crews worth simulating while preserving strong PvE candidates:
-  - ban officers that are consistently poor captain choices;
-  - ban officers that are consistently poor below-decks choices;
-  - implement simple, explainable heuristics that eliminate implausible crews before simulation;
-  - measure and track each reduction's effect on candidate count and projected exhaustive-search runtime, so feasibility gains and search-quality tradeoffs remain visible.
-
-- **Component upgrades** — Model per-component tier upgrades (Impulse, Shield, Warp, weapon turrets, etc.) separately from ship tier/level. Today combat stats come from `data/ships_extended` tier/level rows only; synced `profiles/*/ships.imported.json` component ids are not resolved into stat deltas. Needed for accurate optimize/sim when players run upgraded components above hull tier (e.g. T11 phasers on a T10 hull). Likely path: map component ids → upstream component curves, merge into attacker/defender stats at scenario build; profile sync already carries component lists.
+- **Component upgrades** — This is the next main goal. Model per-component tier upgrades (Impulse, Shield, Warp, weapon turrets, etc.) separately from ship tier/level. Today combat stats come from `data/ships_extended` tier/level rows only; synced `profiles/*/ships.imported.json` component ids are not resolved into stat deltas. Needed for accurate optimize/sim when players run upgraded components above hull tier (e.g. T11 phasers on a T10 hull). Likely path: map component ids → upstream component curves, merge into attacker/defender stats at scenario build; profile sync already carries component lists.
 
 ## Optional follow-ups (low priority)
 
@@ -27,3 +21,4 @@ From the 2026-06-09 audit, these came back clean or justified — don't re-litig
 - Error handling: panics are confined to defensive asserts, malformed API input 400s cleanly, job registries are bounded with prune-on-insert.
 - Dependencies: minimal, stable, no git deps, no duplicates.
 - Station-defense conditions remain a non-goal — see [NOT_ROADMAP.md](NOT_ROADMAP.md).
+- Full-catalog exhaustive search over the broad `red_moving_space` hostile category stays impractical at realistic confirm depth (~17 B crews even after bans + eligibility, per [PVE_CREW_SEARCH_SPACE_REDUCTION.md](PVE_CREW_SEARCH_SPACE_REDUCTION.md)). Tiered/genetic search and per-profile owned-roster narrowing are the intended reducers there — not further catalog-wide bans, which would risk dropping functional crews for ~1% space savings.
