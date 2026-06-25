@@ -16,6 +16,7 @@ use crate::data::hostile::{
     DEFAULT_HOSTILES_INDEX_PATH,
 };
 use crate::data::hostile_loca::load_hostile_loca_display_names;
+use crate::data::import::ShipEntry;
 use crate::data::loader::normalize_lookup;
 use crate::data::officer::{
     load_canonical_officers, normalize_officer_lookup_key, Officer, DEFAULT_CANONICAL_OFFICERS_PATH,
@@ -27,8 +28,9 @@ use crate::data::research::{
     load_research_catalog, ResearchCatalog, DEFAULT_RESEARCH_CATALOG_PATH,
 };
 use crate::data::ship::{
-    load_extended_ship_index, load_extended_ship_record, CrewSlotUnlock, ExtendedShipIndex,
-    ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR,
+    apply_component_overrides_to_ship_record, load_extended_ship_index, load_extended_ship_record,
+    load_hull_id_registry, load_upstream_ship_raw, CrewSlotUnlock, ExtendedShipIndex, ShipRecord,
+    DEFAULT_SHIPS_EXTENDED_DIR, DEFAULT_UPSTREAM_SHIPS_DIR,
 };
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
@@ -74,6 +76,8 @@ pub struct DataRegistry {
     pub research_catalog: Option<ResearchCatalog>,
     /// Support buff definitions (alliance / ship toggles from API); optional if file missing.
     pub support_buffs_catalog: Option<Arc<SupportBuffCatalog>>,
+    /// Synced profile hull ids map to canonical ship ids through this registry.
+    pub hull_id_registry: HashMap<i64, String>,
     /// Officer eligibility matrix (per-ability, per-scenario combat verdicts); `None` if the file
     /// is missing — consumers then fall back to the legacy heuristics.
     pub eligibility_matrix: Option<Arc<EligibilityMatrix>>,
@@ -107,6 +111,7 @@ impl DataRegistry {
         let support_buffs_catalog =
             load_support_buff_catalog(crate::runtime_paths::resolve(DEFAULT_SUPPORT_BUFFS_PATH))
                 .or_else(|| load_support_buff_catalog(Path::new(DEFAULT_SUPPORT_BUFFS_PATH)));
+        let hull_id_registry = load_hull_id_registry();
         let eligibility_matrix = load_eligibility_matrix(crate::runtime_paths::resolve(
             DEFAULT_ELIGIBILITY_MATRIX_PATH,
         ))
@@ -122,6 +127,7 @@ impl DataRegistry {
             forbidden_chaos_catalog,
             research_catalog,
             support_buffs_catalog,
+            hull_id_registry,
             eligibility_matrix,
             hostile_record_cache: Mutex::new(LruCache::new(
                 NonZeroUsize::new(256).expect("256 > 0"),
@@ -154,6 +160,11 @@ impl DataRegistry {
     /// Support buff catalog for API-selected alliance/ship buffs.
     pub fn support_buffs_catalog(&self) -> Option<&SupportBuffCatalog> {
         self.support_buffs_catalog.as_deref()
+    }
+
+    /// Hull id -> canonical ship id mapping from synced profile ship rows.
+    pub fn hull_id_registry(&self) -> &HashMap<i64, String> {
+        &self.hull_id_registry
     }
 
     /// Officer list for API listing and crew generator pool building.
@@ -207,20 +218,24 @@ impl DataRegistry {
         Some(record)
     }
 
-    /// Resolve ship by id or name. Uses data/ships_extended with tier=1, level=1 when not specified.
-    /// Uses cached ship index and per-record LRU cache to avoid re-reading index.json or record files.
-    pub fn resolve_ship(&self, name_or_id: &str) -> Option<ShipRecord> {
+    fn resolve_ship_id(&self, name_or_id: &str) -> Option<&str> {
         let index = self.ship_index.as_ref()?;
-        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
         let normalized = normalize_lookup(name_or_id);
-        let id = index
+        index
             .ships
             .iter()
             .find(|e| {
                 normalize_lookup(&e.id) == normalized
                     || normalize_lookup(&e.ship_name) == normalized
             })
-            .map(|e| e.id.as_str())?;
+            .map(|e| e.id.as_str())
+    }
+
+    /// Resolve ship by id or name. Uses data/ships_extended with tier=1, level=1 when not specified.
+    /// Uses cached ship index and per-record LRU cache to avoid re-reading index.json or record files.
+    pub fn resolve_ship(&self, name_or_id: &str) -> Option<ShipRecord> {
+        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+        let id = self.resolve_ship_id(name_or_id)?;
         let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
         extended.to_ship_record(Some(1), Some(1))
     }
@@ -233,19 +248,61 @@ impl DataRegistry {
         tier: Option<u32>,
         level: Option<u32>,
     ) -> Option<ShipRecord> {
-        let index = self.ship_index.as_ref()?;
         let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
-        let normalized = normalize_lookup(name_or_id);
-        let id = index
-            .ships
-            .iter()
-            .find(|e| {
-                normalize_lookup(&e.id) == normalized
-                    || normalize_lookup(&e.ship_name) == normalized
-            })
-            .map(|e| e.id.as_str())?;
+        let id = self.resolve_ship_id(name_or_id)?;
         let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
         extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))
+    }
+
+    fn imported_ship_entry_for_ship<'a>(
+        &self,
+        ship_id: &str,
+        tier: Option<u32>,
+        level: Option<u32>,
+        imported_ships: &'a [ShipEntry],
+    ) -> Option<&'a ShipEntry> {
+        let tier = tier?;
+        imported_ships
+            .iter()
+            .filter(|entry| {
+                self.hull_id_registry
+                    .get(&entry.hull_id)
+                    .is_some_and(|id| id == ship_id)
+            })
+            .filter(|entry| entry.tier == i64::from(tier))
+            .filter(|entry| level.is_none_or(|level| entry.level == i64::from(level)))
+            .max_by_key(|entry| (entry.tier, entry.level, entry.psid))
+    }
+
+    /// Resolve a ship and apply synced per-component upgrades from `ships.imported.json` when the
+    /// request tier/level identifies an owned profile row for this canonical ship.
+    pub fn resolve_ship_with_tier_level_and_imported_components(
+        &self,
+        name_or_id: &str,
+        tier: Option<u32>,
+        level: Option<u32>,
+        imported_ships: &[ShipEntry],
+    ) -> Option<ShipRecord> {
+        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+        let id = self.resolve_ship_id(name_or_id)?;
+        let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
+        let mut ship = extended.to_ship_record(tier.or(Some(1)), level.or(Some(1)))?;
+        let Some(tier) = tier else {
+            return Some(ship);
+        };
+        let Some(entry) = self.imported_ship_entry_for_ship(id, Some(tier), level, imported_ships)
+        else {
+            return Some(ship);
+        };
+        if entry.components.iter().all(|id| *id <= 0) {
+            return Some(ship);
+        }
+        if let Some(raw_ship) =
+            load_upstream_ship_raw(Path::new(DEFAULT_UPSTREAM_SHIPS_DIR), entry.hull_id)
+        {
+            apply_component_overrides_to_ship_record(&mut ship, &raw_ship, tier, &entry.components);
+        }
+        Some(ship)
     }
 
     /// Return available tier/level numbers plus below-decks unlock schedule for a ship.
@@ -305,5 +362,64 @@ impl DataRegistry {
             return self.load_hostile_record_cached(data_dir, &by_name[0].id);
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_close(actual: f64, expected: f64) {
+        assert!(
+            (actual - expected).abs() < 1e-6,
+            "expected {expected}, got {actual}"
+        );
+    }
+
+    #[test]
+    fn imported_component_ids_apply_to_resolved_ship_record() {
+        let registry = DataRegistry::load().expect("DataRegistry::load");
+        let plain = registry
+            .resolve_ship_with_tier_level("uss_saladin", Some(1), Some(1))
+            .expect("plain Saladin T1");
+        let imported = vec![ShipEntry {
+            psid: 1,
+            tier: 1,
+            level: 1,
+            level_percentage: 0.0,
+            hull_id: 3_056_258_007,
+            components: vec![
+                4_188_416_309,
+                1_853_490_365,
+                3_417_599_684,
+                2_302_957_508,
+                2_821_665_303,
+                409_142_410,
+                1_387_586_361,
+                2_479_600_355,
+                3_277_326_005,
+                4_263_942_579,
+            ],
+        }];
+
+        let upgraded = registry
+            .resolve_ship_with_tier_level_and_imported_components(
+                "uss_saladin",
+                Some(1),
+                Some(1),
+                &imported,
+            )
+            .expect("component-upgraded Saladin T1");
+
+        assert_close(upgraded.armor_piercing, plain.armor_piercing + 158.0);
+        assert_close(upgraded.shield_piercing, plain.shield_piercing + 22.0);
+        assert_close(upgraded.accuracy, plain.accuracy + 24.0);
+        assert_close(upgraded.attack, plain.attack + 553.5);
+        assert_close(upgraded.dodge, plain.dodge + 208.0);
+        let weapon = &upgraded.weapons.as_ref().expect("weapons")[0];
+        assert_close(weapon.attack, 38_985.5);
+        assert_eq!(weapon.armor_piercing, Some(8_001.0));
+        assert_eq!(weapon.shield_piercing, Some(977.0));
+        assert_eq!(weapon.accuracy, Some(1_139.0));
     }
 }

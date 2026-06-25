@@ -6,10 +6,12 @@
 //! [`crate::data::ship_ability_resolve`] and merged in
 //! [`crate::optimizer::monte_carlo::scenario`]. See `docs/DESIGN.md` §3.6 (Ship hull abilities).
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::combat::{AttackerStats, DefenderStats, ShipType, WeaponStats};
 
@@ -190,6 +192,392 @@ pub struct TierStats {
     pub shield_mitigation: Option<f64>,
     #[serde(default)]
     pub weapons: Option<Vec<WeaponRecord>>,
+}
+
+const COMPONENT_WEAPON_ORDER_LAST: i64 = i64::MAX;
+
+pub const DEFAULT_HULL_ID_REGISTRY_PATH: &str = "data/hull_id_registry.json";
+pub const DEFAULT_UPSTREAM_SHIPS_DIR: &str = "data/upstream/data-stfc-space/ships";
+
+/// Load hull id -> canonical ship id mapping. Returns an empty map if the registry is missing.
+pub fn load_hull_id_registry() -> HashMap<i64, String> {
+    let raw = match fs::read_to_string(DEFAULT_HULL_ID_REGISTRY_PATH) {
+        Ok(s) => s,
+        _ => return HashMap::new(),
+    };
+    let parsed: Value = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        _ => return HashMap::new(),
+    };
+    let obj = match parsed.get("hull_id_to_ship_id").and_then(Value::as_object) {
+        Some(o) => o,
+        None => return HashMap::new(),
+    };
+    let mut out = HashMap::new();
+    for (k, v) in obj {
+        if let (Ok(hid), Some(sid)) = (k.parse::<i64>(), v.as_str()) {
+            out.insert(hid, sid.to_string());
+        }
+    }
+    out
+}
+
+/// Load one raw data.stfc.space ship payload by numeric hull id.
+pub fn load_upstream_ship_raw(upstream_dir: &Path, numeric_id: i64) -> Option<Value> {
+    if numeric_id <= 0 {
+        return None;
+    }
+    let path = upstream_dir.join(format!("{numeric_id}.json"));
+    let data = fs::read_to_string(path).ok()?;
+    serde_json::from_str(&data).ok()
+}
+
+fn component_data(comp: &Value) -> Option<&Value> {
+    comp.get("data")
+}
+
+fn component_tag(comp: &Value) -> Option<&str> {
+    component_data(comp)?
+        .get("tag")
+        .and_then(Value::as_str)
+        .filter(|tag| !tag.is_empty())
+}
+
+fn component_order(comp: &Value) -> i64 {
+    comp.get("order")
+        .and_then(Value::as_i64)
+        .filter(|order| *order >= 0)
+        .unwrap_or(-1)
+}
+
+fn component_slot_index(components: &[Value]) -> HashMap<(String, i64, usize), usize> {
+    let mut index = HashMap::new();
+    let mut counts: HashMap<(String, i64), usize> = HashMap::new();
+    for (idx, comp) in components.iter().enumerate() {
+        let Some(tag) = component_tag(comp) else {
+            continue;
+        };
+        let tag = tag.to_string();
+        let order = component_order(comp);
+        let count_key = (tag.clone(), order);
+        let occurrence = counts.entry(count_key).or_insert(0);
+        index.insert((tag, order, *occurrence), idx);
+        *occurrence += 1;
+    }
+    index
+}
+
+fn raw_ship_components_for_tier(raw_ship: &Value, tier: u32) -> Option<Vec<Value>> {
+    let tiers = raw_ship.get("tiers").and_then(Value::as_array)?;
+    let tier_row = tiers
+        .iter()
+        .find(|row| row.get("tier").and_then(Value::as_u64) == Some(u64::from(tier)))?;
+    Some(
+        tier_row
+            .get("components")
+            .and_then(Value::as_array)?
+            .to_vec(),
+    )
+}
+
+fn component_id_index(raw_ship: &Value) -> HashMap<i64, Value> {
+    let mut out = HashMap::new();
+    let Some(tiers) = raw_ship.get("tiers").and_then(Value::as_array) else {
+        return out;
+    };
+    for tier in tiers {
+        let Some(components) = tier.get("components").and_then(Value::as_array) else {
+            continue;
+        };
+        for comp in components {
+            let Some(id) = comp.get("id").and_then(Value::as_i64).filter(|id| *id > 0) else {
+                continue;
+            };
+            out.entry(id).or_insert_with(|| comp.clone());
+        }
+    }
+    out
+}
+
+fn patched_components_for_ids(
+    base_components: &[Value],
+    raw_ship: &Value,
+    component_ids: &[i64],
+) -> Option<Vec<Value>> {
+    let by_id = component_id_index(raw_ship);
+    if by_id.is_empty() {
+        return None;
+    }
+
+    let base_slots = component_slot_index(base_components);
+    if base_slots.is_empty() {
+        return None;
+    }
+
+    let mut patched = base_components.to_vec();
+    let mut selected_counts: HashMap<(String, i64), usize> = HashMap::new();
+    let mut matched = 0usize;
+
+    for id in component_ids.iter().copied().filter(|id| *id > 0) {
+        let Some(component) = by_id.get(&id) else {
+            continue;
+        };
+        let Some(tag) = component_tag(component) else {
+            continue;
+        };
+        let tag = tag.to_string();
+        let order = component_order(component);
+        let count_key = (tag.clone(), order);
+        let occurrence = selected_counts.entry(count_key).or_insert(0);
+        let slot_key = (tag, order, *occurrence);
+        *occurrence += 1;
+
+        if let Some(idx) = base_slots.get(&slot_key) {
+            patched[*idx] = component.clone();
+            matched += 1;
+        }
+    }
+
+    (matched > 0).then_some(patched)
+}
+
+/// Extract combat stats from a component list using the same rules as the ship normalizer.
+///
+/// These stats are **one component tier only**. Normalized [`TierStats`] in `data/ships_extended`
+/// keeps cumulative offensive piercing/accuracy across tiers; component overrides apply a delta
+/// from this current-tier extraction onto the already-resolved base ship record.
+pub fn extract_component_tier_stats(components: &[Value], tier: u32) -> TierStats {
+    let mut hull_health = 0.0;
+    let mut shield_health = 0.0;
+    let mut shield_mitigation = 0.8;
+    let mut armor_stat = 0.0;
+    let mut shield_deflection_stat = 0.0;
+    let mut dodge_stat = 0.0;
+    let mut weapon_components: Vec<(i64, &Value)> = Vec::new();
+
+    for comp in components {
+        let Some(data) = component_data(comp) else {
+            continue;
+        };
+        match data.get("tag").and_then(Value::as_str).unwrap_or("") {
+            "Weapon" => {
+                let order = comp
+                    .get("order")
+                    .and_then(Value::as_i64)
+                    .filter(|order| *order >= 0)
+                    .unwrap_or(COMPONENT_WEAPON_ORDER_LAST);
+                weapon_components.push((order, data));
+            }
+            "Shield" => {
+                shield_health = data.get("hp").and_then(Value::as_f64).unwrap_or(0.0);
+                if let Some(mitigation) = data.get("mitigation").and_then(Value::as_f64) {
+                    shield_mitigation = mitigation;
+                }
+                if let Some(absorption) = data.get("absorption").and_then(Value::as_f64) {
+                    shield_deflection_stat = absorption;
+                }
+            }
+            "Armor" => {
+                hull_health = data.get("hp").and_then(Value::as_f64).unwrap_or(0.0);
+                if let Some(plating) = data.get("plating").and_then(Value::as_f64) {
+                    armor_stat = plating;
+                }
+            }
+            "Impulse" => {
+                if let Some(dodge) = data.get("dodge").and_then(Value::as_f64) {
+                    dodge_stat = dodge;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    weapon_components.sort_by_key(|(order, _)| *order);
+
+    let mut armor_piercing = 0.0;
+    let mut shield_piercing = 0.0;
+    let mut accuracy = 0.0;
+    let mut attack = 0.0;
+    let mut crit_chance = 0.1;
+    let mut crit_damage = 1.5;
+    let mut weapons = Vec::new();
+    let mut first_weapon = true;
+
+    for (_, data) in weapon_components {
+        let penetration = data
+            .get("penetration")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+        let modulation = data
+            .get("modulation")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+        let weapon_accuracy = data.get("accuracy").and_then(Value::as_f64).unwrap_or(0.0);
+        let min_damage = data
+            .get("minimum_damage")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+        let max_damage = data
+            .get("maximum_damage")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+        let shots = data
+            .get("shots")
+            .and_then(Value::as_u64)
+            .unwrap_or(1)
+            .max(1) as u32;
+
+        armor_piercing += penetration;
+        shield_piercing += modulation;
+        accuracy += weapon_accuracy;
+
+        let avg_damage = (min_damage + max_damage) * 0.5;
+        attack += avg_damage * f64::from(shots);
+
+        let row_crit_chance = data.get("crit_chance").and_then(Value::as_f64);
+        let row_crit_damage = data
+            .get("crit_modifier")
+            .or_else(|| data.get("crit_damage"))
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite() && *value > 0.0);
+        let row_proc_chance = data.get("proc_chance").and_then(Value::as_f64);
+        let row_proc_multiplier = data
+            .get("proc_multiplier")
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite() && *value > 0.0);
+
+        if first_weapon {
+            first_weapon = false;
+            if let Some(value) = row_crit_chance {
+                crit_chance = value;
+            }
+            if let Some(value) = row_crit_damage {
+                crit_damage = value;
+            }
+        }
+
+        weapons.push(WeaponRecord {
+            attack: avg_damage,
+            shots: Some(shots),
+            armor_piercing: Some(penetration),
+            shield_piercing: Some(modulation),
+            accuracy: Some(weapon_accuracy),
+            crit_chance: row_crit_chance,
+            crit_multiplier: row_crit_damage,
+            proc_chance: row_proc_chance,
+            proc_multiplier: row_proc_multiplier,
+            ..Default::default()
+        });
+    }
+
+    if attack <= 0.0 {
+        attack = 100.0;
+    }
+    if hull_health <= 0.0 {
+        hull_health = shield_health * 2.0;
+    }
+
+    TierStats {
+        tier,
+        armor_piercing,
+        shield_piercing,
+        accuracy,
+        armor: armor_stat,
+        shield_deflection: shield_deflection_stat,
+        dodge: dodge_stat,
+        attack,
+        crit_chance,
+        crit_damage,
+        hull_health,
+        shield_health,
+        shield_mitigation: Some(shield_mitigation),
+        weapons: (!weapons.is_empty()).then_some(weapons),
+    }
+}
+
+fn add_finite_delta(target: &mut f64, before: f64, after: f64) {
+    let delta = after - before;
+    if delta.is_finite() {
+        *target += delta;
+    }
+}
+
+/// Apply synced per-component ids to an already-resolved ship record.
+///
+/// The base record remains the source of cumulative tier/level stats. Component ids replace the
+/// matching raw tier components by slot (tag + order + occurrence), then the current-tier delta is
+/// applied to the base record. Matching component lists are therefore a no-op, while upgraded parts
+/// above the hull tier adjust only their affected combat stats.
+pub fn apply_component_overrides_to_ship_record(
+    ship: &mut ShipRecord,
+    raw_ship: &Value,
+    tier: u32,
+    component_ids: &[i64],
+) -> bool {
+    let Some(expected_components) = raw_ship_components_for_tier(raw_ship, tier) else {
+        return false;
+    };
+    let Some(patched_components) =
+        patched_components_for_ids(&expected_components, raw_ship, component_ids)
+    else {
+        return false;
+    };
+
+    let expected = extract_component_tier_stats(&expected_components, tier);
+    let patched = extract_component_tier_stats(&patched_components, tier);
+
+    add_finite_delta(
+        &mut ship.armor_piercing,
+        expected.armor_piercing,
+        patched.armor_piercing,
+    );
+    add_finite_delta(
+        &mut ship.shield_piercing,
+        expected.shield_piercing,
+        patched.shield_piercing,
+    );
+    add_finite_delta(&mut ship.accuracy, expected.accuracy, patched.accuracy);
+    add_finite_delta(&mut ship.armor, expected.armor, patched.armor);
+    add_finite_delta(
+        &mut ship.shield_deflection,
+        expected.shield_deflection,
+        patched.shield_deflection,
+    );
+    add_finite_delta(&mut ship.dodge, expected.dodge, patched.dodge);
+    add_finite_delta(&mut ship.attack, expected.attack, patched.attack);
+    add_finite_delta(
+        &mut ship.crit_chance,
+        expected.crit_chance,
+        patched.crit_chance,
+    );
+    add_finite_delta(
+        &mut ship.crit_damage,
+        expected.crit_damage,
+        patched.crit_damage,
+    );
+    add_finite_delta(
+        &mut ship.hull_health,
+        expected.hull_health,
+        patched.hull_health,
+    );
+    add_finite_delta(
+        &mut ship.shield_health,
+        expected.shield_health,
+        patched.shield_health,
+    );
+    if let (Some(current), Some(before), Some(after)) = (
+        ship.shield_mitigation,
+        expected.shield_mitigation,
+        patched.shield_mitigation,
+    ) {
+        let mut next = current;
+        add_finite_delta(&mut next, before, after);
+        ship.shield_mitigation = Some(next);
+    } else {
+        ship.shield_mitigation = patched.shield_mitigation;
+    }
+    ship.weapons = patched.weapons;
+    true
 }
 
 /// Per-level bonus to shield and hull (additive to tier base). Level 1 is typically 0,0.
@@ -609,6 +997,142 @@ pub fn load_extended_ship_index(extended_dir: &Path) -> Option<ExtendedShipIndex
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn component_fixture_raw_ship() -> Value {
+        serde_json::json!({
+            "tiers": [
+                {
+                    "tier": 1,
+                    "components": [
+                        {"id": 1, "order": -1, "data": {"tag": "Armor", "hp": 100.0, "plating": 10.0}},
+                        {"id": 2, "order": 8, "data": {"tag": "Shield", "hp": 200.0, "mitigation": 0.8, "absorption": 20.0}},
+                        {"id": 3, "order": -1, "data": {"tag": "Impulse", "dodge": 5.0}},
+                        {"id": 4, "order": 1, "data": {
+                            "tag": "Weapon",
+                            "minimum_damage": 10.0,
+                            "maximum_damage": 20.0,
+                            "shots": 2,
+                            "penetration": 7.0,
+                            "modulation": 8.0,
+                            "accuracy": 9.0,
+                            "crit_chance": 0.2,
+                            "crit_modifier": 2.0
+                        }}
+                    ]
+                },
+                {
+                    "tier": 2,
+                    "components": [
+                        {"id": 5, "order": -1, "data": {"tag": "Armor", "hp": 150.0, "plating": 14.0}},
+                        {"id": 6, "order": 8, "data": {"tag": "Shield", "hp": 260.0, "mitigation": 0.8, "absorption": 30.0}},
+                        {"id": 7, "order": -1, "data": {"tag": "Impulse", "dodge": 8.0}},
+                        {"id": 8, "order": 1, "data": {
+                            "tag": "Weapon",
+                            "minimum_damage": 20.0,
+                            "maximum_damage": 40.0,
+                            "shots": 3,
+                            "penetration": 11.0,
+                            "modulation": 13.0,
+                            "accuracy": 17.0,
+                            "crit_chance": 0.25,
+                            "crit_modifier": 2.5
+                        }}
+                    ]
+                }
+            ]
+        })
+    }
+
+    fn component_fixture_ship_record() -> ShipRecord {
+        ShipRecord {
+            id: "fixture".to_string(),
+            ship_name: "Fixture".to_string(),
+            ship_class: "battleship".to_string(),
+            faction: None,
+            // Pretend these are cumulative tier values; component overrides add only deltas.
+            armor_piercing: 70.0,
+            shield_piercing: 80.0,
+            accuracy: 90.0,
+            armor: 10.0,
+            shield_deflection: 20.0,
+            dodge: 5.0,
+            attack: 30.0,
+            crit_chance: 0.2,
+            crit_damage: 2.0,
+            hull_health: 110.0,
+            shield_health: 205.0,
+            shield_mitigation: Some(0.8),
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            weapons: Some(vec![WeaponRecord {
+                attack: 15.0,
+                shots: Some(2),
+                armor_piercing: Some(7.0),
+                shield_piercing: Some(8.0),
+                accuracy: Some(9.0),
+                crit_chance: Some(0.2),
+                crit_multiplier: Some(2.0),
+                ..Default::default()
+            }]),
+            abilities: None,
+            officer_bonus: OfficerBonusTable::default(),
+        }
+    }
+
+    #[test]
+    fn component_overrides_are_noop_when_profile_ids_match_base_tier() {
+        let raw = component_fixture_raw_ship();
+        let mut ship = component_fixture_ship_record();
+
+        assert!(apply_component_overrides_to_ship_record(
+            &mut ship,
+            &raw,
+            1,
+            &[1, 2, 3, 4],
+        ));
+
+        assert_eq!(ship.armor_piercing, 70.0);
+        assert_eq!(ship.shield_piercing, 80.0);
+        assert_eq!(ship.accuracy, 90.0);
+        assert_eq!(ship.attack, 30.0);
+        assert_eq!(ship.hull_health, 110.0);
+        assert_eq!(ship.shield_health, 205.0);
+        assert_eq!(ship.armor, 10.0);
+        assert_eq!(ship.shield_deflection, 20.0);
+        assert_eq!(ship.dodge, 5.0);
+        assert_eq!(ship.weapons.as_ref().unwrap()[0].attack, 15.0);
+    }
+
+    #[test]
+    fn component_overrides_apply_deltas_above_base_tier() {
+        let raw = component_fixture_raw_ship();
+        let mut ship = component_fixture_ship_record();
+
+        assert!(apply_component_overrides_to_ship_record(
+            &mut ship,
+            &raw,
+            1,
+            &[5, 6, 7, 8],
+        ));
+
+        assert_eq!(ship.armor_piercing, 74.0);
+        assert_eq!(ship.shield_piercing, 85.0);
+        assert_eq!(ship.accuracy, 98.0);
+        assert_eq!(ship.attack, 90.0);
+        assert_eq!(ship.crit_chance, 0.25);
+        assert_eq!(ship.crit_damage, 2.5);
+        assert_eq!(ship.hull_health, 160.0);
+        assert_eq!(ship.shield_health, 265.0);
+        assert_eq!(ship.armor, 14.0);
+        assert_eq!(ship.shield_deflection, 30.0);
+        assert_eq!(ship.dodge, 8.0);
+        let weapon = &ship.weapons.as_ref().unwrap()[0];
+        assert_eq!(weapon.attack, 30.0);
+        assert_eq!(weapon.shots, Some(3));
+        assert_eq!(weapon.armor_piercing, Some(11.0));
+        assert_eq!(weapon.shield_piercing, Some(13.0));
+        assert_eq!(weapon.accuracy, Some(17.0));
+    }
 
     #[test]
     fn extended_ship_json_abilities_round_trip_to_ship_record() {
