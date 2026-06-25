@@ -2356,7 +2356,9 @@ pub fn forbidden_tech_catalog_payload(
 }
 
 /// Rough seconds per (candidate × sim) on a typical multi-core machine; used for time estimates.
-const ESTIMATE_SEC_PER_CANDIDATE_SIM: f64 = 4e-9;
+/// Shared with the `search-space-report` CLI so both projections use one cost model.
+const ESTIMATE_SEC_PER_CANDIDATE_SIM: f64 =
+    crate::optimizer::crew_generator::EXHAUSTIVE_SEC_PER_CANDIDATE_SIM;
 
 pub fn optimize_payload(
     registry: &DataRegistry,
