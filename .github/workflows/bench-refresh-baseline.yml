@@ -141,14 +141,14 @@ jobs:
           git add benchmark_results.log
           git commit -m "Scheduled benchmark baseline refresh (run ${{ github.run_id }})
 
-Monthly auto-refresh from .github/workflows/bench-refresh-baseline.yml.
-Numbers measured on the same ubuntu-24.04 / KOBAYASHI_RAYON_THREADS=2
-environment the regression gate uses, so the gate now has fresh headroom
-for the next month's PRs.
+          Monthly auto-refresh from .github/workflows/bench-refresh-baseline.yml.
+          Numbers measured on the same ubuntu-24.04 / KOBAYASHI_RAYON_THREADS=2
+          environment the regression gate uses, so the gate now has fresh headroom
+          for the next month's PRs.
 
-If you'd rather hold a particular baseline (e.g. before a known
-optimization lands), close this PR — the next monthly run will
-re-evaluate."
+          If you'd rather hold a particular baseline (e.g. before a known
+          optimization lands), close this PR — the next monthly run will
+          re-evaluate."
           git push origin "$BRANCH"
           gh pr create \
             --title "Scheduled benchmark baseline refresh ($(date -u +%Y-%m-%d))" \
