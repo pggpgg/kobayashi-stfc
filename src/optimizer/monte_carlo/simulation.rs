@@ -14,7 +14,8 @@ use crate::optimizer::crew_generator::CrewCandidate;
 use crate::perf_log;
 use rayon::prelude::*;
 use serde_json::{json, Value};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::cmp::{Ordering, Reverse};
+use std::collections::{BTreeMap, BinaryHeap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
@@ -95,6 +96,17 @@ fn win_rate_upper_wilson_95(wins: usize, trials: usize) -> f64 {
     wilson_95_interval(wins, trials).1
 }
 
+/// Normal-approx 95% upper bound for a running mean from Welford accumulators (`mean`, `m2`, `n`),
+/// clamped to `[0, 1]`. Returns 1.0 for `n < 2` (interval undefined → never prune on it).
+fn normal_upper_95(mean: f64, m2: f64, n: usize) -> f64 {
+    if n < 2 {
+        return 1.0;
+    }
+    let var = m2 / (n as f64 - 1.0);
+    let se = (var / n as f64).sqrt().max(0.0);
+    (mean + 1.96 * se).clamp(0.0, 1.0)
+}
+
 #[derive(Clone, Copy)]
 struct ScoutEarlyStopCfg {
     min_trials: usize,
@@ -135,39 +147,127 @@ impl ProgressiveAbandonCfg {
             margin: 0.05,
         }
     }
+
+    /// Abandonment config for the full Monte Carlo (confirm / exhaustive) pass. Each crew runs at
+    /// least `min_trials` before it can be cut, so reported stats for survivors stay stable.
+    ///
+    /// The margin is on the blended-score scale. Because hull contributes only 0.2 of the score, a
+    /// score margin of 0.05 is a 0.25 *hull* gap that almost never exists, so it pruned nothing on
+    /// real hull-spread matchups. The default is **0.01** (≈ a 0.05 hull gap, and still ~4× the
+    /// score CI half-width at the first checkpoint, so it never over-prunes — verified by the
+    /// equivalence tests). Tunable via `KOBAYASHI_EARLYSTOP_MARGIN` / `KOBAYASHI_EARLYSTOP_MIN_TRIALS_DIV`.
+    fn for_full_mc(max_iterations: usize) -> Self {
+        let div = env_usize("KOBAYASHI_EARLYSTOP_MIN_TRIALS_DIV")
+            .unwrap_or(8)
+            .max(1);
+        let min_trials = (max_iterations / div).max(64).min(max_iterations.max(1));
+        Self {
+            min_trials,
+            check_every: 50,
+            margin: env_f64("KOBAYASHI_EARLYSTOP_MARGIN").unwrap_or(0.01),
+        }
+    }
 }
 
-/// Shared best-so-far tracker for progressive abandonment.
+/// Parse a positive f64 env var, ignoring missing/invalid/non-finite values.
+fn env_f64(key: &str) -> Option<f64> {
+    std::env::var(key)
+        .ok()
+        .and_then(|v| v.trim().parse::<f64>().ok())
+        .filter(|f| f.is_finite() && *f >= 0.0)
+}
+
+/// Parse a positive usize env var, ignoring missing/invalid values.
+fn env_usize(key: &str) -> Option<usize> {
+    std::env::var(key)
+        .ok()
+        .and_then(|v| v.trim().parse::<usize>().ok())
+        .filter(|n| *n > 0)
+}
+
+/// A finished crew's ranking **score** plus the lower bound of its 95% interval, ordered by score
+/// for the leader heap. The score mirrors how [`rank_results`] orders crews — `0.8·win + 0.2·hull`
+/// for single fights, primary success rate for chain grinds — so abandonment prunes against the
+/// metric that actually decides the ranking (not win rate alone, which is blind to hull and so
+/// useless on saturated-win matchups where every crew wins and hull is the differentiator).
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct LeaderEntry {
+    score: f64,
+    ci_low: f64,
+}
+
+impl Eq for LeaderEntry {}
+
+impl PartialOrd for LeaderEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for LeaderEntry {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Scores are finite in [0, 1]; total_cmp keeps the heap well-ordered regardless.
+        self.score.total_cmp(&other.score)
+    }
+}
+
+/// Shared top-K leaderboard for progressive abandonment.
 ///
-/// After each candidate finishes, the best win rate and Wilson bounds are updated.
-/// Running candidates check at their checkpoints whether they can still beat the leader.
-#[derive(Debug, Clone, Default)]
-struct BestSoFar {
-    best_wins: usize,
-    best_trials: usize,
-    best_win_rate: f64,
-    best_win_rate_ci_low: f64,
+/// Tracks the best `k` finished crews by ranking score. The cut line is the **K-th best** crew's
+/// score lower bound; a running candidate whose score upper bound cannot reach `cut − margin`
+/// provably cannot enter the top K and is abandoned. With `k == 1` this is the single-best-leader
+/// behavior used by the scouting pass; larger `k` preserves the full reported top-K set while
+/// pruning the long tail of losers more aggressively.
+#[derive(Debug, Default)]
+struct TopKLeader {
+    k: usize,
+    /// Min-heap (by score) of the best `k` finished crews; the root is the K-th best.
+    top: BinaryHeap<Reverse<LeaderEntry>>,
 }
 
-impl BestSoFar {
-    fn update(&mut self, wins: usize, trials: usize, win_rate: f64, ci_low: f64) {
-        if win_rate > self.best_win_rate {
-            self.best_wins = wins;
-            self.best_trials = trials;
-            self.best_win_rate = win_rate;
-            self.best_win_rate_ci_low = ci_low;
+impl TopKLeader {
+    fn new(k: usize) -> Self {
+        Self {
+            k: k.max(1),
+            top: BinaryHeap::new(),
         }
     }
 
-    /// Returns true if the candidate can still beat the leader given the configured margin.
-    /// When no leader exists yet (0 best trials), always returns true.
-    fn can_beat_leader(&self, candidate_wins: usize, candidate_trials: usize, margin: f64) -> bool {
-        if self.best_trials == 0 {
-            return true;
+    fn update(&mut self, score: f64, ci_low: f64) {
+        let entry = LeaderEntry { score, ci_low };
+        if self.top.len() < self.k {
+            self.top.push(Reverse(entry));
+        } else if let Some(Reverse(worst_of_top)) = self.top.peek() {
+            if entry.score > worst_of_top.score {
+                self.top.pop();
+                self.top.push(Reverse(entry));
+            }
         }
-        let candidate_upper = win_rate_upper_wilson_95(candidate_wins, candidate_trials);
-        candidate_upper >= self.best_win_rate_ci_low - margin
     }
+
+    /// Score lower bound of the current K-th best crew, or `None` until `k` crews have finished
+    /// (no defensible cut exists before the leaderboard is full).
+    fn cut_lower(&self) -> Option<f64> {
+        if self.top.len() < self.k {
+            return None;
+        }
+        self.top.peek().map(|Reverse(e)| e.ci_low)
+    }
+
+    /// Returns true if a candidate with the given score upper bound can still enter the top K under
+    /// the configured margin. Always true until the leaderboard has `k` finished crews.
+    fn can_beat_leader(&self, candidate_score_upper: f64, margin: f64) -> bool {
+        let Some(cut) = self.cut_lower() else {
+            return true;
+        };
+        candidate_score_upper >= cut - margin
+    }
+}
+
+/// Single-fight ranking score from win rate and mean hull remaining, matching [`rank_results`].
+#[inline]
+fn blended_score(win_rate: f64, avg_hull_remaining: f64) -> f64 {
+    0.8 * win_rate + 0.2 * avg_hull_remaining
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -178,7 +278,7 @@ fn run_candidate_chain_monte_carlo(
     max_iterations: usize,
     chain: &ChainGrindParams,
     early_scout: Option<ScoutEarlyStopCfg>,
-    best_so_far: Option<&std::sync::Mutex<BestSoFar>>,
+    best_so_far: Option<&std::sync::Mutex<TopKLeader>>,
     progressive_abandon: Option<ProgressiveAbandonCfg>,
 ) -> SimulationResult {
     let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
@@ -243,8 +343,10 @@ fn run_candidate_chain_monte_carlo(
                 && cfg.check_every > 0
                 && n_done.is_multiple_of(cfg.check_every)
             {
+                // Chain ranking is primary-success dominated; score == primary rate.
+                let score_upper = win_rate_upper_wilson_95(primary_ok, n_done);
                 let leader = bsf.lock().unwrap();
-                if !leader.can_beat_leader(primary_ok, n_done, cfg.margin) {
+                if !leader.can_beat_leader(score_upper, cfg.margin) {
                     break;
                 }
             }
@@ -334,7 +436,7 @@ fn run_candidate_monte_carlo(
     seed: u64,
     max_iterations: usize,
     early_scout: Option<ScoutEarlyStopCfg>,
-    best_so_far: Option<&std::sync::Mutex<BestSoFar>>,
+    best_so_far: Option<&std::sync::Mutex<TopKLeader>>,
     progressive_abandon: Option<ProgressiveAbandonCfg>,
 ) -> SimulationResult {
     let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
@@ -473,11 +575,16 @@ fn run_candidate_monte_carlo(
             }
         }
 
-        // Progressive abandonment check after batch
+        // Progressive abandonment check after batch. Score upper bound = 0.8·(win Wilson upper)
+        // + 0.2·(hull normal upper); `hull_mean`/`hull_m2` track avg_hull_remaining (Welford), so
+        // this matches the blended ranking score the leaderboard is sorted by.
         if let (Some(bsf), Some(cfg)) = (best_so_far, progressive_abandon) {
             if should_checkpoint_abandon(n_done, &cfg) {
+                let win_upper = win_rate_upper_wilson_95(wins, n_done);
+                let hull_upper = normal_upper_95(hull_mean, hull_m2, n_done);
+                let score_upper = blended_score(win_upper, hull_upper);
                 let leader = bsf.lock().unwrap();
-                if !leader.can_beat_leader(wins, n_done, cfg.margin) {
+                if !leader.can_beat_leader(score_upper, cfg.margin) {
                     break;
                 }
             }
@@ -798,6 +905,7 @@ pub fn run_monte_carlo_parallel_deduped_chunked(
 /// across all chunks instead of rebuilding it from disk on every call.
 /// Used by the genetic optimizer where the same (ship, hostile, tier, level, profile) is reused
 /// across every generation and every chunk within a generation.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
     shared: &SharedScenarioData,
     candidates: &[CrewCandidate],
@@ -805,6 +913,7 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
     seed: u64,
     chain_grind: Option<ChainGrindParams>,
     max_unique_per_chunk: usize,
+    abandon_top_k: Option<usize>,
     mut should_continue: impl FnMut() -> bool,
 ) -> Option<Vec<SimulationResult>> {
     if candidates.is_empty() {
@@ -825,19 +934,29 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
         .map(|&i| candidates[i].clone())
         .collect();
 
+    // One leaderboard shared across all chunks so the abandonment cut keeps tightening as crews
+    // finish (per-chunk leaders would reset the cut and prune far less). `None` = no abandonment.
+    let shared_leader = abandon_top_k.map(|k| {
+        (
+            ProgressiveAbandonCfg::for_full_mc(iterations.max(1)),
+            Arc::new(Mutex::new(TopKLeader::new(k.max(1)))),
+        )
+    });
+
     let chunk_sz = max_unique_per_chunk.max(1);
     let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq.len());
     for chunk in uniq.chunks(chunk_sz) {
         if !should_continue() {
             return None;
         }
-        let part = run_monte_carlo_inner(
+        let part = run_monte_carlo_inner_with_leader(
             shared,
             chunk,
             iterations,
             seed,
             true,
             None,
+            shared_leader.clone(),
             chain_grind.clone(),
         );
         for (c, r) in chunk.iter().zip(part) {
@@ -1178,6 +1297,7 @@ pub(crate) fn run_monte_carlo_with_shared(
         seed,
         parallel,
         None,
+        None,
         chain_grind,
     );
     perf_log::log_duration(
@@ -1191,6 +1311,61 @@ pub(crate) fn run_monte_carlo_with_shared(
     out
 }
 
+/// Full Monte Carlo with top-K progressive abandonment: identical statistics to
+/// [`run_monte_carlo_with_shared`] for every crew that survives, but crews whose Wilson upper bound
+/// provably cannot reach the current K-th-best cut line stop early. Preserves the reported top-`k`
+/// ranking while skipping wasted trials on the long tail of losers.
+///
+/// This always applies abandonment — the enable/disable policy lives at the call site (the
+/// exhaustive path gates on `KOBAYASHI_FULLMC_EARLY_STOP`). NOTE: on this codebase's saturated
+/// win/loss matchups abandonment rarely fires, so it is opt-in (see `docs/PERFORMANCE.md`).
+pub(crate) fn run_monte_carlo_confirm_topk_with_shared(
+    shared: SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    parallel: bool,
+    chain_grind: Option<ChainGrindParams>,
+    top_k: usize,
+) -> Vec<SimulationResult> {
+    let t0 = perf_log::perf_start();
+    let cfg = ProgressiveAbandonCfg::for_full_mc(iterations.max(1));
+    let out = run_monte_carlo_inner(
+        &shared,
+        candidates,
+        iterations,
+        seed,
+        parallel,
+        None,
+        Some((cfg, top_k.max(1))),
+        chain_grind,
+    );
+    perf_log::log_duration(
+        &format!(
+            "monte_carlo.confirm_topk(candidates={}, iterations={}, top_k={top_k}, parallel={parallel})",
+            candidates.len(),
+            iterations
+        ),
+        t0,
+    );
+    out
+}
+
+/// Whether full-MC top-K progressive abandonment is enabled on the exhaustive path. **On by
+/// default**: at margin 0.01 the score-aware leader is regression-free and gives ~5–10% on hard
+/// "wins-but-bleeds" PvE while preserving the top-K ranking (`docs/PERFORMANCE.md`). Disable with
+/// `KOBAYASHI_FULLMC_EARLY_STOP=0` (also accepts `false`/`off`/`no`) to get the plain full pass with
+/// byte-identical deep-tail fidelity.
+pub(crate) fn full_mc_early_stop_enabled() -> bool {
+    match std::env::var("KOBAYASHI_FULLMC_EARLY_STOP") {
+        Ok(v) => !matches!(
+            v.trim().to_ascii_lowercase().as_str(),
+            "0" | "false" | "off" | "no"
+        ),
+        Err(_) => true,
+    }
+}
+
 /// Tiered scout phase: same statistics semantics as full MC when no early stop triggers; may use fewer
 /// iterations per crew via Wilson-bound elimination (deterministic given the same iteration order).
 pub(crate) fn run_monte_carlo_scout_phase_with_shared(
@@ -1202,6 +1377,7 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let cfg = ScoutEarlyStopCfg::for_scout_iterations(iterations.max(1));
+    let abandon = ProgressiveAbandonCfg::for_scout_iterations(iterations.max(1));
     run_monte_carlo_inner(
         &shared,
         candidates,
@@ -1209,6 +1385,7 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
         seed,
         parallel,
         Some(cfg),
+        Some((abandon, 1)),
         chain_grind,
     )
 }
@@ -1221,6 +1398,11 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
 /// this threshold and stay on the parallel path.
 const PARALLEL_MIN_WORK_UNITS: usize = 1024;
 
+/// Run Monte Carlo over `candidates`, creating a fresh top-K leaderboard for this call.
+/// The scout pass uses k=1 (single best); the full-MC/confirm pass uses k=top_k so the reported
+/// top-K is preserved. For callers that must share one leaderboard across several batched calls
+/// (e.g. the genetic per-generation chunked eval), use [`run_monte_carlo_inner_with_leader`].
+#[allow(clippy::too_many_arguments)]
 fn run_monte_carlo_inner(
     shared: &SharedScenarioData,
     candidates: &[CrewCandidate],
@@ -1228,20 +1410,44 @@ fn run_monte_carlo_inner(
     seed: u64,
     parallel: bool,
     early_scout: Option<ScoutEarlyStopCfg>,
+    abandon: Option<(ProgressiveAbandonCfg, usize)>,
+    chain_grind: Option<ChainGrindParams>,
+) -> Vec<SimulationResult> {
+    let leader = abandon.map(|(cfg, k)| (cfg, Arc::new(Mutex::new(TopKLeader::new(k.max(1))))));
+    run_monte_carlo_inner_with_leader(
+        shared,
+        candidates,
+        iterations,
+        seed,
+        parallel,
+        early_scout,
+        leader,
+        chain_grind,
+    )
+}
+
+/// Like [`run_monte_carlo_inner`] but takes an externally-owned top-K leaderboard so progressive
+/// abandonment can accumulate across multiple calls (the cut line keeps tightening as more crews
+/// finish). Pass `None` for no abandonment.
+#[allow(clippy::too_many_arguments)]
+fn run_monte_carlo_inner_with_leader(
+    shared: &SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    parallel: bool,
+    early_scout: Option<ScoutEarlyStopCfg>,
+    abandon: Option<(ProgressiveAbandonCfg, Arc<Mutex<TopKLeader>>)>,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     // Auto-degrade to serial when total work is small enough that Rayon's overhead would dominate.
     let work_units = candidates.len().saturating_mul(iterations.max(1));
     let parallel = parallel && work_units >= PARALLEL_MIN_WORK_UNITS;
-    // Shared best-so-far for progressive abandonment: candidates that fall hopelessly
-    // behind the current leader can terminate early, saving sim budget.
-    let best_so_far = Arc::new(Mutex::new(BestSoFar::default()));
-    let progressive_abandon = if early_scout.is_some() {
-        Some(ProgressiveAbandonCfg::for_scout_iterations(
-            iterations.max(1),
-        ))
-    } else {
-        None
+    // Top-K leaderboard for progressive abandonment: candidates that fall hopelessly behind the
+    // current cut line can terminate early, saving sim budget.
+    let (progressive_abandon, best_so_far) = match abandon {
+        Some((cfg, leader)) => (Some(cfg), leader),
+        None => (None, Arc::new(Mutex::new(TopKLeader::new(1)))),
     };
 
     let run_one = |candidate: &CrewCandidate| {
@@ -1266,17 +1472,21 @@ fn run_monte_carlo_inner(
                 progressive_abandon,
             ),
         };
-        // Update the shared leaderboard so other running candidates can compare
-        // at their next checkpoint.
+        // Update the shared leaderboard so other running candidates can compare at their next
+        // checkpoint. Score and its lower bound mirror the ranking metric: blended win+hull for
+        // single fights, primary success rate for chain grinds. The blended lower bound sums the
+        // component lowers — a conservative (looser) bound, so the cut never over-prunes.
         if progressive_abandon.is_some() {
-            let wins = (result.win_rate * result.trials_run as f64).round() as usize;
+            let (score, score_low) = if chain_grind.is_some() {
+                (result.win_rate, result.win_rate_ci_low)
+            } else {
+                (
+                    blended_score(result.win_rate, result.avg_hull_remaining),
+                    blended_score(result.win_rate_ci_low, result.avg_hull_remaining_ci_low),
+                )
+            };
             let mut best = best_so_far.lock().unwrap();
-            best.update(
-                wins,
-                result.trials_run,
-                result.win_rate,
-                result.win_rate_ci_low,
-            );
+            best.update(score, score_low);
         }
         result
     };
@@ -1451,6 +1661,65 @@ mod tests {
     }
 
     #[test]
+    fn topk_leader_no_cut_until_k_finished() {
+        let mut leader = TopKLeader::new(3);
+        assert!(leader.cut_lower().is_none(), "no cut before k crews finish");
+        leader.update(0.9, 0.85);
+        leader.update(0.8, 0.75);
+        assert!(
+            leader.cut_lower().is_none(),
+            "still no cut with only 2 of 3 crews"
+        );
+        // Until the board is full nothing can be abandoned, even a crew with score upper 0.
+        assert!(leader.can_beat_leader(0.0, 0.05));
+    }
+
+    #[test]
+    fn topk_leader_cut_is_kth_best_ci_low() {
+        let mut leader = TopKLeader::new(3);
+        // Insert in arbitrary order; the cut must track the 3rd-best by score.
+        leader.update(0.70, 0.66); // 3rd best
+        leader.update(0.90, 0.86); // 1st best
+        leader.update(0.80, 0.76); // 2nd best
+        let cut = leader.cut_lower().expect("board full");
+        assert!(
+            (cut - 0.66).abs() < 1e-9,
+            "cut should be 3rd-best ci_low (0.66), got {cut}"
+        );
+        // A better crew evicts the weakest and raises the cut to the new 3rd best.
+        leader.update(0.95, 0.91);
+        let cut2 = leader.cut_lower().expect("board full");
+        assert!(
+            (cut2 - 0.76).abs() < 1e-9,
+            "cut should rise to new 3rd-best ci_low (0.76), got {cut2}"
+        );
+    }
+
+    #[test]
+    fn topk_leader_abandons_only_hopeless_candidates() {
+        let mut leader = TopKLeader::new(1);
+        leader.update(0.95, 0.90); // single leader, cut = 0.90
+                                   // A crew whose score upper bound (0.02) is far below 0.90 − margin → abandon.
+        assert!(
+            !leader.can_beat_leader(0.02, 0.05),
+            "hopeless crew should be abandoned"
+        );
+        // A crew whose score upper bound (0.93) clears the cut − margin (0.85) → keep simulating.
+        assert!(
+            leader.can_beat_leader(0.93, 0.05),
+            "contender near the cut should survive"
+        );
+    }
+
+    #[test]
+    fn blended_score_matches_ranking_formula() {
+        // Mirrors rank_results: 0.8·win + 0.2·hull.
+        assert!((blended_score(1.0, 0.0) - 0.8).abs() < 1e-12);
+        assert!((blended_score(1.0, 1.0) - 1.0).abs() < 1e-12);
+        assert!((blended_score(0.0, 0.5) - 0.1).abs() < 1e-12);
+    }
+
+    #[test]
     fn deduped_chunked_returns_none_when_should_continue_false() {
         use std::sync::atomic::{AtomicUsize, Ordering};
         let a = CrewCandidate {
@@ -1506,7 +1775,7 @@ mod tests {
             DefenderOpponent::Hostile,
             None,
         );
-        let full = run_monte_carlo_inner(&shared, &pop, 8, 42, false, None, None);
+        let full = run_monte_carlo_inner(&shared, &pop, 8, 42, false, None, None, None);
         let deduped = run_monte_carlo_parallel_deduped_chunked_with_shared(
             &shared,
             &pop,
@@ -1514,6 +1783,7 @@ mod tests {
             42,
             None,
             pop.len(),
+            None,
             || true,
         )
         .expect("deduped run should complete");

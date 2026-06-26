@@ -46,7 +46,8 @@ use crate::optimizer::monte_carlo::scenario::{
     SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_with_shared, SimulationResult,
+    crew_candidate_stable_hash, full_mc_early_stop_enabled,
+    run_monte_carlo_confirm_topk_with_shared, run_monte_carlo_with_shared, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
@@ -965,15 +966,45 @@ fn optimize_scenario_exhaustive_with_registry(
         }
         return Vec::new();
     }
-    let simulation_results = run_monte_carlo_with_shared(
-        shared_ex,
-        &candidates,
-        scenario.simulation_count.max(1),
-        scenario.seed,
-        true,
-        scenario.chain_grind.clone(),
-    );
+    let sims = scenario.simulation_count.max(1);
+    // Top-K progressive abandonment is opt-in (KOBAYASHI_FULLMC_EARLY_STOP=1): on this codebase's
+    // saturated win/loss matchups it rarely fires and adds leader-lock overhead, so the default is
+    // the plain full pass. See docs/PERFORMANCE.md.
+    let simulation_results = if full_mc_early_stop_enabled() {
+        let abandon_k = exhaustive_abandon_top_k(scenario, candidates.len());
+        run_monte_carlo_confirm_topk_with_shared(
+            shared_ex,
+            &candidates,
+            sims,
+            scenario.seed,
+            true,
+            scenario.chain_grind.clone(),
+            abandon_k,
+        )
+    } else {
+        run_monte_carlo_with_shared(
+            shared_ex,
+            &candidates,
+            sims,
+            scenario.seed,
+            true,
+            scenario.chain_grind.clone(),
+        )
+    };
     rank_results(simulation_results)
+}
+
+/// Conservative leaderboard size for full-MC progressive abandonment on the exhaustive path.
+/// The top `k` crews are always simulated to full depth and ranked exactly; only the long tail
+/// of provable losers is pruned. Floors well above the displayed result count so deep scrolling
+/// still sees a faithful ranking.
+fn exhaustive_abandon_top_k(scenario: &OptimizationScenario<'_>, n_candidates: usize) -> usize {
+    const FULL_MC_ABANDON_MIN_K: usize = 64;
+    scenario
+        .tiered_top_k
+        .unwrap_or_else(|| tiered_top_k_for_workload(n_candidates))
+        .max(DEFAULT_TOP_K)
+        .max(FULL_MC_ABANDON_MIN_K)
 }
 
 /// Exhaustive/sampled path: generator → Monte Carlo → rank.
@@ -1791,6 +1822,7 @@ mod tests {
     use crate::combat::EnemyType;
     use crate::data::data_registry::DataRegistry;
     use crate::optimizer::constraints::CrewSearchConstraints;
+    use crate::optimizer::crew_generator::CrewGenerator;
     use crate::optimizer::crew_generator::{
         build_officer_pools_from_registry, CrewCandidate, DEFAULT_BELOW_DECKS_SLOTS,
         NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS,
@@ -1800,6 +1832,11 @@ mod tests {
         build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
         DefenderOpponent,
     };
+    use crate::optimizer::monte_carlo::{
+        run_monte_carlo_confirm_topk_with_shared,
+        run_monte_carlo_parallel_deduped_chunked_with_shared, run_monte_carlo_with_shared,
+    };
+    use crate::optimizer::ranking::rank_results;
 
     #[test]
     fn analytical_rank_score_prior_reference_boosts_identical_crew() {
@@ -2045,6 +2082,183 @@ mod tests {
         assert_eq!(
             keep_prior[0].below_decks.last().map(String::as_str),
             Some("Nyota Uhura")
+        );
+    }
+
+    #[test]
+    fn confirm_topk_preserves_ranking_vs_full_pass() {
+        // Full-MC top-K progressive abandonment must not change the answer: every crew that runs
+        // to full depth is byte-identical to the no-abandonment baseline (same per-crew seeds), the
+        // winner is preserved, and some losers really do get abandoned (otherwise the test is moot).
+        //
+        // botany_bay (a weak survey hull) vs hostile 38048587 is a borderline matchup: a few crews
+        // win meaningfully while most lose outright, giving the win-rate spread that lets the leader
+        // cut prune the hopeless tail. (Most PvE matchups are all-win or all-lose, where win-rate
+        // abandonment is a safe no-op and ranking is driven by hull remaining instead.)
+        let registry = DataRegistry::load().expect("data registry");
+        let ship = "botany_bay";
+        let hostile = "38048587";
+        let candidates: Vec<CrewCandidate> = CrewGenerator::new()
+            .generate_candidates_from_registry(&registry, ship, hostile, 7, None)
+            .into_iter()
+            .take(80)
+            .collect();
+        if candidates.len() < 20 {
+            // Generation depends on local data; nothing to assert without a real population.
+            return;
+        }
+
+        let sims = 2000usize;
+        let seed = 7u64;
+        let k = 2usize;
+
+        let build_shared = || {
+            build_shared_scenario_data_from_registry(
+                &registry,
+                ship,
+                hostile,
+                Some(1),
+                Some(1),
+                None,
+                crate::data::support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            )
+        };
+
+        // Serial (parallel=false) so the leaderboard evolves deterministically.
+        let baseline =
+            run_monte_carlo_with_shared(build_shared(), &candidates, sims, seed, false, None);
+        let treatment = run_monte_carlo_confirm_topk_with_shared(
+            build_shared(),
+            &candidates,
+            sims,
+            seed,
+            false,
+            None,
+            k,
+        );
+
+        assert_eq!(baseline.len(), treatment.len());
+
+        let mut abandoned = 0usize;
+        for (b, t) in baseline.iter().zip(treatment.iter()) {
+            if t.trials_run < sims {
+                // Abandoned crews ran fewer trials; their (lower-fidelity) stats are not compared.
+                // They are provably out of the top-K — the leader-cut guarantee is unit-tested.
+                abandoned += 1;
+            } else {
+                // Un-abandoned crews are identical to the baseline (same seeds, same trial count).
+                assert_eq!(
+                    t.trials_run, b.trials_run,
+                    "full-depth crew should match baseline trial count"
+                );
+                assert!(
+                    (t.win_rate - b.win_rate).abs() < 1e-12,
+                    "full-depth crew win rate must match baseline exactly"
+                );
+                assert!(
+                    (t.avg_hull_remaining - b.avg_hull_remaining).abs() < 1e-12,
+                    "full-depth crew hull must match baseline exactly"
+                );
+            }
+        }
+
+        assert!(
+            abandoned > 0,
+            "expected some losing crews to be abandoned (population={}, k={k})",
+            candidates.len()
+        );
+
+        // The top-ranked crew must be identical under both paths.
+        let best_baseline = rank_results(baseline);
+        let best_treatment = rank_results(treatment);
+        let bb = &best_baseline[0];
+        let bt = &best_treatment[0];
+        assert_eq!(
+            (&bb.captain, &bb.bridge, &bb.below_decks),
+            (&bt.captain, &bt.bridge, &bt.below_decks),
+            "winner must be preserved by progressive abandonment"
+        );
+    }
+
+    #[test]
+    fn chunked_topk_shared_leader_preserves_survivors() {
+        // The shared-leader chunked path (used by the genetic per-generation eval) must keep its
+        // top-K survivors byte-identical to the no-abandonment baseline while abandoning hopeless
+        // crews. Same borderline matchup as the exhaustive test for win-rate spread.
+        let registry = DataRegistry::load().expect("data registry");
+        let ship = "botany_bay";
+        let hostile = "38048587";
+        let candidates: Vec<CrewCandidate> = CrewGenerator::new()
+            .generate_candidates_from_registry(&registry, ship, hostile, 7, None)
+            .into_iter()
+            .take(80)
+            .collect();
+        if candidates.len() < 20 {
+            return;
+        }
+
+        let sims = 2000usize;
+        let seed = 7u64;
+        let chunk = 8usize;
+        let k = 2usize;
+
+        let build_shared = || {
+            build_shared_scenario_data_from_registry(
+                &registry,
+                ship,
+                hostile,
+                Some(1),
+                Some(1),
+                None,
+                crate::data::support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            )
+        };
+
+        let baseline = run_monte_carlo_parallel_deduped_chunked_with_shared(
+            &build_shared(),
+            &candidates,
+            sims,
+            seed,
+            None,
+            chunk,
+            None,
+            || true,
+        )
+        .expect("baseline run");
+        let treatment = run_monte_carlo_parallel_deduped_chunked_with_shared(
+            &build_shared(),
+            &candidates,
+            sims,
+            seed,
+            None,
+            chunk,
+            Some(k),
+            || true,
+        )
+        .expect("treatment run");
+
+        assert_eq!(baseline.len(), treatment.len());
+        let mut abandoned = 0usize;
+        for (b, t) in baseline.iter().zip(treatment.iter()) {
+            if t.trials_run < sims {
+                abandoned += 1;
+            } else {
+                assert!(
+                    (t.win_rate - b.win_rate).abs() < 1e-12,
+                    "full-depth crew win rate must match baseline exactly"
+                );
+            }
+        }
+        assert!(
+            abandoned > 0,
+            "expected some losers abandoned across chunks (n={}, k={k})",
+            candidates.len()
         );
     }
 

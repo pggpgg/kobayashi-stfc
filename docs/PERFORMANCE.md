@@ -68,8 +68,41 @@ Yes, the sim runs faster with these fixes. Criterion reported significant improv
 - `**KOBAYASHI_RAYON_THREADS`**: positive integer → use a Rayon pool with that many worker threads for code paths that use `WorkerPool::install` (`src/parallel/pool.rs`; default remains “all cores” when unset or `0`).
 - `**KOBAYASHI_PERF_LOG=1`**: logs wall-clock for crew generation and full Monte Carlo batches with shared scenario data (stderr); zero overhead when unset.
 - `**KOBAYASHI_EXPERIMENTAL_SIMD_DAMAGE_KERNEL=1**`: when AVX2 is available and combat trace is off, batches per-hit `damage_after_apex` math (4-wide) for outbound shots and defender counter-fire in `src/combat/engine.rs` via `simd_damage_kernel` (experimental; keep off by default while measuring).
+- `**KOBAYASHI_FULLMC_EARLY_STOP=0**`: disable top-K progressive abandonment on the exhaustive full Monte Carlo pass (**on by default** — see below; `=0` restores the plain full pass with byte-identical deep-tail fidelity).
+- `**KOBAYASHI_GENETIC_EARLY_STOP=1**`: **opt-in** — enable it on the genetic per-generation full-budget population eval (default off; regresses on tested matchups due to shared-leader lock contention).
+- `**KOBAYASHI_EARLYSTOP_MARGIN**` (default `0.01`) / `**KOBAYASHI_EARLYSTOP_MIN_TRIALS_DIV**` (default `8`): tune the abandonment cut margin (blended-score scale) and the per-crew minimum-trials floor (`iterations / div`).
 
 Tiered optimization reuses one `SharedScenarioData` build per phase (`src/optimizer/monte_carlo/scenario.rs`), uses adaptive batch counts via `monte_carlo_batch_count_for_candidates` (`src/parallel/batch.rs`), and runs the scout pass with Wilson-bound early stopping where safe (confirmation pass unchanged).
+
+## Top-K progressive abandonment (exhaustive + genetic) — opt-in, score-aware
+
+The exhaustive full Monte Carlo and the genetic per-generation eval previously simulated **every** candidate to full depth, even crews clearly losing. The scout pass's progressive-abandonment machinery was generalized to a **top-K leaderboard** (`TopKLeader`, `src/optimizer/monte_carlo/simulation.rs`) keyed on the **ranking score**, not win rate:
+
+- The leaderboard sorts finished crews by the same score [`rank_results`] uses — `0.8·win + 0.2·hull` for single fights, primary success rate for chain grinds (`blended_score`). The cut line is the **K-th-best crew's score 95% lower bound**; a running crew whose score upper bound (`0.8·win-Wilson-upper + 0.2·hull-normal-upper`) cannot reach `cut − margin` is abandoned at the next checkpoint. No cut exists until `K` crews finish, and each crew runs ≥ `min_trials` first, so survivors keep full-fidelity stats. The top-1 winner is preserved by construction.
+- Exhaustive uses `K = max(tiered_top_k_or_default, 64)`; the genetic path shares **one** leaderboard across all chunks within a generation (`K = max(pop/2, elitism+8, 16)`) so the cut keeps tightening. Correctness: `confirm_topk_preserves_ranking_vs_full_pass`, `chunked_topk_shared_leader_preserves_survivors`, and `TopKLeader` unit tests (un-abandoned crews byte-identical to the no-abandonment baseline; winner unchanged).
+
+### The margin must be scaled to the hull weight
+
+Because hull contributes only **0.2** of the blended score, a score margin of `m` is a **hull gap of `m / 0.2 = 5m`**. The original `0.05` margin therefore demanded a 0.25-hull gap that almost never exists, so on real hull-spread matchups it pruned **nothing**. The default is now **`0.01`** (≈ a 0.05 hull gap, still ~4× the score CI half-width at the first checkpoint → never over-prunes; winner held across the sweep down to 0.002).
+
+### Benchmark (`src/bin/early_stop_bench.rs`, M-series mac, release, 3-rep median)
+
+Where it bites: matchups where a properly-statted ship **wins reliably but takes crew-dependent hull damage** (multi-round fights vs hard hostiles), e.g. maxed Enterprise-D (demo roster, T12 L60) vs hostile `10264305` (win=1.0, hull spread 0.85–1.00). Margin sweep on that scenario:
+
+| margin | pruned | speedup | winner |
+|---|---|---|---|
+| 0.05 (old default) | 0% | 0.93× | ✅ |
+| 0.02 | 6% | 1.02× | ✅ |
+| **0.01 (default)** | **10%** | **1.06×** | ✅ |
+| 0.005 | 10% | 1.10× | ✅ |
+
+Other scenarios (margin 0.01): expensive borderline `21007889` (44s) → 9% pruned, **1.06×**; Enterprise-D vs `3931453197` (hull 0.92–0.93, *tight*) → 0% pruned, neutral (crews are genuinely near-equal — nothing to prune); saladin one-shot saturated-win → 0% pruned, neutral. Winner identical in every case.
+
+**Where it does *not* help:** dominant one-shot matchups (`win=1, hull=1` for every crew — `avg_hull_remaining` is an overkill ratio clamped to 1.0) and hopeless matchups (`win=0`). There is no spread to exploit, so abandonment correctly prunes nothing and is ~neutral. The win is real but **modest (~5–10%) and confined to the "wins-but-bleeds" regime**, because only the clearly-worst ~10% of crews sit far enough below the cut to prune safely; survivors still run ≥ `min_trials`.
+
+**Determinism caveat (when enabled):** under parallel execution the number of trials an *abandoned* (losing) crew runs depends on completion order, so its low-fidelity tail stats are not bit-reproducible; the reported top-K ranking is. The GA's `ga_run_returns_stable_shape_for_same_seed` guarantee (structural shape only) is unaffected.
+
+**Bottom line:** the score-aware leader at margin 0.01 is the correct, regression-free version and delivers ~5–10% on hard "wins-but-bleeds" PvE while preserving the top-K ranking, so it is **on by default for the exhaustive path** (`KOBAYASHI_FULLMC_EARLY_STOP=0` to opt out for byte-identical deep-tail fidelity). The **genetic** path stays opt-in — it still regresses from shared-leader lock contention with little pruning. For broad optimizer-speed wins on this workload the bigger lever remains **candidate-space reduction** (analytical prefilter; `docs/PVE_CREW_SEARCH_SPACE_REDUCTION.md`). Not yet wired (same primitive applies): the tiered **confirmation** pass and the **batched** exhaustive/multi-hostile paths.
 
 ## Tier 5: resolve-cache fix for the analytical prefilter (2026-06)
 

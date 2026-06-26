@@ -106,6 +106,20 @@ fn fitness_from_result(result: &SimulationResult) -> f32 {
     }
 }
 
+/// Whether per-generation full-budget population evals prune hopeless crews via top-K progressive
+/// abandonment. **Opt-in** (default off): benchmarks showed it rarely fires on this codebase's
+/// saturated win/loss matchups and the shared-leader lock adds contention, making it a small net
+/// regression by default. Enable with `KOBAYASHI_GENETIC_EARLY_STOP=1` (also `true`/`on`/`yes`).
+fn genetic_early_stop_enabled() -> bool {
+    match std::env::var("KOBAYASHI_GENETIC_EARLY_STOP") {
+        Ok(v) => matches!(
+            v.trim().to_ascii_lowercase().as_str(),
+            "1" | "true" | "on" | "yes"
+        ),
+        Err(_) => false,
+    }
+}
+
 /// Configuration for the genetic algorithm.
 #[derive(Debug, Clone)]
 pub struct GeneticConfig {
@@ -698,6 +712,20 @@ pub fn run_genetic_optimizer(
     let mut last_stable_best: Vec<CrewCandidate> = Vec::new();
     let uniq_chunk = (config.population_size / 8).clamp(1, 64);
 
+    // Top-K progressive abandonment for full-budget population evals: keep the better half of the
+    // population (plus all elites, with headroom for tournament contenders) at full sims while the
+    // clear losers stop early. Applied only to the full-sims passes — the cheap scout pass and the
+    // already-promising promoted offspring run unchanged. `None` disables it entirely.
+    let abandon_top_k: Option<usize> = if genetic_early_stop_enabled() {
+        Some(
+            (config.population_size / 2)
+                .max(config.elitism_count + 8)
+                .max(16),
+        )
+    } else {
+        None
+    };
+
     // Incremental fitness: cache simulation results for elite individuals by crew hash
     // so they are not re-evaluated when carried over to the next generation.
     let mut elite_cache: HashMap<u64, SimulationResult> = HashMap::new();
@@ -749,6 +777,8 @@ pub fn run_genetic_optimizer(
                         seed.wrapping_add(generation as u64),
                         config.chain_grind.clone(),
                         uniq_chunk,
+                        // Scout is already a cheap reduced-budget pass; no extra abandonment.
+                        None,
                         &mut eval_should_continue,
                     ) {
                         Some(rows) => rows,
@@ -805,6 +835,8 @@ pub fn run_genetic_optimizer(
                                 seed.wrapping_add(generation as u64).wrapping_add(0xDEAD),
                                 config.chain_grind.clone(),
                                 uniq_chunk,
+                                // Already-promoted contenders: run them all to full depth.
+                                None,
                                 &mut eval_should_continue,
                             ) {
                                 Some(rows) => rows,
@@ -826,6 +858,7 @@ pub fn run_genetic_optimizer(
                         seed.wrapping_add(generation as u64),
                         config.chain_grind.clone(),
                         uniq_chunk,
+                        abandon_top_k,
                         &mut eval_should_continue,
                     ) {
                         Some(rows) => rows,
@@ -858,6 +891,7 @@ pub fn run_genetic_optimizer(
                 seed.wrapping_add(generation as u64),
                 config.chain_grind.clone(),
                 uniq_chunk,
+                abandon_top_k,
                 &mut eval_should_continue,
             ) {
                 Some(rows) => rows,
