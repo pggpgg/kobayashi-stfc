@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-06-14",
+  "last_updated": "2026-06-26",
   "items": [
     {
       "rid": 2999437,
@@ -2598,6 +2598,114 @@
             {
               "stat": "weapon_damage",
               "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 139457186,
+      "name": "PvP Takeover Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 2,
               "operator": "add"
             }
           ]
@@ -5966,6 +6074,242 @@
             {
               "stat": "weapon_damage",
               "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 308351031,
+      "name": "TC PvE Apex Shred",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 309215217,
+      "name": "PvP Takeover Apex Barrier",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 1500,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 2000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 2500,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 3000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 4000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 5000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 7000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 9000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 12000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 15000,
               "operator": "add"
             }
           ]
@@ -12028,6 +12372,114 @@
       ]
     },
     {
+      "rid": 628309109,
+      "name": "FKR PvP Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 631978570,
       "name": "Interceptor Protocols",
       "data_version": "stfcspace-upstream",
@@ -16738,6 +17190,104 @@
       ]
     },
     {
+      "rid": 791148987,
+      "name": "Federation PvE Isolytic Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 796713520,
       "name": "Surge Damage",
       "data_version": "stfcspace-upstream",
@@ -16839,6 +17389,114 @@
             {
               "stat": "weapon_damage",
               "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 801200757,
+      "name": "PvP Takeover Critical Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.012,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.016,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.021,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.026000000000000002,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.032,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.04,
               "operator": "add"
             }
           ]
@@ -17046,6 +17704,134 @@
               "value": 0.015,
               "operator": "add",
               "attacker_faction": "federation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 816547130,
+      "name": "TC PvE Apex Barrier",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 1000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 2000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 3000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 4000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 5000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 6000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 8000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 10000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 12500,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 15000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 17000,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "apex_barrier",
+              "value": 20000,
+              "operator": "add"
             }
           ]
         }
@@ -18291,6 +19077,134 @@
             {
               "stat": "weapon_damage",
               "value": 0.025,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 888854331,
+      "name": "TC PvE Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.075,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.125,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -20083,6 +20997,114 @@
       ]
     },
     {
+      "rid": 1057738437,
+      "name": "Weapon Damage When Attacked",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1058395337,
       "name": "Seek and Destroy Isolytic Damage",
       "data_version": "stfcspace-upstream",
@@ -20901,6 +21923,104 @@
             {
               "stat": "weapon_damage",
               "value": 0.015,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1111844469,
+      "name": "FKR Federation PvE Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 2,
               "operator": "add"
             }
           ]
@@ -23821,6 +24941,104 @@
       ]
     },
     {
+      "rid": 1232449176,
+      "name": "FKR Romulan PvE Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1238392681,
       "name": "Krenim Formation Damage",
       "data_version": "stfcspace-upstream",
@@ -25613,6 +26831,114 @@
       ]
     },
     {
+      "rid": 1322960505,
+      "name": "PvE Energy Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.16,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1325737243,
       "name": "Unstoppable Explorers",
       "data_version": "stfcspace-upstream",
@@ -27184,6 +28510,114 @@
             {
               "stat": "crit_damage",
               "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1400055290,
+      "name": "Romulan PvE Apex Shred",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.5,
               "operator": "add"
             }
           ]
@@ -28773,6 +30207,114 @@
             {
               "stat": "weapon_damage",
               "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1481220337,
+      "name": "PvE Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.16,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
               "operator": "add"
             }
           ]
@@ -30815,6 +32357,114 @@
             {
               "stat": "shield_hp",
               "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1628964776,
+      "name": "<color=#fac710>Vanguard</color> PvE Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -33855,6 +35505,114 @@
       ]
     },
     {
+      "rid": 1735469745,
+      "name": "PvP Critical Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 1.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "crit_damage",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1738747951,
       "name": "6⇵ Battleship Absorbers",
       "data_version": "stfcspace-upstream",
@@ -34552,6 +36310,104 @@
             {
               "stat": "crit_damage",
               "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1772824305,
+      "name": "FKR Klingon PvE Isolytic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 2,
               "operator": "add"
             }
           ]
@@ -36545,6 +38401,114 @@
             {
               "stat": "shield_hp",
               "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1890472028,
+      "name": "<color=#fac710>Vanguard</color> Kinetic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -39203,6 +41167,74 @@
       ]
     },
     {
+      "rid": 2027106908,
+      "name": "G6 Station Base Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2032670410,
       "name": "Pregnable Interceptors",
       "data_version": "stfcspace-upstream",
@@ -41689,6 +43721,114 @@
               "value": 0.3,
               "operator": "add",
               "attacker_faction": "klingon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2165613457,
+      "name": "Federation PvE Apex Shred",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.5,
+              "operator": "add"
             }
           ]
         }
@@ -45153,6 +47293,114 @@
       ]
     },
     {
+      "rid": 2412366910,
+      "name": "<color=#fac710>Vanguard</color> Station Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2419503400,
       "name": "Infinitus (VI'DAR)",
       "data_version": "stfcspace-upstream",
@@ -46209,6 +48457,104 @@
               "value": 0.01,
               "operator": "add",
               "defender_faction": "federation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2467447224,
+      "name": "Romulan PvE Isolytic Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.03,
+              "operator": "add"
             }
           ]
         }
@@ -50627,6 +52973,104 @@
           "bonuses": [
             {
               "stat": "shield_hp",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2656699697,
+      "name": "PvP Takeover Isolytic Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
               "value": 0.04,
               "operator": "add"
             }
@@ -61791,6 +64235,114 @@
       ]
     },
     {
+      "rid": 3287007987,
+      "name": "Klingon PvE Apex Shred",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "apex_shred",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3288510533,
       "name": "Ancient Vulcan Scroll",
       "data_version": "stfcspace-upstream",
@@ -64571,6 +67123,114 @@
       ]
     },
     {
+      "rid": 3423145880,
+      "name": "<color=#fac710>Vanguard</color> PvP Weapon Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3447567285,
       "name": "Valdore Hull Plating",
       "data_version": "stfcspace-upstream",
@@ -66422,6 +69082,232 @@
       ]
     },
     {
+      "rid": 3523000684,
+      "name": "TC PvE Kinetic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.075,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.125,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3525039791,
+      "name": "Klingon PvE Isolytic Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3525583089,
       "name": "Enhanced Piercing",
       "data_version": "stfcspace-upstream",
@@ -67262,6 +70148,114 @@
                 "klingon",
                 "romulan"
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3552600679,
+      "name": "PvE Kinetic Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.16,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
             }
           ]
         }
@@ -72062,6 +75056,114 @@
       ]
     },
     {
+      "rid": 3859262283,
+      "name": "<color=#fac710>Vanguard</color> Energy Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3861991027,
       "name": "Critical Fusion Impact",
       "data_version": "stfcspace-upstream",
@@ -73269,6 +76371,114 @@
             {
               "stat": "weapon_damage",
               "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3923483827,
+      "name": "FKR PvP Isolytic Defense",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "isolytic_defense",
+              "value": 0.7,
               "operator": "add"
             }
           ]
