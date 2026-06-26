@@ -109,6 +109,10 @@
       "category": "cost_reduction_meta",
       "reason": "INDEPENDENT ARCHIVES: Increases Cost Efficiency of Parsteel, Tritanium, and Dilithium for a…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
     },
+    "buff_1350723279": {
+      "category": "takeover_pvp_unmodeled",
+      "reason": "Continuum Consulate: Increases the Apex Barrier of all G6+ FKR ships vs Players during Takeovers.; PvP territory takeover (Apex Barrier); intentionally unmapped for ship-vs-hostile sim"
+    },
     "buff_1361889997": {
       "category": "economy_meta",
       "reason": "Parsteel Generator B: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
@@ -281,6 +285,10 @@
       "category": "cost_reduction_meta",
       "reason": "Holodeck: Increases base Cost Efficiency of Ship Parts in ship components each …; cost reduction; intentionally unmapped for ship-vs-hostile sim"
     },
+    "buff_2158694630": {
+      "category": "economy_meta",
+      "reason": "Continuum Consulate: Increases the Mining Rate of 1⇴2⇴3⇴ Isogenite.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
     "buff_2180825491": {
       "category": "economy_meta",
       "reason": "Parsteel Generator D: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
@@ -433,6 +441,10 @@
       "category": "unlock_meta",
       "reason": "Exocomp Factory: The amount of Axionic Chips that can be claimed daily in the Consumab…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
     },
+    "buff_2746346798": {
+      "category": "economy_meta",
+      "reason": "Continuum Consulate: Increases the base Construction Speed for all buildings.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
     "buff_2769496474": {
       "category": "economy_meta",
       "reason": "Drydock C: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
@@ -464,6 +476,10 @@
     "buff_2993973268": {
       "category": "economy_meta",
       "reason": "Dilithium Generator H: The Σ-Dilithium Storage indicates how much Σ-Dilithium this Generator…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2995632584": {
+      "category": "economy_meta",
+      "reason": "Continuum Consulate: Increases the Mining Rate of ⇔ Isogenite Geodes.; economy/meta; intentionally unmapped for ship-vs-hostile sim"
     },
     "buff_3005330147": {
       "category": "economy_meta",
@@ -588,6 +604,10 @@
     "buff_3383388089": {
       "category": "economy_meta",
       "reason": "Parsteel Generator A: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_338434574": {
+      "category": "unlock_meta",
+      "reason": "Continuum Consulate: Unlocks an exclusive daily refinery. <i>Refinery rewards are improved…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
     },
     "buff_341625291": {
       "category": "crit_mitigation_unmodeled",
@@ -737,6 +757,10 @@
       "category": "economy_meta",
       "reason": "Parsteel Generator E: The Σ-Parsteel Production Rate Per Hour of this Generator is increase…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
     },
+    "buff_3976024909": {
+      "category": "cost_reduction_meta",
+      "reason": "Continuum Consulate: Increases the base Cost Efficiency of Refined Isogenite in the Territ…; cost reduction; intentionally unmapped for ship-vs-hostile sim"
+    },
     "buff_3980673100": {
       "category": "economy_meta",
       "reason": "Collisonal Plasma Harvester B: The amount of Collisional Plasma which can be stored within this harv…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
@@ -788,6 +812,10 @@
     "buff_4159642322": {
       "category": "economy_meta",
       "reason": "Dilithium Vault: The amount of Σ-Dilithium that cannot be stolen when your station get…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_4183662952": {
+      "category": "takeover_pvp_unmodeled",
+      "reason": "Continuum Consulate: Increases the number of points scored from Capture Nodes during a Takeover.; PvP territory takeover (scoring); intentionally unmapped for ship-vs-hostile sim"
     },
     "buff_4204537705": {
       "category": "economy_meta",

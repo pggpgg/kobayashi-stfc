@@ -1,5 +1,5 @@
 {
-  "data_version": "stfcspace-hostiles-2026-06-21",
+  "data_version": "stfcspace-hostiles-2026-06-26",
   "source_note": "data.stfc.space hostile detail (cached under data/upstream/data-stfc-space/hostiles)",
   "hostiles": [
     {
@@ -516,6 +516,15 @@
       "loca_id": 11001
     },
     {
+      "id": "43083229",
+      "hostile_name": "Hostile 43083229",
+      "level": 70,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92002
+    },
+    {
       "id": "43605166",
       "hostile_name": "Hostile 43605166",
       "level": 39,
@@ -721,6 +730,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 84507
+    },
+    {
+      "id": "70516218",
+      "hostile_name": "Hostile 70516218",
+      "level": 66,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92002
     },
     {
       "id": "71958042",
@@ -2433,6 +2451,15 @@
       "loca_id": 41050
     },
     {
+      "id": "215012426",
+      "hostile_name": "Hostile 215012426",
+      "level": 63,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92003
+    },
+    {
       "id": "215655405",
       "hostile_name": "Hostile 215655405",
       "level": 33,
@@ -2476,6 +2503,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 84510
+    },
+    {
+      "id": "217425824",
+      "hostile_name": "Hostile 217425824",
+      "level": 73,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92003
     },
     {
       "id": "218968372",
@@ -3585,6 +3621,15 @@
       "loca_id": 12005
     },
     {
+      "id": "321061966",
+      "hostile_name": "Hostile 321061966",
+      "level": 63,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92002
+    },
+    {
       "id": "321380173",
       "hostile_name": "Hostile 321380173",
       "level": 40,
@@ -4330,6 +4375,15 @@
       "rarity": 3,
       "upstream_ship_type": 1,
       "loca_id": 46005
+    },
+    {
+      "id": "398964986",
+      "hostile_name": "Hostile 398964986",
+      "level": 70,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92002
     },
     {
       "id": "400241533",
@@ -5556,6 +5610,15 @@
       "loca_id": 10003
     },
     {
+      "id": "519457139",
+      "hostile_name": "Hostile 519457139",
+      "level": 66,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92003
+    },
+    {
       "id": "520074544",
       "hostile_name": "Hostile 520074544",
       "level": 63,
@@ -5997,6 +6060,15 @@
       "loca_id": 35012
     },
     {
+      "id": "559778057",
+      "hostile_name": "Hostile 559778057",
+      "level": 70,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92003
+    },
+    {
       "id": "560759731",
       "hostile_name": "Hostile 560759731",
       "level": 58,
@@ -6112,6 +6184,15 @@
       "rarity": 3,
       "upstream_ship_type": 1,
       "loca_id": 18004
+    },
+    {
+      "id": "569574257",
+      "hostile_name": "Hostile 569574257",
+      "level": 61,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92001
     },
     {
       "id": "569647804",
@@ -8643,6 +8724,15 @@
       "loca_id": 60052
     },
     {
+      "id": "805605344",
+      "hostile_name": "Hostile 805605344",
+      "level": 60,
+      "ship_class": "survey",
+      "rarity": 1,
+      "upstream_ship_type": 10,
+      "loca_id": 92004
+    },
+    {
       "id": "806172425",
       "hostile_name": "Hostile 806172425",
       "level": 39,
@@ -8731,6 +8821,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 84512
+    },
+    {
+      "id": "812581453",
+      "hostile_name": "Hostile 812581453",
+      "level": 63,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92003
     },
     {
       "id": "813956656",
@@ -8911,6 +9010,15 @@
       "rarity": 2,
       "upstream_ship_type": 1,
       "loca_id": 400
+    },
+    {
+      "id": "827555808",
+      "hostile_name": "Hostile 827555808",
+      "level": 65,
+      "ship_class": "survey",
+      "rarity": 2,
+      "upstream_ship_type": 1,
+      "loca_id": 92008
     },
     {
       "id": "828431833",
@@ -10857,6 +10965,15 @@
       "loca_id": 47046
     },
     {
+      "id": "989928726",
+      "hostile_name": "Hostile 989928726",
+      "level": 76,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92003
+    },
+    {
       "id": "990461628",
       "hostile_name": "Hostile 990461628",
       "level": 70,
@@ -11307,6 +11424,15 @@
       "loca_id": 84507
     },
     {
+      "id": "1029134381",
+      "hostile_name": "Hostile 1029134381",
+      "level": 76,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92003
+    },
+    {
       "id": "1029311334",
       "hostile_name": "Hostile 1029311334",
       "level": 37,
@@ -11728,6 +11854,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 69116
+    },
+    {
+      "id": "1073900199",
+      "hostile_name": "Hostile 1073900199",
+      "level": 63,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92002
     },
     {
       "id": "1074936661",
@@ -13449,6 +13584,15 @@
       "loca_id": 10023
     },
     {
+      "id": "1226415569",
+      "hostile_name": "Hostile 1226415569",
+      "level": 66,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92003
+    },
+    {
       "id": "1227478450",
       "hostile_name": "Hostile 1227478450",
       "level": 62,
@@ -14608,6 +14752,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 84515
+    },
+    {
+      "id": "1337891437",
+      "hostile_name": "Hostile 1337891437",
+      "level": 63,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92002
     },
     {
       "id": "1337910216",
@@ -21486,6 +21639,15 @@
       "loca_id": 59057
     },
     {
+      "id": "1918262460",
+      "hostile_name": "Hostile 1918262460",
+      "level": 63,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92003
+    },
+    {
       "id": "1919274356",
       "hostile_name": "Hostile 1919274356",
       "level": 76,
@@ -22242,6 +22404,15 @@
       "loca_id": 86211
     },
     {
+      "id": "1976160635",
+      "hostile_name": "Hostile 1976160635",
+      "level": 66,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92003
+    },
+    {
       "id": "1976271312",
       "hostile_name": "Hostile 1976271312",
       "level": 48,
@@ -22519,6 +22690,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 67102
+    },
+    {
+      "id": "2005317425",
+      "hostile_name": "Hostile 2005317425",
+      "level": 73,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92003
     },
     {
       "id": "2005649914",
@@ -25590,6 +25770,15 @@
       "loca_id": 446
     },
     {
+      "id": "2292730107",
+      "hostile_name": "Hostile 2292730107",
+      "level": 66,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92002
+    },
+    {
       "id": "2293084559",
       "hostile_name": "Hostile 2293084559",
       "level": 58,
@@ -25806,6 +25995,15 @@
       "loca_id": 80601
     },
     {
+      "id": "2308162840",
+      "hostile_name": "Hostile 2308162840",
+      "level": 73,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92003
+    },
+    {
       "id": "2308192177",
       "hostile_name": "Hostile 2308192177",
       "level": 68,
@@ -25957,6 +26155,15 @@
       "rarity": 1,
       "upstream_ship_type": 11,
       "loca_id": 13201
+    },
+    {
+      "id": "2316920350",
+      "hostile_name": "Hostile 2316920350",
+      "level": 80,
+      "ship_class": "survey",
+      "rarity": 1,
+      "upstream_ship_type": 10,
+      "loca_id": 92006
     },
     {
       "id": "2317011387",
@@ -26218,6 +26425,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 80103
+    },
+    {
+      "id": "2345423626",
+      "hostile_name": "Hostile 2345423626",
+      "level": 76,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92003
     },
     {
       "id": "2345625121",
@@ -26947,6 +27163,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 77200
+    },
+    {
+      "id": "2411496432",
+      "hostile_name": "Hostile 2411496432",
+      "level": 61,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92001
     },
     {
       "id": "2411787182",
@@ -29442,6 +29667,15 @@
       "loca_id": 36008
     },
     {
+      "id": "2612321971",
+      "hostile_name": "Hostile 2612321971",
+      "level": 70,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92002
+    },
+    {
       "id": "2613145983",
       "hostile_name": "Hostile 2613145983",
       "level": 30,
@@ -31258,6 +31492,15 @@
       "rarity": 1,
       "upstream_ship_type": 11,
       "loca_id": 11001
+    },
+    {
+      "id": "2775243943",
+      "hostile_name": "Hostile 2775243943",
+      "level": 66,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92002
     },
     {
       "id": "2776271068",
@@ -33501,6 +33744,15 @@
       "loca_id": 54059
     },
     {
+      "id": "2971568885",
+      "hostile_name": "Hostile 2971568885",
+      "level": 70,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92003
+    },
+    {
       "id": "2971695152",
       "hostile_name": "Hostile 2971695152",
       "level": 38,
@@ -34354,6 +34606,24 @@
       "rarity": 1,
       "upstream_ship_type": 10,
       "loca_id": 14020
+    },
+    {
+      "id": "3054699283",
+      "hostile_name": "Hostile 3054699283",
+      "level": 70,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92003
+    },
+    {
+      "id": "3057943878",
+      "hostile_name": "Hostile 3057943878",
+      "level": 61,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92001
     },
     {
       "id": "3058049594",
@@ -36811,6 +37081,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 35005
+    },
+    {
+      "id": "3269725375",
+      "hostile_name": "Hostile 3269725375",
+      "level": 65,
+      "ship_class": "survey",
+      "rarity": 1,
+      "upstream_ship_type": 10,
+      "loca_id": 92005
     },
     {
       "id": "3270514343",
@@ -39603,6 +39882,15 @@
       "loca_id": 60029
     },
     {
+      "id": "3507276863",
+      "hostile_name": "Hostile 3507276863",
+      "level": 70,
+      "ship_class": "survey",
+      "rarity": 3,
+      "upstream_ship_type": 1,
+      "loca_id": 92009
+    },
+    {
       "id": "3508831223",
       "hostile_name": "Hostile 3508831223",
       "level": 63,
@@ -39835,6 +40123,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 83101
+    },
+    {
+      "id": "3530116173",
+      "hostile_name": "Hostile 3530116173",
+      "level": 63,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 92001
     },
     {
       "id": "3532111247",
@@ -44697,6 +44994,15 @@
       "loca_id": 36009
     },
     {
+      "id": "3955448501",
+      "hostile_name": "Hostile 3955448501",
+      "level": 63,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 92001
+    },
+    {
       "id": "3956260506",
       "hostile_name": "Hostile 3956260506",
       "level": 77,
@@ -46020,6 +46326,15 @@
       "loca_id": 10003
     },
     {
+      "id": "4070062960",
+      "hostile_name": "Hostile 4070062960",
+      "level": 63,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 92001
+    },
+    {
       "id": "4070277636",
       "hostile_name": "Hostile 4070277636",
       "level": 34,
@@ -46297,6 +46612,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 10005
+    },
+    {
+      "id": "4095062731",
+      "hostile_name": "Hostile 4095062731",
+      "level": 75,
+      "ship_class": "survey",
+      "rarity": 4,
+      "upstream_ship_type": 1,
+      "loca_id": 92010
     },
     {
       "id": "4096053596",

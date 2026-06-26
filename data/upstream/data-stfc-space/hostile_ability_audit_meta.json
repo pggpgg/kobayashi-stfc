@@ -1,7 +1,7 @@
 {
   "generated_from": "scripts/generate_full_hostile_ability_catalog.py",
-  "unique_ability_ids": 976,
-  "hostiles_with_abilities_scanned": 2865,
+  "unique_ability_ids": 982,
+  "hostiles_with_abilities_scanned": 2901,
   "entries": {
     "1636824": {
       "bucket": "isolytic_combat",
@@ -57,6 +57,15 @@
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
       "effect_type": "combat_noop"
     },
+    "15103847": {
+      "bucket": "isolytic_combat",
+      "loca_id": 92209,
+      "hostile_count": 3,
+      "sample_hostile_id": "3507276863",
+      "sample_level": 70,
+      "text_snippet": "isolytic burst warheads \nincreases isolytic damage by {0:#.#%} at the start of combat.",
+      "effect_type": "isolytic_damage"
+    },
     "20796067": {
       "bucket": "isolytic_combat",
       "loca_id": 58051,
@@ -72,7 +81,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "434295500",
       "sample_level": 59,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "31794032": {
@@ -117,7 +126,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3375010649",
       "sample_level": 55,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "75877953": {
@@ -198,7 +207,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1203412547",
       "sample_level": 38,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "106286813": {
@@ -342,7 +351,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "192387181",
       "sample_level": 43,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "157363054": {
@@ -378,7 +387,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3463250137",
       "sample_level": 43,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "174528555": {
@@ -423,7 +432,7 @@
       "hostile_count": 9,
       "sample_hostile_id": "1427742345",
       "sample_level": 46,
-      "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol \u03b2\non combat start, this armada increases its apex barrier by 30,000",
+      "text_snippet": "defense protocol α\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol β\non combat start, this armada increases its apex barrier by 30,000",
       "effect_type": "combat_noop"
     },
     "208825508": {
@@ -621,7 +630,7 @@
       "hostile_count": 9,
       "sample_hostile_id": "1244165844",
       "sample_level": 56,
-      "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol \u03b2\non combat start, this armada increases its apex barrier by 30,000\n\ndefense protocol \u03b3\no",
+      "text_snippet": "defense protocol α\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol β\non combat start, this armada increases its apex barrier by 30,000\n\ndefense protocol γ\no",
       "effect_type": "combat_noop"
     },
     "326507083": {
@@ -666,7 +675,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1168810269",
       "sample_level": 53,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "348165139": {
@@ -909,7 +918,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "345118757",
       "sample_level": 51,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "436377471": {
@@ -990,7 +999,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "198109251",
       "sample_level": 51,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "462471550": {
@@ -1170,7 +1179,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1274986483",
       "sample_level": 53,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "560862974": {
@@ -1179,7 +1188,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "516588665",
       "sample_level": 59,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "562714114": {
@@ -1287,7 +1296,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1970403096",
       "sample_level": 60,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "598222571": {
@@ -1449,7 +1458,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2079029824",
       "sample_level": 56,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "663345959": {
@@ -1575,7 +1584,7 @@
       "hostile_count": 9,
       "sample_hostile_id": "125194787",
       "sample_level": 44,
-      "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol \u03b2\non combat start, this armada increases its apex barrier by 30,000",
+      "text_snippet": "defense protocol α\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol β\non combat start, this armada increases its apex barrier by 30,000",
       "effect_type": "combat_noop"
     },
     "737806657": {
@@ -1620,7 +1629,7 @@
       "hostile_count": 5,
       "sample_hostile_id": "1366188504",
       "sample_level": 42,
-      "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.",
+      "text_snippet": "defense protocol α\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.",
       "effect_type": "combat_noop"
     },
     "755115993": {
@@ -1827,7 +1836,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "774295170",
       "sample_level": 52,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "877244657": {
@@ -1899,7 +1908,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3035332912",
       "sample_level": 53,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "918418075": {
@@ -2223,7 +2232,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2694430532",
       "sample_level": 58,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1070977437": {
@@ -2286,7 +2295,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "982302201",
       "sample_level": 50,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1100812073": {
@@ -2358,7 +2367,7 @@
       "hostile_count": 9,
       "sample_hostile_id": "1063917329",
       "sample_level": 66,
-      "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol \u03b2\non combat start, this armada increases its apex barrier by 30,000\n\ndefense protocol \u03b3\no",
+      "text_snippet": "defense protocol α\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.\n\ndefense protocol β\non combat start, this armada increases its apex barrier by 30,000\n\ndefense protocol γ\no",
       "effect_type": "combat_noop"
     },
     "1144252879": {
@@ -2496,13 +2505,22 @@
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
       "effect_type": "combat_noop"
     },
+    "1206267116": {
+      "bucket": "other_review",
+      "loca_id": 92105,
+      "hostile_count": 17,
+      "sample_hostile_id": "1073900199",
+      "sample_level": 63,
+      "text_snippet": "almost omnipotent\nhas a critical damage floor of 300%.\n\ncan only be engaged in battle by federation, romulan, and klingon ships, or the u.s.s. vengeance - all other vessels will be fatally struck down at the start of combat. such is the dec",
+      "effect_type": "combat_noop"
+    },
     "1207693099": {
       "bucket": "other_review",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "3189527841",
       "sample_level": 54,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1219163911": {
@@ -2718,7 +2736,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2369749889",
       "sample_level": 45,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1302946336": {
@@ -2754,7 +2772,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2010359187",
       "sample_level": 40,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1318141273": {
@@ -3051,7 +3069,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3641498830",
       "sample_level": 48,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1461510348": {
@@ -3186,7 +3204,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "720443256",
       "sample_level": 59,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1529330893": {
@@ -3240,7 +3258,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1462659943",
       "sample_level": 58,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1552909495": {
@@ -3277,6 +3295,15 @@
       "sample_hostile_id": "1974005901",
       "sample_level": 73,
       "text_snippet": "cascade nullification \nincreases isolytic defense by {0:#.#%} at the start of combat. \n\narmadas will reduce shield mitigation from specific factions at the start of each round by 30%. (federation armadas affect klingon ships; klingon armada",
+      "effect_type": "combat_noop"
+    },
+    "1567589326": {
+      "bucket": "other_review",
+      "loca_id": 92108,
+      "hostile_count": 16,
+      "sample_hostile_id": "1029134381",
+      "sample_level": 76,
+      "text_snippet": "strike down\nreduces shield mitigation to 0% at the start of combat. has critical damage floor of 300%.\n\ncan only be engaged in battle by federation, romulan, and klingon ships, or the u.s.s. vengeance - all other vessels will be fatally str",
       "effect_type": "combat_noop"
     },
     "1574518996": {
@@ -3348,7 +3375,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "691861484",
       "sample_level": 51,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1617145485": {
@@ -3582,7 +3609,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2441772837",
       "sample_level": 50,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1745201100": {
@@ -3816,7 +3843,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3705615381",
       "sample_level": 55,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "1852997150": {
@@ -4275,7 +4302,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2195080704",
       "sample_level": 48,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2074720718": {
@@ -4293,7 +4320,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3203190904",
       "sample_level": 38,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2077059795": {
@@ -4554,7 +4581,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "4181596967",
       "sample_level": 57,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2193458493": {
@@ -4725,7 +4752,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "298788050",
       "sample_level": 45,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2264420026": {
@@ -5094,7 +5121,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1926949147",
       "sample_level": 52,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2447761113": {
@@ -5193,7 +5220,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "274638656",
       "sample_level": 60,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2490925371": {
@@ -5508,7 +5535,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2669675029",
       "sample_level": 57,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2640287449": {
@@ -5553,7 +5580,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "951891481",
       "sample_level": 56,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2657382858": {
@@ -6111,7 +6138,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "439930770",
       "sample_level": 54,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "2926010577": {
@@ -6345,7 +6372,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2434668841",
       "sample_level": 40,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3078017073": {
@@ -6444,7 +6471,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "272456609",
       "sample_level": 50,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3126493455": {
@@ -6903,7 +6930,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3909498204",
       "sample_level": 54,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3331427750": {
@@ -6921,7 +6948,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "647800794",
       "sample_level": 58,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3339716871": {
@@ -7077,6 +7104,15 @@
       "text_snippet": "isolytic burst warheads \nincreases isolytic damage by {0:#.#%} at the start of combat.",
       "effect_type": "isolytic_damage"
     },
+    "3409028940": {
+      "bucket": "isolytic_combat",
+      "loca_id": 92107,
+      "hostile_count": 16,
+      "sample_hostile_id": "1029134381",
+      "sample_level": 76,
+      "text_snippet": "judicious preparation\nincreases its isolytic damage, isolytic defense, apex barrier, and apex shred at the start of combat.",
+      "effect_type": "isolytic_defense"
+    },
     "3409482839": {
       "bucket": "isolytic_combat",
       "loca_id": 77101,
@@ -7092,7 +7128,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "1826809341",
       "sample_level": 40,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3416181644": {
@@ -7137,7 +7173,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3755411858",
       "sample_level": 45,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3431782200": {
@@ -7146,7 +7182,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "157478508",
       "sample_level": 43,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3435621456": {
@@ -7335,7 +7371,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2641072555",
       "sample_level": 48,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3515845182": {
@@ -7581,6 +7617,15 @@
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
       "effect_type": "combat_noop"
     },
+    "3679636736": {
+      "bucket": "armada_scope",
+      "loca_id": 92210,
+      "hostile_count": 3,
+      "sample_hostile_id": "3507276863",
+      "sample_level": 70,
+      "text_snippet": "cascade nullification \nincreases isolytic defense by {0:#.#%} at the start of combat. \n\nthis armada's critical damage cannot drop below 300%.\n\nthis armada's battle have a maximum of 20 rounds.",
+      "effect_type": "combat_noop"
+    },
     "3684108364": {
       "bucket": "apex_combat",
       "loca_id": 84504,
@@ -7632,7 +7677,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3686843526",
       "sample_level": 60,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3719105199": {
@@ -7686,7 +7731,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3847232266",
       "sample_level": 56,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3752771552": {
@@ -7715,6 +7760,15 @@
       "sample_level": 60,
       "text_snippet": "victory is life\nthe jem'hadar flagship fully restores hull health when victorious in battle.\n\n\"i am jem'hadar, and i am dead. as of this moment, we are all dead. we go into battle to reclaim our lives. this, we do gladly, for we are jem'had",
       "effect_type": "combat_noop"
+    },
+    "3780349130": {
+      "bucket": "isolytic_combat",
+      "loca_id": 92101,
+      "hostile_count": 17,
+      "sample_hostile_id": "1073900199",
+      "sample_level": 63,
+      "text_snippet": "judicious preparation\nincreases its isolytic damage, isolytic defense, apex barrier, and apex shred at the start of combat.",
+      "effect_type": "isolytic_defense"
     },
     "3780549486": {
       "bucket": "other_review",
@@ -7758,7 +7812,7 @@
       "hostile_count": 5,
       "sample_hostile_id": "1098304183",
       "sample_level": 44,
-      "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.",
+      "text_snippet": "defense protocol α\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.",
       "effect_type": "combat_noop"
     },
     "3798250342": {
@@ -7830,7 +7884,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2123929264",
       "sample_level": 55,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3850396933": {
@@ -7839,7 +7893,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "2036699984",
       "sample_level": 52,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "3852598818": {
@@ -8280,7 +8334,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "10264305",
       "sample_level": 57,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "4030525751": {
@@ -8667,7 +8721,7 @@
       "hostile_count": 1,
       "sample_hostile_id": "3923455101",
       "sample_level": 38,
-      "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
+      "text_snippet": "ravager’s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
       "effect_type": "combat_noop"
     },
     "4209455474": {
