@@ -9,6 +9,12 @@
         "KOBAYASHI_BIND": "127.0.0.1:3480"
       },
       "port": 3480
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "port": 5173
     }
   ]
 }
