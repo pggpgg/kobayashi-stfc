@@ -44,6 +44,8 @@ profiles/*
 !profiles/index.json.example
 !profiles/demo/
 !profiles/demo/**
+# ...but E2E runs create throwaway presets under the demo profile — keep them out of git.
+profiles/demo/presets/e2e_*.json
 
 # Playwright artifacts
 playwright-report/
