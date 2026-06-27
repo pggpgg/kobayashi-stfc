@@ -303,11 +303,9 @@ export default memo(function OptimizePanel({
 
   return (
     <aside
+      className="optimize-panel"
       style={{
-        width: 280,
-        minWidth: 240,
         background: "var(--surface)",
-        borderLeft: "1px solid var(--border)",
         padding: "1rem",
         display: "flex",
         flexDirection: "column",

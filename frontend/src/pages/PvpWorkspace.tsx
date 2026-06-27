@@ -238,7 +238,10 @@ export default function PvpWorkspace() {
 
       {pvp.error && <ErrorBanner message={pvp.error} />}
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div
+        className="workspace-body"
+        style={{ display: "flex", flex: 1, minHeight: 0 }}
+      >
         <main style={{ flex: 1, padding: "1rem 1.25rem", overflow: "auto" }}>
           <section style={{ marginBottom: "1.5rem" }}>
             <h2 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
@@ -330,9 +333,8 @@ export default function PvpWorkspace() {
         </main>
 
         <aside
+          className="pvp-results"
           style={{
-            width: 360,
-            borderLeft: "1px solid var(--border)",
             padding: "1rem",
             overflow: "auto",
             background: "var(--surface)",

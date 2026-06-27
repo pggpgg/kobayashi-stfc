@@ -68,8 +68,18 @@ textarea:focus-visible,
 
 /* LCARS-inspired rail */
 .rail {
-  border-radius: 0 8px 8px 0;
+  width: 200px;
   min-width: 180px;
+  padding: 1rem 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  border-radius: 0 8px 8px 0;
+}
+
+.rail nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .rail a.active {
@@ -96,4 +106,52 @@ textarea:focus-visible,
 }
 .opt-section[open] > summary .opt-caret {
   transform: rotate(90deg);
+}
+
+/* ── Layout columns: desktop defaults, stacked on narrow screens ───── */
+.optimize-panel {
+  width: 280px;
+  min-width: 240px;
+  border-left: 1px solid var(--border);
+}
+.pvp-results {
+  width: 360px;
+  border-left: 1px solid var(--border);
+}
+
+/* Crew + Strategy / results panel stack vertically before they get cramped. */
+@media (max-width: 900px) {
+  .workspace-body {
+    flex-direction: column;
+  }
+  .optimize-panel,
+  .pvp-results {
+    width: 100%;
+    min-width: 0;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Narrow / vertical screens: the side rail becomes a full-width top bar. */
+@media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .rail {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+  .rail nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .rail a.active {
+    border-left: none;
+    border-bottom: 3px solid var(--accent);
+  }
 }
