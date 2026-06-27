@@ -52,6 +52,8 @@ test.describe("workspace smoke flow", () => {
     await page.getByRole("button", { name: "Run simulation" }).click();
     await expect(page.getByText(/Win rate:/)).toBeVisible({ timeout: 120_000 });
 
+    // "Max crews" now lives in the collapsed "Search scope" advanced section.
+    await page.locator("summary").filter({ hasText: "Search scope" }).click();
     const maxCrews = page.getByLabel("Max crews (optional)");
     await maxCrews.scrollIntoViewIfNeeded();
     await maxCrews.fill("12");
