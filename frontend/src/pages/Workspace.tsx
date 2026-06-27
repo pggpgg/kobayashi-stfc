@@ -191,6 +191,7 @@ export default function Workspace() {
         </div>
       )}
       <div
+        className="workspace-body"
         hidden={mode === "guided" && guidedStep !== 1 && guidedStep !== 3}
         style={{
           display: "flex",

@@ -203,6 +203,7 @@ export default memo(function CrewBuilder({
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap",
           justifyContent: "center",
           alignItems: "flex-start",
           gap: 8,

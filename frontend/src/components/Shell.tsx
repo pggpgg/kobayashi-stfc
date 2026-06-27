@@ -17,16 +17,8 @@ export default function Shell({ children }: { children: ReactNode }) {
   const { mode, setMode } = useWorkspaceMode();
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <aside
-        className="rail"
-        style={{
-          width: 200,
-          background: "var(--surface)",
-          borderRight: "1px solid var(--border)",
-          padding: "1rem 0",
-        }}
-      >
+    <div className="app-shell" style={{ display: "flex", minHeight: "100vh" }}>
+      <aside className="rail">
         <div
           style={{
             padding: "0 1rem 0.75rem",
@@ -70,7 +62,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             ))}
           </div>
         </div>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <nav>
           {NAV_ITEMS.map(({ path, label }) => {
             const active = location.pathname === path;
             return (

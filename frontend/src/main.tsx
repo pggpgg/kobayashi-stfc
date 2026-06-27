@@ -14,7 +14,9 @@ if (rootEl == null) {
 
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
       <ErrorBoundary>
         <ProfileProvider>
           <WorkspaceModeProvider>
