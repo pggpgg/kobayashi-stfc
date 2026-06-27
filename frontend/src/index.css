@@ -76,3 +76,24 @@ textarea:focus-visible,
   background: rgba(232, 149, 46, 0.15);
   border-left: 3px solid var(--accent);
 }
+
+/* Collapsible advanced sections (e.g. optimize Strategy panel) */
+.opt-section {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+}
+.opt-section > summary {
+  list-style: none;
+}
+.opt-section > summary::-webkit-details-marker {
+  display: none;
+}
+.opt-section > summary .opt-caret {
+  display: inline-block;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+.opt-section[open] > summary .opt-caret {
+  transform: rotate(90deg);
+}
