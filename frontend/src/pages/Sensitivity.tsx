@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import HostilePicker from "../components/HostilePicker";
 import MorrisResults from "../components/MorrisResults";
 import SensitivityResults from "../components/SensitivityResults";
@@ -27,6 +33,17 @@ import {
   type SobolResponse,
   sensitivityStart,
 } from "../lib/sensitivityApi";
+
+/** Repeated style objects, hoisted so each is defined once (behavior-preserving). */
+const styles = {
+  mutedSm: { fontSize: "0.85rem", color: "var(--text-muted)" },
+  col: { display: "flex", flexDirection: "column", gap: 4 },
+  sectionTop: { marginTop: "1.5rem" },
+  mutedXs: { fontSize: "0.75rem", color: "var(--text-muted)" },
+  cellCenter: { textAlign: "center", padding: "0.35rem 0.5rem" },
+  mb05: { marginBottom: "0.5rem" },
+  cellRight: { textAlign: "right", padding: "0.35rem 0.5rem" },
+} satisfies Record<string, CSSProperties>;
 
 type AnalysisMethod = "oat" | "morris" | "sobol";
 
@@ -340,7 +357,7 @@ export default function Sensitivity() {
       </p>
 
       <section style={{ marginTop: "1rem" }}>
-        <h3 style={{ marginBottom: "0.5rem" }}>Scenario</h3>
+        <h3 style={styles.mb05}>Scenario</h3>
         <div
           style={{
             display: "grid",
@@ -348,10 +365,8 @@ export default function Sensitivity() {
             gap: "0.75rem",
           }}
         >
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Ship
-            </span>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>Ship</span>
             <select value={shipId} onChange={(e) => setShipId(e.target.value)}>
               <option value="">— pick a ship —</option>
               {ships.map((s) => (
@@ -361,20 +376,16 @@ export default function Sensitivity() {
               ))}
             </select>
           </label>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Hostile
-            </span>
+          <div style={styles.col}>
+            <span style={styles.mutedSm}>Hostile</span>
             <HostilePicker
               hostiles={hostiles}
               value={scenarioId}
               onChange={setScenarioId}
             />
           </div>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Ship tier
-            </span>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>Ship tier</span>
             <input
               type="number"
               min={1}
@@ -383,10 +394,8 @@ export default function Sensitivity() {
               onChange={(e) => setShipTier(Number(e.target.value))}
             />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Ship level
-            </span>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>Ship level</span>
             <input
               type="number"
               min={1}
@@ -404,10 +413,8 @@ export default function Sensitivity() {
             marginTop: "0.75rem",
           }}
         >
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Captain id
-            </span>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>Captain id</span>
             <input
               type="text"
               value={captain}
@@ -415,8 +422,8 @@ export default function Sensitivity() {
               placeholder="e.g. ent-e-picard-556227"
             />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>
               Bridge officer ids (comma-separated)
             </span>
             <input
@@ -426,8 +433,8 @@ export default function Sensitivity() {
               placeholder="ent-e-data-871245, five-of-eleven-d9aa11"
             />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>
               Below decks ids (comma-separated, optional)
             </span>
             <input
@@ -439,13 +446,10 @@ export default function Sensitivity() {
         </div>
       </section>
 
-      <section style={{ marginTop: "1.5rem" }}>
-        <h3 style={{ marginBottom: "0.5rem" }}>Run parameters</h3>
+      <section style={styles.sectionTop}>
+        <h3 style={styles.mb05}>Run parameters</h3>
         <div style={{ marginBottom: "0.75rem" }}>
-          <label
-            style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
-            htmlFor="sensitivity-method"
-          >
+          <label style={styles.mutedSm} htmlFor="sensitivity-method">
             Method:&nbsp;
           </label>
           {(["oat", "morris", "sobol"] as const).map((m) => (
@@ -494,10 +498,8 @@ export default function Sensitivity() {
             gap: "0.75rem",
           }}
         >
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Metric
-            </span>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>Metric</span>
             <select
               value={metric}
               onChange={(e) => setMetric(e.target.value as OutcomeMetric)}
@@ -508,15 +510,13 @@ export default function Sensitivity() {
                 </option>
               ))}
             </select>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            <span style={styles.mutedXs}>
               {METRICS.find((m) => m.value === metric)?.hint}
             </span>
           </label>
           {method === "oat" && (
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                Paired sims per stat
-              </span>
+            <label style={styles.col}>
+              <span style={styles.mutedSm}>Paired sims per stat</span>
               <input
                 type="number"
                 min={50}
@@ -528,14 +528,8 @@ export default function Sensitivity() {
           )}
           {method === "morris" && (
             <>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span
-                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
-                >
-                  r trajectories
-                </span>
+              <label style={styles.col}>
+                <span style={styles.mutedSm}>r trajectories</span>
                 <input
                   type="number"
                   min={2}
@@ -543,21 +537,13 @@ export default function Sensitivity() {
                   value={rTrajectories}
                   onChange={(e) => setRTrajectories(Number(e.target.value))}
                 />
-                <span
-                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
-                >
+                <span style={styles.mutedXs}>
                   10 is a conservative default; 20–50 tightens μ* / σ at
                   proportional cost.
                 </span>
               </label>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span
-                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
-                >
-                  Sims per trajectory point
-                </span>
+              <label style={styles.col}>
+                <span style={styles.mutedSm}>Sims per trajectory point</span>
                 <input
                   type="number"
                   min={2}
@@ -565,9 +551,7 @@ export default function Sensitivity() {
                   value={morrisNumSims}
                   onChange={(e) => setMorrisNumSims(Number(e.target.value))}
                 />
-                <span
-                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
-                >
+                <span style={styles.mutedXs}>
                   Total sims ≈ r × (k+1) × this.
                 </span>
               </label>
@@ -575,12 +559,8 @@ export default function Sensitivity() {
           )}
           {method === "sobol" && (
             <>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              >
-                <span
-                  style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
-                >
+              <label style={styles.col}>
+                <span style={styles.mutedSm}>
                   N samples per Saltelli matrix
                 </span>
                 <input
@@ -590,9 +570,7 @@ export default function Sensitivity() {
                   value={sobolNSamples}
                   onChange={(e) => setSobolNSamples(Number(e.target.value))}
                 />
-                <span
-                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
-                >
+                <span style={styles.mutedXs}>
                   Total sims = N × (k + 2). N=512 is a reasonable default; raise
                   to 2048 for tighter CIs.
                 </span>
@@ -621,19 +599,15 @@ export default function Sensitivity() {
                   Also compute pairwise interactions (S
                   <sub>ij</sub>)
                 </span>
-                <span
-                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
-                >
+                <span style={styles.mutedXs}>
                   Adds N × k(k−1)/2 extra sims (≈ 8× more at defaults). Reveals
                   which specific pairs of stats produce value together.
                 </span>
               </label>
             </>
           )}
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Base seed
-            </span>
+          <label style={styles.col}>
+            <span style={styles.mutedSm}>Base seed</span>
             <input
               type="number"
               min={0}
@@ -644,8 +618,8 @@ export default function Sensitivity() {
         </div>
       </section>
 
-      <section style={{ marginTop: "1.5rem" }}>
-        <h3 style={{ marginBottom: "0.5rem" }}>Per-stat overrides</h3>
+      <section style={styles.sectionTop}>
+        <h3 style={styles.mb05}>Per-stat overrides</h3>
         <p
           style={{
             fontSize: "0.85rem",
@@ -670,15 +644,9 @@ export default function Sensitivity() {
               <th style={{ textAlign: "left", padding: "0.35rem 0.5rem" }}>
                 Stat
               </th>
-              <th style={{ textAlign: "right", padding: "0.35rem 0.5rem" }}>
-                δ
-              </th>
-              <th style={{ textAlign: "center", padding: "0.35rem 0.5rem" }}>
-                Mode
-              </th>
-              <th style={{ textAlign: "center", padding: "0.35rem 0.5rem" }}>
-                Include
-              </th>
+              <th style={styles.cellRight}>δ</th>
+              <th style={styles.cellCenter}>Mode</th>
+              <th style={styles.cellCenter}>Include</th>
             </tr>
           </thead>
           <tbody>
@@ -691,7 +659,7 @@ export default function Sensitivity() {
                 }}
               >
                 <td style={{ padding: "0.35rem 0.5rem" }}>{row.stat}</td>
-                <td style={{ textAlign: "right", padding: "0.35rem 0.5rem" }}>
+                <td style={styles.cellRight}>
                   <input
                     type="number"
                     step="0.001"
@@ -714,7 +682,7 @@ export default function Sensitivity() {
                 >
                   {row.multiplicative ? "×(1+δ)" : "+δ"}
                 </td>
-                <td style={{ textAlign: "center", padding: "0.35rem 0.5rem" }}>
+                <td style={styles.cellCenter}>
                   <input
                     type="checkbox"
                     checked={row.enabled}
@@ -731,7 +699,7 @@ export default function Sensitivity() {
         </table>
       </section>
 
-      <section style={{ marginTop: "1.5rem" }}>
+      <section style={styles.sectionTop}>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
           <button
             type="button"
@@ -866,7 +834,7 @@ export default function Sensitivity() {
       </section>
 
       {response && (
-        <section style={{ marginTop: "1.5rem" }}>
+        <section style={styles.sectionTop}>
           <h3>Results</h3>
           <SensitivityResults
             rows={response.rows}
@@ -878,7 +846,7 @@ export default function Sensitivity() {
       )}
 
       {morrisResponse && (
-        <section style={{ marginTop: "1.5rem" }}>
+        <section style={styles.sectionTop}>
           <h3>Results (Morris screening)</h3>
           <MorrisResults
             rows={morrisResponse.rows}
@@ -892,7 +860,7 @@ export default function Sensitivity() {
       )}
 
       {sobolResponse && (
-        <section style={{ marginTop: "1.5rem" }}>
+        <section style={styles.sectionTop}>
           <h3>Results (Sobol variance decomposition)</h3>
           <SobolResults
             rows={sobolResponse.rows}
