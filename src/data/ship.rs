@@ -502,69 +502,104 @@ fn add_finite_delta(target: &mut f64, before: f64, after: f64) {
     }
 }
 
+/// Finite delta `after - before`, or 0.0 when the difference is non-finite (NaN/inf).
+fn finite_delta(before: f64, after: f64) -> f64 {
+    let delta = after - before;
+    if delta.is_finite() {
+        delta
+    } else {
+        0.0
+    }
+}
+
+/// Per-stat deltas applied to a ship's base tier/level stats by synced component overrides.
+///
+/// Produced by [`apply_component_overrides_to_ship_record`] and surfaced to the UI so players can
+/// see that upgraded components above hull tier are actually factored into sim/optimize. All fields
+/// are additive deltas over the base record (0.0 = unchanged).
+#[derive(Debug, Clone, Default, PartialEq, Serialize)]
+pub struct ComponentOverrideSummary {
+    pub armor_piercing: f64,
+    pub shield_piercing: f64,
+    pub accuracy: f64,
+    pub armor: f64,
+    pub shield_deflection: f64,
+    pub dodge: f64,
+    pub attack: f64,
+    pub crit_chance: f64,
+    pub crit_damage: f64,
+    pub hull_health: f64,
+    pub shield_health: f64,
+}
+
+impl ComponentOverrideSummary {
+    /// True when any stat delta is non-zero — i.e. components differ from the base hull tier.
+    pub fn applied(&self) -> bool {
+        [
+            self.armor_piercing,
+            self.shield_piercing,
+            self.accuracy,
+            self.armor,
+            self.shield_deflection,
+            self.dodge,
+            self.attack,
+            self.crit_chance,
+            self.crit_damage,
+            self.hull_health,
+            self.shield_health,
+        ]
+        .iter()
+        .any(|d| *d != 0.0)
+    }
+}
+
 /// Apply synced per-component ids to an already-resolved ship record.
 ///
 /// The base record remains the source of cumulative tier/level stats. Component ids replace the
 /// matching raw tier components by slot (tag + order + occurrence), then the current-tier delta is
 /// applied to the base record. Matching component lists are therefore a no-op, while upgraded parts
 /// above the hull tier adjust only their affected combat stats.
+///
+/// Returns the per-stat deltas it applied, or `None` when component data is unavailable.
 pub fn apply_component_overrides_to_ship_record(
     ship: &mut ShipRecord,
     raw_ship: &Value,
     tier: u32,
     component_ids: &[i64],
-) -> bool {
-    let Some(expected_components) = raw_ship_components_for_tier(raw_ship, tier) else {
-        return false;
-    };
-    let Some(patched_components) =
-        patched_components_for_ids(&expected_components, raw_ship, component_ids)
-    else {
-        return false;
-    };
+) -> Option<ComponentOverrideSummary> {
+    let expected_components = raw_ship_components_for_tier(raw_ship, tier)?;
+    let patched_components =
+        patched_components_for_ids(&expected_components, raw_ship, component_ids)?;
 
     let expected = extract_component_tier_stats(&expected_components, tier);
     let patched = extract_component_tier_stats(&patched_components, tier);
 
-    add_finite_delta(
-        &mut ship.armor_piercing,
-        expected.armor_piercing,
-        patched.armor_piercing,
-    );
-    add_finite_delta(
-        &mut ship.shield_piercing,
-        expected.shield_piercing,
-        patched.shield_piercing,
-    );
-    add_finite_delta(&mut ship.accuracy, expected.accuracy, patched.accuracy);
-    add_finite_delta(&mut ship.armor, expected.armor, patched.armor);
-    add_finite_delta(
-        &mut ship.shield_deflection,
-        expected.shield_deflection,
-        patched.shield_deflection,
-    );
-    add_finite_delta(&mut ship.dodge, expected.dodge, patched.dodge);
-    add_finite_delta(&mut ship.attack, expected.attack, patched.attack);
-    add_finite_delta(
-        &mut ship.crit_chance,
-        expected.crit_chance,
-        patched.crit_chance,
-    );
-    add_finite_delta(
-        &mut ship.crit_damage,
-        expected.crit_damage,
-        patched.crit_damage,
-    );
-    add_finite_delta(
-        &mut ship.hull_health,
-        expected.hull_health,
-        patched.hull_health,
-    );
-    add_finite_delta(
-        &mut ship.shield_health,
-        expected.shield_health,
-        patched.shield_health,
-    );
+    let summary = ComponentOverrideSummary {
+        armor_piercing: finite_delta(expected.armor_piercing, patched.armor_piercing),
+        shield_piercing: finite_delta(expected.shield_piercing, patched.shield_piercing),
+        accuracy: finite_delta(expected.accuracy, patched.accuracy),
+        armor: finite_delta(expected.armor, patched.armor),
+        shield_deflection: finite_delta(expected.shield_deflection, patched.shield_deflection),
+        dodge: finite_delta(expected.dodge, patched.dodge),
+        attack: finite_delta(expected.attack, patched.attack),
+        crit_chance: finite_delta(expected.crit_chance, patched.crit_chance),
+        crit_damage: finite_delta(expected.crit_damage, patched.crit_damage),
+        hull_health: finite_delta(expected.hull_health, patched.hull_health),
+        shield_health: finite_delta(expected.shield_health, patched.shield_health),
+    };
+
+    ship.armor_piercing += summary.armor_piercing;
+    ship.shield_piercing += summary.shield_piercing;
+    ship.accuracy += summary.accuracy;
+    ship.armor += summary.armor;
+    ship.shield_deflection += summary.shield_deflection;
+    ship.dodge += summary.dodge;
+    ship.attack += summary.attack;
+    ship.crit_chance += summary.crit_chance;
+    ship.crit_damage += summary.crit_damage;
+    ship.hull_health += summary.hull_health;
+    ship.shield_health += summary.shield_health;
+
     if let (Some(current), Some(before), Some(after)) = (
         ship.shield_mitigation,
         expected.shield_mitigation,
@@ -577,7 +612,7 @@ pub fn apply_component_overrides_to_ship_record(
         ship.shield_mitigation = patched.shield_mitigation;
     }
     ship.weapons = patched.weapons;
-    true
+    Some(summary)
 }
 
 /// Per-level bonus to shield and hull (additive to tier base). Level 1 is typically 0,0.
@@ -1084,12 +1119,9 @@ mod tests {
         let raw = component_fixture_raw_ship();
         let mut ship = component_fixture_ship_record();
 
-        assert!(apply_component_overrides_to_ship_record(
-            &mut ship,
-            &raw,
-            1,
-            &[1, 2, 3, 4],
-        ));
+        let summary = apply_component_overrides_to_ship_record(&mut ship, &raw, 1, &[1, 2, 3, 4])
+            .expect("override resolves");
+        assert!(!summary.applied(), "matching components produce no delta");
 
         assert_eq!(ship.armor_piercing, 70.0);
         assert_eq!(ship.shield_piercing, 80.0);
@@ -1108,12 +1140,12 @@ mod tests {
         let raw = component_fixture_raw_ship();
         let mut ship = component_fixture_ship_record();
 
-        assert!(apply_component_overrides_to_ship_record(
-            &mut ship,
-            &raw,
-            1,
-            &[5, 6, 7, 8],
-        ));
+        let summary = apply_component_overrides_to_ship_record(&mut ship, &raw, 1, &[5, 6, 7, 8])
+            .expect("override resolves");
+        assert!(summary.applied());
+        assert_eq!(summary.attack, 60.0); // 90 - 30
+        assert_eq!(summary.hull_health, 50.0); // 160 - 110
+        assert_eq!(summary.armor_piercing, 4.0); // 74 - 70
 
         assert_eq!(ship.armor_piercing, 74.0);
         assert_eq!(ship.shield_piercing, 85.0);

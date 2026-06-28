@@ -194,6 +194,10 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
         .route("/api/officers/:id/resolved", get(handle_officer_resolved))
         .route("/api/ships", get(handle_ships))
         .route("/api/ships/:id/tiers-levels", get(handle_ship_tiers_levels))
+        .route(
+            "/api/ships/:id/component-overrides",
+            get(handle_ship_component_overrides),
+        )
         .route("/api/hostiles", get(handle_hostiles))
         .route("/api/data/version", get(handle_data_version))
         .route("/api/forbidden-tech", get(handle_forbidden_tech))
@@ -604,6 +608,27 @@ async fn handle_ship_tiers_levels(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     match api::ship_tiers_levels_payload(&id, state.registry.as_ref()) {
+        Ok(body) => ok_json(body).into_response(),
+        Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
+    }
+}
+
+async fn handle_ship_component_overrides(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let tier = params.get("tier").and_then(|s| s.parse::<u32>().ok());
+    let level = params.get("level").and_then(|s| s.parse::<u32>().ok());
+    let profile_id = profile_id_from_request(&headers, &params);
+    match api::ship_component_overrides_payload(
+        &id,
+        tier,
+        level,
+        profile_id.as_deref(),
+        state.registry.as_ref(),
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }

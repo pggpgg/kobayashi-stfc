@@ -308,6 +308,28 @@ pub fn ship_tiers_levels_payload(
     )
 }
 
+/// Per-stat deltas that synced component upgrades apply over a ship's base tier/level, for the
+/// active profile. `applied` is false (and `deltas` null) when components match the hull tier or
+/// there is no synced/upstream component data. Untyped payload, mirroring `ship_tiers_levels_payload`.
+pub fn ship_component_overrides_payload(
+    ship_id: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    profile_id: Option<&str>,
+    registry: &DataRegistry,
+) -> Result<String, serde_json::Error> {
+    let pid = resolve_profile_id(profile_id);
+    let ships_path = profile_path(&pid, SHIPS_IMPORTED)
+        .to_string_lossy()
+        .to_string();
+    let imported = load_imported_ships(&ships_path).unwrap_or_default();
+    let summary = registry.component_overrides_for_ship(ship_id, ship_tier, ship_level, &imported);
+    serde_json::to_string(&serde_json::json!({
+        "applied": summary.is_some(),
+        "deltas": summary,
+    }))
+}
+
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct HostileListItem {
     pub id: String,
