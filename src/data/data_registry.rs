@@ -29,8 +29,8 @@ use crate::data::research::{
 };
 use crate::data::ship::{
     apply_component_overrides_to_ship_record, load_extended_ship_index, load_extended_ship_record,
-    load_hull_id_registry, load_upstream_ship_raw, CrewSlotUnlock, ExtendedShipIndex, ShipRecord,
-    DEFAULT_SHIPS_EXTENDED_DIR, DEFAULT_UPSTREAM_SHIPS_DIR,
+    load_hull_id_registry, load_upstream_ship_raw, ComponentOverrideSummary, CrewSlotUnlock,
+    ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR, DEFAULT_UPSTREAM_SHIPS_DIR,
 };
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
@@ -303,6 +303,37 @@ impl DataRegistry {
             apply_component_overrides_to_ship_record(&mut ship, &raw_ship, tier, &entry.components);
         }
         Some(ship)
+    }
+
+    /// Compute the per-stat deltas synced component upgrades apply over a ship's base tier, without
+    /// building a full scenario. Returns `None` when there is no effective override (components match
+    /// the hull tier, no synced entry, or no upstream component data) so callers can show that the
+    /// ship's components match its tier.
+    pub fn component_overrides_for_ship(
+        &self,
+        name_or_id: &str,
+        tier: Option<u32>,
+        level: Option<u32>,
+        imported_ships: &[ShipEntry],
+    ) -> Option<ComponentOverrideSummary> {
+        let extended_dir = Path::new(DEFAULT_SHIPS_EXTENDED_DIR);
+        let id = self.resolve_ship_id(name_or_id)?;
+        let extended = self.load_extended_ship_record_cached(extended_dir, id)?;
+        let tier = tier?;
+        let mut ship = extended.to_ship_record(Some(tier), level.or(Some(1)))?;
+        let entry = self.imported_ship_entry_for_ship(id, Some(tier), level, imported_ships)?;
+        if entry.components.iter().all(|cid| *cid <= 0) {
+            return None;
+        }
+        let raw_ship =
+            load_upstream_ship_raw(Path::new(DEFAULT_UPSTREAM_SHIPS_DIR), entry.hull_id)?;
+        let summary = apply_component_overrides_to_ship_record(
+            &mut ship,
+            &raw_ship,
+            tier,
+            &entry.components,
+        )?;
+        summary.applied().then_some(summary)
     }
 
     /// Return available tier/level numbers plus below-decks unlock schedule for a ship.

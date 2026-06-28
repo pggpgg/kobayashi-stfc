@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, memo, useEffect, useMemo, useState } from "react";
 import { useProfile } from "../contexts/ProfileContext";
 import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import type {
@@ -7,10 +7,13 @@ import type {
   ShipListItem,
 } from "../lib/api";
 import {
+  type ComponentOverrideDeltas,
+  type ComponentOverrides,
   fetchHostiles,
   fetchShips,
   formatApiError,
   formatOptimizePhaseLabel,
+  getShipComponentOverrides,
   getShipTiersLevels,
 } from "../lib/api";
 import type { SupportBuffId } from "../lib/supportBuffs";
@@ -29,6 +32,110 @@ const selectStyle = {
   borderRadius: 6,
   color: "var(--text)",
 } as const;
+
+const COMPONENT_DELTA_FIELDS: {
+  key: keyof ComponentOverrideDeltas;
+  short: string;
+  long: string;
+  fmt: "int" | "pct" | "mult";
+}[] = [
+  { key: "attack", short: "atk", long: "Attack", fmt: "int" },
+  { key: "hull_health", short: "hull", long: "Hull health", fmt: "int" },
+  { key: "shield_health", short: "shield", long: "Shield health", fmt: "int" },
+  { key: "armor", short: "armor", long: "Armor", fmt: "int" },
+  {
+    key: "shield_deflection",
+    short: "deflect",
+    long: "Shield deflection",
+    fmt: "int",
+  },
+  { key: "dodge", short: "dodge", long: "Dodge", fmt: "int" },
+  {
+    key: "armor_piercing",
+    short: "a.pierce",
+    long: "Armor piercing",
+    fmt: "int",
+  },
+  {
+    key: "shield_piercing",
+    short: "s.pierce",
+    long: "Shield piercing",
+    fmt: "int",
+  },
+  { key: "accuracy", short: "acc", long: "Accuracy", fmt: "int" },
+  { key: "crit_chance", short: "crit", long: "Crit chance", fmt: "pct" },
+  { key: "crit_damage", short: "critdmg", long: "Crit damage", fmt: "mult" },
+];
+
+function formatDeltaValue(value: number, fmt: "int" | "pct" | "mult"): string {
+  const sign = value > 0 ? "+" : "";
+  if (fmt === "pct") return `${sign}${(value * 100).toFixed(1)}%`;
+  if (fmt === "mult") return `${sign}${value.toFixed(2)}`;
+  return `${sign}${Math.round(value)}`;
+}
+
+/** Non-zero component deltas as "label value" strings (short or long labels). */
+function componentDeltaEntries(
+  deltas: ComponentOverrideDeltas,
+  useLong: boolean,
+): string[] {
+  return COMPONENT_DELTA_FIELDS.flatMap((f) => {
+    const value = deltas[f.key];
+    if (!value) return [];
+    return [`${useLong ? f.long : f.short} ${formatDeltaValue(value, f.fmt)}`];
+  });
+}
+
+const overrideChipBase: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+  padding: "0.25rem 0.5rem",
+  fontSize: "0.72rem",
+  borderRadius: 999,
+  cursor: "help",
+  whiteSpace: "nowrap",
+};
+
+/** Shows whether the active profile's synced components add stats over the ship's base hull tier. */
+function ComponentOverridesChip({
+  overrides,
+}: {
+  overrides: ComponentOverrides;
+}) {
+  if (!overrides.applied || !overrides.deltas) {
+    return (
+      <span
+        title="Your synced components match this hull tier — no stat bonus is applied."
+        style={{
+          ...overrideChipBase,
+          border: "1px solid var(--border)",
+          color: "var(--text-muted)",
+        }}
+      >
+        Components match tier
+      </span>
+    );
+  }
+  const shortEntries = componentDeltaEntries(overrides.deltas, false);
+  const longList = componentDeltaEntries(overrides.deltas, true).join(", ");
+  const face = shortEntries.slice(0, 3).join(" · ");
+  const more = shortEntries.length - 3;
+  return (
+    <span
+      title={`Synced component upgrades above hull tier are applied to sim/optimize: ${longList}`}
+      style={{
+        ...overrideChipBase,
+        border: "1px solid var(--accent-dim)",
+        background: "rgba(232, 149, 46, 0.15)",
+        color: "var(--text)",
+      }}
+    >
+      ⬆ {face}
+      {more > 0 ? ` · +${more} more` : ""}
+    </span>
+  );
+}
 
 interface WorkspaceHeaderProps {
   shipId: string;
@@ -107,6 +214,8 @@ export default memo(function WorkspaceHeader({
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [tiers, setTiers] = useState<number[]>([1]);
   const [levels, setLevels] = useState<number[]>([1, 10, 20, 30, 40, 50, 60]);
+  const [componentOverrides, setComponentOverrides] =
+    useState<ComponentOverrides | null>(null);
   const selectedRosterShip = useMemo(
     () => ships.find((s) => s.id === shipId),
     [ships, shipId],
@@ -240,6 +349,25 @@ export default memo(function WorkspaceHeader({
     };
   }, []);
 
+  // Component-upgrade deltas for the chip — only meaningful with an owned roster (roster/guided).
+  useEffect(() => {
+    if (!ownedOnly || !shipId) {
+      setComponentOverrides(null);
+      return;
+    }
+    let c = false;
+    getShipComponentOverrides(shipId, shipTier, shipLevel, activeProfileId)
+      .then((r) => {
+        if (!c) setComponentOverrides(r);
+      })
+      .catch(() => {
+        if (!c) setComponentOverrides(null);
+      });
+    return () => {
+      c = true;
+    };
+  }, [ownedOnly, shipId, shipTier, shipLevel, activeProfileId]);
+
   return (
     <header
       id="guided-scenario"
@@ -301,6 +429,9 @@ export default memo(function WorkspaceHeader({
           </option>
         ))}
       </select>
+      {componentOverrides && (
+        <ComponentOverridesChip overrides={componentOverrides} />
+      )}
       <HostilePicker
         hostiles={hostiles}
         value={scenarioId}

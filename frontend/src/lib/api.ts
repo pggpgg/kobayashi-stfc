@@ -293,6 +293,50 @@ export async function getShipTiersLevels(
   return res.json();
 }
 
+/** Per-stat deltas synced component upgrades apply over a ship's base tier/level. */
+export interface ComponentOverrideDeltas {
+  armor_piercing: number;
+  shield_piercing: number;
+  accuracy: number;
+  armor: number;
+  shield_deflection: number;
+  dodge: number;
+  attack: number;
+  crit_chance: number;
+  crit_damage: number;
+  hull_health: number;
+  shield_health: number;
+}
+
+export interface ComponentOverrides {
+  /** True when synced components differ from the base hull tier (a real stat bonus). */
+  applied: boolean;
+  /** Non-null only when `applied`; all-fields delta object over the base record. */
+  deltas: ComponentOverrideDeltas | null;
+}
+
+/**
+ * Component-upgrade deltas the sim applies for a ship under the active profile. `applied` is false
+ * (deltas null) when components match the hull tier or there is no synced/upstream data.
+ */
+export async function getShipComponentOverrides(
+  shipId: string,
+  shipTier: number,
+  shipLevel: number,
+  profileId?: string | null,
+): Promise<ComponentOverrides> {
+  const params = new URLSearchParams({
+    tier: String(shipTier),
+    level: String(shipLevel),
+  });
+  const res = await fetch(
+    `${API_BASE}/api/ships/${encodeURIComponent(shipId)}/component-overrides?${params}`,
+    { headers: profileHeaders(profileId) },
+  );
+  await checkOk(res);
+  return res.json();
+}
+
 /** Primary sort key for hostiles (display name when present). */
 export function hostileSortLabel(h: HostileListItem): string {
   return h.display_name ?? h.hostile_name;

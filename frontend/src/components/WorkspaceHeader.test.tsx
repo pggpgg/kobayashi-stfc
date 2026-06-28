@@ -13,6 +13,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     fetchHostiles: vi.fn(),
     fetchProfiles: vi.fn(),
     getShipTiersLevels: vi.fn(),
+    getShipComponentOverrides: vi.fn(),
   };
 });
 
@@ -42,6 +43,10 @@ describe("WorkspaceHeader", () => {
       tiers: [1],
       levels: [1, 50],
       crew_slots: [],
+    });
+    vi.mocked(api.getShipComponentOverrides).mockResolvedValue({
+      applied: false,
+      deltas: null,
     });
   });
 
@@ -130,5 +135,68 @@ describe("WorkspaceHeader", () => {
     expect(
       screen.queryByRole("button", { name: "Run optimization" }),
     ).toBeNull();
+  });
+
+  it("shows the component-upgrade chip in roster mode when components beat the hull tier", async () => {
+    localStorage.setItem("kobayashi_workspace_mode", "roster");
+    vi.mocked(api.getShipComponentOverrides).mockResolvedValue({
+      applied: true,
+      deltas: {
+        armor_piercing: 0,
+        shield_piercing: 0,
+        accuracy: 0,
+        armor: 0,
+        shield_deflection: 0,
+        dodge: 0,
+        attack: 60,
+        crit_chance: 0,
+        crit_damage: 0,
+        hull_health: 50,
+        shield_health: 0,
+      },
+    });
+    render(
+      <ProfileProvider>
+        <WorkspaceModeProvider>
+          <WorkspaceHeader
+            shipId="ship1"
+            scenarioId="h1"
+            onShipIdChange={vi.fn()}
+            onScenarioIdChange={vi.fn()}
+            enemyType=""
+            onEnemyTypeChange={vi.fn()}
+            shipTier={1}
+            onShipTierChange={vi.fn()}
+            shipLevel={50}
+            onShipLevelChange={vi.fn()}
+            onBelowDeckUnlockLevelsChange={vi.fn()}
+            crew={emptyCrew}
+            simsPerCrew={1000}
+            onSimsPerCrewChange={vi.fn()}
+            estimate={null}
+            lastOptimizeDurationMs={null}
+            onRunSim={vi.fn()}
+            onRunOptimize={vi.fn()}
+            onCancelOptimize={vi.fn()}
+            onSavePreset={vi.fn()}
+            loadingSim={false}
+            loadingOptimize={false}
+            optimizeProgress={null}
+            optimizeCrewsDone={null}
+            optimizeTotalCrews={null}
+            selectedSupportBuffs={[]}
+            onSelectedSupportBuffsChange={vi.fn()}
+          />
+        </WorkspaceModeProvider>
+      </ProfileProvider>,
+    );
+    await waitFor(() =>
+      expect(api.getShipComponentOverrides).toHaveBeenCalled(),
+    );
+    const chip = await screen.findByTitle(
+      /Synced component upgrades above hull tier/,
+    );
+    expect(chip.textContent).toContain("atk +60");
+    expect(chip.textContent).toContain("hull +50");
   });
 });
