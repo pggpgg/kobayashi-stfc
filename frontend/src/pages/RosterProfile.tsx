@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { useProfile } from "../contexts/ProfileContext";
 import type {
   BuildingCombatSummary,
@@ -29,6 +29,18 @@ import {
 
 /** Mod sync older than this is shown in red (stale). */
 const MOD_SYNC_STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+/** Repeated style objects, hoisted so each is defined once (behavior-preserving). */
+const styles = {
+  cellPad: { padding: "6px 8px" },
+  muted: { color: "var(--text-muted)" },
+  blockGap: { marginBottom: "0.75rem" },
+  noMargin: { margin: 0 },
+  fieldLabel: { fontWeight: 600, marginBottom: 4 },
+  bulletList: { margin: 0, paddingLeft: "1.25rem" },
+  errorNote: { marginTop: 8, color: "var(--error)" },
+  rowCenter: { display: "flex", alignItems: "center", gap: 8 },
+} satisfies Record<string, CSSProperties>;
 
 function formatResearchBonusMap(m?: Record<string, number>): string {
   if (!m || Object.keys(m).length === 0) return "—";
@@ -308,11 +320,9 @@ export default function RosterProfile() {
       {modSyncError ? (
         <span style={{ color: "var(--error)" }}>{modSyncError}</span>
       ) : modSyncUtc === undefined ? (
-        <span style={{ color: "var(--text-muted)" }}>
-          Checking community mod sync…
-        </span>
+        <span style={styles.muted}>Checking community mod sync…</span>
       ) : modSyncUtc === null ? (
-        <span style={{ color: "var(--text-muted)" }}>
+        <span style={styles.muted}>
           No community mod sync recorded yet for this profile. Use the STFC
           Community Mod in-game to push roster, buildings, research, and other
           data to Kobayashi.
@@ -431,12 +441,12 @@ export default function RosterProfile() {
             <dt style={{ color: "var(--text-muted)", fontWeight: 500 }}>
               Name
             </dt>
-            <dd style={{ margin: 0 }}>{activeProfile.name}</dd>
+            <dd style={styles.noMargin}>{activeProfile.name}</dd>
 
             <dt style={{ color: "var(--text-muted)", fontWeight: 500 }}>
               Profile ID
             </dt>
-            <dd style={{ margin: 0 }}>
+            <dd style={styles.noMargin}>
               <code
                 style={{
                   padding: "0.2rem 0.4rem",
@@ -602,24 +612,20 @@ token = "${activeProfile.sync_token}"`}
                   maxWidth: 520,
                 }}
               >
-                <dt style={{ color: "var(--text-muted)" }}>Synced rows</dt>
-                <dd style={{ margin: 0 }}>
+                <dt style={styles.muted}>Synced rows</dt>
+                <dd style={styles.noMargin}>
                   {buildingSummary.synced_building_count}
                 </dd>
-                <dt style={{ color: "var(--text-muted)" }}>
-                  Ops (profile override)
-                </dt>
-                <dd style={{ margin: 0 }}>
+                <dt style={styles.muted}>Ops (profile override)</dt>
+                <dd style={styles.noMargin}>
                   {buildingSummary.ops_level_profile_override ?? "—"}
                 </dd>
-                <dt style={{ color: "var(--text-muted)" }}>
-                  Ops (inferred from sync)
-                </dt>
-                <dd style={{ margin: 0 }}>
+                <dt style={styles.muted}>Ops (inferred from sync)</dt>
+                <dd style={styles.noMargin}>
                   {buildingSummary.ops_level_inferred_from_sync ?? "—"}
                 </dd>
-                <dt style={{ color: "var(--text-muted)" }}>Ops (effective)</dt>
-                <dd style={{ margin: 0 }}>
+                <dt style={styles.muted}>Ops (effective)</dt>
+                <dd style={styles.noMargin}>
                   {buildingSummary.ops_level_effective ?? "—"}
                 </dd>
               </dl>
@@ -632,11 +638,11 @@ token = "${activeProfile.sync_token}"`}
               {buildingSummary.combat_bonuses_from_buildings &&
                 Object.keys(buildingSummary.combat_bonuses_from_buildings)
                   .length > 0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Combat bonuses from buildings
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                    <ul style={styles.bulletList}>
                       {Object.entries(
                         buildingSummary.combat_bonuses_from_buildings,
                       )
@@ -674,10 +680,10 @@ token = "${activeProfile.sync_token}"`}
                           borderBottom: "1px solid var(--border)",
                         }}
                       >
-                        <th style={{ padding: "6px 8px" }}>bid</th>
-                        <th style={{ padding: "6px 8px" }}>Level</th>
-                        <th style={{ padding: "6px 8px" }}>Building</th>
-                        <th style={{ padding: "6px 8px" }}>Catalog</th>
+                        <th style={styles.cellPad}>bid</th>
+                        <th style={styles.cellPad}>Level</th>
+                        <th style={styles.cellPad}>Building</th>
+                        <th style={styles.cellPad}>Catalog</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -694,13 +700,13 @@ token = "${activeProfile.sync_token}"`}
                           >
                             {row.bid}
                           </td>
-                          <td style={{ padding: "6px 8px" }}>{row.level}</td>
-                          <td style={{ padding: "6px 8px" }}>
+                          <td style={styles.cellPad}>{row.level}</td>
+                          <td style={styles.cellPad}>
                             {row.building_name ??
                               row.kobayashi_building_id ??
                               "—"}
                           </td>
-                          <td style={{ padding: "6px 8px" }}>
+                          <td style={styles.cellPad}>
                             {row.catalog_record_present ? "yes" : "no"}
                           </td>
                         </tr>
@@ -763,8 +769,8 @@ token = "${activeProfile.sync_token}"`}
                   maxWidth: 520,
                 }}
               >
-                <dt style={{ color: "var(--text-muted)" }}>Synced rows</dt>
-                <dd style={{ margin: 0 }}>
+                <dt style={styles.muted}>Synced rows</dt>
+                <dd style={styles.noMargin}>
                   {researchSummary.synced_research_count}
                 </dd>
               </dl>
@@ -780,7 +786,7 @@ token = "${activeProfile.sync_token}"`}
                   Scenario lens (optional)
                 </div>
                 <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
-                  <span style={{ color: "var(--text-muted)" }}>ship_id</span>
+                  <span style={styles.muted}>ship_id</span>
                   <input
                     type="text"
                     value={researchScenarioShipId}
@@ -790,7 +796,7 @@ token = "${activeProfile.sync_token}"`}
                   />
                 </label>
                 <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
-                  <span style={{ color: "var(--text-muted)" }}>hostile_id</span>
+                  <span style={styles.muted}>hostile_id</span>
                   <input
                     type="text"
                     value={researchScenarioHostileId}
@@ -819,8 +825,8 @@ token = "${activeProfile.sync_token}"`}
               </div>
               {researchSummary.unmapped_research &&
                 researchSummary.unmapped_research.length > 0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Unmapped research (by level)
                     </div>
                     <ul
@@ -841,11 +847,11 @@ token = "${activeProfile.sync_token}"`}
               {researchSummary.combat_bonuses_from_research &&
                 Object.keys(researchSummary.combat_bonuses_from_research)
                   .length > 0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Flat combat bonuses (global)
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                    <ul style={styles.bulletList}>
                       {Object.entries(
                         researchSummary.combat_bonuses_from_research,
                       )
@@ -863,11 +869,11 @@ token = "${activeProfile.sync_token}"`}
                 Object.keys(
                   researchSummary.combat_owner_faction_bonuses_from_research,
                 ).length > 0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Owner-hull faction bonuses
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                    <ul style={styles.bulletList}>
                       {Object.entries(
                         researchSummary.combat_owner_faction_bonuses_from_research,
                       )
@@ -889,8 +895,8 @@ token = "${activeProfile.sync_token}"`}
               {researchSummary.combat_conditional_bonuses_from_research &&
                 researchSummary.combat_conditional_bonuses_from_research
                   .length > 0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Conditional bonuses (attack-phase seats)
                     </div>
                     <ul
@@ -921,11 +927,11 @@ token = "${activeProfile.sync_token}"`}
               {researchSummary.combat_bonuses_scenario_effective &&
                 Object.keys(researchSummary.combat_bonuses_scenario_effective)
                   .length > 0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Scenario-effective flat totals
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                    <ul style={styles.bulletList}>
                       {Object.entries(
                         researchSummary.combat_bonuses_scenario_effective,
                       )
@@ -942,8 +948,8 @@ token = "${activeProfile.sync_token}"`}
               {researchSummary.combat_conditional_scenario_active &&
                 researchSummary.combat_conditional_scenario_active.length >
                   0 && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  <div style={styles.blockGap}>
+                    <div style={styles.fieldLabel}>
                       Conditional active for scenario (static gates)
                     </div>
                     <ul
@@ -995,13 +1001,13 @@ token = "${activeProfile.sync_token}"`}
                           borderBottom: "1px solid var(--border)",
                         }}
                       >
-                        <th style={{ padding: "6px 8px" }}>rid</th>
-                        <th style={{ padding: "6px 8px" }}>Level</th>
-                        <th style={{ padding: "6px 8px" }}>Research</th>
-                        <th style={{ padding: "6px 8px" }}>Kind</th>
-                        <th style={{ padding: "6px 8px" }}>Flat</th>
-                        <th style={{ padding: "6px 8px" }}>Owner hull</th>
-                        <th style={{ padding: "6px 8px" }}>Conditional</th>
+                        <th style={styles.cellPad}>rid</th>
+                        <th style={styles.cellPad}>Level</th>
+                        <th style={styles.cellPad}>Research</th>
+                        <th style={styles.cellPad}>Kind</th>
+                        <th style={styles.cellPad}>Flat</th>
+                        <th style={styles.cellPad}>Owner hull</th>
+                        <th style={styles.cellPad}>Conditional</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1018,11 +1024,11 @@ token = "${activeProfile.sync_token}"`}
                           >
                             {row.rid}
                           </td>
-                          <td style={{ padding: "6px 8px" }}>{row.level}</td>
-                          <td style={{ padding: "6px 8px" }}>
+                          <td style={styles.cellPad}>{row.level}</td>
+                          <td style={styles.cellPad}>
                             {row.research_name ?? "—"}
                           </td>
-                          <td style={{ padding: "6px 8px" }}>
+                          <td style={styles.cellPad}>
                             {researchCombatKindLabel(row.combat_kind)}
                           </td>
                           <td
@@ -1096,7 +1102,7 @@ token = "${activeProfile.sync_token}"`}
               maxWidth: 420,
             }}
           >
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label style={styles.rowCenter}>
               <span style={{ width: 140 }}>Equipped</span>
               <select
                 value={
@@ -1173,7 +1179,7 @@ token = "${activeProfile.sync_token}"`}
               maxWidth: 420,
             }}
           >
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label style={styles.rowCenter}>
               <span style={{ width: 140 }}>Equipped</span>
               <select
                 value={
@@ -1234,11 +1240,7 @@ token = "${activeProfile.sync_token}"`}
           >
             Save profile
           </button>
-          {profileError && (
-            <div style={{ marginTop: 8, color: "var(--error)" }}>
-              {profileError}
-            </div>
-          )}
+          {profileError && <div style={styles.errorNote}>{profileError}</div>}
         </section>
       )}
 
@@ -1290,11 +1292,7 @@ token = "${activeProfile.sync_token}"`}
           >
             Import
           </button>
-          {importError && (
-            <div style={{ marginTop: 8, color: "var(--error)" }}>
-              {importError}
-            </div>
-          )}
+          {importError && <div style={styles.errorNote}>{importError}</div>}
           {importResult && (
             <div
               style={{
@@ -1319,7 +1317,7 @@ token = "${activeProfile.sync_token}"`}
               {importResult.diagnostics &&
                 importResult.diagnostics.length > 0 && (
                   <div style={{ marginTop: 8, fontSize: "0.85rem" }}>
-                    <strong style={{ color: "var(--text-muted)" }}>
+                    <strong style={styles.muted}>
                       Warnings (tier / level)
                     </strong>
                     <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
@@ -1407,10 +1405,7 @@ token = "${activeProfile.sync_token}"`}
             }}
           >
             {["weapon", "shield", "mitigation", "hull"].map((key) => (
-              <label
-                key={key}
-                style={{ display: "flex", alignItems: "center", gap: 8 }}
-              >
+              <label key={key} style={styles.rowCenter}>
                 <span style={{ width: 100 }}>{key} %</span>
                 <input
                   type="number"
@@ -1443,11 +1438,7 @@ token = "${activeProfile.sync_token}"`}
           >
             Save profile
           </button>
-          {profileError && (
-            <div style={{ marginTop: 8, color: "var(--error)" }}>
-              {profileError}
-            </div>
-          )}
+          {profileError && <div style={styles.errorNote}>{profileError}</div>}
         </section>
       )}
     </div>
