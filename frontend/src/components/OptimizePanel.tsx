@@ -92,6 +92,20 @@ const selectStyle: CSSProperties = {
   color: "var(--text)",
 };
 
+/** Same field surface as `selectStyle`, with tighter padding for text inputs. */
+const inputStyleCompact: CSSProperties = { ...selectStyle, padding: "0.35rem" };
+
+/** Bare chevron button used to collapse/expand the panel. */
+const iconButtonStyle: CSSProperties = {
+  padding: 4,
+  background: "transparent",
+  border: "none",
+  color: "var(--text-muted)",
+};
+
+/** Drop the default checkbox margin so it aligns inside flex label rows. */
+const checkboxResetStyle: CSSProperties = { margin: 0 };
+
 const checkboxLabelStyle: CSSProperties = {
   fontSize: "0.85rem",
   display: "flex",
@@ -282,12 +296,7 @@ export default memo(function OptimizePanel({
           type="button"
           onClick={onToggleCollapsed}
           aria-label="Expand panel"
-          style={{
-            padding: 4,
-            background: "transparent",
-            border: "none",
-            color: "var(--text-muted)",
-          }}
+          style={iconButtonStyle}
         >
           →
         </button>
@@ -324,12 +333,7 @@ export default memo(function OptimizePanel({
           type="button"
           onClick={onToggleCollapsed}
           aria-label="Collapse panel"
-          style={{
-            padding: 4,
-            background: "transparent",
-            border: "none",
-            color: "var(--text-muted)",
-          }}
+          style={iconButtonStyle}
         >
           ←
         </button>
@@ -367,7 +371,7 @@ export default memo(function OptimizePanel({
                   type="checkbox"
                   checked={selectedSeeds.includes(seed)}
                   onChange={() => toggleSeed(seed)}
-                  style={{ margin: 0 }}
+                  style={checkboxResetStyle}
                 />
                 <span style={{ fontSize: "0.8rem" }}>{seed}</span>
               </label>
@@ -416,7 +420,7 @@ export default memo(function OptimizePanel({
               type="checkbox"
               checked={heuristicsOnly}
               onChange={(e) => onHeuristicsOnlyChange(e.target.checked)}
-              style={{ margin: 0 }}
+              style={checkboxResetStyle}
             />
             <span>Heuristics only (skip broader search)</span>
           </label>
@@ -433,7 +437,7 @@ export default memo(function OptimizePanel({
               disabled={optimizerStrategy === "genetic"}
               onChange={(e) => onFastDiscoveryChange(e.target.checked)}
               aria-label="Fast discovery: merge seed crews into main optimize pipeline"
-              style={{ margin: 0 }}
+              style={checkboxResetStyle}
             />
             <span
               style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
@@ -534,16 +538,7 @@ export default memo(function OptimizePanel({
                   );
                 }
               }}
-              style={{
-                display: "block",
-                marginTop: 4,
-                width: "100%",
-                padding: "0.4rem",
-                background: "var(--bg)",
-                border: "1px solid var(--border)",
-                borderRadius: 4,
-                color: "var(--text)",
-              }}
+              style={selectStyle}
             />
           </div>
           <div style={{ fontSize: "0.85rem" }}>
@@ -572,16 +567,7 @@ export default memo(function OptimizePanel({
                   onTieredTopKChange(Math.min(n, MAX_TIERED_TOP_K_UI));
                 }
               }}
-              style={{
-                display: "block",
-                marginTop: 4,
-                width: "100%",
-                padding: "0.4rem",
-                background: "var(--bg)",
-                border: "1px solid var(--border)",
-                borderRadius: 4,
-                color: "var(--text)",
-              }}
+              style={selectStyle}
             />
           </div>
           <p
@@ -613,7 +599,7 @@ export default memo(function OptimizePanel({
                 type="checkbox"
                 checked={chainGrindEnabled}
                 onChange={(e) => onChainGrindEnabledChange(e.target.checked)}
-                style={{ margin: 0 }}
+                style={checkboxResetStyle}
               />
               <span>
                 Chain grind (N wins, hull carries, shields full each fight)
@@ -639,16 +625,7 @@ export default memo(function OptimizePanel({
                         Math.min(50, Math.max(1, Number(e.target.value) || 1)),
                       )
                     }
-                    style={{
-                      display: "block",
-                      marginTop: 4,
-                      width: "100%",
-                      padding: "0.35rem",
-                      background: "var(--bg)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 4,
-                      color: "var(--text)",
-                    }}
+                    style={inputStyleCompact}
                   />
                 </label>
                 <label
@@ -710,16 +687,7 @@ export default memo(function OptimizePanel({
             value={noveltyLambdaText}
             onChange={(e) => onNoveltyLambdaTextChange(e.target.value)}
             aria-label="Novelty lambda for MMR ranking"
-            style={{
-              display: "block",
-              marginTop: 4,
-              width: "100%",
-              padding: "0.4rem",
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
-              color: "var(--text)",
-            }}
+            style={selectStyle}
           />
           <label
             style={{
@@ -739,16 +707,7 @@ export default memo(function OptimizePanel({
               disabled={!noveltyLambdaText.trim()}
               value={noveltyDiverseTopText}
               onChange={(e) => onNoveltyDiverseTopTextChange(e.target.value)}
-              style={{
-                display: "block",
-                marginTop: 4,
-                width: "100%",
-                padding: "0.4rem",
-                background: "var(--bg)",
-                border: "1px solid var(--border)",
-                borderRadius: 4,
-                color: "var(--text)",
-              }}
+              style={selectStyle}
             />
           </label>
           <label
@@ -769,16 +728,7 @@ export default memo(function OptimizePanel({
               disabled={!noveltyLambdaText.trim()}
               value={noveltyPoolText}
               onChange={(e) => onNoveltyPoolTextChange(e.target.value)}
-              style={{
-                display: "block",
-                marginTop: 4,
-                width: "100%",
-                padding: "0.4rem",
-                background: "var(--bg)",
-                border: "1px solid var(--border)",
-                borderRadius: 4,
-                color: "var(--text)",
-              }}
+              style={selectStyle}
             />
           </label>
           <label
@@ -831,16 +781,7 @@ export default memo(function OptimizePanel({
             value={optimizeMustInclude}
             onChange={(e) => onOptimizeMustIncludeChange(e.target.value)}
             placeholder="Officer A, Officer B"
-            style={{
-              display: "block",
-              marginTop: 4,
-              width: "100%",
-              padding: "0.35rem",
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
-              color: "var(--text)",
-            }}
+            style={inputStyleCompact}
           />
         </label>
         <OfficerNameMultiSelect
@@ -876,14 +817,7 @@ export default memo(function OptimizePanel({
             rows={2}
             placeholder='[{"officers":["A","B"],"min_count":2}]'
             style={{
-              display: "block",
-              marginTop: 4,
-              width: "100%",
-              padding: "0.35rem",
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
-              color: "var(--text)",
+              ...inputStyleCompact,
               fontFamily: "monospace",
               fontSize: "0.75rem",
               resize: "vertical",
@@ -913,16 +847,7 @@ export default memo(function OptimizePanel({
                 onMaxCandidatesChange(Math.min(n, 2_000_000));
               }
             }}
-            style={{
-              display: "block",
-              marginTop: 4,
-              width: "100%",
-              padding: "0.4rem",
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
-              color: "var(--text)",
-            }}
+            style={selectStyle}
           />
         </label>
 

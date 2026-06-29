@@ -1,4 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   type CompareCrewDistribution,
   type CrewRecommendation,
@@ -15,6 +22,71 @@ const DEFAULT_PER_PAGE = 50;
 const TABLE_CELL_PAD = "0.45rem 0.5rem";
 const TABLE_NUM_PAD = "0.45rem 0.4rem";
 const CREW_CELL_MAX_CH = 42;
+
+/** Sticky header cell shared by every results-table column. */
+const thBase: CSSProperties = {
+  position: "sticky",
+  top: 0,
+  zIndex: 2,
+  background: "var(--surface)",
+  borderBottom: "1px solid var(--border)",
+};
+
+/** Repeated style objects, hoisted so each is defined once (and not re-allocated per render). */
+const styles = {
+  thText: { ...thBase, textAlign: "left", padding: TABLE_CELL_PAD },
+  thCheckbox: {
+    ...thBase,
+    textAlign: "left",
+    padding: TABLE_NUM_PAD,
+    width: 34,
+  },
+  thIndex: {
+    ...thBase,
+    textAlign: "left",
+    padding: TABLE_NUM_PAD,
+    width: 56,
+    color: "var(--text-muted)",
+    fontWeight: 600,
+  },
+  thNumeric: {
+    ...thBase,
+    textAlign: "right",
+    padding: TABLE_NUM_PAD,
+    whiteSpace: "nowrap",
+    fontVariantNumeric: "tabular-nums",
+  },
+  tdIndex: {
+    padding: TABLE_NUM_PAD,
+    color: "var(--text-muted)",
+    fontVariantNumeric: "tabular-nums",
+  },
+  tdCrew: {
+    padding: TABLE_CELL_PAD,
+    whiteSpace: "nowrap",
+    maxWidth: 360,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  tdNumeric: {
+    padding: TABLE_NUM_PAD,
+    textAlign: "right",
+    whiteSpace: "nowrap",
+    fontVariantNumeric: "tabular-nums",
+  },
+  control: {
+    padding: "0.25rem 0.5rem",
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    borderRadius: 4,
+    color: "var(--text)",
+  },
+  sectionLabel: {
+    fontSize: "0.75rem",
+    color: "var(--text-muted)",
+    marginBottom: 6,
+  },
+} satisfies Record<string, CSSProperties>;
 
 /** Normalize captain/bridge/below_decks for display: API may return string[]; join with ", ". */
 function formatCrewCell(value: string | string[] | null | undefined): string {
@@ -70,15 +142,7 @@ function SideBySideHistograms({
   const max = Math.max(1, ...series.flat());
   return (
     <div style={{ marginTop: 12 }}>
-      <div
-        style={{
-          fontSize: "0.75rem",
-          color: "var(--text-muted)",
-          marginBottom: 6,
-        }}
-      >
-        {title}
-      </div>
+      <div style={styles.sectionLabel}>{title}</div>
       <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
         {crews.map((c, ci) => {
           const vals = getCounts(c);
@@ -587,13 +651,7 @@ export default memo(function SimResults({
                     Math.min(p, Math.max(1, Math.ceil(total / n))),
                   );
                 }}
-                style={{
-                  padding: "0.25rem 0.5rem",
-                  background: "var(--bg)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 4,
-                  color: "var(--text)",
-                }}
+                style={styles.control}
                 aria-label="Results per page"
               >
                 {PER_PAGE_OPTIONS.map((n) => (
@@ -617,11 +675,7 @@ export default memo(function SimResults({
                   disabled={safePage <= 1}
                   aria-label="Previous page"
                   style={{
-                    padding: "0.25rem 0.5rem",
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 4,
-                    color: "var(--text)",
+                    ...styles.control,
                     cursor: safePage <= 1 ? "not-allowed" : "pointer",
                     opacity: safePage <= 1 ? 0.6 : 1,
                   }}
@@ -643,11 +697,7 @@ export default memo(function SimResults({
                   disabled={safePage >= totalPages}
                   aria-label="Next page"
                   style={{
-                    padding: "0.25rem 0.5rem",
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 4,
-                    color: "var(--text)",
+                    ...styles.control,
                     cursor: safePage >= totalPages ? "not-allowed" : "pointer",
                     opacity: safePage >= totalPages ? 0.6 : 1,
                   }}
@@ -676,88 +726,13 @@ export default memo(function SimResults({
             >
               <thead>
                 <tr>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      background: "var(--surface)",
-                      borderBottom: "1px solid var(--border)",
-                      textAlign: "left",
-                      padding: TABLE_NUM_PAD,
-                      width: 34,
-                    }}
-                  />
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      background: "var(--surface)",
-                      borderBottom: "1px solid var(--border)",
-                      textAlign: "left",
-                      padding: TABLE_NUM_PAD,
-                      width: 56,
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    #
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      background: "var(--surface)",
-                      borderBottom: "1px solid var(--border)",
-                      textAlign: "left",
-                      padding: TABLE_CELL_PAD,
-                    }}
-                  >
-                    Captain
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      background: "var(--surface)",
-                      borderBottom: "1px solid var(--border)",
-                      textAlign: "left",
-                      padding: TABLE_CELL_PAD,
-                    }}
-                  >
-                    Bridge
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      background: "var(--surface)",
-                      borderBottom: "1px solid var(--border)",
-                      textAlign: "left",
-                      padding: TABLE_CELL_PAD,
-                    }}
-                  >
-                    Below Deck
-                  </th>
+                  <th style={styles.thCheckbox} />
+                  <th style={styles.thIndex}>#</th>
+                  <th style={styles.thText}>Captain</th>
+                  <th style={styles.thText}>Bridge</th>
+                  <th style={styles.thText}>Below Deck</th>
                   {numericTableHeaders.map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        position: "sticky",
-                        top: 0,
-                        zIndex: 2,
-                        background: "var(--surface)",
-                        borderBottom: "1px solid var(--border)",
-                        textAlign: "right",
-                        padding: TABLE_NUM_PAD,
-                        whiteSpace: "nowrap",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
+                    <th key={h} style={styles.thNumeric}>
                       {h}
                     </th>
                   ))}
@@ -802,15 +777,7 @@ export default memo(function SimResults({
                           aria-label={`Select row ${globalIndex + 1}`}
                         />
                       </td>
-                      <td
-                        style={{
-                          padding: TABLE_NUM_PAD,
-                          color: "var(--text-muted)",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {globalIndex + 1}
-                      </td>
+                      <td style={styles.tdIndex}>{globalIndex + 1}</td>
                       {(
                         [
                           { label: "Captain", value: r.captain },
@@ -821,112 +788,53 @@ export default memo(function SimResults({
                         const full = formatCrewCell(c.value);
                         const shown = truncateMiddle(full, CREW_CELL_MAX_CH);
                         return (
-                          <td
-                            key={c.label}
-                            style={{
-                              padding: TABLE_CELL_PAD,
-                              whiteSpace: "nowrap",
-                              maxWidth: 360,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                            title={full}
-                          >
+                          <td key={c.label} style={styles.tdCrew} title={full}>
                             {shown}
                           </td>
                         );
                       })}
                       {linearEvalMode ? (
-                        <td
-                          style={{
-                            padding: TABLE_NUM_PAD,
-                            textAlign: "right",
-                            whiteSpace: "nowrap",
-                            fontVariantNumeric: "tabular-nums",
-                          }}
-                        >
+                        <td style={styles.tdNumeric}>
                           {formatExpectedHullDamage(r.expected_hull_damage)}
                         </td>
                       ) : (
                         <>
-                          <td
-                            style={{
-                              padding: TABLE_NUM_PAD,
-                              textAlign: "right",
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <td style={styles.tdNumeric}>
                             {formatPctWithCi(
                               r.win_rate,
                               r.win_rate_ci_low,
                               r.win_rate_ci_high,
                             )}
                           </td>
-                          <td
-                            style={{
-                              padding: TABLE_NUM_PAD,
-                              textAlign: "right",
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <td style={styles.tdNumeric}>
                             {formatPctWithCi(
                               r.stall_rate,
                               r.stall_rate_ci_low,
                               r.stall_rate_ci_high,
                             )}
                           </td>
-                          <td
-                            style={{
-                              padding: TABLE_NUM_PAD,
-                              textAlign: "right",
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <td style={styles.tdNumeric}>
                             {formatPctWithCi(
                               r.loss_rate,
                               r.loss_rate_ci_low,
                               r.loss_rate_ci_high,
                             )}
                           </td>
-                          <td
-                            style={{
-                              padding: TABLE_NUM_PAD,
-                              textAlign: "right",
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <td style={styles.tdNumeric}>
                             {formatPctWithCi(
                               r.r1_kill_rate,
                               r.r1_kill_rate_ci_low,
                               r.r1_kill_rate_ci_high,
                             )}
                           </td>
-                          <td
-                            style={{
-                              padding: TABLE_NUM_PAD,
-                              textAlign: "right",
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <td style={styles.tdNumeric}>
                             {formatPctWithCi(
                               r.avg_hull_remaining,
                               r.avg_hull_remaining_ci_low,
                               r.avg_hull_remaining_ci_high,
                             )}
                           </td>
-                          <td
-                            style={{
-                              padding: TABLE_NUM_PAD,
-                              textAlign: "right",
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <td style={styles.tdNumeric}>
                             {formatPctWithCi(
                               r.avg_defender_hull_remaining,
                               r.avg_defender_hull_remaining_ci_low,
@@ -1088,13 +996,7 @@ export default memo(function SimResults({
                     (c) => c.proc_rates && Object.keys(c.proc_rates).length > 0,
                   ) && (
                     <div style={{ marginTop: 12 }}>
-                      <div
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--text-muted)",
-                          marginBottom: 6,
-                        }}
-                      >
+                      <div style={styles.sectionLabel}>
                         Proc-like events (mean count per traced trial)
                       </div>
                       <div
