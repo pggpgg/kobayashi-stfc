@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { SensitivityRow } from "../lib/sensitivityApi";
+import { fmtFloat, fmtPct } from "../lib/sensitivityFormat";
 import ExplainerPanel from "./ExplainerPanel";
 
 interface Props {
@@ -7,17 +8,6 @@ interface Props {
   baselineMean: number;
   metric: string;
   numSims: number;
-}
-
-function fmtPct(n: number | null | undefined, digits = 2): string {
-  if (n == null || !Number.isFinite(n)) return "—";
-  return `${(n * 100).toFixed(digits)}%`;
-}
-
-function fmtFloat(n: number, digits = 4): string {
-  if (!Number.isFinite(n)) return "—";
-  if (Math.abs(n) < 1e-6 && n !== 0) return n.toExponential(2);
-  return n.toFixed(digits);
 }
 
 export default function SensitivityResults({
