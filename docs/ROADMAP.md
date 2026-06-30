@@ -24,7 +24,7 @@ _Last updated 2026-06-30. The June 2026 audit backlog (engine decomposition, ass
 
 ## Optional follow-ups (low priority)
 
-- **Hostile names in data files** — the hostile picker already shows proper names (`/api/hostiles` resolves `display_name` from upstream translations; [HostilePicker](../frontend/src/components/HostilePicker.tsx) labels rows accordingly). On-disk `hostile_name` in `data/hostiles/*.json` still uses `Hostile {id}` placeholders from the normalizer — cosmetic data debt, not a UI gap. Optional: bake resolved names into `normalize_hostiles_stfc_space` and refresh stale notes in [STFC_SPACE_DATA_STRATEGY.md](STFC_SPACE_DATA_STRATEGY.md).
+- ~~**Hostile names in data files**~~ *Shipped 2026-06-30* — `normalize_hostiles_stfc_space` now resolves `hostile_name` via [`hostile_loca::resolve_hostile_display_name`](../src/data/hostile_loca.rs), the same `loca_id` → string map already used by `/api/hostiles`'s `display_name` field. All 5,420 on-disk `data/hostiles/*.json` regenerated; 0 fall back to the `Hostile {id}` placeholder. [STFC_SPACE_DATA_STRATEGY.md](STFC_SPACE_DATA_STRATEGY.md) notes refreshed to match.
 
 ## Assessed, no action planned
 
