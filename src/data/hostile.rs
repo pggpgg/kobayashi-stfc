@@ -1,8 +1,9 @@
 //! Hostile data: normalized combat stats for hostiles (from STFCcommunity, data.stfc.space, or manual).
 //! Used to build DefenderStats + hull + ShipType when resolving by name/id.
 //!
-//! **Display names:** `normalize_hostiles_stfc_space` sets `hostile_name` to `Hostile {id}` until a
-//! `loca_id` → string map (e.g. `translations-hostiles` from data.stfc.space) is wired into that tool.
+//! **Display names:** `normalize_hostiles_stfc_space` resolves `hostile_name` via
+//! [`crate::data::hostile_loca::resolve_hostile_display_name`] (the same `loca_id` → string map used
+//! by the `/api/hostiles` `display_name` field); falls back to `Hostile {id}` for ids with no match.
 //!
 //! **Defender faction tag (`opponent_faction_tag`):** Maps `faction.id` (from `summary-hostile`) and
 //! `faction.loca_id` (aligns with `translations-factions.json` `faction_name` rows) to

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (display names, catalogs), with automated **summary drift detection** in CI and weekly refresh PRs (see Part 7). Legacy **STFCcommunity** path kept optional for older baselines.
+This document describes how Kobayashi imports ship and hostile data from **data.stfc.space** (the stfc.space backend API) into `**data/ships_extended/`** and `**data/hostiles/`**, alongside optional buildings/research importers. The **core pipeline is implemented** (Node fetch + Rust normalizers). Remaining work is mostly **backlog** (catalogs), with automated **summary drift detection** in CI and weekly refresh PRs (see Part 7). Legacy **STFCcommunity** path kept optional for older baselines.
 
 ---
 
@@ -15,7 +15,7 @@ This document describes how Kobayashi imports ship and hostile data from **data.
 **Identity and hull class**
 
 - `id`: Unique string id (stfc.space pipeline: numeric string from upstream, e.g. `"111884576"`)
-- `hostile_name`: Display name (may be a placeholder until `loca_id` is translated)
+- `hostile_name`: Display name, resolved via the `loca_id` → string map in [`hostile_loca.rs`](../src/data/hostile_loca.rs) (the same map backing `/api/hostiles`'s `display_name`); falls back to `Hostile {id}` for unmapped ids
 - `level`: Level/tier (u32)
 - `ship_class`: One of `battleship`, `explorer`, `interceptor`, `survey`, `armada` (derived from upstream `hull_type`)
 
@@ -57,7 +57,7 @@ This document describes how Kobayashi imports ship and hostile data from **data.
 ```json
 {
   "id": "111884576",
-  "hostile_name": "Hostile 111884576",
+  "hostile_name": "Pakled Thief",
   "level": 18,
   "ship_class": "battleship",
   "armor": 689.0,
@@ -237,9 +237,9 @@ Recompute anytime with: `node -e "console.log(require('./data/upstream/data-stfc
 - Full hostile ladder (levels through **81** in current summaries), rare tiers, `ability[]` payloads, and offensive stats on `HostileRecord` (counter-fire / two-way combat).
 - Structured ship JSON for **all tiers** and level curves consumed by `normalize_data_stfc_space`.
 
-**Remaining product gaps (data, not API “unknown”):**
+**Remaining product gaps (data, not API “unknown”):** none currently outstanding.
 
-- **Hostile display names:** `normalize_hostiles_stfc_space` still emits `Hostile {id}` until a trusted `loca_id` → string map exists; `materials` translations are the wrong namespace for that.
+- ~~**Hostile display names:** `normalize_hostiles_stfc_space` emitted `Hostile {id}` placeholders.~~ *Shipped 2026-06-30* — the normalizer now resolves `hostile_name` via [`hostile_loca::resolve_hostile_display_name`](../src/data/hostile_loca.rs) (ships/officer-name/navigation translation files), the same map already used by `/api/hostiles`. 0 of 5,420 hostiles fall back to the placeholder as of this run.
 
 ---
 
@@ -318,7 +318,7 @@ This section matches the **checked-in normalizers**, not a wishlist. When upstre
 | Upstream (detail JSON)                                                                                   | KOBAYASHI field      | Notes                                                                                                                                             |
 | -------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id` (number)                                                                                            | `id`                 | **Decimal string**, e.g. `"2918121098"` — same id as stfc.space, not a legacy `explorer_30` slug                                                  |
-| —                                                                                                        | `hostile_name`       | Placeholder `Hostile {id}` until `loca_id` → name pipeline exists (Part 2 / Part 3)                                                               |
+| —                                                                                                        | `hostile_name`       | Resolved from `loca_id` via the shared translation map ([`hostile_loca.rs`](../src/data/hostile_loca.rs)); `Hostile {id}` fallback for unmapped ids |
 | `level`                                                                                                  | `level`              | Coerced to `u32`                                                                                                                                  |
 | `hull_type`                                                                                              | `ship_class`         | Via [`hostile_hull_type_raw_to_ship_class`](../src/data/hostile.rs) (aligned with client combat triangle): `0` interceptor, `1` survey, `2` explorer, `3` battleship, `4`/`5` survey; unknown → `battleship` + stderr warning |
 | `hull_type`                                                                                              | `hull_type_raw`      | Raw copy                                                                                                                                          |
@@ -528,7 +528,7 @@ Older drafts of this document described **phased delivery** of a Rust `fetch-dat
 
 | Priority | Item                              | Notes                                                                                                                                                                                                                                             |
 | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1        | **Hostile display names**         | `loca_id` is stored; normalizer still sets `hostile_name` to `Hostile {id}`. Need a verified string source (translation category, game dump, or new upstream field). The standard translation fetch list has **no** `hostiles` category (Part 2). |
+| 1        | ~~**Hostile display names**~~     | *Shipped 2026-06-30* — normalizer now resolves `hostile_name` via the existing `hostile_loca` translation map (ships/officer-name/navigation files), the same source `/api/hostiles` already used; `Hostile {id}` fallback only for unmapped ids. |
 | 2        | **Provenance parity**             | ~~Ships `registry.json` row~~ *shipped 2026-06-14* — `normalize_data_stfc_space` now calls `merge_registry_entry` with env-driven `STFCSPACE_SHIPS_VERSION` / `STFCSPACE_SHIPS_SOURCE_NOTE`. |
 | 3        | **Hostile abilities in combat**   | ~~Catalog + resolver shipped 2026-06-14~~ — [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) (976 ids), [`hostile_ability_resolve.rs`](../src/data/hostile_ability_resolve.rs) → `defender_crew`, audit [`HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md`](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md). Regen: `python3 scripts/generate_full_hostile_ability_catalog.py`. Remaining gaps: crit floor, multi-stat crit, PvP/armada scope (see audit). |
 | 4        | **Research / buildings coverage** | Extend `BUFF_MAPPING` / buff-id maps and research importers as new STFC buff ids appear; use `--dump-unmapped` on research import.                                                                                                                |

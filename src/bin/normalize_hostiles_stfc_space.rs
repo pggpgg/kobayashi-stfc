@@ -2,6 +2,7 @@
 //! Reads `data/upstream/data-stfc-space/hostiles/*.json`.
 //! Writes per-id JSON + `index.json`, merge-updates `data/registry.json` hostiles entry only.
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -11,6 +12,9 @@ use serde_json::Value;
 use kobayashi::data::hostile::{
     hostile_hull_type_raw_to_ship_class, HostileFactionRef, HostileIndex, HostileIndexEntry,
     HostileRecord, HostileResourceDrop,
+};
+use kobayashi::data::hostile_loca::{
+    load_hostile_loca_display_names, resolve_hostile_display_name,
 };
 use kobayashi::data::registry::merge_registry_entry;
 
@@ -183,7 +187,11 @@ fn curated_hostile_tags_for_upstream(
     tags
 }
 
-fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
+fn raw_to_record(
+    raw: RawUpstream,
+    unknown_hull: &mut u32,
+    loca_map: &HashMap<u64, String>,
+) -> HostileRecord {
     let id = raw.id.to_string();
     let stats = raw.stats.unwrap_or_default();
     let loca_id = raw.loca_id.as_ref().and_then(value_to_u64);
@@ -209,7 +217,7 @@ fn raw_to_record(raw: RawUpstream, unknown_hull: &mut u32) -> HostileRecord {
 
     HostileRecord {
         id: id.clone(),
-        hostile_name: format!("Hostile {}", id),
+        hostile_name: resolve_hostile_display_name(loca_map, loca_id, &format!("Hostile {}", id)),
         level,
         ship_class,
         armor: stats.armor,
@@ -321,6 +329,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     fs::create_dir_all(&out_dir)?;
 
+    let loca_map = load_hostile_loca_display_names(&repo);
     let mut unknown_hull = 0u32;
     let mut parse_errors = 0u32;
     let mut records: Vec<HostileRecord> = Vec::new();
@@ -347,7 +356,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
         };
-        records.push(raw_to_record(raw, &mut unknown_hull));
+        records.push(raw_to_record(raw, &mut unknown_hull, &loca_map));
     }
 
     if records.is_empty() {
