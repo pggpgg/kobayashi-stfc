@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import type { MorrisRow } from "../lib/sensitivityApi";
+import { fmtFloat } from "../lib/sensitivityFormat";
 import ExplainerPanel from "./ExplainerPanel";
+import SortableStatTable, { type StatTableColumn } from "./SortableStatTable";
 
 interface Props {
   rows: MorrisRow[];
@@ -13,11 +15,66 @@ interface Props {
 
 type SortKey = "mu_star" | "sigma" | "mu";
 
-function fmtFloat(n: number, digits = 4): string {
-  if (!Number.isFinite(n)) return "—";
-  if (Math.abs(n) < 1e-6 && n !== 0) return n.toExponential(2);
-  return n.toFixed(digits);
-}
+// Interactive heuristic: σ > 0.5 × μ* and μ* > 0 → flag as "interacts".
+// Tight visual cue; not statistical (Sobol pairwise gives the real answer).
+const INTERACTS_THRESHOLD = 0.5;
+
+const SORT_KEYS = [
+  { key: "mu_star" as const, label: "μ* (importance)" },
+  { key: "sigma" as const, label: "σ (interaction)" },
+  { key: "mu" as const, label: "|μ| (direction)" },
+];
+
+const columns: StatTableColumn<MorrisRow>[] = [
+  { key: "stat", header: "Stat", align: "left", render: (row) => row.stat },
+  {
+    key: "delta_applied",
+    header: "δ applied",
+    render: (row) => fmtFloat(row.delta_applied, 3),
+  },
+  {
+    key: "mu_star",
+    header: "μ* (importance)",
+    headerTitle:
+      "Importance: how much this stat moves the outcome on average, ignoring whether it goes up or down. Sort by this first.",
+    variant: "headline",
+    render: (row) => fmtFloat(row.mu_star),
+  },
+  {
+    key: "mu_star_ci",
+    header: "95% CI",
+    headerTitle:
+      "95% confidence interval on the importance. Wider = noisier; raise sims per point or trajectory count to tighten.",
+    variant: "ci",
+    render: (row) =>
+      `[${fmtFloat(row.mu_star_ci95_low)}, ${fmtFloat(row.mu_star_ci95_high)}]`,
+  },
+  {
+    key: "mu",
+    header: "μ (direction)",
+    headerTitle:
+      "Direction: average signed effect. Positive = investing helps; negative = hurts. Small μ but large μ* means 'helps in some setups, hurts in others' — an interaction hint.",
+    render: (row) => fmtFloat(row.mu),
+  },
+  {
+    key: "sigma",
+    header: "σ (interaction)",
+    headerTitle:
+      "Interaction signal: how much the effect varies across random paths. High σ vs. μ* means the stat's effect depends on what other stats are doing.",
+    render: (row) => fmtFloat(row.sigma),
+  },
+  {
+    key: "interacts",
+    header: "Interacts?",
+    headerTitle:
+      "Quick flag: σ > 0.5 × μ* — this stat probably interacts with others. To find out WHICH others, run Sobol with pairwise interactions enabled.",
+    align: "center",
+    render: (row) =>
+      row.mu_star > 0 && row.sigma > INTERACTS_THRESHOLD * row.mu_star
+        ? "•"
+        : "",
+  },
+];
 
 export default function MorrisResults({
   rows,
@@ -38,10 +95,6 @@ export default function MorrisResults({
     });
     return copy;
   }, [rows, sortBy]);
-
-  // Interactive heuristic: σ > 0.5 × μ* and μ* > 0 → flag as "interacts".
-  // Tight visual cue; not statistical (Sobol pairwise gives the real answer).
-  const interactsThreshold = 0.5;
 
   if (rows.length === 0) {
     return (
@@ -101,142 +154,21 @@ export default function MorrisResults({
           run.
         </p>
       </ExplainerPanel>
-      <div
-        style={{
-          marginBottom: "0.75rem",
-          color: "var(--text-muted)",
-          fontSize: "0.85rem",
-        }}
-      >
-        <strong>{metric}</strong> · <strong>r={rTrajectories}</strong>{" "}
-        trajectories · {numSimsPerPoint} sims/point ·{" "}
-        {totalSims.toLocaleString()} total sims · seed {baseSeed}
-      </div>
-      <div
-        style={{
-          marginBottom: "0.5rem",
-          fontSize: "0.85rem",
-          color: "var(--text-muted)",
-        }}
-      >
-        Sort by:{" "}
-        {(["mu_star", "sigma", "mu"] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setSortBy(key)}
-            style={{
-              marginRight: "0.5rem",
-              padding: "0.15rem 0.5rem",
-              border: "1px solid var(--border)",
-              background: sortBy === key ? "var(--accent)" : "transparent",
-              color: sortBy === key ? "var(--bg)" : "inherit",
-              borderRadius: 3,
-              cursor: "pointer",
-              fontSize: "0.8rem",
-            }}
-          >
-            {key === "mu_star"
-              ? "μ* (importance)"
-              : key === "sigma"
-                ? "σ (interaction)"
-                : "|μ| (direction)"}
-          </button>
-        ))}
-      </div>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: "0.9rem",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        <thead>
-          <tr style={{ borderBottom: "1px solid var(--border)" }}>
-            <th style={{ textAlign: "left", padding: "0.45rem 0.5rem" }}>
-              Stat
-            </th>
-            <th style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-              δ applied
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Importance: how much this stat moves the outcome on average, ignoring whether it goes up or down. Sort by this first."
-            >
-              μ* (importance)
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="95% confidence interval on the importance. Wider = noisier; raise sims per point or trajectory count to tighten."
-            >
-              95% CI
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Direction: average signed effect. Positive = investing helps; negative = hurts. Small μ but large μ* means 'helps in some setups, hurts in others' — an interaction hint."
-            >
-              μ (direction)
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Interaction signal: how much the effect varies across random paths. High σ vs. μ* means the stat's effect depends on what other stats are doing."
-            >
-              σ (interaction)
-            </th>
-            <th
-              style={{ textAlign: "center", padding: "0.45rem 0.5rem" }}
-              title="Quick flag: σ > 0.5 × μ* — this stat probably interacts with others. To find out WHICH others, run Sobol with pairwise interactions enabled."
-            >
-              Interacts?
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((row, i) => {
-            const bg = i % 2 === 1 ? "rgba(255,255,255,0.03)" : undefined;
-            const interacts =
-              row.mu_star > 0 && row.sigma > interactsThreshold * row.mu_star;
-            return (
-              <tr key={row.stat} style={{ background: bg }}>
-                <td style={{ padding: "0.45rem 0.5rem" }}>{row.stat}</td>
-                <td style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-                  {fmtFloat(row.delta_applied, 3)}
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    padding: "0.45rem 0.5rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {fmtFloat(row.mu_star)}
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    padding: "0.45rem 0.5rem",
-                    color: "var(--text-muted)",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  [{fmtFloat(row.mu_star_ci95_low)},{" "}
-                  {fmtFloat(row.mu_star_ci95_high)}]
-                </td>
-                <td style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-                  {fmtFloat(row.mu)}
-                </td>
-                <td style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-                  {fmtFloat(row.sigma)}
-                </td>
-                <td style={{ textAlign: "center", padding: "0.45rem 0.5rem" }}>
-                  {interacts ? "•" : ""}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <SortableStatTable
+        rows={sorted}
+        rowKey={(row) => row.stat}
+        columns={columns}
+        sortKeys={SORT_KEYS}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        summary={
+          <>
+            <strong>{metric}</strong> · <strong>r={rTrajectories}</strong>{" "}
+            trajectories · {numSimsPerPoint} sims/point ·{" "}
+            {totalSims.toLocaleString()} total sims · seed {baseSeed}
+          </>
+        }
+      />
       <p
         style={{
           marginTop: "0.75rem",

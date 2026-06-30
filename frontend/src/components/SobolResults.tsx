@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import type { SobolPairRow, SobolRow } from "../lib/sensitivityApi";
+import { fmtFloat } from "../lib/sensitivityFormat";
 import ExplainerPanel from "./ExplainerPanel";
 import SobolPairs from "./SobolPairs";
+import SortableStatTable, { type StatTableColumn } from "./SortableStatTable";
 
 interface Props {
   rows: SobolRow[];
@@ -15,11 +17,68 @@ interface Props {
 
 type SortKey = "st" | "s1" | "interaction";
 
-function fmtFloat(n: number, digits = 4): string {
-  if (!Number.isFinite(n)) return "—";
-  if (Math.abs(n) < 1e-6 && n !== 0) return n.toExponential(2);
-  return n.toFixed(digits);
-}
+const SORT_KEYS = [
+  { key: "st" as const, label: "Total impact" },
+  { key: "s1" as const, label: "Solo impact" },
+  { key: "interaction" as const, label: "Interaction gap" },
+];
+
+const columns: StatTableColumn<SobolRow>[] = [
+  { key: "stat", header: "Stat", align: "left", render: (row) => row.stat },
+  {
+    key: "base_delta",
+    header: "base δ",
+    render: (row) => fmtFloat(row.base_delta, 3),
+  },
+  {
+    key: "s1",
+    header: (
+      <>
+        Solo (S<sub>1</sub>)
+      </>
+    ),
+    headerTitle:
+      "Solo impact (S₁): how much this stat changes the outcome by itself, ignoring interactions with other stats. Range 0–1.",
+    variant: "headline",
+    render: (row) => fmtFloat(row.s1),
+  },
+  {
+    key: "s1_ci",
+    header: "95% CI",
+    headerTitle:
+      "95% confidence interval on the solo impact. Wider = noisier; raise N to tighten.",
+    variant: "ci",
+    render: (row) =>
+      `[${fmtFloat(row.s1_ci95_low)}, ${fmtFloat(row.s1_ci95_high)}]`,
+  },
+  {
+    key: "st",
+    header: (
+      <>
+        Total (S<sub>T</sub>)
+      </>
+    ),
+    headerTitle:
+      "Total impact (S_T): how much this stat changes the outcome on its own AND through combinations with any other stat. Always ≥ solo impact.",
+    variant: "headline",
+    render: (row) => fmtFloat(row.st),
+  },
+  {
+    key: "st_ci",
+    header: "95% CI",
+    headerTitle: "95% confidence interval on the total impact.",
+    variant: "ci",
+    render: (row) =>
+      `[${fmtFloat(row.st_ci95_low)}, ${fmtFloat(row.st_ci95_high)}]`,
+  },
+  {
+    key: "interaction",
+    header: "Interaction gap",
+    headerTitle:
+      "Gap = Total − Solo. The fraction of this stat's impact that comes from interactions with other stats (not from the stat alone).",
+    render: (row) => fmtFloat(row.interaction),
+  },
+];
 
 export default function SobolResults({
   rows,
@@ -123,155 +182,25 @@ export default function SobolResults({
         </p>
       </ExplainerPanel>
 
-      <div
-        style={{
-          marginBottom: "0.75rem",
-          color: "var(--text-muted)",
-          fontSize: "0.85rem",
-        }}
+      <SortableStatTable
+        rows={sorted}
+        rowKey={(row) => row.stat}
+        columns={columns}
+        sortKeys={SORT_KEYS}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        summary={
+          <>
+            <strong>{metric}</strong> · <strong>N={nSamples}</strong> samples ·{" "}
+            {totalSims.toLocaleString()} total sims · V(Y) ={" "}
+            {fmtFloat(outputVariance)} · seed {baseSeed}
+          </>
+        }
       >
-        <strong>{metric}</strong> · <strong>N={nSamples}</strong> samples ·{" "}
-        {totalSims.toLocaleString()} total sims · V(Y) ={" "}
-        {fmtFloat(outputVariance)} · seed {baseSeed}
-      </div>
-      <div
-        style={{
-          marginBottom: "0.5rem",
-          fontSize: "0.85rem",
-          color: "var(--text-muted)",
-        }}
-      >
-        Sort by:{" "}
-        {(["st", "s1", "interaction"] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setSortBy(key)}
-            style={{
-              marginRight: "0.5rem",
-              padding: "0.15rem 0.5rem",
-              border: "1px solid var(--border)",
-              background: sortBy === key ? "var(--accent)" : "transparent",
-              color: sortBy === key ? "var(--bg)" : "inherit",
-              borderRadius: 3,
-              cursor: "pointer",
-              fontSize: "0.8rem",
-            }}
-          >
-            {key === "st"
-              ? "Total impact"
-              : key === "s1"
-                ? "Solo impact"
-                : "Interaction gap"}
-          </button>
-        ))}
-      </div>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: "0.9rem",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        <thead>
-          <tr style={{ borderBottom: "1px solid var(--border)" }}>
-            <th style={{ textAlign: "left", padding: "0.45rem 0.5rem" }}>
-              Stat
-            </th>
-            <th style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-              base δ
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Solo impact (S₁): how much this stat changes the outcome by itself, ignoring interactions with other stats. Range 0–1."
-            >
-              Solo (S<sub>1</sub>)
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="95% confidence interval on the solo impact. Wider = noisier; raise N to tighten."
-            >
-              95% CI
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Total impact (S_T): how much this stat changes the outcome on its own AND through combinations with any other stat. Always ≥ solo impact."
-            >
-              Total (S<sub>T</sub>)
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="95% confidence interval on the total impact."
-            >
-              95% CI
-            </th>
-            <th
-              style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}
-              title="Gap = Total − Solo. The fraction of this stat's impact that comes from interactions with other stats (not from the stat alone)."
-            >
-              Interaction gap
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((row, i) => {
-            const bg = i % 2 === 1 ? "rgba(255,255,255,0.03)" : undefined;
-            return (
-              <tr key={row.stat} style={{ background: bg }}>
-                <td style={{ padding: "0.45rem 0.5rem" }}>{row.stat}</td>
-                <td style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-                  {fmtFloat(row.base_delta, 3)}
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    padding: "0.45rem 0.5rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {fmtFloat(row.s1)}
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    padding: "0.45rem 0.5rem",
-                    color: "var(--text-muted)",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  [{fmtFloat(row.s1_ci95_low)}, {fmtFloat(row.s1_ci95_high)}]
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    padding: "0.45rem 0.5rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {fmtFloat(row.st)}
-                </td>
-                <td
-                  style={{
-                    textAlign: "right",
-                    padding: "0.45rem 0.5rem",
-                    color: "var(--text-muted)",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  [{fmtFloat(row.st_ci95_low)}, {fmtFloat(row.st_ci95_high)}]
-                </td>
-                <td style={{ textAlign: "right", padding: "0.45rem 0.5rem" }}>
-                  {fmtFloat(row.interaction)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {pairs && pairs.length > 0 && (
-        <SobolPairs pairs={pairs} statOrder={sorted.map((r) => r.stat)} />
-      )}
+        {pairs && pairs.length > 0 && (
+          <SobolPairs pairs={pairs} statOrder={sorted.map((r) => r.stat)} />
+        )}
+      </SortableStatTable>
       <p
         style={{
           marginTop: "0.75rem",

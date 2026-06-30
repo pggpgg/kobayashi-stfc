@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { SobolPairRow } from "../lib/sensitivityApi";
+import { fmtFloat } from "../lib/sensitivityFormat";
 
 interface Props {
   pairs: SobolPairRow[];
@@ -9,12 +10,6 @@ interface Props {
 }
 
 type ViewMode = "list" | "heatmap";
-
-function fmtFloat(n: number, digits = 4): string {
-  if (!Number.isFinite(n)) return "—";
-  if (Math.abs(n) < 1e-6 && n !== 0) return n.toExponential(2);
-  return n.toFixed(digits);
-}
 
 /** Lookup table: "stat_a|stat_b" → row, with both orderings filled in for O(1) lookup. */
 function buildPairIndex(pairs: SobolPairRow[]): Map<string, SobolPairRow> {
