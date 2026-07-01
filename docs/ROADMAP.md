@@ -4,6 +4,8 @@ What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](N
 
 _Last updated 2026-06-30. The June 2026 audit backlog (engine decomposition, assurance gates, upstream drift automation, June patch content, import faction resolution, and related prep) is **shipped**, as is PvE crew-search-space reduction — captain/below-decks bans, the eligibility-matrix filter, and the [`search-space-report`](PVE_CREW_SEARCH_SPACE_REDUCTION.md) measurement harness (bans + eligibility cut the full-catalog space 46×–5,400× by scenario). **Component upgrades is also shipped** (PR #231, recalibrated PR #235): synced per-component ids from `profiles/*/ships.imported.json` now resolve into stat deltas over the base tier/level row and merge into both attacker and PvP-defender stats at scenario build ([`ship.rs`](../src/data/ship.rs) `apply_component_overrides_to_ship_record`, [`data_registry.rs`](../src/data/data_registry.rs) `resolve_ship_with_tier_level_and_imported_components`, [`scenario.rs`](../src/optimizer/monte_carlo/scenario.rs)). Durable design detail lives in linked docs, not here._
 
+For the next-generation optimizer research and implementation path, see [OPTIMIZER_AMBITIOUS_ROADMAP.md](OPTIMIZER_AMBITIOUS_ROADMAP.md). For the bigger frontier-model vision, see [KOBAYASHI_MOONSHOT_ROADMAP.md](KOBAYASHI_MOONSHOT_ROADMAP.md).
+
 ## Planned
 
 - **Product polish & speed (web UI)** — The next main goal. The engine, data, and optimizer are mature (officer modeling fidelity ~maxed, search well-tuned, component upgrades shipped); focus is refining the React SPA. The app is solid at desktop width — incremental refinement, not a rebuild.
