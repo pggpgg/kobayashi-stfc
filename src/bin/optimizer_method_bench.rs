@@ -434,6 +434,7 @@ fn heuristic_warm_start(
     out
 }
 
+#[allow(clippy::too_many_arguments)]
 fn summarize_record(
     case: &BenchCase,
     method: &str,
@@ -567,6 +568,7 @@ fn now_ms() -> u128 {
         .as_millis()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_optimizer_lane(
     registry: &DataRegistry,
     case: &BenchCase,

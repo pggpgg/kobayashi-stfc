@@ -757,7 +757,9 @@ export default memo(function SimResults({
                   <th style={styles.thText}>Captain</th>
                   <th style={styles.thText}>Bridge</th>
                   <th style={styles.thText}>Below Deck</th>
-                  {showMethodProvenance && <th style={styles.thText}>Method</th>}
+                  {showMethodProvenance && (
+                    <th style={styles.thText}>Method</th>
+                  )}
                   {numericTableHeaders.map((h) => (
                     <th key={h} style={styles.thNumeric}>
                       {h}
