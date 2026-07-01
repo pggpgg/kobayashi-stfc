@@ -156,6 +156,26 @@ describe("SimResults", () => {
     expect(screen.getByText("Seven, Neelix, Chakotay")).toBeTruthy();
   });
 
+  it("renders method provenance when optimize rows include it", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Janeway",
+          bridge: ["Ent-E Data", "Tuvok"],
+          below_decks: ["Seven"],
+          win_rate: 0.88,
+          stall_rate: 0.06,
+          loss_rate: 0.06,
+          avg_hull_remaining: 0.5,
+        }),
+        method_provenance: "tiered_confirmed",
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.getByText("Method")).toBeTruthy();
+    expect(screen.getByText("Tiered")).toBeTruthy();
+  });
+
   it("renders recommendation rows", () => {
     const recs: CrewRecommendation[] = [
       crewRec({

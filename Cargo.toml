@@ -61,6 +61,10 @@ name = "tiered_scout_budget_compare"
 path = "src/bin/tiered_scout_budget_compare.rs"
 
 [[bin]]
+name = "optimizer_method_bench"
+path = "src/bin/optimizer_method_bench.rs"
+
+[[bin]]
 name = "benchmark_parallel_speedup"
 path = "src/bin/benchmark_parallel_speedup.rs"
 

@@ -68,6 +68,12 @@ const styles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
+  tdMethod: {
+    padding: TABLE_CELL_PAD,
+    color: "var(--text-muted)",
+    whiteSpace: "nowrap",
+    fontSize: "0.82rem",
+  },
   tdNumeric: {
     padding: TABLE_NUM_PAD,
     textAlign: "right",
@@ -114,6 +120,23 @@ function formatPctWithCi(p: number, lo: number, hi: number): string {
 function formatExpectedHullDamage(value: number | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
   return Math.round(value).toLocaleString();
+}
+
+function formatMethodProvenance(value: string | undefined): string {
+  const map: Record<string, string> = {
+    curated_warm_start: "Curated",
+    exhaustive_mc: "Exhaustive MC",
+    exhaustive_two_phase: "Two-phase MC",
+    genetic: "Genetic",
+    heuristic_seed: "Heuristic seed",
+    heuristics: "Heuristics",
+    linear_eval: "Linear eval",
+    monte_carlo: "Monte Carlo",
+    seeded_genetic: "Seeded GA",
+    tiered_confirmed: "Tiered",
+    warm_start: "Warm start",
+  };
+  return value != null ? (map[value] ?? value.replace(/_/g, " ")) : "";
 }
 
 /** Scenario context for POST /api/compare/crews (Monte Carlo distributions). */
@@ -269,6 +292,9 @@ export default memo(function SimResults({
         ? "Hull %*|hit"
         : "Your hull %";
   const chainR1Header = chainMode ? "R1 (1st link)" : "R1 %";
+  const showMethodProvenance = recommendations.some(
+    (r) => r.method_provenance != null && r.method_provenance.trim() !== "",
+  );
   const numericTableHeaders = useMemo(
     () =>
       linearEvalMode
@@ -731,6 +757,7 @@ export default memo(function SimResults({
                   <th style={styles.thText}>Captain</th>
                   <th style={styles.thText}>Bridge</th>
                   <th style={styles.thText}>Below Deck</th>
+                  {showMethodProvenance && <th style={styles.thText}>Method</th>}
                   {numericTableHeaders.map((h) => (
                     <th key={h} style={styles.thNumeric}>
                       {h}
@@ -793,6 +820,14 @@ export default memo(function SimResults({
                           </td>
                         );
                       })}
+                      {showMethodProvenance && (
+                        <td
+                          style={styles.tdMethod}
+                          title={r.method_provenance ?? ""}
+                        >
+                          {formatMethodProvenance(r.method_provenance)}
+                        </td>
+                      )}
                       {linearEvalMode ? (
                         <td style={styles.tdNumeric}>
                           {formatExpectedHullDamage(r.expected_hull_damage)}

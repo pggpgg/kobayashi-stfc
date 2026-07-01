@@ -393,10 +393,55 @@ pub(crate) fn sort_and_analytical_prefilter(
     }
 }
 
+/// Candidate-count funnel for a registry-backed optimize run.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct OptimizeCandidateFunnel {
+    /// Raw generated candidates before warm-start crews are prepended.
+    pub generated_candidates: Option<usize>,
+    /// Warm-start crews supplied to this optimizer scenario.
+    pub warm_start_candidates: usize,
+    /// Candidate count after warm-start prepending and stable-hash dedupe.
+    pub after_warm_start_dedupe: Option<usize>,
+    /// Candidate count after explicit optimize constraints are applied.
+    pub after_constraints: Option<usize>,
+    /// Analytical prefilter input count, when that filter truncated the set.
+    pub analytical_prefilter_from: Option<usize>,
+    /// Analytical prefilter output count, when that filter truncated the set.
+    pub analytical_prefilter_kept: Option<usize>,
+    /// Candidate count entering the scout / cheap-evaluation phase.
+    pub scout_candidates: Option<usize>,
+    /// Candidate count entering expensive confirmation or final ranking output.
+    pub confirmed_candidates: Option<usize>,
+}
+
+impl OptimizeCandidateFunnel {
+    fn with_counts(
+        generated_candidates: usize,
+        warm_start_candidates: usize,
+        after_warm_start_dedupe: usize,
+        after_constraints: usize,
+        analytical_prefilter: Option<(usize, usize)>,
+        scout_candidates: usize,
+        confirmed_candidates: usize,
+    ) -> Self {
+        Self {
+            generated_candidates: Some(generated_candidates),
+            warm_start_candidates,
+            after_warm_start_dedupe: Some(after_warm_start_dedupe),
+            after_constraints: Some(after_constraints),
+            analytical_prefilter_from: analytical_prefilter.map(|(n, _)| n),
+            analytical_prefilter_kept: analytical_prefilter.map(|(_, n)| n),
+            scout_candidates: Some(scout_candidates),
+            confirmed_candidates: Some(confirmed_candidates),
+        }
+    }
+}
+
 /// Result of [`optimize_scenario_with_progress_with_registry`] including optional analytical pre-filter stats.
 #[derive(Debug, Clone)]
 pub struct OptimizeRunOutcome {
     pub ranked: Vec<RankedCrewResult>,
+    pub candidate_funnel: OptimizeCandidateFunnel,
     /// `Some((generated, kept))` when crews were truncated after analytical ranking before Monte Carlo.
     pub analytical_prefilter: Option<(usize, usize)>,
     /// When tiered ran: `(n_candidates, resolved_scout_sims, resolved_top_k)` for cross-session cache metadata.
@@ -1350,8 +1395,11 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let generated_candidates = candidates.len();
             let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
+            let after_warm_start_dedupe = candidates.len();
             let candidates = apply_crew_constraints(candidates, scenario);
+            let after_constraints = candidates.len();
             let shared = build_shared_scenario_data_from_registry(
                 registry,
                 scenario.ship,
@@ -1482,8 +1530,18 @@ where
                 scenario.tiered_pq_abandon_margin,
                 &mut on_progress,
             );
+            let confirmed_candidates = ranked.len();
             OptimizeRunOutcome {
                 ranked,
+                candidate_funnel: OptimizeCandidateFunnel::with_counts(
+                    generated_candidates,
+                    scenario.warm_start.len(),
+                    after_warm_start_dedupe,
+                    after_constraints,
+                    analytical_prefilter,
+                    n_tiered,
+                    confirmed_candidates,
+                ),
                 analytical_prefilter,
                 tiered_resolved: Some((n_tiered, scout_sims, top_k)),
                 tiered_scout_budget: Some(scout_budget),
@@ -1501,8 +1559,11 @@ where
                 scenario.seed,
                 scenario.profile_id,
             );
+            let generated_candidates = candidates.len();
             let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
+            let after_warm_start_dedupe = candidates.len();
             let candidates = apply_crew_constraints(candidates, scenario);
+            let after_constraints = candidates.len();
             let shared_ex = build_shared_scenario_data_from_registry(
                 registry,
                 scenario.ship,
@@ -1582,9 +1643,21 @@ where
                 );
             }
             let total = candidates.len();
+            let candidate_funnel = |confirmed_candidates: usize| {
+                OptimizeCandidateFunnel::with_counts(
+                    generated_candidates,
+                    scenario.warm_start.len(),
+                    after_warm_start_dedupe,
+                    after_constraints,
+                    analytical_prefilter,
+                    total,
+                    confirmed_candidates,
+                )
+            };
             if total == 0 {
                 return OptimizeRunOutcome {
                     ranked: Vec::new(),
+                    candidate_funnel: candidate_funnel(0),
                     analytical_prefilter,
                     tiered_resolved: None,
                     tiered_scout_budget: None,
@@ -1609,6 +1682,7 @@ where
                 } else {
                     Some(&pre_map)
                 };
+                let confirmed_target = top_keep.max(1).min(total);
                 if let Some((merged, budget)) = run_exhaustive_scout_then_full_mc(
                     shared_ex,
                     &candidates,
@@ -1624,6 +1698,7 @@ where
                 ) {
                     return OptimizeRunOutcome {
                         ranked: rank_results(merged),
+                        candidate_funnel: candidate_funnel(confirmed_target),
                         analytical_prefilter,
                         tiered_resolved: None,
                         tiered_scout_budget: None,
@@ -1633,6 +1708,7 @@ where
                 }
                 return OptimizeRunOutcome {
                     ranked: Vec::new(),
+                    candidate_funnel: candidate_funnel(0),
                     analytical_prefilter,
                     tiered_resolved: None,
                     tiered_scout_budget: None,
@@ -1649,6 +1725,7 @@ where
             }) {
                 return OptimizeRunOutcome {
                     ranked: Vec::new(),
+                    candidate_funnel: candidate_funnel(0),
                     analytical_prefilter,
                     tiered_resolved: None,
                     tiered_scout_budget: None,
@@ -1714,8 +1791,11 @@ where
                 }
             }
 
+            let ranked = rank_results(all_results);
+            let confirmed_candidates = ranked.len();
             OptimizeRunOutcome {
-                ranked: rank_results(all_results),
+                ranked,
+                candidate_funnel: candidate_funnel(confirmed_candidates),
                 analytical_prefilter,
                 tiered_resolved: None,
                 tiered_scout_budget: None,
@@ -1723,8 +1803,8 @@ where
                 optimize_history_confirm_hits: 0,
             }
         }
-        OptimizerStrategy::Genetic => OptimizeRunOutcome {
-            ranked: optimize_scenario_genetic(
+        OptimizerStrategy::Genetic => {
+            let ranked = optimize_scenario_genetic(
                 scenario,
                 |gen, max_gen, _| {
                     on_progress(OptimizeProgressTick {
@@ -1735,13 +1815,24 @@ where
                     })
                 },
                 eval_should_continue,
-            ),
-            analytical_prefilter: None,
-            tiered_resolved: None,
-            tiered_scout_budget: None,
-            exhaustive_adaptive_budget: None,
-            optimize_history_confirm_hits: 0,
-        },
+            );
+            let confirmed_candidates = ranked.len();
+            OptimizeRunOutcome {
+                ranked,
+                candidate_funnel: OptimizeCandidateFunnel {
+                    warm_start_candidates: scenario.warm_start.len(),
+                    scout_candidates: (!scenario.seed_population.is_empty())
+                        .then_some(scenario.seed_population.len()),
+                    confirmed_candidates: Some(confirmed_candidates),
+                    ..OptimizeCandidateFunnel::default()
+                },
+                analytical_prefilter: None,
+                tiered_resolved: None,
+                tiered_scout_budget: None,
+                exhaustive_adaptive_budget: None,
+                optimize_history_confirm_hits: 0,
+            }
+        }
         OptimizerStrategy::LinearEval => {
             let ranked = linear_eval::run_linear_eval_with_registry(
                 registry,
@@ -1749,8 +1840,14 @@ where
                 &mut on_progress,
                 &mut eval_should_continue,
             );
+            let confirmed_candidates = ranked.len();
             OptimizeRunOutcome {
                 ranked,
+                candidate_funnel: OptimizeCandidateFunnel {
+                    warm_start_candidates: scenario.warm_start.len(),
+                    confirmed_candidates: Some(confirmed_candidates),
+                    ..OptimizeCandidateFunnel::default()
+                },
                 analytical_prefilter: None,
                 tiered_resolved: None,
                 tiered_scout_budget: None,

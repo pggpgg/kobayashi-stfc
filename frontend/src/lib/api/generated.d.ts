@@ -2509,6 +2509,7 @@ export interface components {
             crews_done?: number;
             total_crews?: number;
             phase?: string;
+            cancellation_point?: string;
             throughput_crews_per_sec?: number;
             eta_seconds?: number;
             progress_preview?: {
@@ -2524,9 +2525,53 @@ export interface components {
             status: string;
             engine: string;
             scenario: {
+                /** @description Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final merged result width. */
+                optimizer_funnel?: {
+                    raw_role_pool?: {
+                        captains: number;
+                        bridge: number;
+                        below_decks: number;
+                    };
+                    banned_role_pool?: {
+                        captains: number;
+                        bridge: number;
+                        below_decks: number;
+                    };
+                    eligible_role_pool?: {
+                        captains: number;
+                        bridge: number;
+                        below_decks: number;
+                    };
+                    roster_role_pool?: {
+                        captains: number;
+                        bridge: number;
+                        below_decks: number;
+                    };
+                    final_role_pool?: {
+                        captains: number;
+                        bridge: number;
+                        below_decks: number;
+                    };
+                    heuristic_candidates: number;
+                    warm_start_candidates: number;
+                    generated_candidates?: number;
+                    after_warm_start_dedupe?: number;
+                    after_constraints?: number;
+                    analytical_prefilter_from?: number;
+                    analytical_prefilter_kept?: number;
+                    scout_candidates?: number;
+                    confirmed_candidates?: number;
+                    final_result_count: number;
+                    phase_durations_ms?: {
+                        [key: string]: number;
+                    };
+                    cancellation_point?: string;
+                };
                 [key: string]: unknown;
             };
             recommendations: ({
+                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, or `linear_eval`. */
+                method_provenance?: string;
                 /** @description Closed-form expected total hull damage over the fight (linear_eval only). */
                 expected_hull_damage?: number;
             } & {

@@ -595,6 +595,8 @@ export interface CrewRecommendation {
   bridge: string | string[];
   /** API returns string[]; we accept string for backward compatibility. */
   below_decks: string | string[];
+  /** Optimizer source/method label for this row, when returned by the API. */
+  method_provenance?: string;
   win_rate: number;
   win_rate_ci_low: number;
   win_rate_ci_high: number;
@@ -626,6 +628,46 @@ export interface ChainGrindRequestBody {
   secondary?: "min_hull_damage" | "max_loot_per_hull_proxy";
 }
 
+export interface OptimizerFunnelTelemetry {
+  raw_role_pool?: {
+    captains: number;
+    bridge: number;
+    below_decks: number;
+  };
+  banned_role_pool?: {
+    captains: number;
+    bridge: number;
+    below_decks: number;
+  };
+  eligible_role_pool?: {
+    captains: number;
+    bridge: number;
+    below_decks: number;
+  };
+  roster_role_pool?: {
+    captains: number;
+    bridge: number;
+    below_decks: number;
+  };
+  final_role_pool?: {
+    captains: number;
+    bridge: number;
+    below_decks: number;
+  };
+  heuristic_candidates: number;
+  warm_start_candidates: number;
+  generated_candidates?: number;
+  after_warm_start_dedupe?: number;
+  after_constraints?: number;
+  analytical_prefilter_from?: number;
+  analytical_prefilter_kept?: number;
+  scout_candidates?: number;
+  confirmed_candidates?: number;
+  final_result_count: number;
+  phase_durations_ms?: Record<string, number>;
+  cancellation_point?: string;
+}
+
 /** Matches server `WarmStartCrewDto`; sent as `warm_start_crews` on optimize. */
 export type WarmStartCrewBody = {
   captain: string;
@@ -655,6 +697,7 @@ export interface OptimizeResponse {
     analytical_prefilter_keep?: number;
     analytical_prefilter_from?: number;
     analytical_prefilter_kept?: number;
+    optimizer_funnel?: OptimizerFunnelTelemetry;
     /** Echo of optimize request chain settings when present. */
     chain?: ChainGrindRequestBody;
     effective_strategy: string;
@@ -771,6 +814,7 @@ export interface OptimizeStatusResponse {
   total_crews?: number;
   /** Server phase: heuristics, monte_carlo, genetic, tiered_scout, tiered_confirm */
   phase?: string;
+  cancellation_point?: string;
   throughput_crews_per_sec?: number;
   eta_seconds?: number;
   progress_preview?: CrewRecommendation[];

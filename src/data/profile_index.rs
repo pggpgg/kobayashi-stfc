@@ -65,6 +65,8 @@ pub const OFFICER_LEARNING_JSON: &str = "officer_learning.json";
 pub const OPTIMIZER_BUDGET_HINTS_JSON: &str = "optimizer_budget_hints.json";
 /// Append-only optimize budget telemetry when `KOBAYASHI_BUDGET_TELEMETRY=1` (see `budget_telemetry` module).
 pub const BUDGET_TELEMETRY_JSONL: &str = "budget_telemetry.jsonl";
+/// Append-only per-crew optimizer observations when `KOBAYASHI_OPTIMIZE_OBSERVATIONS=1`.
+pub const OPTIMIZE_OBSERVATIONS_JSONL: &str = "optimize_observations.jsonl";
 
 /// Resolve profile id for optimizer/simulate; uses default when None.
 pub fn resolve_profile_id_for_api(profile_id: Option<&str>) -> String {
