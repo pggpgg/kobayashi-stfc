@@ -11,6 +11,9 @@ Reference and design docs for KOBAYASHI. The main [README](../README.md) is the 
 ## Design & architecture
 
 - [DESIGN.md](DESIGN.md) — the canonical design doc: combat model, LCARS grammar, optimizer, profiles, support buffs.
+- [CREW_OPTIMIZATION_METHODS.md](CREW_OPTIMIZATION_METHODS.md) — practical search methods for large STFC crew spaces.
+- [OPTIMIZER_AMBITIOUS_ROADMAP.md](OPTIMIZER_AMBITIOUS_ROADMAP.md) — staged roadmap for Kobayashi's next-generation optimizer portfolio.
+- [KOBAYASHI_MOONSHOT_ROADMAP.md](KOBAYASHI_MOONSHOT_ROADMAP.md) — aspirational roadmap for Kobayashi as an autonomous STFC combat science lab.
 - [OFFICER_STAT_FORMULA.md](OFFICER_STAT_FORMULA.md) — how officer attack/defense/health stats are derived and routed into combat.
 - [COMBAT_EFFECT_SPEC.md](COMBAT_EFFECT_SPEC.md) — effect resolution order, triggers, conditions, and composability.
 - [COMBAT_TRACE.md](COMBAT_TRACE.md) — debug trace format for fight logs.
