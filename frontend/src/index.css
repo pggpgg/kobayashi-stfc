@@ -9,6 +9,23 @@
   --success: #4e9d6b;
   --warning: #c9a227;
   --error: #c9544a;
+
+  /* Spacing/radius scale extracted verbatim from existing component styles, ordered by
+     rendered size. px and rem entries are kept distinct even where a pair renders
+     identically at the browser default font size (e.g. --space-1 / --space-2), since a
+     px value won't scale with a user's font-size preference the way a rem value does. */
+  --space-1: 4px;
+  --space-2: 0.25rem;
+  --space-3: 0.35rem;
+  --space-4: 6px;
+  --space-5: 0.4rem;
+  --space-6: 0.45rem;
+  --space-7: 8px;
+  --space-8: 0.5rem;
+  --space-9: 0.75rem;
+  --space-10: 1.25rem;
+  --space-11: 1.5rem;
+  --radius-1: 4px;
   font-family:
     system-ui,
     -apple-system,

@@ -37,12 +37,15 @@ import {
 /** Repeated style objects, hoisted so each is defined once (behavior-preserving). */
 const styles = {
   mutedSm: { fontSize: "0.85rem", color: "var(--text-muted)" },
-  col: { display: "flex", flexDirection: "column", gap: 4 },
-  sectionTop: { marginTop: "1.5rem" },
+  col: { display: "flex", flexDirection: "column", gap: "var(--space-1)" },
+  sectionTop: { marginTop: "var(--space-11)" },
   mutedXs: { fontSize: "0.75rem", color: "var(--text-muted)" },
-  cellCenter: { textAlign: "center", padding: "0.35rem 0.5rem" },
-  mb05: { marginBottom: "0.5rem" },
-  cellRight: { textAlign: "right", padding: "0.35rem 0.5rem" },
+  cellCenter: {
+    textAlign: "center",
+    padding: "var(--space-3) var(--space-8)",
+  },
+  mb05: { marginBottom: "var(--space-8)" },
+  cellRight: { textAlign: "right", padding: "var(--space-3) var(--space-8)" },
 } satisfies Record<string, CSSProperties>;
 
 type AnalysisMethod = "oat" | "morris" | "sobol";

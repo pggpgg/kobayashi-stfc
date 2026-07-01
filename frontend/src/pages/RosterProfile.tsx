@@ -32,14 +32,14 @@ const MOD_SYNC_STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 /** Repeated style objects, hoisted so each is defined once (behavior-preserving). */
 const styles = {
-  cellPad: { padding: "6px 8px" },
+  cellPad: { padding: "var(--space-4) var(--space-7)" },
   muted: { color: "var(--text-muted)" },
-  blockGap: { marginBottom: "0.75rem" },
+  blockGap: { marginBottom: "var(--space-9)" },
   noMargin: { margin: 0 },
-  fieldLabel: { fontWeight: 600, marginBottom: 4 },
-  bulletList: { margin: 0, paddingLeft: "1.25rem" },
-  errorNote: { marginTop: 8, color: "var(--error)" },
-  rowCenter: { display: "flex", alignItems: "center", gap: 8 },
+  fieldLabel: { fontWeight: 600, marginBottom: "var(--space-1)" },
+  bulletList: { margin: 0, paddingLeft: "var(--space-10)" },
+  errorNote: { marginTop: "var(--space-7)", color: "var(--error)" },
+  rowCenter: { display: "flex", alignItems: "center", gap: "var(--space-7)" },
 } satisfies Record<string, CSSProperties>;
 
 function formatResearchBonusMap(m?: Record<string, number>): string {

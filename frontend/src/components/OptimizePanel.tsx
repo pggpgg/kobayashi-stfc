@@ -83,21 +83,24 @@ interface OptimizePanelProps {
 
 const selectStyle: CSSProperties = {
   display: "block",
-  marginTop: 4,
+  marginTop: "var(--space-1)",
   width: "100%",
-  padding: "0.4rem",
+  padding: "var(--space-5)",
   background: "var(--bg)",
   border: "1px solid var(--border)",
-  borderRadius: 4,
+  borderRadius: "var(--radius-1)",
   color: "var(--text)",
 };
 
 /** Same field surface as `selectStyle`, with tighter padding for text inputs. */
-const inputStyleCompact: CSSProperties = { ...selectStyle, padding: "0.35rem" };
+const inputStyleCompact: CSSProperties = {
+  ...selectStyle,
+  padding: "var(--space-3)",
+};
 
 /** Bare chevron button used to collapse/expand the panel. */
 const iconButtonStyle: CSSProperties = {
-  padding: 4,
+  padding: "var(--space-1)",
   background: "transparent",
   border: "none",
   color: "var(--text-muted)",
@@ -110,15 +113,15 @@ const checkboxLabelStyle: CSSProperties = {
   fontSize: "0.85rem",
   display: "flex",
   alignItems: "center",
-  gap: "0.5rem",
+  gap: "var(--space-8)",
   cursor: "pointer",
 };
 
 const labelWithHintRowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 4,
-  marginBottom: 4,
+  gap: "var(--space-1)",
+  marginBottom: "var(--space-1)",
 };
 
 function HelpHint({ text }: { text: string }) {
@@ -167,7 +170,7 @@ const sectionSummaryStyle: CSSProperties = {
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: 6,
+  gap: "var(--space-4)",
   fontSize: "0.85rem",
   fontWeight: 600,
 };
