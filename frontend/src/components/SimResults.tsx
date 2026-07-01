@@ -19,8 +19,8 @@ import {
 const PER_PAGE_OPTIONS = [50, 100, 200, 500] as const;
 const DEFAULT_PER_PAGE = 50;
 
-const TABLE_CELL_PAD = "0.45rem 0.5rem";
-const TABLE_NUM_PAD = "0.45rem 0.4rem";
+const TABLE_CELL_PAD = "var(--space-6) var(--space-8)";
+const TABLE_NUM_PAD = "var(--space-6) var(--space-5)";
 const CREW_CELL_MAX_CH = 42;
 
 /** Sticky header cell shared by every results-table column. */
@@ -75,16 +75,16 @@ const styles = {
     fontVariantNumeric: "tabular-nums",
   },
   control: {
-    padding: "0.25rem 0.5rem",
+    padding: "var(--space-2) var(--space-8)",
     background: "var(--bg)",
     border: "1px solid var(--border)",
-    borderRadius: 4,
+    borderRadius: "var(--radius-1)",
     color: "var(--text)",
   },
   sectionLabel: {
     fontSize: "0.75rem",
     color: "var(--text-muted)",
-    marginBottom: 6,
+    marginBottom: "var(--space-4)",
   },
 } satisfies Record<string, CSSProperties>;
 
