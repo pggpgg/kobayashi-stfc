@@ -333,9 +333,11 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       shipLevel: 50,
       tieredScoutSims: 800,
       tieredTopK: 40,
+      tieredRandomExplorationPct: 0.15,
     });
     expect(body.tiered_scout_sims).toBe(800);
     expect(body.tiered_top_k).toBe(40);
+    expect(body.tiered_random_exploration_pct).toBe(0.15);
   });
 
   it("omits tiered fields when strategy is not tiered even if values are set", () => {
@@ -353,9 +355,11 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       shipLevel: 50,
       tieredScoutSims: 800,
       tieredTopK: 40,
+      tieredRandomExplorationPct: 0.15,
     });
     expect(body).not.toHaveProperty("tiered_scout_sims");
     expect(body).not.toHaveProperty("tiered_top_k");
+    expect(body).not.toHaveProperty("tiered_random_exploration_pct");
   });
 
   it("omits tiered fields when null, zero, or negative", () => {

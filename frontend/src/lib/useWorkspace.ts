@@ -160,6 +160,10 @@ export function useWorkspace() {
   const [tieredScoutSims, setTieredScoutSims] = useState<number | null>(null);
   /** Tiered: top K for confirmation; null = omit (server default 20). */
   const [tieredTopK, setTieredTopK] = useState<number | null>(null);
+  /** Tiered: random exploration slice fraction (0, 0.5]; null = omit (off). */
+  const [tieredRandomExplorationPct, setTieredRandomExplorationPct] = useState<
+    number | null
+  >(null);
   /** Analytical prefilter: learned pair co-occurrence prior (default on). */
   const [enableLearnedPairPrior, setEnableLearnedPairPrior] = useState(true);
 
@@ -878,6 +882,7 @@ export function useWorkspace() {
             loadWarmStartCrews(optimizeWarmStartCacheKey()) ?? undefined,
           tieredScoutSims,
           tieredTopK,
+          tieredRandomExplorationPct,
           fastDiscovery:
             fastDiscovery && selectedSeeds.length > 0 ? true : undefined,
           noveltyLambdaText,
@@ -1061,6 +1066,8 @@ export function useWorkspace() {
     setTieredScoutSims,
     tieredTopK,
     setTieredTopK,
+    tieredRandomExplorationPct,
+    setTieredRandomExplorationPct,
     enableLearnedPairPrior,
     setEnableLearnedPairPrior,
     noveltyLambdaText,

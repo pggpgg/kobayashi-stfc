@@ -39,6 +39,8 @@ const baseProps = {
   onTieredScoutSimsChange: vi.fn(),
   tieredTopK: null as number | null,
   onTieredTopKChange: vi.fn(),
+  tieredRandomExplorationPct: null as number | null,
+  onTieredRandomExplorationPctChange: vi.fn(),
   noveltyLambdaText: "",
   onNoveltyLambdaTextChange: vi.fn(),
   noveltyDiverseTopText: "",

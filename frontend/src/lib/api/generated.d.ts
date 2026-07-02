@@ -2527,30 +2527,35 @@ export interface components {
             scenario: {
                 /** @description Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final merged result width. */
                 optimizer_funnel?: {
+                    /** @description Full-catalog raw role pools before ban/eligibility filters. */
                     raw_role_pool?: {
-                        captains: number;
-                        bridge: number;
-                        below_decks: number;
+                        captains?: number;
+                        bridge?: number;
+                        below_decks?: number;
                     };
+                    /** @description Full-catalog role pools after the curation ban list. */
                     banned_role_pool?: {
-                        captains: number;
-                        bridge: number;
-                        below_decks: number;
+                        captains?: number;
+                        bridge?: number;
+                        below_decks?: number;
                     };
+                    /** @description Full-catalog role pools after ban/eligibility filters. */
                     eligible_role_pool?: {
-                        captains: number;
-                        bridge: number;
-                        below_decks: number;
+                        captains?: number;
+                        bridge?: number;
+                        below_decks?: number;
                     };
+                    /** @description Production role pools after roster/profile narrowing, before explicit constraints. */
                     roster_role_pool?: {
-                        captains: number;
-                        bridge: number;
-                        below_decks: number;
+                        captains?: number;
+                        bridge?: number;
+                        below_decks?: number;
                     };
+                    /** @description Production role pools after roster/profile narrowing and explicit constraints. */
                     final_role_pool?: {
-                        captains: number;
-                        bridge: number;
-                        below_decks: number;
+                        captains?: number;
+                        bridge?: number;
+                        below_decks?: number;
                     };
                     heuristic_candidates: number;
                     warm_start_candidates: number;
@@ -2561,16 +2566,21 @@ export interface components {
                     analytical_prefilter_kept?: number;
                     scout_candidates?: number;
                     confirmed_candidates?: number;
+                    /** @description Stratified-random crews in the scout set (`random_stratified` strategy or the tiered `tiered_random_exploration_pct` slice). Absent when the lane did not run. */
+                    random_exploration_candidates?: number;
                     final_result_count: number;
+                    /** @description Coarse wall-clock time spent in each optimize phase, milliseconds. */
                     phase_durations_ms?: {
                         [key: string]: number;
                     };
+                    /** @description Phase observed when a background optimize job was cancelled. */
                     cancellation_point?: string;
                 };
+            } & {
                 [key: string]: unknown;
             };
             recommendations: ({
-                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, or `linear_eval`. */
+                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. */
                 method_provenance?: string;
                 /** @description Closed-form expected total hull damage over the fight (linear_eval only). */
                 expected_hull_damage?: number;
@@ -2923,7 +2933,7 @@ export interface components {
             /** Format: int64 */
             seed?: number;
             max_candidates?: number;
-            /** @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), or `linear_eval` (closed-form expected hull damage only; no Monte Carlo). When omitted, server auto-picks tiered vs exhaustive from candidate count. */
+            /** @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull damage only; no Monte Carlo), or `random_stratified` (benchmark-control lane: legal crews sampled at random, stratified by captain faction/rarity and below-decks family, then scout → confirm; ignores warm-start and skips the analytical prefilter). When omitted, server auto-picks tiered vs exhaustive from candidate count. */
             strategy?: string;
             /**
              * @description Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers. `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power. Unknown values fall back to strict.
@@ -2942,6 +2952,8 @@ export interface components {
             tiered_scout_uniform?: boolean;
             /** @description Tiered: when set, scales down per-top-K confirmation iterations so their sum does not exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no global cap (default). Typical values 1.5–3; must be in (0, 20]. */
             tiered_confirm_budget_cap_mult?: number;
+            /** @description Tiered strategy only. Fraction of the scout candidate list — after warm-start, constraints, and analytical prefilter — replaced with stratified-random crews that bypass the analytical proxy (budget-neutral exploration slice). Injected crews are labeled `random_stratified` in `method_provenance` when they reach the results. Typical values 0.05–0.2. Omitted or 0 = off. */
+            tiered_random_exploration_pct?: number;
             /** @description Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep. Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking. */
             exhaustive_scout_sims?: number;
             /** @description Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked crews receive the full per-crew simulation_count (others keep scout statistics). */

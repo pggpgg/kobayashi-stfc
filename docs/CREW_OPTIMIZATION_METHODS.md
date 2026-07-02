@@ -226,6 +226,10 @@ Random search samples valid crews, simulates them, and keeps the best. It is sim
 
 Use random search as a control group. If a complex heuristic cannot beat a well-seeded random baseline, the heuristic is probably not worth its complexity.
 
+### Kobayashi use
+
+Implemented as the `random_stratified` lane ([`src/optimizer/random_stratified.rs`](../src/optimizer/random_stratified.rs)): `strategy: "random_stratified"` runs a standalone benchmark-control lane (stratified sampling over captain faction/rarity cells and below-decks group families, then scout → confirm), and `tiered_random_exploration_pct` reserves a budget-neutral slice of the tiered scout candidate list for the same sampler, bypassing the analytical prefilter. Result rows carry `method_provenance: "random_stratified"`.
+
 ## 7. Multi-armed bandits and adaptive sampling
 
 Bandit methods allocate more simulation budget to promising arms. An arm can be a captain, crew archetype, officer family, synergy package, or full candidate crew.

@@ -48,6 +48,9 @@ interface OptimizePanelProps {
   /** Tiered only: top K for confirmation; null = server default (20). */
   tieredTopK: number | null;
   onTieredTopKChange: (value: number | null) => void;
+  /** Tiered only: scout exploration slice fraction (0, 0.5]; null = off. */
+  tieredRandomExplorationPct: number | null;
+  onTieredRandomExplorationPctChange: (value: number | null) => void;
   /** Blank = off. When set to a number in (0, 1], server reorders the recommendation head for diverse officer material (MMR + Jaccard). */
   noveltyLambdaText: string;
   onNoveltyLambdaTextChange: (value: string) => void;
@@ -243,6 +246,8 @@ export default memo(function OptimizePanel({
   onTieredScoutSimsChange,
   tieredTopK,
   onTieredTopKChange,
+  tieredRandomExplorationPct,
+  onTieredRandomExplorationPctChange,
   noveltyLambdaText,
   onNoveltyLambdaTextChange,
   noveltyDiverseTopText,
@@ -462,7 +467,7 @@ export default memo(function OptimizePanel({
       <div style={{ fontSize: "0.85rem" }}>
         <FieldLabelWithHint
           hint={
-            "Exhaustive: generate candidate crews from officer pools (respecting Max crews when set), then run your full Sims per crew on each. Genetic: evolve populations of crews for very large spaces; ignores the Max crews cap. Tiered: a fast scouting pass with fewer sims per crew ranks candidates, then your full sim count runs only on the best Top K crews."
+            "Exhaustive: generate candidate crews from officer pools (respecting Max crews when set), then run your full Sims per crew on each. Genetic: evolve populations of crews for very large spaces; ignores the Max crews cap. Tiered: a fast scouting pass with fewer sims per crew ranks candidates, then your full sim count runs only on the best Top K crews. Random stratified: baseline control — random legal crews stratified across captain faction/rarity and below-decks families, then scout → confirm."
           }
         >
           <span>Optimizer strategy</span>
@@ -480,7 +485,23 @@ export default memo(function OptimizePanel({
           <option value="genetic">Genetic</option>
           <option value="tiered">Tiered (scout → confirm)</option>
           <option value="linear_eval">Linear eval (expected damage)</option>
+          <option value="random_stratified">
+            Random stratified (baseline)
+          </option>
         </select>
+        {optimizerStrategy === "random_stratified" && (
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: "0.72rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            Benchmark control: legal crews sampled at random (stratified by
+            captain faction/rarity and below-decks family), then scout →
+            confirm. Ignores warm-start and the analytical prefilter.
+          </p>
+        )}
         {optimizerStrategy === "linear_eval" && (
           <p
             style={{
@@ -573,6 +594,39 @@ export default memo(function OptimizePanel({
               style={selectStyle}
             />
           </div>
+          <div style={{ fontSize: "0.85rem" }}>
+            <FieldLabelWithHint
+              hint={
+                "Fraction of scout candidates (0–50%) swapped for random legal crews stratified by captain faction/rarity and below-decks family. These bypass the analytical prefilter, so surprising crews the proxy would discard still get scouted. Rows they produce are labeled random_stratified. Leave blank to disable."
+              }
+            >
+              <span>Random exploration % (optional)</span>
+            </FieldLabelWithHint>
+            <input
+              type="number"
+              min={0}
+              max={50}
+              step={1}
+              placeholder="off (default)"
+              value={
+                tieredRandomExplorationPct != null
+                  ? Math.round(tieredRandomExplorationPct * 100)
+                  : ""
+              }
+              onChange={(e) => {
+                const raw = e.target.value.trim();
+                if (raw === "") {
+                  onTieredRandomExplorationPctChange(null);
+                  return;
+                }
+                const n = parseInt(raw, 10);
+                if (!Number.isNaN(n) && n >= 0) {
+                  onTieredRandomExplorationPctChange(Math.min(n, 50) / 100);
+                }
+              }}
+              style={selectStyle}
+            />
+          </div>
           <p
             style={{
               margin: "4px 0 0",
@@ -580,8 +634,9 @@ export default memo(function OptimizePanel({
               color: "var(--text-muted)",
             }}
           >
-            Leave blank for server defaults (500 scout sims, top 20). Max{" "}
-            {MAX_TIERED_SCOUT_SIMS_UI.toLocaleString()} / {MAX_TIERED_TOP_K_UI}.
+            Leave blank for server defaults (500 scout sims, top 20, no random
+            exploration). Max {MAX_TIERED_SCOUT_SIMS_UI.toLocaleString()} /{" "}
+            {MAX_TIERED_TOP_K_UI}.
           </p>
         </>
       )}

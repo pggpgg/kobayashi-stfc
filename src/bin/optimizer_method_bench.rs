@@ -17,12 +17,15 @@ use kobayashi::data::heuristics::{
 use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::data::support_buffs::SupportBuffScenarioRequest;
 use kobayashi::optimizer::crew_generator::{
-    build_officer_pools_from_registry, build_officer_pools_with_constraints_from_registry,
-    resolve_below_decks_slots_for_ship, CrewCandidate, OfficerPools, BRIDGE_SLOTS,
+    build_officer_pools_with_constraints_from_registry, resolve_below_decks_slots_for_ship,
+    CrewCandidate, OfficerPools,
 };
 use kobayashi::optimizer::genetic::{run_genetic_optimizer_ranked_with_stats, GeneticConfig};
 use kobayashi::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_parallel_with_registry, DefenderOpponent,
+};
+use kobayashi::optimizer::random_stratified::{
+    sample_stratified_random_crews, StratifiedSampleParams,
 };
 use kobayashi::optimizer::ranking::{rank_results, RankedCrewResult};
 use kobayashi::optimizer::{
@@ -191,34 +194,6 @@ struct BenchRecord {
     win_rate_regret: Option<f64>,
 }
 
-struct Lcg {
-    state: u64,
-}
-
-impl Lcg {
-    fn new(seed: u64) -> Self {
-        Self {
-            state: seed ^ 0x9e37_79b9_7f4a_7c15,
-        }
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        self.state = self
-            .state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        self.state
-    }
-
-    fn index(&mut self, n: usize) -> usize {
-        if n == 0 {
-            0
-        } else {
-            (self.next_u64() as usize) % n
-        }
-    }
-}
-
 fn method_enabled(args: &Args, method: &str) -> bool {
     args.methods
         .iter()
@@ -253,6 +228,7 @@ fn scenario<'a>(
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
         tiered_pq_abandon_margin: None,
+        tiered_random_exploration_pct: None,
         exhaustive_scout_sims: None,
         exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
@@ -276,21 +252,9 @@ fn scenario<'a>(
     }
 }
 
-fn choose_distinct(pool: &[String], used: &mut HashSet<String>, rng: &mut Lcg) -> Option<String> {
-    for _ in 0..32 {
-        let value = pool.get(rng.index(pool.len()))?;
-        if used.insert(value.to_ascii_lowercase()) {
-            return Some(value.clone());
-        }
-    }
-    for value in pool {
-        if used.insert(value.to_ascii_lowercase()) {
-            return Some(value.clone());
-        }
-    }
-    None
-}
-
+/// Random-control candidates via the production stratified sampler
+/// (`kobayashi::optimizer::random_stratified`), so the benchmark control and the
+/// production `random_stratified` lane exercise identical sampling code.
 fn stratified_random_crews(
     registry: &DataRegistry,
     case: &BenchCase,
@@ -298,65 +262,19 @@ fn stratified_random_crews(
     below_decks_slots: usize,
     count: usize,
 ) -> Vec<CrewCandidate> {
-    let Some(pools) = build_officer_pools_from_registry(
+    sample_stratified_random_crews(
         registry,
-        BelowDecksPoolMode::Strict,
-        Some(case.enemy_type),
-        profile,
-        below_decks_slots,
-        None,
-    ) else {
-        return Vec::new();
-    };
-    let mut rng = Lcg::new(case.seed.wrapping_add(0x5151_5151));
-    let mut out = Vec::with_capacity(count);
-    let mut seen = HashSet::new();
-    let max_attempts = count.saturating_mul(64).max(256);
-    for attempt in 0..max_attempts {
-        if out.len() >= count {
-            break;
-        }
-        let Some(captain) = pools
-            .captains
-            .get((attempt + rng.index(pools.captains.len())) % pools.captains.len())
-            .cloned()
-        else {
-            break;
-        };
-        let mut used = HashSet::new();
-        used.insert(captain.to_ascii_lowercase());
-        let mut bridge = Vec::with_capacity(BRIDGE_SLOTS);
-        for _ in 0..BRIDGE_SLOTS {
-            let Some(value) = choose_distinct(&pools.bridge, &mut used, &mut rng) else {
-                bridge.clear();
-                break;
-            };
-            bridge.push(value);
-        }
-        if bridge.len() != BRIDGE_SLOTS {
-            continue;
-        }
-        let mut below_decks = Vec::with_capacity(below_decks_slots);
-        for _ in 0..below_decks_slots {
-            let Some(value) = choose_distinct(&pools.below_decks, &mut used, &mut rng) else {
-                below_decks.clear();
-                break;
-            };
-            below_decks.push(value);
-        }
-        if below_decks.len() != below_decks_slots {
-            continue;
-        }
-        let crew = CrewCandidate {
-            captain,
-            bridge,
-            below_decks,
-        };
-        if seen.insert(crew_candidate_stable_hash(&crew)) {
-            out.push(crew);
-        }
-    }
-    out
+        &StratifiedSampleParams {
+            count,
+            seed: case.seed,
+            below_decks_slots,
+            below_decks_pool_mode: BelowDecksPoolMode::Strict,
+            enemy_type: case.enemy_type,
+            profile_id: profile,
+            constraints: None,
+            exclude_hashes: None,
+        },
+    )
 }
 
 fn pad_below_decks(crew: &mut CrewCandidate, pools: &OfficerPools, slots: usize) {

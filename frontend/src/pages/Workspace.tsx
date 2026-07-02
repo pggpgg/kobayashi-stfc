@@ -284,6 +284,10 @@ export default function Workspace() {
             onTieredScoutSimsChange={ws.setTieredScoutSims}
             tieredTopK={ws.tieredTopK}
             onTieredTopKChange={ws.setTieredTopK}
+            tieredRandomExplorationPct={ws.tieredRandomExplorationPct}
+            onTieredRandomExplorationPctChange={
+              ws.setTieredRandomExplorationPct
+            }
             noveltyLambdaText={ws.noveltyLambdaText}
             onNoveltyLambdaTextChange={ws.setNoveltyLambdaText}
             noveltyDiverseTopText={ws.noveltyDiverseTopText}

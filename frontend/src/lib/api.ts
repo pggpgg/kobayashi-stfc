@@ -849,7 +849,8 @@ export type OptimizerStrategyType =
   | "exhaustive"
   | "genetic"
   | "tiered"
-  | "linear_eval";
+  | "linear_eval"
+  | "random_stratified";
 
 /** Optional hooks for `optimizeStart` (CPU admission may queue the request). */
 export type OptimizeStartOptions = {
@@ -887,6 +888,7 @@ export async function optimizeStart(
     warm_start_crews?: WarmStartCrewBody[];
     tiered_scout_sims?: number;
     tiered_top_k?: number;
+    tiered_random_exploration_pct?: number;
     fast_discovery?: boolean;
     enable_learned_pair_prior?: boolean;
     novelty_lambda?: number;
@@ -962,6 +964,12 @@ export async function optimizeStart(
   }
   if (params.tiered_top_k != null && params.tiered_top_k > 0) {
     body.tiered_top_k = params.tiered_top_k;
+  }
+  if (
+    params.tiered_random_exploration_pct != null &&
+    params.tiered_random_exploration_pct > 0
+  ) {
+    body.tiered_random_exploration_pct = params.tiered_random_exploration_pct;
   }
   if (params.fast_discovery === true) {
     body.fast_discovery = true;
