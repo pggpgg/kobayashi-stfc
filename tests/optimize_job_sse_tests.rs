@@ -130,9 +130,10 @@ async fn optimize_job_stream_terminal_error_job_emits_error_payload() {
             crews_done: 0,
             total_crews: 0,
             phase: None,
+            cancellation_point: Some("tiered_confirm".to_string()),
             progress_preview: None,
             result: None,
-            error: Some("validation failed".to_string()),
+            error: Some("Cancelled during tiered_confirm".to_string()),
             started_at_ms: now_ms(),
         },
     );
@@ -145,7 +146,8 @@ async fn optimize_job_stream_terminal_error_job_emits_error_payload() {
         "terminal error should emit once: {events:?}"
     );
     assert_eq!(events[0]["status"], "error");
-    assert_eq!(events[0]["error"], "validation failed");
+    assert_eq!(events[0]["error"], "Cancelled during tiered_confirm");
+    assert_eq!(events[0]["cancellation_point"], "tiered_confirm");
 }
 
 #[serial_test::serial]
@@ -160,6 +162,7 @@ async fn optimize_job_stream_emits_running_updates_then_done() {
             crews_done: 5,
             total_crews: 20,
             phase: Some("monte_carlo".to_string()),
+            cancellation_point: None,
             progress_preview: None,
             result: None,
             error: None,

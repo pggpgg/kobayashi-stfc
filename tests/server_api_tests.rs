@@ -333,6 +333,44 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     assert_eq!(payload["scenario"]["seed"], 7);
     assert_eq!(payload["scenario"]["effective_strategy"], "exhaustive");
     assert_eq!(payload["scenario"]["strategy_auto"], true);
+    let funnel = payload["scenario"]["optimizer_funnel"]
+        .as_object()
+        .expect("optimizer_funnel should be an object");
+    assert!(
+        funnel["generated_candidates"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include generated candidate count"
+    );
+    assert!(
+        funnel["raw_role_pool"]["captains"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include raw captain pool size"
+    );
+    assert!(
+        funnel["banned_role_pool"]["bridge"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include ban-list-filtered bridge pool size"
+    );
+    assert!(
+        funnel["eligible_role_pool"]["bridge"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include eligibility-filtered bridge pool size"
+    );
+    assert!(
+        funnel["roster_role_pool"]["captains"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include roster-filtered captain pool size"
+    );
+    assert!(
+        funnel["final_role_pool"]["below_decks"]
+            .as_u64()
+            .unwrap_or(0)
+            > 0,
+        "optimizer_funnel should include final below-decks pool size"
+    );
+    assert!(
+        funnel["after_constraints"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include post-constraints count"
+    );
+    assert!(
+        funnel["phase_durations_ms"]["total"].as_u64().unwrap_or(0) > 0,
+        "optimizer_funnel should include total phase timing"
+    );
     assert!(
         payload["scenario"].get("requested_strategy").is_none()
             || payload["scenario"]["requested_strategy"].is_null()
@@ -358,6 +396,16 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
     );
     assert!(first["win_rate"].as_f64().is_some());
     assert!(first["avg_hull_remaining"].as_f64().is_some());
+    assert!(
+        first["method_provenance"]
+            .as_str()
+            .is_some_and(|s| !s.is_empty()),
+        "recommendations should include method provenance"
+    );
+    assert_eq!(
+        funnel["final_result_count"].as_u64(),
+        Some(recommendations.len() as u64)
+    );
     let wr = first["win_rate"].as_f64().expect("win_rate");
     let wr_lo = first["win_rate_ci_low"].as_f64().expect("win_rate_ci_low");
     let wr_hi = first["win_rate_ci_high"]
@@ -437,6 +485,7 @@ async fn optimize_linear_eval_returns_expected_hull_damage_without_monte_carlo()
         first["expected_hull_damage"].as_f64().is_some(),
         "linear_eval rows should include expected_hull_damage"
     );
+    assert_eq!(first["method_provenance"].as_str(), Some("linear_eval"));
     assert_eq!(first["win_rate"].as_f64(), Some(0.0));
 
     let approximate = payload["approximate_notes"]
@@ -519,7 +568,21 @@ async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
         serde_json::from_str(&response_a.body).expect("response A should be valid json");
     let payload_b: serde_json::Value =
         serde_json::from_str(&response_b.body).expect("response B should be valid json");
-    assert_eq!(payload_a["scenario"], payload_b["scenario"]);
+    let mut scenario_a = payload_a["scenario"].clone();
+    let mut scenario_b = payload_b["scenario"].clone();
+    if let Some(funnel) = scenario_a
+        .get_mut("optimizer_funnel")
+        .and_then(|v| v.as_object_mut())
+    {
+        funnel.remove("phase_durations_ms");
+    }
+    if let Some(funnel) = scenario_b
+        .get_mut("optimizer_funnel")
+        .and_then(|v| v.as_object_mut())
+    {
+        funnel.remove("phase_durations_ms");
+    }
+    assert_eq!(scenario_a, scenario_b);
     assert_eq!(payload_a["recommendations"], payload_b["recommendations"]);
 }
 
@@ -743,8 +806,18 @@ async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
         serde_json::from_str(&response.body).expect("response should be valid json");
     assert_eq!(payload["scenario"]["analytical_prefilter_keep"], 4);
     assert_eq!(payload["scenario"]["analytical_prefilter_kept"], 4);
+    assert_eq!(
+        payload["scenario"]["optimizer_funnel"]["analytical_prefilter_kept"],
+        4
+    );
     assert!(
         payload["scenario"]["analytical_prefilter_from"]
+            .as_u64()
+            .unwrap_or(0)
+            > 4
+    );
+    assert!(
+        payload["scenario"]["optimizer_funnel"]["analytical_prefilter_from"]
             .as_u64()
             .unwrap_or(0)
             > 4

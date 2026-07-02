@@ -1,5 +1,6 @@
 //! Append-only JSON lines for post-hoc analysis of optimize budgets (`KOBAYASHI_BUDGET_TELEMETRY`).
 
+use std::collections::BTreeMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
@@ -16,6 +17,54 @@ pub struct BudgetTelemetryRow<'a> {
     pub hostile: &'a str,
     pub strategy: &'a str,
     pub result_crews: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_role_captains: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_role_bridge: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_role_below_decks: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub banned_role_captains: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub banned_role_bridge: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub banned_role_below_decks: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eligible_role_captains: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eligible_role_bridge: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eligible_role_below_decks: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roster_role_captains: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roster_role_bridge: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roster_role_below_decks: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_role_captains: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_role_bridge: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_role_below_decks: Option<u32>,
+    pub heuristic_candidates: u32,
+    pub warm_start_candidates: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub generated_candidates: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after_warm_start_dedupe: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after_constraints: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_from: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_kept: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scout_candidates: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confirmed_candidates: Option<u32>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub phase_durations_ms: BTreeMap<String, u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tiered_scout_trials_final: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -83,6 +132,31 @@ mod tests {
             hostile: "h",
             strategy: "tiered",
             result_crews: 3,
+            raw_role_captains: Some(10),
+            raw_role_bridge: Some(11),
+            raw_role_below_decks: Some(12),
+            banned_role_captains: Some(9),
+            banned_role_bridge: Some(10),
+            banned_role_below_decks: Some(11),
+            eligible_role_captains: Some(8),
+            eligible_role_bridge: Some(9),
+            eligible_role_below_decks: Some(10),
+            roster_role_captains: Some(7),
+            roster_role_bridge: Some(8),
+            roster_role_below_decks: Some(9),
+            final_role_captains: Some(4),
+            final_role_bridge: Some(5),
+            final_role_below_decks: Some(6),
+            heuristic_candidates: 2,
+            warm_start_candidates: 1,
+            generated_candidates: Some(20),
+            after_warm_start_dedupe: Some(21),
+            after_constraints: Some(18),
+            analytical_prefilter_from: Some(18),
+            analytical_prefilter_kept: Some(6),
+            scout_candidates: Some(6),
+            confirmed_candidates: Some(3),
+            phase_durations_ms: BTreeMap::from([("tiered".to_string(), 42)]),
             tiered_scout_trials_final: Some(100),
             tiered_confirm_trials_total: Some(50),
             exhaustive_scout_trials_final: None,

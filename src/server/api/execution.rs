@@ -1,7 +1,7 @@
 //! Execution layer: run optimize, job store, and response types.
 
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -18,15 +18,18 @@ use crate::data::heuristics::{
 use crate::data::import::{load_imported_roster, roster_import_fallback_warning_message};
 use crate::data::officer::normalize_officer_lookup_key;
 use crate::data::optimize_history;
+use crate::data::optimize_observations::{
+    maybe_append_rows as maybe_append_observation_rows, stable_text_hash, OptimizeObservationRow,
+};
 use crate::data::support_buffs;
 use crate::lcars::LcarsOfficer;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry, resolve_below_decks_slots_for_ship, CandidateStrategy,
-    CrewCandidate, BRIDGE_SLOTS,
+    build_officer_pools_from_registry, resolve_below_decks_slots_for_ship,
+    search_space_reduction_report, CandidateStrategy, CrewCandidate, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
-    run_monte_carlo_with_shared,
+    crew_candidate_stable_hash, run_monte_carlo_with_shared,
     scenario::{build_shared_scenario_data_from_registry, DefenderOpponent},
     SimulationResult,
 };
@@ -34,8 +37,8 @@ use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, R
 use crate::optimizer::tiered::TieredScoutBudgetStats;
 use crate::optimizer::{
     count_effective_optimize_candidates, enforce_candidate_optimization_eligibility_with_registry,
-    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeProgressTick,
-    OptimizerStrategy,
+    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeCandidateFunnel,
+    OptimizeProgressTick, OptimizerStrategy,
 };
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
@@ -48,7 +51,7 @@ use super::requests::{
 
 #[derive(Debug)]
 enum OptimizeGatherError {
-    Cancelled,
+    Cancelled { phase: Option<String> },
     Validation(ValidationErrorResponse),
 }
 
@@ -262,6 +265,8 @@ pub struct CrewRecommendation {
     pub captain: String,
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
+    /// Method/source path that produced or injected this row (e.g. `exhaustive_mc`, `warm_start`).
+    pub method_provenance: String,
     pub win_rate: f64,
     pub win_rate_ci_low: f64,
     pub win_rate_ci_high: f64,
@@ -298,11 +303,15 @@ pub struct OptimizeConstraintsSummary {
     pub below_decks_must_include: usize,
 }
 
-fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
+fn crew_recommendation_from_ranked(
+    r: &RankedCrewResult,
+    method_provenance: impl Into<String>,
+) -> CrewRecommendation {
     CrewRecommendation {
         captain: r.captain.clone(),
         bridge: r.bridge.clone(),
         below_decks: r.below_decks.clone(),
+        method_provenance: method_provenance.into(),
         win_rate: r.win_rate,
         win_rate_ci_low: r.win_rate_ci_low,
         win_rate_ci_high: r.win_rate_ci_high,
@@ -326,6 +335,17 @@ fn crew_recommendation_from_ranked(r: &RankedCrewResult) -> CrewRecommendation {
     }
 }
 
+fn progress_phase_method_provenance(phase: &str) -> &'static str {
+    match phase {
+        "heuristics" => "heuristics",
+        "genetic" => "genetic",
+        "tiered_scout" | "tiered_scout_refine" | "tiered_confirm" => "tiered_confirmed",
+        "exhaustive_scout" | "exhaustive_confirm" => "exhaustive_two_phase",
+        "linear_eval" => "linear_eval",
+        _ => "monte_carlo",
+    }
+}
+
 fn summarize_constraints(
     con: Option<&CrewSearchConstraints>,
 ) -> Option<OptimizeConstraintsSummary> {
@@ -341,6 +361,251 @@ fn summarize_constraints(
         bridge_must_include: c.bridge_must_include.len(),
         below_decks_must_include: c.below_decks_must_include.len(),
     })
+}
+
+#[derive(Debug, Clone, Default, Serialize, schemars::JsonSchema)]
+pub struct OptimizerRolePoolTelemetry {
+    pub captains: u32,
+    pub bridge: u32,
+    pub below_decks: u32,
+}
+
+impl OptimizerRolePoolTelemetry {
+    fn new(captains: usize, bridge: usize, below_decks: usize) -> Self {
+        Self {
+            captains: telemetry_count(captains),
+            bridge: telemetry_count(bridge),
+            below_decks: telemetry_count(below_decks),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, schemars::JsonSchema)]
+pub struct OptimizerFunnelTelemetry {
+    /// Full-catalog raw role pools before ban/eligibility filters.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_role_pool: Option<OptimizerRolePoolTelemetry>,
+    /// Full-catalog role pools after the curation ban list.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub banned_role_pool: Option<OptimizerRolePoolTelemetry>,
+    /// Full-catalog role pools after ban/eligibility filters.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eligible_role_pool: Option<OptimizerRolePoolTelemetry>,
+    /// Production role pools after roster/profile narrowing, before explicit constraints.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roster_role_pool: Option<OptimizerRolePoolTelemetry>,
+    /// Production role pools after roster/profile narrowing and explicit constraints.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_role_pool: Option<OptimizerRolePoolTelemetry>,
+    /// Heuristic-expanded candidates after roster/seat legality and explicit constraints.
+    pub heuristic_candidates: u32,
+    /// Warm-start candidates sent into the main optimizer scenario (including fast-discovery merges).
+    pub warm_start_candidates: u32,
+    /// Raw generated candidates before warm-start merge.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub generated_candidates: Option<u32>,
+    /// Candidate count after warm-start prepend and stable-hash dedupe.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after_warm_start_dedupe: Option<u32>,
+    /// Candidate count after explicit optimize constraints.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after_constraints: Option<u32>,
+    /// Analytical prefilter input count when truncation ran.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_from: Option<u32>,
+    /// Analytical prefilter kept count when truncation ran.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analytical_prefilter_kept: Option<u32>,
+    /// Candidate count entering scout / cheap-evaluation phase.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scout_candidates: Option<u32>,
+    /// Candidate count entering confirmation or final ranking output.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confirmed_candidates: Option<u32>,
+    /// Rows returned after standalone heuristic and/or main optimizer results are merged.
+    pub final_result_count: u32,
+    /// Coarse wall-clock time spent in each optimize phase, milliseconds.
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub phase_durations_ms: BTreeMap<String, u64>,
+    /// Phase observed when a background optimize job was cancelled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cancellation_point: Option<String>,
+}
+
+fn telemetry_count(n: usize) -> u32 {
+    n.min(u32::MAX as usize) as u32
+}
+
+fn telemetry_optional_count(n: Option<usize>) -> Option<u32> {
+    n.map(telemetry_count)
+}
+
+impl OptimizerFunnelTelemetry {
+    fn new(heuristic_candidates: usize, warm_start_candidates: usize) -> Self {
+        Self {
+            heuristic_candidates: telemetry_count(heuristic_candidates),
+            warm_start_candidates: telemetry_count(warm_start_candidates),
+            ..Self::default()
+        }
+    }
+
+    fn apply_optimizer_funnel(&mut self, funnel: OptimizeCandidateFunnel) {
+        self.warm_start_candidates = telemetry_count(funnel.warm_start_candidates);
+        self.generated_candidates = telemetry_optional_count(funnel.generated_candidates);
+        self.after_warm_start_dedupe = telemetry_optional_count(funnel.after_warm_start_dedupe);
+        self.after_constraints = telemetry_optional_count(funnel.after_constraints);
+        self.analytical_prefilter_from = telemetry_optional_count(funnel.analytical_prefilter_from);
+        self.analytical_prefilter_kept = telemetry_optional_count(funnel.analytical_prefilter_kept);
+        self.scout_candidates = telemetry_optional_count(funnel.scout_candidates);
+        self.confirmed_candidates = telemetry_optional_count(funnel.confirmed_candidates);
+    }
+
+    fn apply_phase_durations(&mut self, phase_durations_ms: BTreeMap<String, u64>) {
+        self.phase_durations_ms = phase_durations_ms;
+    }
+}
+
+fn elapsed_ms_since(start: Instant) -> u64 {
+    start.elapsed().as_millis().min(u128::from(u64::MAX)) as u64
+}
+
+fn record_phase_duration(
+    phase_durations_ms: &mut BTreeMap<String, u64>,
+    phase: &'static str,
+    start: Instant,
+) {
+    let elapsed = elapsed_ms_since(start);
+    phase_durations_ms
+        .entry(phase.to_string())
+        .and_modify(|n| *n = n.saturating_add(elapsed))
+        .or_insert(elapsed);
+}
+
+fn candidate_hash_set(crews: &[CrewCandidate]) -> HashSet<u64> {
+    crews.iter().map(crew_candidate_stable_hash).collect()
+}
+
+fn ranked_crew_hash(r: &RankedCrewResult) -> u64 {
+    crew_candidate_stable_hash(&CrewCandidate {
+        captain: r.captain.clone(),
+        bridge: r.bridge.clone(),
+        below_decks: r.below_decks.clone(),
+    })
+}
+
+fn recommendation_method_provenance(
+    meta: &OptimizeGatherMeta,
+    r: &RankedCrewResult,
+) -> &'static str {
+    if matches!(meta.strategy, OptimizerStrategy::LinearEval) {
+        return "linear_eval";
+    }
+    let h = ranked_crew_hash(r);
+    if meta.heuristic_hashes.contains(&h) {
+        return if meta.fast_discovery || meta.is_seeded_genetic {
+            "heuristic_seed"
+        } else {
+            "heuristics"
+        };
+    }
+    if meta.curated_warm_start_hashes.contains(&h) {
+        return "curated_warm_start";
+    }
+    if meta.warm_start_hashes.contains(&h) {
+        return "warm_start";
+    }
+    if meta.heuristics_only {
+        return "heuristics";
+    }
+    if meta.is_seeded_genetic {
+        return "seeded_genetic";
+    }
+    match meta.strategy {
+        OptimizerStrategy::Exhaustive if meta.exhaustive_adaptive_budget.is_some() => {
+            "exhaustive_two_phase"
+        }
+        OptimizerStrategy::Exhaustive => "exhaustive_mc",
+        OptimizerStrategy::Genetic => "genetic",
+        OptimizerStrategy::Tiered => "tiered_confirmed",
+        OptimizerStrategy::LinearEval => "linear_eval",
+    }
+}
+
+fn non_empty_string_slice(value: Option<&Vec<String>>) -> Option<&[String]> {
+    value.map(Vec::as_slice).filter(|slice| !slice.is_empty())
+}
+
+fn append_optimize_observations(
+    request: &OptimizeRequest,
+    meta: &OptimizeGatherMeta,
+    ranked_results: &[RankedCrewResult],
+    profile_id: Option<&str>,
+    sims: u32,
+    seed: u64,
+) {
+    let ts_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let strategy = optimizer_strategy_to_api_label(meta.strategy);
+    let profile_hash = profile_id.map(stable_text_hash);
+    let chain_enabled = request.chain.as_ref().is_some_and(|chain| chain.enabled);
+    let chain_kills_target = request.chain.as_ref().and_then(|chain| chain.kills_target);
+    let support_buffs = non_empty_string_slice(request.support_buffs.as_ref());
+    let defender_support_buffs = non_empty_string_slice(request.defender_support_buffs.as_ref());
+    let defender_alliance_debuffs =
+        non_empty_string_slice(request.defender_alliance_debuffs.as_ref());
+    let rows: Vec<OptimizeObservationRow<'_>> = ranked_results
+        .iter()
+        .map(|r| OptimizeObservationRow {
+            schema_version: 1,
+            ts_ms,
+            profile_id,
+            profile_hash,
+            simulator_version: env!("CARGO_PKG_VERSION"),
+            ship: request.ship.as_str(),
+            hostile: request.hostile.as_str(),
+            ship_tier: request.ship_tier,
+            ship_level: request.ship_level,
+            below_decks_slots: meta.below_decks_slots as u32,
+            enemy_type: request.enemy_type.as_deref(),
+            support_buffs,
+            defender_support_buffs,
+            defender_alliance_debuffs,
+            chain_enabled,
+            chain_kills_target,
+            seed,
+            sims_requested: sims,
+            trials_run: r.trials_run,
+            strategy,
+            method_provenance: recommendation_method_provenance(meta, r),
+            crew_hash: ranked_crew_hash(r),
+            captain: r.captain.as_str(),
+            bridge: &r.bridge,
+            below_decks: &r.below_decks,
+            win_rate: r.win_rate,
+            win_rate_ci_low: r.win_rate_ci_low,
+            win_rate_ci_high: r.win_rate_ci_high,
+            stall_rate: r.stall_rate,
+            stall_rate_ci_low: r.stall_rate_ci_low,
+            stall_rate_ci_high: r.stall_rate_ci_high,
+            loss_rate: r.loss_rate,
+            loss_rate_ci_low: r.loss_rate_ci_low,
+            loss_rate_ci_high: r.loss_rate_ci_high,
+            r1_kill_rate: r.r1_kill_rate,
+            r1_kill_rate_ci_low: r.r1_kill_rate_ci_low,
+            r1_kill_rate_ci_high: r.r1_kill_rate_ci_high,
+            avg_hull_remaining: r.avg_hull_remaining,
+            avg_hull_remaining_ci_low: r.avg_hull_remaining_ci_low,
+            avg_hull_remaining_ci_high: r.avg_hull_remaining_ci_high,
+            avg_defender_hull_remaining: r.avg_defender_hull_remaining,
+            avg_defender_hull_remaining_ci_low: r.avg_defender_hull_remaining_ci_low,
+            avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
+            score: r.score.value,
+            expected_hull_damage: r.expected_hull_damage,
+        })
+        .collect();
+    maybe_append_observation_rows(profile_id, &rows);
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -362,6 +627,8 @@ pub struct ScenarioSummary {
     /// Crew count after analytical truncation (only when truncation ran).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analytical_prefilter_kept: Option<u32>,
+    /// Candidate-count funnel for this optimize run.
+    pub optimizer_funnel: OptimizerFunnelTelemetry,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chain: Option<ChainGrindRequest>,
     /// Strategy actually run (`exhaustive`, `tiered`, or `genetic`).
@@ -520,6 +787,10 @@ struct OptimizeGatherMeta {
     using_placeholder_combatants: bool,
     /// `Some((generated, kept))` when analytical pre-filter truncated the candidate list.
     analytical_prefilter: Option<(usize, usize)>,
+    optimizer_funnel: OptimizerFunnelTelemetry,
+    heuristic_hashes: HashSet<u64>,
+    warm_start_hashes: HashSet<u64>,
+    curated_warm_start_hashes: HashSet<u64>,
     below_decks_slots: usize,
     optimize_constraints: Option<OptimizeConstraintsSummary>,
     optimize_history_confirm_hits: u32,
@@ -592,7 +863,7 @@ impl OptimizeProgressSink {
                 ranked
                     .iter()
                     .take(5)
-                    .map(crew_recommendation_from_ranked)
+                    .map(|r| crew_recommendation_from_ranked(r, "heuristics"))
                     .collect(),
             );
         });
@@ -638,7 +909,12 @@ impl OptimizeProgressSink {
                             partial
                                 .iter()
                                 .take(5)
-                                .map(crew_recommendation_from_ranked)
+                                .map(|r| {
+                                    crew_recommendation_from_ranked(
+                                        r,
+                                        progress_phase_method_provenance(tick.phase),
+                                    )
+                                })
                                 .collect(),
                         );
                     }
@@ -661,6 +937,13 @@ impl OptimizeProgressSink {
         match self {
             Self::None => false,
             Self::Job { cancel, .. } => cancel.load(Ordering::Relaxed),
+        }
+    }
+
+    fn current_phase(&self) -> Option<String> {
+        match self {
+            Self::None => None,
+            Self::Job { job_id, .. } => REGISTRY.get(job_id).and_then(|state| state.phase),
         }
     }
 }
@@ -696,6 +979,20 @@ fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
     }
 }
 
+fn cancelled_error(
+    sink: &OptimizeProgressSink,
+    fallback_phase: &'static str,
+) -> OptimizeGatherError {
+    let phase = sink
+        .current_phase()
+        .or_else(|| Some(fallback_phase.to_string()));
+    warn!(
+        cancellation_phase = phase.as_deref().unwrap_or("unknown"),
+        "optimize_cancelled"
+    );
+    OptimizeGatherError::Cancelled { phase }
+}
+
 /// Shared Monte Carlo + optimizer scenario execution. Sync and background jobs use the same logic.
 fn gather_optimize_simulation_results(
     registry: &DataRegistry,
@@ -725,6 +1022,9 @@ fn gather_optimize_simulation_results(
         profile_id_present = profile_id.is_some()
     );
     let _gather_span = gather_span.enter();
+    let gather_started = Instant::now();
+    let prepare_started = Instant::now();
+    let mut phase_durations_ms = BTreeMap::new();
     let below_decks_slots = resolve_below_decks_slots_for_ship(
         &request.ship,
         request.ship_tier,
@@ -734,6 +1034,60 @@ fn gather_optimize_simulation_results(
     let crew_constraints = build_crew_search_constraints(request);
     // Resolve the combat scenario for eligibility filtering (explicit `enemy_type`, else inferred).
     let enemy_type = resolve_request_enemy_type(registry, request);
+    let pool_mode = below_decks_pool_mode_resolved(request);
+    let search_space_report =
+        search_space_reduction_report(registry, enemy_type, pool_mode, below_decks_slots);
+    let raw_stage = search_space_report.raw();
+    let raw_role_pool = OptimizerRolePoolTelemetry::new(
+        raw_stage.captains,
+        raw_stage.bridge,
+        raw_stage.below_decks,
+    );
+    let banned_stage = search_space_report
+        .stages
+        .get(1)
+        .unwrap_or_else(|| search_space_report.final_stage());
+    let banned_role_pool = OptimizerRolePoolTelemetry::new(
+        banned_stage.captains,
+        banned_stage.bridge,
+        banned_stage.below_decks,
+    );
+    let eligible_stage = search_space_report.final_stage();
+    let eligible_role_pool = OptimizerRolePoolTelemetry::new(
+        eligible_stage.captains,
+        eligible_stage.bridge,
+        eligible_stage.below_decks,
+    );
+    let roster_role_pool = build_officer_pools_from_registry(
+        registry,
+        pool_mode,
+        Some(enemy_type),
+        profile_id,
+        below_decks_slots,
+        None,
+    )
+    .map(|pools| {
+        OptimizerRolePoolTelemetry::new(
+            pools.captains.len(),
+            pools.bridge.len(),
+            pools.below_decks.len(),
+        )
+    });
+    let final_role_pool = build_officer_pools_from_registry(
+        registry,
+        pool_mode,
+        Some(enemy_type),
+        profile_id,
+        below_decks_slots,
+        crew_constraints.as_ref(),
+    )
+    .map(|pools| {
+        OptimizerRolePoolTelemetry::new(
+            pools.captains.len(),
+            pools.bridge.len(),
+            pools.below_decks.len(),
+        )
+    });
     let cache_key_normalized = request.optimize_cache_key.as_ref().and_then(|s| {
         let t = s.trim();
         if t.is_empty() {
@@ -787,18 +1141,21 @@ fn gather_optimize_simulation_results(
         heuristics_candidates = h_candidates.len() as u64,
         "optimize_heuristics_candidates_ready"
     );
+    let heuristic_hashes = candidate_hash_set(&h_candidates);
 
     let mut dto_warm = warm_start_crews_from_request_dtos(request);
     // Prepend a guaranteed proven-strong crew so candidate generation always reaches a viable
     // below-decks lineup (a low max_candidates over a many-slot ship can otherwise generate none).
     // The enforce call below validates/rejects it; it is deduped against generated crews downstream.
-    if let Some(crew) = curated_proven_warm_start_crew(
+    let curated_warm_start = curated_proven_warm_start_crew(
         registry,
         profile_id,
         below_decks_slots,
         enemy_type,
         crew_constraints.as_ref(),
-    ) {
+    );
+    let curated_warm_start_hash = curated_warm_start.as_ref().map(crew_candidate_stable_hash);
+    if let Some(crew) = curated_warm_start {
         dto_warm.insert(0, crew);
     }
     let (dto_warm, warm_legality) = enforce_candidate_optimization_eligibility_with_registry(
@@ -824,6 +1181,18 @@ fn gather_optimize_simulation_results(
     } else {
         (dto_warm, false)
     };
+    let warm_start_hashes = candidate_hash_set(&scenario_warm_start);
+    let curated_warm_start_hashes: HashSet<u64> = curated_warm_start_hash
+        .into_iter()
+        .filter(|h| warm_start_hashes.contains(h))
+        .collect();
+    let mut optimizer_funnel =
+        OptimizerFunnelTelemetry::new(h_candidates.len(), scenario_warm_start.len());
+    optimizer_funnel.raw_role_pool = Some(raw_role_pool);
+    optimizer_funnel.banned_role_pool = Some(banned_role_pool);
+    optimizer_funnel.eligible_role_pool = Some(eligible_role_pool);
+    optimizer_funnel.roster_role_pool = roster_role_pool;
+    optimizer_funnel.final_role_pool = final_role_pool;
 
     let prior_reference_crews_raw = match (profile_id, cache_key_normalized.as_deref()) {
         (Some(pid), Some(key)) => {
@@ -1010,12 +1379,14 @@ fn gather_optimize_simulation_results(
         pvp.clone(),
     );
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
+    record_phase_duration(&mut phase_durations_ms, "prepare", prepare_started);
 
     let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty
         && !is_seeded_genetic
         && !fast_discovery
         && strategy != OptimizerStrategy::LinearEval
     {
+        let heuristics_started = Instant::now();
         let h_total = h_candidates.len() as u32;
         sink.on_heuristics_start(h_total);
         let h_len = h_candidates.len();
@@ -1024,8 +1395,8 @@ fn gather_optimize_simulation_results(
         let mut results: Vec<SimulationResult> = Vec::with_capacity(h_len);
         for (start, end) in ranges {
             if sink.job_cancelled() {
-                warn!("optimize_cancelled");
-                return Err(OptimizeGatherError::Cancelled);
+                record_phase_duration(&mut phase_durations_ms, "heuristics", heuristics_started);
+                return Err(cancelled_error(sink, "heuristics"));
             }
             let batch = &h_candidates[start..end];
             let batch_results = run_monte_carlo_with_shared(
@@ -1039,6 +1410,7 @@ fn gather_optimize_simulation_results(
             results.extend(batch_results);
         }
         sink.on_heuristics_complete(heuristics_only, h_total, &results);
+        record_phase_duration(&mut phase_durations_ms, "heuristics", heuristics_started);
         info!(
             heuristic_results = results.len() as u64,
             "optimize_heuristics_monte_carlo_complete"
@@ -1049,6 +1421,8 @@ fn gather_optimize_simulation_results(
     };
 
     let analytical_prefilter = if !heuristics_only {
+        let optimizer_started = Instant::now();
+        let optimizer_phase = optimizer_strategy_to_api_label(strategy);
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: scenario_hostile.as_str(),
@@ -1120,9 +1494,11 @@ fn gather_optimize_simulation_results(
             },
         );
         if sink.job_cancelled() {
-            warn!("optimize_cancelled");
-            return Err(OptimizeGatherError::Cancelled);
+            record_phase_duration(&mut phase_durations_ms, optimizer_phase, optimizer_started);
+            return Err(cancelled_error(sink, optimizer_phase));
         }
+        record_phase_duration(&mut phase_durations_ms, optimizer_phase, optimizer_started);
+        optimizer_funnel.apply_optimizer_funnel(outcome.candidate_funnel);
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
         tiered_scout_budget_for_response = outcome.tiered_scout_budget;
         exhaustive_adaptive_budget_for_response = outcome.exhaustive_adaptive_budget;
@@ -1206,6 +1582,9 @@ fn gather_optimize_simulation_results(
     } else {
         None
     };
+    optimizer_funnel.final_result_count = telemetry_count(all_results.len());
+    record_phase_duration(&mut phase_durations_ms, "total", gather_started);
+    optimizer_funnel.apply_phase_durations(phase_durations_ms);
 
     let meta = OptimizeGatherMeta {
         strategy,
@@ -1218,6 +1597,10 @@ fn gather_optimize_simulation_results(
         fast_discovery_heuristic_cap_hit,
         using_placeholder_combatants,
         analytical_prefilter,
+        optimizer_funnel,
+        heuristic_hashes,
+        warm_start_hashes,
+        curated_warm_start_hashes,
         below_decks_slots,
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
         optimize_history_confirm_hits,
@@ -1239,9 +1622,28 @@ fn gather_optimize_simulation_results(
         strategy_auto = meta.strategy_auto,
         heuristics_only = meta.heuristics_only,
         analytical_prefilter_applied = meta.analytical_prefilter.is_some(),
+        raw_role_captains = meta.optimizer_funnel.raw_role_pool.as_ref().map(|p| p.captains).unwrap_or(0),
+        raw_role_bridge = meta.optimizer_funnel.raw_role_pool.as_ref().map(|p| p.bridge).unwrap_or(0),
+        raw_role_below_decks = meta.optimizer_funnel.raw_role_pool.as_ref().map(|p| p.below_decks).unwrap_or(0),
+        banned_role_captains = meta.optimizer_funnel.banned_role_pool.as_ref().map(|p| p.captains).unwrap_or(0),
+        banned_role_bridge = meta.optimizer_funnel.banned_role_pool.as_ref().map(|p| p.bridge).unwrap_or(0),
+        banned_role_below_decks = meta.optimizer_funnel.banned_role_pool.as_ref().map(|p| p.below_decks).unwrap_or(0),
+        eligible_role_captains = meta.optimizer_funnel.eligible_role_pool.as_ref().map(|p| p.captains).unwrap_or(0),
+        eligible_role_bridge = meta.optimizer_funnel.eligible_role_pool.as_ref().map(|p| p.bridge).unwrap_or(0),
+        eligible_role_below_decks = meta.optimizer_funnel.eligible_role_pool.as_ref().map(|p| p.below_decks).unwrap_or(0),
+        roster_role_captains = meta.optimizer_funnel.roster_role_pool.as_ref().map(|p| p.captains).unwrap_or(0),
+        roster_role_bridge = meta.optimizer_funnel.roster_role_pool.as_ref().map(|p| p.bridge).unwrap_or(0),
+        roster_role_below_decks = meta.optimizer_funnel.roster_role_pool.as_ref().map(|p| p.below_decks).unwrap_or(0),
+        final_role_captains = meta.optimizer_funnel.final_role_pool.as_ref().map(|p| p.captains).unwrap_or(0),
+        final_role_bridge = meta.optimizer_funnel.final_role_pool.as_ref().map(|p| p.bridge).unwrap_or(0),
+        final_role_below_decks = meta.optimizer_funnel.final_role_pool.as_ref().map(|p| p.below_decks).unwrap_or(0),
+        generated_candidates = meta.optimizer_funnel.generated_candidates.unwrap_or(0),
+        scout_candidates = meta.optimizer_funnel.scout_candidates.unwrap_or(0),
+        confirmed_candidates = meta.optimizer_funnel.confirmed_candidates.unwrap_or(0),
         optimize_history_confirm_hits = meta.optimize_history_confirm_hits,
         optimize_history_wrote = meta.optimize_history_wrote,
         final_result_count = all_results.len() as u64,
+        phase_durations_ms = ?meta.optimizer_funnel.phase_durations_ms,
         "optimize_gather_complete"
     );
 
@@ -1257,6 +1659,91 @@ fn gather_optimize_simulation_results(
             hostile: request.hostile.as_str(),
             strategy: optimizer_strategy_to_api_label(meta.strategy),
             result_crews: all_results.len(),
+            raw_role_captains: meta
+                .optimizer_funnel
+                .raw_role_pool
+                .as_ref()
+                .map(|p| p.captains),
+            raw_role_bridge: meta
+                .optimizer_funnel
+                .raw_role_pool
+                .as_ref()
+                .map(|p| p.bridge),
+            raw_role_below_decks: meta
+                .optimizer_funnel
+                .raw_role_pool
+                .as_ref()
+                .map(|p| p.below_decks),
+            banned_role_captains: meta
+                .optimizer_funnel
+                .banned_role_pool
+                .as_ref()
+                .map(|p| p.captains),
+            banned_role_bridge: meta
+                .optimizer_funnel
+                .banned_role_pool
+                .as_ref()
+                .map(|p| p.bridge),
+            banned_role_below_decks: meta
+                .optimizer_funnel
+                .banned_role_pool
+                .as_ref()
+                .map(|p| p.below_decks),
+            eligible_role_captains: meta
+                .optimizer_funnel
+                .eligible_role_pool
+                .as_ref()
+                .map(|p| p.captains),
+            eligible_role_bridge: meta
+                .optimizer_funnel
+                .eligible_role_pool
+                .as_ref()
+                .map(|p| p.bridge),
+            eligible_role_below_decks: meta
+                .optimizer_funnel
+                .eligible_role_pool
+                .as_ref()
+                .map(|p| p.below_decks),
+            roster_role_captains: meta
+                .optimizer_funnel
+                .roster_role_pool
+                .as_ref()
+                .map(|p| p.captains),
+            roster_role_bridge: meta
+                .optimizer_funnel
+                .roster_role_pool
+                .as_ref()
+                .map(|p| p.bridge),
+            roster_role_below_decks: meta
+                .optimizer_funnel
+                .roster_role_pool
+                .as_ref()
+                .map(|p| p.below_decks),
+            final_role_captains: meta
+                .optimizer_funnel
+                .final_role_pool
+                .as_ref()
+                .map(|p| p.captains),
+            final_role_bridge: meta
+                .optimizer_funnel
+                .final_role_pool
+                .as_ref()
+                .map(|p| p.bridge),
+            final_role_below_decks: meta
+                .optimizer_funnel
+                .final_role_pool
+                .as_ref()
+                .map(|p| p.below_decks),
+            heuristic_candidates: meta.optimizer_funnel.heuristic_candidates,
+            warm_start_candidates: meta.optimizer_funnel.warm_start_candidates,
+            generated_candidates: meta.optimizer_funnel.generated_candidates,
+            after_warm_start_dedupe: meta.optimizer_funnel.after_warm_start_dedupe,
+            after_constraints: meta.optimizer_funnel.after_constraints,
+            analytical_prefilter_from: meta.optimizer_funnel.analytical_prefilter_from,
+            analytical_prefilter_kept: meta.optimizer_funnel.analytical_prefilter_kept,
+            scout_candidates: meta.optimizer_funnel.scout_candidates,
+            confirmed_candidates: meta.optimizer_funnel.confirmed_candidates,
+            phase_durations_ms: meta.optimizer_funnel.phase_durations_ms.clone(),
             tiered_scout_trials_final: meta
                 .tiered_scout_budget
                 .as_ref()
@@ -1433,6 +1920,8 @@ fn build_optimize_response(
         );
     }
 
+    append_optimize_observations(request, meta, &ranked_results, profile_id, sims, seed);
+
     let mut warnings = Vec::new();
     if meta.fast_discovery_no_resolved_crews {
         warnings.push(
@@ -1496,6 +1985,7 @@ fn build_optimize_response(
             analytical_prefilter_keep: request.analytical_prefilter_keep,
             analytical_prefilter_from: meta.analytical_prefilter.map(|(g, _)| g as u32),
             analytical_prefilter_kept: meta.analytical_prefilter.map(|(_, k)| k as u32),
+            optimizer_funnel: meta.optimizer_funnel.clone(),
             chain: request.chain.clone(),
             effective_strategy: optimizer_strategy_to_api_label(meta.strategy).to_string(),
             strategy_auto: meta.strategy_auto,
@@ -1513,7 +2003,7 @@ fn build_optimize_response(
         },
         recommendations: ranked_results
             .iter()
-            .map(crew_recommendation_from_ranked)
+            .map(|r| crew_recommendation_from_ranked(r, recommendation_method_provenance(meta, r)))
             .collect(),
         duration_ms: Some(duration_ms),
         notes,
@@ -1543,7 +2033,7 @@ pub fn run_optimize(
     let (all_results, meta) =
         match gather_optimize_simulation_results(registry, request, profile_id, &mut sink) {
             Ok(x) => x,
-            Err(OptimizeGatherError::Cancelled) => {
+            Err(OptimizeGatherError::Cancelled { .. }) => {
                 panic!("sync optimize does not cancel");
             }
             Err(OptimizeGatherError::Validation(e)) => {
@@ -1578,6 +2068,7 @@ pub struct OptimizeJobState {
     pub crews_done: u32,
     pub total_crews: u32,
     pub phase: Option<String>,
+    pub cancellation_point: Option<String>,
     pub progress_preview: Option<Vec<CrewRecommendation>>,
     pub result: Option<OptimizeResponse>,
     pub error: Option<String>,
@@ -1614,6 +2105,8 @@ pub struct OptimizeStatusResponse {
     pub total_crews: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phase: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cancellation_point: Option<String>,
     /// Best-effort crews/sec for phases where `crews_done` / `total_crews` are crew counts (not generations).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub throughput_crews_per_sec: Option<f64>,
@@ -1695,6 +2188,7 @@ pub fn start_optimize_job(
             crews_done: 0,
             total_crews: 0,
             phase: None,
+            cancellation_point: None,
             progress_preview: None,
             result: None,
             error: None,
@@ -1756,15 +2250,25 @@ pub fn start_optimize_job(
                     state.status = OptimizeJobStatus::Done;
                     state.progress = 100;
                     state.phase = None;
+                    state.cancellation_point = None;
                     state.progress_preview = None;
                     state.result = Some(response);
                 });
             }
-            Err(OptimizeGatherError::Cancelled) => {
-                warn!(job_id = %job_id_thread, "optimize_job_cancelled");
+            Err(OptimizeGatherError::Cancelled { phase }) => {
+                warn!(
+                    job_id = %job_id_thread,
+                    cancellation_phase = phase.as_deref().unwrap_or("unknown"),
+                    "optimize_job_cancelled"
+                );
                 REGISTRY.with_state_mut(&job_id_thread, |state| {
                     state.status = OptimizeJobStatus::Error;
-                    state.error = Some("Cancelled".to_string());
+                    state.phase = None;
+                    state.cancellation_point = phase.clone();
+                    state.error = Some(match phase {
+                        Some(phase) => format!("Cancelled during {phase}"),
+                        None => "Cancelled".to_string(),
+                    });
                 });
             }
             Err(OptimizeGatherError::Validation(resp)) => {
@@ -1828,6 +2332,7 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
         crews_done: Some(state.crews_done),
         total_crews: Some(state.total_crews),
         phase: state.phase.clone(),
+        cancellation_point: state.cancellation_point.clone(),
         throughput_crews_per_sec,
         eta_seconds,
         progress_preview: state.progress_preview.clone(),

@@ -1611,6 +1611,8 @@ components:
           type: integer
         phase:
           type: string
+        cancellation_point:
+          type: string
         throughput_crews_per_sec:
           type: number
         eta_seconds:
@@ -1638,6 +1640,98 @@ components:
         scenario:
           type: object
           additionalProperties: true
+          properties:
+            optimizer_funnel:
+              type: object
+              required: [heuristic_candidates, warm_start_candidates, final_result_count]
+              additionalProperties: false
+              description: >
+                Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm,
+                and final merged result width.
+              properties:
+                raw_role_pool:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    captains:
+                      type: integer
+                    bridge:
+                      type: integer
+                    below_decks:
+                      type: integer
+                  description: Full-catalog raw role pools before ban/eligibility filters.
+                banned_role_pool:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    captains:
+                      type: integer
+                    bridge:
+                      type: integer
+                    below_decks:
+                      type: integer
+                  description: Full-catalog role pools after the curation ban list.
+                eligible_role_pool:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    captains:
+                      type: integer
+                    bridge:
+                      type: integer
+                    below_decks:
+                      type: integer
+                  description: Full-catalog role pools after ban/eligibility filters.
+                roster_role_pool:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    captains:
+                      type: integer
+                    bridge:
+                      type: integer
+                    below_decks:
+                      type: integer
+                  description: Production role pools after roster/profile narrowing, before explicit constraints.
+                final_role_pool:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    captains:
+                      type: integer
+                    bridge:
+                      type: integer
+                    below_decks:
+                      type: integer
+                  description: Production role pools after roster/profile narrowing and explicit constraints.
+                heuristic_candidates:
+                  type: integer
+                warm_start_candidates:
+                  type: integer
+                generated_candidates:
+                  type: integer
+                after_warm_start_dedupe:
+                  type: integer
+                after_constraints:
+                  type: integer
+                analytical_prefilter_from:
+                  type: integer
+                analytical_prefilter_kept:
+                  type: integer
+                scout_candidates:
+                  type: integer
+                confirmed_candidates:
+                  type: integer
+                final_result_count:
+                  type: integer
+                phase_durations_ms:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  description: Coarse wall-clock time spent in each optimize phase, milliseconds.
+                cancellation_point:
+                  type: string
+                  description: Phase observed when a background optimize job was cancelled.
         recommendations:
           type: array
           items:
@@ -1647,6 +1741,11 @@ components:
               Ranked crew row. Monte Carlo strategies populate win/stall/loss rates and CIs.
               `linear_eval` sets `expected_hull_damage` and leaves win-rate fields at zero.
             properties:
+              method_provenance:
+                type: string
+                description: >
+                  Optimizer source/method label for this row, such as `exhaustive_mc`,
+                  `tiered_confirmed`, `heuristic_seed`, `warm_start`, or `linear_eval`.
               expected_hull_damage:
                 type: number
                 description: >

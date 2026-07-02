@@ -67,6 +67,8 @@ Record per optimize run:
 
 This extends the current budget telemetry into a full optimizer funnel. It should be emitted in logs, optionally appended to profile telemetry, and summarized in API responses for advanced mode.
 
+**Status:** implemented for the current optimizer paths. Kobayashi now emits API, log, and budget-telemetry counts for raw role pools, ban-list filtering, eligibility filtering, roster narrowing, final constrained pools, generated candidates, warm-start/dedupe, constraints, analytical prefilter, scout/confirm candidates, history hits, final results, coarse phase durations, and structured async cancellation points. Result rows now carry `method_provenance`. Remaining Phase 0 measurement work is 0.2 durable simulation observations and 0.3 controlled optimizer benchmarks; future lanes should add their own method-specific subphase timings as they land.
+
 ### 0.2 Simulation Observation Log
 
 Create a durable `optimize_observations` store keyed by:
@@ -82,6 +84,8 @@ Create a durable `optimize_observations` store keyed by:
 - trials, seed range or seed panel id, objective metrics, confidence intervals
 
 This should not replace `optimize_history` immediately. Start as append-only telemetry, then graduate into a reusable dataset for surrogate evaluation and cache reuse.
+
+**Status:** first slice implemented. When `KOBAYASHI_OPTIMIZE_OBSERVATIONS=1`, Kobayashi appends final ranked crew observations to `profiles/{id}/optimize_observations.jsonl` or `KOBAYASHI_OPTIMIZE_OBSERVATIONS_PATH`. Rows include profile id/hash, scenario/request context, method provenance, crew hash/material, trial count, score, objective metrics, and confidence intervals. Remaining 0.2 work: catalog/simulator version fingerprints beyond crate version, richer hostile/support fingerprints, offline dataset tooling, retention/compaction, and reuse by surrogate search.
 
 ### 0.3 Benchmark Harness With Controls
 
@@ -102,6 +106,8 @@ Score each method by:
 - stability across seeds
 - regret versus the best discovered crew
 - false-negative rate of any prefilter
+
+**Status:** first slice implemented. `cargo run --release --bin optimizer_method_bench` runs built-in optimizer method comparisons over fixed scenarios and optional `--seed-panel` values, then emits JSONL (or `--pretty`) rows for `tiered`, `genetic`, `linear_eval`, `warm_start_tiered`, and a benchmark-only `random_stratified` control. Rows include budgets, elapsed time, candidate funnel/trial accounting where available, top crew identity, top-K material diversity metrics, best discovered win-rate, and per-method regret. Remaining 0.3 work: equalized wall-clock/trial budget modes, deeper reference sweeps for top-K recall/false-negative scoring, CI artifact wiring, and baseline thresholds.
 
 ## Phase 1: Better Recommendations Without New Magic
 
@@ -431,7 +437,7 @@ This is the point where Kobayashi starts optimizing the optimizer.
 
 ## Suggested Implementation Order
 
-1. Extend optimizer telemetry and result provenance.
+1. [x] Extend optimizer telemetry and result provenance.
 2. Add stratified random baseline and benchmark it against current tiered/genetic.
 3. Add local refinement around finalists.
 4. Add Pareto tags and recommendation reasons to API/UI.
