@@ -17,6 +17,9 @@ vi.mock("./pages/RosterProfile", () => ({
 vi.mock("./pages/DataMechanics", () => ({
   default: () => <div>DataMechanicsPageMarker</div>,
 }));
+vi.mock("./pages/Learn", () => ({
+  default: () => <div>LearnPageMarker</div>,
+}));
 
 vi.mock("./lib/api", () => ({
   fetchProfiles: vi.fn().mockResolvedValue({
@@ -59,6 +62,11 @@ describe("App navigation", () => {
     fireEvent.click(screen.getByRole("link", { name: "Data & Mechanics" }));
     await waitFor(() => {
       expect(screen.getByText("DataMechanicsPageMarker")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("link", { name: "Learn" }));
+    await waitFor(() => {
+      expect(screen.getByText("LearnPageMarker")).toBeTruthy();
     });
 
     fireEvent.click(screen.getByRole("link", { name: "Workspace" }));
