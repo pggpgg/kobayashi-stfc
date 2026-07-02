@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { path: "/results", label: "Results Library" },
   { path: "/roster", label: "Roster & Profile" },
   { path: "/data", label: "Data & Mechanics" },
+  { path: "/learn", label: "Learn" },
 ];
 
 export default function Shell({ children }: { children: ReactNode }) {

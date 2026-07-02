@@ -8,6 +8,7 @@ const RosterProfile = lazy(() => import("./pages/RosterProfile"));
 const DataMechanics = lazy(() => import("./pages/DataMechanics"));
 const PvpWorkspace = lazy(() => import("./pages/PvpWorkspace"));
 const Sensitivity = lazy(() => import("./pages/Sensitivity"));
+const Learn = lazy(() => import("./pages/Learn"));
 
 function RouteFallback() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/results" element={<ResultsLibrary />} />
           <Route path="/roster" element={<RosterProfile />} />
           <Route path="/data" element={<DataMechanics />} />
+          <Route path="/learn" element={<Learn />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
