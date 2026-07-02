@@ -218,6 +218,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   tieredScoutSims?: number | null;
   /** Tiered only: crews promoted to full confirmation (omit for server default 20). */
   tieredTopK?: number | null;
+  /** Tiered only: fraction (0, 0.5] of scout candidates swapped for stratified-random crews (omit = off). */
+  tieredRandomExplorationPct?: number | null;
   /** Merge heuristic seeds into main optimize warm-start (requires non-empty selected seeds). */
   fastDiscovery?: boolean;
   /** MMR blend in (0, 1]; blank = omit (pure strength ordering). */
@@ -289,6 +291,11 @@ export function buildWorkspaceOptimizeStartBody(args: {
     args.tieredTopK != null &&
     args.tieredTopK > 0
       ? { tiered_top_k: args.tieredTopK }
+      : {}),
+    ...(args.optimizerStrategy === "tiered" &&
+    args.tieredRandomExplorationPct != null &&
+    args.tieredRandomExplorationPct > 0
+      ? { tiered_random_exploration_pct: args.tieredRandomExplorationPct }
       : {}),
     ...(args.fastDiscovery === true ? { fast_discovery: true } : {}),
     ...noveltyFieldsForOptimizeBody({

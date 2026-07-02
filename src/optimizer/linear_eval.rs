@@ -154,6 +154,7 @@ mod tests {
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
+            tiered_random_exploration_pct: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,

@@ -124,6 +124,8 @@ Add a small random exploration lane:
 
 This is both a benchmark control and an antidote to overconfident proxy rankings.
 
+**Status:** implemented. [`src/optimizer/random_stratified.rs`](../src/optimizer/random_stratified.rs) samples legal crews from the eligibility-filtered pools, round-robin across captain (faction, rarity) cells with below-decks group-family rotation, deterministic per seed. Two production surfaces: `strategy: "random_stratified"` runs a standalone control lane (pure random candidate set → tiered scout → confirm; ignores warm-start, skips the analytical prefilter and optimize-history preconfirm reuse), and `tiered_random_exploration_pct` (0, 0.5] swaps that fraction of the tiered scout candidate list — budget-neutral, post-prefilter — for random crews. Both label result rows `method_provenance: "random_stratified"` and report `random_exploration_candidates` in the funnel telemetry; the SPA exposes the strategy option and a "Random exploration %" tiered control. `optimizer_method_bench`'s `random_stratified` control now calls the same production sampler. Remaining 1.1 work: archetype/ability-tag strata (beyond faction/rarity/group) once tags exist, and default-on evaluation for the tiered slice after benchmark comparisons justify it.
+
 ### 1.2 Local Refinement and Large-Neighborhood Repair
 
 After tiered/genetic finalists, search nearby:
@@ -438,7 +440,7 @@ This is the point where Kobayashi starts optimizing the optimizer.
 ## Suggested Implementation Order
 
 1. [x] Extend optimizer telemetry and result provenance.
-2. Add stratified random baseline and benchmark it against current tiered/genetic.
+2. [x] Add stratified random baseline and benchmark it against current tiered/genetic.
 3. Add local refinement around finalists.
 4. Add Pareto tags and recommendation reasons to API/UI.
 5. Generalize tiered scout into Hyperband-style racing with strata.

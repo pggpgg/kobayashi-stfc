@@ -637,6 +637,130 @@ async fn optimize_endpoint_rejects_empty_ship_and_hostile() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn optimize_random_stratified_strategy_labels_all_rows() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":300,"seed":9,"max_candidates":24,"strategy":"random_stratified"}"#;
+    let response = route_request_optimize(body).await;
+
+    assert_eq!(response.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+
+    assert_eq!(payload["engine"], "random_stratified");
+    assert_eq!(
+        payload["scenario"]["effective_strategy"],
+        "random_stratified"
+    );
+    assert_eq!(payload["scenario"]["strategy_auto"], false);
+    assert_eq!(
+        payload["scenario"]["requested_strategy"],
+        "random_stratified"
+    );
+
+    let funnel = payload["scenario"]["optimizer_funnel"]
+        .as_object()
+        .expect("optimizer_funnel should be an object");
+    let random_candidates = funnel["random_exploration_candidates"]
+        .as_u64()
+        .expect("funnel should report random_exploration_candidates");
+    assert!(
+        random_candidates > 0 && random_candidates <= 24,
+        "random candidate count should be positive and capped by max_candidates, got {random_candidates}"
+    );
+
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(!recommendations.is_empty());
+    for recommendation in recommendations {
+        assert_eq!(
+            recommendation["method_provenance"].as_str(),
+            Some("random_stratified"),
+            "every random_stratified row should carry the lane's provenance label"
+        );
+    }
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_random_stratified_is_deterministic_for_fixed_seed() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":21,"max_candidates":12,"strategy":"random_stratified"}"#;
+    let first = route_request_optimize(body).await;
+    let second = route_request_optimize(body).await;
+    assert_eq!(first.status_code, 200);
+    assert_eq!(second.status_code, 200);
+    let a: serde_json::Value = serde_json::from_str(&first.body).expect("json");
+    let b: serde_json::Value = serde_json::from_str(&second.body).expect("json");
+    assert_eq!(
+        a["recommendations"], b["recommendations"],
+        "same seed should reproduce the same random-lane recommendations"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_tiered_random_exploration_slice_reports_funnel() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":300,"seed":5,"max_candidates":64,"strategy":"tiered","tiered_scout_sims":50,"tiered_top_k":4,"tiered_random_exploration_pct":0.25}"#;
+    let response = route_request_optimize(body).await;
+
+    assert_eq!(response.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["effective_strategy"], "tiered");
+
+    let funnel = payload["scenario"]["optimizer_funnel"]
+        .as_object()
+        .expect("optimizer_funnel should be an object");
+    let injected = funnel["random_exploration_candidates"]
+        .as_u64()
+        .expect("funnel should report random_exploration_candidates for the slice");
+    assert!(
+        injected > 0,
+        "exploration slice should inject at least one random crew"
+    );
+    let scout = funnel["scout_candidates"].as_u64().unwrap_or(0);
+    assert!(
+        injected <= scout.div_ceil(2).max(1),
+        "budget-neutral slice: injected ({injected}) stays within half the scout set ({scout})"
+    );
+
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    for recommendation in recommendations {
+        let provenance = recommendation["method_provenance"].as_str().unwrap_or("");
+        assert!(
+            !provenance.is_empty(),
+            "tiered rows keep a provenance label with the slice active"
+        );
+    }
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_endpoint_rejects_out_of_range_random_exploration_pct() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"tiered_random_exploration_pct":0.9}"#,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(errors
+        .iter()
+        .any(|error| error["field"] == "tiered_random_exploration_pct"));
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn optimize_endpoint_rejects_zero_sims() {
     let response = route_request(
         "POST",

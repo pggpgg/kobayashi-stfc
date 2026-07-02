@@ -10,6 +10,7 @@ pub mod linear_eval;
 pub mod matchup_priors;
 pub mod monte_carlo;
 pub mod officer_learning;
+pub mod random_stratified;
 pub mod ranking;
 pub mod sensitivity;
 pub mod sensitivity_morris;
@@ -48,6 +49,9 @@ use crate::optimizer::monte_carlo::scenario::{
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, full_mc_early_stop_enabled,
     run_monte_carlo_confirm_topk_with_shared, run_monte_carlo_with_shared, SimulationResult,
+};
+use crate::optimizer::random_stratified::{
+    sample_stratified_random_crews, StratifiedSampleParams, DEFAULT_RANDOM_STRATIFIED_CANDIDATES,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
@@ -412,6 +416,9 @@ pub struct OptimizeCandidateFunnel {
     pub scout_candidates: Option<usize>,
     /// Candidate count entering expensive confirmation or final ranking output.
     pub confirmed_candidates: Option<usize>,
+    /// Stratified-random crews in the scout set (`random_stratified` lane or the
+    /// tiered `tiered_random_exploration_pct` slice). `None` when the lane did not run.
+    pub random_exploration_candidates: Option<usize>,
 }
 
 impl OptimizeCandidateFunnel {
@@ -433,6 +440,7 @@ impl OptimizeCandidateFunnel {
             analytical_prefilter_kept: analytical_prefilter.map(|(_, n)| n),
             scout_candidates: Some(scout_candidates),
             confirmed_candidates: Some(confirmed_candidates),
+            random_exploration_candidates: None,
         }
     }
 }
@@ -452,6 +460,10 @@ pub struct OptimizeRunOutcome {
     pub exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
     /// Crews in the tiered candidate list that reused [`crate::data::optimize_history`] confirmation rows.
     pub optimize_history_confirm_hits: u32,
+    /// Stable hashes of stratified-random crews injected into the scout set
+    /// (standalone `random_stratified` lane or the tiered exploration slice).
+    /// Used downstream for per-row method provenance. Empty when the lane did not run.
+    pub random_exploration_hashes: HashSet<u64>,
 }
 
 /// Progress update for async optimize jobs (SSE / polling): phase label, counts, optional partial top crews.
@@ -476,6 +488,10 @@ pub enum OptimizerStrategy {
     Tiered,
     /// Closed-form expected hull damage only; no Monte Carlo.
     LinearEval,
+    /// Stratified random baseline (roadmap §1.1): sample legal crews stratified by
+    /// captain faction/rarity and below-decks family, then scout → confirm.
+    /// Benchmark control; ignores warm-start and skips the analytical prefilter.
+    RandomStratified,
 }
 
 #[derive(Debug, Clone)]
@@ -521,6 +537,12 @@ pub struct OptimizationScenario<'a> {
     /// Tiered priority-queue only: abandon crews whose Wilson upper bound is below
     /// `(K-th lower - margin)`. When `None`, defaults to 0.05.
     pub tiered_pq_abandon_margin: Option<f64>,
+    /// Tiered only (roadmap §1.1): replace this fraction (0, 0.5] of the scout candidate
+    /// list — after warm-start, constraints, and analytical prefilter — with stratified-random
+    /// crews that bypass the analytical proxy. Budget-neutral: the candidate count is unchanged;
+    /// the analytically weakest tail is swapped out. Injected crews are provenance-labeled
+    /// `random_stratified` when they reach the results. `None`/0 = off.
+    pub tiered_random_exploration_pct: Option<f64>,
     /// Exhaustive only: when **both** this and [`Self::exhaustive_scout_top_keep`] are `Some`, run scout Monte Carlo at this many trials per crew on the full candidate list, then run full [`Self::simulation_count`] only on the top `exhaustive_scout_top_keep` crews by scout rank (others keep scout statistics).
     pub exhaustive_scout_sims: Option<usize>,
     /// Exhaustive only: paired with [`Self::exhaustive_scout_sims`] (see there).
@@ -596,6 +618,7 @@ impl Default for OptimizationScenario<'_> {
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
+            tiered_random_exploration_pct: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
@@ -826,12 +849,97 @@ fn resolved_analytical_prefilter_keep(
     analytical_prefilter_keep_auto(n_after_merge, scenario.max_candidates, top_ref, workload)
 }
 
+/// Sample the standalone `random_stratified` candidate set for a scenario.
+/// Warm-start crews are deliberately ignored (the lane is a benchmark control);
+/// constraints and eligibility filters still apply via the shared pool builder.
+fn random_stratified_candidates_for_scenario(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+) -> Vec<CrewCandidate> {
+    if !scenario.warm_start.is_empty() {
+        info!(
+            strategy = "random_stratified",
+            ignored_warm_start = scenario.warm_start.len() as u64,
+            "optimize_random_stratified_warm_start_ignored"
+        );
+    }
+    sample_stratified_random_crews(
+        registry,
+        &StratifiedSampleParams {
+            count: scenario
+                .max_candidates
+                .unwrap_or(DEFAULT_RANDOM_STRATIFIED_CANDIDATES)
+                .max(1),
+            seed: scenario.seed,
+            below_decks_slots: scenario.below_decks_slots,
+            below_decks_pool_mode: scenario.below_decks_pool_mode,
+            enemy_type: scenario.enemy_type,
+            profile_id: scenario.profile_id,
+            constraints: scenario.constraints.as_ref(),
+            exclude_hashes: None,
+        },
+    )
+}
+
+/// Tiered scout exploration slice (roadmap §1.1): when `tiered_random_exploration_pct`
+/// is set, swap the tail `pct` of the post-prefilter scout candidate list for
+/// stratified-random crews that never saw the analytical proxy. Budget-neutral —
+/// the scout candidate count is unchanged (or shrinks slightly if the legal space
+/// cannot supply enough distinct random crews). Returns the new list and the stable
+/// hashes of the injected crews for downstream method provenance.
+fn inject_random_exploration(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+    candidates: Vec<CrewCandidate>,
+) -> (Vec<CrewCandidate>, HashSet<u64>) {
+    let pct = scenario
+        .tiered_random_exploration_pct
+        .unwrap_or(0.0)
+        .clamp(0.0, 0.5);
+    let n = candidates.len();
+    if pct <= 0.0 || n == 0 {
+        return (candidates, HashSet::new());
+    }
+    let k = (((n as f64) * pct).round() as usize).min(n / 2);
+    if k == 0 {
+        return (candidates, HashSet::new());
+    }
+    let mut kept = candidates;
+    kept.truncate(n - k);
+    let exclude: HashSet<u64> = kept.iter().map(crew_candidate_stable_hash).collect();
+    let sampled = sample_stratified_random_crews(
+        registry,
+        &StratifiedSampleParams {
+            count: k,
+            seed: scenario.seed,
+            below_decks_slots: scenario.below_decks_slots,
+            below_decks_pool_mode: scenario.below_decks_pool_mode,
+            enemy_type: scenario.enemy_type,
+            profile_id: scenario.profile_id,
+            constraints: scenario.constraints.as_ref(),
+            exclude_hashes: Some(&exclude),
+        },
+    );
+    let hashes: HashSet<u64> = sampled.iter().map(crew_candidate_stable_hash).collect();
+    info!(
+        strategy = "tiered",
+        seed = scenario.seed,
+        random_exploration_pct = pct,
+        random_exploration_requested = k as u64,
+        random_exploration_injected = sampled.len() as u64,
+        "optimize_random_exploration_injected"
+    );
+    kept.extend(sampled);
+    (kept, hashes)
+}
+
 pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewResult> {
     match scenario.strategy {
         OptimizerStrategy::Exhaustive => optimize_scenario_exhaustive(scenario),
         OptimizerStrategy::Genetic => optimize_scenario_genetic(scenario, |_, _, _| true, || true),
         OptimizerStrategy::Tiered => optimize_scenario_exhaustive(scenario), // Tiered requires registry; fallback when none
         OptimizerStrategy::LinearEval => optimize_scenario_exhaustive(scenario), // LinearEval requires registry; fallback when none
+        OptimizerStrategy::RandomStratified => optimize_scenario_exhaustive(scenario), // Sampler requires registry; fallback when none
     }
 }
 
@@ -873,6 +981,8 @@ fn optimize_scenario_tiered_with_registry(
         &scenario.prior_reference_crews,
         scenario.enable_learned_pair_prior,
     );
+    let (candidates, _random_exploration_hashes) =
+        inject_random_exploration(registry, scenario, candidates);
     let n_tiered = candidates.len();
     let scout_sims = scenario
         .tiered_scout_sims
@@ -936,6 +1046,10 @@ pub fn optimize_scenario_with_registry(
         OptimizerStrategy::Tiered => optimize_scenario_tiered_with_registry(registry, scenario),
         OptimizerStrategy::LinearEval => {
             linear_eval::run_linear_eval_with_registry(registry, scenario, |_| true, || true)
+        }
+        OptimizerStrategy::RandomStratified => {
+            optimize_scenario_with_progress_with_registry(registry, scenario, |_| true, || true)
+                .ranked
         }
     }
 }
@@ -1172,92 +1286,13 @@ where
     F: FnMut(OptimizeProgressTick) -> bool,
 {
     match scenario.strategy {
-        OptimizerStrategy::Tiered => {
-            // No registry; fall back to exhaustive with progress
+        // These strategies require a registry; without one fall back to exhaustive with progress.
+        OptimizerStrategy::Tiered
+        | OptimizerStrategy::LinearEval
+        | OptimizerStrategy::RandomStratified => {
             let scenario_ex = OptimizationScenario {
-                ship: scenario.ship,
-                hostile: scenario.hostile,
-                ship_tier: scenario.ship_tier,
-                ship_level: scenario.ship_level,
-                simulation_count: scenario.simulation_count,
-                seed: scenario.seed,
-                max_candidates: scenario.max_candidates,
                 strategy: OptimizerStrategy::Exhaustive,
-                below_decks_pool_mode: scenario.below_decks_pool_mode,
-                seed_population: scenario.seed_population.clone(),
-                profile_id: scenario.profile_id,
-                tiered_scout_sims: scenario.tiered_scout_sims,
-                tiered_top_k: scenario.tiered_top_k,
-                tiered_scout_uniform: scenario.tiered_scout_uniform,
-                tiered_confirm_budget_cap_mult: scenario.tiered_confirm_budget_cap_mult,
-                tiered_scout_priority_queue: scenario.tiered_scout_priority_queue,
-                tiered_pq_minimal_scout: scenario.tiered_pq_minimal_scout,
-                tiered_pq_selection_mult: scenario.tiered_pq_selection_mult,
-                tiered_pq_abandon_margin: scenario.tiered_pq_abandon_margin,
-                exhaustive_scout_sims: scenario.exhaustive_scout_sims,
-                exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
-                analytical_prefilter_keep: scenario.analytical_prefilter_keep,
-                prune_analytical_hull_fraction: scenario.prune_analytical_hull_fraction,
-                prune_static_gate_max_fraction: scenario.prune_static_gate_max_fraction,
-                below_decks_slots: scenario.below_decks_slots,
-                constraints: scenario.constraints.clone(),
-                support_buffs: scenario.support_buffs.clone(),
-                defender_support_buffs: scenario.defender_support_buffs.clone(),
-                defender_alliance_debuffs: scenario.defender_alliance_debuffs.clone(),
-                chain_grind: scenario.chain_grind.clone(),
-                defender_opponent: scenario.defender_opponent,
-                player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
-                pvp: scenario.pvp.clone(),
-                enemy_type: scenario.enemy_type,
-                warm_start: scenario.warm_start.clone(),
-                prior_reference_crews: scenario.prior_reference_crews.clone(),
-                optimize_cache_key: scenario.optimize_cache_key.clone(),
-                enable_learned_pair_prior: scenario.enable_learned_pair_prior,
-                learned_officer_scores: scenario.learned_officer_scores.clone(),
-            };
-            optimize_scenario_with_progress(&scenario_ex, on_progress)
-        }
-        OptimizerStrategy::LinearEval => {
-            let scenario_ex = OptimizationScenario {
-                ship: scenario.ship,
-                hostile: scenario.hostile,
-                ship_tier: scenario.ship_tier,
-                ship_level: scenario.ship_level,
-                simulation_count: scenario.simulation_count,
-                seed: scenario.seed,
-                max_candidates: scenario.max_candidates,
-                strategy: OptimizerStrategy::Exhaustive,
-                below_decks_pool_mode: scenario.below_decks_pool_mode,
-                seed_population: scenario.seed_population.clone(),
-                profile_id: scenario.profile_id,
-                tiered_scout_sims: scenario.tiered_scout_sims,
-                tiered_top_k: scenario.tiered_top_k,
-                tiered_scout_uniform: scenario.tiered_scout_uniform,
-                tiered_confirm_budget_cap_mult: scenario.tiered_confirm_budget_cap_mult,
-                tiered_scout_priority_queue: scenario.tiered_scout_priority_queue,
-                tiered_pq_minimal_scout: scenario.tiered_pq_minimal_scout,
-                tiered_pq_selection_mult: scenario.tiered_pq_selection_mult,
-                tiered_pq_abandon_margin: scenario.tiered_pq_abandon_margin,
-                exhaustive_scout_sims: scenario.exhaustive_scout_sims,
-                exhaustive_scout_top_keep: scenario.exhaustive_scout_top_keep,
-                analytical_prefilter_keep: scenario.analytical_prefilter_keep,
-                prune_analytical_hull_fraction: scenario.prune_analytical_hull_fraction,
-                prune_static_gate_max_fraction: scenario.prune_static_gate_max_fraction,
-                below_decks_slots: scenario.below_decks_slots,
-                constraints: scenario.constraints.clone(),
-                support_buffs: scenario.support_buffs.clone(),
-                defender_support_buffs: scenario.defender_support_buffs.clone(),
-                defender_alliance_debuffs: scenario.defender_alliance_debuffs.clone(),
-                chain_grind: scenario.chain_grind.clone(),
-                defender_opponent: scenario.defender_opponent,
-                player_defender_officer_crew: scenario.player_defender_officer_crew.clone(),
-                pvp: scenario.pvp.clone(),
-                enemy_type: scenario.enemy_type,
-                warm_start: scenario.warm_start.clone(),
-                prior_reference_crews: scenario.prior_reference_crews.clone(),
-                optimize_cache_key: scenario.optimize_cache_key.clone(),
-                enable_learned_pair_prior: scenario.enable_learned_pair_prior,
-                learned_officer_scores: scenario.learned_officer_scores.clone(),
+                ..scenario.clone()
             };
             optimize_scenario_with_progress(&scenario_ex, on_progress)
         }
@@ -1483,6 +1518,8 @@ where
                     "optimize_static_gate_pruned"
                 );
             }
+            let (candidates, random_exploration_hashes) =
+                inject_random_exploration(registry, scenario, candidates);
             let n_tiered = candidates.len();
             let scout_sims = scenario
                 .tiered_scout_sims
@@ -1531,22 +1568,28 @@ where
                 &mut on_progress,
             );
             let confirmed_candidates = ranked.len();
+            let mut candidate_funnel = OptimizeCandidateFunnel::with_counts(
+                generated_candidates,
+                scenario.warm_start.len(),
+                after_warm_start_dedupe,
+                after_constraints,
+                analytical_prefilter,
+                n_tiered,
+                confirmed_candidates,
+            );
+            if !random_exploration_hashes.is_empty() {
+                candidate_funnel.random_exploration_candidates =
+                    Some(random_exploration_hashes.len());
+            }
             OptimizeRunOutcome {
                 ranked,
-                candidate_funnel: OptimizeCandidateFunnel::with_counts(
-                    generated_candidates,
-                    scenario.warm_start.len(),
-                    after_warm_start_dedupe,
-                    after_constraints,
-                    analytical_prefilter,
-                    n_tiered,
-                    confirmed_candidates,
-                ),
+                candidate_funnel,
                 analytical_prefilter,
                 tiered_resolved: Some((n_tiered, scout_sims, top_k)),
                 tiered_scout_budget: Some(scout_budget),
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: hits,
+                random_exploration_hashes,
             }
         }
         OptimizerStrategy::Exhaustive => {
@@ -1663,6 +1706,7 @@ where
                     tiered_scout_budget: None,
                     exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
+                    random_exploration_hashes: HashSet::new(),
                 };
             }
 
@@ -1704,6 +1748,7 @@ where
                         tiered_scout_budget: None,
                         exhaustive_adaptive_budget: Some(budget),
                         optimize_history_confirm_hits: hits,
+                        random_exploration_hashes: HashSet::new(),
                     };
                 }
                 return OptimizeRunOutcome {
@@ -1714,6 +1759,7 @@ where
                     tiered_scout_budget: None,
                     exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
+                    random_exploration_hashes: HashSet::new(),
                 };
             }
 
@@ -1731,6 +1777,7 @@ where
                     tiered_scout_budget: None,
                     exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
+                    random_exploration_hashes: HashSet::new(),
                 };
             }
 
@@ -1801,6 +1848,7 @@ where
                 tiered_scout_budget: None,
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
+                random_exploration_hashes: HashSet::new(),
             }
         }
         OptimizerStrategy::Genetic => {
@@ -1831,6 +1879,7 @@ where
                 tiered_scout_budget: None,
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
+                random_exploration_hashes: HashSet::new(),
             }
         }
         OptimizerStrategy::LinearEval => {
@@ -1853,6 +1902,82 @@ where
                 tiered_scout_budget: None,
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
+                random_exploration_hashes: HashSet::new(),
+            }
+        }
+        OptimizerStrategy::RandomStratified => {
+            let candidates = random_stratified_candidates_for_scenario(registry, scenario);
+            let generated_candidates = candidates.len();
+            let random_exploration_hashes: HashSet<u64> =
+                candidates.iter().map(crew_candidate_stable_hash).collect();
+            let scout_sims = scenario
+                .tiered_scout_sims
+                .unwrap_or_else(|| tiered_scout_sims_for_workload(generated_candidates))
+                .max(1);
+            let top_k = scenario
+                .tiered_top_k
+                .unwrap_or_else(|| tiered_top_k_for_workload(generated_candidates))
+                .max(1);
+            info!(
+                strategy = "random_stratified",
+                seed = scenario.seed,
+                random_candidates = generated_candidates as u64,
+                scout_sims = scout_sims as u64,
+                top_k = top_k as u64,
+                "optimize_random_stratified_sampled"
+            );
+            let budget_hints_storage = scenario
+                .profile_id
+                .and_then(crate::optimizer::budget_hints::load_for_profile);
+            let (ranked, scout_budget) = run_tiered_with_registry_with_progress(
+                registry,
+                scenario.ship,
+                scenario.hostile,
+                scenario.ship_tier,
+                scenario.ship_level,
+                candidates,
+                scout_sims,
+                scenario.simulation_count.max(1),
+                top_k,
+                scenario.seed,
+                scenario.profile_id,
+                scenario_support_buff_request(scenario),
+                scenario.chain_grind.clone(),
+                scenario.defender_opponent,
+                scenario.player_defender_officer_crew.clone(),
+                scenario.pvp.clone(),
+                // No optimize-history preconfirm reuse: the control lane stays
+                // independent of previously confirmed crews.
+                None,
+                !scenario.tiered_scout_uniform,
+                scenario.tiered_confirm_budget_cap_mult,
+                budget_hints_storage.as_ref(),
+                scenario.tiered_scout_priority_queue,
+                scenario.tiered_pq_minimal_scout,
+                scenario.tiered_pq_selection_mult,
+                scenario.tiered_pq_abandon_margin,
+                &mut on_progress,
+            );
+            let confirmed_candidates = ranked.len();
+            let mut candidate_funnel = OptimizeCandidateFunnel::with_counts(
+                generated_candidates,
+                0,
+                generated_candidates,
+                generated_candidates,
+                None,
+                generated_candidates,
+                confirmed_candidates,
+            );
+            candidate_funnel.random_exploration_candidates = Some(generated_candidates);
+            OptimizeRunOutcome {
+                ranked,
+                candidate_funnel,
+                analytical_prefilter: None,
+                tiered_resolved: None,
+                tiered_scout_budget: Some(scout_budget),
+                exhaustive_adaptive_budget: None,
+                optimize_history_confirm_hits: 0,
+                random_exploration_hashes,
             }
         }
     }
@@ -1884,6 +2009,7 @@ pub fn optimize_crew(
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
         tiered_pq_abandon_margin: None,
+        tiered_random_exploration_pct: None,
         exhaustive_scout_sims: None,
         exhaustive_scout_top_keep: None,
         analytical_prefilter_keep: None,
@@ -2381,6 +2507,7 @@ mod tests {
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
+            tiered_random_exploration_pct: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,
@@ -2537,6 +2664,7 @@ mod tests {
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
+            tiered_random_exploration_pct: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: Some(4),
@@ -2612,6 +2740,7 @@ mod tests {
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
+            tiered_random_exploration_pct: None,
             exhaustive_scout_sims: Some(12),
             exhaustive_scout_top_keep: Some(4),
             analytical_prefilter_keep: None,
@@ -2681,6 +2810,7 @@ mod tests {
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
+            tiered_random_exploration_pct: None,
             exhaustive_scout_sims: None,
             exhaustive_scout_top_keep: None,
             analytical_prefilter_keep: None,

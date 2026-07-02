@@ -1722,6 +1722,11 @@ components:
                   type: integer
                 confirmed_candidates:
                   type: integer
+                random_exploration_candidates:
+                  type: integer
+                  description: >
+                    Stratified-random crews in the scout set (`random_stratified` strategy or the
+                    tiered `tiered_random_exploration_pct` slice). Absent when the lane did not run.
                 final_result_count:
                   type: integer
                 phase_durations_ms:
@@ -1745,7 +1750,8 @@ components:
                 type: string
                 description: >
                   Optimizer source/method label for this row, such as `exhaustive_mc`,
-                  `tiered_confirmed`, `heuristic_seed`, `warm_start`, or `linear_eval`.
+                  `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`,
+                  or `linear_eval`.
               expected_hull_damage:
                 type: number
                 description: >
@@ -2532,7 +2538,10 @@ components:
           description: >
             Optimizer strategy: `exhaustive` (full Monte Carlo on candidates),
             `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC),
-            or `linear_eval` (closed-form expected hull damage only; no Monte Carlo).
+            `linear_eval` (closed-form expected hull damage only; no Monte Carlo),
+            or `random_stratified` (benchmark-control lane: legal crews sampled at
+            random, stratified by captain faction/rarity and below-decks family,
+            then scout → confirm; ignores warm-start and skips the analytical prefilter).
             When omitted, server auto-picks tiered vs exhaustive from candidate count.
         below_decks_pool_mode:
           type: string
@@ -2572,6 +2581,16 @@ components:
             exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the
             width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no
             global cap (default). Typical values 1.5–3; must be in (0, 20].
+        tiered_random_exploration_pct:
+          type: number
+          minimum: 0
+          maximum: 0.5
+          description: >
+            Tiered strategy only. Fraction of the scout candidate list — after warm-start,
+            constraints, and analytical prefilter — replaced with stratified-random crews that
+            bypass the analytical proxy (budget-neutral exploration slice). Injected crews are
+            labeled `random_stratified` in `method_provenance` when they reach the results.
+            Typical values 0.05–0.2. Omitted or 0 = off.
         exhaustive_scout_sims:
           type: integer
           minimum: 1

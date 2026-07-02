@@ -68,6 +68,7 @@ fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
         OptimizerStrategy::Genetic => "genetic",
         OptimizerStrategy::Tiered => "tiered",
         OptimizerStrategy::LinearEval => "linear_eval",
+        OptimizerStrategy::RandomStratified => "random_stratified",
     }
 }
 
@@ -422,6 +423,10 @@ pub struct OptimizerFunnelTelemetry {
     /// Candidate count entering confirmation or final ranking output.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confirmed_candidates: Option<u32>,
+    /// Stratified-random crews in the scout set (`random_stratified` strategy or the
+    /// tiered `tiered_random_exploration_pct` slice).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub random_exploration_candidates: Option<u32>,
     /// Rows returned after standalone heuristic and/or main optimizer results are merged.
     pub final_result_count: u32,
     /// Coarse wall-clock time spent in each optimize phase, milliseconds.
@@ -458,6 +463,8 @@ impl OptimizerFunnelTelemetry {
         self.analytical_prefilter_kept = telemetry_optional_count(funnel.analytical_prefilter_kept);
         self.scout_candidates = telemetry_optional_count(funnel.scout_candidates);
         self.confirmed_candidates = telemetry_optional_count(funnel.confirmed_candidates);
+        self.random_exploration_candidates =
+            telemetry_optional_count(funnel.random_exploration_candidates);
     }
 
     fn apply_phase_durations(&mut self, phase_durations_ms: BTreeMap<String, u64>) {
@@ -514,6 +521,9 @@ fn recommendation_method_provenance(
     if meta.warm_start_hashes.contains(&h) {
         return "warm_start";
     }
+    if meta.random_exploration_hashes.contains(&h) {
+        return "random_stratified";
+    }
     if meta.heuristics_only {
         return "heuristics";
     }
@@ -528,6 +538,7 @@ fn recommendation_method_provenance(
         OptimizerStrategy::Genetic => "genetic",
         OptimizerStrategy::Tiered => "tiered_confirmed",
         OptimizerStrategy::LinearEval => "linear_eval",
+        OptimizerStrategy::RandomStratified => "random_stratified",
     }
 }
 
@@ -791,6 +802,9 @@ struct OptimizeGatherMeta {
     heuristic_hashes: HashSet<u64>,
     warm_start_hashes: HashSet<u64>,
     curated_warm_start_hashes: HashSet<u64>,
+    /// Stable hashes of stratified-random crews injected into the scout set
+    /// (`random_stratified` strategy or the tiered exploration slice).
+    random_exploration_hashes: HashSet<u64>,
     below_decks_slots: usize,
     optimize_constraints: Option<OptimizeConstraintsSummary>,
     optimize_history_confirm_hits: u32,
@@ -816,6 +830,9 @@ enum OptimizeProgressSink {
         is_seeded_genetic: bool,
         /// When true, skip the 0–10% progress slice reserved for standalone heuristic Monte Carlo.
         skip_heuristic_standalone_mc: bool,
+        /// Standalone `random_stratified` strategy: label partial-preview rows with the lane's
+        /// provenance instead of the tiered phase mapping (the lane reuses the tiered runner).
+        random_stratified: bool,
     },
 }
 
@@ -878,6 +895,7 @@ impl OptimizeProgressSink {
                 heuristics_seeds_nonempty,
                 is_seeded_genetic,
                 skip_heuristic_standalone_mc,
+                random_stratified,
             } => {
                 if cancel.load(Ordering::Relaxed) {
                     return false;
@@ -912,7 +930,11 @@ impl OptimizeProgressSink {
                                 .map(|r| {
                                     crew_recommendation_from_ranked(
                                         r,
-                                        progress_phase_method_provenance(tick.phase),
+                                        if *random_stratified {
+                                            "random_stratified"
+                                        } else {
+                                            progress_phase_method_provenance(tick.phase)
+                                        },
                                     )
                                 })
                                 .collect(),
@@ -1100,6 +1122,7 @@ fn gather_optimize_simulation_results(
     let mut optimize_history_wrote = false;
     let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
     let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
+    let mut random_exploration_hashes: HashSet<u64> = HashSet::new();
 
     let defender_static_support_inactive_labels = match (
         registry.support_buffs_catalog(),
@@ -1340,11 +1363,13 @@ fn gather_optimize_simulation_results(
     if let OptimizeProgressSink::Job {
         is_seeded_genetic: sink_sg,
         skip_heuristic_standalone_mc: sink_skip,
+        random_stratified: sink_random,
         ..
     } = sink
     {
         *sink_sg = is_seeded_genetic;
         *sink_skip = fast_discovery && !is_seeded_genetic;
+        *sink_random = strategy == OptimizerStrategy::RandomStratified;
     }
 
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
@@ -1445,6 +1470,9 @@ fn gather_optimize_simulation_results(
             tiered_confirm_budget_cap_mult: request
                 .tiered_confirm_budget_cap_mult
                 .or(auto_tuned_confirm_cap),
+            tiered_random_exploration_pct: request
+                .tiered_random_exploration_pct
+                .filter(|_| strategy == OptimizerStrategy::Tiered),
             tiered_scout_priority_queue: false,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
@@ -1502,6 +1530,7 @@ fn gather_optimize_simulation_results(
         optimize_history_confirm_hits = outcome.optimize_history_confirm_hits;
         tiered_scout_budget_for_response = outcome.tiered_scout_budget;
         exhaustive_adaptive_budget_for_response = outcome.exhaustive_adaptive_budget;
+        random_exploration_hashes = outcome.random_exploration_hashes.clone();
         if strategy == OptimizerStrategy::Tiered {
             if let (Some(pid), Some(key), Some((n, scout, tk))) = (
                 profile_id,
@@ -1601,6 +1630,7 @@ fn gather_optimize_simulation_results(
         heuristic_hashes,
         warm_start_hashes,
         curated_warm_start_hashes,
+        random_exploration_hashes,
         below_decks_slots,
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
         optimize_history_confirm_hits,
@@ -1825,6 +1855,7 @@ fn build_optimize_response(
             OptimizerStrategy::Genetic => "genetic",
             OptimizerStrategy::Tiered => "tiered",
             OptimizerStrategy::LinearEval => "linear_eval",
+            OptimizerStrategy::RandomStratified => "random_stratified",
         }
     };
     let mut notes: Vec<&'static str> = if matches!(meta.strategy, OptimizerStrategy::LinearEval) {
@@ -2220,6 +2251,7 @@ pub fn start_optimize_job(
             heuristics_seeds_nonempty,
             is_seeded_genetic: false,
             skip_heuristic_standalone_mc: false,
+            random_stratified: false,
         };
         let gather = gather_optimize_simulation_results(
             registry.as_ref(),

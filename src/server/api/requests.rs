@@ -158,6 +158,12 @@ pub struct OptimizeRequest {
     /// When set (tiered): cap total confirmation iterations across the top-K crews to `floor(mult * tiered_top_k * sims)` after per-crew adaptive allocation.
     #[serde(default)]
     pub tiered_confirm_budget_cap_mult: Option<f64>,
+    /// Tiered strategy: fraction (0, 0.5] of the scout candidate list replaced with
+    /// stratified-random crews that bypass the analytical prefilter (roadmap §1.1 exploration
+    /// slice). Budget-neutral; injected crews are labeled `random_stratified` in results.
+    /// Omitted or 0 = off.
+    #[serde(default)]
+    pub tiered_random_exploration_pct: Option<f64>,
     /// Exhaustive strategy only: scout-phase sims per crew before ranking (pair with `exhaustive_scout_top_keep`).
     #[serde(default)]
     pub exhaustive_scout_sims: Option<u32>,
@@ -390,6 +396,17 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
                 field: "tiered_confirm_budget_cap_mult",
                 messages: vec![
                     "if set, must be a finite number in (0, 20] (typical: 1.5–3)".to_string(),
+                ],
+            });
+        }
+    }
+
+    if let Some(p) = request.tiered_random_exploration_pct {
+        if !p.is_finite() || !(0.0..=0.5).contains(&p) {
+            errors.push(ValidationIssue {
+                field: "tiered_random_exploration_pct",
+                messages: vec![
+                    "if set, must be a finite number in [0, 0.5] (typical: 0.05–0.2)".to_string(),
                 ],
             });
         }
@@ -808,6 +825,9 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
         Some(v) if v.trim().eq_ignore_ascii_case("genetic") => OptimizerStrategy::Genetic,
         Some(v) if v.trim().eq_ignore_ascii_case("tiered") => OptimizerStrategy::Tiered,
         Some(v) if v.trim().eq_ignore_ascii_case("linear_eval") => OptimizerStrategy::LinearEval,
+        Some(v) if v.trim().eq_ignore_ascii_case("random_stratified") => {
+            OptimizerStrategy::RandomStratified
+        }
         _ => OptimizerStrategy::Exhaustive,
     }
 }
