@@ -971,6 +971,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::OnHitCritDamageStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1166,6 +1167,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::OnHitCritDamageStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1323,6 +1325,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::OnHitCritDamageStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1482,6 +1485,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::OnHitCritDamageStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
                 | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
@@ -1647,6 +1651,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::OnHitCritDamageStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1848,6 +1853,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
+                AbilityEffect::OnHitCritDamageStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -2071,6 +2077,14 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
+        // Mirrors CritDamageMultiplier: the additive stack bonus scales by assimilated effectiveness.
+        AbilityEffect::OnHitCritDamageStack {
+            bonus,
+            duration_rounds,
+        } => AbilityEffect::OnHitCritDamageStack {
+            bonus: bonus * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+        },
         AbilityEffect::MitigationAdditive(v) => {
             AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
@@ -2108,6 +2122,7 @@ mod tests {
 
     fn make_active(effect: AbilityEffect) -> ActiveAbilityEffect {
         ActiveAbilityEffect {
+            weapon_scope: Default::default(),
             ability_name: "test".into(),
             officer_id: None,
             effect,

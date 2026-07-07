@@ -140,6 +140,7 @@ mod tests {
     fn accumulate_proc_attack_multipliers_multiply_in_stable_order_when_all_guaranteed() {
         let rows = [
             ActiveAbilityEffect {
+                weapon_scope: Default::default(),
                 ability_name: "a".into(),
                 officer_id: None,
                 effect: AbilityEffect::ProcAttackMultiplier {
@@ -150,6 +151,7 @@ mod tests {
                 condition: None,
             },
             ActiveAbilityEffect {
+                weapon_scope: Default::default(),
                 ability_name: "b".into(),
                 officer_id: None,
                 effect: AbilityEffect::ProcAttackMultiplier {

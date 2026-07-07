@@ -75,6 +75,7 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "burn-contract".into(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::CombatBegin,
@@ -158,6 +159,7 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "burn-re".into(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundEnd,
@@ -232,6 +234,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "morale-contract".into(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundStart,
@@ -334,6 +337,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "breach-refresh".into(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -426,6 +430,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "breach-decay".into(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -530,6 +535,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "breach-order".into(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,

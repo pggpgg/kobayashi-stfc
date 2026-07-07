@@ -97,6 +97,7 @@ fn seat(
     CrewSeatContext {
         seat,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: name.to_string(),
             class: AbilityClass::CaptainManeuver,
             timing,

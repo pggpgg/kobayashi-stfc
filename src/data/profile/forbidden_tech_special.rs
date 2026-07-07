@@ -265,6 +265,7 @@ pub fn forbidden_tech_derived_attack_phase_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!("forbidden_tech_borg_alcove_crit_chance_{idx}"),
                         class: AbilityClass::ShipAbility,
                         timing: TimingWindow::AttackPhase,
@@ -284,6 +285,7 @@ pub fn forbidden_tech_derived_attack_phase_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!("forbidden_tech_borg_alcove_crit_damage_{idx}"),
                         class: AbilityClass::ShipAbility,
                         timing: TimingWindow::AttackPhase,
@@ -369,6 +371,7 @@ pub fn borg_operating_table_forbidden_tech_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!("forbidden_tech_borg_operating_table_crit_damage_{idx}"),
                         class: AbilityClass::ShipAbility,
                         timing: TimingWindow::AttackPhase,
@@ -386,6 +389,7 @@ pub fn borg_operating_table_forbidden_tech_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!("forbidden_tech_borg_operating_table_apex_shred_{idx}"),
                         class: AbilityClass::ShipAbility,
                         timing: TimingWindow::AttackPhase,
@@ -403,6 +407,7 @@ pub fn borg_operating_table_forbidden_tech_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!(
                             "forbidden_tech_borg_operating_table_hostile_crit_reduction_{idx}"
                         ),
@@ -485,6 +490,7 @@ pub fn quantum_slipstream_forbidden_tech_round_start_seats(
     vec![CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "forbidden_tech_quantum_slipstream_opponent_shield_mitigation_debuff".to_string(),
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::RoundStart,
@@ -732,6 +738,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
             out.push(CrewSeatContext {
                 seat: CrewSeat::Ship,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: format!(
                         "forbidden_tech_ship_class_torpedo_family_{fid}_armor_dodge_return_fire"
                     ),
@@ -751,6 +758,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!("forbidden_tech_ship_class_torpedo_family_{fid}_pierce"),
                         class: AbilityClass::ShipAbility,
                         timing: TimingWindow::CombatBegin,
@@ -769,6 +777,7 @@ pub fn ship_class_gated_torpedo_family_derived_seats(
                 out.push(CrewSeatContext {
                     seat: CrewSeat::Ship,
                     ability: Ability {
+                        weapon_scope: Default::default(),
                         name: format!(
                             "forbidden_tech_ship_class_torpedo_family_{fid}_weapon_damage"
                         ),

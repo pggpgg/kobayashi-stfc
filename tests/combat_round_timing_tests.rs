@@ -93,6 +93,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "RoundEnd Apex Shred".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundEnd,
@@ -110,6 +111,7 @@ fn round_end_apex_shred_does_not_affect_same_round_weapon_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "CombatBegin Apex Shred".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::CombatBegin,
@@ -221,6 +223,7 @@ fn after_subround_attack_multiplier_carries_to_next_weapon_same_round() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "chain".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::AfterSubround,
@@ -268,6 +271,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
         isolytic_defense: 0.0,
         weapons: vec![
             WeaponStats {
+                weapon_type: Default::default(),
                 attack: 100.0,
                 shots: Some(1),
                 pierce: Some(0.5),

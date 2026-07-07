@@ -2,7 +2,7 @@
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
-    NO_EXPLICIT_CONTRIBUTION_BATCH,
+    WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::combine_optional_and;
 use crate::combat::types::{enemy_type_from_engagement_slug, OpponentFactionTag, ShipType};
@@ -123,6 +123,10 @@ pub fn compile_condition(
             Ok(AbilityCondition::AttackerOfficerTalNotOnBridge)
         }
         AbilityConditionSpec::LiteralBool { value } => Ok(AbilityCondition::LiteralBool(*value)),
+        // Weapon-type gates are extracted out-of-band into `Ability.weapon_scope`
+        // ([`weapon_scope_from_conditions`]); inside the tree they are always-true so
+        // nesting under And/Or/Not stays sound.
+        AbilityConditionSpec::AttackerWeaponScope { .. } => Ok(AbilityCondition::LiteralBool(true)),
         AbilityConditionSpec::DefenderShipTypeIs { ship_type } => {
             let st = ShipType::from_data_slug(ship_type)
                 .ok_or_else(|| EffectSpecCompileError::UnknownShipTypeSlug(ship_type.clone()))?;
@@ -319,6 +323,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::HullBreach { .. }
             | AbilityEffect::Burning { .. }
             | AbilityEffect::ShotsBonus { .. }
+            | AbilityEffect::OnHitCritDamageStack { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
             | AbilityEffect::HostileKemociteWeaponry { .. }
@@ -342,6 +347,23 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
 pub fn compile_officer_combat_spec(
     spec: &CombatEffectSpec,
 ) -> Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError> {
+    compile_officer_combat_spec_full(spec).map(|c| (c.timing, c.effect, c.condition))
+}
+
+/// Result of [`compile_officer_combat_spec_full`]: the classic (timing, effect, condition)
+/// triple plus the out-of-band weapon-type scope extracted from `spec.conditions`
+/// (canonical `ModuleKinetic` / `ModuleEnergy` → [`WeaponTypeScope`]).
+pub struct CompiledOfficerCombatSpec {
+    pub timing: TimingWindow,
+    pub effect: AbilityEffect,
+    pub condition: Option<AbilityCondition>,
+    pub weapon_scope: WeaponTypeScope,
+}
+
+/// [`compile_officer_combat_spec`] variant that also extracts the weapon-type scope.
+pub fn compile_officer_combat_spec_full(
+    spec: &CombatEffectSpec,
+) -> Result<CompiledOfficerCombatSpec, EffectSpecCompileError> {
     let (timing, effect, condition) = compile_officer_combat_spec_impl(spec)?;
     // At `CombatBegin`, effects with their own `duration_rounds` / `delay_rounds` field
     // (Kuron self_recharge `ShotsBonus`, Rom/Pon `DefenderFireDelay`, etc.) must NOT also be
@@ -350,14 +372,57 @@ pub fn compile_officer_combat_spec(
     // `ShieldMitigationBypassFraction`, Apex / Isolytic / shield-mitigation bonuses, ...)
     // DO need the gate so the buff stays bounded to `duration_rounds` instead of leaking
     // into the accumulator for the rest of the fight.
-    let skip_round_gate =
-        timing == TimingWindow::CombatBegin && effect_has_intrinsic_duration(&effect);
+    let skip_round_gate = (timing == TimingWindow::CombatBegin
+        && effect_has_intrinsic_duration(&effect))
+        // On-hit stacks manage expiry per weapon inside the engine; a RoundRange gate would
+        // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
+        || matches!(effect, AbilityEffect::OnHitCritDamageStack { .. });
     let condition = if skip_round_gate {
         condition
     } else {
         merge_duration_round_condition(condition, spec)
     };
-    Ok((timing, effect, condition))
+    Ok(CompiledOfficerCombatSpec {
+        timing,
+        effect,
+        condition,
+        weapon_scope: weapon_scope_from_conditions(&spec.conditions),
+    })
+}
+
+/// Extract the weapon-type scope from a condition-spec list (top level and one `And` level).
+/// The [`AbilityConditionSpec::AttackerWeaponScope`] variant itself compiles to
+/// `LiteralBool(true)` in the tree ([`compile_condition`]); this out-of-band extraction is what
+/// the engine consumes. Conflicting scopes (kinetic AND energy) collapse to `All` — no known
+/// upstream row carries both.
+pub fn weapon_scope_from_conditions(conditions: &[AbilityConditionSpec]) -> WeaponTypeScope {
+    let mut scope = WeaponTypeScope::All;
+    let mut apply = |slug: &str| {
+        let found = match slug {
+            "kinetic" => WeaponTypeScope::KineticOnly,
+            "energy" => WeaponTypeScope::EnergyOnly,
+            _ => return,
+        };
+        scope = if scope == WeaponTypeScope::All || scope == found {
+            found
+        } else {
+            WeaponTypeScope::All
+        };
+    };
+    for cond in conditions {
+        match cond {
+            AbilityConditionSpec::AttackerWeaponScope { scope: slug } => apply(slug.as_str()),
+            AbilityConditionSpec::And { all } => {
+                for inner in all {
+                    if let AbilityConditionSpec::AttackerWeaponScope { scope: slug } = inner {
+                        apply(slug.as_str());
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    scope
 }
 
 fn compile_officer_combat_spec_impl(
@@ -460,6 +525,38 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
+            // On-hit crit-damage buff with a finite duration (Seska "Rules Are for Fools"):
+            // per-weapon stacking with engine-managed expiry, not a flat round-gated multiplier.
+            // Additive ops only — the stack bonus is an additive fraction per hit.
+            if timing == TimingWindow::AttackPhase
+                && !matches!(
+                    op,
+                    "multiply"
+                        | "mul_add"
+                        | "multiplyadd"
+                        | "multiply_base_add"
+                        | "multiplybaseadd"
+                        | "sub"
+                        | "mul_sub"
+                        | "multiplysub"
+                        | "multiply_base_sub"
+                        | "multiplybasesub"
+                        | "set"
+                )
+            {
+                if let Some(DurationSpec::Rounds { rounds }) = spec.duration.as_ref() {
+                    if v.is_finite() && v > 0.0 {
+                        return Ok((
+                            timing,
+                            AbilityEffect::OnHitCritDamageStack {
+                                bonus: v,
+                                duration_rounds: (*rounds).max(1),
+                            },
+                            compiled_condition.clone(),
+                        ));
+                    }
+                }
+            }
             let mult = match op {
                 "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
                 | "multiplybaseadd" => v,
@@ -1231,6 +1328,7 @@ pub fn compile_research_attack_phase_spec(
         return Err(EffectSpecCompileError::EmptyConditionParts);
     };
     Ok(Ability {
+        weapon_scope: Default::default(),
         name: spec.id.clone(),
         class: AbilityClass::ShipAbility,
         timing,
@@ -1324,6 +1422,122 @@ mod tests {
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
         }
+    }
+
+    fn seska_shaped_crit_damage_spec() -> CombatEffectSpec {
+        CombatEffectSpec {
+            id: "lcars:test:on_hit_crit_damage".into(),
+            source: EffectSource::LcarsOfficer,
+            source_ref: None,
+            text: None,
+            trigger: AbilityTriggerSpec::AttackPhase,
+            target: AbilityTargetSpec::SelfShip,
+            modifier: AbilityModifierSpec::CritDamage,
+            operation: AbilityOperationSpec::Add,
+            value: Some(ValueSpec {
+                scalar: Some(0.4),
+                by_rank: None,
+                unit: None,
+                officer_stat_scaling: None,
+            }),
+            chance: None,
+            duration: Some(DurationSpec::Rounds { rounds: 4 }),
+            decay: None,
+            accumulate: None,
+            conditions: vec![],
+            attributes: serde_json::Map::new(),
+            officer: OfficerSpecAttrs::default(),
+            stacking: None,
+            category: Some(EffectCategory::Combat),
+            confidence: Some(EffectConfidence::Authoritative),
+        }
+    }
+
+    #[test]
+    fn attack_phase_crit_damage_with_finite_duration_compiles_to_on_hit_stack() {
+        let spec = seska_shaped_crit_damage_spec();
+        let (timing, effect, condition) =
+            compile_officer_combat_spec(&spec).expect("seska-shaped row compiles");
+        assert_eq!(timing, TimingWindow::AttackPhase);
+        assert!(
+            matches!(
+                effect,
+                AbilityEffect::OnHitCritDamageStack {
+                    bonus,
+                    duration_rounds: 4,
+                } if (bonus - 0.4).abs() < 1e-12
+            ),
+            "expected OnHitCritDamageStack, got {effect:?}"
+        );
+        // Intrinsic duration: no RoundRange gate may clip the per-weapon expiry.
+        fn has_round_range(c: &AbilityCondition) -> bool {
+            match c {
+                AbilityCondition::RoundRange { .. } => true,
+                AbilityCondition::And(cs) | AbilityCondition::Or(cs) => {
+                    cs.iter().any(has_round_range)
+                }
+                AbilityCondition::Not(inner) => has_round_range(inner),
+                _ => false,
+            }
+        }
+        assert!(
+            !condition.as_ref().is_some_and(has_round_range),
+            "OnHitCritDamageStack must not get a RoundRange gate: {condition:?}"
+        );
+    }
+
+    #[test]
+    fn attack_phase_crit_damage_without_duration_stays_flat_multiplier() {
+        let mut spec = seska_shaped_crit_damage_spec();
+        spec.duration = None;
+        let (_, effect, _) = compile_officer_combat_spec(&spec).expect("compiles");
+        assert!(
+            matches!(effect, AbilityEffect::CritDamageMultiplier(m) if (m - 1.4).abs() < 1e-12),
+            "no duration -> classic flat multiplier, got {effect:?}"
+        );
+    }
+
+    #[test]
+    fn weapon_scope_extracted_from_conditions_top_level_and_and() {
+        let kinetic = AbilityConditionSpec::AttackerWeaponScope {
+            scope: "kinetic".into(),
+        };
+        assert_eq!(
+            weapon_scope_from_conditions(std::slice::from_ref(&kinetic)),
+            WeaponTypeScope::KineticOnly
+        );
+        assert_eq!(
+            weapon_scope_from_conditions(&[AbilityConditionSpec::And {
+                all: vec![AbilityConditionSpec::MoraleActive, kinetic.clone()],
+            }]),
+            WeaponTypeScope::KineticOnly
+        );
+        assert_eq!(
+            weapon_scope_from_conditions(&[AbilityConditionSpec::AttackerWeaponScope {
+                scope: "energy".into(),
+            }]),
+            WeaponTypeScope::EnergyOnly
+        );
+        assert_eq!(weapon_scope_from_conditions(&[]), WeaponTypeScope::All);
+        // Conflicting scopes collapse to All (no known upstream row carries both).
+        assert_eq!(
+            weapon_scope_from_conditions(&[
+                kinetic,
+                AbilityConditionSpec::AttackerWeaponScope {
+                    scope: "energy".into(),
+                },
+            ]),
+            WeaponTypeScope::All
+        );
+    }
+
+    #[test]
+    fn compile_condition_weapon_scope_is_literal_true_in_tree() {
+        let c = compile_condition(&AbilityConditionSpec::AttackerWeaponScope {
+            scope: "kinetic".into(),
+        })
+        .unwrap();
+        assert_eq!(c, AbilityCondition::LiteralBool(true));
     }
 
     #[test]

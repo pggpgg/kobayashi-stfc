@@ -48,7 +48,7 @@ These tokens have **no dedicated `CombatContext` field** (or no field for the ov
 
 | Canonical token | LCARS / condition | Fidelity note |
 | --- | --- | --- |
-| `ModuleKinetic` / `ModuleEnergy` | `literal_true` | Weapon module type is not evaluated; mapping is **lenient** so the token is not dropped from multi-token `and` rows (kinetic-only debuffs may over-apply vs in-game energy-only builds). |
+| `ModuleKinetic` / `ModuleEnergy` | `attacker_weapon_scope` (`weapon_scope: kinetic\|energy`) | Compiled out-of-band into `Ability.weapon_scope` (the condition tree sees `true`, so `and` nesting stays sound); the engine applies the effect only to weapons of the matching `WeaponStats.weapon_type`. **Untyped** weapons match every scope (lenient fallback for data without weapon types). |
 | `TargetStateAny` | `or` of `defender_burning`, `defender_hull_breach`, `defender_assimilated` | Matches STFC “opponent has a debuff-style state” for the three flags the engine tracks. **Defender morale** is not included (morale is modeled on the attacker as `morale_active`). |
 | `SelfStateNone` | `not` → `or`(`attacker_burning`, `attacker_hull_breach`) | Approximation for “no debuff state on self”; omits assimilate / morale and other STFC “states”. |
 | `SelfCloaked` / `SelfMining` | `literal_false` | Cloak and mining overworld context are not on the default ship-vs-hostile path. |

@@ -3,8 +3,8 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
-    CrewOfficerStatTotals, CrewSeat, CrewSeatContext, TimingWindow,
+    Ability, AbilityClass, Combatant, CrewConfiguration, CrewOfficerStatTotals, CrewSeat,
+    CrewSeatContext, TimingWindow,
 };
 use crate::data::combat_effect_spec::AbilityConditionSpec;
 use crate::data::profile;
@@ -262,7 +262,7 @@ fn officer_stat_duration_ok(effect: &LcarsEffect, officer_stat_key: bool) -> boo
 /// passes through unchanged (the rank coefficient is used as a flat value).
 ///
 /// Implementation: [`crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec`] →
-/// [`crate::combat::effect_spec_compile::compile_officer_combat_spec`].
+/// [`crate::combat::effect_spec_compile::compile_officer_combat_spec_full`].
 fn resolve_effect(
     effect: &LcarsEffect,
     ability_name: &str,
@@ -270,7 +270,7 @@ fn resolve_effect(
     officer_id: &str,
     officer: Option<&LcarsOfficer>,
     effect_index: usize,
-) -> Option<(TimingWindow, AbilityEffect, Option<AbilityCondition>)> {
+) -> Option<crate::combat::effect_spec_compile::CompiledOfficerCombatSpec> {
     if is_static_effect(effect) {
         return None;
     }
@@ -288,7 +288,7 @@ fn resolve_effect(
         tier,
         stats_row,
     )?;
-    crate::combat::effect_spec_compile::compile_officer_combat_spec(&spec).ok()
+    crate::combat::effect_spec_compile::compile_officer_combat_spec_full(&spec).ok()
 }
 
 /// Coarse coverage tier for `/api/mechanics/coverage` (LCARS effects).
@@ -700,7 +700,7 @@ pub fn resolve_officer_ability(
 ) -> Vec<CrewSeatContext> {
     let mut contexts = Vec::new();
     for (idx, effect) in ability.effects.iter().enumerate() {
-        if let Some((timing, effect_effect, condition)) = resolve_effect(
+        if let Some(compiled) = resolve_effect(
             effect,
             &ability.name,
             options,
@@ -711,12 +711,13 @@ pub fn resolve_officer_ability(
             contexts.push(CrewSeatContext {
                 seat,
                 ability: Ability {
+                    weapon_scope: compiled.weapon_scope,
                     name: ability.name.clone(),
                     class,
-                    timing,
+                    timing: compiled.timing,
                     boostable: true,
-                    effect: effect_effect,
-                    condition,
+                    effect: compiled.effect,
+                    condition: compiled.condition,
                 },
                 boosted: false,
                 officer_id: Some(officer.id.clone()),
@@ -1217,6 +1218,7 @@ mod tests {
     ) -> LcarsEffect {
         let duration = Some(LcarsDuration::Permanent("permanent".to_string()));
         let condition = condition_type.map(|ct| crate::lcars::LcarsCondition {
+            weapon_scope: Default::default(),
             condition_type: ct.to_string(),
             stat: None,
             threshold_pct: None,
@@ -1428,7 +1430,7 @@ mod tests {
         assert!(
             row.runtime_condition
                 .as_ref()
-                .is_some_and(|c| matches!(c, AbilityCondition::MoraleActive)),
+                .is_some_and(|c| matches!(c, crate::combat::AbilityCondition::MoraleActive)),
             "expected MoraleActive condition; got: {:?}",
             row.runtime_condition
         );
@@ -1581,6 +1583,7 @@ mod tests {
         if let Some(ref mut c) = eff.condition {
             c.conditions = Some(vec![
                 crate::lcars::LcarsCondition {
+                    weapon_scope: Default::default(),
                     condition_type: "engagement_includes".to_string(),
                     stat: None,
                     threshold_pct: None,
@@ -1598,6 +1601,7 @@ mod tests {
                     conditions: None,
                 },
                 crate::lcars::LcarsCondition {
+                    weapon_scope: Default::default(),
                     condition_type: "defender_hull_faction_id".to_string(),
                     stat: None,
                     threshold_pct: None,

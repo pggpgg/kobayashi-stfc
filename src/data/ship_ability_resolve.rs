@@ -311,6 +311,7 @@ pub fn ship_ability_to_crew_seat_context(ability: &ShipAbility) -> Option<CrewSe
     Some(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: ability.id.clone(),
             class: AbilityClass::ShipAbility,
             timing,
@@ -357,6 +358,7 @@ pub fn ship_ability_to_crew_seat_context_via_spec(
     Some(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: ability.id.clone(),
             class: AbilityClass::ShipAbility,
             timing,

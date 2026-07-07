@@ -82,6 +82,7 @@ fn crew_with_defender_hull_breach(mut crew: CrewConfiguration) -> CrewConfigurat
     crew.seats.push(CrewSeatContext {
         seat: CrewSeat::Captain,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "test_defender_hull_breach".into(),
             class: AbilityClass::CaptainManeuver,
             timing: TimingWindow::RoundStart,
@@ -579,4 +580,113 @@ fn ortegas_bridge_round_start_delay_vs_player_defender() {
         saw_delay,
         "Ortegas bridge reload should proc vs player defender on BB in some seeds"
     );
+}
+
+// ── Weapon-type dimension (ModuleKinetic gate) ──
+
+fn typed_attacker(types: &[kobayashi::combat::WeaponType]) -> Combatant {
+    let mut a = breaking_attacker(0.0);
+    a.weapons = types
+        .iter()
+        .map(|&weapon_type| WeaponStats {
+            attack: 2_500.0,
+            shots: Some(1),
+            weapon_type,
+            ..Default::default()
+        })
+        .collect();
+    a
+}
+
+fn total_damage_for(attacker: &Combatant, crew: &CrewConfiguration, seed: u64) -> f64 {
+    let setup = build_combat_setup(
+        attacker,
+        &shielded_defender(),
+        &sim_config(seed, 2),
+        crew,
+        kobayashi::combat::OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    simulate_combat_from_setup(&setup, seed).total_damage
+}
+
+#[test]
+fn kuron_resolves_kinetic_only_weapon_scope() {
+    let crew = resolve_crew("kuron-15cda2", &[], 1);
+    let scoped = crew
+        .seats
+        .iter()
+        .find(|s| matches!(s.ability.effect, AbilityEffect::ShotsBonus { .. }));
+    let scoped = scoped.expect("Kuron ShotsBonus seat");
+    assert_eq!(
+        scoped.ability.weapon_scope,
+        kobayashi::combat::WeaponTypeScope::KineticOnly,
+        "canonical ModuleKinetic condition should stamp KineticOnly weapon scope"
+    );
+}
+
+#[test]
+fn kuron_recharge_is_noop_on_all_energy_ship() {
+    use kobayashi::combat::WeaponType;
+    let with_kuron = resolve_crew("kuron-15cda2", &[], 1);
+    let empty = CrewConfiguration::default();
+    let attacker = typed_attacker(&[WeaponType::Energy, WeaponType::Energy]);
+    // Deterministic damage: crit/proc chances are zero, so the extra RNG draw from the
+    // shots-bonus trigger cannot change per-shot outcomes.
+    for seed in 0..16_u64 {
+        assert_eq!(
+            total_damage_for(&attacker, &with_kuron, seed),
+            total_damage_for(&attacker, &empty, seed),
+            "seed {seed}: kinetic-gated recharge must not boost an all-energy ship"
+        );
+    }
+}
+
+#[test]
+fn kuron_recharge_boosts_only_kinetic_weapon_on_mixed_ship() {
+    use kobayashi::combat::WeaponType;
+    let with_kuron = resolve_crew("kuron-15cda2", &[], 1);
+    let empty = CrewConfiguration::default();
+    let mixed = typed_attacker(&[WeaponType::Kinetic, WeaponType::Energy]);
+    let all_kinetic = typed_attacker(&[WeaponType::Kinetic, WeaponType::Kinetic]);
+    let mut saw_proc = false;
+    for seed in 0..200_u64 {
+        let mixed_kuron = total_damage_for(&mixed, &with_kuron, seed);
+        let mixed_base = total_damage_for(&mixed, &empty, seed);
+        if mixed_kuron > mixed_base {
+            saw_proc = true;
+            let all_kinetic_kuron = total_damage_for(&all_kinetic, &with_kuron, seed);
+            assert!(
+                all_kinetic_kuron > mixed_kuron,
+                "seed {seed}: all-kinetic ship should gain more from Kuron than mixed \
+                 (all_kinetic={all_kinetic_kuron}, mixed={mixed_kuron})"
+            );
+            break;
+        }
+    }
+    assert!(
+        saw_proc,
+        "expected Kuron proc to boost the mixed ship in some seed"
+    );
+}
+
+#[test]
+fn kuron_recharge_boosts_all_weapons_on_untyped_ship() {
+    use kobayashi::combat::WeaponType;
+    let with_kuron = resolve_crew("kuron-15cda2", &[], 1);
+    let untyped = typed_attacker(&[WeaponType::Unknown, WeaponType::Unknown]);
+    let all_kinetic = typed_attacker(&[WeaponType::Kinetic, WeaponType::Kinetic]);
+    // Lenient fallback: untyped weapons match every scope, so an untyped ship behaves
+    // exactly like an all-kinetic ship (pre-weapon-typing behavior preserved).
+    for seed in 0..16_u64 {
+        assert_eq!(
+            total_damage_for(&untyped, &with_kuron, seed),
+            total_damage_for(&all_kinetic, &with_kuron, seed),
+            "seed {seed}: untyped weapons must match the kinetic scope leniently"
+        );
+    }
 }

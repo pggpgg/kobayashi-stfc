@@ -194,6 +194,7 @@ fn pike_boost_inactive_when_hostile_level_above_seventy() {
 #[test]
 fn sum_bridge_effectiveness_from_combat_begin_rows() {
     let effects = vec![ActiveAbilityEffect {
+        weapon_scope: Default::default(),
         ability_name: "Teaching Moments".into(),
         officer_id: Some("pike-1e7d0d".into()),
         effect: AbilityEffect::BridgeAbilityEffectivenessBonus(0.4),
@@ -210,6 +211,7 @@ fn scale_crew_skips_captain_seat_bridge_ability() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "meta".into(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::CombatBegin,
@@ -224,6 +226,7 @@ fn scale_crew_skips_captain_seat_bridge_ability() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "own_bridge".into(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::CombatBegin,
@@ -238,6 +241,7 @@ fn scale_crew_skips_captain_seat_bridge_ability() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "harrison".into(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::CombatBegin,

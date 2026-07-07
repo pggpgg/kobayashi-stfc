@@ -199,6 +199,7 @@ fn compile_canonical_override_seats(
             out.push(CrewSeatContext {
                 seat: CrewSeat::Ship,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: spec.id.clone(),
                     class: AbilityClass::ShipAbility,
                     timing,
@@ -399,6 +400,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                             out.push(CrewSeatContext {
                                 seat: CrewSeat::Ship,
                                 ability: Ability {
+                                    weapon_scope: Default::default(),
                                     name: spec.id.clone(),
                                     class: AbilityClass::ShipAbility,
                                     timing,
@@ -420,6 +422,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         out.push(CrewSeatContext {
                             seat: CrewSeat::Ship,
                             ability: Ability {
+                                weapon_scope: Default::default(),
                                 name: spec.id.clone(),
                                 class: AbilityClass::ShipAbility,
                                 timing,
