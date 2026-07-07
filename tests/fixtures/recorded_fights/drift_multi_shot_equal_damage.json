@@ -1,0 +1,31 @@
+{
+  "id": "drift_multi_shot_equal_damage",
+  "source": "mathematical invariant",
+  "description": "Two-shot weapon with zero mitigation/crit vs huge-hull defender: each hit deals the same base damage (1000 + 1000 = 2000 in round 1). Guards against per-hit accumulation of the PreAttackDamage stack base (hit N must not deal N x base).",
+  "attacker": {
+    "id": "ms_equal_a",
+    "attack": 1000,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 100000,
+    "shield_health": 0,
+    "weapons": [{ "attack": 1000, "shots": 2, "crit_chance": 0 }]
+  },
+  "defender": {
+    "id": "ms_equal_d",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 1000000,
+    "shield_health": 0,
+    "shield_mitigation": 0.0
+  },
+  "simulation": {
+    "rounds": 1,
+    "seed": 7
+  },
+  "bands": {
+    "total_damage": [1999.9, 2000.1],
+    "rounds_simulated": [1, 1]
+  }
+}

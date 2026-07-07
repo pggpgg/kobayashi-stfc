@@ -26,14 +26,14 @@ See [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) and [CALIBRAT
 
 | Metric | Value |
 | --- | ---: |
-| Drift fixtures passed | 20 |
+| Drift fixtures passed | 21 |
 | Drift fixtures failed | 0 |
 | Recorded fights passed | 0 |
 | Recorded fights failed | 0 |
 | Recorded iteration passed | 0 |
 | Recorded iteration failed | 0 |
-| Metrics scored | 66 |
-| Mean σ (composite) | 0.3093 |
+| Metrics scored | 68 |
+| Mean σ (composite) | 0.2987 |
 | Max σ | 1.0000 |
 | Worst metric | `drift_survey_soak` `attacker_hull_remaining` σ=1.0000 |
 
@@ -176,8 +176,8 @@ Two-weapon attacker vs single-hull defender; exercises sub-round ordering.
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |
-| total_damage | 953.9200 | [300.0000, 4000.0000] | 0.647 | ok |
-| rounds_simulated | 4.0000 | [1.0000, 15.0000] | 0.571 | ok |
+| total_damage | 875.6000 | [300.0000, 4000.0000] | 0.689 | ok |
+| rounds_simulated | 5.0000 | [1.0000, 15.0000] | 0.429 | ok |
 | defender_hull_remaining | 0.0000 | [0.0000, 650.0000] | 1.000 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 150.0000] | 1.000 | ok |
 | attacker_hull_remaining | 1500.0000 | [800.0000, 1500.0000] | 1.000 | ok |
@@ -206,6 +206,17 @@ Mathematical invariant: Morale, Burning, and Hull Breach all active simultaneous
 | --- | ---: | --- | ---: | --- |
 | total_damage | 800.0000 | [780.0000, 820.0000] | 0.000 | ok |
 | rounds_simulated | 10.0000 | [10.0000, 10.0000] | 0.000 | ok |
+
+**fixture_ok:** yes
+
+### `drift_multi_shot_equal_damage`
+
+Two-shot weapon with zero mitigation/crit vs huge-hull defender: each hit deals the same base damage (1000 + 1000 = 2000 in round 1). Guards against per-hit accumulation of the PreAttackDamage stack base (hit N must not deal N x base).
+
+| metric | actual | band | σ | status |
+| --- | ---: | --- | ---: | --- |
+| total_damage | 2000.0000 | [1999.9000, 2000.1000] | 0.000 | ok |
+| rounds_simulated | 1.0000 | [1.0000, 1.0000] | 0.000 | ok |
 
 **fixture_ok:** yes
 
