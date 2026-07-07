@@ -111,7 +111,7 @@ path = "benches/genetic_throughput_bench.rs"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 axum = { version = "0.7", features = ["macros"] }
-calamine = "0.24"
+calamine = "0.36"
 chrono = { version = "0.4", default-features = false, features = ["std", "now"] }
 csv = "1"
 serde = { version = "1", features = ["derive"] }

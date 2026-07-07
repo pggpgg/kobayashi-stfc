@@ -365,6 +365,7 @@ fn calibration_on_kill_hull_regen_improves_survivability_within_bounds() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "cal_kill_regen".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::Kill,

@@ -21,7 +21,7 @@ use serde_json::Value;
 
 use crate::combat::{
     pierce_damage_through_bonus, AttackerStats, DefenderStats, EnemyTypes, OpponentFactionTag,
-    ShipType, WeaponStats,
+    ShipType, WeaponStats, WeaponType,
 };
 use crate::data::upstream_hostile_ship_type::upstream_hostile_ship_type_profile;
 
@@ -484,6 +484,12 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
         .get("proc_multiplier")
         .and_then(json_f64)
         .filter(|v| v.is_finite() && *v > 0.0);
+    // Upstream weapon_type: 1 = Energy, 2 = Kinetic. Anything else stays Unknown (lenient match).
+    let weapon_type = match obj.get("weapon_type").and_then(json_f64).map(|v| v as i64) {
+        Some(1) => WeaponType::Energy,
+        Some(2) => WeaponType::Kinetic,
+        _ => WeaponType::Unknown,
+    };
 
     Some(WeaponStats {
         attack,
@@ -493,6 +499,7 @@ fn weapon_stats_from_component_data(data: &Value) -> Option<WeaponStats> {
         crit_multiplier,
         proc_chance,
         proc_multiplier,
+        weapon_type,
     })
 }
 

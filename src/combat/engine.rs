@@ -10,8 +10,9 @@ pub use crate::combat::types::{
     effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
     CrewOfficerStatTotals, DefenderStats, EnemyTypes, EventSource, HostileMitigationParams,
     OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
-    WeaponStats, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
-    MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
+    WeaponStats, WeaponType, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
+    INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS,
+    SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -28,7 +29,7 @@ use crate::combat::abilities::{
     sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
     sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
     AbilityEffect, ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext,
-    CrewConfiguration, TimingWindow,
+    CrewConfiguration, TimingWindow, WeaponTypeScope,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -467,6 +468,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         defender_morale_rounds_remaining: 0,
         shots_bonus_entries: Vec::new(),
         defender_shots_bonus_entries: Vec::new(),
+        on_hit_crit_stack_expires: [0; MAX_TRACKED_WEAPON_SLOTS],
+        on_hit_crit_stack_bonus: 0.0,
         defender_weapon_fire_delayed_rounds: 0,
         defender_kemocite_stacks: 0,
         defender_denticle_blade_active: false,
@@ -492,6 +495,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let defense_phase_effects = &setup.defense_phase_effects;
     let round_end_effects = &setup.round_end_effects;
     let after_subround_effects = &setup.after_subround_effects;
+
+    // Weapon-type-scoped rows (ModuleKinetic / ModuleEnergy, CombatBegin / RoundStart scalars):
+    // excluded from the shared round-level accumulation below and re-added per weapon in the
+    // sub-round loop for weapons matching the scope. Attacker-side only — the defender counter
+    // path keeps lenient (scope-as-All) application. `ShotsBonus` rows are scope-aware through
+    // [`ShotsBonusEntry`] instead of this path. False for typical crews → zero extra work.
+    let attacker_has_weapon_scoped_effects = setup
+        .combat_begin_effects
+        .iter()
+        .chain(setup.round_start_effects.iter())
+        .any(|e| e.weapon_scope != WeaponTypeScope::All);
 
     let ctx_template = CombatCtxTemplate {
         defender_faction,
@@ -651,11 +665,23 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let mut phase_effects = EffectAccumulator::default();
         let combat_begin_this_round =
             filter_effects_by_condition(combat_begin_effects, &combat_ctx);
+        // Split off weapon-scoped rows: they must not enter the shared round-level accumulator
+        // (it feeds every weapon via `weapon_round_base`); they are re-added per matching weapon
+        // in the sub-round loop with the same timing and assimilated flag.
+        let (combat_begin_round_level, combat_begin_weapon_scoped): (Vec<_>, Vec<_>) =
+            if attacker_has_weapon_scoped_effects {
+                combat_begin_this_round
+                    .into_iter()
+                    .partition(|e| e.weapon_scope == WeaponTypeScope::All)
+            } else {
+                (combat_begin_this_round, Vec::new())
+            };
+        let combat_begin_assimilated_this_round = st.assimilated_rounds_remaining > 0;
         phase_effects.add_effects(
             TimingWindow::CombatBegin,
-            &combat_begin_this_round,
+            &combat_begin_round_level,
             attacker.attack,
-            st.assimilated_rounds_remaining > 0,
+            combat_begin_assimilated_this_round,
             round_index,
         );
 
@@ -689,13 +715,41 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &bench,
             round_start_assimilated,
         );
-        phase_effects.add_effects(
-            TimingWindow::RoundStart,
-            &bench,
-            attacker.attack,
-            round_start_assimilated,
-            round_index,
-        );
+        // Weapon-scoped round-start rows: keep the full `bench` for RNG-drawing helpers below
+        // (proc/morale roll order is load-bearing) but exclude scoped rows from the shared
+        // round-level accumulation; they are re-added per matching weapon in the sub-round loop.
+        let round_start_weapon_scoped: Vec<ActiveAbilityEffect> =
+            if attacker_has_weapon_scoped_effects {
+                bench
+                    .iter()
+                    .filter(|e| e.weapon_scope != WeaponTypeScope::All)
+                    .cloned()
+                    .collect()
+            } else {
+                Vec::new()
+            };
+        if round_start_weapon_scoped.is_empty() {
+            phase_effects.add_effects(
+                TimingWindow::RoundStart,
+                &bench,
+                attacker.attack,
+                round_start_assimilated,
+                round_index,
+            );
+        } else {
+            let bench_round_level: Vec<ActiveAbilityEffect> = bench
+                .iter()
+                .filter(|e| e.weapon_scope == WeaponTypeScope::All)
+                .cloned()
+                .collect();
+            phase_effects.add_effects(
+                TimingWindow::RoundStart,
+                &bench_round_level,
+                attacker.attack,
+                round_start_assimilated,
+                round_index,
+            );
+        }
 
         roll_attacker_round_start_procs(
             &mut trace,
@@ -744,6 +798,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         combat_ctx.attacker_burning_active = st.attacker_burning_rounds > 0;
 
         let full_round_start = filter_effects_by_condition(round_start_effects, &combat_ctx);
+        let mut round_start_weapon_scoped = round_start_weapon_scoped;
         let round_start_extra: Vec<_> = full_round_start
             .iter()
             .filter(|e| !bench.contains(e))
@@ -758,13 +813,28 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 &round_start_extra,
                 round_start_assimilated,
             );
-            phase_effects.add_effects(
-                TimingWindow::RoundStart,
-                &round_start_extra,
-                attacker.attack,
-                round_start_assimilated,
-                round_index,
-            );
+            if attacker_has_weapon_scoped_effects {
+                let (extra_round_level, extra_weapon_scoped): (Vec<_>, Vec<_>) = round_start_extra
+                    .iter()
+                    .cloned()
+                    .partition(|e| e.weapon_scope == WeaponTypeScope::All);
+                round_start_weapon_scoped.extend(extra_weapon_scoped);
+                phase_effects.add_effects(
+                    TimingWindow::RoundStart,
+                    &extra_round_level,
+                    attacker.attack,
+                    round_start_assimilated,
+                    round_index,
+                );
+            } else {
+                phase_effects.add_effects(
+                    TimingWindow::RoundStart,
+                    &round_start_extra,
+                    attacker.attack,
+                    round_start_assimilated,
+                    round_index,
+                );
+            }
         }
 
         let osr_round_delta = setup
@@ -816,13 +886,13 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             }
         }
 
-        // Prune expired shots bonuses and compute B_shots(r) for this round.
+        // Prune expired shots bonuses and compute per-scope B_shots(r) sums for this round.
         st.shots_bonus_entries
-            .retain(|(_, expires)| *expires >= round_index);
-        let b_shots: f64 = st.shots_bonus_entries.iter().map(|(b, _)| b).sum();
+            .retain(|e| e.expires_round >= round_index);
+        let b_shots = ShotsBonusSums::from_entries(&st.shots_bonus_entries);
         st.defender_shots_bonus_entries
-            .retain(|(_, expires)| *expires >= round_index);
-        let def_b_shots: f64 = st.defender_shots_bonus_entries.iter().map(|(b, _)| b).sum();
+            .retain(|e| e.expires_round >= round_index);
+        let def_b_shots = ShotsBonusSums::from_entries(&st.defender_shots_bonus_entries);
 
         if emit_snapshots {
             let snap = build_combat_state_snapshot(
@@ -913,6 +983,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         let mut phase_effects = EffectAccumulator::default();
         let mut after_subround_carry = EffectAccumulator::default();
         after_subround_carry.set_trace_contributions(trace.is_enabled());
+        // On-hit crit stacks (Seska-style): computed once per round; the per-weapon re-arm scan
+        // below runs only when the crew actually carries such a row.
+        let has_on_hit_crit_stack_rows = attack_phase_filtered
+            .iter()
+            .any(|e| matches!(e.effect, AbilityEffect::OnHitCritDamageStack { .. }));
         for weapon_index in 0..num_sub_rounds {
             let mut defender_shield_break_carry: Vec<ActiveAbilityEffect> = Vec::new();
             phase_effects.clear();
@@ -941,6 +1016,61 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defense_phase_assimilated,
                 round_index,
             );
+
+            // Weapon-scoped CombatBegin / RoundStart scalars (ModuleKinetic / ModuleEnergy
+            // officers): excluded from `weapon_round_base` above, applied here only to weapons
+            // matching the scope. Untyped weapons match every scope (lenient), preserving
+            // pre-typing behavior for data without weapon types.
+            if attacker_has_weapon_scoped_effects {
+                let weapon_type = attacker.weapon_type(weapon_index);
+                for effect in combat_begin_weapon_scoped
+                    .iter()
+                    .filter(|e| e.weapon_scope.matches(weapon_type))
+                {
+                    phase_effects.add_effect(
+                        TimingWindow::CombatBegin,
+                        scale_effect(effect.effect, combat_begin_assimilated_this_round),
+                        attacker.attack,
+                        round_index,
+                        Some((effect.ability_name.as_str(), effect.officer_id.as_deref())),
+                    );
+                }
+                for effect in round_start_weapon_scoped
+                    .iter()
+                    .filter(|e| e.weapon_scope.matches(weapon_type))
+                {
+                    phase_effects.add_effect(
+                        TimingWindow::RoundStart,
+                        scale_effect(effect.effect, round_start_assimilated),
+                        attacker.attack,
+                        round_index,
+                        Some((effect.ability_name.as_str(), effect.officer_id.as_deref())),
+                    );
+                }
+            }
+
+            // Inject the composed multiplier of currently-active on-hit crit stacks (one per
+            // weapon that hit within the last `duration_rounds`) into this sub-round's crit
+            // product channel. Uses the existing CritDamageMultiplier channel so tracing and
+            // stacking rules apply unchanged; no allocation and no RNG draws.
+            if st.on_hit_crit_stack_bonus != 0.0 {
+                let active_stacks = st
+                    .on_hit_crit_stack_expires
+                    .iter()
+                    .filter(|&&expiry| expiry >= round_index)
+                    .count() as i32;
+                if active_stacks > 0 {
+                    phase_effects.add_effect(
+                        TimingWindow::AttackPhase,
+                        AbilityEffect::CritDamageMultiplier(
+                            (1.0 + st.on_hit_crit_stack_bonus).powi(active_stacks),
+                        ),
+                        weapon_base,
+                        round_index,
+                        Some(("on_hit_crit_stacks", None)),
+                    );
+                }
+            }
 
             let weapon_index_u = weapon_index as u32;
             if emit_snapshots {
@@ -971,7 +1101,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 compute_apex_damage_factor(effective_apex_shred, effective_apex_barrier);
 
             let base_shots = attacker.weapon_base_shots(weapon_index);
-            let effective_shots = effective_shots_for_weapon(base_shots, b_shots);
+            let effective_shots = effective_shots_for_weapon(
+                base_shots,
+                b_shots.for_weapon(attacker.weapon_type(weapon_index)),
+            );
+            let defender_alive_before_shot = st.total_hull_damage < defender.hull_health;
             let shield_before_weapon = st.defender_shield_remaining;
             fire_attacker_weapon(FireAttackerWeapon {
                 st: &mut st,
@@ -1005,6 +1139,32 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_receive_damage_effects,
                 defender_isolytic_vulnerability: setup.defender_isolytic_vulnerability,
             });
+
+            // Re-arm on-hit crit stacks: a weapon that fired (hits are guaranteed in this
+            // engine, matching in-game behavior) refreshes its own stack slot. The refreshed
+            // stack benefits LATER weapons this round and all weapons for `duration_rounds`;
+            // semantics: at most one concurrent stack per weapon, refreshed on that weapon's
+            // next hit ("once per weapon"). A stricter once-per-fight reading would need a
+            // proc bitmask here; both readings agree for fights ≤ duration_rounds.
+            if has_on_hit_crit_stack_rows
+                && defender_alive_before_shot
+                && effective_shots > 0
+                && attacker.weapon_attack(weapon_index).is_some()
+            {
+                for effect in &attack_phase_filtered {
+                    if let AbilityEffect::OnHitCritDamageStack {
+                        bonus,
+                        duration_rounds,
+                    } = scale_effect(effect.effect, attack_phase_assimilated)
+                    {
+                        let slot = weapon_index.min(MAX_TRACKED_WEAPON_SLOTS - 1);
+                        // Active for `duration_rounds` counting this round.
+                        st.on_hit_crit_stack_expires[slot] =
+                            round_index + duration_rounds.max(1) - 1;
+                        st.on_hit_crit_stack_bonus = bonus;
+                    }
+                }
+            }
 
             let shield_broke_this_round =
                 shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0;
@@ -1890,7 +2050,7 @@ fn roll_defender_round_start_shots_bonus(
     defender_round_start_effects: &[ActiveAbilityEffect],
     combat_ctx: &CombatContext,
     defender_assimilated_rounds_remaining: u32,
-    defender_shots_bonus_entries: &mut Vec<(f64, u32)>,
+    defender_shots_bonus_entries: &mut Vec<ShotsBonusEntry>,
 ) {
     let defender_rstart_filtered =
         filter_effects_by_condition(defender_round_start_effects, combat_ctx);
@@ -1907,7 +2067,11 @@ fn roll_defender_round_start_shots_bonus(
             let triggered = shots_roll < chance.clamp(0.0, 1.0);
             if triggered {
                 let duration = duration_rounds.max(1);
-                defender_shots_bonus_entries.push((bonus_pct, round_index + duration));
+                defender_shots_bonus_entries.push(ShotsBonusEntry {
+                    bonus: bonus_pct,
+                    expires_round: round_index + duration,
+                    scope: effect.weapon_scope,
+                });
             }
             trace.record_if(|| CombatEvent {
                 event_type: "defender_shots_bonus_trigger".to_string(),
@@ -1924,6 +2088,10 @@ fn roll_defender_round_start_shots_bonus(
                     ("chance".to_string(), Value::from(round_f64(chance))),
                     ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
                     ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    (
+                        "weapon_scope".to_string(),
+                        Value::from(effect.weapon_scope.as_str()),
+                    ),
                 ]),
             });
         }
@@ -2069,7 +2237,7 @@ fn roll_attacker_round_start_procs(
     defender_hull_breach_rounds: &mut u32,
     defender_assimilated_rounds_remaining: &mut u32,
     defender_morale_rounds_remaining: &mut u32,
-    shots_bonus_entries: &mut Vec<(f64, u32)>,
+    shots_bonus_entries: &mut Vec<ShotsBonusEntry>,
     defender_weapon_fire_delayed_rounds: &mut u32,
 ) {
     for effect in bench {
@@ -2183,7 +2351,11 @@ fn roll_attacker_round_start_procs(
             let triggered = shots_roll < chance.clamp(0.0, 1.0);
             if triggered {
                 let duration = duration_rounds.max(1);
-                shots_bonus_entries.push((bonus_pct, round_index + duration));
+                shots_bonus_entries.push(ShotsBonusEntry {
+                    bonus: bonus_pct,
+                    expires_round: round_index + duration,
+                    scope: effect.weapon_scope,
+                });
             }
             trace.record_if(|| CombatEvent {
                 event_type: "shots_bonus_trigger".to_string(),
@@ -2201,6 +2373,10 @@ fn roll_attacker_round_start_procs(
                     ("chance".to_string(), Value::from(round_f64(chance))),
                     ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
                     ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    (
+                        "weapon_scope".to_string(),
+                        Value::from(effect.weapon_scope.as_str()),
+                    ),
                 ]),
             });
         }
@@ -3105,7 +3281,7 @@ struct FireDefenderCounter<'a> {
     round_index: u32,
     weapon_index: usize,
     defender_weapon_attack: f64,
-    def_b_shots: f64,
+    def_b_shots: ShotsBonusSums,
     weapon_base: f64,
     attack_phase_assimilated: bool,
     use_experimental_simd_damage_after_apex_base: bool,
@@ -3188,7 +3364,10 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // so the two paths stay in sync. Shot count mirrors outbound: `effective_shots_for_weapon`
     // on `defender.weapon_base_shots` with defender crew `ShotsBonus`.
     let def_base_shots = defender.weapon_base_shots(weapon_index);
-    let def_effective_shots = effective_shots_for_weapon(def_base_shots, def_b_shots);
+    let def_effective_shots = effective_shots_for_weapon(
+        def_base_shots,
+        def_b_shots.for_weapon(defender.weapon_type(weapon_index)),
+    );
 
     // Inbound counter-fire mitigation: weight each component by the attacker
     // ship-type coefficients (c_armor, c_shield, c_dodge). `damage_reduction`
@@ -4061,6 +4240,55 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     }
 }
 
+/// Fixed capacity of the per-weapon on-hit stack tracker. Player ships top out at 5 weapons
+/// (hostiles similar); indices past the last slot saturate into it.
+const MAX_TRACKED_WEAPON_SLOTS: usize = 8;
+
+/// One active `ShotsBonus` grant: additive `bonus` to B_shots while `round_index <= expires_round`,
+/// restricted to weapons matching `scope` (`All` for every pre-weapon-typing effect).
+#[derive(Clone, Copy)]
+struct ShotsBonusEntry {
+    bonus: f64,
+    expires_round: u32,
+    scope: WeaponTypeScope,
+}
+
+/// Per-round B_shots sums bucketed by weapon-type scope. Built once per round from the pruned
+/// entry list; [`Self::for_weapon`] selects the sum applicable to one weapon's damage type.
+/// Untyped ([`WeaponType::Unknown`]) weapons receive every bucket (lenient matching).
+#[derive(Clone, Copy, Default)]
+struct ShotsBonusSums {
+    all: f64,
+    kinetic_only: f64,
+    energy_only: f64,
+}
+
+impl ShotsBonusSums {
+    fn from_entries(entries: &[ShotsBonusEntry]) -> Self {
+        let mut sums = Self::default();
+        for e in entries {
+            match e.scope {
+                WeaponTypeScope::All => sums.all += e.bonus,
+                WeaponTypeScope::KineticOnly => sums.kinetic_only += e.bonus,
+                WeaponTypeScope::EnergyOnly => sums.energy_only += e.bonus,
+            }
+        }
+        sums
+    }
+
+    #[inline]
+    fn for_weapon(self, weapon_type: WeaponType) -> f64 {
+        let mut total = self.all;
+        if WeaponTypeScope::KineticOnly.matches(weapon_type) {
+            total += self.kinetic_only;
+        }
+        if WeaponTypeScope::EnergyOnly.matches(weapon_type) {
+            total += self.energy_only;
+        }
+        total
+    }
+}
+
 /// The per-fight **mutable running state** threaded through `simulate_combat_from_setup` and its
 /// phase helpers: cumulative damage, remaining shields, and the per-side status-duration counters.
 /// Bundled into one struct (task 12) so the weapon-block helpers take `&mut CombatRunState` rather
@@ -4086,8 +4314,16 @@ struct CombatRunState {
     assimilated_rounds_remaining: u32,
     defender_assimilated_rounds_remaining: u32,
     defender_morale_rounds_remaining: u32,
-    shots_bonus_entries: Vec<(f64, u32)>,
-    defender_shots_bonus_entries: Vec<(f64, u32)>,
+    shots_bonus_entries: Vec<ShotsBonusEntry>,
+    defender_shots_bonus_entries: Vec<ShotsBonusEntry>,
+    /// Per-weapon expiry round for the attacker's on-hit crit-damage stack
+    /// ([`AbilityEffect::OnHitCritDamageStack`]); `0` = no active stack. Index = weapon_index
+    /// (saturating at [`MAX_TRACKED_WEAPON_SLOTS`] − 1). A stack is active while
+    /// `round_index <= expiry`, and firing the weapon refreshes its slot.
+    on_hit_crit_stack_expires: [u32; MAX_TRACKED_WEAPON_SLOTS],
+    /// Additive crit-damage fraction per active on-hit stack. Single-source: one Seska-shaped
+    /// row per crew (duplicate-officer policy); if several rows exist the last writer wins.
+    on_hit_crit_stack_bonus: f64,
     defender_weapon_fire_delayed_rounds: u32,
     /// Successful Kemocite Weaponry round-end stacks (Xindi group armadas).
     defender_kemocite_stacks: u32,
@@ -4350,7 +4586,7 @@ fn apply_combat_begin_phase(
     combat_begin_assimilated: bool,
     defender_burning_rounds: &mut u32,
     defender_weapon_fire_delayed_rounds: &mut u32,
-    shots_bonus_entries: &mut Vec<(f64, u32)>,
+    shots_bonus_entries: &mut Vec<ShotsBonusEntry>,
 ) {
     record_ability_activations(
         trace,
@@ -4406,7 +4642,11 @@ fn apply_combat_begin_phase(
             let triggered = shots_roll < chance.clamp(0.0, 1.0);
             if triggered {
                 let duration = duration_rounds.max(1);
-                shots_bonus_entries.push((bonus_pct, duration));
+                shots_bonus_entries.push(ShotsBonusEntry {
+                    bonus: bonus_pct,
+                    expires_round: duration,
+                    scope: effect.weapon_scope,
+                });
             }
             trace.record_if(|| CombatEvent {
                 event_type: "shots_bonus_trigger".to_string(),
@@ -4424,6 +4664,10 @@ fn apply_combat_begin_phase(
                     ("chance".to_string(), Value::from(round_f64(chance))),
                     ("bonus_pct".to_string(), Value::from(round_f64(bonus_pct))),
                     ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    (
+                        "weapon_scope".to_string(),
+                        Value::from(effect.weapon_scope.as_str()),
+                    ),
                 ]),
             });
         }

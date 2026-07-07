@@ -72,6 +72,7 @@ fn synthetic_prev_round_hull_crew() -> CrewConfiguration {
         seats: vec![CrewSeatContext::legacy(
             CrewSeat::BelowDeck,
             Ability {
+                weapon_scope: Default::default(),
                 name: "BenchPrevRoundHull".into(),
                 class: AbilityClass::BelowDeck,
                 timing: TimingWindow::RoundStart,

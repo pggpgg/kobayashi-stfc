@@ -47,9 +47,9 @@ struct AbilityCatalogEntry {
 
 use kobayashi::data::registry::merge_registry_entry;
 use kobayashi::data::ship::{
-    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, OfficerBonusBreakpoint, OfficerBonusTable,
-    ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
-    DEFAULT_SHIP_ID_REGISTRY_PATH,
+    weapon_type_slug_from_upstream, CrewSlotUnlock, ExtendedShipRecord, LevelBonus,
+    OfficerBonusBreakpoint, OfficerBonusTable, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry,
+    TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -567,6 +567,10 @@ fn extract_tier_combat(
             crit_multiplier: w_crit_mult,
             proc_chance: w_proc_chance,
             proc_multiplier: w_proc_mult,
+            weapon_type: weapon_type_slug_from_upstream(
+                data.get("weapon_type").and_then(Value::as_i64),
+            )
+            .map(str::to_string),
             ..Default::default()
         });
     }

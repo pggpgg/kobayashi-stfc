@@ -100,6 +100,7 @@ fn hostile_counter_stat_debuff_preserves_more_attacker_hull_than_plain() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "701705952".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -143,6 +144,7 @@ fn defender_shield_drain_per_round_reduces_defender_shields() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "1379978713".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::RoundStart,
@@ -177,6 +179,7 @@ fn hostile_engagement_defensive_preserves_more_attacker_hull() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "1463338054".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -220,6 +223,7 @@ fn breach_seat() -> CrewSeatContext {
     CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "breach_proc".into(),
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::AttackPhase,
@@ -241,6 +245,7 @@ fn ship_seat(name: &str, effect: AbilityEffect) -> CrewSeatContext {
     CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: name.into(),
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::AttackPhase,

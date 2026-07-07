@@ -42,6 +42,27 @@ pub struct WeaponRecord {
     pub proc_chance: Option<f64>,
     #[serde(default)]
     pub proc_multiplier: Option<f64>,
+    /// Weapon damage type slug (`"energy"` / `"kinetic"`), from upstream `weapon_type` (1 = Energy, 2 = Kinetic). Unset for legacy data.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub weapon_type: Option<String>,
+}
+
+/// Maps the upstream numeric `weapon_type` (1 = Energy, 2 = Kinetic) to the slug stored on [`WeaponRecord`].
+pub fn weapon_type_slug_from_upstream(v: Option<i64>) -> Option<&'static str> {
+    match v {
+        Some(1) => Some("energy"),
+        Some(2) => Some("kinetic"),
+        _ => None,
+    }
+}
+
+/// Parses a [`WeaponRecord::weapon_type`] slug into the engine [`crate::combat::WeaponType`].
+pub fn weapon_type_from_slug(slug: Option<&str>) -> crate::combat::WeaponType {
+    match slug {
+        Some("energy") => crate::combat::WeaponType::Energy,
+        Some("kinetic") => crate::combat::WeaponType::Kinetic,
+        _ => crate::combat::WeaponType::Unknown,
+    }
 }
 
 /// Normalized ship hull ability (from data.stfc.space ability array). Trigger and effect are resolved when building crew.
@@ -466,6 +487,10 @@ pub fn extract_component_tier_stats(components: &[Value], tier: u32) -> TierStat
             crit_multiplier: row_crit_damage,
             proc_chance: row_proc_chance,
             proc_multiplier: row_proc_multiplier,
+            weapon_type: weapon_type_slug_from_upstream(
+                data.get("weapon_type").and_then(Value::as_i64),
+            )
+            .map(str::to_string),
             ..Default::default()
         });
     }
@@ -942,6 +967,7 @@ impl ShipRecord {
                         crit_multiplier: r.crit_multiplier,
                         proc_chance: r.proc_chance,
                         proc_multiplier: r.proc_multiplier,
+                        weapon_type: weapon_type_from_slug(r.weapon_type.as_deref()),
                     })
                     .collect()
             })

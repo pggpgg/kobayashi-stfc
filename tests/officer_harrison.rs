@@ -143,6 +143,7 @@ fn harrison_sabotage_round_range_gates_bypass_to_first_combat_round() {
                 )
         })
         .map(|s| kobayashi::combat::ActiveAbilityEffect {
+            weapon_scope: Default::default(),
             ability_name: s.ability.name.clone(),
             officer_id: s.officer_id.clone(),
             effect: s.ability.effect,

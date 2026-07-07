@@ -29,7 +29,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 63617749.0,
@@ -41,7 +42,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 127235497.5,
@@ -53,7 +55,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 127235497.5,
@@ -65,7 +68,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -94,7 +98,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 67434814.0,
@@ -106,7 +111,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 134869627.5,
@@ -118,7 +124,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 134869627.5,
@@ -130,7 +137,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -159,7 +167,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 71480902.5,
@@ -171,7 +180,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 142961805.0,
@@ -183,7 +193,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 142961805.0,
@@ -195,7 +206,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -224,7 +236,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 75769756.5,
@@ -236,7 +249,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 151539513.5,
@@ -248,7 +262,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 151539513.5,
@@ -260,7 +275,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -289,7 +305,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 81073639.5,
@@ -301,7 +318,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 162147279.5,
@@ -313,7 +331,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 162147279.5,
@@ -325,7 +344,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -354,7 +374,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 86748794.0,
@@ -366,7 +387,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 173497589.0,
@@ -378,7 +400,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 173497589.0,
@@ -390,7 +413,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -419,7 +443,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 92821210.0,
@@ -431,7 +456,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 185642420.0,
@@ -443,7 +469,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 185642420.0,
@@ -455,7 +482,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -484,7 +512,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 100246907.0,
@@ -496,7 +525,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 200493813.5,
@@ -508,7 +538,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 200493813.5,
@@ -520,7 +551,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -549,7 +581,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 108266659.5,
@@ -561,7 +594,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 216533318.5,
@@ -573,7 +607,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 216533318.5,
@@ -585,7 +620,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -614,7 +650,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 116927992.0,
@@ -626,7 +663,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 233855984.0,
@@ -638,7 +676,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 233855984.0,
@@ -650,7 +689,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -679,7 +719,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 127451511.0,
@@ -691,7 +732,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 254903023.0,
@@ -703,7 +745,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 254903023.0,
@@ -715,7 +758,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -744,7 +788,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 138922147.5,
@@ -756,7 +801,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 277844294.5,
@@ -768,7 +814,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 277844294.5,
@@ -780,7 +827,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -809,7 +857,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 150392783.5,
@@ -821,7 +870,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 300785566.5,
@@ -833,7 +883,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 300785566.5,
@@ -845,7 +896,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -874,7 +926,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 161863419.5,
@@ -886,7 +939,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 323726839.0,
@@ -898,7 +952,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 323726839.0,
@@ -910,7 +965,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     },
@@ -939,7 +995,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 173334055.5,
@@ -951,7 +1008,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         },
         {
           "attack": 346668111.0,
@@ -963,7 +1021,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 346668111.0,
@@ -975,7 +1034,8 @@
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "energy"
         }
       ]
     }

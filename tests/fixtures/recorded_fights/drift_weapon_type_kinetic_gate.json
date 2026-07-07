@@ -1,0 +1,37 @@
+{
+  "id": "drift_weapon_type_kinetic_gate",
+  "source": "mathematical invariant",
+  "description": "Weapon-type dimension: a synthetic Captain ShotsBonus (+100% shots, 1 round, chance 1.0) at CombatBegin scoped KineticOnly (Kuron ModuleKinetic recharge shape). The attacker carries one kinetic and one energy weapon, 1000 damage each, zero mitigation/pierce/crit. Round 1: the kinetic weapon fires round_half_even(1 x (1+1)) = 2 shots, the energy weapon keeps 1 shot. Under the engine's per-hit stacking convention (hit N of a weapon composes base x N: a 2-shot weapon deals 1000 + 2000), the kinetic weapon deals 3000 and the energy weapon 1000, so total_damage = 4000. Without the weapon-type gate both weapons would double (6000); with the gate wrongly excluding everything it would be 2000 - the band pins the kinetic-only value exactly.",
+  "attacker": {
+    "id": "kinetic_gate_attacker",
+    "attack": 2000,
+    "mitigation": 0.0,
+    "pierce": 0.0,
+    "crit_chance": 0.0,
+    "hull_health": 100000,
+    "shield_health": 0,
+    "weapons": [
+      { "attack": 1000, "shots": 1, "weapon_type": "kinetic" },
+      { "attack": 1000, "shots": 1, "weapon_type": "energy" }
+    ]
+  },
+  "defender": {
+    "id": "big_target",
+    "attack": 0,
+    "mitigation": 0.0,
+    "hull_health": 1000000,
+    "shield_health": 0
+  },
+  "simulation": {
+    "rounds": 1,
+    "seed": 7
+  },
+  "synthetic_crew": {
+    "combat_begin_kinetic_shots_bonus_pct": 1.0
+  },
+  "bands": {
+    "total_damage": [4000, 4000],
+    "rounds_simulated": [1, 1]
+  },
+  "expect_attacker_won": false
+}

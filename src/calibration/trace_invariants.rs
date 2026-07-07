@@ -329,7 +329,9 @@ pub fn check_trace_invariants(
     let mut expect_outbound_crit_after_attack_roll = false;
 
     for (i, ev) in events.iter().enumerate() {
-        if ev.round_index < 1 {
+        // Combat-begin trigger events (`apply_combat_begin_phase`: ability activations,
+        // shots-bonus / fire-delay / burning rolls) legitimately carry round_index 0.
+        if ev.round_index < 1 && ev.phase != "combat_begin" {
             record(
                 &mut errs,
                 i,

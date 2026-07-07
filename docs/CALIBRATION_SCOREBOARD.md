@@ -33,7 +33,7 @@ See [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) and [CALIBRAT
 | Recorded iteration passed | 0 |
 | Recorded iteration failed | 0 |
 | Metrics scored | 68 |
-| Mean σ (composite) | 0.2987 |
+| Mean σ (composite) | 0.3002 |
 | Max σ | 1.0000 |
 | Worst metric | `drift_survey_soak` `attacker_hull_remaining` σ=1.0000 |
 
@@ -176,8 +176,8 @@ Two-weapon attacker vs single-hull defender; exercises sub-round ordering.
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |
-| total_damage | 875.6000 | [300.0000, 4000.0000] | 0.689 | ok |
-| rounds_simulated | 5.0000 | [1.0000, 15.0000] | 0.429 | ok |
+| total_damage | 953.9200 | [300.0000, 4000.0000] | 0.647 | ok |
+| rounds_simulated | 4.0000 | [1.0000, 15.0000] | 0.571 | ok |
 | defender_hull_remaining | 0.0000 | [0.0000, 650.0000] | 1.000 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 150.0000] | 1.000 | ok |
 | attacker_hull_remaining | 1500.0000 | [800.0000, 1500.0000] | 1.000 | ok |
@@ -206,17 +206,6 @@ Mathematical invariant: Morale, Burning, and Hull Breach all active simultaneous
 | --- | ---: | --- | ---: | --- |
 | total_damage | 800.0000 | [780.0000, 820.0000] | 0.000 | ok |
 | rounds_simulated | 10.0000 | [10.0000, 10.0000] | 0.000 | ok |
-
-**fixture_ok:** yes
-
-### `drift_multi_shot_equal_damage`
-
-Two-shot weapon with zero mitigation/crit vs huge-hull defender: each hit deals the same base damage (1000 + 1000 = 2000 in round 1). Guards against per-hit accumulation of the PreAttackDamage stack base (hit N must not deal N x base).
-
-| metric | actual | band | σ | status |
-| --- | ---: | --- | ---: | --- |
-| total_damage | 2000.0000 | [1999.9000, 2000.1000] | 0.000 | ok |
-| rounds_simulated | 1.0000 | [1.0000, 1.0000] | 0.000 | ok |
 
 **fixture_ok:** yes
 
@@ -313,6 +302,19 @@ Low pierce survey-style attacker vs high-mitigation defender with shields; long 
 | defender_hull_remaining | 60.0000 | [0.0000, 800.0000] | 0.850 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 400.0000] | 1.000 | ok |
 | attacker_hull_remaining | 3000.0000 | [2500.0000, 3000.0000] | 1.000 | ok |
+
+**fixture_ok:** yes
+
+### `drift_weapon_type_kinetic_gate`
+
+Weapon-type dimension: a synthetic Captain ShotsBonus (+100% shots, 1 round, chance 1.0) at CombatBegin scoped KineticOnly (Kuron ModuleKinetic recharge shape). The attacker carries one kinetic and one energy weapon, 1000 damage each, zero mitigation/pierce/crit. Round 1: the kinetic weapon fires round_half_even(1 x (1+1)) = 2 shots, the energy weapon keeps 1 shot. Under the engine's per-hit stacking convention (hit N of a weapon composes base x N: a 2-shot weapon deals 1000 + 2000), the kinetic weapon deals 3000 and the energy weapon 1000, so total_damage = 4000. Without the weapon-type gate both weapons would double (6000); with the gate wrongly excluding everything it would be 2000 - the band pins the kinetic-only value exactly.
+
+| metric | actual | band | σ | status |
+| --- | ---: | --- | ---: | --- |
+| total_damage | 4000.0000 | [4000.0000, 4000.0000] | 0.000 | ok |
+| rounds_simulated | 1.0000 | [1.0000, 1.0000] | 0.000 | ok |
+
+**attacker_won:** ok
 
 **fixture_ok:** yes
 

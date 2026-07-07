@@ -149,6 +149,15 @@ pub enum AbilityEffect {
     /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
     /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
     CritDamageMultiplier(f64),
+    /// On-hit crit-damage stack (Seska "each time you score a hit (Once per weapon)"): each
+    /// attacker weapon's hit (re)arms one stack of `+bonus` (additive fraction on the crit-damage
+    /// product channel) lasting `duration_rounds`; at most one active stack per weapon, refreshed
+    /// when that weapon hits again. Duration is intrinsic — the compile path must NOT clip it with
+    /// a `RoundRange` gate. Stacks from all weapons multiply as `(1 + bonus)^active`.
+    OnHitCritDamageStack {
+        bonus: f64,
+        duration_rounds: u32,
+    },
     /// Hull HP restored when this ship gets a kill (on_kill). Reduces total_attacker_hull_damage.
     OnKillHullRegen(f64),
     /// Attack multiplier that decays each round. initial - round * decay_per_round, floored.
@@ -520,6 +529,38 @@ impl AbilityCondition {
     }
 }
 
+/// Restricts an effect to weapons of one damage type. Kept NEXT TO the effect (on [`Ability`] /
+/// [`ActiveAbilityEffect`]) rather than inside the [`AbilityEffect`] enum so effects stay `Copy`.
+/// Matching is lenient: weapons with [`crate::combat::WeaponType::Unknown`] match every scope,
+/// so untyped data sources behave exactly as before weapon typing existed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum WeaponTypeScope {
+    #[default]
+    All,
+    KineticOnly,
+    EnergyOnly,
+}
+
+impl WeaponTypeScope {
+    #[inline]
+    pub fn matches(self, weapon_type: crate::combat::WeaponType) -> bool {
+        match self {
+            Self::All => true,
+            Self::KineticOnly => weapon_type != crate::combat::WeaponType::Energy,
+            Self::EnergyOnly => weapon_type != crate::combat::WeaponType::Kinetic,
+        }
+    }
+
+    /// Stable slug for trace events and drop reports.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::All => "all",
+            Self::KineticOnly => "kinetic_only",
+            Self::EnergyOnly => "energy_only",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ability {
     pub name: String,
@@ -528,6 +569,8 @@ pub struct Ability {
     pub boostable: bool,
     pub effect: AbilityEffect,
     pub condition: Option<AbilityCondition>,
+    /// Weapon-type gate (e.g. upstream `ModuleKinetic`); `All` for the vast majority of effects.
+    pub weapon_scope: WeaponTypeScope,
 }
 
 /// Sentinel batch id: legacy or non-officer contexts group by consecutive matching [CrewSeatContext::officer_id].
@@ -639,6 +682,8 @@ pub struct ActiveAbilityEffect {
     pub effect: AbilityEffect,
     pub boosted: bool,
     pub condition: Option<AbilityCondition>,
+    /// Weapon-type gate copied from the source [`Ability`]; `All` unless the row is weapon-scoped.
+    pub weapon_scope: WeaponTypeScope,
 }
 
 impl AbilityClass {
@@ -672,6 +717,7 @@ pub fn active_effects_for_timing(
             effect: seat_context.ability.effect,
             boosted: seat_context.boosted,
             condition: seat_context.ability.condition.clone(),
+            weapon_scope: seat_context.ability.weapon_scope,
         })
         .collect()
 }
@@ -825,6 +871,10 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
         AbilityEffect::CritDamageMultiplier(m) => *m = scale(*m),
+        AbilityEffect::OnHitCritDamageStack {
+            bonus,
+            duration_rounds: _,
+        } => *bonus = scale(*bonus),
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
@@ -1312,6 +1362,7 @@ mod tests {
         effect: AbilityEffect,
     ) -> Ability {
         Ability {
+            weapon_scope: Default::default(),
             name: name.to_string(),
             class,
             timing,
@@ -2141,6 +2192,7 @@ mod tests {
     fn sum_mitigation_additive_sums_values() {
         let effects = vec![
             ActiveAbilityEffect {
+                weapon_scope: Default::default(),
                 ability_name: "a".into(),
                 officer_id: None,
                 effect: AbilityEffect::MitigationAdditive(0.1),
@@ -2148,6 +2200,7 @@ mod tests {
                 condition: None,
             },
             ActiveAbilityEffect {
+                weapon_scope: Default::default(),
                 ability_name: "b".into(),
                 officer_id: None,
                 effect: AbilityEffect::MitigationAdditive(0.05),
@@ -2162,6 +2215,7 @@ mod tests {
     fn sum_mitigation_additive_ignores_non_mitigation_effects() {
         let effects = vec![
             ActiveAbilityEffect {
+                weapon_scope: Default::default(),
                 ability_name: "a".into(),
                 officer_id: None,
                 effect: AbilityEffect::AttackMultiplier(0.1),
@@ -2169,6 +2223,7 @@ mod tests {
                 condition: None,
             },
             ActiveAbilityEffect {
+                weapon_scope: Default::default(),
                 ability_name: "b".into(),
                 officer_id: None,
                 effect: AbilityEffect::MitigationAdditive(0.05),
@@ -2414,5 +2469,34 @@ mod tests {
         };
         let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
         assert!(r.additive_points.abs() < 1e-12 && r.multiplicative_fraction.abs() < 1e-12);
+    }
+}
+
+#[cfg(test)]
+mod weapon_type_scope_tests {
+    use super::WeaponTypeScope;
+    use crate::combat::WeaponType;
+
+    #[test]
+    fn matches_truth_table() {
+        use WeaponType::{Energy, Kinetic, Unknown};
+        use WeaponTypeScope::{All, EnergyOnly, KineticOnly};
+        for wt in [Unknown, Energy, Kinetic] {
+            assert!(All.matches(wt), "All matches every weapon type");
+        }
+        assert!(KineticOnly.matches(Kinetic));
+        assert!(!KineticOnly.matches(Energy));
+        assert!(
+            KineticOnly.matches(Unknown),
+            "untyped weapons match leniently (pre-typing behavior)"
+        );
+        assert!(EnergyOnly.matches(Energy));
+        assert!(!EnergyOnly.matches(Kinetic));
+        assert!(EnergyOnly.matches(Unknown));
+    }
+
+    #[test]
+    fn default_scope_is_all() {
+        assert_eq!(WeaponTypeScope::default(), WeaponTypeScope::All);
     }
 }

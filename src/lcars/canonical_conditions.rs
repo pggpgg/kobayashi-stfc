@@ -7,6 +7,7 @@ use crate::combat::ShipType;
 
 fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
     LcarsCondition {
+        weapon_scope: Default::default(),
         condition_type: ty.into(),
         stat: None,
         threshold_pct: None,
@@ -34,6 +35,7 @@ fn lcars_defender_ship_type_is(slug: &str) -> LcarsCondition {
 /// LCARS `not` with exactly one child (see [`crate::lcars::lcars_condition_to_spec`]).
 fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
     LcarsCondition {
+        weapon_scope: Default::default(),
         condition_type: "not".to_string(),
         stat: None,
         threshold_pct: None,
@@ -60,6 +62,7 @@ fn lcars_attacker_ship_id_is(ship_id: &str) -> LcarsCondition {
 
 fn lcars_or(children: Vec<LcarsCondition>) -> LcarsCondition {
     LcarsCondition {
+        weapon_scope: Default::default(),
         condition_type: "or".to_string(),
         stat: None,
         threshold_pct: None,
@@ -183,9 +186,19 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             c.enemy_type = Some("group_armadas".to_string());
             return Some(c);
         }
-        // Weapon module line is not tracked in ship-vs-hostile condition eval; lenient `true` so
-        // kinetic/energy-gated rows are not dropped from the AND (see docs/CANONICAL_CONDITIONS.md).
-        "ModuleKinetic" | "ModuleEnergy" => return Some(lcars_cond_base("literal_true")),
+        // Weapon-type gates: compile-time scope extracted into `Ability.weapon_scope`
+        // (condition-tree evaluation stays `true`; the engine applies the effect only to
+        // weapons of the matching type — untyped weapons match leniently).
+        "ModuleKinetic" => {
+            let mut c = lcars_cond_base("attacker_weapon_scope");
+            c.weapon_scope = Some("kinetic".to_string());
+            return Some(c);
+        }
+        "ModuleEnergy" => {
+            let mut c = lcars_cond_base("attacker_weapon_scope");
+            c.weapon_scope = Some("energy".to_string());
+            return Some(c);
+        }
         "TargetStateAny" => return Some(lcars_target_state_any()),
         "SelfStateNone" => return Some(lcars_self_state_none_attacker_debuffs()),
         "SelfCloaked" | "SelfMining" => return Some(lcars_cond_base("literal_false")),
@@ -297,6 +310,7 @@ pub fn canonical_conditions_to_lcars(
         0 => None,
         1 => Some(mapped.pop().expect("len checked")),
         _ => Some(LcarsCondition {
+            weapon_scope: Default::default(),
             condition_type: "and".to_string(),
             stat: None,
             threshold_pct: None,

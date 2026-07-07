@@ -490,6 +490,7 @@ fn no_mercy_lethal_is_not_undone_by_attacker_round_end_hull_regen() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "test_regen".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::RoundEnd,
@@ -562,6 +563,7 @@ fn xindi_crit_debuff_reduces_player_crit_damage_on_outbound() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "1271329828".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::RoundStart,

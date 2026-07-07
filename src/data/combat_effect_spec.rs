@@ -302,6 +302,13 @@ pub enum AbilityConditionSpec {
     LiteralBool {
         value: bool,
     },
+    /// Weapon-type gate (canonical `ModuleKinetic` / `ModuleEnergy`). Compiles to
+    /// `LiteralBool(true)` in the condition tree; the scope itself is extracted out-of-band
+    /// into [`crate::combat::abilities::Ability::weapon_scope`] so the engine can apply the
+    /// effect per weapon. `scope` is `"kinetic"` or `"energy"`.
+    AttackerWeaponScope {
+        scope: String,
+    },
     DefenderShipTypeIs {
         ship_type: String,
     },

@@ -183,6 +183,7 @@ fn morale_injector_seat() -> CrewSeatContext {
     CrewSeatContext {
         seat: CrewSeat::BelowDeck,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "morale_src".into(),
             class: AbilityClass::BelowDeck,
             timing: TimingWindow::RoundStart,
