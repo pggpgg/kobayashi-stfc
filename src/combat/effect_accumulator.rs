@@ -599,7 +599,12 @@ impl EffectAccumulator {
         base * multiplier + flat
     }
 
+    /// Replace the PreAttackDamage base for the current hit. Called once per shot inside the
+    /// per-hit loop, so the key must be reset first — accumulating across hits would make hit N
+    /// of a multi-shot weapon deal N× base damage. Only this method writes to the key, so the
+    /// reset cannot drop ability contributions.
     pub(crate) fn set_pre_attack_damage_base(&mut self, base: f64) {
+        self.stacks.reset(EffectStatKey::PreAttackDamage);
         self.stacks.add(StackContribution::base(
             EffectStatKey::PreAttackDamage,
             base,
@@ -3033,6 +3038,16 @@ mod tests {
         // pre_attack_damage is in StatStacking, AttackMultiplier goes to pre_attack_modifier_sum
         // But set_pre_attack_damage_base adds to StatStacking, not to pre_attack_modifier_sum
         // So composed_pre_attack_damage should still be 1000 (stacking base)
+        assert!((acc.composed_pre_attack_damage() - 1000.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn set_pre_attack_damage_base_replaces_previous_hit() {
+        // Called once per shot in the per-hit loop: the second call must replace the first,
+        // not stack on top of it (hit 2 of a 2-shot weapon deals 1× base, not 2×).
+        let mut acc = EffectAccumulator::default();
+        acc.set_pre_attack_damage_base(1000.0);
+        acc.set_pre_attack_damage_base(1000.0);
         assert!((acc.composed_pre_attack_damage() - 1000.0).abs() < 1e-12);
     }
 
