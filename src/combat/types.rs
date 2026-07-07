@@ -378,6 +378,24 @@ pub struct SimulationResult {
     pub total_isolytic_damage: f64,
 }
 
+/// Weapon damage type (kinetic vs energy). Sourced from upstream `weapon_type` (1 = Energy,
+/// 2 = Kinetic); `Unknown` when the data source carries no type (legacy fixtures, scalar-attack
+/// fallback). Weapon-type-scoped effects match `Unknown` leniently, preserving pre-typed behavior.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WeaponType {
+    #[default]
+    Unknown,
+    Energy,
+    Kinetic,
+}
+
+impl WeaponType {
+    pub fn is_unknown(&self) -> bool {
+        *self == WeaponType::Unknown
+    }
+}
+
 /// Per-weapon stats for sub-round resolution. Optional fields override [`Combatant`] ship-level
 /// pierce/crit/proc for that weapon index only; unset → use combatant defaults.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -398,6 +416,9 @@ pub struct WeaponStats {
     pub proc_chance: Option<f64>,
     #[serde(default)]
     pub proc_multiplier: Option<f64>,
+    /// Damage type of this weapon; `Unknown` for data sources without weapon typing.
+    #[serde(default, skip_serializing_if = "WeaponType::is_unknown")]
+    pub weapon_type: WeaponType,
 }
 
 /// Parameters for dynamic hostile mitigation computation at combat time.
@@ -551,6 +572,14 @@ impl Combatant {
             .unwrap_or(self.pierce)
     }
 
+    /// Damage type of the weapon at `weapon_index`; `Unknown` for the scalar-attack fallback
+    /// weapon and for indices past the end of the weapons list.
+    pub fn weapon_type(&self, weapon_index: usize) -> WeaponType {
+        self.weapon_row(weapon_index)
+            .map(|w| w.weapon_type)
+            .unwrap_or(WeaponType::Unknown)
+    }
+
     pub fn weapon_crit_chance(&self, weapon_index: usize) -> f64 {
         self.weapon_row(weapon_index)
             .and_then(|w| w.crit_chance)
@@ -683,5 +712,50 @@ mod enemy_types_tests {
                 EnemyType::Waves,
             ]
         );
+    }
+}
+
+#[cfg(test)]
+mod weapon_type_tests {
+    use super::*;
+
+    #[test]
+    fn weapon_stats_without_weapon_type_deserializes_as_unknown() {
+        let w: WeaponStats = serde_json::from_str(r#"{ "attack": 1000.0, "shots": 2 }"#).unwrap();
+        assert_eq!(w.weapon_type, WeaponType::Unknown);
+    }
+
+    #[test]
+    fn weapon_stats_weapon_type_round_trips_and_skips_unknown() {
+        let w: WeaponStats =
+            serde_json::from_str(r#"{ "attack": 1.0, "weapon_type": "kinetic" }"#).unwrap();
+        assert_eq!(w.weapon_type, WeaponType::Kinetic);
+        let j = serde_json::to_string(&w).unwrap();
+        assert!(j.contains(r#""weapon_type":"kinetic""#));
+        let untyped = WeaponStats {
+            attack: 1.0,
+            ..Default::default()
+        };
+        let j = serde_json::to_string(&untyped).unwrap();
+        assert!(
+            !j.contains("weapon_type"),
+            "Unknown must be skipped so legacy serialized output stays stable: {j}"
+        );
+    }
+
+    #[test]
+    fn combatant_weapon_type_falls_back_to_unknown() {
+        let mut c = Combatant {
+            attack: 100.0,
+            ..Default::default()
+        };
+        assert_eq!(c.weapon_type(0), WeaponType::Unknown); // scalar-attack fallback weapon
+        c.weapons.push(WeaponStats {
+            attack: 1.0,
+            weapon_type: WeaponType::Energy,
+            ..Default::default()
+        });
+        assert_eq!(c.weapon_type(0), WeaponType::Energy);
+        assert_eq!(c.weapon_type(5), WeaponType::Unknown); // past the end
     }
 }

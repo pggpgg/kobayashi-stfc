@@ -499,6 +499,7 @@ mod tests {
         CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "test_ability".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::AttackPhase,
@@ -516,6 +517,7 @@ mod tests {
         CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: name.to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::AttackPhase,

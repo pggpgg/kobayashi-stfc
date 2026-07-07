@@ -165,6 +165,7 @@ fn extend_crew_with_isolytic_cascade_profile_and_static(
     seats.push(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "profile_isolytic_cascade_damage".to_string(),
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::AttackPhase,
@@ -276,6 +277,7 @@ fn extend_crew_with_player_crit_damage_reduction_profile_bonus(
     seats.push(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "profile_player_crit_damage_reduction".to_string(),
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::CombatBegin,
@@ -318,6 +320,7 @@ fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
     defender_seats.push(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: "opponent_profile_player_crit_damage_reduction".to_string(),
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::CombatBegin,

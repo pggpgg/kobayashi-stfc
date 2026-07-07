@@ -1362,6 +1362,9 @@ fn eval_static_condition(
     use crate::data::combat_effect_spec::AbilityConditionSpec as C;
     match cond {
         C::LiteralBool { value } => Some(*value),
+        // Weapon-type scope gates per weapon at combat time, not at fight setup; the condition
+        // tree compiles it to `true` and the engine applies the scope via `Ability.weapon_scope`.
+        C::AttackerWeaponScope { .. } => Some(true),
         C::AttackerShipTypeIs { ship_type } => ctx
             .attacker_ship_class
             .as_deref()

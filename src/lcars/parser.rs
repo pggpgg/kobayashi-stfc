@@ -291,6 +291,11 @@ pub struct LcarsCondition {
     /// Engagement tag slug for `engagement_includes` (e.g. `group_armadas`); same strings as [`crate::combat::EnemyType`] JSON.
     #[serde(default)]
     pub enemy_type: Option<String>,
+    /// Weapon damage-type slug (`"kinetic"` / `"energy"`) for `attacker_weapon_scope`
+    /// (canonical `ModuleKinetic` / `ModuleEnergy`). Extracted out-of-band at compile time
+    /// into [`crate::combat::abilities::Ability::weapon_scope`].
+    #[serde(default)]
+    pub weapon_scope: Option<String>,
     /// Raw STFC `battle_types` ids (from canonical attributes `battle_types=[...]`).
     /// Used by `combat_battle_type_any`.
     #[serde(default)]

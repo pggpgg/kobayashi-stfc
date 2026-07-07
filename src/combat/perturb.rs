@@ -293,6 +293,7 @@ mod tests {
         let mut a = mk_combatant();
         let mut d = mk_combatant();
         a.weapons.push(crate::combat::WeaponStats {
+            weapon_type: Default::default(),
             attack: 50.0,
             shots: Some(1),
             pierce: None,

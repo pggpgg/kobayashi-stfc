@@ -461,6 +461,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "hostile_proc_attack_x2".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -594,6 +595,7 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "def_sb_pierce".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::ShieldBreak,
@@ -757,6 +759,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "own_sb_damage".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::SelfShieldBreak,
@@ -1303,6 +1306,7 @@ fn officer_apex_shred_bonus_at_combat_begin_increases_damage_through_barrier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "Officer (Apex Shred)".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::CombatBegin,
@@ -1407,6 +1411,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "Officer (Apex Barrier)".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::CombatBegin,
@@ -1512,6 +1517,7 @@ fn ship_ability_pierce_bonus_at_round_start_increases_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "pierce_on_hit".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::RoundStart,
@@ -1611,6 +1617,7 @@ fn defender_faction_gates_combat_begin_attack_multiplier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "vs_klingon".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -1707,6 +1714,7 @@ fn defender_hostile_tag_mask_gates_combat_begin_attack_multiplier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "vs_conqueror_borg".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -1810,6 +1818,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "apex_vs_conqueror_borg".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -1912,6 +1921,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "beam_suppression".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2056,6 +2066,7 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "beam_suppression".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2164,6 +2175,7 @@ fn defender_ship_type_gate_attack_multiplier_only_matches_class() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "vs_battleship".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2285,6 +2297,7 @@ fn defender_opponent_kind_gate_npc_hostile_vs_player_ship() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "vs_npc_hostile".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2407,6 +2420,7 @@ fn attacker_ship_type_gate_attack_multiplier_only_matches_player_class() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "if_battleship".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2530,6 +2544,7 @@ fn and_attacker_defender_ship_type_gate_requires_both_hull_classes() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "bb_vs_explorer".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2680,6 +2695,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "full_mult".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2696,6 +2712,7 @@ fn round_cap_via_round_range_limits_combat_begin_attack_multiplier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "two_round_mult".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2822,6 +2839,7 @@ fn ship_ability_hostile_crit_reduction_preserves_more_attacker_hull() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "47269853".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -2914,6 +2932,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "receive_damage_apex_shred".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::ReceiveDamage,
@@ -3022,6 +3041,7 @@ fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::BelowDeck,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "round_start_morale".to_string(),
                 class: AbilityClass::BelowDeck,
                 timing: TimingWindow::RoundStart,
@@ -3125,6 +3145,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
             CrewSeatContext {
                 seat: CrewSeat::BelowDeck,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "morale_src".to_string(),
                     class: AbilityClass::BelowDeck,
                     timing: TimingWindow::RoundStart,
@@ -3139,6 +3160,7 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
             CrewSeatContext {
                 seat: CrewSeat::Ship,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "morale_gated_accum".to_string(),
                     class: AbilityClass::ShipAbility,
                     timing: TimingWindow::RoundStart,
@@ -3244,6 +3266,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "damage_buff".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::AttackPhase,
@@ -3262,6 +3285,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
             CrewSeatContext {
                 seat: CrewSeat::BelowDeck,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "dezoc_like_assimilate".to_string(),
                     class: AbilityClass::BelowDeck,
                     timing: TimingWindow::RoundStart,
@@ -3279,6 +3303,7 @@ fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "damage_buff".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::AttackPhase,
@@ -3394,6 +3419,7 @@ fn dezoc_style_assimilated_can_trigger_from_below_decks() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::BelowDeck,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "Dezoc".to_string(),
                 class: AbilityClass::BelowDeck,
                 timing: TimingWindow::RoundStart,
@@ -3504,6 +3530,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "Lorca".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -3620,6 +3647,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "crit_cap".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -3730,6 +3758,7 @@ fn typed_crit_damage_multiplier_multiplies_combatant_crit_tier() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "crit_dmg".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -3827,6 +3856,7 @@ fn hull_breach_can_trigger_from_critical_hit_officer_ability() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "Gorkon".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::AttackPhase,
@@ -4385,6 +4415,7 @@ fn crit_damage_floor_clamps_attacker_outbound_reduction() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "opponent_cdr".to_string(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::CombatBegin,
@@ -4603,6 +4634,7 @@ fn stacking_is_order_independent_within_categories() {
 #[test]
 fn crew_slot_gating_matrix_controls_activation() {
     let captain_ability = Ability {
+        weapon_scope: Default::default(),
         name: "captain_strike".to_string(),
         class: AbilityClass::CaptainManeuver,
         timing: TimingWindow::AttackPhase,
@@ -4611,6 +4643,7 @@ fn crew_slot_gating_matrix_controls_activation() {
         condition: None,
     };
     let bridge_ability = Ability {
+        weapon_scope: Default::default(),
         name: "bridge_targeting".to_string(),
         class: AbilityClass::BridgeAbility,
         timing: TimingWindow::AttackPhase,
@@ -4737,6 +4770,7 @@ fn crew_slot_gating_matrix_controls_activation() {
 #[test]
 fn boosted_non_boostable_abilities_are_filtered_out() {
     let non_boostable = Ability {
+        weapon_scope: Default::default(),
         name: "steady_hands".to_string(),
         class: AbilityClass::BridgeAbility,
         timing: TimingWindow::AttackPhase,
@@ -4926,6 +4960,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "pierce_now".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::AttackPhase,
@@ -4942,6 +4977,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "pierce_early".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundStart,
@@ -4958,6 +4994,7 @@ fn timing_windows_materially_change_damage_outcomes() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "pierce_on_defense".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::DefensePhase,
@@ -5039,6 +5076,7 @@ fn burning_deals_one_percent_hull_per_round() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "georgiou".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundStart,
@@ -5094,6 +5132,7 @@ fn burning_only_crew(timing: TimingWindow) -> CrewConfiguration {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "burn-timing-test".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing,
@@ -5504,6 +5543,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "fixture-hull-breach-proc".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -5522,6 +5562,7 @@ fn burning_triggers_on_hull_breach_state_entry() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "burn-timing-test".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::HullBreach,
@@ -5856,6 +5897,7 @@ fn emits_ability_activation_for_each_timing_window() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "combat_begin_alpha".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::CombatBegin,
@@ -5870,6 +5912,7 @@ fn emits_ability_activation_for_each_timing_window() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "round_start_alpha".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -5884,6 +5927,7 @@ fn emits_ability_activation_for_each_timing_window() {
             CrewSeatContext {
                 seat: CrewSeat::BelowDeck,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "attack_alpha".to_string(),
                     class: AbilityClass::BelowDeck,
                     timing: TimingWindow::AttackPhase,
@@ -5898,6 +5942,7 @@ fn emits_ability_activation_for_each_timing_window() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "defense_alpha".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::DefensePhase,
@@ -5912,6 +5957,7 @@ fn emits_ability_activation_for_each_timing_window() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "round_end_alpha".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundEnd,
@@ -5926,6 +5972,7 @@ fn emits_ability_activation_for_each_timing_window() {
             CrewSeatContext {
                 seat: CrewSeat::Ship,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "after_sub_alpha".to_string(),
                     class: AbilityClass::ShipAbility,
                     timing: TimingWindow::AfterSubround,
@@ -6037,6 +6084,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "round_start_ten_alpha".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::RoundStart,
@@ -6051,6 +6099,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "round_start_ten_beta".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -6068,6 +6117,7 @@ fn additive_attack_modifiers_match_canonical_summed_behavior() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "round_start_twenty".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundStart,
@@ -6163,6 +6213,7 @@ fn decaying_attack_multiplier_reduces_damage_over_rounds() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "decay".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -6258,6 +6309,7 @@ fn accumulating_attack_multiplier_increases_damage_over_rounds() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "accumulate".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -6436,6 +6488,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "ShieldRegen".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundEnd,
@@ -6450,6 +6503,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "HullRegen".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundEnd,
@@ -6771,6 +6825,7 @@ fn crew_isolytic_damage_bonus_increases_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "test_iso".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -6865,6 +6920,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "iso".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -6882,6 +6938,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "iso".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -6896,6 +6953,7 @@ fn crew_isolytic_cascade_damage_bonus_increases_damage() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "cascade".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::RoundStart,
@@ -7207,6 +7265,7 @@ fn shots_bonus_increases_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "ShotsCaptain".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundStart,
@@ -7290,6 +7349,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "shield_break_ping".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::ShieldBreak,
@@ -7304,6 +7364,7 @@ fn shield_break_and_receive_damage_windows_emit_activations() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "on_receive_damage_ping".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::ReceiveDamage,
@@ -7410,6 +7471,7 @@ fn kill_window_emits_activation_and_applies_hull_regen() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Captain,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "kill_heal".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::Kill,
@@ -7538,6 +7600,7 @@ fn combat_end_window_respects_condition_filtering() {
             CrewSeatContext {
                 seat: CrewSeat::Captain,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "combat_end_true".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::CombatEnd,
@@ -7555,6 +7618,7 @@ fn combat_end_window_respects_condition_filtering() {
             CrewSeatContext {
                 seat: CrewSeat::Bridge,
                 ability: Ability {
+                    weapon_scope: Default::default(),
                     name: "combat_end_false".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::CombatEnd,
@@ -7668,6 +7732,7 @@ fn stack_resolution_trace_emits_effect_stack_breakdown() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "attack_phase_amp".to_string(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::AttackPhase,
@@ -7824,6 +7889,7 @@ fn attacker_round_start_hull_regen_stacks_across_rounds() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "test_hull_regen_rs".into(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -7915,6 +7981,7 @@ fn attacker_round_start_hull_max_fraction_regen_uses_max_hull() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "test_hull_max_fraction_regen_rs".into(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::RoundStart,
@@ -8011,6 +8078,7 @@ fn defender_round_start_hull_regen_heals_defender() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "def_hull_rs".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::RoundStart,
@@ -8141,6 +8209,7 @@ fn pic_hugh_prev_round_hull_fraction_heals_at_round_start() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::BelowDeck,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "Reclaiming Lives".into(),
                 class: AbilityClass::BelowDeck,
                 timing: TimingWindow::RoundStart,
@@ -8270,6 +8339,7 @@ fn engagement_group_armadas_gates_combat_begin_isolytic_defense_on_counter() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Bridge,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "right_to_protest_style".into(),
                 class: AbilityClass::BridgeAbility,
                 timing: TimingWindow::CombatBegin,
@@ -8389,6 +8459,7 @@ fn mara_style_shield_prev_round_heal_vs_armada_defender_only() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::BelowDeck,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "defy_defeat_style".into(),
                 class: AbilityClass::BelowDeck,
                 timing: TimingWindow::RoundStart,
@@ -8529,6 +8600,7 @@ fn defender_inbound_defense_phase_reduces_incoming_damage() {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: "inbound_shield_mit_test".into(),
                 class: AbilityClass::ShipAbility,
                 timing: TimingWindow::DefensePhase,

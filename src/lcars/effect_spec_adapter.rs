@@ -322,6 +322,14 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
         }
         "literal_true" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
         "literal_false" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
+        "attacker_weapon_scope" => match c.weapon_scope.as_deref() {
+            Some(slug @ ("kinetic" | "energy")) => Ok(AbilityConditionSpec::AttackerWeaponScope {
+                scope: slug.to_string(),
+            }),
+            other => Err(format!(
+                "attacker_weapon_scope condition requires `weapon_scope` of kinetic|energy, got {other:?}"
+            )),
+        },
         "defender_faction_is"
         | "defender_faction"
         | "opponent_faction_is"
@@ -1192,6 +1200,7 @@ mod tests {
     #[test]
     fn lcars_self_officer_tal_not_on_bridge_maps_to_spec() {
         let c = LcarsCondition {
+            weapon_scope: Default::default(),
             condition_type: "self_officer_tal_not_on_bridge".into(),
             stat: None,
             threshold_pct: None,
@@ -1370,6 +1379,7 @@ mod tests {
     #[test]
     fn lcars_effect_with_unmapped_condition_yields_no_spec_row() {
         let bad_c = LcarsCondition {
+            weapon_scope: Default::default(),
             condition_type: "totally_unknown_condition_xyz".into(),
             stat: None,
             threshold_pct: None,
@@ -1407,6 +1417,7 @@ mod tests {
             "must not emit spec without encoding the YAML condition"
         );
         let good_c = LcarsCondition {
+            weapon_scope: Default::default(),
             condition_type: "defender_burning".into(),
             stat: None,
             threshold_pct: None,

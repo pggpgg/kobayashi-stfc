@@ -26,14 +26,14 @@ See [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) and [CALIBRAT
 
 | Metric | Value |
 | --- | ---: |
-| Drift fixtures passed | 20 |
+| Drift fixtures passed | 21 |
 | Drift fixtures failed | 0 |
 | Recorded fights passed | 0 |
 | Recorded fights failed | 0 |
 | Recorded iteration passed | 0 |
 | Recorded iteration failed | 0 |
-| Metrics scored | 66 |
-| Mean σ (composite) | 0.3093 |
+| Metrics scored | 68 |
+| Mean σ (composite) | 0.3002 |
 | Max σ | 1.0000 |
 | Worst metric | `drift_survey_soak` `attacker_hull_remaining` σ=1.0000 |
 
@@ -302,6 +302,19 @@ Low pierce survey-style attacker vs high-mitigation defender with shields; long 
 | defender_hull_remaining | 60.0000 | [0.0000, 800.0000] | 0.850 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 400.0000] | 1.000 | ok |
 | attacker_hull_remaining | 3000.0000 | [2500.0000, 3000.0000] | 1.000 | ok |
+
+**fixture_ok:** yes
+
+### `drift_weapon_type_kinetic_gate`
+
+Weapon-type dimension: a synthetic Captain ShotsBonus (+100% shots, 1 round, chance 1.0) at CombatBegin scoped KineticOnly (Kuron ModuleKinetic recharge shape). The attacker carries one kinetic and one energy weapon, 1000 damage each, zero mitigation/pierce/crit. Round 1: the kinetic weapon fires round_half_even(1 x (1+1)) = 2 shots, the energy weapon keeps 1 shot. Under the engine's per-hit stacking convention (hit N of a weapon composes base x N: a 2-shot weapon deals 1000 + 2000), the kinetic weapon deals 3000 and the energy weapon 1000, so total_damage = 4000. Without the weapon-type gate both weapons would double (6000); with the gate wrongly excluding everything it would be 2000 - the band pins the kinetic-only value exactly.
+
+| metric | actual | band | σ | status |
+| --- | ---: | --- | ---: | --- |
+| total_damage | 4000.0000 | [4000.0000, 4000.0000] | 0.000 | ok |
+| rounds_simulated | 1.0000 | [1.0000, 1.0000] | 0.000 | ok |
+
+**attacker_won:** ok
 
 **fixture_ok:** yes
 

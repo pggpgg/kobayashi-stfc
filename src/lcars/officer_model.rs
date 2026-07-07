@@ -586,6 +586,7 @@ fn effect_condition_from_canonical(
     if wants_hull_faction {
         match faction_id_from_canonical_attributes(attrs) {
             Some(fid) => conditions.push(LcarsCondition {
+                weapon_scope: Default::default(),
                 condition_type: "defender_hull_faction_id".to_string(),
                 stat: None,
                 threshold_pct: None,
@@ -614,6 +615,7 @@ fn effect_condition_from_canonical(
     if wants_combat_battle_type {
         match battle_types_from_canonical_attributes(attrs) {
             Some(ids) if !ids.is_empty() => conditions.push(LcarsCondition {
+                weapon_scope: Default::default(),
                 condition_type: "combat_battle_type_any".to_string(),
                 stat: None,
                 threshold_pct: None,
@@ -640,6 +642,7 @@ fn effect_condition_from_canonical(
     if wants_target_max_level {
         match max_level_from_canonical_attributes(attrs) {
             Some(max_level) => conditions.push(LcarsCondition {
+                weapon_scope: Default::default(),
                 condition_type: "defender_level_at_most".to_string(),
                 stat: None,
                 threshold_pct: None,
@@ -687,6 +690,7 @@ fn effect_condition_from_canonical(
         0 => None,
         1 => conditions.pop(),
         _ => Some(LcarsCondition {
+            weapon_scope: Default::default(),
             condition_type: "and".to_string(),
             stat: None,
             threshold_pct: None,
@@ -827,6 +831,18 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 // Officer-stat keys honor canonical `num_rounds` (e.g. Kirk OfficerStatAll
                 // `num_rounds=1` → first-round-only), matching the Tag path. Other stat_modify
                 // effects (shield drain, weapon damage, …) stay permanent unless handled above.
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|n| LcarsDuration::Rounds { rounds: n })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+            } else if stat == "crit_damage"
+                && operator == "add"
+                && a.trigger.as_deref() == Some("EnemyTakesHit")
+            {
+                // "Each time you score a hit" crit-damage buffs honor canonical `num_rounds`
+                // (Seska `num_rounds=4` → per-weapon on-hit stacks with intrinsic 4-round
+                // expiry; see AbilityEffect::OnHitCritDamageStack). Deliberately narrow:
+                // `HitTaken` (damage-taken) rows and other stats keep their existing
+                // permanent-buff approximation.
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|n| LcarsDuration::Rounds { rounds: n })
                     .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
@@ -989,6 +1005,7 @@ fn hull_health_condition_from_canonical_attributes(
         "stat_below"
     };
     Some(LcarsCondition {
+        weapon_scope: Default::default(),
         condition_type: ty.to_string(),
         stat: Some(stat.to_string()),
         threshold_pct: Some(threshold_pct),

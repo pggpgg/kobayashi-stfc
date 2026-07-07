@@ -29,7 +29,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 21510.5,
@@ -41,7 +42,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -70,7 +72,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 21726.0,
@@ -82,7 +85,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -111,7 +115,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 22160.5,
@@ -123,7 +128,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -152,7 +158,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 23933.0,
@@ -164,7 +171,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -193,7 +201,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 27523.0,
@@ -205,7 +214,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -234,7 +244,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 31376.0,
@@ -246,7 +257,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -275,7 +287,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 34513.5,
@@ -287,7 +300,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -316,7 +330,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 37274.5,
@@ -328,7 +343,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     },
@@ -357,7 +373,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         },
         {
           "attack": 38766.0,
@@ -369,7 +386,8 @@
           "crit_chance": 0.15,
           "crit_multiplier": 1.35,
           "proc_chance": null,
-          "proc_multiplier": null
+          "proc_multiplier": null,
+          "weapon_type": "kinetic"
         }
       ]
     }

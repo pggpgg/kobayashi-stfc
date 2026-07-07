@@ -316,6 +316,7 @@ fn push_hostile_catalog_seat(
     seats.push(CrewSeatContext {
         seat: CrewSeat::Ship,
         ability: Ability {
+            weapon_scope: Default::default(),
             name: parsed.id.clone(),
             class: AbilityClass::ShipAbility,
             timing,
@@ -436,6 +437,7 @@ pub fn hostile_abilities_to_defender_crew_via_spec(
         seats.push(CrewSeatContext {
             seat: CrewSeat::Ship,
             ability: Ability {
+                weapon_scope: Default::default(),
                 name: parsed.id.clone(),
                 class: AbilityClass::ShipAbility,
                 timing,

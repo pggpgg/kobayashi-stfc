@@ -363,7 +363,12 @@ fn map_condition_token(
             ship_type: "armada".into(),
         }),
         "TargetNotInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
-        "ModuleKinetic" | "ModuleEnergy" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "ModuleKinetic" => Ok(AbilityConditionSpec::AttackerWeaponScope {
+            scope: "kinetic".into(),
+        }),
+        "ModuleEnergy" => Ok(AbilityConditionSpec::AttackerWeaponScope {
+            scope: "energy".into(),
+        }),
         "TargetStateAny" => Ok(AbilityConditionSpec::Or {
             any: vec![
                 AbilityConditionSpec::DefenderBurning,

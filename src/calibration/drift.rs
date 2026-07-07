@@ -75,6 +75,12 @@ pub struct DriftSyntheticCrew {
     /// `CombatContext::defender_faction` and gates combat in the calibration path.
     #[serde(default)]
     pub faction_gated_attack_multiplier: Option<f64>,
+    /// Apply a deterministic [`AbilityEffect::ShotsBonus`] (chance 1.0, 1 round) at CombatBegin
+    /// scoped to **kinetic weapons only** ([`WeaponTypeScope::KineticOnly`]). Weapons with
+    /// `weapon_type: "energy"` keep base shots; untyped weapons match leniently. Exercises the
+    /// weapon-type dimension (Kuron-style `ModuleKinetic` recharge gate).
+    #[serde(default)]
+    pub combat_begin_kinetic_shots_bonus_pct: Option<f64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -170,6 +176,9 @@ pub struct FixtureWeapon {
     pub crit_multiplier: Option<f64>,
     pub proc_chance: Option<f64>,
     pub proc_multiplier: Option<f64>,
+    /// Weapon damage type (`"energy"` / `"kinetic"`); absent = untyped (matches every scope).
+    #[serde(default)]
+    pub weapon_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -201,6 +210,7 @@ fn crew_for_drift(
         attacker_seats.push(CrewSeatContext::legacy(
             CrewSeat::Captain,
             Ability {
+                weapon_scope: Default::default(),
                 name: "drift_synthetic_attack_mult".to_string(),
                 class: AbilityClass::CaptainManeuver,
                 timing: TimingWindow::RoundStart,
@@ -212,11 +222,34 @@ fn crew_for_drift(
         ));
     }
 
+    if let Some(bonus_pct) = c.combat_begin_kinetic_shots_bonus_pct {
+        if bonus_pct.is_finite() && bonus_pct > 0.0 {
+            attacker_seats.push(CrewSeatContext::legacy(
+                CrewSeat::Captain,
+                Ability {
+                    weapon_scope: crate::combat::WeaponTypeScope::KineticOnly,
+                    name: "drift_synthetic_kinetic_shots_bonus".to_string(),
+                    class: AbilityClass::CaptainManeuver,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::ShotsBonus {
+                        chance: 1.0,
+                        bonus_pct,
+                        duration_rounds: 1,
+                    },
+                    condition: None,
+                },
+                false,
+            ));
+        }
+    }
+
     if let Some(rounds) = c.defender_hull_breach_rounds {
         if rounds > 0 {
             attacker_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Bridge,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_hull_breach".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -238,6 +271,7 @@ fn crew_for_drift(
             attacker_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Bridge,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_burning".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -258,6 +292,7 @@ fn crew_for_drift(
             attacker_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Bridge,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_morale".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::RoundStart,
@@ -275,6 +310,7 @@ fn crew_for_drift(
             attacker_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Bridge,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_on_kill_hull_regen".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::Kill,
@@ -292,6 +328,7 @@ fn crew_for_drift(
             attacker_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Captain,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_faction_gated_attack_mult".to_string(),
                     class: AbilityClass::CaptainManeuver,
                     timing: TimingWindow::RoundStart,
@@ -315,6 +352,7 @@ fn crew_for_drift(
             defender_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Bridge,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_attacker_hull_breach".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::AttackPhase,
@@ -336,6 +374,7 @@ fn crew_for_drift(
             defender_seats.push(CrewSeatContext::legacy(
                 CrewSeat::Bridge,
                 Ability {
+                    weapon_scope: Default::default(),
                     name: "drift_synthetic_attacker_burning".to_string(),
                     class: AbilityClass::BridgeAbility,
                     timing: TimingWindow::AttackPhase,
@@ -414,6 +453,7 @@ impl FixtureCombatant {
                 crit_multiplier: w.crit_multiplier,
                 proc_chance: w.proc_chance,
                 proc_multiplier: w.proc_multiplier,
+                weapon_type: crate::data::ship::weapon_type_from_slug(w.weapon_type.as_deref()),
             })
             .collect();
         Combatant {
