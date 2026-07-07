@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-06-16):** There are **976** unique upstream hostile ability ids across **2,865** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **250** modeled for defender-side counter-fire (`defender_crew`), **726** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-07):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **261** modeled for defender-side counter-fire (`defender_crew`), **721** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
 
@@ -54,30 +54,33 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 
 | Metric | Count |
 | --- | ---: |
-| Unique upstream ability ids | 976 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 250 |
-| `combat_noop` (catalogued, inert in sim) | 726 |
+| Unique upstream ability ids | 982 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 261 |
+| `combat_noop` (catalogued, inert in sim) | 721 |
 
-**Modeled effect types (250 ids):**
+**Modeled effect types (261 ids):**
 
 | `effect_type` | Ids |
 | --- | ---: |
-| `isolytic_damage` | 91 |
-| `isolytic_defense` | 80 |
-| `apex_barrier` | 55 |
-| `attack_multiplier` | 19 |
+| `isolytic_damage` | 88 |
+| `isolytic_defense` | 82 |
+| `apex_barrier` | 54 |
+| `attack_multiplier` | 22 |
+| `hostile_hyperthermic_decay` | 4 |
 | `hostile_crit_damage_reduction` | 3 |
+| `hostile_crit_damage_floor` | 2 |
+| `shield_mitigation_bypass` | 2 |
+| `hostile_isolytic_vulnerability` | 1 |
+| `crit_chance` (+ `crit_damage` / `hostile_crit_damage_floor` extra seats) | 1 |
 | `hostile_lethal_end_of_round` | 1 |
-| `accumulating_attack_multiplier` | 1 |
+| `hostile_kemocite_weaponry` | 1 |
 
 **Not yet modeled (high instance count, remain `combat_noop`):**
 
-- Multi-stat crit (`2291206649` Critical Training — 325 hostiles): crit chance + crit damage + crit floor in one row
-- Crit damage floor (`2486538514`, `788454016` — 273 hostiles): no `crit_damage_floor` `AbilityEffect` seat yet
-- PvP player targeting (7 ids, 506 instances): default PvE path is ship vs NPC hostile
-- Armada scope (124 ids, 257 instances)
+- PvP player targeting (4 ids, 422 instances): default PvE path is ship vs NPC hostile
+- Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (454 ids): burning procs, extra shots, faction gates, etc.
+- `other_review` (453 ids): burning procs, extra shots, faction gates, etc.
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -87,17 +90,17 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 
 | Bucket | Unique ids | Hostile instances | Decision |
 | --- | ---: | ---: | --- |
-| Isolytic combat-start | 171 | 1,532 | **Modeled** — `combat_begin` + `isolytic_damage` / `isolytic_defense` |
-| Apex barrier | 55 | 384 | **Modeled** — `combat_begin` + `apex_barrier` |
-| Weapon damage conditional | 20 | 127 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
-| Crit multi-stat | 1 | 325 | **Keep noop** until multi-effect catalog row or split ids |
-| Crit damage floor | 2 | 384 | **Keep noop** until `crit_damage_floor` ability seat exists |
-| PvP enemy player | 7 | 506 | **Keep noop** on default ship-vs-hostile path |
-| Armada | 124 | 257 | **Keep noop** — no armada scenario |
+| Isolytic combat-start | 170 | 1,498 | **Modeled** — `combat_begin` + `isolytic_damage` / `isolytic_defense` |
+| Apex barrier | 54 | 368 | **Modeled** — `combat_begin` + `apex_barrier` |
+| Weapon damage conditional | 19 | 121 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
+| Crit multi-stat | 1 | 325 | **Modeled** — Critical Training emits `crit_chance` plus `crit_damage` / `hostile_crit_damage_floor` extra seats |
+| Crit damage floor | 2 | 273 | **Modeled** — Diverted Power emits `hostile_crit_damage_floor` |
+| PvP enemy player | 4 | 422 | **Keep noop** on default ship-vs-hostile path |
+| Armada | 125 | 260 | **Keep noop** — no armada scenario |
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
-| Defense stat review | 85 | 187 | **Keep noop** pending defender mitigation seat mapping |
+| Defense stat review | 82 | 142 | **Keep noop** pending defender mitigation seat mapping |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 454 | 1,068 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 453 | 1,011 | **Shard triage** — extend generator or overrides per pattern |
 
 ---
 
@@ -105,11 +108,11 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 
 | Ability id | Hostiles | Bucket | Catalog `effect_type` | Text (plain snippet) |
 | --- | ---: | --- | --- | --- |
-| `2291206649` | 325 | crit_multi_stat_review | `combat_noop` | Critical Training — crit chance + damage + floor at combat start |
+| `2291206649` | 325 | crit_multi_stat_modeled | `crit_chance` + `crit_damage` / `hostile_crit_damage_floor` extra seats | Critical Training — crit chance + damage + floor at combat start |
 | `849650945` | 194 | pvp_player_target | `combat_noop` | Deadlock — hull breach enemy player |
 | `910140799` | 194 | pvp_player_target | `combat_noop` | Dismantlement — weapon damage if enemy player hull breached |
-| `2486538514` | 162 | crit_floor_unmodeled | `combat_noop` | Diverted Power — crit damage floor |
-| `788454016` | 111 | crit_floor_unmodeled | `combat_noop` | Diverted Power — crit damage floor |
+| `2486538514` | 162 | crit_floor_modeled | `hostile_crit_damage_floor` | Diverted Power — crit damage floor |
+| `788454016` | 111 | crit_floor_modeled | `hostile_crit_damage_floor` | Diverted Power — crit damage floor |
 | `3172395625` | 90 | isolytic_combat | `isolytic_damage` | Elite Assassin Training — isolytic at combat start |
 | `2747222231` | 82 | outpost_scope | `combat_noop` | Diverted Power (outpost) |
 | `1782396999` | 69 | apex_combat | `apex_barrier` | Not So Wounded — apex barrier |
@@ -134,7 +137,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 1. Run from repo root: `python3 scripts/generate_full_hostile_ability_catalog.py`
 2. **Overrides:** After heuristics, merges [`hostile_ability_catalog_overrides.json`](../data/upstream/data-stfc-space/hostile_ability_catalog_overrides.json) (`entries`: ability id → full catalog row).
 3. **Audit metadata:** `hostile_ability_audit_meta.json` (bucket + hostile counts per id; not consumed at runtime).
-4. **Diff:** Compare regenerated catalog to previous commit; port intentional deltas into the Python classifier or overrides file.
+4. **Diff:** Compare regenerated catalog to previous commit; port intentional deltas into the Python classifier or overrides file. The nine hand-maintained aggregation/offense/isolytic rows currently live in the overrides file so regeneration is idempotent.
 5. **Parity test:** `cargo test --test hostile_ability_catalog_parity` — catalog keys must cover every upstream ability id.
 
 ---

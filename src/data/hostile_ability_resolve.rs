@@ -392,6 +392,8 @@ pub fn hostile_abilities_to_defender_crew(
 /// Mirrors [`hostile_abilities_to_defender_crew`] but routes through
 /// [`crate::data::hostile_ability_effect_spec_adapter::hostile_ability_to_combat_effect_spec`]
 /// → [`crate::combat::effect_spec_compile::compile_officer_combat_spec`].
+/// This parity helper currently compiles only the primary catalog row; production
+/// defender-crew resolution above also emits recursive `extra_seats`.
 pub fn hostile_abilities_to_defender_crew_via_spec(
     upstream_abilities: &[Value],
     catalog: Option<&HostileAbilityCatalog>,

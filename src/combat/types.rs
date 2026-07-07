@@ -464,10 +464,12 @@ pub struct Combatant {
     pub crit_multiplier: f64,
     /// Defensive clamp: per-shot crit resolution enforces `effective_crit_multiplier ≥
     /// crit_damage_floor` AFTER any attacker-outbound crit-damage reduction is applied
-    /// and BEFORE hull-breach amplification. Populated by [`apply_profile_to_attacker`]
-    /// from the `crit_damage_floor` profile key (sum across owned "Critical Damage Floor"
-    /// research nodes — additive per the upstream catalog). When zero (default), the
-    /// clamp is a no-op.
+    /// and BEFORE hull-breach amplification; defender counter-fire uses the same ordering
+    /// after player-applied hostile crit-damage reduction. Populated by
+    /// [`apply_profile_to_attacker`] from the `crit_damage_floor` profile key (sum across
+    /// owned "Critical Damage Floor" research nodes — additive per the upstream catalog)
+    /// and by modeled hostile defender-crew abilities at scenario build. When zero
+    /// (default), the clamp is a no-op.
     #[serde(default)]
     pub crit_damage_floor: f64,
     pub proc_chance: f64,

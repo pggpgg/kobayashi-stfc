@@ -11,8 +11,8 @@ pub use crate::combat::types::{
     CrewOfficerStatTotals, DefenderStats, EnemyTypes, EventSource, HostileMitigationParams,
     OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
     WeaponStats, WeaponType, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
-    INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PRIMARY_PIERCING_BONUS,
-    SURVEY_COEFFICIENTS,
+    HULL_BREACH_CRIT_BONUS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS,
+    MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -3641,9 +3641,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             defender_phase_effects.defense_mitigation_bonus(),
         );
         let attacker_hull_breach_active_for_crit = st.attacker_hull_breach_rounds > 0;
-        // Defender counter-fire: pass 0 for the new attacker-outbound CDR / floor
-        // params. The existing `hostile_crit_reduction` post-call adjustment below
-        // keeps the player-side defensive CDR semantics intact.
+        // Defender counter-fire: pass 0 for the attacker-outbound CDR params.
+        // Counter-side CDR is applied below so the hostile crit floor can clamp after it.
         let def_crit = resolve_vehicle_weapon_crit(
             defender.weapon_crit_chance(weapon_index),
             defender_phase_effects.crit_chance_bonus(),
@@ -3652,7 +3651,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             0.0,
             0.0,
             0.0,
-            0.0,
+            defender.crit_damage_floor,
             attacker_hull_breach_active_for_crit,
             &mut *rng,
         );
@@ -3664,6 +3663,16 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         // apply the resolved fraction.
         if def_is_crit && hostile_crit_reduction.multiplicative_fraction > 0.0 {
             def_crit_mult *= (1.0 - hostile_crit_reduction.multiplicative_fraction).max(0.05);
+        }
+        if def_is_crit && defender.crit_damage_floor > 0.0 {
+            // Hostile critical-damage floors are modeled as protection against player CDR:
+            // reduction first, floor second, hull-breach amplification last.
+            let hb = if attacker_hull_breach_active_for_crit {
+                HULL_BREACH_CRIT_BONUS
+            } else {
+                1.0
+            };
+            def_crit_mult = def_crit_mult.max(defender.crit_damage_floor * hb);
         }
         trace.record_if(|| CombatEvent {
             event_type: "crit_resolution".to_string(),
