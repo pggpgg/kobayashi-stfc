@@ -30,7 +30,7 @@ NOOP = {
     "effect_type": "combat_noop",
     "value_is_percentage": False,
     "ignore_upstream_value_is_percentage": True,
-    "value_override": 0.0,
+    "value_override": 0,
 }
 
 
@@ -154,7 +154,7 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     # Be Like Water + Xindi Might text: weapon component only (9×20B), no extra lethal seat.
     if "critical hit damage" in p and "start of the round" in p and "reduces" in p:
         stacks = "can stack" in p
-        value_override = 25.0 if "2500" in p else None
+        value_override = 25 if "2500" in p else None
         extras = None
         if "doomed species" in p and ("xindi weaponry" in p or "particle beam" in p):
             extras = [
@@ -268,11 +268,42 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
 
     # Multi-stat crit rows (Critical Training: chance + damage + floor in one ability)
     if "critical hit chance" in p and "critical hit damage" in p and "critical damage floor" in p:
-        return dict(NOOP), "crit_multi_stat_review"
+        return (
+            modeled(
+                "combat_begin",
+                "crit_chance",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                value_override=1000.0,
+                extra_seats=[
+                    modeled(
+                        "combat_begin",
+                        "crit_damage",
+                        value_is_percentage=False,
+                        ignore_upstream_value_is_percentage=True,
+                    ),
+                    modeled(
+                        "combat_begin",
+                        "hostile_crit_damage_floor",
+                        value_is_percentage=False,
+                        ignore_upstream_value_is_percentage=True,
+                    ),
+                ],
+            ),
+            "crit_multi_stat_modeled",
+        )
 
-    # Crit damage floor only (Diverted Power) — no AbilityEffect yet
+    # Crit damage floor only (Diverted Power)
     if "critical hit damage cannot fall below" in p or "crit damage cannot fall below" in p:
-        return dict(NOOP), "crit_floor_unmodeled"
+        return (
+            modeled(
+                "combat_begin",
+                "hostile_crit_damage_floor",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+            ),
+            "crit_floor_modeled",
+        )
 
     # Isolytic
     if "isolytic" in p and ("defense" in p or "defence" in p):
@@ -387,7 +418,7 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 "shield_mitigation_bypass",
                 value_is_percentage=False,
                 ignore_upstream_value_is_percentage=True,
-                value_override=1.0,
+                value_override=1,
             ),
             "hostile_shield_bypass",
         )

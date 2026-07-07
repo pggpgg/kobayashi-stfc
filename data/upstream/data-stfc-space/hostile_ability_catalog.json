@@ -1322,10 +1322,9 @@
     },
     "788454016": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_crit_damage_floor",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "ignore_upstream_value_is_percentage": true
     },
     "792207871": {
       "timing": "combat_begin",
@@ -3709,10 +3708,24 @@
     },
     "2291206649": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_chance",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 1000.0,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true
+        }
+      ]
     },
     "2292782980": {
       "timing": "combat_begin",
@@ -4005,10 +4018,9 @@
     },
     "2486538514": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_crit_damage_floor",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "ignore_upstream_value_is_percentage": true
     },
     "2490276629": {
       "timing": "combat_begin",
