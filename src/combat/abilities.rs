@@ -236,6 +236,14 @@ pub enum AbilityEffect {
         reduction: f64,
         duration_rounds: u32,
     },
+    /// Hostile hull ability (Pen of Kahless): multiplies hostile counter-fire pierce by
+    /// `(1 + bonus)` — "increases Shield Piercing, Armor Piercing, and Accuracy stats by X%",
+    /// approximated as a uniform pierce multiplier on the counter path (the increase mirror of
+    /// [`AbilityEffect::HostileCounterStatDebuff`]). Round gating comes from the seat's
+    /// [`AbilityCondition::RoundRange`] via the standard per-round defender effect filtering.
+    HostileCounterPierceMultiplier {
+        bonus: f64,
+    },
     /// Player ship hull ability (Sanctus): at round start, drain `fraction` of defender max shield HP
     /// for rounds `1..=duration_rounds` (when fighting hostiles).
     DefenderShieldDrainPerRound {
@@ -942,6 +950,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileDenticleBladeHeavyArtillery { .. }
         | AbilityEffect::HostileHyperthermicDecay { .. }
         | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+        | AbilityEffect::HostileCounterPierceMultiplier { .. }
         | AbilityEffect::HostileCritDamageFloorBonus(_) => {}
         AbilityEffect::HostileCounterStatDebuff {
             reduction,

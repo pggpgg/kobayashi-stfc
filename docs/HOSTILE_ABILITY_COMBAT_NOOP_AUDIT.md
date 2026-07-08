@@ -2,7 +2,24 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-07):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **261** modeled for defender-side counter-fire (`defender_crew`), **721** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-08):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **427** modeled for defender-side counter-fire (`defender_crew`), **555** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+
+**Fidelity pass (2026-07-08):** Four engine/resolver fixes plus five newly modeled text families:
+
+- **Proc chance `1` = 100%.** All 22 live `attack_multiplier`/`pierce_bonus` catalog rows carry upstream `values[].chance: 1` ("always active"); `normalize_probability` previously folded `1.0` → `0.01`, so these buffs procced on 1% of counter hits. Upstream convention (4,537 of ~4,924 rows use `chance: 1`): values ≤ 1.0 are fractions, values > 1.0 are percent-scaled.
+- **`attack_multiplier` value is a bonus fraction.** `ProcAttackMultiplier` now composes as `×(1 + value)`; the curated Xindi bundle overrides (`value_override` 125 / 66 / 60 / 50) match their upstream texts (+12500% / +6600% / +6000% / +5000%) exactly. `2560325528` gained the missing override (+5000% weapon damage + 150% crit floor extra seat) its siblings already had.
+- **`round_cap` on hostile catalog entries** ("for the first N rounds" texts) maps to an `AbilityCondition::RoundRange { 1, N }` seat condition, evaluated by the standard per-round defender effect filtering.
+- **Upstream `{0:#.#%}` placeholders are fractions.** The generator now detects the C# percent-format placeholder (value 0.75 renders as "75%") and passes such values through raw instead of dividing by 100.
+
+| Newly modeled family | Ability ids | Hostiles | Mapping |
+| --- | ---: | ---: | --- |
+| Ruthless Pursuit / Deadly Strike / Predator Instincts (`390948510`) | 1 | 53 | `crit_chance` +100% `round_cap: 4` + extra seats `crit_damage` +350%, `hostile_crit_damage_floor` 0.5 |
+| Persistence Hunter (`986116981`) | 1 | 53 | `burning` at `combat_begin`, 100% / 6 rounds — engine rolls defender combat-begin `Burning` onto the **player** (`attacker_burning_rounds`; 1% max-hull tick per round) |
+| Pen of Kahless | 82 | 142 | `hostile_counter_pierce_multiplier` (+X% of counter pierce, `round_cap: 5`) — new effect; flat `pierce_bonus` would be inert against the fraction-scale pierce-through term |
+| Revolutionary Spirit | 82 | 142 | `crit_damage` fraction with `round_cap: 5` |
+| Psionic Assault | 18 | 108 | `hostile_hyperthermic_decay` at `round_start` (X% of player max hull per round) — was misclassified `attack_multiplier` |
+
+Coverage: `tests/hostile_fidelity_new_mechanics.rs`; resolver units in `src/data/hostile_ability_resolve.rs` and `src/data/ship_ability_resolve.rs`.
 
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
 
@@ -92,15 +109,19 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | --- | ---: | ---: | --- |
 | Isolytic combat-start | 170 | 1,498 | **Modeled** — `combat_begin` + `isolytic_damage` / `isolytic_defense` |
 | Apex barrier | 54 | 368 | **Modeled** — `combat_begin` + `apex_barrier` |
-| Weapon damage conditional | 19 | 121 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
-| Crit multi-stat | 1 | 325 | **Modeled** — Critical Training emits `crit_chance` plus `crit_damage` / `hostile_crit_damage_floor` extra seats |
+| Crit multi-stat | 2 | 378 | **Modeled** — Critical Training + Ruthless Pursuit emit `crit_chance` plus `crit_damage` / `hostile_crit_damage_floor` extra seats |
 | Crit damage floor | 2 | 273 | **Modeled** — Diverted Power emits `hostile_crit_damage_floor` |
+| Pierce first-N-rounds | 82 | 142 | **Modeled (2026-07-08)** — Pen of Kahless → `hostile_counter_pierce_multiplier` + `round_cap` (was "Defense stat review") |
+| Crit first-N-rounds | 82 | 142 | **Modeled (2026-07-08)** — Revolutionary Spirit → `crit_damage` + `round_cap` |
+| Hyperthermic decay per-round | 18 | 108 | **Modeled (2026-07-08)** — Psionic Assault → `round_start` + `hostile_hyperthermic_decay` |
+| Burning at combat start | 1 | 53 | **Modeled (2026-07-08)** — Persistence Hunter → `combat_begin` + `burning` on the player |
+| Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
 | PvP enemy player | 4 | 422 | **Keep noop** on default ship-vs-hostile path |
 | Armada | 125 | 260 | **Keep noop** — no armada scenario |
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
-| Defense stat review | 82 | 142 | **Keep noop** pending defender mitigation seat mapping |
+| Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 453 | 1,011 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 366 | 748 | **Shard triage** — extend generator or overrides per pattern |
 
 ---
 
@@ -117,9 +138,9 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `2747222231` | 82 | outpost_scope | `combat_noop` | Diverted Power (outpost) |
 | `1782396999` | 69 | apex_combat | `apex_barrier` | Not So Wounded — apex barrier |
 | `3257135627` | 69 | isolytic_combat | `isolytic_damage` | Augmented Force — isolytic at combat start |
-| `390948510` | 53 | other_review | `combat_noop` | Ruthless Pursuit — crit chance first N rounds |
+| `390948510` | 53 | crit_multi_stat_modeled | `crit_chance` (`round_cap: 4`) + `crit_damage` / `hostile_crit_damage_floor` extra seats | Ruthless Pursuit — +100% crit chance first 4 rounds, +350% crit damage, 50% crit floor |
 | `658066283` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Vulnerability |
-| `986116981` | 53 | other_review | `combat_noop` | Persistence Hunter — burning at combat start |
+| `986116981` | 53 | burning_combat_start | `burning` | Persistence Hunter — 100% burning on the player for 6 rounds at combat start |
 | `1745201100` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Maul |
 | `1271329828` | 45 | xindi_crit_debuff | `hostile_crit_damage_reduction` + lethal extra seat | Doomed Species + Xindi Weaponry particle beam |
 | `141924765` | 14 | xindi_crit_debuff | `hostile_crit_damage_reduction` + Denticle extra seat | Be Like Water + Denticle Blade (30% proc gates weapon slot 5) |

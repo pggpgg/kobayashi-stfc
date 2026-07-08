@@ -21,7 +21,7 @@ use crate::combat::abilities::{
 use crate::combat::condition::combine_optional_and;
 use crate::combat::CrewConfiguration;
 use crate::data::ship_ability_resolve::{
-    parse_ship_ability_timing, ship_ability_effect_from_catalog,
+    normalize_probability, parse_ship_ability_timing, ship_ability_effect_from_catalog,
 };
 
 pub const DEFAULT_HOSTILE_ABILITY_CATALOG_PATH: &str =
@@ -64,6 +64,10 @@ pub struct HostileAbilityCatalogEntry {
     /// 1-based weapon sub-round index for Denticle Blade heavy artillery gating.
     #[serde(default)]
     pub weapon_index: Option<u32>,
+    /// When set, the seat's effect applies only for combat rounds `1..=round_cap` (inclusive),
+    /// via [`AbilityCondition::RoundRange`] — "for the first N rounds" hostile ability texts.
+    #[serde(default)]
+    pub round_cap: Option<u32>,
     #[serde(default)]
     pub extra_seats: Vec<HostileAbilityCatalogEntry>,
 }
@@ -124,14 +128,6 @@ fn parse_one_upstream_ability(v: &Value) -> Option<ResolvedHostileAbility> {
         value,
         upstream_value_is_percentage,
     })
-}
-
-fn normalize_probability(value: f64) -> f64 {
-    if (1.0..=100.0).contains(&value) {
-        value / 100.0
-    } else {
-        value.clamp(0.0, 1.0)
-    }
 }
 
 fn normalize_catalog_value(
@@ -224,16 +220,24 @@ pub(crate) fn hostile_ability_effect_from_catalog(
         "hostile_crit_damage_floor" | "crit_damage_floor" => {
             Some(AbilityEffect::HostileCritDamageFloorBonus(value.max(0.0)))
         }
+        // Catalog value is a *bonus fraction* (0.2 = +20%, 125 = +12500% — matching upstream
+        // ability text); the engine's proc accumulator expects a full multiplier.
         "attack_multiplier" | "weapon_damage" | "attack" => {
             Some(AbilityEffect::ProcAttackMultiplier {
                 chance: normalize_probability(chance),
-                multiplier: value,
+                multiplier: 1.0 + value.max(0.0),
             })
         }
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => Some(AbilityEffect::ProcPierceBonus {
             chance: normalize_probability(chance),
             bonus: value,
         }),
+        // Percentage increase of the hostile's counter-fire pierce stats (Pen of Kahless).
+        "hostile_counter_pierce_multiplier" | "counter_pierce_multiplier" => {
+            Some(AbilityEffect::HostileCounterPierceMultiplier {
+                bonus: value.max(0.0),
+            })
+        }
         "hostile_isolytic_vulnerability" | "isolytic_vulnerability" => {
             if timing != TimingWindow::CombatBegin {
                 return None;
@@ -258,6 +262,9 @@ fn ability_condition_from_hostile_entry(
     }
     if entry.condition_defender_hull_breach {
         parts.push(AbilityCondition::DefenderHullBreach);
+    }
+    if let Some(cap) = entry.round_cap.filter(|c| *c > 0) {
+        parts.push(AbilityCondition::RoundRange { min: 1, max: cap });
     }
     combine_optional_and(parts)
 }
@@ -470,6 +477,60 @@ mod tests {
         assert_eq!(p.chance, 25.0);
         assert_eq!(p.value, 10.0);
         assert_eq!(p.upstream_value_is_percentage, Some(true));
+    }
+
+    #[test]
+    fn upstream_chance_one_yields_always_on_proc_seat() {
+        // Upstream `chance: 1` means "always active" (the dominant convention: 4537 of ~4924
+        // hostile ability rows), not a 1% proc.
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "77": {"timing":"combat_begin","effect_type":"attack_multiplier","value_is_percentage":true,"ignore_upstream_value_is_percentage":false}
+              }
+            }"#,
+        )
+        .unwrap();
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":77,"value_is_percentage":true,"values":[{"chance":1,"value":125}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        match crew.seats[0].ability.effect {
+            AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
+                assert!((chance - 1.0).abs() < 1e-12, "chance 1 must mean 100%");
+                // Catalog value is a bonus fraction: +125% → ×2.25 damage.
+                assert!((multiplier - 2.25).abs() < 1e-9);
+            }
+            ref other => panic!("expected ProcAttackMultiplier, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn round_cap_gates_seat_with_round_range_condition() {
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "88": {"timing":"combat_begin","effect_type":"crit_chance","value_is_percentage":false,"ignore_upstream_value_is_percentage":true,"value_override":100,"round_cap":4}
+              }
+            }"#,
+        )
+        .unwrap();
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":88,"value_is_percentage":false,"values":[{"chance":1,"value":1}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        assert!(matches!(
+            crew.seats[0].ability.effect,
+            AbilityEffect::CritChanceBonus(v) if (v - 1.0).abs() < 1e-9
+        ));
+        assert_eq!(
+            crew.seats[0].ability.condition,
+            Some(AbilityCondition::RoundRange { min: 1, max: 4 })
+        );
     }
 
     #[test]

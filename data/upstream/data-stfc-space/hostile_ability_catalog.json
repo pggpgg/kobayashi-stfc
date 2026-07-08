@@ -74,16 +74,16 @@
       "value_override": 0
     },
     "56799195": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "56901449": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "67301964": {
       "timing": "combat_begin",
@@ -94,10 +94,10 @@
     },
     "75877953": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "82618606": {
       "timing": "combat_begin",
@@ -108,10 +108,10 @@
     },
     "84457918": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "85410186": {
       "timing": "combat_begin",
@@ -155,17 +155,17 @@
     },
     "106286813": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "106553120": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "113557680": {
       "timing": "combat_begin",
@@ -189,10 +189,10 @@
     },
     "123695932": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "125667262": {
       "timing": "combat_begin",
@@ -215,10 +215,10 @@
     },
     "135950416": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "136675100": {
       "timing": "combat_begin",
@@ -336,10 +336,10 @@
     },
     "208825508": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "213041740": {
       "timing": "combat_begin",
@@ -350,10 +350,10 @@
     },
     "215665177": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "215852350": {
       "timing": "combat_begin",
@@ -391,10 +391,10 @@
     },
     "249152341": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "253241732": {
       "timing": "combat_begin",
@@ -437,10 +437,10 @@
     },
     "304257853": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "306487042": {
       "timing": "combat_begin",
@@ -491,10 +491,10 @@
     },
     "331825882": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "332664960": {
       "timing": "combat_begin",
@@ -505,10 +505,10 @@
     },
     "333094448": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "342269298": {
       "timing": "combat_begin",
@@ -553,17 +553,17 @@
     },
     "356773633": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "363228633": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "368326093": {
       "timing": "combat_begin",
@@ -574,10 +574,10 @@
     },
     "370646788": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "372582193": {
       "timing": "combat_begin",
@@ -594,10 +594,10 @@
     },
     "375901308": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "375941532": {
       "timing": "combat_begin",
@@ -629,24 +629,41 @@
     },
     "390948510": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_chance",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 100.0,
+      "round_cap": 4,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "crit_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 3.5
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0.5
+        }
+      ]
     },
     "392991108": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "396132215": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "398205826": {
       "timing": "combat_begin",
@@ -689,10 +706,10 @@
       "value_override": 0
     },
     "427525451": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "431717803": {
       "timing": "combat_begin",
@@ -703,16 +720,16 @@
     },
     "436377471": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "441857757": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "446260266": {
       "timing": "combat_begin",
@@ -722,24 +739,24 @@
     },
     "449937357": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "454946294": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "455180927": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "456168708": {
       "timing": "combat_begin",
@@ -782,10 +799,10 @@
     },
     "481175964": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "486449410": {
       "timing": "combat_begin",
@@ -855,10 +872,10 @@
     },
     "529032806": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "532565157": {
       "timing": "combat_begin",
@@ -903,10 +920,10 @@
     },
     "562714114": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "563499055": {
       "timing": "combat_begin",
@@ -937,10 +954,10 @@
     },
     "578447152": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "579031558": {
       "timing": "combat_begin",
@@ -999,10 +1016,10 @@
     },
     "615446678": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "616283823": {
       "timing": "combat_begin",
@@ -1040,10 +1057,10 @@
     },
     "636056044": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "638014673": {
       "timing": "combat_begin",
@@ -1157,10 +1174,10 @@
     },
     "673669254": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "708519281": {
       "timing": "combat_begin",
@@ -1211,17 +1228,17 @@
     },
     "728010019": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "730790815": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "733487420": {
       "timing": "combat_begin",
@@ -1239,10 +1256,10 @@
     },
     "738614080": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "742711330": {
       "timing": "combat_begin",
@@ -1281,10 +1298,10 @@
     },
     "764901292": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "765792252": {
       "timing": "combat_begin",
@@ -1294,10 +1311,10 @@
       "value_override": 0
     },
     "767843776": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "784752837": {
       "timing": "combat_begin",
@@ -1315,10 +1332,10 @@
     },
     "787392610": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "788454016": {
       "timing": "combat_begin",
@@ -1342,10 +1359,10 @@
     },
     "798446838": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "809557880": {
       "timing": "combat_begin",
@@ -1368,10 +1385,10 @@
     },
     "825965675": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "827241882": {
       "timing": "combat_begin",
@@ -1381,10 +1398,10 @@
     },
     "835562208": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "839530769": {
       "timing": "combat_begin",
@@ -1394,10 +1411,10 @@
     },
     "845771824": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "849650945": {
       "timing": "combat_begin",
@@ -1422,10 +1439,10 @@
     },
     "877244657": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "887524387": {
       "timing": "combat_begin",
@@ -1436,10 +1453,10 @@
     },
     "896123756": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "898072606": {
       "timing": "combat_begin",
@@ -1483,10 +1500,10 @@
     },
     "922441492": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "930022463": {
       "timing": "combat_begin",
@@ -1541,10 +1558,10 @@
     },
     "952685419": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "960577624": {
       "timing": "combat_begin",
@@ -1554,16 +1571,16 @@
     },
     "967201684": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "967808962": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "967923304": {
       "timing": "combat_begin",
@@ -1607,10 +1624,11 @@
     },
     "986116981": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "burning",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 6,
+      "value_override": 1.0
     },
     "1004890011": {
       "timing": "combat_begin",
@@ -1675,10 +1693,10 @@
     },
     "1037118594": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1047126013": {
       "timing": "combat_begin",
@@ -1695,10 +1713,10 @@
     },
     "1056547210": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1059081556": {
       "timing": "combat_begin",
@@ -1709,10 +1727,10 @@
     },
     "1065422632": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1068868639": {
       "timing": "combat_begin",
@@ -1763,10 +1781,10 @@
     },
     "1092288281": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1097075322": {
       "timing": "combat_begin",
@@ -1796,17 +1814,17 @@
       "ignore_upstream_value_is_percentage": false
     },
     "1112031100": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "1116789234": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1121381480": {
       "timing": "combat_begin",
@@ -1897,17 +1915,17 @@
     },
     "1178349037": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1187421715": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1191296542": {
       "timing": "combat_begin",
@@ -1966,10 +1984,10 @@
     },
     "1230069942": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1230549475": {
       "timing": "combat_begin",
@@ -1979,10 +1997,10 @@
     },
     "1231557728": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1234463706": {
       "timing": "combat_begin",
@@ -1992,10 +2010,10 @@
       "value_override": 0
     },
     "1234769790": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "1236106151": {
       "timing": "combat_begin",
@@ -2013,24 +2031,24 @@
     },
     "1256048139": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1261726367": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1263738725": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1266162710": {
       "timing": "combat_begin",
@@ -2106,10 +2124,10 @@
     },
     "1294364759": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1295181079": {
       "timing": "combat_begin",
@@ -2160,10 +2178,10 @@
     },
     "1324185618": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1324887894": {
       "timing": "combat_begin",
@@ -2206,10 +2224,10 @@
     },
     "1370328697": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1380996270": {
       "timing": "combat_begin",
@@ -2220,10 +2238,10 @@
     },
     "1382328836": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1383740011": {
       "timing": "combat_begin",
@@ -2290,17 +2308,17 @@
     },
     "1414838698": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1421178836": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1421713322": {
       "timing": "combat_begin",
@@ -2318,10 +2336,10 @@
     },
     "1425996382": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1427668426": {
       "timing": "combat_begin",
@@ -2391,10 +2409,10 @@
       "value_override": 0
     },
     "1481068241": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "1482124771": {
       "timing": "combat_begin",
@@ -2404,10 +2422,10 @@
     },
     "1488818164": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1494214549": {
       "timing": "combat_begin",
@@ -2445,10 +2463,10 @@
     },
     "1520719749": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1521244938": {
       "timing": "combat_begin",
@@ -2459,10 +2477,10 @@
     },
     "1524408358": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1528676120": {
       "timing": "combat_begin",
@@ -2549,23 +2567,23 @@
     },
     "1574518996": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1590904858": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "1591582721": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1597753629": {
       "timing": "combat_begin",
@@ -2590,10 +2608,10 @@
     },
     "1611103465": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1614080299": {
       "timing": "combat_begin",
@@ -2604,10 +2622,10 @@
     },
     "1617145485": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1624877280": {
       "timing": "combat_begin",
@@ -2618,17 +2636,17 @@
     },
     "1631899884": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1637114277": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1640927784": {
       "timing": "combat_begin",
@@ -2638,10 +2656,10 @@
     },
     "1642475644": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1646865184": {
       "timing": "combat_begin",
@@ -2671,10 +2689,10 @@
     },
     "1670502045": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1675628310": {
       "timing": "combat_begin",
@@ -2706,10 +2724,10 @@
     },
     "1692955230": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1697627625": {
       "timing": "combat_begin",
@@ -2731,17 +2749,17 @@
       "ignore_upstream_value_is_percentage": true
     },
     "1704582990": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "1712086863": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1713462944": {
       "timing": "combat_begin",
@@ -2758,10 +2776,10 @@
     },
     "1725866349": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1729666920": {
       "timing": "combat_begin",
@@ -2815,10 +2833,10 @@
     },
     "1755868978": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1756146051": {
       "timing": "combat_begin",
@@ -2909,10 +2927,10 @@
     },
     "1803049747": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1805243438": {
       "timing": "combat_begin",
@@ -2929,10 +2947,10 @@
     },
     "1809917740": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1814329704": {
       "timing": "combat_begin",
@@ -2990,10 +3008,10 @@
     },
     "1857764392": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1862511209": {
       "timing": "combat_begin",
@@ -3172,10 +3190,10 @@
     },
     "1985024671": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "1986478644": {
       "timing": "combat_begin",
@@ -3225,10 +3243,10 @@
     },
     "2020103360": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2024076202": {
       "timing": "combat_begin",
@@ -3259,10 +3277,10 @@
     },
     "2038803748": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2039418162": {
       "timing": "combat_begin",
@@ -3272,10 +3290,10 @@
     },
     "2043262705": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2044202743": {
       "timing": "combat_begin",
@@ -3286,10 +3304,10 @@
     },
     "2052990014": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2055497967": {
       "timing": "combat_begin",
@@ -3381,10 +3399,10 @@
     },
     "2097561252": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2097618429": {
       "timing": "combat_begin",
@@ -3401,10 +3419,10 @@
     },
     "2101039109": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2105941894": {
       "timing": "combat_begin",
@@ -3428,10 +3446,10 @@
       "value_override": 0
     },
     "2117614379": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "2128670118": {
       "timing": "combat_begin",
@@ -3460,10 +3478,10 @@
     },
     "2140196951": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2146932955": {
       "timing": "round_start",
@@ -3538,17 +3556,17 @@
       "value_override": 0
     },
     "2193458493": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "2195740379": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2199598455": {
       "timing": "combat_begin",
@@ -3559,10 +3577,10 @@
     },
     "2203927560": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2216870777": {
       "timing": "combat_begin",
@@ -3597,10 +3615,10 @@
     },
     "2231256646": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2237185391": {
       "timing": "combat_begin",
@@ -3639,10 +3657,10 @@
     },
     "2250223100": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2250476065": {
       "timing": "combat_begin",
@@ -3680,10 +3698,10 @@
     },
     "2267433146": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2275759645": {
       "timing": "combat_begin",
@@ -3736,10 +3754,10 @@
     },
     "2293662285": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2299102171": {
       "timing": "combat_begin",
@@ -3770,10 +3788,10 @@
     },
     "2332777769": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2332927967": {
       "timing": "combat_begin",
@@ -3803,17 +3821,17 @@
     },
     "2346163621": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2366863169": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2367779009": {
       "timing": "combat_begin",
@@ -3917,10 +3935,10 @@
     },
     "2430198826": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2434782348": {
       "timing": "combat_begin",
@@ -3977,10 +3995,10 @@
     },
     "2460059228": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2466223538": {
       "timing": "combat_begin",
@@ -4004,10 +4022,10 @@
     },
     "2479001022": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2481788113": {
       "timing": "combat_begin",
@@ -4045,10 +4063,10 @@
     },
     "2510693471": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2510817144": {
       "timing": "combat_begin",
@@ -4080,10 +4098,10 @@
     },
     "2523002369": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2523580501": {
       "timing": "combat_begin",
@@ -4126,10 +4144,10 @@
     },
     "2538847823": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2543747134": {
       "timing": "combat_begin",
@@ -4139,10 +4157,10 @@
     },
     "2550220693": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2556197069": {
       "timing": "combat_begin",
@@ -4161,8 +4179,18 @@
     "2560325528": {
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 50,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.5
+        }
+      ]
     },
     "2571134390": {
       "timing": "combat_begin",
@@ -4308,10 +4336,10 @@
     },
     "2645316647": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2646481486": {
       "timing": "combat_begin",
@@ -4363,10 +4391,10 @@
     },
     "2668838424": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2669697193": {
       "timing": "combat_begin",
@@ -4430,10 +4458,10 @@
     },
     "2718218719": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2723215231": {
       "timing": "combat_begin",
@@ -4472,10 +4500,10 @@
     },
     "2751967066": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2757701912": {
       "timing": "combat_begin",
@@ -4500,24 +4528,24 @@
     },
     "2780405687": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2782226538": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2782367817": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2782991872": {
       "timing": "combat_begin",
@@ -4547,10 +4575,10 @@
       "value_override": 0
     },
     "2787239739": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "2794125774": {
       "timing": "combat_begin",
@@ -4580,10 +4608,10 @@
     },
     "2806761268": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2810472756": {
       "timing": "combat_begin",
@@ -4594,10 +4622,10 @@
     },
     "2811564588": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2818877087": {
       "timing": "combat_begin",
@@ -4641,10 +4669,10 @@
     },
     "2846946976": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2852278773": {
       "timing": "combat_begin",
@@ -4662,10 +4690,10 @@
     },
     "2857064766": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2863086141": {
       "timing": "combat_begin",
@@ -4723,17 +4751,17 @@
     },
     "2918791160": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2920782920": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "2922610677": {
       "timing": "combat_begin",
@@ -4812,10 +4840,10 @@
     },
     "2992500414": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3000719286": {
       "timing": "combat_begin",
@@ -4832,10 +4860,10 @@
     },
     "3010905187": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3015621685": {
       "timing": "combat_begin",
@@ -4858,10 +4886,10 @@
       "value_override": 0
     },
     "3035918177": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "3038600948": {
       "timing": "combat_begin",
@@ -4934,10 +4962,10 @@
     },
     "3086451244": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3088493342": {
       "timing": "combat_begin",
@@ -4954,10 +4982,10 @@
     },
     "3096319180": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3100528450": {
       "timing": "combat_begin",
@@ -5043,10 +5071,10 @@
       "value_override": 0
     },
     "3143400095": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "3144982821": {
       "timing": "combat_begin",
@@ -5087,10 +5115,10 @@
     },
     "3164692420": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3165256234": {
       "timing": "combat_begin",
@@ -5101,10 +5129,10 @@
     },
     "3165681827": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3167243916": {
       "timing": "combat_begin",
@@ -5161,10 +5189,10 @@
     },
     "3198879611": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3206032362": {
       "timing": "combat_begin",
@@ -5302,10 +5330,10 @@
     },
     "3303959983": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3305822680": {
       "timing": "combat_begin",
@@ -5316,10 +5344,10 @@
     },
     "3307634107": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3308120216": {
       "timing": "combat_begin",
@@ -5355,10 +5383,10 @@
     },
     "3331427750": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3334230711": {
       "timing": "combat_begin",
@@ -5390,10 +5418,10 @@
     },
     "3363560125": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3365706029": {
       "timing": "combat_begin",
@@ -5437,10 +5465,10 @@
     },
     "3383416957": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3391157960": {
       "timing": "combat_begin",
@@ -5464,17 +5492,17 @@
     },
     "3405988097": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3406306012": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3407916199": {
       "timing": "combat_begin",
@@ -5515,10 +5543,10 @@
     },
     "3419662303": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3422974103": {
       "timing": "combat_begin",
@@ -5563,10 +5591,10 @@
     },
     "3450229444": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3456128330": {
       "timing": "combat_begin",
@@ -5649,10 +5677,10 @@
     },
     "3494409699": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3500505461": {
       "timing": "combat_begin",
@@ -5670,10 +5698,10 @@
     },
     "3505786380": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3511884181": {
       "timing": "combat_begin",
@@ -5691,10 +5719,10 @@
     },
     "3524241781": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3529890913": {
       "timing": "combat_begin",
@@ -5733,17 +5761,17 @@
     },
     "3559697397": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3560185551": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3566779117": {
       "timing": "combat_begin",
@@ -5786,10 +5814,10 @@
     },
     "3614715817": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3615446199": {
       "timing": "combat_begin",
@@ -5799,17 +5827,17 @@
     },
     "3631658668": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3636801966": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3637907359": {
       "timing": "combat_begin",
@@ -5880,10 +5908,10 @@
     },
     "3684452750": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3687094821": {
       "timing": "combat_begin",
@@ -6035,10 +6063,10 @@
     },
     "3807845241": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3825538982": {
       "timing": "combat_begin",
@@ -6055,10 +6083,10 @@
     },
     "3839132951": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3845968517": {
       "timing": "combat_begin",
@@ -6076,10 +6104,10 @@
     },
     "3852598818": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3854011090": {
       "timing": "combat_begin",
@@ -6089,10 +6117,10 @@
     },
     "3862542127": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3865859985": {
       "timing": "combat_begin",
@@ -6103,10 +6131,10 @@
     },
     "3866744950": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3867337071": {
       "timing": "combat_begin",
@@ -6184,10 +6212,10 @@
     },
     "3908120389": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3926823774": {
       "timing": "combat_begin",
@@ -6219,10 +6247,10 @@
     },
     "3941723756": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3942626863": {
       "timing": "combat_begin",
@@ -6251,10 +6279,10 @@
     },
     "3957652497": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3959049887": {
       "timing": "combat_begin",
@@ -6291,10 +6319,10 @@
     },
     "3982232193": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3985273368": {
       "timing": "combat_begin",
@@ -6312,10 +6340,10 @@
     },
     "3989697543": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "3997179682": {
       "timing": "combat_begin",
@@ -6326,10 +6354,10 @@
     },
     "4002115428": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4002596384": {
       "timing": "combat_begin",
@@ -6365,10 +6393,10 @@
     },
     "4018534685": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4021395417": {
       "timing": "combat_begin",
@@ -6411,10 +6439,10 @@
     },
     "4040005217": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4041445141": {
       "timing": "combat_begin",
@@ -6454,10 +6482,10 @@
     },
     "4060801507": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4064876852": {
       "timing": "combat_begin",
@@ -6488,17 +6516,17 @@
     },
     "4090677892": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4093352639": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4097019156": {
       "timing": "combat_begin",
@@ -6541,10 +6569,10 @@
       "ignore_upstream_value_is_percentage": false
     },
     "4111821283": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "4115514686": {
       "timing": "combat_begin",
@@ -6554,10 +6582,10 @@
       "value_override": 0
     },
     "4116909035": {
-      "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "round_start",
+      "effect_type": "hostile_hyperthermic_decay",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "4119055872": {
       "timing": "combat_begin",
@@ -6582,10 +6610,10 @@
     },
     "4123186050": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4123370781": {
       "timing": "combat_begin",
@@ -6623,17 +6651,17 @@
     },
     "4140652923": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4145303524": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4148453257": {
       "timing": "combat_begin",
@@ -6643,10 +6671,10 @@
     },
     "4151447209": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4153973984": {
       "timing": "combat_begin",
@@ -6732,10 +6760,10 @@
     },
     "4225586244": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "crit_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4229054121": {
       "timing": "combat_begin",
@@ -6752,10 +6780,10 @@
     },
     "4239167975": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_counter_pierce_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "round_cap": 5
     },
     "4240957028": {
       "timing": "combat_begin",
