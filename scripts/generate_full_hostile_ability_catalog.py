@@ -137,6 +137,9 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         return dict(NOOP), "empty_translation"
 
     rc = first_n_rounds_cap(p)
+    # C#-style percent placeholder ({0:#.#%}) multiplies by 100 at render time, so the upstream
+    # value is a FRACTION (0.75 → "75%"). Rows without it use percent units or hardcoded text.
+    frac = re.search(r"\{0[^}]*%\}", p) is not None
 
     def m(timing: str, effect_type: str, **kwargs) -> tuple[dict, str]:
         if kwargs.get("duration_rounds") is None:
@@ -266,6 +269,78 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     ):
         return dict(NOOP), "aggregation_offense_manual"
 
+    # Psionic Assault: "deals {0:#.#%} hyperthermic decay to its hull health every round" —
+    # per-round fraction of the player's max hull (same hook as the Aggregation hyperthermic seat).
+    # Multi-stat bundles (isolytic / final-damage texts) keep their existing classification below.
+    if (
+        "hyperthermic decay" in p
+        and ("every round" in p or "each round" in p)
+        and frac
+        and "isolytic" not in p
+        and "final damage" not in p
+    ):
+        return (
+            modeled(
+                "round_start",
+                "hostile_hyperthermic_decay",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+            ),
+            "hyperthermic_decay_combat",
+        )
+    # Remaining pure-hyperthermic texts need manual review (value scale is not uniform).
+    if "hyperthermic decay" in p and "isolytic" not in p and "final damage" not in p:
+        return dict(NOOP), "hyperthermic_review"
+
+    # Ruthless Pursuit family (multi-part text, hardcoded percentages):
+    #   "Increases Critical Chance by 100% for the first 4 rounds." +
+    #   "Increases Critical Damage by 350% at the start of each round." +
+    #   "This hostile's Critical Damage cannot be reduced below 50%."
+    if (
+        "increases critical chance" in p
+        and "for the first" in p
+        and "increases critical damage" in p
+        and "cannot be reduced below" in p
+    ):
+        chance_m = re.search(r"increases critical chance by (\d+(?:\.\d+)?)%", p)
+        dmg_m = re.search(r"increases critical damage by (\d+(?:\.\d+)?)%", p)
+        floor_m = re.search(r"cannot be reduced below (\d+(?:\.\d+)?)%", p)
+        if chance_m and dmg_m and floor_m and rc:
+            return (
+                modeled(
+                    "combat_begin",
+                    "crit_chance",
+                    value_override=float(chance_m.group(1)),
+                    round_cap=rc,
+                    extra_seats=[
+                        modeled(
+                            "combat_begin",
+                            "crit_damage",
+                            value_override=float(dmg_m.group(1)) / 100.0,
+                        ),
+                        modeled(
+                            "combat_begin",
+                            "hostile_crit_damage_floor",
+                            value_override=float(floor_m.group(1)) / 100.0,
+                        ),
+                    ],
+                ),
+                "crit_multi_stat_modeled",
+            )
+
+    # Burning applied to the player at combat start (Persistence Hunter).
+    burn_m = re.search(r"applies burning for (\d+) rounds? at the start of combat", p)
+    if burn_m:
+        return (
+            modeled(
+                "combat_begin",
+                "burning",
+                value_override=1.0,
+                duration_rounds=int(burn_m.group(1)),
+            ),
+            "burning_combat_start",
+        )
+
     # Multi-stat crit rows (Critical Training: chance + damage + floor in one ability)
     if "critical hit chance" in p and "critical hit damage" in p and "critical damage floor" in p:
         return (
@@ -354,27 +429,49 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 _bucket="weapon_damage_combat",
             )
 
-    # Combat-start crit chance / damage (single-stat)
-    if ("combat start" in p or "start of combat" in p or "at the start of combat" in p) and "critical" in p:
+    # Combat-start or first-N-rounds crit chance / damage (single-stat,
+    # e.g. Revolutionary Spirit "Increases Critical Hit Damage by X% for the first 5 rounds")
+    if (
+        "combat start" in p
+        or "start of combat" in p
+        or "at the start of combat" in p
+        or (rc is not None and "increas" in p)
+    ) and "critical" in p:
         if "chance" in p and "damage" not in p:
             return m(
                 "combat_begin",
                 "crit_chance",
-                value_is_percentage=True,
-                ignore_upstream_value_is_percentage=False,
+                value_is_percentage=not frac,
+                ignore_upstream_value_is_percentage=frac,
                 _bucket="crit_combat",
             )
         if "damage" in p and "floor" not in p:
             return m(
                 "combat_begin",
                 "crit_damage",
-                value_is_percentage=True,
-                ignore_upstream_value_is_percentage=False,
+                value_is_percentage=not frac,
+                ignore_upstream_value_is_percentage=frac,
                 _bucket="crit_combat",
             )
 
-    # Pierce at combat start
-    if ("combat start" in p or "start of combat" in p) and "pierc" in p:
+    # Pierce at combat start or for the first N rounds (Pen of Kahless: shield piercing,
+    # armor piercing, and accuracy collapse to the engine's uniform pierce stack).
+    if (
+        "combat start" in p
+        or "start of combat" in p
+        or (rc is not None and "increas" in p)
+    ) and "pierc" in p:
+        if frac:
+            # Fraction rows are percentage *increases* of the hostile's pierce stats —
+            # flat pierce_bonus would be a noop against absolute pierce; use the
+            # counter-pierce multiplier hook instead.
+            return m(
+                "combat_begin",
+                "hostile_counter_pierce_multiplier",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                _bucket="pierce_combat",
+            )
         return m(
             "combat_begin",
             "pierce_bonus",
@@ -389,8 +486,8 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         return m(
             timing,
             "attack_multiplier",
-            value_is_percentage=True,
-            ignore_upstream_value_is_percentage=False,
+            value_is_percentage=not frac,
+            ignore_upstream_value_is_percentage=frac,
             _bucket="weapon_damage_combat",
         )
 
@@ -403,8 +500,8 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         return m(
             "combat_begin",
             "attack_multiplier",
-            value_is_percentage=True,
-            ignore_upstream_value_is_percentage=False,
+            value_is_percentage=not frac,
+            ignore_upstream_value_is_percentage=frac,
             _bucket="weapon_damage_combat",
         )
 

@@ -54,6 +54,13 @@ pub fn hostile_ability_to_combat_effect_spec(
 
     let p = crate::data::ship_ability_resolve::normalize_probability(chance);
 
+    let mut conditions = Vec::new();
+    if let Some(cap) = entry.round_cap.filter(|c| *c > 0) {
+        conditions.push(
+            crate::data::combat_effect_spec::AbilityConditionSpec::RoundRange { min: 1, max: cap },
+        );
+    }
+
     Some(CombatEffectSpec {
         id: ability_id.to_string(),
         source: EffectSource::HostileAbilityCatalog,
@@ -76,7 +83,7 @@ pub fn hostile_ability_to_combat_effect_spec(
         duration: None,
         decay: None,
         accumulate: None,
-        conditions: Vec::new(),
+        conditions,
         attributes: serde_json::Map::new(),
         officer: OfficerSpecAttrs::default(),
         stacking: None,
@@ -128,6 +135,7 @@ mod tests {
             crit_debuff_stacks: false,
             prevent_when_defender_assimilated: false,
             weapon_index: None,
+            round_cap: None,
             extra_seats: Vec::new(),
         };
         let spec =

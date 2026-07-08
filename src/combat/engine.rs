@@ -596,6 +596,33 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         });
     }
 
+    // Defender combat-begin Burning seats (e.g. Persistence Hunter "Applies Burning for 6 rounds
+    // at the start of combat") burn the *player*: roll onto attacker_burning_rounds. RNG draws
+    // only happen when such seats exist, so seeded outcomes for other fights are unchanged.
+    if defender_combat_begin_effects
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::Burning { .. }))
+    {
+        let defender_begin_burning: Vec<ActiveAbilityEffect> =
+            filter_effects_by_condition(defender_combat_begin_effects, &setup.combat_begin_ctx)
+                .into_iter()
+                .filter(|e| matches!(e.effect, AbilityEffect::Burning { .. }))
+                .collect();
+        roll_burning_triggers(
+            &mut RoundPhaseCtx {
+                trace: &mut trace,
+                rng: &mut rng,
+                round_index: 0,
+            },
+            &defender_begin_burning,
+            false,
+            "combat_begin",
+            &defender.id,
+            None,
+            &mut st.attacker_burning_rounds,
+        );
+    }
+
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     st.shots_bonus_entries
         .reserve(rounds_to_simulate.min(32) as usize);
@@ -3634,6 +3661,19 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
         {
             counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
+        }
+        // Pen of Kahless-style percentage pierce buffs on the hostile's own counter-fire.
+        // Round caps are already applied by the per-round condition filtering above.
+        let counter_pierce_bonus_fraction: f64 = defender_combat_begin_filtered
+            .iter()
+            .chain(defender_round_start_filtered.iter())
+            .filter_map(|e| match e.effect {
+                AbilityEffect::HostileCounterPierceMultiplier { bonus } => Some(bonus),
+                _ => None,
+            })
+            .sum();
+        if counter_pierce_bonus_fraction > 0.0 {
+            counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
         }
         let counter_damage_through = compute_damage_through_factor(
             counter_mitigation_mult,

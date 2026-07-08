@@ -837,6 +837,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::HostileCounterPierceMultiplier { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -1065,6 +1066,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::HostileCounterPierceMultiplier { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -1223,6 +1225,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::HostileCounterPierceMultiplier { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -1385,6 +1388,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::HostileCounterPierceMultiplier { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -1517,6 +1521,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::HostileCounterPierceMultiplier { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -1719,6 +1724,7 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::ProcAttackMultiplier { .. } => {}
                 AbilityEffect::ProcPierceBonus { .. } => {}
+                AbilityEffect::HostileCounterPierceMultiplier { .. } => {}
                 AbilityEffect::Morale(_) => {}
                 AbilityEffect::Assimilated { .. } => {}
                 AbilityEffect::HullBreach { .. } => {}
@@ -2101,6 +2107,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::DefenderShieldDrainPerRound { .. }
         | AbilityEffect::HostileHyperthermicDecay { .. }
         | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+        | AbilityEffect::HostileCounterPierceMultiplier { .. }
         | AbilityEffect::HostileCritDamageFloorBonus(_) => effect,
         AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,
         AbilityEffect::BreachCumulativeCritChancePerHit(_)

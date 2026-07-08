@@ -103,22 +103,22 @@
       "effect_type": "combat_noop"
     },
     "56799195": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1810805003",
       "sample_level": 63,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "56901449": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "18551664",
       "sample_level": 77,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "67301964": {
       "bucket": "other_review",
@@ -130,13 +130,13 @@
       "effect_type": "combat_noop"
     },
     "75877953": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2195534190",
       "sample_level": 57,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "82618606": {
       "bucket": "other_review",
@@ -148,13 +148,13 @@
       "effect_type": "combat_noop"
     },
     "84457918": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "4073853890",
       "sample_level": 59,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "85410186": {
       "bucket": "outpost_scope",
@@ -211,22 +211,22 @@
       "effect_type": "combat_noop"
     },
     "106286813": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1346474354",
       "sample_level": 55,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "106553120": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3358146888",
       "sample_level": 57,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "113557680": {
       "bucket": "isolytic_combat",
@@ -256,13 +256,13 @@
       "effect_type": "combat_noop"
     },
     "123695932": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "107152479",
       "sample_level": 61,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "125667262": {
       "bucket": "other_review",
@@ -292,13 +292,13 @@
       "effect_type": "isolytic_damage"
     },
     "135950416": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2902559197",
       "sample_level": 63,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "136675100": {
       "bucket": "outpost_scope",
@@ -436,13 +436,13 @@
       "effect_type": "combat_noop"
     },
     "208825508": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "958210272",
       "sample_level": 51,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "213041740": {
       "bucket": "other_review",
@@ -454,13 +454,13 @@
       "effect_type": "combat_noop"
     },
     "215665177": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2840821572",
       "sample_level": 59,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "215852350": {
       "bucket": "other_review",
@@ -508,13 +508,13 @@
       "effect_type": "combat_noop"
     },
     "249152341": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1285027123",
       "sample_level": 68,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "253241732": {
       "bucket": "apex_combat",
@@ -571,13 +571,13 @@
       "effect_type": "combat_noop"
     },
     "304257853": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2552452522",
       "sample_level": 52,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "306487042": {
       "bucket": "other_review",
@@ -643,13 +643,13 @@
       "effect_type": "isolytic_damage"
     },
     "331825882": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3076072272",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "332664960": {
       "bucket": "other_review",
@@ -661,13 +661,13 @@
       "effect_type": "combat_noop"
     },
     "333094448": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "284640524",
       "sample_level": 61,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "342269298": {
       "bucket": "other_review",
@@ -724,22 +724,22 @@
       "effect_type": "combat_noop"
     },
     "356773633": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "97946987",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "363228633": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2117827260",
       "sample_level": 53,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "368326093": {
       "bucket": "armada_scope",
@@ -751,13 +751,13 @@
       "effect_type": "combat_noop"
     },
     "370646788": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "31889579",
       "sample_level": 57,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "372582193": {
       "bucket": "apex_combat",
@@ -778,13 +778,13 @@
       "effect_type": "combat_noop"
     },
     "375901308": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1772890923",
       "sample_level": 70,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "375941532": {
       "bucket": "other_review",
@@ -823,31 +823,31 @@
       "effect_type": "combat_noop"
     },
     "390948510": {
-      "bucket": "other_review",
+      "bucket": "crit_multi_stat_modeled",
       "loca_id": 64050,
       "hostile_count": 53,
       "sample_hostile_id": "1013586418",
       "sample_level": 63,
       "text_snippet": "ruthless pursuit\nincreases critical chance by 100% for the first 4 rounds.\n\ndeadly strike\nincreases critical damage by 350% at the start of each round.\n\npredator instincts\nthis hostile's critical damage cannot be reduced below 50%.\n\nship ab",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_chance"
     },
     "392991108": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1190706642",
       "sample_level": 71,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "396132215": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "274779189",
       "sample_level": 62,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "398205826": {
       "bucket": "other_review",
@@ -895,7 +895,7 @@
       "effect_type": "isolytic_damage"
     },
     "421424883": {
-      "bucket": "other_review",
+      "bucket": "hyperthermic_review",
       "loca_id": 89107,
       "hostile_count": 3,
       "sample_hostile_id": "1361807236",
@@ -904,13 +904,13 @@
       "effect_type": "combat_noop"
     },
     "427525451": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1307905342",
       "sample_level": 53,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "431717803": {
       "bucket": "other_review",
@@ -922,22 +922,22 @@
       "effect_type": "combat_noop"
     },
     "436377471": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2229943764",
       "sample_level": 67,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "441857757": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1138512766",
       "sample_level": 63,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "446260266": {
       "bucket": "apex_combat",
@@ -949,31 +949,31 @@
       "effect_type": "apex_barrier"
     },
     "449937357": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1449321299",
       "sample_level": 61,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "454946294": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "2068772610",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "455180927": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1198893314",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "456168708": {
       "bucket": "armada_scope",
@@ -1030,13 +1030,13 @@
       "effect_type": "isolytic_damage"
     },
     "481175964": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1237198069",
       "sample_level": 62,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "486449410": {
       "bucket": "outpost_scope",
@@ -1129,13 +1129,13 @@
       "effect_type": "isolytic_damage"
     },
     "529032806": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "2317011387",
       "sample_level": 54,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "532565157": {
       "bucket": "other_review",
@@ -1192,13 +1192,13 @@
       "effect_type": "combat_noop"
     },
     "562714114": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "2062100719",
       "sample_level": 64,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "563499055": {
       "bucket": "isolytic_combat",
@@ -1237,13 +1237,13 @@
       "effect_type": "combat_noop"
     },
     "578447152": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "3410910744",
       "sample_level": 62,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "579031558": {
       "bucket": "isolytic_combat",
@@ -1318,16 +1318,16 @@
       "effect_type": "combat_noop"
     },
     "615446678": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "120331177",
       "sample_level": 61,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "616283823": {
-      "bucket": "other_review",
+      "bucket": "hyperthermic_review",
       "loca_id": 89108,
       "hostile_count": 6,
       "sample_hostile_id": "1361645982",
@@ -1372,13 +1372,13 @@
       "effect_type": "combat_noop"
     },
     "636056044": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1792881419",
       "sample_level": 64,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "638014673": {
       "bucket": "isolytic_combat",
@@ -1491,13 +1491,13 @@
       "effect_type": "combat_noop"
     },
     "673669254": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2464585951",
       "sample_level": 50,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "708519281": {
       "bucket": "armada_scope",
@@ -1563,22 +1563,22 @@
       "effect_type": "combat_noop"
     },
     "728010019": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "1577791129",
       "sample_level": 59,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "730790815": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "2464035558",
       "sample_level": 66,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "733487420": {
       "bucket": "armada_scope",
@@ -1599,13 +1599,13 @@
       "effect_type": "combat_noop"
     },
     "738614080": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1968271964",
       "sample_level": 50,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "742711330": {
       "bucket": "armada_scope",
@@ -1653,13 +1653,13 @@
       "effect_type": "combat_noop"
     },
     "764901292": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3118799748",
       "sample_level": 58,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "765792252": {
       "bucket": "other_review",
@@ -1671,13 +1671,13 @@
       "effect_type": "combat_noop"
     },
     "767843776": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1903873661",
       "sample_level": 70,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "784752837": {
       "bucket": "armada_scope",
@@ -1698,13 +1698,13 @@
       "effect_type": "combat_noop"
     },
     "787392610": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1415930819",
       "sample_level": 51,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "788454016": {
       "bucket": "crit_floor_modeled",
@@ -1734,13 +1734,13 @@
       "effect_type": "combat_noop"
     },
     "798446838": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2257296413",
       "sample_level": 56,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "809557880": {
       "bucket": "isolytic_combat",
@@ -1770,13 +1770,13 @@
       "effect_type": "isolytic_damage"
     },
     "825965675": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "365388855",
       "sample_level": 55,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "827241882": {
       "bucket": "apex_combat",
@@ -1788,13 +1788,13 @@
       "effect_type": "apex_barrier"
     },
     "835562208": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "634732852",
       "sample_level": 71,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "839530769": {
       "bucket": "apex_combat",
@@ -1806,13 +1806,13 @@
       "effect_type": "apex_barrier"
     },
     "845771824": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1572098905",
       "sample_level": 61,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "849650945": {
       "bucket": "pvp_player_target",
@@ -1842,13 +1842,13 @@
       "effect_type": "combat_noop"
     },
     "877244657": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "2136021416",
       "sample_level": 69,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "887524387": {
       "bucket": "other_review",
@@ -1860,13 +1860,13 @@
       "effect_type": "combat_noop"
     },
     "896123756": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1844129149",
       "sample_level": 56,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "898072606": {
       "bucket": "isolytic_combat",
@@ -1923,13 +1923,13 @@
       "effect_type": "combat_noop"
     },
     "922441492": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1969276283",
       "sample_level": 56,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "930022463": {
       "bucket": "other_review",
@@ -1987,13 +1987,13 @@
       "effect_type": "combat_noop"
     },
     "952685419": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2881087142",
       "sample_level": 52,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "960577624": {
       "bucket": "isolytic_combat",
@@ -2005,22 +2005,22 @@
       "effect_type": "isolytic_damage"
     },
     "967201684": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1120713907",
       "sample_level": 58,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "967808962": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1924102084",
       "sample_level": 73,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "967923304": {
       "bucket": "apex_combat",
@@ -2077,13 +2077,13 @@
       "effect_type": "combat_noop"
     },
     "986116981": {
-      "bucket": "other_review",
+      "bucket": "burning_combat_start",
       "loca_id": 64053,
       "hostile_count": 53,
       "sample_hostile_id": "1013586418",
       "sample_level": 63,
       "text_snippet": "persistence hunter\napplies burning for 6 rounds at the start of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "burning"
     },
     "1004890011": {
       "bucket": "other_review",
@@ -2167,13 +2167,13 @@
       "effect_type": "combat_noop"
     },
     "1037118594": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "1115724213",
       "sample_level": 50,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1047126013": {
       "bucket": "outpost_scope",
@@ -2194,13 +2194,13 @@
       "effect_type": "isolytic_defense"
     },
     "1056547210": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1394484879",
       "sample_level": 53,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1059081556": {
       "bucket": "other_review",
@@ -2212,13 +2212,13 @@
       "effect_type": "combat_noop"
     },
     "1065422632": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "2315444146",
       "sample_level": 66,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1068868639": {
       "bucket": "outpost_scope",
@@ -2284,13 +2284,13 @@
       "effect_type": "combat_noop"
     },
     "1092288281": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1888909386",
       "sample_level": 55,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1097075322": {
       "bucket": "other_review",
@@ -2329,22 +2329,22 @@
       "effect_type": "isolytic_defense"
     },
     "1112031100": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1022287607",
       "sample_level": 54,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "1116789234": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "157719930",
       "sample_level": 55,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1121381480": {
       "bucket": "other_review",
@@ -2464,22 +2464,22 @@
       "effect_type": "combat_noop"
     },
     "1178349037": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3602517776",
       "sample_level": 54,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1187421715": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1664463088",
       "sample_level": 70,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1191296542": {
       "bucket": "other_review",
@@ -2554,13 +2554,13 @@
       "effect_type": "combat_noop"
     },
     "1230069942": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "1559364757",
       "sample_level": 52,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1230549475": {
       "bucket": "isolytic_combat",
@@ -2572,13 +2572,13 @@
       "effect_type": "isolytic_defense"
     },
     "1231557728": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2298096252",
       "sample_level": 50,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1234463706": {
       "bucket": "armada_scope",
@@ -2590,13 +2590,13 @@
       "effect_type": "combat_noop"
     },
     "1234769790": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "2115578828",
       "sample_level": 67,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "1236106151": {
       "bucket": "other_review",
@@ -2617,31 +2617,31 @@
       "effect_type": "combat_noop"
     },
     "1256048139": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1999839501",
       "sample_level": 63,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1261726367": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "1140710508",
       "sample_level": 52,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1263738725": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1124988603",
       "sample_level": 71,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1266162710": {
       "bucket": "other_review",
@@ -2725,13 +2725,13 @@
       "effect_type": "combat_noop"
     },
     "1294364759": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1414845459",
       "sample_level": 59,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1295181079": {
       "bucket": "other_review",
@@ -2797,13 +2797,13 @@
       "effect_type": "combat_noop"
     },
     "1324185618": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1532044061",
       "sample_level": 59,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1324887894": {
       "bucket": "isolytic_combat",
@@ -2860,13 +2860,13 @@
       "effect_type": "combat_noop"
     },
     "1370328697": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "2767983104",
       "sample_level": 63,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1380996270": {
       "bucket": "armada_scope",
@@ -2878,13 +2878,13 @@
       "effect_type": "combat_noop"
     },
     "1382328836": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2113572401",
       "sample_level": 55,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1383740011": {
       "bucket": "other_review",
@@ -2968,22 +2968,22 @@
       "effect_type": "combat_noop"
     },
     "1414838698": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "393653250",
       "sample_level": 67,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1421178836": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1779410737",
       "sample_level": 66,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1421713322": {
       "bucket": "other_review",
@@ -3004,13 +3004,13 @@
       "effect_type": "combat_noop"
     },
     "1425996382": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "2582332342",
       "sample_level": 65,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1427668426": {
       "bucket": "isolytic_combat",
@@ -3103,13 +3103,13 @@
       "effect_type": "combat_noop"
     },
     "1481068241": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1454149980",
       "sample_level": 66,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "1482124771": {
       "bucket": "isolytic_combat",
@@ -3121,13 +3121,13 @@
       "effect_type": "isolytic_defense"
     },
     "1488818164": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3840530780",
       "sample_level": 56,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1494214549": {
       "bucket": "other_review",
@@ -3175,13 +3175,13 @@
       "effect_type": "apex_barrier"
     },
     "1520719749": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "2347616559",
       "sample_level": 70,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1521244938": {
       "bucket": "other_review",
@@ -3193,13 +3193,13 @@
       "effect_type": "combat_noop"
     },
     "1524408358": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "347068270",
       "sample_level": 54,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1528676120": {
       "bucket": "other_review",
@@ -3310,31 +3310,31 @@
       "effect_type": "combat_noop"
     },
     "1574518996": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2169998664",
       "sample_level": 51,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1590904858": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1423673408",
       "sample_level": 57,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "1591582721": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "785933202",
       "sample_level": 55,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1597753629": {
       "bucket": "other_review",
@@ -3364,13 +3364,13 @@
       "effect_type": "combat_noop"
     },
     "1611103465": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "3274354795",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1614080299": {
       "bucket": "other_review",
@@ -3382,13 +3382,13 @@
       "effect_type": "combat_noop"
     },
     "1617145485": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "2349821219",
       "sample_level": 62,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1624877280": {
       "bucket": "armada_scope",
@@ -3400,22 +3400,22 @@
       "effect_type": "combat_noop"
     },
     "1631899884": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3700973600",
       "sample_level": 52,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1637114277": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1422763424",
       "sample_level": 65,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1640927784": {
       "bucket": "apex_combat",
@@ -3427,13 +3427,13 @@
       "effect_type": "apex_barrier"
     },
     "1642475644": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2681172584",
       "sample_level": 50,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1646865184": {
       "bucket": "isolytic_combat",
@@ -3472,13 +3472,13 @@
       "effect_type": "apex_barrier"
     },
     "1670502045": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "1533620044",
       "sample_level": 63,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1675628310": {
       "bucket": "other_review",
@@ -3517,13 +3517,13 @@
       "effect_type": "combat_noop"
     },
     "1692955230": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3318845550",
       "sample_level": 51,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1697627625": {
       "bucket": "outpost_scope",
@@ -3553,22 +3553,22 @@
       "effect_type": "apex_barrier"
     },
     "1704582990": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1113135816",
       "sample_level": 71,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "1712086863": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1921869390",
       "sample_level": 64,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1713462944": {
       "bucket": "isolytic_combat",
@@ -3589,13 +3589,13 @@
       "effect_type": "combat_noop"
     },
     "1725866349": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "881682448",
       "sample_level": 58,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1729666920": {
       "bucket": "aggregation_offense_manual",
@@ -3635,13 +3635,13 @@
       "effect_type": "combat_noop"
     },
     "1755868978": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3795529881",
       "sample_level": 50,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1756146051": {
       "bucket": "other_review",
@@ -3761,13 +3761,13 @@
       "effect_type": "combat_noop"
     },
     "1803049747": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1282219773",
       "sample_level": 69,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1805243438": {
       "bucket": "apex_combat",
@@ -3788,13 +3788,13 @@
       "effect_type": "combat_noop"
     },
     "1809917740": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "1882609300",
       "sample_level": 51,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1814329704": {
       "bucket": "other_review",
@@ -3869,13 +3869,13 @@
       "effect_type": "combat_noop"
     },
     "1857764392": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1948216125",
       "sample_level": 64,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "1862511209": {
       "bucket": "other_review",
@@ -4112,13 +4112,13 @@
       "effect_type": "combat_noop"
     },
     "1985024671": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3776040788",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1986478644": {
       "bucket": "other_review",
@@ -4184,13 +4184,13 @@
       "effect_type": "combat_noop"
     },
     "2020103360": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3157098238",
       "sample_level": 54,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2024076202": {
       "bucket": "isolytic_combat",
@@ -4229,13 +4229,13 @@
       "effect_type": "combat_noop"
     },
     "2038803748": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "578663330",
       "sample_level": 52,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2039418162": {
       "bucket": "isolytic_combat",
@@ -4247,13 +4247,13 @@
       "effect_type": "isolytic_defense"
     },
     "2043262705": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "708346826",
       "sample_level": 50,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2044202743": {
       "bucket": "other_review",
@@ -4265,13 +4265,13 @@
       "effect_type": "combat_noop"
     },
     "2052990014": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3540820250",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2055497967": {
       "bucket": "other_review",
@@ -4391,13 +4391,13 @@
       "effect_type": "combat_noop"
     },
     "2097561252": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1001379962",
       "sample_level": 67,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2097618429": {
       "bucket": "isolytic_combat",
@@ -4418,13 +4418,13 @@
       "effect_type": "combat_noop"
     },
     "2101039109": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "3635608485",
       "sample_level": 57,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2105941894": {
       "bucket": "other_review",
@@ -4454,13 +4454,13 @@
       "effect_type": "combat_noop"
     },
     "2117614379": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "106663403",
       "sample_level": 60,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "2128670118": {
       "bucket": "other_review",
@@ -4499,13 +4499,13 @@
       "effect_type": "isolytic_damage"
     },
     "2140196951": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "2712263416",
       "sample_level": 67,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2146932955": {
       "bucket": "aggregation_hyperthermic_manual",
@@ -4590,22 +4590,22 @@
       "effect_type": "combat_noop"
     },
     "2193458493": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1007969491",
       "sample_level": 60,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "2195740379": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "109873465",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2199598455": {
       "bucket": "armada_scope",
@@ -4617,13 +4617,13 @@
       "effect_type": "combat_noop"
     },
     "2203927560": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "2319866863",
       "sample_level": 70,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2216870777": {
       "bucket": "armada_scope",
@@ -4671,13 +4671,13 @@
       "effect_type": "apex_barrier"
     },
     "2231256646": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1753974311",
       "sample_level": 52,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2237185391": {
       "bucket": "other_review",
@@ -4725,13 +4725,13 @@
       "effect_type": "combat_noop"
     },
     "2250223100": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "4176180614",
       "sample_level": 57,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2250476065": {
       "bucket": "outpost_scope",
@@ -4779,13 +4779,13 @@
       "effect_type": "isolytic_damage"
     },
     "2267433146": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3592022839",
       "sample_level": 54,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2275759645": {
       "bucket": "other_review",
@@ -4833,13 +4833,13 @@
       "effect_type": "combat_noop"
     },
     "2293662285": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "3647880089",
       "sample_level": 70,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2299102171": {
       "bucket": "other_review",
@@ -4878,13 +4878,13 @@
       "effect_type": "combat_noop"
     },
     "2332777769": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "558784882",
       "sample_level": 56,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2332927967": {
       "bucket": "isolytic_combat",
@@ -4923,22 +4923,22 @@
       "effect_type": "combat_noop"
     },
     "2346163621": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3734714546",
       "sample_level": 59,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2366863169": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "2690637278",
       "sample_level": 54,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2367779009": {
       "bucket": "other_review",
@@ -5076,13 +5076,13 @@
       "effect_type": "combat_noop"
     },
     "2430198826": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2261128267",
       "sample_level": 50,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2434782348": {
       "bucket": "isolytic_combat",
@@ -5157,13 +5157,13 @@
       "effect_type": "isolytic_damage"
     },
     "2460059228": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2807108048",
       "sample_level": 64,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2466223538": {
       "bucket": "aggregation_hyperthermic_manual",
@@ -5194,13 +5194,13 @@
       "effect_type": "combat_noop"
     },
     "2479001022": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1553915288",
       "sample_level": 71,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2481788113": {
       "bucket": "other_review",
@@ -5248,13 +5248,13 @@
       "effect_type": "combat_noop"
     },
     "2510693471": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "139134319",
       "sample_level": 64,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2510817144": {
       "bucket": "armada_scope",
@@ -5293,13 +5293,13 @@
       "effect_type": "combat_noop"
     },
     "2523002369": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1503389325",
       "sample_level": 62,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2523580501": {
       "bucket": "isolytic_combat",
@@ -5356,13 +5356,13 @@
       "effect_type": "isolytic_defense"
     },
     "2538847823": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2377571317",
       "sample_level": 66,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2543747134": {
       "bucket": "isolytic_combat",
@@ -5374,13 +5374,13 @@
       "effect_type": "isolytic_defense"
     },
     "2550220693": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2185266560",
       "sample_level": 54,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2556197069": {
       "bucket": "other_review",
@@ -5407,7 +5407,8 @@
       "sample_hostile_id": "1144198852",
       "sample_level": 45,
       "text_snippet": "increases weapon damage by 5000% and critical damage floor by 150%.",
-      "effect_type": "attack_multiplier"
+      "effect_type": "attack_multiplier",
+      "overridden": true
     },
     "2571134390": {
       "bucket": "armada_scope",
@@ -5564,13 +5565,13 @@
       "effect_type": "combat_noop"
     },
     "2645316647": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "3609807394",
       "sample_level": 66,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2646481486": {
       "bucket": "isolytic_combat",
@@ -5636,13 +5637,13 @@
       "effect_type": "hostile_lethal_end_of_round"
     },
     "2668838424": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1744873150",
       "sample_level": 56,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2669697193": {
       "bucket": "isolytic_combat",
@@ -5726,13 +5727,13 @@
       "effect_type": "combat_noop"
     },
     "2718218719": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2090457092",
       "sample_level": 56,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2723215231": {
       "bucket": "other_review",
@@ -5780,13 +5781,13 @@
       "effect_type": "combat_noop"
     },
     "2751967066": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1083816606",
       "sample_level": 59,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2757701912": {
       "bucket": "other_review",
@@ -5816,31 +5817,31 @@
       "effect_type": "combat_noop"
     },
     "2780405687": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2593079275",
       "sample_level": 55,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2782226538": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3575551655",
       "sample_level": 53,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2782367817": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "248702362",
       "sample_level": 64,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2782991872": {
       "bucket": "isolytic_combat",
@@ -5879,13 +5880,13 @@
       "effect_type": "combat_noop"
     },
     "2787239739": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1196267760",
       "sample_level": 57,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "2794125774": {
       "bucket": "armada_scope",
@@ -5924,13 +5925,13 @@
       "effect_type": "combat_noop"
     },
     "2806761268": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1637013726",
       "sample_level": 51,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2810472756": {
       "bucket": "other_review",
@@ -5942,13 +5943,13 @@
       "effect_type": "combat_noop"
     },
     "2811564588": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3997851259",
       "sample_level": 53,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2818877087": {
       "bucket": "armada_scope",
@@ -6005,13 +6006,13 @@
       "effect_type": "combat_noop"
     },
     "2846946976": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3111342475",
       "sample_level": 58,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2852278773": {
       "bucket": "other_review",
@@ -6032,13 +6033,13 @@
       "effect_type": "combat_noop"
     },
     "2857064766": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "2373285259",
       "sample_level": 50,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2863086141": {
       "bucket": "other_review",
@@ -6113,22 +6114,22 @@
       "effect_type": "combat_noop"
     },
     "2918791160": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "146080202",
       "sample_level": 53,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2920782920": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1849343488",
       "sample_level": 62,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "2922610677": {
       "bucket": "other_review",
@@ -6230,13 +6231,13 @@
       "effect_type": "isolytic_damage"
     },
     "2992500414": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "323743810",
       "sample_level": 68,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3000719286": {
       "bucket": "economy",
@@ -6257,13 +6258,13 @@
       "effect_type": "isolytic_damage"
     },
     "3010905187": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 4,
       "sample_hostile_id": "143534023",
       "sample_level": 67,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3015621685": {
       "bucket": "armada_scope",
@@ -6293,13 +6294,13 @@
       "effect_type": "combat_noop"
     },
     "3035918177": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1156901507",
       "sample_level": 77,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "3038600948": {
       "bucket": "armada_scope",
@@ -6392,13 +6393,13 @@
       "effect_type": "combat_noop"
     },
     "3086451244": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2688803426",
       "sample_level": 54,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3088493342": {
       "bucket": "other_review",
@@ -6419,13 +6420,13 @@
       "effect_type": "apex_barrier"
     },
     "3096319180": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "4190709798",
       "sample_level": 68,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3100528450": {
       "bucket": "isolytic_combat",
@@ -6536,13 +6537,13 @@
       "effect_type": "combat_noop"
     },
     "3143400095": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "3847843453",
       "sample_level": 80,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "3144982821": {
       "bucket": "other_review",
@@ -6582,13 +6583,13 @@
       "effect_type": "combat_noop"
     },
     "3164692420": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 4,
       "sample_hostile_id": "1049558449",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3165256234": {
       "bucket": "other_review",
@@ -6600,13 +6601,13 @@
       "effect_type": "combat_noop"
     },
     "3165681827": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1001602677",
       "sample_level": 62,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3167243916": {
       "bucket": "isolytic_combat",
@@ -6681,13 +6682,13 @@
       "effect_type": "shield_mitigation_bypass"
     },
     "3198879611": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3898916268",
       "sample_level": 57,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3206032362": {
       "bucket": "other_review",
@@ -6870,13 +6871,13 @@
       "effect_type": "isolytic_damage"
     },
     "3303959983": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "3696771073",
       "sample_level": 63,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3305822680": {
       "bucket": "other_review",
@@ -6888,13 +6889,13 @@
       "effect_type": "combat_noop"
     },
     "3307634107": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "3321257451",
       "sample_level": 58,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3308120216": {
       "bucket": "isolytic_combat",
@@ -6942,13 +6943,13 @@
       "effect_type": "combat_noop"
     },
     "3331427750": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2166596443",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3334230711": {
       "bucket": "other_review",
@@ -6987,13 +6988,13 @@
       "effect_type": "combat_noop"
     },
     "3363560125": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 4,
       "sample_hostile_id": "145462468",
       "sample_level": 68,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3365706029": {
       "bucket": "isolytic_combat",
@@ -7050,13 +7051,13 @@
       "effect_type": "isolytic_defense"
     },
     "3383416957": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1429972523",
       "sample_level": 61,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3391157960": {
       "bucket": "other_review",
@@ -7086,22 +7087,22 @@
       "effect_type": "combat_noop"
     },
     "3405988097": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "4012224568",
       "sample_level": 53,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3406306012": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2291765957",
       "sample_level": 57,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3407916199": {
       "bucket": "isolytic_combat",
@@ -7158,13 +7159,13 @@
       "effect_type": "isolytic_defense"
     },
     "3419662303": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "2348505166",
       "sample_level": 58,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3422974103": {
       "bucket": "isolytic_combat",
@@ -7221,13 +7222,13 @@
       "effect_type": "shield_mitigation_bypass"
     },
     "3450229444": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "3130597264",
       "sample_level": 57,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3456128330": {
       "bucket": "apex_combat",
@@ -7338,13 +7339,13 @@
       "effect_type": "isolytic_defense"
     },
     "3494409699": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2626550157",
       "sample_level": 69,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3500505461": {
       "bucket": "other_review",
@@ -7365,13 +7366,13 @@
       "effect_type": "combat_noop"
     },
     "3505786380": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "1836711127",
       "sample_level": 69,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3511884181": {
       "bucket": "other_review",
@@ -7392,13 +7393,13 @@
       "effect_type": "combat_noop"
     },
     "3524241781": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "3239825334",
       "sample_level": 50,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3529890913": {
       "bucket": "other_review",
@@ -7446,22 +7447,22 @@
       "effect_type": "combat_noop"
     },
     "3559697397": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 3,
       "sample_hostile_id": "1551315274",
       "sample_level": 52,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3560185551": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "2320375242",
       "sample_level": 53,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3566779117": {
       "bucket": "other_review",
@@ -7491,7 +7492,7 @@
       "effect_type": "combat_noop"
     },
     "3593194899": {
-      "bucket": "other_review",
+      "bucket": "hyperthermic_review",
       "loca_id": 89109,
       "hostile_count": 6,
       "sample_hostile_id": "1117012705",
@@ -7518,13 +7519,13 @@
       "effect_type": "isolytic_defense"
     },
     "3614715817": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "1862886607",
       "sample_level": 66,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3615446199": {
       "bucket": "apex_combat",
@@ -7536,22 +7537,22 @@
       "effect_type": "apex_barrier"
     },
     "3631658668": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "544152513",
       "sample_level": 63,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3636801966": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1470389719",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3637907359": {
       "bucket": "armada_scope",
@@ -7644,13 +7645,13 @@
       "effect_type": "apex_barrier"
     },
     "3684452750": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2585102624",
       "sample_level": 55,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3687094821": {
       "bucket": "pvp_player_target",
@@ -7851,13 +7852,13 @@
       "effect_type": "combat_noop"
     },
     "3807845241": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "996155770",
       "sample_level": 58,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3825538982": {
       "bucket": "other_review",
@@ -7878,13 +7879,13 @@
       "effect_type": "isolytic_damage"
     },
     "3839132951": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "423259217",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3845968517": {
       "bucket": "other_review",
@@ -7905,13 +7906,13 @@
       "effect_type": "combat_noop"
     },
     "3852598818": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3199633299",
       "sample_level": 58,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3854011090": {
       "bucket": "isolytic_combat",
@@ -7923,13 +7924,13 @@
       "effect_type": "isolytic_defense"
     },
     "3862542127": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "221184407",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3865859985": {
       "bucket": "other_review",
@@ -7941,13 +7942,13 @@
       "effect_type": "combat_noop"
     },
     "3866744950": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 1,
       "sample_hostile_id": "1121384072",
       "sample_level": 55,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3867337071": {
       "bucket": "other_review",
@@ -8049,13 +8050,13 @@
       "effect_type": "combat_noop"
     },
     "3908120389": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "394062552",
       "sample_level": 63,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3926823774": {
       "bucket": "other_review",
@@ -8094,13 +8095,13 @@
       "effect_type": "combat_noop"
     },
     "3941723756": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1582652588",
       "sample_level": 65,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3942626863": {
       "bucket": "isolytic_combat",
@@ -8139,13 +8140,13 @@
       "effect_type": "isolytic_damage"
     },
     "3957652497": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "137700024",
       "sample_level": 60,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3959049887": {
       "bucket": "outpost_scope",
@@ -8193,13 +8194,13 @@
       "effect_type": "hostile_kemocite_weaponry"
     },
     "3982232193": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2474468244",
       "sample_level": 51,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "3985273368": {
       "bucket": "armada_scope",
@@ -8220,13 +8221,13 @@
       "effect_type": "combat_noop"
     },
     "3989697543": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3374695473",
       "sample_level": 51,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3997179682": {
       "bucket": "other_review",
@@ -8238,13 +8239,13 @@
       "effect_type": "combat_noop"
     },
     "4002115428": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "1219973275",
       "sample_level": 66,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "4002596384": {
       "bucket": "isolytic_combat",
@@ -8292,13 +8293,13 @@
       "effect_type": "apex_barrier"
     },
     "4018534685": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3125419294",
       "sample_level": 56,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4021395417": {
       "bucket": "isolytic_combat",
@@ -8355,13 +8356,13 @@
       "effect_type": "apex_barrier"
     },
     "4040005217": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "3419627230",
       "sample_level": 52,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4041445141": {
       "bucket": "outpost_scope",
@@ -8392,13 +8393,13 @@
       "effect_type": "apex_barrier"
     },
     "4060801507": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 3,
       "sample_hostile_id": "1186884395",
       "sample_level": 65,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "4064876852": {
       "bucket": "armada_scope",
@@ -8437,22 +8438,22 @@
       "effect_type": "isolytic_damage"
     },
     "4090677892": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 1,
       "sample_hostile_id": "1298610623",
       "sample_level": 59,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4093352639": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1872680740",
       "sample_level": 60,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4097019156": {
       "bucket": "armada_scope",
@@ -8509,13 +8510,13 @@
       "effect_type": "isolytic_damage"
     },
     "4111821283": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1181669118",
       "sample_level": 81,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "4115514686": {
       "bucket": "armada_scope",
@@ -8527,13 +8528,13 @@
       "effect_type": "combat_noop"
     },
     "4116909035": {
-      "bucket": "weapon_damage_combat",
+      "bucket": "hyperthermic_decay_combat",
       "loca_id": 84505,
       "hostile_count": 6,
       "sample_hostile_id": "1419263816",
       "sample_level": 73,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
-      "effect_type": "attack_multiplier"
+      "effect_type": "hostile_hyperthermic_decay"
     },
     "4119055872": {
       "bucket": "armada_scope",
@@ -8563,13 +8564,13 @@
       "effect_type": "combat_noop"
     },
     "4123186050": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "1686814482",
       "sample_level": 68,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "4123370781": {
       "bucket": "other_review",
@@ -8617,22 +8618,22 @@
       "effect_type": "isolytic_defense"
     },
     "4140652923": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1714913136",
       "sample_level": 69,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4145303524": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "100063440",
       "sample_level": 71,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4148453257": {
       "bucket": "isolytic_combat",
@@ -8644,13 +8645,13 @@
       "effect_type": "isolytic_defense"
     },
     "4151447209": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "2618717130",
       "sample_level": 53,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4153973984": {
       "bucket": "isolytic_combat",
@@ -8761,13 +8762,13 @@
       "effect_type": "combat_noop"
     },
     "4225586244": {
-      "bucket": "other_review",
+      "bucket": "crit_combat",
       "loca_id": 35019,
       "hostile_count": 2,
       "sample_hostile_id": "2124085457",
       "sample_level": 65,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "crit_damage"
     },
     "4229054121": {
       "bucket": "isolytic_combat",
@@ -8788,13 +8789,13 @@
       "effect_type": "combat_noop"
     },
     "4239167975": {
-      "bucket": "defense_combat_review",
+      "bucket": "pierce_combat",
       "loca_id": 35018,
       "hostile_count": 2,
       "sample_hostile_id": "1413935529",
       "sample_level": 51,
       "text_snippet": "pen of kahless\nincreases shield piercing, armor piercing, and accuracy stats by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4240957028": {
       "bucket": "isolytic_combat",

@@ -72,9 +72,11 @@ pub fn parse_ship_ability_timing(s: &str) -> Option<TimingWindow> {
 }
 
 /// If the game stores probabilities as whole percents (e.g. 25 = 25%), fold to [0, 1].
+/// Upstream `chance: 1` means "always" (100%), not 1% — values at or below 1.0 are already
+/// fractions; only values above 1.0 are percent-scaled.
 pub(crate) fn normalize_probability(value: f64) -> f64 {
-    if (1.0..=100.0).contains(&value) {
-        value / 100.0
+    if value > 1.0 {
+        (value / 100.0).clamp(0.0, 1.0)
     } else {
         value.clamp(0.0, 1.0)
     }
@@ -233,7 +235,7 @@ pub fn ship_ability_effect_from_catalog(
 
         "burning" => Some(AbilityEffect::Burning {
             chance: normalize_probability(value),
-            duration_rounds: 1,
+            duration_rounds: duration_rounds.unwrap_or(1).max(1),
         }),
 
         "shots" | "weapon_shots" | "shots_per_weapon" | "shots_per_attack" | "shots_bonus" => {
@@ -387,6 +389,16 @@ mod tests {
     use super::*;
     use crate::combat::abilities::{AbilityCondition, AbilityEffect};
     use crate::combat::types::{OpponentFactionTag, ShipType};
+
+    #[test]
+    fn normalize_probability_treats_one_as_always_and_percents_above_one() {
+        assert!((normalize_probability(1.0) - 1.0).abs() < 1e-12);
+        assert!((normalize_probability(0.9) - 0.9).abs() < 1e-12);
+        assert!((normalize_probability(25.0) - 0.25).abs() < 1e-12);
+        assert!((normalize_probability(100.0) - 1.0).abs() < 1e-12);
+        assert!((normalize_probability(1000.0) - 1.0).abs() < 1e-12);
+        assert!((normalize_probability(-0.5) - 0.0).abs() < 1e-12);
+    }
 
     #[test]
     fn timing_accepts_lcars_style_aliases() {
