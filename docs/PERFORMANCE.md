@@ -19,6 +19,7 @@ cargo xtask bench-check --write-baseline
 ```
 
 - **Noise:** shared GitHub runners vary; if the gate flakes, re-run the workflow or refresh the log from a fresh Linux release artifact. Prefer `**ubuntu-24.04`** for the committed numbers so they match the gate runner.
+- **Paired fallback (hardware drift):** when the committed-baseline comparison fails, the workflow re-benches `main` **on the same runner** (shared `CARGO_TARGET_DIR`, so only the kobayashi crates rebuild) and gates on the paired PR-vs-main medians instead. A true regression still fails (it regresses vs `main` too); a stale-baseline false positive passes and the sticky comment tells you to dispatch `bench-refresh-baseline.yml`. Motivation: on 2026-07-08 (PR #252) GitHub runner hardware changed 2-thread Rayon scaling from ~1.76× to ~1.05×, making `monte_carlo/parallel` fail +53% against the committed baseline — on `main` itself as well.
 
 ## benchmark_parallel_speedup (64 candidates × 1000 iterations)
 
