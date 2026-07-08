@@ -41,10 +41,65 @@ jobs:
             ${{ runner.os }}-bench-cargo-
 
       - name: cargo bench + regression check
+        id: gate
         run: |
           set -euo pipefail
           cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
-          cargo xtask bench-check --markdown-out bench-comment.md
+          if cargo xtask bench-check --markdown-out bench-comment.md; then
+            echo "baseline_result=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "baseline_result=fail" >> "$GITHUB_OUTPUT"
+            echo "::warning::Committed-baseline comparison failed; falling back to paired main-vs-PR measurement on this runner."
+          fi
+
+      # Hardware-drift guard: the committed baseline goes stale when GitHub swaps runner
+      # hardware (e.g. 2026-07-08, PR #252: `monte_carlo/parallel` +53% on the PR *and* on
+      # `main`, because 2-thread Rayon scaling dropped from ~1.76x to ~1.05x between runner
+      # generations). When the baseline comparison fails, re-measure `main` on THIS runner
+      # and gate on the paired comparison instead — a true regression still fails (it
+      # regresses vs main too), while stale-baseline false positives self-heal.
+      - name: Paired fallback — bench main on this runner
+        id: paired
+        if: steps.gate.outputs.baseline_result == 'fail'
+        run: |
+          set -euo pipefail
+          # Preserve the PR's Criterion medians before main's bench overwrites `new/`.
+          cp -r target/criterion /tmp/pr-criterion
+          # Bench main from a worktree but reuse the PR's target dir: deps stay cached
+          # (only the kobayashi crates rebuild) and the runner disk holds one target dir.
+          git fetch --depth 1 origin main
+          git worktree add --detach /tmp/main-bench FETCH_HEAD
+          pushd /tmp/main-bench
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" cargo xtask bench-check \
+            --write-baseline --baseline /tmp/main-fresh-baseline.log \
+            --criterion-dir "$GITHUB_WORKSPACE/target/criterion"
+          popd
+          {
+            echo "> [!NOTE]"
+            echo "> The committed \`benchmark_results.log\` comparison failed, so \`main\` was re-benched on this same runner and the gate below compares **paired medians (PR vs main, same hardware)**. If the paired gate passes, the committed baseline is stale — dispatch \`bench-refresh-baseline.yml\` to refresh it."
+            echo ""
+          } > bench-comment.paired.md
+          if cargo xtask bench-check --baseline /tmp/main-fresh-baseline.log \
+               --criterion-dir /tmp/pr-criterion --markdown-out bench-comment.inner.md; then
+            echo "paired_result=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "paired_result=fail" >> "$GITHUB_OUTPUT"
+          fi
+          cat bench-comment.inner.md >> bench-comment.paired.md
+          mv bench-comment.paired.md bench-comment.md
+
+      - name: Gate result
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.gate.outputs.baseline_result }}" = "pass" ]; then
+            echo "Baseline gate passed."
+          elif [ "${{ steps.paired.outputs.paired_result }}" = "pass" ]; then
+            echo "Paired gate passed (committed baseline is stale — consider dispatching bench-refresh-baseline.yml)."
+          else
+            echo "::error::Benchmark regression confirmed against main on the same runner."
+            exit 1
+          fi
 
       - uses: marocchino/sticky-pull-request-comment@v2
         if: always() && github.event_name == 'pull_request' && hashFiles('bench-comment.md') != ''
