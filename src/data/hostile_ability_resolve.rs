@@ -19,6 +19,7 @@ use crate::combat::abilities::{
     TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::combine_optional_and;
+use crate::combat::types::OpponentFactionTag;
 use crate::combat::CrewConfiguration;
 use crate::data::ship_ability_resolve::{
     normalize_probability, parse_ship_ability_timing, ship_ability_effect_from_catalog,
@@ -68,6 +69,13 @@ pub struct HostileAbilityCatalogEntry {
     /// via [`AbilityCondition::RoundRange`] — "for the first N rounds" hostile ability texts.
     #[serde(default)]
     pub round_cap: Option<u32>,
+    /// Hull-design faction slugs allowed to engage (`federation`, `klingon`, `romulan`, …)
+    /// for [`AbilityEffect::HostileLethalUnlessAttackerFaction`].
+    #[serde(default)]
+    pub allowed_attacker_factions: Vec<String>,
+    /// Ship ids exempt from the faction gate (e.g. `uss_vengeance`).
+    #[serde(default)]
+    pub allowed_attacker_ship_ids: Vec<String>,
     #[serde(default)]
     pub extra_seats: Vec<HostileAbilityCatalogEntry>,
 }
@@ -162,10 +170,50 @@ pub(crate) fn hostile_ability_effect_from_catalog(
     round_interval: Option<u32>,
     shots: Option<u32>,
     weapon_index: Option<u32>,
+    allowed_attacker_factions: &[String],
+    allowed_attacker_ship_ids: &[String],
 ) -> Option<AbilityEffect> {
     // Proc-gated counter-fire multipliers keep upstream `values[].chance` semantics.
     match effect_type.trim().to_lowercase().replace('-', "_").as_str() {
         "combat_noop" | "unmodeled" | "not_applicable" => None,
+        "hostile_lethal_unless_attacker_faction"
+        | "faction_gated_lethal_strike"
+        | "lethal_unless_attacker_faction" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            let mut allow_federation = false;
+            let mut allow_klingon = false;
+            let mut allow_romulan = false;
+            for s in allowed_attacker_factions {
+                match OpponentFactionTag::from_data_slug(s) {
+                    Some(OpponentFactionTag::Federation) => allow_federation = true,
+                    Some(OpponentFactionTag::Klingon) => allow_klingon = true,
+                    Some(OpponentFactionTag::Romulan) => allow_romulan = true,
+                    _ => {}
+                }
+            }
+            let allow_uss_vengeance = allowed_attacker_ship_ids
+                .iter()
+                .any(|id| id.trim().eq_ignore_ascii_case("uss_vengeance"));
+            if !allow_federation && !allow_klingon && !allow_romulan && !allow_uss_vengeance {
+                return None;
+            }
+            Some(AbilityEffect::HostileLethalUnlessAttackerFaction {
+                allow_federation,
+                allow_klingon,
+                allow_romulan,
+                allow_uss_vengeance,
+            })
+        }
+        "hostile_attacker_shield_mitigation_zero"
+        | "attacker_shield_mitigation_zero"
+        | "strike_down_shield_mitigation_zero" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileAttackerShieldMitigationZero)
+        }
         "hostile_crit_damage_reduction" | "reduce_hostile_crit_damage" => {
             if timing != TimingWindow::CombatBegin && timing != TimingWindow::RoundStart {
                 return None;
@@ -299,6 +347,8 @@ fn push_hostile_catalog_seat(
         entry.round_interval,
         entry.shots,
         entry.weapon_index,
+        &entry.allowed_attacker_factions,
+        &entry.allowed_attacker_ship_ids,
     ) else {
         return;
     };
@@ -563,6 +613,8 @@ mod tests {
             None,
             None,
             None,
+            &[],
+            &[],
         );
         assert!(matches!(
             vuln,
@@ -578,6 +630,8 @@ mod tests {
             None,
             None,
             None,
+            &[],
+            &[],
         );
         assert!(
             matches!(iso, Some(AbilityEffect::IsolyticDamageBonus(v)) if (v - 0.15).abs() < 1e-9)
@@ -592,6 +646,8 @@ mod tests {
             None,
             None,
             None,
+            &[],
+            &[],
         );
         assert!(
             matches!(apex, Some(AbilityEffect::ApexBarrierBonus(v)) if (v - 5000.0).abs() < 1e-9)

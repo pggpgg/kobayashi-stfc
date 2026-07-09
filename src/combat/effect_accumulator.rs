@@ -969,6 +969,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+                | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1166,6 +1168,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+                | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1325,6 +1329,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+                | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1486,6 +1492,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+                | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1653,6 +1661,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+                | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1856,6 +1866,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+                | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -2114,6 +2126,8 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
         AbilityEffect::HostileIsolyticVulnerability
+        | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+        | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,
         AbilityEffect::RandomDefenderState { .. } => effect,

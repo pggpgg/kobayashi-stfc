@@ -1774,10 +1774,14 @@
     },
     "1088929105": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_unless_attacker_faction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0,
+      "allowed_attacker_factions": [
+        "klingon",
+        "romulan"
+      ]
     },
     "1092288281": {
       "timing": "combat_begin",
@@ -1949,10 +1953,27 @@
     },
     "1206267116": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_unless_attacker_faction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0,
+      "allowed_attacker_factions": [
+        "federation",
+        "klingon",
+        "romulan"
+      ],
+      "allowed_attacker_ship_ids": [
+        "uss_vengeance"
+      ],
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 3.0
+        }
+      ]
     },
     "1207693099": {
       "timing": "combat_begin",
@@ -2560,10 +2581,34 @@
     },
     "1567589326": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_unless_attacker_faction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0,
+      "allowed_attacker_factions": [
+        "federation",
+        "klingon",
+        "romulan"
+      ],
+      "allowed_attacker_ship_ids": [
+        "uss_vengeance"
+      ],
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 3.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_attacker_shield_mitigation_zero",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0
+        }
+      ]
     },
     "1574518996": {
       "timing": "combat_begin",
@@ -2676,10 +2721,14 @@
     },
     "1651219904": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_unless_attacker_faction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0,
+      "allowed_attacker_factions": [
+        "federation",
+        "romulan"
+      ]
     },
     "1653326588": {
       "timing": "combat_begin",
@@ -4077,10 +4126,14 @@
     },
     "2518573064": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_unless_attacker_faction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0,
+      "allowed_attacker_factions": [
+        "federation",
+        "klingon"
+      ]
     },
     "2518795428": {
       "timing": "combat_begin",

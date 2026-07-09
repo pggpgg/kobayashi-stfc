@@ -159,6 +159,8 @@ fn classify_hostile_catalog_entry(entry: &HostileAbilityCatalogEntry) -> LcarsEf
         entry.round_interval,
         entry.shots,
         entry.weapon_index,
+        &entry.allowed_attacker_factions,
+        &entry.allowed_attacker_ship_ids,
     )
     .is_some()
     {

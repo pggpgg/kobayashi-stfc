@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-08):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **427** modeled for defender-side counter-fire (`defender_crew`), **555** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-08 / faction gates):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **432** modeled for defender-side counter-fire (`defender_crew`), **550** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Fidelity pass (2026-07-08):** Four engine/resolver fixes plus five newly modeled text families:
 
@@ -18,6 +18,16 @@ This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability covera
 | Pen of Kahless | 82 | 142 | `hostile_counter_pierce_multiplier` (+X% of counter pierce, `round_cap: 5`) — new effect; flat `pierce_bonus` would be inert against the fraction-scale pierce-through term |
 | Revolutionary Spirit | 82 | 142 | `crit_damage` fraction with `round_cap: 5` |
 | Psionic Assault | 18 | 108 | `hostile_hyperthermic_decay` at `round_start` (X% of player max hull per round) — was misclassified `attack_multiplier` |
+
+**Faction-gated lethal strikes (2026-07-08 follow-up):** Five `other_review` noops → `hostile_lethal_unless_attacker_faction` (bucket `faction_gate_lethal`). Wrong hull design faction → pre-combat instant loss (`rounds_simulated == 0`), same path as Conqueror Borg beams. Gate uses `SimulationConfig.attacker_owner_faction` (`ShipRecord::faction`); Q texts also allow `uss_vengeance` by ship id. Both Q abilities emit `hostile_crit_damage_floor` 3.0 (text "300%"); Strike Down adds `hostile_attacker_shield_mitigation_zero` (forces incoming SM to 0% for the fight). **Uncertainty:** ~49 ships lack a `faction` slug (including Vengeance, which relies on the id exception); missing faction → instant loss unless exempt — fill ship `faction` data when known.
+
+| Ability id | Hostiles | Gate | Extra seats |
+| --- | ---: | --- | --- |
+| `2518573064` | 30 | Fed \| Klingon | — |
+| `1651219904` | 30 | Fed \| Romulan | — |
+| `1088929105` | 30 | Klingon \| Romulan | — |
+| `1206267116` | 17 | Fed \| Rom \| Klingon **or** `uss_vengeance` | crit floor 3.0 |
+| `1567589326` | 16 | same | crit floor 3.0 + SM→0 |
 
 Coverage: `tests/hostile_fidelity_new_mechanics.rs`; resolver units in `src/data/hostile_ability_resolve.rs` and `src/data/ship_ability_resolve.rs`.
 
@@ -97,7 +107,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 - PvP player targeting (4 ids, 422 instances): default PvE path is ship vs NPC hostile
 - Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (453 ids): burning procs, extra shots, faction gates, etc.
+- `other_review` (361 ids): burning procs, extra shots, etc. (faction gates modeled 2026-07-08)
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -115,13 +125,14 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Crit first-N-rounds | 82 | 142 | **Modeled (2026-07-08)** — Revolutionary Spirit → `crit_damage` + `round_cap` |
 | Hyperthermic decay per-round | 18 | 108 | **Modeled (2026-07-08)** — Psionic Assault → `round_start` + `hostile_hyperthermic_decay` |
 | Burning at combat start | 1 | 53 | **Modeled (2026-07-08)** — Persistence Hunter → `combat_begin` + `burning` on the player |
+| Faction-gated lethal strike | 5 | 123 | **Modeled (2026-07-08)** — Tal Shiar / Mo'Kai / S31 / Q → `hostile_lethal_unless_attacker_faction` (+ Q crit floor / Strike Down SM→0) |
 | Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
 | PvP enemy player | 4 | 422 | **Keep noop** on default ship-vs-hostile path |
 | Armada | 125 | 260 | **Keep noop** — no armada scenario |
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 366 | 748 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 361 | 625 | **Shard triage** — extend generator or overrides per pattern |
 
 ---
 
@@ -147,9 +158,9 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `3445799437` | 45 | hostile_shield_bypass | `shield_mitigation_bypass` | Blade's Tip — 100% bypass of player shield mitigation on counter |
 | `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — reduces final damage (review mapping) |
 | `3196612078` | 39 | hostile_shield_bypass | `shield_mitigation_bypass` | Strength of the Ibix — 100% bypass (10 shots are weapon components, not this seat) |
-| `1088929105` | 30 | other_review | `combat_noop` | S31 Elite — faction ship gate |
+| `1088929105` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | S31 Elite — Klingon/Romulan designed ships only |
 | `1539285779` | 30 | armada_scope | `combat_noop` | Armada isolytic defense |
-| `1651219904` | 30 | other_review | `combat_noop` | Mo'Kai Elite — faction ship gate |
+| `1651219904` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | Mo'Kai Elite — Fed/Romulan designed ships only |
 
 ---
 

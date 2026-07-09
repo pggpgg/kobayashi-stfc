@@ -136,6 +136,8 @@ mod tests {
             prevent_when_defender_assimilated: false,
             weapon_index: None,
             round_cap: None,
+            allowed_attacker_factions: Vec::new(),
+            allowed_attacker_ship_ids: Vec::new(),
             extra_seats: Vec::new(),
         };
         let spec =

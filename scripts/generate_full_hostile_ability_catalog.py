@@ -83,6 +83,8 @@ def modeled(
     prevent_when_defender_assimilated: bool = False,
     value_override: float | None = None,
     weapon_index: int | None = None,
+    allowed_attacker_factions: list[str] | None = None,
+    allowed_attacker_ship_ids: list[str] | None = None,
     extra_seats: list[dict] | None = None,
 ) -> dict:
     d: dict = {
@@ -114,6 +116,10 @@ def modeled(
     cap = None if duration_rounds is not None else round_cap
     if cap is not None and cap > 0:
         d["round_cap"] = int(cap)
+    if allowed_attacker_factions:
+        d["allowed_attacker_factions"] = list(allowed_attacker_factions)
+    if allowed_attacker_ship_ids:
+        d["allowed_attacker_ship_ids"] = list(allowed_attacker_ship_ids)
     if extra_seats:
         d["extra_seats"] = extra_seats
     return d
@@ -326,6 +332,55 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                     ],
                 ),
                 "crit_multi_stat_modeled",
+            )
+
+    # Faction-gated lethal strikes (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down).
+    # Gate is on hull design faction ("designed ships"), not player reputation.
+    if (
+        ("lethally struck" in p or "fatally struck" in p)
+        and ("can engage" in p or "engaged in battle" in p)
+    ):
+        factions: list[str] = []
+        if "federation" in p:
+            factions.append("federation")
+        if "klingon" in p:
+            factions.append("klingon")
+        if "romulan" in p:
+            factions.append("romulan")
+        ship_ids: list[str] = []
+        if "vengeance" in p:
+            ship_ids.append("uss_vengeance")
+        extras: list[dict] = []
+        # Text says "Critical Damage Floor of 300%" — multiplier floor 3.0 (not upstream level curve).
+        if "critical damage floor" in p or "crit damage floor" in p:
+            extras.append(
+                modeled(
+                    "combat_begin",
+                    "hostile_crit_damage_floor",
+                    value_is_percentage=False,
+                    ignore_upstream_value_is_percentage=True,
+                    value_override=3.0,
+                )
+            )
+        if "shield mitigation to 0" in p or "shield mitigation to 0%" in p:
+            extras.append(
+                modeled(
+                    "combat_begin",
+                    "hostile_attacker_shield_mitigation_zero",
+                    value_override=0,
+                )
+            )
+        if factions or ship_ids:
+            return (
+                modeled(
+                    "combat_begin",
+                    "hostile_lethal_unless_attacker_faction",
+                    value_override=0,
+                    allowed_attacker_factions=factions,
+                    allowed_attacker_ship_ids=ship_ids or None,
+                    extra_seats=extras or None,
+                ),
+                "faction_gate_lethal",
             )
 
     # Burning applied to the player at combat start (Persistence Hunter).

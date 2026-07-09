@@ -2275,13 +2275,13 @@
       "effect_type": "combat_noop"
     },
     "1088929105": {
-      "bucket": "other_review",
+      "bucket": "faction_gate_lethal",
       "loca_id": 91806,
       "hostile_count": 30,
       "sample_hostile_id": "1229485126",
       "sample_level": 38,
       "text_snippet": "s31 elite lethal strike\nonly klingon or romulan designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "1092288281": {
       "bucket": "crit_combat",
@@ -2509,13 +2509,13 @@
       "effect_type": "combat_noop"
     },
     "1206267116": {
-      "bucket": "other_review",
+      "bucket": "faction_gate_lethal",
       "loca_id": 92105,
       "hostile_count": 17,
       "sample_hostile_id": "1073900199",
       "sample_level": 63,
       "text_snippet": "almost omnipotent\nhas a critical damage floor of 300%.\n\ncan only be engaged in battle by federation, romulan, and klingon ships, or the u.s.s. vengeance - all other vessels will be fatally struck down at the start of combat. such is the dec",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "1207693099": {
       "bucket": "other_review",
@@ -3301,13 +3301,13 @@
       "effect_type": "combat_noop"
     },
     "1567589326": {
-      "bucket": "other_review",
+      "bucket": "faction_gate_lethal",
       "loca_id": 92108,
       "hostile_count": 16,
       "sample_hostile_id": "1029134381",
       "sample_level": 76,
       "text_snippet": "strike down\nreduces shield mitigation to 0% at the start of combat. has critical damage floor of 300%.\n\ncan only be engaged in battle by federation, romulan, and klingon ships, or the u.s.s. vengeance - all other vessels will be fatally str",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "1574518996": {
       "bucket": "crit_combat",
@@ -3454,13 +3454,13 @@
       "effect_type": "combat_noop"
     },
     "1651219904": {
-      "bucket": "other_review",
+      "bucket": "faction_gate_lethal",
       "loca_id": 91807,
       "hostile_count": 30,
       "sample_hostile_id": "1262772259",
       "sample_level": 36,
       "text_snippet": "mo'kai elite lethal strike\nonly federation or romulan designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "1653326588": {
       "bucket": "apex_combat",
@@ -5266,13 +5266,13 @@
       "effect_type": "combat_noop"
     },
     "2518573064": {
-      "bucket": "other_review",
+      "bucket": "faction_gate_lethal",
       "loca_id": 91808,
       "hostile_count": 30,
       "sample_hostile_id": "1107147565",
       "sample_level": 34,
       "text_snippet": "tal shiar elite lethal strike\nonly federation or klingon designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "2518795428": {
       "bucket": "other_review",

@@ -293,6 +293,21 @@ pub enum AbilityEffect {
     /// component of player outbound weapon damage (standard weapon damage does not deplete shields/hull).
     /// Detected at combat setup; resolved out of band in the weapon loop (not in [`EffectAccumulator`]).
     HostileIsolyticVulnerability,
+    /// Faction-gated lethal strike (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down):
+    /// if the attacking hull's design faction is not allowed and the ship is not an exempt id
+    /// (U.S.S. Vengeance), the player is lethally struck at combat start (instant loss). Gate is on
+    /// hull design (`ShipRecord::faction` → [`OpponentFactionTag`]), not player reputation.
+    /// Resolved out of band in [`crate::combat::engine`] pre-combat setup.
+    HostileLethalUnlessAttackerFaction {
+        allow_federation: bool,
+        allow_klingon: bool,
+        allow_romulan: bool,
+        /// U.S.S. Vengeance ship-id exception (Q hostiles).
+        allow_uss_vengeance: bool,
+    },
+    /// Strike Down secondary: force the player's effective shield mitigation to 0% for the fight
+    /// (incoming counter-fire). Resolved out of band at combat setup.
+    HostileAttackerShieldMitigationZero,
     /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables the
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
@@ -975,6 +990,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::DefenderFireDelay { .. }
         | AbilityEffect::RandomDefenderState { .. }
         | AbilityEffect::HostileIsolyticVulnerability
+        | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+        | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression => {}
     }
 }
@@ -1138,6 +1155,50 @@ pub fn hostile_isolytic_vulnerability_active(crew: &CrewConfiguration) -> bool {
         matches!(
             s.ability.effect,
             AbilityEffect::HostileIsolyticVulnerability
+        )
+    })
+}
+
+/// True when a faction-gated lethal-strike seat forbids this attacker hull from engaging.
+///
+/// Allow if `attacker_owner_faction` matches an allowed design faction **or** the ship id is
+/// `uss_vengeance` when that exception is set. Missing / unknown faction fails the faction check
+/// (instant loss) unless the Vengeance exception applies.
+pub fn hostile_faction_gate_instant_loss(
+    crew: &CrewConfiguration,
+    attacker_owner_faction: OpponentFactionTag,
+    attacker_ship_id: &str,
+) -> bool {
+    for s in &crew.seats {
+        if let AbilityEffect::HostileLethalUnlessAttackerFaction {
+            allow_federation,
+            allow_klingon,
+            allow_romulan,
+            allow_uss_vengeance,
+        } = s.ability.effect
+        {
+            let faction_ok = match attacker_owner_faction {
+                OpponentFactionTag::Federation => allow_federation,
+                OpponentFactionTag::Klingon => allow_klingon,
+                OpponentFactionTag::Romulan => allow_romulan,
+                _ => false,
+            };
+            let ship_ok =
+                allow_uss_vengeance && attacker_ship_id.eq_ignore_ascii_case("uss_vengeance");
+            if !faction_ok && !ship_ok {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// True when Strike Down (or similar) forces player shield mitigation to 0% for the fight.
+pub fn hostile_attacker_shield_mitigation_zero_active(crew: &CrewConfiguration) -> bool {
+    crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::HostileAttackerShieldMitigationZero
         )
     })
 }

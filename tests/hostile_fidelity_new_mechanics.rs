@@ -1,7 +1,8 @@
 //! Integration coverage for hostile-ability fidelity mechanics added 2026-07:
 //! combat-start burning applied to the player (Persistence Hunter), round-capped
-//! crit buffs (Ruthless Pursuit via `round_cap` → RoundRange), and the counter-fire
-//! pierce percentage multiplier (Pen of Kahless).
+//! crit buffs (Ruthless Pursuit via `round_cap` → RoundRange), the counter-fire
+//! pierce percentage multiplier (Pen of Kahless), and faction-gated lethal strikes
+//! (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down).
 
 use kobayashi::combat::abilities::AbilityEffect;
 use kobayashi::combat::types::{OpponentFactionTag, ShipType};
@@ -255,5 +256,188 @@ fn pen_of_kahless_pierce_multiplier_increases_counter_damage() {
     assert!(
         boosted_loss > baseline_loss * 1.05,
         "pierce multiplier should raise counter damage (baseline {baseline_loss}, boosted {boosted_loss})"
+    );
+}
+
+/// Tal Shiar Elite (`2518573064` on hostile 1107147565): only Federation or Klingon designed
+/// ships may engage; others are lethally struck at combat start (`rounds_simulated == 0`).
+#[test]
+fn tal_shiar_elite_faction_gate_instant_loss_and_allowed_fight() {
+    let rec = resolve_hostile("1107147565").expect("tal shiar elite sample");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalUnlessAttackerFaction {
+                allow_federation: true,
+                allow_klingon: true,
+                allow_romulan: false,
+                allow_uss_vengeance: false,
+            }
+        )),
+        "expected Tal Shiar Fed|Klingon lethal gate seat"
+    );
+
+    let mut attacker = combatant(
+        "uss_enterprise",
+        500_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1107147565",
+        1_000_000.0,
+        WeaponStats {
+            attack: 10_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+
+    let mut wrong = pve_config(5, 42);
+    wrong.attacker_owner_faction = OpponentFactionTag::Romulan;
+    let loss = run(&attacker, &defender, &wrong, &crew);
+    assert!(
+        !loss.attacker_won && loss.rounds_simulated == 0 && loss.attacker_hull_remaining == 0.0,
+        "Romulan hull should be lethally struck: {loss:?}"
+    );
+
+    let mut ok = pve_config(5, 42);
+    ok.attacker_owner_faction = OpponentFactionTag::Federation;
+    let fight = run(&attacker, &defender, &ok, &crew);
+    assert!(
+        fight.rounds_simulated > 0,
+        "Federation hull should engage normally (got rounds={})",
+        fight.rounds_simulated
+    );
+
+    attacker.id = "korinar".into();
+    let mut klingon = pve_config(5, 42);
+    klingon.attacker_owner_faction = OpponentFactionTag::Klingon;
+    let fight_k = run(&attacker, &defender, &klingon, &crew);
+    assert!(
+        fight_k.rounds_simulated > 0,
+        "Klingon hull should engage normally"
+    );
+}
+
+/// Almost Omnipotent (`1206267116`): Fed/Rom/Klingon or U.S.S. Vengeance; +300% crit floor.
+#[test]
+fn almost_omnipotent_vengeance_exception_and_crit_floor() {
+    let rec = resolve_hostile("1073900199").expect("almost omnipotent sample");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalUnlessAttackerFaction {
+                allow_federation: true,
+                allow_klingon: true,
+                allow_romulan: true,
+                allow_uss_vengeance: true,
+            }
+        )),
+        "expected Q faction gate with Vengeance exception"
+    );
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileCritDamageFloorBonus(v) if (v - 3.0).abs() < 1e-9
+        )),
+        "expected hostile crit damage floor 3.0 (300%)"
+    );
+
+    let mut attacker = combatant(
+        "borg_sphere",
+        500_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1073900199",
+        1_000_000.0,
+        WeaponStats {
+            attack: 10_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+
+    let mut wrong = pve_config(3, 9);
+    wrong.attacker_owner_faction = OpponentFactionTag::Borg;
+    let loss = run(&attacker, &defender, &wrong, &crew);
+    assert_eq!(loss.rounds_simulated, 0, "non-exempt hull should die instantly");
+
+    attacker.id = "uss_vengeance".into();
+    let mut vengeance = pve_config(3, 9);
+    vengeance.attacker_owner_faction = OpponentFactionTag::Unknown;
+    let fight = run(&attacker, &defender, &vengeance, &crew);
+    assert!(
+        fight.rounds_simulated > 0,
+        "U.S.S. Vengeance must engage despite missing faction slug"
+    );
+}
+
+/// Strike Down (`1567589326`): same Q gate + SM→0% for allowed ships (more hull damage taken).
+#[test]
+fn strike_down_zeros_attacker_shield_mitigation() {
+    let rec = resolve_hostile("1029134381").expect("strike down sample");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats
+            .iter()
+            .any(|s| matches!(s.ability.effect, AbilityEffect::HostileAttackerShieldMitigationZero)),
+        "expected Strike Down shield-mitigation-zero seat"
+    );
+
+    let mut attacker = combatant(
+        "uss_enterprise",
+        10_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    attacker.shield_health = 5_000_000.0;
+    attacker.shield_mitigation = 0.8;
+
+    let defender = combatant(
+        "1029134381",
+        50_000_000.0,
+        WeaponStats {
+            attack: 200_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+
+    let mut cfg = pve_config(3, 13);
+    cfg.attacker_owner_faction = OpponentFactionTag::Federation;
+
+    let baseline = run(
+        &attacker,
+        &defender,
+        &cfg,
+        &empty_catalog_crew(&rec.ability),
+    );
+    let struck = run(&attacker, &defender, &cfg, &crew);
+    assert!(
+        struck.rounds_simulated > 0,
+        "Federation hull should engage Strike Down"
+    );
+    let baseline_loss = 10_000_000.0 - baseline.attacker_hull_remaining;
+    let struck_loss = 10_000_000.0 - struck.attacker_hull_remaining;
+    assert!(
+        struck_loss > baseline_loss * 1.2,
+        "SM→0% should increase hull damage taken (baseline {baseline_loss}, struck {struck_loss})"
     );
 }

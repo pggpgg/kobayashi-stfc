@@ -27,7 +27,11 @@ Ordering is by (hostile instances affected) × (tractability).
 
 ---
 
-## 1. Faction-gated lethal strikes (Q/faction elite hostiles — ~123 hostiles)
+## 1. Faction-gated lethal strikes (Q/faction elite hostiles — ~123 hostiles) ✅
+
+**Status (2026-07-08):** Implemented — `HostileLethalUnlessAttackerFaction` +
+`HostileAttackerShieldMitigationZero`; catalog bucket `faction_gate_lethal`; coverage in
+`tests/hostile_fidelity_new_mechanics.rs`.
 
 **a) The issue.** Five text families make a hostile *unengageable* except by specific ship
 factions: Tal Shiar Elite (`2518573064`, 30 hostiles, "only Federation or Klingon designed ships"),

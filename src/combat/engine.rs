@@ -106,7 +106,11 @@ fn effective_incoming_shield_mitigation(
     config: &SimulationConfig,
     round_index: u32,
     attacker_self_bonus: f64,
+    force_zero: bool,
 ) -> f64 {
+    if force_zero {
+        return 0.0;
+    }
     let extra = if config.incoming_shield_mitigation_bonus_rounds > 0
         && round_index > 0
         && round_index <= config.incoming_shield_mitigation_bonus_rounds
@@ -132,9 +136,15 @@ fn effective_counter_incoming_shield_mitigation(
     round_index: u32,
     attacker_self_bonus: f64,
     hostile_bypass_fraction: f64,
+    force_zero: bool,
 ) -> f64 {
-    let pre_bypass =
-        effective_incoming_shield_mitigation(base_sm, config, round_index, attacker_self_bonus);
+    let pre_bypass = effective_incoming_shield_mitigation(
+        base_sm,
+        config,
+        round_index,
+        attacker_self_bonus,
+        force_zero,
+    );
     let bypass = hostile_bypass_fraction.clamp(0.0, 1.0);
     (pre_bypass * (1.0 - bypass)).clamp(0.0, 1.0)
 }
@@ -186,8 +196,12 @@ pub struct PreCombatSetup {
     pub effective_conqueror_borg_beam_suppression: bool,
     pub quantum_beam_instant_loss: bool,
     pub evo_assim_instant_loss: bool,
+    /// Faction-gated lethal strike (Tal Shiar / Mo'Kai / S31 / Q): wrong hull → instant loss.
+    pub faction_gate_instant_loss: bool,
     /// Hostile **Isolytic Vulnerability**: player outbound hits apply only the isolytic leg to defender HP.
     pub defender_isolytic_vulnerability: bool,
+    /// Strike Down: force player incoming shield mitigation to 0% for the fight.
+    pub attacker_shield_mitigation_forced_zero: bool,
     /// Pre-allocated Arc for attacker ship id slug — avoids String clone per construction.
     pub attacker_ship_id_arc: std::sync::Arc<str>,
     /// Pre-allocated Arc for engagement enemy types — avoids EnemyTypes clone per construction.
@@ -197,9 +211,12 @@ pub struct PreCombatSetup {
 }
 
 impl PreCombatSetup {
-    /// Whether the fight ends instantly due to conqueror borg / evolutionary assimilation mechanics.
+    /// Whether the fight ends instantly due to conqueror borg / evolutionary assimilation /
+    /// faction-gated lethal-strike mechanics.
     pub fn would_end_instantly(&self) -> bool {
-        self.quantum_beam_instant_loss || self.evo_assim_instant_loss
+        self.quantum_beam_instant_loss
+            || self.evo_assim_instant_loss
+            || self.faction_gate_instant_loss
     }
 }
 
@@ -367,6 +384,13 @@ pub fn build_combat_setup_with_officer_stat(
 
     let defender_isolytic_vulnerability =
         crate::combat::abilities::hostile_isolytic_vulnerability_active(&defender_crew);
+    let faction_gate_instant_loss = crate::combat::abilities::hostile_faction_gate_instant_loss(
+        &defender_crew,
+        config.attacker_owner_faction,
+        &attacker.id,
+    );
+    let attacker_shield_mitigation_forced_zero =
+        crate::combat::abilities::hostile_attacker_shield_mitigation_zero_active(&defender_crew);
 
     PreCombatSetup {
         attacker: attacker.clone(),
@@ -390,7 +414,9 @@ pub fn build_combat_setup_with_officer_stat(
         effective_conqueror_borg_beam_suppression,
         quantum_beam_instant_loss,
         evo_assim_instant_loss,
+        faction_gate_instant_loss,
         defender_isolytic_vulnerability,
+        attacker_shield_mitigation_forced_zero,
         round_start_effects,
         attack_phase_effects,
         defense_phase_effects,
@@ -540,6 +566,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             seed,
         )
         || setup.evo_assim_instant_loss
+        || setup.faction_gate_instant_loss
     {
         let instant_loss_hull = max_att_hull;
         let attacker_hull_remaining = (attacker.hull_health - instant_loss_hull).max(0.0);
@@ -1268,6 +1295,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                     osr_defense_shield_deflection_add: osr_round_delta
                         .defense_shield_deflection_add,
                     osr_defense_dodge_add: osr_round_delta.defense_dodge_add,
+                    attacker_shield_mitigation_forced_zero: setup
+                        .attacker_shield_mitigation_forced_zero,
                 });
             }
 
@@ -3334,6 +3363,7 @@ struct FireDefenderCounter<'a> {
     osr_defense_armor_add: f64,
     osr_defense_shield_deflection_add: f64,
     osr_defense_dodge_add: f64,
+    attacker_shield_mitigation_forced_zero: bool,
 }
 
 /// Defender counter-fire for one weapon sub-round: hostile weapon shots vs the player ship,
@@ -3385,6 +3415,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         osr_defense_armor_add,
         osr_defense_shield_deflection_add,
         osr_defense_dodge_add,
+        attacker_shield_mitigation_forced_zero,
     } = p;
     // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
     // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
@@ -3774,6 +3805,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 round_index,
                 phase_effects.composed_attacker_shield_mitigation_bonus(),
                 defender_phase_effects.composed_shield_mitigation_bypass(),
+                attacker_shield_mitigation_forced_zero,
             );
             counter_simd_damage_batch.push(counter_after_attack_phase);
             counter_simd_isolytic_batch.push(counter_iso_taken);
@@ -4043,6 +4075,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 round_index,
                 phase_effects.composed_attacker_shield_mitigation_bonus(),
                 defender_phase_effects.composed_shield_mitigation_bypass(),
+                attacker_shield_mitigation_forced_zero,
             )
         } else {
             0.0
