@@ -96,7 +96,11 @@ interact with ranking (win_rate 0 is the correct signal).
 
 ---
 
-## 2. Per-hit stacking counter buffs — Critical Breach / Rising Fire (34 hostiles)
+## 2. Per-hit stacking counter buffs — Critical Breach / Rising Fire (34 hostiles) ✅
+
+**Status (2026-07-08):** Implemented — `DefenderOnHitStack` + Hole Puncher / Immolator combat-begin
+player breach/burn; catalog bucket `defender_on_hit_stack`; coverage in
+`tests/hostile_fidelity_new_mechanics.rs`.
 
 **a) The issue.** Two Xindi-era abilities stack a buff *per weapon hit* with a 2-round expiry:
 Critical Breach (`3358683912`, 17 hostiles) "increases its Critical Chance by X% for 2 rounds

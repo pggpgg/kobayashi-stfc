@@ -979,7 +979,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. } => {}
+                AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1178,7 +1179,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. } => {}
+                AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1339,7 +1341,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. } => {}
+                AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1502,7 +1505,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. } => {}
+                AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
                 | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
@@ -1671,7 +1675,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. } => {}
+                AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -1876,7 +1881,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. } => {}
+                AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
                     decay_per_round,
@@ -2108,6 +2114,8 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             bonus: bonus * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             duration_rounds,
         },
+        // Hostile defender seats: not scaled by player assimilation.
+        AbilityEffect::DefenderOnHitStack { .. } => effect,
         AbilityEffect::MitigationAdditive(v) => {
             AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }

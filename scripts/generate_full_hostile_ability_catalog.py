@@ -153,6 +153,39 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         bucket = kwargs.pop("_bucket", "modeled_combat")
         return modeled(timing, effect_type, **kwargs), bucket
 
+    # Combat-start player burn/breach (Xindi Hole Puncher / Immolator). Must run BEFORE the
+    # broad "enemy player" PvP short-circuit so these NPC texts are not bucketed as PvP.
+    if (
+        "on combat start" in p
+        and "hull breach" in p
+        and "enemy player" in p
+        and "rest of combat" in p
+    ):
+        return (
+            modeled(
+                "combat_begin",
+                "hull_breach",
+                value_override=1.0,
+                duration_rounds=100,  # MAX_COMBAT_ROUNDS
+            ),
+            "player_hull_breach_combat_start",
+        )
+    if (
+        "on combat start" in p
+        and "burning" in p
+        and "enemy player" in p
+        and "rest of combat" in p
+    ):
+        return (
+            modeled(
+                "combat_begin",
+                "burning",
+                value_override=1.0,
+                duration_rounds=100,  # MAX_COMBAT_ROUNDS
+            ),
+            "player_burning_combat_start",
+        )
+
     # PvP-only (default PvE path is ship vs hostile NPC). Word-boundary match so Xindi NPC
     # text ("enemy players ship") is not misclassified.
     if re.search(r"\benemy player\b", p) or re.search(r"\bopponent player\b", p):
@@ -483,6 +516,51 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 condition_defender_hull_breach=True,
                 _bucket="weapon_damage_combat",
             )
+
+    # Per-hit stacking counter buffs (Critical Breach / Rising Fire). Before generic
+    # weapon-damage / crit branches so "every time it hits" texts are not misclassified.
+    if (
+        "every time it hits" in p
+        and "hull breached" in p
+        and "critical chance" in p
+    ):
+        extras = []
+        if "150%" in p or "cannot fall below" in p:
+            extras.append(
+                modeled(
+                    "combat_begin",
+                    "hostile_crit_damage_floor",
+                    value_is_percentage=False,
+                    ignore_upstream_value_is_percentage=True,
+                    value_override=1.5,
+                )
+            )
+        return (
+            modeled(
+                "combat_begin",
+                "defender_on_hit_crit_chance_stack",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                duration_rounds=2,
+                extra_seats=extras or None,
+            ),
+            "defender_on_hit_stack",
+        )
+    if (
+        "every time it hits" in p
+        and "burning" in p
+        and "standard damage" in p
+    ):
+        return (
+            modeled(
+                "combat_begin",
+                "defender_on_hit_weapon_damage_stack",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                duration_rounds=2,
+            ),
+            "defender_on_hit_stack",
+        )
 
     # Combat-start or first-N-rounds crit chance / damage (single-stat,
     # e.g. Revolutionary Spirit "Increases Critical Hit Damage by X% for the first 5 rounds")

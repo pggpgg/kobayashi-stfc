@@ -1,14 +1,16 @@
 //! Integration coverage for hostile-ability fidelity mechanics added 2026-07:
 //! combat-start burning applied to the player (Persistence Hunter), round-capped
 //! crit buffs (Ruthless Pursuit via `round_cap` → RoundRange), the counter-fire
-//! pierce percentage multiplier (Pen of Kahless), and faction-gated lethal strikes
-//! (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down).
+//! pierce percentage multiplier (Pen of Kahless), faction-gated lethal strikes
+//! (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down), and
+//! Xindi per-hit stacking counter buffs (Critical Breach / Rising Fire) with
+//! Hole Puncher / Immolator combat-start player breach/burn companions.
 
-use kobayashi::combat::abilities::AbilityEffect;
-use kobayashi::combat::types::{OpponentFactionTag, ShipType};
 use kobayashi::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, Combatant, CrewConfiguration,
-    SimulationConfig, TraceMode, WeaponStats,
+    hostile_crit_damage_floor_bonus_from_defender_crew, simulate_combat_with_defender_faction_and_defender_crew,
+    Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
+    DefenderOnHitGate, DefenderOnHitStat, OpponentFactionTag, ShipType, SimulationConfig,
+    TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
@@ -439,5 +441,228 @@ fn strike_down_zeros_attacker_shield_mitigation() {
     assert!(
         struck_loss > baseline_loss * 1.2,
         "SM→0% should increase hull damage taken (baseline {baseline_loss}, struck {struck_loss})"
+    );
+}
+
+/// Rising Fire (`3353377682`) + Immolator (`3687094821`) on hostile 1150472432:
+/// combat-start burn opens the gate; each counter hit stacks +standard damage for 2 rounds.
+#[test]
+fn rising_fire_with_immolator_ramps_counter_damage() {
+    let rec = resolve_hostile("1150472432").expect("rising fire carrier");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::Burning { chance, duration_rounds }
+                if (chance - 1.0).abs() < 1e-9 && duration_rounds == 100
+        )),
+        "expected Immolator rest-of-combat Burning seat"
+    );
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::DefenderOnHitStack {
+                stat: DefenderOnHitStat::WeaponDamage,
+                duration_rounds: 2,
+                requires: DefenderOnHitGate::AttackerBurning,
+                ..
+            }
+        )),
+        "expected Rising Fire DefenderOnHitStack seat"
+    );
+
+    let attacker = combatant(
+        "att",
+        50_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1150472432",
+        50_000_000.0,
+        WeaponStats {
+            attack: 100_000.0,
+            shots: Some(2),
+            ..Default::default()
+        },
+    );
+
+    // Empty catalog: no burn, no stacks. Full crew: Immolator burn + Rising Fire stacks.
+    // Over several rounds the stacked weapon channel must clearly exceed baseline weapon damage
+    // (burn ticks alone are only 1% max-hull/round and cannot explain a large gap).
+    let baseline = run(
+        &attacker,
+        &defender,
+        &pve_config(6, 21),
+        &empty_catalog_crew(&rec.ability),
+    );
+    let boosted = run(&attacker, &defender, &pve_config(6, 21), &crew);
+    let baseline_loss = 50_000_000.0 - baseline.attacker_hull_remaining;
+    let boosted_loss = 50_000_000.0 - boosted.attacker_hull_remaining;
+    assert!(
+        boosted_loss > baseline_loss * 1.5,
+        "with stacks+burn, counter damage must exceed empty-catalog baseline ({baseline_loss} vs {boosted_loss})"
+    );
+
+    // Synthetic: permanent burn via Immolator-equivalent seat only vs burn+stack — stacks add damage.
+    let burn_only = CrewConfiguration {
+        seats: crew
+            .seats
+            .iter()
+            .filter(|s| matches!(s.ability.effect, AbilityEffect::Burning { .. }))
+            .cloned()
+            .collect(),
+    };
+    let burn_only_loss = {
+        let r = run(&attacker, &defender, &pve_config(6, 21), &burn_only);
+        50_000_000.0 - r.attacker_hull_remaining
+    };
+    assert!(
+        boosted_loss > burn_only_loss * 1.05,
+        "Rising Fire stacks must add damage beyond burn alone (burn_only={burn_only_loss}, full={boosted_loss})"
+    );
+}
+
+/// Critical Breach (`3358683912`) + Hole Puncher (`3503588487`) on hostile 1744721896:
+/// combat-start hull breach + per-hit crit-chance stacks + 150% crit floor seat.
+#[test]
+fn critical_breach_with_hole_puncher_seats_and_crit_floor() {
+    let rec = resolve_hostile("1744721896").expect("critical breach carrier");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HullBreach {
+                chance,
+                duration_rounds,
+                requires_critical: false,
+            } if (chance - 1.0).abs() < 1e-9 && duration_rounds == 100
+        )),
+        "expected Hole Puncher rest-of-combat HullBreach seat"
+    );
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::DefenderOnHitStack {
+                stat: DefenderOnHitStat::CritChance,
+                duration_rounds: 2,
+                requires: DefenderOnHitGate::AttackerHullBreach,
+                ..
+            }
+        )),
+        "expected Critical Breach DefenderOnHitStack seat"
+    );
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileCritDamageFloorBonus(v) if (v - 1.5).abs() < 1e-9
+        )),
+        "expected Critical Breach hostile crit damage floor 1.5"
+    );
+    let floor = hostile_crit_damage_floor_bonus_from_defender_crew(&crew);
+    assert!(
+        (floor - 1.5).abs() < 1e-9,
+        "scenario helper should sum crit floor to 1.5 (got {floor})"
+    );
+
+    let attacker = combatant(
+        "att",
+        50_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let mut defender = combatant(
+        "1744721896",
+        50_000_000.0,
+        WeaponStats {
+            attack: 80_000.0,
+            shots: Some(2),
+            crit_chance: Some(0.0),
+            crit_multiplier: Some(1.5),
+            ..Default::default()
+        },
+    );
+    defender.crit_damage_floor = floor;
+
+    let baseline = run(
+        &attacker,
+        &defender,
+        &pve_config(5, 33),
+        &empty_catalog_crew(&rec.ability),
+    );
+    let stacked = run(&attacker, &defender, &pve_config(5, 33), &crew);
+    let baseline_loss = 50_000_000.0 - baseline.attacker_hull_remaining;
+    let stacked_loss = 50_000_000.0 - stacked.attacker_hull_remaining;
+    assert!(
+        stacked_loss > baseline_loss * 1.15,
+        "crit-chance stacks + floor should raise counter damage (baseline {baseline_loss}, stacked {stacked_loss})"
+    );
+}
+
+/// Without player burn/breach, Rising Fire / Critical Breach seats must not change outcomes
+/// (bit-identical to a fight that only lacks the stack seats — use empty catalog as baseline
+/// when companions are also absent).
+#[test]
+fn on_hit_stacks_without_player_state_match_empty_catalog() {
+    // Synthetic crew: Rising Fire seat only (no Immolator) → gate never opens.
+    let stack_only = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                weapon_scope: Default::default(),
+                name: "rising_fire_only".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::DefenderOnHitStack {
+                    stat: DefenderOnHitStat::WeaponDamage,
+                    per_hit: 0.15,
+                    duration_rounds: 2,
+                    requires: DefenderOnHitGate::AttackerBurning,
+                },
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let empty = CrewConfiguration { seats: vec![] };
+
+    let attacker = combatant(
+        "att",
+        5_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "def",
+        5_000_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(3),
+            ..Default::default()
+        },
+    );
+    let cfg = pve_config(8, 99);
+    let a = run(&attacker, &defender, &cfg, &empty);
+    let b = run(&attacker, &defender, &cfg, &stack_only);
+    assert!(
+        (a.attacker_hull_remaining - b.attacker_hull_remaining).abs() < 1e-6
+            && (a.defender_hull_remaining - b.defender_hull_remaining).abs() < 1e-6
+            && a.rounds_simulated == b.rounds_simulated
+            && a.attacker_won == b.attacker_won,
+        "stack seat with closed gate must be bit-identical to empty crew"
     );
 }

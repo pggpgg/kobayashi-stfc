@@ -335,6 +335,35 @@ pub enum AbilityEffect {
     /// setup via [`sum_bridge_ability_effectiveness_add`] + [`scale_crew_bridge_ability_effects`];
     /// not applied per round. Value is the additive bonus (e.g. `0.4` for +40%).
     BridgeAbilityEffectivenessBonus(f64),
+    /// Hostile per-hit stacking buff (Critical Breach / Rising Fire): each defender weapon hit
+    /// that lands while the player-state gate holds pushes one stack of `per_hit` lasting
+    /// `duration_rounds`. Stacks sum additively; a stack earned on hit N boosts hit N+1 of the
+    /// same round ("prior events only"). Resolved out of band in counter-fire — a no-op in the
+    /// per-timing accumulator. Duration is intrinsic (no `RoundRange` gate).
+    DefenderOnHitStack {
+        stat: DefenderOnHitStat,
+        per_hit: f64,
+        duration_rounds: u32,
+        requires: DefenderOnHitGate,
+    },
+}
+
+/// Which counter-fire channel a [`AbilityEffect::DefenderOnHitStack`] feeds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DefenderOnHitStat {
+    /// Absolute probability points added to hostile crit chance (0.1 = +10%).
+    CritChance,
+    /// Additive bonus fraction on counter-fire `pre_attack_multiplier` (0.15 → ×(1 + Σ0.15)).
+    WeaponDamage,
+}
+
+/// Player-state gate for [`AbilityEffect::DefenderOnHitStack`] (attacker = player in PvE).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DefenderOnHitGate {
+    /// Requires [`CombatContext::attacker_burning_active`].
+    AttackerBurning,
+    /// Requires [`CombatContext::attacker_hull_breach_active`].
+    AttackerHullBreach,
 }
 
 /// Active prefix of a packed [`AbilityEffect::RandomDefenderState`] outcome table.
@@ -992,7 +1021,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
-        | AbilityEffect::ConquerorBorgBeamSuppression => {}
+        | AbilityEffect::ConquerorBorgBeamSuppression
+        | AbilityEffect::DefenderOnHitStack { .. } => {}
     }
 }
 

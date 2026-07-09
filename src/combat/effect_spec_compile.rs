@@ -324,6 +324,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::Burning { .. }
             | AbilityEffect::ShotsBonus { .. }
             | AbilityEffect::OnHitCritDamageStack { .. }
+            | AbilityEffect::DefenderOnHitStack { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
             | AbilityEffect::HostileKemociteWeaponry { .. }
@@ -376,7 +377,10 @@ pub fn compile_officer_combat_spec_full(
         && effect_has_intrinsic_duration(&effect))
         // On-hit stacks manage expiry per weapon inside the engine; a RoundRange gate would
         // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
-        || matches!(effect, AbilityEffect::OnHitCritDamageStack { .. });
+        || matches!(
+            effect,
+            AbilityEffect::OnHitCritDamageStack { .. } | AbilityEffect::DefenderOnHitStack { .. }
+        );
     let condition = if skip_round_gate {
         condition
     } else {

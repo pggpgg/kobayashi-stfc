@@ -31,8 +31,8 @@ pub use abilities::{
     hostile_defender_mitigation_additive_factor_from_defender_crew,
     hostile_hyperthermic_decay_fraction_from_defender_crew, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
-    CrewSeat, CrewSeatContext, TimingWindow, WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
-    TAL_OFFICER_LCARS_ID,
+    CrewSeat, CrewSeatContext, DefenderOnHitGate, DefenderOnHitStat, TimingWindow, WeaponTypeScope,
+    NO_EXPLICIT_CONTRIBUTION_BATCH, TAL_OFFICER_LCARS_ID,
 };
 pub use damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,

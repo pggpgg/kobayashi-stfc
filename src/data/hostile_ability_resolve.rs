@@ -268,6 +268,23 @@ pub(crate) fn hostile_ability_effect_from_catalog(
         "hostile_crit_damage_floor" | "crit_damage_floor" => {
             Some(AbilityEffect::HostileCritDamageFloorBonus(value.max(0.0)))
         }
+        // Critical Breach / Rising Fire: per-hit stacks gated on player burn/breach.
+        "defender_on_hit_crit_chance_stack" | "hostile_on_hit_crit_chance_stack" => {
+            Some(AbilityEffect::DefenderOnHitStack {
+                stat: crate::combat::abilities::DefenderOnHitStat::CritChance,
+                per_hit: value.max(0.0),
+                duration_rounds: duration_rounds.unwrap_or(2).max(1),
+                requires: crate::combat::abilities::DefenderOnHitGate::AttackerHullBreach,
+            })
+        }
+        "defender_on_hit_weapon_damage_stack" | "hostile_on_hit_weapon_damage_stack" => {
+            Some(AbilityEffect::DefenderOnHitStack {
+                stat: crate::combat::abilities::DefenderOnHitStat::WeaponDamage,
+                per_hit: value.max(0.0),
+                duration_rounds: duration_rounds.unwrap_or(2).max(1),
+                requires: crate::combat::abilities::DefenderOnHitGate::AttackerBurning,
+            })
+        }
         // Catalog value is a *bonus fraction* (0.2 = +20%, 125 = +12500% — matching upstream
         // ability text); the engine's proc accumulator expects a full multiplier.
         "attack_multiplier" | "weapon_damage" | "attack" => {

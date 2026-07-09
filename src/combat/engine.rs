@@ -29,7 +29,7 @@ use crate::combat::abilities::{
     sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
     sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
     AbilityEffect, ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext,
-    CrewConfiguration, TimingWindow, WeaponTypeScope,
+    CrewConfiguration, DefenderOnHitGate, DefenderOnHitStat, TimingWindow, WeaponTypeScope,
 };
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::conqueror_borg_beams::{
@@ -494,6 +494,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         defender_morale_rounds_remaining: 0,
         shots_bonus_entries: Vec::new(),
         defender_shots_bonus_entries: Vec::new(),
+        defender_on_hit_stack_entries: Vec::new(),
         on_hit_crit_stack_expires: [0; MAX_TRACKED_WEAPON_SLOTS],
         on_hit_crit_stack_bonus: 0.0,
         defender_weapon_fire_delayed_rounds: 0,
@@ -624,8 +625,9 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     }
 
     // Defender combat-begin Burning seats (e.g. Persistence Hunter "Applies Burning for 6 rounds
-    // at the start of combat") burn the *player*: roll onto attacker_burning_rounds. RNG draws
-    // only happen when such seats exist, so seeded outcomes for other fights are unchanged.
+    // at the start of combat", Immolator "apply burning to enemy player for the rest of combat")
+    // burn the *player*: roll onto attacker_burning_rounds. RNG draws only happen when such seats
+    // exist, so seeded outcomes for other fights are unchanged.
     if defender_combat_begin_effects
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::Burning { .. }))
@@ -650,11 +652,36 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         );
     }
 
+    // Defender combat-begin HullBreach seats (Hole Puncher): breach the *player* for the seat
+    // duration. Same RNG discipline as Burning — only draw when such seats exist.
+    if defender_combat_begin_effects
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::HullBreach { .. }))
+    {
+        let defender_begin_breach: Vec<ActiveAbilityEffect> =
+            filter_effects_by_condition(defender_combat_begin_effects, &setup.combat_begin_ctx)
+                .into_iter()
+                .filter(|e| matches!(e.effect, AbilityEffect::HullBreach { .. }))
+                .collect();
+        roll_combat_begin_attacker_hull_breach(
+            &mut RoundPhaseCtx {
+                trace: &mut trace,
+                rng: &mut rng,
+                round_index: 0,
+            },
+            &defender_begin_breach,
+            &defender.id,
+            &mut st.attacker_hull_breach_rounds,
+        );
+    }
+
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     st.shots_bonus_entries
         .reserve(rounds_to_simulate.min(32) as usize);
     st.defender_shots_bonus_entries
         .reserve(rounds_to_simulate.min(32) as usize);
+    st.defender_on_hit_stack_entries
+        .reserve(rounds_to_simulate.min(64) as usize);
     let mut rounds_completed = 0u32;
 
     for round_index in 1..=rounds_to_simulate {
@@ -947,6 +974,10 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         st.defender_shots_bonus_entries
             .retain(|e| e.expires_round >= round_index);
         let def_b_shots = ShotsBonusSums::from_entries(&st.defender_shots_bonus_entries);
+        // Critical Breach / Rising Fire: prune expired per-hit stacks (active while
+        // round_index <= expires_round; Seska/shots-bonus convention).
+        st.defender_on_hit_stack_entries
+            .retain(|e| e.expires_round >= round_index);
 
         if emit_snapshots {
             let snap = build_combat_state_snapshot(
@@ -3657,6 +3688,29 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         let mut defender_phase_effects = defender_phase_template.clone();
         defender_phase_effects.set_trace_contributions(trace.is_enabled());
 
+        // Rising Fire / Critical Breach: sum live stacks before this hit so a stack earned on
+        // hit N boosts hit N+1 of the same round ("prior events only").
+        let (on_hit_crit_chance_sum, on_hit_weapon_damage_sum) =
+            sum_defender_on_hit_stacks(&st.defender_on_hit_stack_entries);
+        if on_hit_crit_chance_sum > 0.0 {
+            defender_phase_effects.add_effect(
+                TimingWindow::AttackPhase,
+                AbilityEffect::CritChanceBonus(on_hit_crit_chance_sum),
+                defender_weapon_attack,
+                round_index,
+                Some(("defender_on_hit_crit_chance", None)),
+            );
+        }
+        if on_hit_weapon_damage_sum > 0.0 {
+            defender_phase_effects.add_effect(
+                TimingWindow::CombatBegin,
+                AbilityEffect::AttackMultiplier(on_hit_weapon_damage_sum),
+                defender_weapon_attack,
+                round_index,
+                Some(("defender_on_hit_weapon_damage", None)),
+            );
+        }
+
         // Per-shot `Proc*` (mirrors outbound per-shot weapon intrinsic proc: fresh rolls).
         let (proc_pre_attack_multiplier, proc_pre_attack_pierce_bonus) =
             accumulate_proc_attack_effects(
@@ -4063,6 +4117,17 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 counter_simd_shield_mit_batch.clear();
                 counter_simd_crit_batch.clear();
             }
+            // Push after each hit iteration (even when damage is batched) so hit N+1 of the
+            // same round sees prior stacks. Intra-batch damage application remains deferred.
+            maybe_push_defender_on_hit_stacks(
+                st,
+                defender_combat_begin_filtered
+                    .iter()
+                    .chain(defender_round_start_filtered.iter())
+                    .chain(defender_attack_filtered.iter())
+                    .chain(defender_defense_filtered.iter()),
+                round_index,
+            );
             continue;
         }
 
@@ -4292,6 +4357,19 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 &mut st.attacker_burning_rounds,
             );
         }
+
+        // Critical Breach / Rising Fire: each weapon hit while the player-state gate holds
+        // pushes a stack (hits are guaranteed; Seska convention). Stacks earned here boost
+        // subsequent hits this round ("prior events only").
+        maybe_push_defender_on_hit_stacks(
+            st,
+            defender_combat_begin_filtered
+                .iter()
+                .chain(defender_round_start_filtered.iter())
+                .chain(defender_attack_filtered.iter())
+                .chain(defender_defense_filtered.iter()),
+            round_index,
+        );
     }
 
     if counter_hull_damage_this_subround {
@@ -4333,6 +4411,107 @@ struct ShotsBonusEntry {
     bonus: f64,
     expires_round: u32,
     scope: WeaponTypeScope,
+}
+
+/// One Critical Breach / Rising Fire stack: additive `bonus` while `round_index <= expires_round`.
+/// Expiry matches Seska / shots-bonus: active for `duration_rounds` counting the earn round
+/// (`expires_round = round_index + duration_rounds - 1`).
+#[derive(Clone, Copy)]
+struct DefenderOnHitStackEntry {
+    bonus: f64,
+    expires_round: u32,
+    stat: DefenderOnHitStat,
+}
+
+fn sum_defender_on_hit_stacks(entries: &[DefenderOnHitStackEntry]) -> (f64, f64) {
+    let mut crit = 0.0;
+    let mut weapon = 0.0;
+    for e in entries {
+        match e.stat {
+            DefenderOnHitStat::CritChance => crit += e.bonus,
+            DefenderOnHitStat::WeaponDamage => weapon += e.bonus,
+        }
+    }
+    (crit, weapon)
+}
+
+fn maybe_push_defender_on_hit_stacks<'a, I>(
+    st: &mut CombatRunState,
+    effects: I,
+    round_index: u32,
+) where
+    I: IntoIterator<Item = &'a ActiveAbilityEffect>,
+{
+    for effect in effects {
+        let AbilityEffect::DefenderOnHitStack {
+            stat,
+            per_hit,
+            duration_rounds,
+            requires,
+        } = effect.effect
+        else {
+            continue;
+        };
+        if per_hit <= 0.0 || !per_hit.is_finite() {
+            continue;
+        }
+        let gate_ok = match requires {
+            DefenderOnHitGate::AttackerBurning => st.attacker_burning_rounds > 0,
+            DefenderOnHitGate::AttackerHullBreach => st.attacker_hull_breach_rounds > 0,
+        };
+        if !gate_ok {
+            continue;
+        }
+        let expires_round = round_index + duration_rounds.max(1) - 1;
+        st.defender_on_hit_stack_entries.push(DefenderOnHitStackEntry {
+            bonus: per_hit,
+            expires_round,
+            stat,
+        });
+    }
+}
+
+/// Combat-begin HullBreach seats on defender crew apply to the *player* (Hole Puncher).
+fn roll_combat_begin_attacker_hull_breach(
+    pc: &mut RoundPhaseCtx<'_>,
+    effects: &[ActiveAbilityEffect],
+    defender_id: &str,
+    attacker_hull_breach_rounds: &mut u32,
+) {
+    for effect in effects {
+        if let AbilityEffect::HullBreach {
+            chance,
+            duration_rounds,
+            requires_critical: _,
+        } = effect.effect
+        {
+            let hull_breach_roll = (pc.rng.next_u64() as f64) / (u64::MAX as f64);
+            let triggered = hull_breach_roll < chance.clamp(0.0, 1.0);
+            if triggered {
+                *attacker_hull_breach_rounds =
+                    (*attacker_hull_breach_rounds).max(duration_rounds.max(1));
+            }
+            let round_index = pc.round_index;
+            pc.trace.record_if(|| CombatEvent {
+                event_type: "hull_breach_trigger".to_string(),
+                round_index,
+                phase: "combat_begin".to_string(),
+                source: EventSource {
+                    hostile_ability_id: Some(format!("{defender_id}_combat_begin_hull_breach")),
+                    ship_ability_id: Some(effect.ability_name.clone()),
+                    ..EventSource::default()
+                },
+                weapon_index: None,
+                values: Map::from_iter([
+                    ("roll".to_string(), Value::from(round_f64(hull_breach_roll))),
+                    ("triggered".to_string(), Value::Bool(triggered)),
+                    ("chance".to_string(), Value::from(round_f64(chance))),
+                    ("duration_rounds".to_string(), Value::from(duration_rounds)),
+                    ("target".to_string(), Value::String("attacker".to_string())),
+                ]),
+            });
+        }
+    }
 }
 
 /// Per-round B_shots sums bucketed by weapon-type scope. Built once per round from the pruned
@@ -4398,6 +4577,8 @@ struct CombatRunState {
     defender_morale_rounds_remaining: u32,
     shots_bonus_entries: Vec<ShotsBonusEntry>,
     defender_shots_bonus_entries: Vec<ShotsBonusEntry>,
+    /// Critical Breach / Rising Fire per-hit stacks (active while `round_index <= expires_round`).
+    defender_on_hit_stack_entries: Vec<DefenderOnHitStackEntry>,
     /// Per-weapon expiry round for the attacker's on-hit crit-damage stack
     /// ([`AbilityEffect::OnHitCritDamageStack`]); `0` = no active stack. Index = weapon_index
     /// (saturating at [`MAX_TRACKED_WEAPON_SLOTS`] − 1). A stack is active while

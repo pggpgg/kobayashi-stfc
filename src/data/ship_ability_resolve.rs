@@ -229,7 +229,7 @@ pub fn ship_ability_effect_from_catalog(
 
         "hull_breach" => Some(AbilityEffect::HullBreach {
             chance: normalize_probability(value),
-            duration_rounds: 1,
+            duration_rounds: duration_rounds.unwrap_or(1).max(1),
             requires_critical: false,
         }),
 

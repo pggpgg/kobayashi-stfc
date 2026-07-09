@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-08 / faction gates):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **432** modeled for defender-side counter-fire (`defender_crew`), **550** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-08 / per-hit stacks):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **436** modeled for defender-side counter-fire (`defender_crew`), **546** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Fidelity pass (2026-07-08):** Four engine/resolver fixes plus five newly modeled text families:
 
@@ -30,6 +30,17 @@ This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability covera
 | `1567589326` | 16 | same | crit floor 3.0 + SM→0 |
 
 Coverage: `tests/hostile_fidelity_new_mechanics.rs`; resolver units in `src/data/hostile_ability_resolve.rs` and `src/data/ship_ability_resolve.rs`.
+
+**Per-hit stacking counter buffs (2026-07-08 follow-up):** Critical Breach / Rising Fire leave `other_review` → `defender_on_hit_*_stack` (bucket `defender_on_hit_stack`). Each defender weapon hit while the player-state gate holds pushes one stack lasting 2 rounds (Seska/shots-bonus expiry: active while `round_index <= expires_round`; stacks earned on hit N boost hit N+1 same round). Companions Hole Puncher / Immolator leave `pvp_player_target` via narrow combat-start exceptions → `hull_breach` / `burning` for `MAX_COMBAT_ROUNDS` on the player. Critical Breach also emits `hostile_crit_damage_floor` 1.5.
+
+| Ability id | Hostiles | Mapping |
+| --- | ---: | --- |
+| `3358683912` | 17 | `defender_on_hit_crit_chance_stack` (gate: player hull breach) + crit floor 1.5 |
+| `3353377682` | 17 | `defender_on_hit_weapon_damage_stack` (gate: player burning) |
+| `3503588487` | 17 | `hull_breach` combat_begin → player, duration 100 |
+| `3687094821` | 17 | `burning` combat_begin → player, duration 100 |
+
+**Uncertainty:** stack expiry off-by-one vs client is unconfirmed (Seska convention chosen). True PvP "enemy player" rows (Deadlock / Dismantlement) stay noop.
 
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
 
@@ -104,10 +115,10 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 
 **Not yet modeled (high instance count, remain `combat_noop`):**
 
-- PvP player targeting (4 ids, 422 instances): default PvE path is ship vs NPC hostile
+- PvP player targeting (2 ids, 388 instances): Deadlock / Dismantlement — default PvE path is ship vs NPC hostile (Hole Puncher / Immolator modeled 2026-07-08)
 - Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (361 ids): burning procs, extra shots, etc. (faction gates modeled 2026-07-08)
+- `other_review` (359 ids, 591 instances): dilithium lethal, Temporal Dreadnought regen, etc. (Critical Breach / Rising Fire modeled 2026-07-08)
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -126,13 +137,16 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Hyperthermic decay per-round | 18 | 108 | **Modeled (2026-07-08)** — Psionic Assault → `round_start` + `hostile_hyperthermic_decay` |
 | Burning at combat start | 1 | 53 | **Modeled (2026-07-08)** — Persistence Hunter → `combat_begin` + `burning` on the player |
 | Faction-gated lethal strike | 5 | 123 | **Modeled (2026-07-08)** — Tal Shiar / Mo'Kai / S31 / Q → `hostile_lethal_unless_attacker_faction` (+ Q crit floor / Strike Down SM→0) |
+| Defender per-hit stacks | 2 | 34 | **Modeled (2026-07-08)** — Critical Breach / Rising Fire → `defender_on_hit_*_stack` |
+| Player hull breach at combat start | 1 | 17 | **Modeled (2026-07-08)** — Hole Puncher → `hull_breach` on the player for rest of combat |
+| Player burning at combat start (Immolator) | 1 | 17 | **Modeled (2026-07-08)** — Immolator → `burning` on the player for rest of combat |
 | Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
-| PvP enemy player | 4 | 422 | **Keep noop** on default ship-vs-hostile path |
+| PvP enemy player | 2 | 388 | **Keep noop** on default ship-vs-hostile path (Deadlock / Dismantlement) |
 | Armada | 125 | 260 | **Keep noop** — no armada scenario |
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 361 | 625 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 359 | 591 | **Shard triage** — extend generator or overrides per pattern |
 
 ---
 

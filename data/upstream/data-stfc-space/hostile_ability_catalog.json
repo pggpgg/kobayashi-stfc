@@ -5457,17 +5457,26 @@
     },
     "3353377682": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_weapon_damage_stack",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 2
     },
     "3358683912": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_crit_chance_stack",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 2,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 1.5
+        }
+      ]
     },
     "3363560125": {
       "timing": "combat_begin",
@@ -5744,10 +5753,11 @@
     },
     "3503588487": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hull_breach",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 100,
+      "value_override": 1.0
     },
     "3505786380": {
       "timing": "combat_begin",
@@ -5968,10 +5978,11 @@
     },
     "3687094821": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "burning",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 100,
+      "value_override": 1.0
     },
     "3699372727": {
       "timing": "combat_begin",

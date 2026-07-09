@@ -6970,22 +6970,22 @@
       "effect_type": "combat_noop"
     },
     "3353377682": {
-      "bucket": "other_review",
+      "bucket": "defender_on_hit_stack",
       "loca_id": 72055,
       "hostile_count": 17,
       "sample_hostile_id": "1150472432",
       "sample_level": 38,
       "text_snippet": "rising fire\nthis ship increases its standard damage by {0:#.#%} for 2 rounds every time it hits with a weapon while the player is burning.",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_weapon_damage_stack"
     },
     "3358683912": {
-      "bucket": "other_review",
+      "bucket": "defender_on_hit_stack",
       "loca_id": 72052,
       "hostile_count": 17,
       "sample_hostile_id": "1744721896",
       "sample_level": 48,
       "text_snippet": "critical breach \nthis ship increases its critical chance by {0:#.#%} for 2 rounds every time it hits with a weapon while the player is hull breached. this hostile's critical damage cannot fall below 150%.",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_crit_chance_stack"
     },
     "3363560125": {
       "bucket": "pierce_combat",
@@ -7357,13 +7357,13 @@
       "effect_type": "combat_noop"
     },
     "3503588487": {
-      "bucket": "pvp_player_target",
+      "bucket": "player_hull_breach_combat_start",
       "loca_id": 72054,
       "hostile_count": 17,
       "sample_hostile_id": "1744721896",
       "sample_level": 48,
       "text_snippet": "hole puncher\non combat start, hull breach enemy player for the rest of combat.",
-      "effect_type": "combat_noop"
+      "effect_type": "hull_breach"
     },
     "3505786380": {
       "bucket": "pierce_combat",
@@ -7654,13 +7654,13 @@
       "effect_type": "crit_damage"
     },
     "3687094821": {
-      "bucket": "pvp_player_target",
+      "bucket": "player_burning_combat_start",
       "loca_id": 72056,
       "hostile_count": 17,
       "sample_hostile_id": "1150472432",
       "sample_level": 38,
       "text_snippet": "immolator\non combat start, apply burning to enemy player for the rest of combat.",
-      "effect_type": "combat_noop"
+      "effect_type": "burning"
     },
     "3699372727": {
       "bucket": "armada_scope",
