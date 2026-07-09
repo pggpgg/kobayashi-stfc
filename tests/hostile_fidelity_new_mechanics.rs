@@ -3,15 +3,16 @@
 //! crit buffs (Ruthless Pursuit via `round_cap` → RoundRange), the counter-fire
 //! pierce percentage multiplier (Pen of Kahless), faction-gated lethal strikes
 //! (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down),
-//! Dilithium Destabilization chance-gated combat-begin instant kill, and
+//! Dilithium Destabilization chance-gated combat-begin instant kill,
 //! Xindi per-hit stacking counter buffs (Critical Breach / Rising Fire) with
-//! Hole Puncher / Immolator combat-start player breach/burn companions.
+//! Hole Puncher / Immolator combat-start player breach/burn companions, and
+//! Intraluminary hostile self-morale at combat begin.
 
 use kobayashi::combat::{
     hostile_crit_damage_floor_bonus_from_defender_crew, simulate_combat_with_defender_faction_and_defender_crew,
-    Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
-    DefenderOnHitGate, DefenderOnHitStat, OpponentFactionTag, ShipType, SimulationConfig,
-    TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityEffect, CombatStateSnapshot, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, DefenderOnHitGate, DefenderOnHitStat, OpponentFactionTag, ShipType,
+    SimulationConfig, TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
@@ -822,4 +823,172 @@ fn dilithium_destabilization_zero_chance_never_instant_kills() {
             "0% chance must never instant-kill (seed {seed}): {r:?}"
         );
     }
+}
+
+/// Intraluminary (`4021963607` on Assimilated Coryn-class Explorers, sample `1295067482`):
+/// combat-begin self-morale for the rest of combat. Carriers are Explorers — defender morale
+/// does not change Explorer counter pierce in this sim (accuracy not modeled); assert seat +
+/// snapshot flag only.
+#[test]
+fn intraluminary_self_morale_on_carrier_hostile() {
+    let rec = resolve_hostile("1295067482").expect("intraluminary sample");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileSelfMorale { duration_rounds: 100 }
+        )),
+        "expected HostileSelfMorale duration 100, seats={:?}",
+        crew.seats
+            .iter()
+            .map(|s| &s.ability.effect)
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        empty_catalog_crew(&rec.ability).seats.iter().all(|s| {
+            !matches!(s.ability.effect, AbilityEffect::HostileSelfMorale { .. })
+        }),
+        "empty catalog must not resolve Intraluminary"
+    );
+
+    let attacker = combatant(
+        "player",
+        5_000_000.0,
+        WeaponStats {
+            attack: 1_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1295067482",
+        5_000_000.0,
+        WeaponStats {
+            attack: 10_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let mut cfg = pve_config(25, 42);
+    cfg.trace_mode = TraceMode::Events;
+    cfg.emit_state_snapshots = true;
+
+    let result = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &cfg,
+        &CrewConfiguration { seats: vec![] },
+        OpponentFactionTag::Unknown,
+        ShipType::Explorer,
+        ShipType::Battleship,
+        true,
+        false,
+        &crew,
+    );
+    assert!(result.rounds_simulated >= 20);
+
+    let round20_morale = result.events.iter().find_map(|ev| {
+        if ev.event_type != "state_snapshot" || ev.round_index != 20 {
+            return None;
+        }
+        let snap: CombatStateSnapshot =
+            serde_json::from_value(ev.values.get("snapshot")?.clone()).ok()?;
+        Some(snap.flags.defender_morale_active)
+    });
+    assert_eq!(
+        round20_morale,
+        Some(true),
+        "defender_morale_active should stay true at round 20 with duration 100"
+    );
+
+    let baseline = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &cfg,
+        &CrewConfiguration { seats: vec![] },
+        OpponentFactionTag::Unknown,
+        ShipType::Explorer,
+        ShipType::Battleship,
+        true,
+        false,
+        &empty_catalog_crew(&rec.ability),
+    );
+    let baseline_morale = baseline.events.iter().find_map(|ev| {
+        if ev.event_type != "state_snapshot" || ev.round_index != 20 {
+            return None;
+        }
+        let snap: CombatStateSnapshot =
+            serde_json::from_value(ev.values.get("snapshot")?.clone()).ok()?;
+        Some(snap.flags.defender_morale_active)
+    });
+    assert_eq!(
+        baseline_morale,
+        Some(false),
+        "empty-catalog baseline must not have defender morale"
+    );
+}
+
+/// Synthetic Battleship defender with HostileSelfMorale: +10% counter pierce increases
+/// damage taken by the player vs an empty-seat baseline (the only modeled morale benefit).
+#[test]
+fn intraluminary_self_morale_boosts_battleship_counter_pierce() {
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                weapon_scope: Default::default(),
+                name: "synthetic_intraluminary".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::HostileSelfMorale {
+                    duration_rounds: 100,
+                },
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let empty = CrewConfiguration { seats: vec![] };
+
+    // High player mitigation so pierce matters; no crits for a clean delta.
+    let mut attacker = combatant(
+        "player",
+        10_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    attacker.mitigation = 0.8;
+    attacker.armor = 100_000.0;
+    attacker.shield_deflection = 100_000.0;
+    attacker.dodge = 100_000.0;
+
+    let mut defender = combatant(
+        "hostile_bb",
+        10_000_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(3),
+            pierce: Some(0.5),
+            crit_chance: Some(0.0),
+            ..Default::default()
+        },
+    );
+    defender.pierce = 0.5;
+
+    let cfg = pve_config(5, 7);
+    let with_morale = run(&attacker, &defender, &cfg, &crew);
+    let without = run(&attacker, &defender, &cfg, &empty);
+    assert!(
+        with_morale.attacker_hull_remaining < without.attacker_hull_remaining - 1.0,
+        "BB defender morale should increase counter damage via pierce: with={} without={}",
+        with_morale.attacker_hull_remaining,
+        without.attacker_hull_remaining
+    );
 }

@@ -447,6 +447,23 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             "dilithium_destabilization",
         )
 
+    # Intraluminary: hostile applies Morale to itself for the rest of combat.
+    # Duration is MAX_COMBAT_ROUNDS (100); engine sets defender_morale_rounds_remaining.
+    if (
+        ("combat start" in p or "start of combat" in p or "at the start of combat" in p)
+        and "morale" in p
+        and ("itself" in p or "this ship" in p)
+    ):
+        return (
+            modeled(
+                "combat_begin",
+                "hostile_self_morale",
+                value_override=1.0,
+                duration_rounds=100,
+            ),
+            "hostile_self_morale",
+        )
+
     # Multi-stat crit rows (Critical Training: chance + damage + floor in one ability)
     if "critical hit chance" in p and "critical hit damage" in p and "critical damage floor" in p:
         return (

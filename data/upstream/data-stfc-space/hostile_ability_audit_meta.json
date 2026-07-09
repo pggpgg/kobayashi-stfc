@@ -8311,13 +8311,13 @@
       "effect_type": "isolytic_defense"
     },
     "4021963607": {
-      "bucket": "other_review",
+      "bucket": "hostile_self_morale",
       "loca_id": 72051,
       "hostile_count": 17,
       "sample_hostile_id": "1295067482",
       "sample_level": 62,
       "text_snippet": "intraluminary\non combat start, this ship applies morale to itself for the rest of combat.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_self_morale"
     },
     "4022486293": {
       "bucket": "armada_scope",

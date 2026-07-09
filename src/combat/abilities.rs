@@ -312,6 +312,14 @@ pub enum AbilityEffect {
     HostileLethalCombatBegin {
         chance: f64,
     },
+    /// Intraluminary: at combat begin, grant the hostile (defender) Morale for `duration_rounds`
+    /// (typically [`crate::combat::types::MAX_COMBAT_ROUNDS`] for "rest of combat"). Sets
+    /// `defender_morale_rounds_remaining` out of band — a no-op in the per-timing accumulator.
+    /// Modeled combat benefit today: +10% counter-fire pierce for Battleship/Interceptor only;
+    /// Explorer morale→accuracy is not modeled.
+    HostileSelfMorale {
+        duration_rounds: u32,
+    },
     /// Strike Down secondary: force the player's effective shield mitigation to 0% for the fight
     /// (incoming counter-fire). Resolved out of band at combat setup.
     HostileAttackerShieldMitigationZero,
@@ -1028,6 +1036,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileLethalCombatBegin { .. }
+        | AbilityEffect::HostileSelfMorale { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression
         | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1250,6 +1259,19 @@ pub fn hostile_lethal_combat_begin_chance(crew: &CrewConfiguration) -> Option<f6
         }
     }
     None
+}
+
+/// Intraluminary (or similar) combat-begin self-morale duration from defender crew.
+/// Returns `None` when no seat exists. When multiple seats exist, takes the max duration.
+pub fn hostile_self_morale_duration(crew: &CrewConfiguration) -> Option<u32> {
+    let mut best: Option<u32> = None;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileSelfMorale { duration_rounds } = s.ability.effect {
+            let d = duration_rounds.max(1);
+            best = Some(best.map_or(d, |b| b.max(d)));
+        }
+    }
+    best
 }
 
 /// Combat-begin Dilithium Destabilization roll. Returns `None` when the crew has no seat

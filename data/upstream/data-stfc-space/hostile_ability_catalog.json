@@ -6468,10 +6468,11 @@
     },
     "4021963607": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_self_morale",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 100,
+      "value_override": 1.0
     },
     "4022486293": {
       "timing": "combat_begin",

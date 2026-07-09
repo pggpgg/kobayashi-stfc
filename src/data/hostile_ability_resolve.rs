@@ -214,6 +214,14 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 chance: normalize_probability(chance),
             })
         }
+        "hostile_self_morale" | "intraluminary_self_morale" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileSelfMorale {
+                duration_rounds: duration_rounds.unwrap_or(100).max(1),
+            })
+        }
         "hostile_attacker_shield_mitigation_zero"
         | "attacker_shield_mitigation_zero"
         | "strike_down_shield_mitigation_zero" => {
@@ -679,6 +687,70 @@ mod tests {
             0.9,
             1.0,
             None,
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        )
+        .is_none());
+    }
+
+    #[test]
+    fn intraluminary_hostile_self_morale_maps_duration_at_combat_begin() {
+        let effect = hostile_ability_effect_from_catalog(
+            "hostile_self_morale",
+            TimingWindow::CombatBegin,
+            1.0,
+            1.0,
+            Some(100),
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        );
+        assert!(matches!(
+            effect,
+            Some(AbilityEffect::HostileSelfMorale {
+                duration_rounds: 100
+            })
+        ));
+
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "4021963607": {
+                  "timing": "combat_begin",
+                  "effect_type": "hostile_self_morale",
+                  "value_is_percentage": false,
+                  "ignore_upstream_value_is_percentage": true,
+                  "duration_rounds": 100,
+                  "value_override": 1.0
+                }
+              }
+            }"#,
+        )
+        .unwrap();
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":4021963607,"value_is_percentage":true,"values":[{"chance":1,"value":1}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        match crew.seats[0].ability.effect {
+            AbilityEffect::HostileSelfMorale { duration_rounds } => {
+                assert_eq!(duration_rounds, 100);
+            }
+            ref other => panic!("expected HostileSelfMorale, got {other:?}"),
+        }
+
+        assert!(hostile_ability_effect_from_catalog(
+            "hostile_self_morale",
+            TimingWindow::RoundStart,
+            1.0,
+            1.0,
+            Some(100),
             None,
             None,
             None,

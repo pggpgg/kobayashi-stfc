@@ -698,6 +698,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         };
     }
 
+    // Intraluminary (HostileSelfMorale): grant the hostile Morale for the rest of combat.
+    // No RNG — only sets defender_morale_rounds_remaining when a seat exists.
+    if let Some(duration) = crate::combat::abilities::hostile_self_morale_duration(defender_crew) {
+        st.defender_morale_rounds_remaining = st.defender_morale_rounds_remaining.max(duration);
+    }
+
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
     st.shots_bonus_entries
         .reserve(rounds_to_simulate.min(32) as usize);

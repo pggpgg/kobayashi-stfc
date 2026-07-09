@@ -971,6 +971,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
+                | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1172,6 +1173,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
+                | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1335,6 +1337,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
+                | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1500,6 +1503,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
+                | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1671,6 +1675,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
+                | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1878,6 +1883,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileIsolyticVulnerability
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
+                | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -2142,6 +2148,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileLethalCombatBegin { .. }
+        | AbilityEffect::HostileSelfMorale { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,

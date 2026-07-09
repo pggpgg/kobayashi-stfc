@@ -200,7 +200,12 @@ Implementation sketch:
 
 ---
 
-## 4. Intraluminary — hostile self-morale (17 hostiles)
+## 4. Intraluminary — hostile self-morale (17 hostiles) ✅
+
+**Status (2026-07-09):** Implemented — `HostileSelfMorale` + catalog `hostile_self_morale`
+(bucket `hostile_self_morale`). Sets `defender_morale_rounds_remaining` at combat begin
+(`MAX_COMBAT_ROUNDS`). Modeled benefit: BB/INT counter pierce +10%; Explorer accuracy not
+modeled (all 17 carriers are Explorers). Coverage in `tests/hostile_fidelity_new_mechanics.rs`.
 
 **a) The issue.** `4021963607`: "On combat start, this ship applies Morale to itself for the rest
 of combat." The engine already tracks defender morale (`st.defender_morale_rounds_remaining`,
