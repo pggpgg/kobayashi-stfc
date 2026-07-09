@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-08 / per-hit stacks):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **436** modeled for defender-side counter-fire (`defender_crew`), **546** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-08 / Dilithium Destabilization):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **438** modeled for defender-side counter-fire (`defender_crew`), **544** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Fidelity pass (2026-07-08):** Four engine/resolver fixes plus five newly modeled text families:
 
@@ -41,6 +41,15 @@ Coverage: `tests/hostile_fidelity_new_mechanics.rs`; resolver units in `src/data
 | `3687094821` | 17 | `burning` combat_begin → player, duration 100 |
 
 **Uncertainty:** stack expiry off-by-one vs client is unconfirmed (Seska convention chosen). True PvP "enemy player" rows (Deadlock / Dismantlement) stay noop.
+
+**Dilithium Destabilization (2026-07-08 follow-up):** Two `other_review` noops → `hostile_lethal_combat_begin` (bucket `dilithium_destabilization`). Once per trial at combat begin, roll upstream `values[0].chance` (fraction; **not** `values[0].value`, which is a flag `1`); on success, same instant-loss early return as faction-gate / Conqueror Borg beams (`rounds_simulated == 0`). RNG draws only when a seat exists (after Denticle Blade + defender Burning + HullBreach rolls); `roll_proc_chance_short_circuit` skips the draw at chance 0/1.
+
+| Ability id | Hostiles | Chance |
+| --- | ---: | ---: |
+| `167520385` | 23 | 0.9 (90%) |
+| `3566779117` | 4 | 0.3 (30%) |
+
+Coverage: `tests/hostile_fidelity_new_mechanics.rs` (`dilithium_*`); resolver unit in `src/data/hostile_ability_resolve.rs`.
 
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
 
@@ -93,10 +102,10 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 982 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 261 |
-| `combat_noop` (catalogued, inert in sim) | 721 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 438 |
+| `combat_noop` (catalogued, inert in sim) | 544 |
 
-**Modeled effect types (261 ids):**
+**Modeled effect types (438 ids):**
 
 | `effect_type` | Ids |
 | --- | ---: |
@@ -107,6 +116,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | `hostile_hyperthermic_decay` | 4 |
 | `hostile_crit_damage_reduction` | 3 |
 | `hostile_crit_damage_floor` | 2 |
+| `hostile_lethal_combat_begin` | 2 |
 | `shield_mitigation_bypass` | 2 |
 | `hostile_isolytic_vulnerability` | 1 |
 | `crit_chance` (+ `crit_damage` / `hostile_crit_damage_floor` extra seats) | 1 |
@@ -118,7 +128,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 - PvP player targeting (2 ids, 388 instances): Deadlock / Dismantlement — default PvE path is ship vs NPC hostile (Hole Puncher / Immolator modeled 2026-07-08)
 - Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (359 ids, 591 instances): dilithium lethal, Temporal Dreadnought regen, etc. (Critical Breach / Rising Fire modeled 2026-07-08)
+- `other_review` (357 ids, 564 instances): Temporal Dreadnought regen, etc. (Critical Breach / Rising Fire / Dilithium Destabilization modeled 2026-07-08)
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -138,6 +148,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Burning at combat start | 1 | 53 | **Modeled (2026-07-08)** — Persistence Hunter → `combat_begin` + `burning` on the player |
 | Faction-gated lethal strike | 5 | 123 | **Modeled (2026-07-08)** — Tal Shiar / Mo'Kai / S31 / Q → `hostile_lethal_unless_attacker_faction` (+ Q crit floor / Strike Down SM→0) |
 | Defender per-hit stacks | 2 | 34 | **Modeled (2026-07-08)** — Critical Breach / Rising Fire → `defender_on_hit_*_stack` |
+| Dilithium Destabilization | 2 | 27 | **Modeled (2026-07-08)** — chance-gated combat-begin instant kill → `hostile_lethal_combat_begin` (chance from upstream `values[].chance`) |
 | Player hull breach at combat start | 1 | 17 | **Modeled (2026-07-08)** — Hole Puncher → `hull_breach` on the player for rest of combat |
 | Player burning at combat start (Immolator) | 1 | 17 | **Modeled (2026-07-08)** — Immolator → `burning` on the player for rest of combat |
 | Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
@@ -146,7 +157,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 359 | 591 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 357 | 564 | **Shard triage** — extend generator or overrides per pattern |
 
 ---
 

@@ -373,13 +373,13 @@
       "effect_type": "combat_noop"
     },
     "167520385": {
-      "bucket": "other_review",
+      "bucket": "dilithium_destabilization",
       "loca_id": 78053,
       "hostile_count": 23,
       "sample_hostile_id": "1072466025",
       "sample_level": 56,
       "text_snippet": "dilithium destabilization\nthis ship has a {0:#.#%} chance at the start of combat to destabilize the player ship's warp core, instantly destroying the ship.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_combat_begin"
     },
     "169505753": {
       "bucket": "other_review",
@@ -7465,13 +7465,13 @@
       "effect_type": "crit_damage"
     },
     "3566779117": {
-      "bucket": "other_review",
+      "bucket": "dilithium_destabilization",
       "loca_id": 78053,
       "hostile_count": 4,
       "sample_hostile_id": "1527858129",
       "sample_level": 40,
       "text_snippet": "dilithium destabilization\nthis ship has a {0:#.#%} chance at the start of combat to destabilize the player ship's warp core, instantly destroying the ship.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_combat_begin"
     },
     "3581149413": {
       "bucket": "isolytic_combat",

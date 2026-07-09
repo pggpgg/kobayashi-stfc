@@ -429,6 +429,24 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             "burning_combat_start",
         )
 
+    # Dilithium Destabilization: chance-gated instant kill at combat start.
+    # Chance lives in upstream values[0].chance (not value); catalog carries effect_type only.
+    if (
+        "chance" in p
+        and ("start of combat" in p or "at the start of combat" in p)
+        and ("instantly destroying" in p or "instantly destroy" in p)
+        and ("warp core" in p or "destabiliz" in p)
+    ):
+        return (
+            modeled(
+                "combat_begin",
+                "hostile_lethal_combat_begin",
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+            ),
+            "dilithium_destabilization",
+        )
+
     # Multi-stat crit rows (Critical Training: chance + damage + floor in one ability)
     if "critical hit chance" in p and "critical hit damage" in p and "critical damage floor" in p:
         return (

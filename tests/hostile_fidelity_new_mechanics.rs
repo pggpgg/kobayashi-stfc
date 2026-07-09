@@ -2,7 +2,8 @@
 //! combat-start burning applied to the player (Persistence Hunter), round-capped
 //! crit buffs (Ruthless Pursuit via `round_cap` → RoundRange), the counter-fire
 //! pierce percentage multiplier (Pen of Kahless), faction-gated lethal strikes
-//! (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down), and
+//! (Tal Shiar / Mo'Kai / S31 Elite, Q Almost Omnipotent / Strike Down),
+//! Dilithium Destabilization chance-gated combat-begin instant kill, and
 //! Xindi per-hit stacking counter buffs (Critical Breach / Rising Fire) with
 //! Hole Puncher / Immolator combat-start player breach/burn companions.
 
@@ -665,4 +666,160 @@ fn on_hit_stacks_without_player_state_match_empty_catalog() {
             && a.attacker_won == b.attacker_won,
         "stack seat with closed gate must be bit-identical to empty crew"
     );
+}
+
+/// Dilithium Destabilization (`167520385` on hostile 1072466025): 90% chance at combat begin
+/// to instantly destroy the player. Chance is upstream `values[0].chance` (0.9), not `value`.
+#[test]
+fn dilithium_destabilization_90_percent_instant_loss_rate_and_determinism() {
+    let rec = resolve_hostile("1072466025").expect("dilithium 90% sample");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalCombatBegin { chance }
+            if (chance - 0.9).abs() < 1e-9
+        )),
+        "expected HostileLethalCombatBegin chance 0.9, seats={:?}",
+        crew.seats
+            .iter()
+            .map(|s| &s.ability.effect)
+            .collect::<Vec<_>>()
+    );
+
+    let attacker = combatant(
+        "player",
+        500_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1072466025",
+        1_000_000.0,
+        WeaponStats {
+            attack: 10_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+
+    const N: u64 = 5_000;
+    let mut instant_losses = 0usize;
+    for seed in 0..N {
+        let r = run(&attacker, &defender, &pve_config(5, seed), &crew);
+        if !r.attacker_won && r.rounds_simulated == 0 {
+            instant_losses += 1;
+        }
+    }
+    let p = instant_losses as f64 / N as f64;
+    assert!(
+        (p - 0.9).abs() < 0.03,
+        "empirical instant-loss rate {p} should ≈ 0.9 over {N} seeds (got {instant_losses})"
+    );
+
+    let a = run(&attacker, &defender, &pve_config(5, 12345), &crew);
+    let b = run(&attacker, &defender, &pve_config(5, 12345), &crew);
+    assert_eq!(a.attacker_won, b.attacker_won);
+    assert_eq!(a.rounds_simulated, b.rounds_simulated);
+    assert_eq!(a.attacker_hull_remaining, b.attacker_hull_remaining);
+}
+
+/// Dilithium Destabilization variant (`3566779117` on hostile 1527858129): 30% chance.
+#[test]
+fn dilithium_destabilization_30_percent_instant_loss_rate() {
+    let rec = resolve_hostile("1527858129").expect("dilithium 30% sample");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalCombatBegin { chance }
+            if (chance - 0.3).abs() < 1e-9
+        )),
+        "expected HostileLethalCombatBegin chance 0.3"
+    );
+
+    let attacker = combatant(
+        "player",
+        500_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1527858129",
+        1_000_000.0,
+        WeaponStats {
+            attack: 10_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+
+    const N: u64 = 5_000;
+    let mut instant_losses = 0usize;
+    for seed in 0..N {
+        let r = run(&attacker, &defender, &pve_config(5, seed), &crew);
+        if !r.attacker_won && r.rounds_simulated == 0 {
+            instant_losses += 1;
+        }
+    }
+    let p = instant_losses as f64 / N as f64;
+    assert!(
+        (p - 0.3).abs() < 0.03,
+        "empirical instant-loss rate {p} should ≈ 0.3 over {N} seeds (got {instant_losses})"
+    );
+}
+
+/// Synthetic 0% Dilithium seat never instant-kills (short-circuit; no RNG needed for outcome).
+#[test]
+fn dilithium_destabilization_zero_chance_never_instant_kills() {
+    let crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                weapon_scope: Default::default(),
+                name: "synthetic_dilithium".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::HostileLethalCombatBegin { chance: 0.0 },
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let attacker = combatant(
+        "player",
+        500_000.0,
+        WeaponStats {
+            attack: 50_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "hostile",
+        1_000_000.0,
+        WeaponStats {
+            attack: 10_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    for seed in 0..200 {
+        let r = run(&attacker, &defender, &pve_config(5, seed), &crew);
+        assert!(
+            r.rounds_simulated > 0,
+            "0% chance must never instant-kill (seed {seed}): {r:?}"
+        );
+    }
 }

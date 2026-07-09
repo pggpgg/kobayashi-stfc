@@ -206,6 +206,14 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 allow_uss_vengeance,
             })
         }
+        "hostile_lethal_combat_begin" | "lethal_combat_begin" | "dilithium_destabilization" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileLethalCombatBegin {
+                chance: normalize_probability(chance),
+            })
+        }
         "hostile_attacker_shield_mitigation_zero"
         | "attacker_shield_mitigation_zero"
         | "strike_down_shield_mitigation_zero" => {
@@ -617,6 +625,67 @@ mod tests {
         let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
         assert_eq!(crew.seats.len(), 1);
         assert_eq!(crew.seats[0].ability.name, "123");
+    }
+
+    #[test]
+    fn dilithium_destabilization_maps_chance_from_upstream_chance_field() {
+        let effect = hostile_ability_effect_from_catalog(
+            "hostile_lethal_combat_begin",
+            TimingWindow::CombatBegin,
+            0.9,
+            1.0,
+            None,
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        );
+        assert!(matches!(
+            effect,
+            Some(AbilityEffect::HostileLethalCombatBegin { chance }) if (chance - 0.9).abs() < 1e-12
+        ));
+
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "167520385": {
+                  "timing": "combat_begin",
+                  "effect_type": "hostile_lethal_combat_begin",
+                  "value_is_percentage": false,
+                  "ignore_upstream_value_is_percentage": true
+                }
+              }
+            }"#,
+        )
+        .unwrap();
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":167520385,"value_is_percentage":true,"values":[{"chance":0.9,"value":1}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        match crew.seats[0].ability.effect {
+            AbilityEffect::HostileLethalCombatBegin { chance } => {
+                assert!((chance - 0.9).abs() < 1e-12);
+            }
+            ref other => panic!("expected HostileLethalCombatBegin, got {other:?}"),
+        }
+
+        // Wrong timing must not resolve.
+        assert!(hostile_ability_effect_from_catalog(
+            "hostile_lethal_combat_begin",
+            TimingWindow::RoundStart,
+            0.9,
+            1.0,
+            None,
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        )
+        .is_none());
     }
 
     #[test]

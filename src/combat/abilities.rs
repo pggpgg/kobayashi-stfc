@@ -305,6 +305,13 @@ pub enum AbilityEffect {
         /// U.S.S. Vengeance ship-id exception (Q hostiles).
         allow_uss_vengeance: bool,
     },
+    /// Dilithium Destabilization: once per trial at combat begin, with probability `chance`,
+    /// instantly destroy the player ship (same instant-loss shape as faction-gate / quantum beam).
+    /// Chance is a 0..=1 fraction from upstream `values[0].chance`. Rolled out of band in the
+    /// engine — only draws RNG when a seat exists (Denticle Blade discipline).
+    HostileLethalCombatBegin {
+        chance: f64,
+    },
     /// Strike Down secondary: force the player's effective shield mitigation to 0% for the fight
     /// (incoming counter-fire). Resolved out of band at combat setup.
     HostileAttackerShieldMitigationZero,
@@ -1020,6 +1027,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::RandomDefenderState { .. }
         | AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+        | AbilityEffect::HostileLethalCombatBegin { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression
         | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1231,6 +1239,29 @@ pub fn hostile_attacker_shield_mitigation_zero_active(crew: &CrewConfiguration) 
             AbilityEffect::HostileAttackerShieldMitigationZero
         )
     })
+}
+
+/// Dilithium Destabilization (or similar) combat-begin instant-kill chance from defender crew.
+/// Returns `None` when no seat exists so callers can skip the RNG draw entirely.
+pub fn hostile_lethal_combat_begin_chance(crew: &CrewConfiguration) -> Option<f64> {
+    for s in &crew.seats {
+        if let AbilityEffect::HostileLethalCombatBegin { chance } = s.ability.effect {
+            return Some(chance.clamp(0.0, 1.0));
+        }
+    }
+    None
+}
+
+/// Combat-begin Dilithium Destabilization roll. Returns `None` when the crew has no seat
+/// (no RNG drawn). On `Some(true)`, the fight ends as an instant attacker loss.
+pub fn roll_hostile_lethal_combat_begin(
+    crew: &CrewConfiguration,
+    rng: &mut crate::combat::rng::Rng,
+) -> Option<bool> {
+    let chance = hostile_lethal_combat_begin_chance(crew)?;
+    Some(crate::combat::proc::roll_proc_chance_short_circuit(
+        chance, rng,
+    ))
 }
 
 /// Denticle Blade proc chance and gated weapon slot (1-based) from hostile defender crew.
@@ -2507,6 +2538,45 @@ mod tests {
         assert_eq!(
             hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0),
             0.0
+        );
+    }
+
+    #[test]
+    fn hostile_lethal_combat_begin_chance_and_roll_skip_when_absent() {
+        let empty = CrewConfiguration { seats: vec![] };
+        assert!(hostile_lethal_combat_begin_chance(&empty).is_none());
+        let mut rng = crate::combat::rng::Rng::new(1);
+        assert!(roll_hostile_lethal_combat_begin(&empty, &mut rng).is_none());
+
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "dilithium",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::HostileLethalCombatBegin { chance: 0.3 },
+                ),
+                None,
+            )],
+        };
+        assert_eq!(hostile_lethal_combat_begin_chance(&crew), Some(0.3));
+        // 0% short-circuits to false without depending on seed.
+        let zero = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "dilithium0",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::HostileLethalCombatBegin { chance: 0.0 },
+                ),
+                None,
+            )],
+        };
+        assert_eq!(
+            roll_hostile_lethal_combat_begin(&zero, &mut rng),
+            Some(false)
         );
     }
 

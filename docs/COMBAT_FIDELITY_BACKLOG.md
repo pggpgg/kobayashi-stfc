@@ -158,7 +158,12 @@ Implementation sketch:
 
 ---
 
-## 3. Dilithium Destabilization — chance-gated instant kill at combat start (27 hostiles)
+## 3. Dilithium Destabilization — chance-gated instant kill at combat start (27 hostiles) ✅
+
+**Status (2026-07-08):** Implemented — `HostileLethalCombatBegin { chance }` + catalog
+`hostile_lethal_combat_begin` (bucket `dilithium_destabilization`). Chance is upstream
+`values[0].chance` (0.9 / 0.3), not `values[0].value`. Coverage in
+`tests/hostile_fidelity_new_mechanics.rs`.
 
 **a) The issue.** `167520385` (23 hostiles) and `3566779117` (4) read: "This ship has a X% chance
 at the start of combat to destabilize the player ship's warp core, instantly destroying the ship."
@@ -174,9 +179,8 @@ docs/COMBAT_FIDELITY_BACKLOG.md § "Shared context" first.
 
 Target ids 167520385 (23 hostiles) and 3566779117 (4): "X% chance at the start of combat to
 destabilize the player ship's warp core, instantly destroying the ship". X is upstream
-values[0].value with a {0:#.#%} placeholder → fraction convention. Check whether the chance sits
-in values[0].chance or values[0].value for these ids by inspecting a carrier hostile JSON under
-data/upstream/data-stfc-space/hostiles/ before deciding how the catalog row carries it.
+values[0].chance with a {0:#.#%} placeholder → fraction convention (values[0].value is a flag
+1 — do not use it for the kill probability).
 
 Implementation sketch:
 1. New effect, e.g. AbilityEffect::HostileLethalCombatBegin { chance } mapped from a new catalog

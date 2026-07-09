@@ -289,10 +289,9 @@
     },
     "167520385": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_combat_begin",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "ignore_upstream_value_is_percentage": true
     },
     "169505753": {
       "timing": "combat_begin",
@@ -5838,10 +5837,9 @@
     },
     "3566779117": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_lethal_combat_begin",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "ignore_upstream_value_is_percentage": true
     },
     "3581149413": {
       "timing": "combat_begin",

@@ -25,6 +25,7 @@ use crate::combat::abilities::{
     hostile_denticle_blade_gates_weapon, hostile_kemocite_attack_multiplier_bonus,
     hostile_kemocite_try_add_stack, hostile_lethal_end_of_round_hull_damage,
     opponent_captain_maneuver_multiplier_from_effects, roll_hostile_denticle_blade_at_combat_begin,
+    roll_hostile_lethal_combat_begin,
     scale_crew_captain_maneuver_effects, sum_accuracy_bonus,
     sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
     sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
@@ -673,6 +674,28 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &defender.id,
             &mut st.attacker_hull_breach_rounds,
         );
+    }
+
+    // Dilithium Destabilization (HostileLethalCombatBegin): chance-gated instant kill at combat
+    // begin. RNG order: after Denticle Blade + defender Burning + HullBreach rolls, before the
+    // round loop. Only draws when a seat exists (and short-circuits at chance 0/1), so other
+    // seeded fights stay bit-identical.
+    if let Some(true) = roll_hostile_lethal_combat_begin(defender_crew, &mut rng) {
+        let instant_loss_hull = max_att_hull;
+        let attacker_hull_remaining = (attacker.hull_health - instant_loss_hull).max(0.0);
+        return SimulationResult {
+            total_damage: 0.0,
+            total_isolytic_damage: 0.0,
+            attacker_won: false,
+            winner_by_round_limit: false,
+            rounds_simulated: 0,
+            attacker_hull_remaining: round_f64(attacker_hull_remaining),
+            defender_hull_remaining: round_f64(defender.hull_health),
+            defender_shield_remaining: round_f64(st.defender_shield_remaining),
+            attacker_shield_remaining: round_f64(st.attacker_shield_remaining),
+            events: trace.events(),
+            conqueror_borg_beam_suppression: setup.conqueror_borg_beam_suppression,
+        };
     }
 
     let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
