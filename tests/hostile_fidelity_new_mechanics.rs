@@ -9,10 +9,11 @@
 //! Intraluminary hostile self-morale at combat begin.
 
 use kobayashi::combat::{
-    hostile_crit_damage_floor_bonus_from_defender_crew, simulate_combat_with_defender_faction_and_defender_crew,
-    Ability, AbilityClass, AbilityEffect, CombatStateSnapshot, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, DefenderOnHitGate, DefenderOnHitStat, OpponentFactionTag, ShipType,
-    SimulationConfig, TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    hostile_crit_damage_floor_bonus_from_defender_crew,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass, AbilityEffect,
+    CombatStateSnapshot, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext,
+    DefenderOnHitGate, DefenderOnHitStat, OpponentFactionTag, ShipType, SimulationConfig,
+    TimingWindow, TraceMode, WeaponStats, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
@@ -377,7 +378,10 @@ fn almost_omnipotent_vengeance_exception_and_crit_floor() {
     let mut wrong = pve_config(3, 9);
     wrong.attacker_owner_faction = OpponentFactionTag::Borg;
     let loss = run(&attacker, &defender, &wrong, &crew);
-    assert_eq!(loss.rounds_simulated, 0, "non-exempt hull should die instantly");
+    assert_eq!(
+        loss.rounds_simulated, 0,
+        "non-exempt hull should die instantly"
+    );
 
     attacker.id = "uss_vengeance".into();
     let mut vengeance = pve_config(3, 9);
@@ -396,9 +400,10 @@ fn strike_down_zeros_attacker_shield_mitigation() {
     let catalog = hostile_ability_catalog_for_default_path();
     let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
     assert!(
-        crew.seats
-            .iter()
-            .any(|s| matches!(s.ability.effect, AbilityEffect::HostileAttackerShieldMitigationZero)),
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileAttackerShieldMitigationZero
+        )),
         "expected Strike Down shield-mitigation-zero seat"
     );
 
@@ -826,9 +831,8 @@ fn dilithium_destabilization_zero_chance_never_instant_kills() {
 }
 
 /// Intraluminary (`4021963607` on Assimilated Coryn-class Explorers, sample `1295067482`):
-/// combat-begin self-morale for the rest of combat. Carriers are Explorers — defender morale
-/// does not change Explorer counter pierce in this sim (accuracy not modeled); assert seat +
-/// snapshot flag only.
+/// combat-begin self-morale for the rest of combat. Asserts seat resolution + the snapshot flag
+/// staying up through round 20 (counter-pierce impact is covered by the synthetic test below).
 #[test]
 fn intraluminary_self_morale_on_carrier_hostile() {
     let rec = resolve_hostile("1295067482").expect("intraluminary sample");
@@ -837,7 +841,9 @@ fn intraluminary_self_morale_on_carrier_hostile() {
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
-            AbilityEffect::HostileSelfMorale { duration_rounds: 100 }
+            AbilityEffect::HostileSelfMorale {
+                duration_rounds: 100
+            }
         )),
         "expected HostileSelfMorale duration 100, seats={:?}",
         crew.seats
@@ -846,9 +852,10 @@ fn intraluminary_self_morale_on_carrier_hostile() {
             .collect::<Vec<_>>()
     );
     assert!(
-        empty_catalog_crew(&rec.ability).seats.iter().all(|s| {
-            !matches!(s.ability.effect, AbilityEffect::HostileSelfMorale { .. })
-        }),
+        empty_catalog_crew(&rec.ability)
+            .seats
+            .iter()
+            .all(|s| { !matches!(s.ability.effect, AbilityEffect::HostileSelfMorale { .. }) }),
         "empty catalog must not resolve Intraluminary"
     );
 
@@ -929,8 +936,8 @@ fn intraluminary_self_morale_on_carrier_hostile() {
     );
 }
 
-/// Synthetic Battleship defender with HostileSelfMorale: +10% counter pierce increases
-/// damage taken by the player vs an empty-seat baseline (the only modeled morale benefit).
+/// Synthetic Battleship defender with HostileSelfMorale: +10% counter pierce (any hull class
+/// qualifies) increases damage taken by the player vs an empty-seat baseline.
 #[test]
 fn intraluminary_self_morale_boosts_battleship_counter_pierce() {
     let crew = CrewConfiguration {

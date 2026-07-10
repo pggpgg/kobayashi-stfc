@@ -115,11 +115,11 @@ fn pick_weighted_state_id_respects_eight_four_two_weights() {
 }
 
 #[test]
-fn defender_morale_adjusted_pierce_boosts_battleship_primary_channel() {
+fn defender_morale_adjusted_pierce_boosts_counter_pierce() {
     let base = 0.4;
-    let boosted = defender_morale_adjusted_pierce(base, ShipType::Battleship, true);
+    let boosted = defender_morale_adjusted_pierce(base, true);
     assert!((boosted - base * 1.1).abs() < 1e-9);
-    let unchanged = defender_morale_adjusted_pierce(base, ShipType::Battleship, false);
+    let unchanged = defender_morale_adjusted_pierce(base, false);
     assert!((unchanged - base).abs() < 1e-9);
 }
 

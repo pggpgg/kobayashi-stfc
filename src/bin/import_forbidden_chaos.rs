@@ -164,7 +164,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 fid: row.fid,
                 name: name.clone(),
                 tech_type: row.tech_type.trim().to_string(),
-                tier: row.tier.and_then(|t| if t > 0 { Some(t) } else { None }),
+                tier: row.tier.filter(|&t| t > 0),
                 bonuses: Vec::new(),
             }
         });

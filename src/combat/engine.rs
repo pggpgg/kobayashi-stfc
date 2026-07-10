@@ -2,8 +2,8 @@
 
 pub use crate::combat::events::serialize_events_json;
 pub use crate::combat::mitigation::{
-    apply_morale_primary_piercing, component_mitigation, isolytic_damage, mitigation,
-    mitigation_breakdown, mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
+    apply_morale_piercing, component_mitigation, isolytic_damage, mitigation, mitigation_breakdown,
+    mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
     pierce_damage_through_bonus, MITIGATION_CEILING, MITIGATION_FLOOR, PIERCE_CAP,
 };
 pub use crate::combat::types::{
@@ -11,8 +11,8 @@ pub use crate::combat::types::{
     CrewOfficerStatTotals, DefenderStats, EnemyTypes, EventSource, HostileMitigationParams,
     OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
     WeaponStats, WeaponType, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
-    HULL_BREACH_CRIT_BONUS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS,
-    MORALE_PRIMARY_PIERCING_BONUS, SURVEY_COEFFICIENTS,
+    HULL_BREACH_CRIT_BONUS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PIERCING_BONUS,
+    SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -25,8 +25,7 @@ use crate::combat::abilities::{
     hostile_denticle_blade_gates_weapon, hostile_kemocite_attack_multiplier_bonus,
     hostile_kemocite_try_add_stack, hostile_lethal_end_of_round_hull_damage,
     opponent_captain_maneuver_multiplier_from_effects, roll_hostile_denticle_blade_at_combat_begin,
-    roll_hostile_lethal_combat_begin,
-    scale_crew_captain_maneuver_effects, sum_accuracy_bonus,
+    roll_hostile_lethal_combat_begin, scale_crew_captain_maneuver_effects, sum_accuracy_bonus,
     sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
     sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
     AbilityEffect, ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext,
@@ -891,12 +890,23 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         );
 
         // Morale proc after other round-start RNG consumers (assimilated, hull breach, burning, shots).
-        // Sets [CombatContext::attacker_morale_active] for [AbilityCondition::MoraleActive] and pierce.
+        // Sets [CombatContext::attacker_morale_active] for [AbilityCondition::MoraleActive],
+        // per-shot morale piercing, and the pierce damage-through scalar. Self-shield-break
+        // morale sources (Arkady) join the roll only while the attacker's shields are depleted.
+        let shield_break_morale_sources: &[ActiveAbilityEffect] =
+            if st.attacker_shield_remaining <= 0.0 {
+                self_shield_break_effects
+            } else {
+                &[]
+            };
         let morale_triggered = roll_morale_activation(
             &mut trace,
             &mut rng,
             round_index,
             &bench,
+            combat_begin_filtered,
+            shield_break_morale_sources,
+            &combat_ctx,
             round_start_assimilated,
         );
         combat_ctx.attacker_morale_active = morale_triggered;
@@ -1111,10 +1121,14 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             let weapon_base = attacker
                 .weapon_attack(weapon_index)
                 .unwrap_or(attacker.attack);
+            // Morale (+10% all piercing stats, applied after all other bonuses) enters the
+            // damage-through model in two places: the pierce damage-through scalar here (itself
+            // derived from the piercing stats at scenario build), and the per-shot dynamic
+            // mitigation in `fire_attacker_weapon` via `apply_morale_piercing`.
             let mut effective_pierce = attacker.weapon_pierce(weapon_index)
                 + phase_effects_round.pre_attack_pierce_bonus();
             if morale_triggered {
-                effective_pierce *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
+                effective_pierce *= 1.0 + MORALE_PIERCING_BONUS;
             }
             phase_effects.add_effects(
                 TimingWindow::AttackPhase,
@@ -2214,27 +2228,39 @@ fn roll_defender_round_start_shots_bonus(
     }
 }
 
-/// Morale activation roll: at most one `Morale` effect (first in `bench` order) is rolled, after
-/// every other round-start RNG consumer. Returns whether morale is active this round.
-///
-/// Extracted verbatim from `simulate_combat_from_setup` (roadmap task 12); RNG draw order
-/// unchanged.
+/// Morale activation roll, after every other round-start RNG consumer. Combines every eligible
+/// `Morale` source into one roll (chance = 1 − ∏(1 − cᵢ), treating sources as independent) so
+/// the RNG draw count stays at most one per round regardless of how many morale officers are
+/// crewed. Eligible sources: round-start `bench` rows, combat-begin rows (`passive`-trigger
+/// morale officers such as Sulu), and — only while the attacker's shields are depleted —
+/// self-shield-break rows (Arkady), the per-round approximation of "gains Morale when shields
+/// break". Returns whether morale is active this round.
+#[allow(clippy::too_many_arguments)]
 fn roll_morale_activation(
     trace: &mut TraceCollector,
     rng: &mut Rng,
     round_index: u32,
     bench: &[ActiveAbilityEffect],
+    combat_begin: &[ActiveAbilityEffect],
+    self_shield_break: &[ActiveAbilityEffect],
+    ctx: &CombatContext,
     round_start_assimilated: bool,
 ) -> bool {
-    let morale_source = bench.iter().find_map(|effect| {
+    let mut morale_source: Option<&str> = None;
+    let mut miss_product = 1.0_f64;
+    let unconditional = bench.iter().chain(combat_begin.iter());
+    let conditional = self_shield_break
+        .iter()
+        .filter(|e| e.condition.as_ref().is_none_or(|c| c.evaluate(ctx)));
+    for effect in unconditional.chain(conditional) {
         if let AbilityEffect::Morale(chance) = scale_effect(effect.effect, round_start_assimilated)
         {
-            Some((effect.ability_name.clone(), chance.clamp(0.0, 1.0)))
-        } else {
-            None
+            miss_product *= 1.0 - chance.clamp(0.0, 1.0);
+            morale_source.get_or_insert(effect.ability_name.as_str());
         }
-    });
-    if let Some((morale_source, morale_chance)) = morale_source {
+    }
+    if let Some(morale_source) = morale_source {
+        let morale_chance = 1.0 - miss_product;
         let morale_roll = (rng.next_u64() as f64) / (u64::MAX as f64);
         let triggered = morale_roll < morale_chance;
         trace.record_if(|| CombatEvent {
@@ -2242,7 +2268,7 @@ fn roll_morale_activation(
             round_index,
             phase: "round_start".to_string(),
             source: EventSource {
-                ship_ability_id: Some(morale_source),
+                ship_ability_id: Some(morale_source.to_string()),
                 ..EventSource::default()
             },
             weapon_index: None,
@@ -2252,11 +2278,11 @@ fn roll_morale_activation(
                 ("chance".to_string(), Value::from(round_f64(morale_chance))),
                 (
                     "applied_to".to_string(),
-                    Value::String("primary_piercing".to_string()),
+                    Value::String("all_piercing".to_string()),
                 ),
                 (
                     "multiplier".to_string(),
-                    Value::from(1.0 + MORALE_PRIMARY_PIERCING_BONUS),
+                    Value::from(1.0 + MORALE_PIERCING_BONUS),
                 ),
             ]),
         });
@@ -2734,6 +2760,10 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             let effective_mitigation = if let Some(params) = &defender.hostile_mitigation_params {
                 let mut adjusted_attacker = params.base_attacker_stats;
                 adjusted_attacker.accuracy += attacker_accuracy_bonus;
+                // Morale: +10% on all piercing stats, applied last (after all other bonuses).
+                if combat_ctx.attacker_morale_active {
+                    adjusted_attacker = apply_morale_piercing(adjusted_attacker);
+                }
                 let breakdown = mitigation_breakdown(
                     params.defender_stats,
                     adjusted_attacker,
@@ -3768,7 +3798,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
 
         let mut counter_pierce = crate::combat::abilities::defender_morale_adjusted_pierce(
             defender.weapon_pierce(weapon_index) + defender_phase_effects.pre_attack_pierce_bonus(),
-            defender_ship_type,
             st.defender_morale_rounds_remaining > 0,
         );
         if hostile_counter_debuff > 0.0
@@ -4464,11 +4493,8 @@ fn sum_defender_on_hit_stacks(entries: &[DefenderOnHitStackEntry]) -> (f64, f64)
     (crit, weapon)
 }
 
-fn maybe_push_defender_on_hit_stacks<'a, I>(
-    st: &mut CombatRunState,
-    effects: I,
-    round_index: u32,
-) where
+fn maybe_push_defender_on_hit_stacks<'a, I>(st: &mut CombatRunState, effects: I, round_index: u32)
+where
     I: IntoIterator<Item = &'a ActiveAbilityEffect>,
 {
     for effect in effects {
@@ -4492,11 +4518,12 @@ fn maybe_push_defender_on_hit_stacks<'a, I>(
             continue;
         }
         let expires_round = round_index + duration_rounds.max(1) - 1;
-        st.defender_on_hit_stack_entries.push(DefenderOnHitStackEntry {
-            bonus: per_hit,
-            expires_round,
-            stat,
-        });
+        st.defender_on_hit_stack_entries
+            .push(DefenderOnHitStackEntry {
+                bonus: per_hit,
+                expires_round,
+                stat,
+            });
     }
 }
 

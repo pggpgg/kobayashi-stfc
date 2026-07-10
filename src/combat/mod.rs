@@ -39,7 +39,7 @@ pub use damage::{
     compute_isolytic_taken,
 };
 pub use engine::{
-    apply_morale_primary_piercing, build_combat_setup, build_combat_setup_with_officer_stat,
+    apply_morale_piercing, build_combat_setup, build_combat_setup_with_officer_stat,
     component_mitigation, effective_shots_for_weapon, isolytic_damage, mitigation,
     mitigation_for_hostile, mitigation_with_morale, mitigation_with_mystery,
     pierce_damage_through_bonus, round_half_even, serialize_events_json, simulate_combat,
@@ -48,8 +48,7 @@ pub use engine::{
     CrewOfficerStatTotals, DefenderStats, EventSource, OpponentFactionTag, PreCombatSetup,
     ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode, WeaponStats,
     BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS, INTERCEPTOR_COEFFICIENTS,
-    MITIGATION_CEILING, MITIGATION_FLOOR, MORALE_PRIMARY_PIERCING_BONUS, PIERCE_CAP,
-    SURVEY_COEFFICIENTS,
+    MITIGATION_CEILING, MITIGATION_FLOOR, MORALE_PIERCING_BONUS, PIERCE_CAP, SURVEY_COEFFICIENTS,
 };
 pub use evolutionary_assimilation::EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS;
 pub use export_csv::{

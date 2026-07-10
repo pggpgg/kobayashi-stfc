@@ -204,8 +204,9 @@ Implementation sketch:
 
 **Status (2026-07-09):** Implemented — `HostileSelfMorale` + catalog `hostile_self_morale`
 (bucket `hostile_self_morale`). Sets `defender_morale_rounds_remaining` at combat begin
-(`MAX_COMBAT_ROUNDS`). Modeled benefit: BB/INT counter pierce +10%; Explorer accuracy not
-modeled (all 17 carriers are Explorers). Coverage in `tests/hostile_fidelity_new_mechanics.rs`.
+(`MAX_COMBAT_ROUNDS`). Modeled benefit: counter pierce +10% for any hull class (Morale boosts
+all piercing stats; the class gate was removed with the 2026-07-09 morale spec fix, so the 17
+Explorer carriers benefit too). Coverage in `tests/hostile_fidelity_new_mechanics.rs`.
 
 **a) The issue.** `4021963607`: "On combat start, this ship applies Morale to itself for the rest
 of combat." The engine already tracks defender morale (`st.defender_morale_rounds_remaining`,

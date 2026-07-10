@@ -315,8 +315,8 @@ pub enum AbilityEffect {
     /// Intraluminary: at combat begin, grant the hostile (defender) Morale for `duration_rounds`
     /// (typically [`crate::combat::types::MAX_COMBAT_ROUNDS`] for "rest of combat"). Sets
     /// `defender_morale_rounds_remaining` out of band — a no-op in the per-timing accumulator.
-    /// Modeled combat benefit today: +10% counter-fire pierce for Battleship/Interceptor only;
-    /// Explorer morale→accuracy is not modeled.
+    /// Modeled combat benefit: +10% counter-fire pierce for any hull class
+    /// ([`defender_morale_adjusted_pierce`]).
     HostileSelfMorale {
         duration_rounds: u32,
     },
@@ -450,23 +450,16 @@ pub fn apply_defender_random_state_id(
     }
 }
 
-/// Counter-fire pierce with defender Morale (primary pierce channel by hull class).
-pub fn defender_morale_adjusted_pierce(
-    base_pierce: f64,
-    ship_type: crate::combat::ShipType,
-    morale_active: bool,
-) -> f64 {
+/// Counter-fire pierce with defender Morale: +10% on the aggregate pierce scalar for any hull
+/// class. The player-inbound mitigation path has no per-channel hostile piercing stats (it is a
+/// weighted percentage sum of the player's armor/shield/dodge), so the spec's "all piercing
+/// stats +10%" collapses onto this single damage-through scalar, applied after all other bonuses.
+pub fn defender_morale_adjusted_pierce(base_pierce: f64, morale_active: bool) -> f64 {
     if !morale_active {
         return base_pierce;
     }
-    use crate::combat::types::MORALE_PRIMARY_PIERCING_BONUS;
-    match ship_type {
-        crate::combat::ShipType::Battleship | crate::combat::ShipType::Interceptor => {
-            base_pierce * (1.0 + MORALE_PRIMARY_PIERCING_BONUS)
-        }
-        // Explorer morale is accuracy in-game; aggregate pierce unchanged.
-        _ => base_pierce,
-    }
+    use crate::combat::types::MORALE_PIERCING_BONUS;
+    base_pierce * (1.0 + MORALE_PIERCING_BONUS)
 }
 
 /// Combat context for condition evaluation at runtime.

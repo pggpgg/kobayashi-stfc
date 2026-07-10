@@ -134,7 +134,7 @@ pub fn mitigation_with_morale(
     morale_active: bool,
 ) -> f64 {
     let attacker = if morale_active {
-        apply_morale_primary_piercing(attacker, ship_type)
+        apply_morale_piercing(attacker)
     } else {
         attacker
     };
@@ -151,27 +151,16 @@ pub fn isolytic_damage(
         * (isolytic_damage_bonus + (1.0 + isolytic_damage_bonus) * isolytic_cascade_damage_bonus)
 }
 
-pub fn apply_morale_primary_piercing(
-    attacker: AttackerStats,
-    ship_type: ShipType,
-) -> AttackerStats {
-    use types::MORALE_PRIMARY_PIERCING_BONUS;
-    let mut adjusted = attacker;
-    match ship_type {
-        ShipType::Battleship => {
-            adjusted.shield_piercing *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
-        }
-        ShipType::Interceptor => {
-            adjusted.armor_piercing *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
-        }
-        ShipType::Explorer => {
-            adjusted.accuracy *= 1.0 + MORALE_PRIMARY_PIERCING_BONUS;
-        }
-        ShipType::Survey => {}
-        ShipType::Armada => {}
+/// Morale piercing bonus: all piercing stats (armor piercing, shield piercing, accuracy) are
+/// increased by [`types::MORALE_PIERCING_BONUS`] for the weapon attack, applied at the end,
+/// after all other bonuses (so call this on fully-resolved stats).
+pub fn apply_morale_piercing(attacker: AttackerStats) -> AttackerStats {
+    use types::MORALE_PIERCING_BONUS;
+    AttackerStats {
+        armor_piercing: attacker.armor_piercing * (1.0 + MORALE_PIERCING_BONUS),
+        shield_piercing: attacker.shield_piercing * (1.0 + MORALE_PIERCING_BONUS),
+        accuracy: attacker.accuracy * (1.0 + MORALE_PIERCING_BONUS),
     }
-
-    adjusted
 }
 
 #[cfg(test)]
@@ -383,38 +372,15 @@ mod tests {
     // ── morale piercing ──
 
     #[test]
-    fn morale_boosts_exactly_the_class_primary_piercing_stat() {
-        fn assert_stats(got: AttackerStats, want: (f64, f64, f64), label: &str) {
-            for (g, w) in [
-                (got.armor_piercing, want.0),
-                (got.shield_piercing, want.1),
-                (got.accuracy, want.2),
-            ] {
-                assert!((g - w).abs() < 1e-9, "{label}: expected {w}, got {g}");
-            }
-        }
-        let base = att(100.0, 100.0, 100.0);
-        assert_stats(
-            apply_morale_primary_piercing(base, ShipType::Battleship),
-            (100.0, 110.0, 100.0),
-            "battleship",
-        );
-        assert_stats(
-            apply_morale_primary_piercing(base, ShipType::Interceptor),
-            (110.0, 100.0, 100.0),
-            "interceptor",
-        );
-        assert_stats(
-            apply_morale_primary_piercing(base, ShipType::Explorer),
-            (100.0, 100.0, 110.0),
-            "explorer",
-        );
-        for st in [ShipType::Survey, ShipType::Armada] {
-            assert_stats(
-                apply_morale_primary_piercing(base, st),
-                (100.0, 100.0, 100.0),
-                "survey/armada",
-            );
+    fn morale_boosts_all_piercing_stats_by_ten_percent() {
+        let base = att(100.0, 200.0, 300.0);
+        let got = apply_morale_piercing(base);
+        for (g, w) in [
+            (got.armor_piercing, 110.0),
+            (got.shield_piercing, 220.0),
+            (got.accuracy, 330.0),
+        ] {
+            assert!((g - w).abs() < 1e-9, "expected {w}, got {g}");
         }
     }
 
