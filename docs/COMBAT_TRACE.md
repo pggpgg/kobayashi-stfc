@@ -23,7 +23,7 @@ For each weapon sub-round, the engine records:
    - Includes the same scalar `mitigation` and `multiplier` fields used by outbound shots.
 
 2. **`pierce_calc`** (phase `attack`)  
-   - **`pierce`**: effective additive pierce for this round (ship base + pre-attack pierce bonuses + morale primary-piercing when it fired).  
+   - **`pierce`**: effective additive pierce for this round (ship base + pre-attack pierce bonuses, ×1.10 when Morale fired — Morale also lowers per-shot dynamic mitigation via +10% on all piercing stats).  
    - **`damage_through_factor`**: how much of the attack **gets through** mitigation for damage scaling:  
      `(mitigation_multiplier + pierce + defense_mitigation_bonus).max(0)`  
      where `defense_mitigation_bonus` comes from defense-phase effects on the attacker’s crew (see [`src/combat/damage.rs`](../src/combat/damage.rs)).  

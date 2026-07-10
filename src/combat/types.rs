@@ -40,7 +40,9 @@ pub fn effective_shots_for_weapon(base_shots: u32, shots_bonus_sum: f64) -> u32 
 }
 
 pub const MAX_COMBAT_ROUNDS: u32 = 100;
-pub const MORALE_PRIMARY_PIERCING_BONUS: f64 = 0.10;
+/// Morale status: while active, all piercing stats (armor piercing, shield piercing, accuracy)
+/// are increased by this fraction for each weapon attack, applied after all other bonuses.
+pub const MORALE_PIERCING_BONUS: f64 = 0.10;
 /// When target has Hull Breach, critical damage is multiplied by this factor (per game rules).
 pub const HULL_BREACH_CRIT_BONUS: f64 = 1.5;
 pub const BURNING_HULL_DAMAGE_PER_ROUND: f64 = 0.01;
@@ -422,8 +424,9 @@ pub struct WeaponStats {
 }
 
 /// Parameters for dynamic hostile mitigation computation at combat time.
-/// When present on a [`Combatant`], the engine calls [`crate::combat::mitigation::mitigation_for_hostile`]
-/// per-shot with morale-adjusted attacker stats instead of using the pre-computed `mitigation` scalar.
+/// When present on a [`Combatant`], the engine computes mitigation per-shot from these stats
+/// instead of the pre-computed `mitigation` scalar; while attacker Morale is active the piercing
+/// stats are boosted last via [`crate::combat::mitigation::apply_morale_piercing`].
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct HostileMitigationParams {
     pub defender_stats: DefenderStats,

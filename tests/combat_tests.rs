@@ -1,12 +1,13 @@
 use kobayashi::combat::{
-    aggregate_contributions, apply_morale_primary_piercing, component_mitigation,
-    effective_shots_for_weapon, isolytic_damage, mitigation, mitigation_with_morale,
-    pierce_damage_through_bonus, round_half_even, serialize_events_json, simulate_combat,
-    simulate_combat_with_defender_faction, simulate_combat_with_defender_faction_and_defender_crew,
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyType, EnemyTypes,
-    EventSource, HostileMitigationParams, OpponentFactionTag, ShipType, SimulationConfig,
-    StackContribution, StatStacking, TimingWindow, TraceCollector, TraceMode, WeaponStats, EPSILON,
+    aggregate_contributions, apply_morale_piercing, component_mitigation,
+    effective_shots_for_weapon, isolytic_damage, mitigation, mitigation_for_hostile,
+    mitigation_with_morale, pierce_damage_through_bonus, round_half_even, serialize_events_json,
+    simulate_combat, simulate_combat_with_defender_faction,
+    simulate_combat_with_defender_faction_and_defender_crew, Ability, AbilityClass,
+    AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant, CrewConfiguration,
+    CrewSeat, CrewSeatContext, DefenderStats, EnemyType, EnemyTypes, EventSource,
+    HostileMitigationParams, OpponentFactionTag, ShipType, SimulationConfig, StackContribution,
+    StatStacking, TimingWindow, TraceCollector, TraceMode, WeaponStats, EPSILON,
     EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS, HOSTILE_TAG_MASK_CONQUEROR_BORG,
     NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
 };
@@ -363,37 +364,19 @@ fn armada_mitigation_matches_survey_for_identical_stats() {
 }
 
 #[test]
-fn morale_boosts_only_primary_piercing_per_ship_type() {
+fn morale_boosts_all_piercing_stats() {
+    // Spec: "all piercing stats (armor_piercing + shield_piercing + accuracy) are increased by
+    // 10% for that weapon attack" — independent of hull class.
     let attacker = AttackerStats {
         armor_piercing: 100.0,
         shield_piercing: 80.0,
         accuracy: 60.0,
     };
 
-    let battleship = apply_morale_primary_piercing(attacker, ShipType::Battleship);
-    approx_eq(battleship.shield_piercing, 88.0, 1e-12);
-    approx_eq(battleship.armor_piercing, 100.0, 1e-12);
-    approx_eq(battleship.accuracy, 60.0, 1e-12);
-
-    let interceptor = apply_morale_primary_piercing(attacker, ShipType::Interceptor);
-    approx_eq(interceptor.armor_piercing, 110.0, 1e-12);
-    approx_eq(interceptor.shield_piercing, 80.0, 1e-12);
-    approx_eq(interceptor.accuracy, 60.0, 1e-12);
-
-    let explorer = apply_morale_primary_piercing(attacker, ShipType::Explorer);
-    approx_eq(explorer.accuracy, 66.0, 1e-12);
-    approx_eq(explorer.armor_piercing, 100.0, 1e-12);
-    approx_eq(explorer.shield_piercing, 80.0, 1e-12);
-
-    let survey = apply_morale_primary_piercing(attacker, ShipType::Survey);
-    approx_eq(survey.armor_piercing, 100.0, 1e-12);
-    approx_eq(survey.shield_piercing, 80.0, 1e-12);
-    approx_eq(survey.accuracy, 60.0, 1e-12);
-
-    let armada = apply_morale_primary_piercing(attacker, ShipType::Armada);
-    approx_eq(armada.armor_piercing, 100.0, 1e-12);
-    approx_eq(armada.shield_piercing, 80.0, 1e-12);
-    approx_eq(armada.accuracy, 60.0, 1e-12);
+    let boosted = apply_morale_piercing(attacker);
+    approx_eq(boosted.armor_piercing, 110.0, 1e-12);
+    approx_eq(boosted.shield_piercing, 88.0, 1e-12);
+    approx_eq(boosted.accuracy, 66.0, 1e-12);
 }
 
 #[test]
@@ -782,7 +765,7 @@ fn attacker_self_shield_break_pierce_applies_to_later_outbound_weapons_same_roun
 }
 
 #[test]
-fn mitigation_with_morale_applies_primary_piercing_bonus_when_active() {
+fn mitigation_with_morale_applies_all_piercing_bonus_when_active() {
     let defender = DefenderStats {
         armor: 100.0,
         shield_deflection: 80.0,
@@ -806,7 +789,7 @@ fn mitigation_with_morale_applies_primary_piercing_bonus_when_active() {
         morale < baseline,
         "morale should lower mitigation and increase final damage"
     );
-    approx_eq(morale, 0.5869213146636679, 1e-12);
+    approx_eq(morale, 0.5636223639639175, 1e-12);
 }
 
 #[test]
@@ -3207,6 +3190,277 @@ fn morale_active_condition_gates_round_start_effects_until_morale_roll_succeeds(
         always_morale.total_damage > never_morale.total_damage,
         "MoraleActive accumulating damage should apply only when Morale procs"
     );
+}
+
+/// Shared skeleton for the morale engine tests below: attacker with a single scalar weapon,
+/// inert defender (no counter fire), trace enabled.
+fn morale_test_config(rounds: u32) -> SimulationConfig {
+    SimulationConfig {
+        rounds,
+        seed: 42,
+        trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
+        attacker_hyperthermic_decay_fraction: 0.0,
+        emit_state_snapshots: false,
+    }
+}
+
+fn morale_seat(timing: TimingWindow, chance: f64) -> CrewSeatContext {
+    CrewSeatContext {
+        seat: CrewSeat::BelowDeck,
+        ability: Ability {
+            weapon_scope: Default::default(),
+            name: format!("morale_{timing:?}"),
+            class: AbilityClass::BelowDeck,
+            timing,
+            boostable: false,
+            effect: AbilityEffect::Morale(chance),
+            condition: None,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    }
+}
+
+#[test]
+fn morale_boosts_all_piercing_stats_in_per_shot_dynamic_mitigation() {
+    // Spec: with Morale, armor_piercing + shield_piercing + accuracy all get +10%, applied after
+    // all other bonuses. With dynamic hostile mitigation params, the per-shot mitigation must be
+    // computed from the morale-boosted stats.
+    let defender_stats = DefenderStats {
+        armor: 1000.0,
+        shield_deflection: 800.0,
+        dodge: 600.0,
+    };
+    let base_stats = AttackerStats {
+        armor_piercing: 500.0,
+        shield_piercing: 400.0,
+        accuracy: 300.0,
+    };
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 5000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        id: "hostile".to_string(),
+        mitigation: 0.35,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 100_000.0,
+        shield_mitigation: 0.8,
+        hostile_mitigation_params: Some(HostileMitigationParams {
+            defender_stats,
+            base_attacker_stats: base_stats,
+            ship_type: ShipType::Battleship,
+            mystery_mitigation_factor: 0.0,
+            floor: 0.0,
+            ceiling: 1.0,
+        }),
+        ..Default::default()
+    };
+
+    let config = morale_test_config(2);
+    let no_morale = CrewConfiguration::default();
+    let with_morale = CrewConfiguration {
+        seats: vec![morale_seat(TimingWindow::RoundStart, 1.0)],
+    };
+
+    let baseline = simulate_combat(&attacker, &defender, &config, &no_morale);
+    let boosted = simulate_combat(&attacker, &defender, &config, &with_morale);
+
+    let expected_base = mitigation_for_hostile(
+        defender_stats,
+        base_stats,
+        ShipType::Battleship,
+        0.0,
+        0.0,
+        1.0,
+    );
+    let expected_morale = mitigation_for_hostile(
+        defender_stats,
+        apply_morale_piercing(base_stats),
+        ShipType::Battleship,
+        0.0,
+        0.0,
+        1.0,
+    );
+    assert!(
+        expected_morale < expected_base,
+        "morale-boosted piercing must lower mitigation"
+    );
+
+    let mitigation_values = |result: &kobayashi::combat::SimulationResult| -> Vec<f64> {
+        result
+            .events
+            .iter()
+            // Outbound per-shot mitigation only (the counter path emits phase "counter").
+            .filter(|e| e.event_type == "mitigation_calc" && e.phase == "defense")
+            .map(|e| e.values["mitigation"].as_f64().unwrap())
+            .collect()
+    };
+    for v in mitigation_values(&baseline) {
+        approx_eq(v, expected_base, 1e-5);
+    }
+    let boosted_values = mitigation_values(&boosted);
+    assert!(!boosted_values.is_empty());
+    for v in boosted_values {
+        approx_eq(v, expected_morale, 1e-5);
+    }
+    assert!(boosted.total_damage > baseline.total_damage);
+}
+
+#[test]
+fn combat_begin_morale_sources_roll_every_round() {
+    // Sulu-style `passive` morale lands in the CombatBegin window; it must join the per-round
+    // morale roll rather than being silently dropped.
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        pierce: 0.15,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 5000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        mitigation: 0.35,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 100_000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+
+    let config = morale_test_config(3);
+    let combat_begin_morale = CrewConfiguration {
+        seats: vec![morale_seat(TimingWindow::CombatBegin, 1.0)],
+    };
+    let combat_begin_never = CrewConfiguration {
+        seats: vec![morale_seat(TimingWindow::CombatBegin, 0.0)],
+    };
+
+    let boosted = simulate_combat(&attacker, &defender, &config, &combat_begin_morale);
+    let baseline = simulate_combat(&attacker, &defender, &config, &combat_begin_never);
+
+    let triggered = boosted
+        .events
+        .iter()
+        .filter(|e| e.event_type == "morale_activation")
+        .map(|e| e.values["triggered"].as_bool().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(triggered.len(), 3, "one morale roll per round");
+    assert!(triggered.iter().all(|&t| t));
+    assert!(boosted.total_damage > baseline.total_damage);
+}
+
+#[test]
+fn self_shield_break_morale_joins_roll_only_while_shields_depleted() {
+    // Arkady-style shield-break morale: eligible only while the attacker's shields are down.
+    let attacker_template = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        pierce: 0.15,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 5000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        mitigation: 0.35,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 100_000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+
+    let config = morale_test_config(3);
+    let crew = CrewConfiguration {
+        seats: vec![morale_seat(TimingWindow::SelfShieldBreak, 1.0)],
+    };
+
+    // No shields at all: the source is eligible from round 1.
+    let depleted = simulate_combat(&attacker_template, &defender, &config, &crew);
+    let depleted_rolls = depleted
+        .events
+        .iter()
+        .filter(|e| e.event_type == "morale_activation")
+        .count();
+    assert_eq!(depleted_rolls, 3);
+
+    // Healthy shields and no incoming fire: the source never becomes eligible.
+    let shielded_attacker = Combatant {
+        shield_health: 10_000.0,
+        ..attacker_template
+    };
+    let shielded = simulate_combat(&shielded_attacker, &defender, &config, &crew);
+    let shielded_rolls = shielded
+        .events
+        .iter()
+        .filter(|e| e.event_type == "morale_activation")
+        .count();
+    assert_eq!(shielded_rolls, 0);
+}
+
+#[test]
+fn multiple_morale_sources_combine_into_one_roll() {
+    // Two independent 50% sources → one roll at 1 − 0.5×0.5 = 0.75.
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 100.0,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 5000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        mitigation: 0.35,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 100_000.0,
+        shield_mitigation: 0.8,
+        ..Default::default()
+    };
+
+    let config = morale_test_config(1);
+    let crew = CrewConfiguration {
+        seats: vec![
+            morale_seat(TimingWindow::RoundStart, 0.5),
+            morale_seat(TimingWindow::CombatBegin, 0.5),
+        ],
+    };
+
+    let result = simulate_combat(&attacker, &defender, &config, &crew);
+    let chances = result
+        .events
+        .iter()
+        .filter(|e| e.event_type == "morale_activation")
+        .map(|e| e.values["chance"].as_f64().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(chances.len(), 1, "sources combine into a single roll");
+    approx_eq(chances[0], 0.75, 1e-9);
 }
 
 #[test]

@@ -200,7 +200,7 @@ Mathematical invariant: defender with mitigation 0.0 (below hostile floor 0.16).
 
 ### `drift_morale_burning_hullbreach_stacking`
 
-Mathematical invariant: Morale, Burning, and Hull Breach all active simultaneously. Morale adds +10% primary piercing (requires hostile mitigation params, not wired). Burning ticks 1% max hull/round = 30. Hull Breach adds 1.5× crit damage (0% crit here). Shot damage: 10×100×0.50 = 500 + 10×30 Burning = 800 total. Verifies all three status effects fire without conflicts.
+Mathematical invariant: Morale, Burning, and Hull Breach all active simultaneously. Morale boosts all piercing stats +10%, but this fixture uses a static mitigation scalar and zero pierce, so it contributes no damage. Burning ticks 1% max hull/round = 30. Hull Breach adds 1.5× crit damage (0% crit here). Shot damage: 10×100×0.50 = 500 + 10×30 Burning = 800 total. Verifies all three status effects fire without conflicts.
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |

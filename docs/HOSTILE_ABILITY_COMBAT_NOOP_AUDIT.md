@@ -51,7 +51,7 @@ Coverage: `tests/hostile_fidelity_new_mechanics.rs`; resolver units in `src/data
 
 Coverage: `tests/hostile_fidelity_new_mechanics.rs` (`dilithium_*`); resolver unit in `src/data/hostile_ability_resolve.rs`.
 
-**Intraluminary (2026-07-09 follow-up):** One `other_review` noop → `hostile_self_morale` (bucket `hostile_self_morale`). At combat begin, sets `defender_morale_rounds_remaining` to `MAX_COMBAT_ROUNDS` (100) with no RNG. Modeled combat benefit today: +10% counter-fire pierce for Battleship/Interceptor via `defender_morale_adjusted_pierce`. **All 17 carriers are Assimilated Coryn-class Explorers** — Explorer morale→accuracy is not modeled, so enabling the seat is correct state fidelity but does not change their counter damage until that channel exists.
+**Intraluminary (2026-07-09 follow-up):** One `other_review` noop → `hostile_self_morale` (bucket `hostile_self_morale`). At combat begin, sets `defender_morale_rounds_remaining` to `MAX_COMBAT_ROUNDS` (100) with no RNG. Modeled combat benefit: +10% counter-fire pierce for any hull class via `defender_morale_adjusted_pierce` (Morale boosts all piercing stats; the player-inbound mitigation path has no per-channel hostile piercing stats, so the bonus collapses onto the aggregate counter pierce scalar). The 17 Assimilated Coryn-class Explorer carriers get the counter pierce boost as well.
 
 | Ability id | Hostiles | Mapping |
 | --- | ---: | --- |
@@ -158,7 +158,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Faction-gated lethal strike | 5 | 123 | **Modeled (2026-07-08)** — Tal Shiar / Mo'Kai / S31 / Q → `hostile_lethal_unless_attacker_faction` (+ Q crit floor / Strike Down SM→0) |
 | Defender per-hit stacks | 2 | 34 | **Modeled (2026-07-08)** — Critical Breach / Rising Fire → `defender_on_hit_*_stack` |
 | Dilithium Destabilization | 2 | 27 | **Modeled (2026-07-08)** — chance-gated combat-begin instant kill → `hostile_lethal_combat_begin` (chance from upstream `values[].chance`) |
-| Intraluminary self-morale | 1 | 17 | **Modeled (2026-07-09)** — combat-begin `hostile_self_morale` → defender Morale for rest of combat (BB/INT pierce only; Explorer accuracy not modeled) |
+| Intraluminary self-morale | 1 | 17 | **Modeled (2026-07-09)** — combat-begin `hostile_self_morale` → defender Morale for rest of combat (+10% counter pierce, any hull class) |
 | Player hull breach at combat start | 1 | 17 | **Modeled (2026-07-08)** — Hole Puncher → `hull_breach` on the player for rest of combat |
 | Player burning at combat start (Immolator) | 1 | 17 | **Modeled (2026-07-08)** — Immolator → `burning` on the player for rest of combat |
 | Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
