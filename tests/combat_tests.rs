@@ -6828,7 +6828,7 @@ fn round_end_regen_restores_shield_and_reduces_hull_damage() {
 }
 
 #[test]
-fn round_limit_declares_winner_by_hull_without_destruction() {
+fn round_limit_timeout_is_a_loss_without_destruction() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 1.0,
@@ -6904,10 +6904,46 @@ fn round_limit_declares_winner_by_hull_without_destruction() {
         &CrewConfiguration::default(),
     );
 
+    // Timeout: both alive at the round cap. In game this yields no kill/loot, so the
+    // attacker does NOT win — there is no hull-comparison tiebreak.
     assert!(result.winner_by_round_limit);
-    assert!(result.attacker_won);
+    assert!(!result.attacker_won);
     assert!(result.attacker_hull_remaining > 0.0);
     assert!(result.defender_hull_remaining > 0.0);
+}
+
+#[test]
+fn round_limit_flag_fires_at_configured_cap_below_max_rounds() {
+    // Production sims run min(100, 10 + hostile_level) rounds; surviving that window is a
+    // timeout too, and must be reported as ended-by-round-limit (not a plain loss).
+    let attacker = Combatant {
+        id: "attacker".to_string(),
+        attack: 10.0,
+        crit_multiplier: 1.0,
+        proc_multiplier: 1.0,
+        hull_health: 1_000_000.0,
+        weapons: vec![],
+        ..Combatant::default()
+    };
+    let defender = Combatant {
+        id: "defender".to_string(),
+        hull_health: 1_000_000.0,
+        ..attacker.clone()
+    };
+    let result = simulate_combat(
+        &attacker,
+        &defender,
+        &SimulationConfig {
+            rounds: 30,
+            seed: 3,
+            trace_mode: TraceMode::Off,
+            ..Default::default()
+        },
+        &CrewConfiguration::default(),
+    );
+    assert_eq!(result.rounds_simulated, 30);
+    assert!(result.winner_by_round_limit);
+    assert!(!result.attacker_won);
 }
 
 #[test]

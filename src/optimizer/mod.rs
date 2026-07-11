@@ -2314,10 +2314,12 @@ mod tests {
         // to full depth is byte-identical to the no-abandonment baseline (same per-crew seeds), the
         // winner is preserved, and some losers really do get abandoned (otherwise the test is moot).
         //
-        // botany_bay (a weak survey hull) vs hostile 38048587 is a borderline matchup: a few crews
-        // win meaningfully while most lose outright, giving the win-rate spread that lets the leader
-        // cut prune the hopeless tail. (Most PvE matchups are all-win or all-lose, where win-rate
-        // abandonment is a safe no-op and ranking is driven by hull remaining instead.)
+        // botany_bay (a weak survey hull) at T2/L10 vs hostile 38048587 is a borderline matchup:
+        // a few crews win meaningfully while most lose outright, giving the win-rate spread that
+        // lets the leader cut prune the hopeless tail. (Most PvE matchups are all-win or all-lose,
+        // where win-rate abandonment is a safe no-op and ranking is driven by hull remaining
+        // instead.) Recalibrated from T1/L1 after the 2026-07-10 engine correctness fixes
+        // (weapon_damage operator folding) collapsed that matchup to all-lose.
         let registry = DataRegistry::load().expect("data registry");
         let ship = "botany_bay";
         let hostile = "38048587";
@@ -2340,8 +2342,8 @@ mod tests {
                 &registry,
                 ship,
                 hostile,
-                Some(1),
-                Some(1),
+                Some(2),
+                Some(10),
                 None,
                 crate::data::support_buffs::SupportBuffScenarioRequest::default(),
                 DefenderOpponent::Hostile,
@@ -2410,7 +2412,7 @@ mod tests {
     fn chunked_topk_shared_leader_preserves_survivors() {
         // The shared-leader chunked path (used by the genetic per-generation eval) must keep its
         // top-K survivors byte-identical to the no-abandonment baseline while abandoning hopeless
-        // crews. Same borderline matchup as the exhaustive test for win-rate spread.
+        // crews. Same borderline matchup (T2/L10) as the exhaustive test for win-rate spread.
         let registry = DataRegistry::load().expect("data registry");
         let ship = "botany_bay";
         let hostile = "38048587";
@@ -2433,8 +2435,8 @@ mod tests {
                 &registry,
                 ship,
                 hostile,
-                Some(1),
-                Some(1),
+                Some(2),
+                Some(10),
                 None,
                 crate::data::support_buffs::SupportBuffScenarioRequest::default(),
                 DefenderOpponent::Hostile,

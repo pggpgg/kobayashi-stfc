@@ -161,12 +161,23 @@ pub enum AbilityEffect {
     /// Hull HP restored when this ship gets a kill (on_kill). Reduces total_attacker_hull_damage.
     OnKillHullRegen(f64),
     /// Attack multiplier that decays each round. initial - round * decay_per_round, floored.
+    /// Full multiplicative factor that shrinks each round. Round-index convention: the engine
+    /// evaluates `initial − round_index × decay_per_round` with `round_index` starting at 1, so
+    /// round 1 already includes one decay step (mirrors [`Self::AccumulatingAttackMultiplier`],
+    /// where the catalog documents "round n → n × value" — round 1's round-start tick counts).
+    /// `initial` and `floor` are full factors (`value − 1` enters the additive modifier sum);
+    /// `decay_per_round` is a bonus-scale step. NOTE: the LCARS `decay:` compile path feeds the
+    /// raw YAML value in as `initial` without operator folding — no shipped officer uses it yet;
+    /// fold the operator before first use if `add`-style decay rows appear.
     DecayingAttackMultiplier {
         initial: f64,
         decay_per_round: f64,
         floor: f64,
     },
-    /// Attack multiplier that accumulates each round. initial + round * growth_per_round, ceiling.
+    /// Attack multiplier that accumulates each round: `initial + round_index × growth_per_round`
+    /// (capped at `ceiling`), `round_index` starting at 1 — round 1 includes one growth step
+    /// ("round n → n × value", the round-start tick of round 1 counts). `initial`/`ceiling` are
+    /// full factors; `growth_per_round` is a bonus-scale step.
     AccumulatingAttackMultiplier {
         initial: f64,
         growth_per_round: f64,
@@ -901,6 +912,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
     let factor = 1.0 + bonus_add;
     let cap_one = |v: f64| (v * factor).clamp(0.0, 1.0);
     let scale = |v: f64| v * factor;
+    // Full multiplicative factors (stored as `1 + bonus`, e.g. [`AbilityEffect::CritDamageMultiplier`])
+    // must scale only their bonus part — scaling the whole factor would also amplify the base ×1.0.
+    let scale_factor = |m: f64| (1.0 + (m - 1.0) * factor).max(crate::combat::EPSILON);
     match effect {
         AbilityEffect::ShieldMitigationBypassFraction(v) => *v = cap_one(*v),
         AbilityEffect::Morale(chance) => *chance = cap_one(*chance),
@@ -919,7 +933,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         } => *chance = cap_one(*chance),
         AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
             *chance = cap_one(*chance);
-            *multiplier = scale(*multiplier);
+            *multiplier = scale_factor(*multiplier);
         }
         AbilityEffect::ProcPierceBonus { chance, bonus } => {
             *chance = cap_one(*chance);
@@ -930,7 +944,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::HullHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
-        AbilityEffect::CritDamageMultiplier(m) => *m = scale(*m),
+        AbilityEffect::CritDamageMultiplier(m) => *m = scale_factor(*m),
         AbilityEffect::OnHitCritDamageStack {
             bonus,
             duration_rounds: _,
@@ -955,18 +969,20 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             decay_per_round,
             floor,
         } => {
-            *initial = scale(*initial);
+            // `initial`/`floor` are full factors (accumulator applies `value − 1`); the
+            // per-round step is already a bonus-scale delta.
+            *initial = scale_factor(*initial);
             *decay_per_round = scale(*decay_per_round);
-            *floor = scale(*floor);
+            *floor = scale_factor(*floor);
         }
         AbilityEffect::AccumulatingAttackMultiplier {
             initial,
             growth_per_round,
             ceiling,
         } => {
-            *initial = scale(*initial);
+            *initial = scale_factor(*initial);
             *growth_per_round = scale(*growth_per_round);
-            *ceiling = scale(*ceiling);
+            *ceiling = scale_factor(*ceiling);
         }
         AbilityEffect::OnKillHullRegen(v) => *v = scale(*v),
         AbilityEffect::AccuracyBonus(v) => *v = scale(*v),
@@ -1049,7 +1065,11 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
             AbilityEffect::AttackMultiplier(m) => *m *= multiplier,
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
-            AbilityEffect::CritDamageMultiplier(c) => *c *= multiplier,
+            // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness
+            // debuff would push a crit below ×1.0 (weaker than a normal hit).
+            AbilityEffect::CritDamageMultiplier(c) => {
+                *c = (1.0 + (*c - 1.0) * multiplier).max(crate::combat::EPSILON)
+            }
             _ => {}
         }
     }
@@ -2654,6 +2674,101 @@ mod tests {
         };
         let r = hostile_crit_damage_reduction_active_at_round(&crew, &ctx_default(), 1);
         assert!(r.additive_points.abs() < 1e-12 && r.multiplicative_fraction.abs() < 1e-12);
+    }
+
+    // ── effectiveness scaling of full-factor effects (bonus part only) ──
+
+    #[test]
+    fn bridge_effectiveness_scales_crit_damage_bonus_not_base() {
+        // ×1.20 crit damage (+20% bonus) with +40% effectiveness → ×1.28, not 1.2 × 1.4 = ×1.68.
+        let mut effect = AbilityEffect::CritDamageMultiplier(1.2);
+        scale_bridge_officer_ability_effect(&mut effect, 0.4);
+        assert!(
+            matches!(effect, AbilityEffect::CritDamageMultiplier(m) if (m - 1.28).abs() < 1e-12)
+        );
+    }
+
+    #[test]
+    fn bridge_effectiveness_scales_proc_attack_multiplier_bonus_not_base() {
+        let mut effect = AbilityEffect::ProcAttackMultiplier {
+            chance: 0.5,
+            multiplier: 1.2,
+        };
+        scale_bridge_officer_ability_effect(&mut effect, 0.4);
+        let AbilityEffect::ProcAttackMultiplier { chance, multiplier } = effect else {
+            panic!("variant changed");
+        };
+        assert!((chance - 0.7).abs() < 1e-12);
+        assert!((multiplier - 1.28).abs() < 1e-12);
+    }
+
+    #[test]
+    fn bridge_effectiveness_scales_decay_accumulate_factor_fields_bonus_only() {
+        let mut decay = AbilityEffect::DecayingAttackMultiplier {
+            initial: 1.6,
+            decay_per_round: 0.05,
+            floor: 1.0,
+        };
+        scale_bridge_officer_ability_effect(&mut decay, 0.5);
+        let AbilityEffect::DecayingAttackMultiplier {
+            initial,
+            decay_per_round,
+            floor,
+        } = decay
+        else {
+            panic!("variant changed");
+        };
+        assert!((initial - 1.9).abs() < 1e-12, "initial bonus 0.6 × 1.5");
+        assert!((decay_per_round - 0.075).abs() < 1e-12);
+        assert!(
+            (floor - 1.0).abs() < 1e-12,
+            "×1.0 floor has no bonus to scale"
+        );
+    }
+
+    #[test]
+    fn captain_maneuver_debuff_scales_crit_damage_bonus_not_below_one() {
+        // ×1.20 crit damage debuffed to 80% effectiveness → ×1.16; the old full-factor
+        // multiply gave ×0.96 — a crit weaker than a normal hit.
+        let mut crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Captain,
+                make_ability(
+                    "maneuver",
+                    AbilityClass::CaptainManeuver,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::CritDamageMultiplier(1.2),
+                ),
+                None,
+            )],
+        };
+        scale_crew_captain_maneuver_effects(&mut crew, 0.8);
+        assert!(matches!(
+            crew.seats[0].ability.effect,
+            AbilityEffect::CritDamageMultiplier(m) if (m - 1.16).abs() < 1e-12
+        ));
+    }
+
+    #[test]
+    fn captain_maneuver_scales_genuine_crit_debuff_toward_one() {
+        // A sub-×1.0 crit-damage effect (genuine debuff) at half effectiveness moves toward ×1.0.
+        let mut crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Captain,
+                make_ability(
+                    "maneuver",
+                    AbilityClass::CaptainManeuver,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::CritDamageMultiplier(0.9),
+                ),
+                None,
+            )],
+        };
+        scale_crew_captain_maneuver_effects(&mut crew, 0.5);
+        assert!(matches!(
+            crew.seats[0].ability.effect,
+            AbilityEffect::CritDamageMultiplier(m) if (m - 0.95).abs() < 1e-12
+        ));
     }
 }
 

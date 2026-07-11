@@ -234,6 +234,14 @@ Modifies a stat on a target. Supports scaling, decay, accumulation, and conditio
     threshold_pct: 0.50
 ```
 
+**Decay/accumulate round indexing:** the engine evaluates decay/accumulate curves as
+`value ± round_index × amount` with `round_index` starting at **1**, so round 1 already includes
+one step (the round-start tick of round 1 counts — the same convention as the ship-catalog
+`accumulating_attack_multiplier` rows, "round n → n × value"). The stated `value` is therefore the
+round-0 anchor, not the round-1 magnitude. No shipped officer uses `decay`/`accumulate` yet, and
+the decay compile path does not fold the LCARS `operator` (see the
+`AbilityEffect::DecayingAttackMultiplier` doc) — treat `value` as a full multiplier there.
+
 **Scaling precedence:** When `scaling.values` is present and non-empty, the effect’s numeric magnitude at officer tier *T* is `values[T-1]` (after clamping *T* to `max_rank` and the index to the table length). Otherwise the linear model `base + (T-1) * per_rank` applies. The same rule applies to proc chances via `scaling.chance_values` versus `base_chance`/`base` + `per_rank`. Game data often uses non-linear rank tables; prefer explicit lists when they differ from a straight line between rank 1 and max rank.
 
 ```yaml
@@ -566,6 +574,8 @@ pub struct SimulationResult {
 ```
 
 The Monte Carlo layer aggregates many `SimulationResult` values into win rate, hull remaining, R1 kill rate, etc. A minimal `[FightResult { won }](src/combat/types.rs)` exists for tests/stubs only; it is not the combat engine’s real output.
+
+**Round-limit outcome (2026-07-10):** when both ships survive to the configured round cap (`SimulationConfig::rounds`, clamped to `MAX_COMBAT_ROUNDS = 100`), the fight is a **timeout**: `winner_by_round_limit` is true and `attacker_won` is always false — in game a timed-out fight yields no kill/loot (the attacker survives but does not win), so there is no hull-comparison tiebreak. Read the historically-named flag as "ended by round limit". The optimizer layers count these as **stalls**, distinct from losses (see `distribution_for_crew` / chain `failed_on_stall`).
 
 ### 4.5 Target Throughput
 
