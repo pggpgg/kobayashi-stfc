@@ -27,6 +27,43 @@ Ordering is by (hostile instances affected) × (tractability).
 
 ---
 
+## Correctness audit (2026-07-10) — engine bugs fixed outside this backlog
+
+A dedicated audit pass (post-Morale-fix, PR #256) found and fixed five engine correctness bugs and
+one validation gap; they are recorded here because calibration bands and golden masters were
+re-blessed accordingly:
+
+1. **LCARS dynamic `weapon_damage` operator folding** — `compile_officer_combat_spec_impl`
+   emitted full factors into `AttackMultiplier`, which the accumulator consumes as an additive
+   bonus fraction: every non-static officer weapon-damage buff was over-applied by +100
+   percentage points (`multiply 1.2` dealt ×2.2) and `sub` debuffs flipped into buffs.
+   Now folds like the Pierce family (`multiply v → v−1`, `sub v → −v`, `add v → v`).
+   Test: `tests/lcars_weapon_damage_operator_convention.rs`.
+2. **Round-start `ShotsBonus` expiry off-by-one** — both round-start push sites used
+   `round_index + duration` against a prune of `expires_round >= round_index`, so extra-shots
+   procs (attacker and hostile counter-fire) lasted duration+1 rounds. Now `+ duration − 1`
+   (the documented ring convention). Test: `tests/shots_bonus_expiry.rs`.
+3. **Player self-burn tick scaled by the outbound apex factor** — a hostile's apex barrier
+   wrongly suppressed the player's own burning damage. Test:
+   `tests/self_burn_apex_independence.rs`.
+4. **Effectiveness helpers scaled full-factor effects as bonuses** — Pike-style bridge
+   effectiveness and captain-maneuver scaling multiplied `CritDamageMultiplier` (a full factor)
+   wholesale, over-buffing crit damage and letting a <1 debuff push a crit below ×1.0. Now scale
+   only the bonus part (`1 + (m−1)×factor`), matching the assimilation scaler.
+5. **Round-limit outcome** — timeouts (both alive at the configured cap, not just at 100) are
+   now flagged `winner_by_round_limit` and are always a loss (no loot/kill on timeout); the
+   hull-comparison tiebreak at round 100 was removed. See DESIGN.md §4.4.
+6. **Validation** — misspelled `stat_modify` stats (which compile to nothing) now emit a
+   validation warning instead of passing silently.
+
+Report-only (documented, intentional): outbound morale mitigation is skipped for defenders
+without `hostile_mitigation_params` (PvP-shaped/legacy only); counter-fire player mitigation is a
+sheet-style model without hostile piercing/accuracy terms (DESIGN.md §3.5);
+`combat_battle_type_id` is never set, so `CombatBattleTypeAny` conditions are leniently true;
+decay/accumulate curves count round 1 as one step (DESIGN.md §3.3, now documented).
+
+---
+
 ## 1. Faction-gated lethal strikes (Q/faction elite hostiles — ~123 hostiles) ✅
 
 **Status (2026-07-08):** Implemented — `HostileLethalUnlessAttackerFaction` +

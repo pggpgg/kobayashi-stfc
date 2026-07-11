@@ -466,18 +466,19 @@ fn compile_officer_combat_spec_impl(
                     compiled_condition.clone(),
                 ));
             }
-            let mult = match op {
+            // [`AbilityEffect::AttackMultiplier`] is an additive bonus fraction on the
+            // pre-attack modifier sum (`base × (1 + Σ)`), so fold operators the same way as
+            // the Pierce/Isolytic additive family: multiply-family `v` is the full factor
+            // (`×1.2` ⇒ `+0.2`), sub-family negates, add passes through.
+            let add = match op {
                 "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
-                | "multiplybaseadd" => v,
-                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => {
-                    1.0 - v
-                }
-                "set" => v,
-                _ => 1.0 + v,
+                | "multiplybaseadd" | "set" => v - 1.0,
+                "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
+                _ => v,
             };
             Ok((
                 timing,
-                AbilityEffect::AttackMultiplier(mult),
+                AbilityEffect::AttackMultiplier(add),
                 compiled_condition.clone(),
             ))
         }

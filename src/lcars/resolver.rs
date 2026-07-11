@@ -2438,7 +2438,7 @@ mod tests {
         assert_eq!(contexts.len(), 2);
         assert!(matches!(
             contexts[0].ability.effect,
-            AbilityEffect::AttackMultiplier(v) if (v - 0.8).abs() < 1e-12
+            AbilityEffect::AttackMultiplier(v) if (v - (-0.2)).abs() < 1e-12
         ));
         assert!(matches!(
             contexts[1].ability.effect,

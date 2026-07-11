@@ -534,12 +534,10 @@ fn run_candidate_monte_carlo(
             }
 
             let hull_draw = if result.attacker_won {
-                let remaining = if result.winner_by_round_limit {
-                    (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0))
-                        .clamp(0.0, 1.0)
-                } else {
-                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
-                };
+                // attacker_won implies a kill (timeouts are never wins), so overkill fraction
+                // is the right surviving-hull proxy.
+                let remaining =
+                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0);
                 surviving_hull_sum += remaining;
                 remaining
             } else {
@@ -558,8 +556,7 @@ fn run_candidate_monte_carlo(
             let delta_d2 = def_draw - def_hull_mean;
             def_hull_m2 += delta_d * delta_d2;
 
-            if result.attacker_won && !result.winner_by_round_limit && result.rounds_simulated == 1
-            {
+            if result.attacker_won && result.rounds_simulated == 1 {
                 r1_kills += 1;
             }
         }

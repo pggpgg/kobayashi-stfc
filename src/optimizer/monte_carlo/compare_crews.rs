@@ -107,12 +107,10 @@ fn hull_fraction_on_win(
     result: &CombatSimResult,
     iteration_seed: u64,
 ) -> f64 {
+    // Only called on wins; wins are always kills (timeouts are never wins), so the overkill
+    // fraction is the surviving-hull proxy.
     let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
-    if result.winner_by_round_limit {
-        (result.attacker_hull_remaining / input.attacker.hull_health.max(1.0)).clamp(0.0, 1.0)
-    } else {
-        ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
-    }
+    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
 }
 
 fn hull_bin_index(frac: f64) -> usize {

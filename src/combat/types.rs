@@ -360,6 +360,10 @@ pub fn enemy_type_from_engagement_slug(s: &str) -> Option<EnemyType> {
 pub struct SimulationResult {
     pub total_damage: f64,
     pub attacker_won: bool,
+    /// True when the fight ended because both ships survived to the configured round cap
+    /// (`SimulationConfig::rounds`, clamped to [`MAX_COMBAT_ROUNDS`]). A timeout yields no
+    /// kill/loot in game, so this always coincides with `attacker_won == false` — the name is
+    /// historical; read it as "ended by round limit", not "winner decided by round limit".
     pub winner_by_round_limit: bool,
     pub rounds_simulated: u32,
     pub attacker_hull_remaining: f64,

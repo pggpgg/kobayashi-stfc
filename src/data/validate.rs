@@ -358,6 +358,18 @@ fn validate_lcars_ability(
                             format!("stat '{stat}' maps to planned mechanic"),
                         );
                     }
+                } else if !is_known_lcars_stat_token(stat) {
+                    // A stat neither the mechanic-support triage nor the LCARS compile pipeline
+                    // recognizes compiles to NOTHING: the effect is silently dropped in combat.
+                    // Without this warning a typo (`weapn_damage`) is indistinguishable from a
+                    // valid stat.
+                    report.push(
+                        ValidationSeverity::Warning,
+                        eff_ctx,
+                        format!(
+                            "unknown stat '{stat}': stat_modify compiles to no combat effect and is silently ignored"
+                        ),
+                    );
                 }
             } else {
                 report.push(
@@ -382,6 +394,18 @@ fn validate_lcars_ability(
 fn mechanic_support_for_lcars_stat(stat: &str) -> Option<MechanicSupport> {
     let key = stat.to_lowercase().replace('-', "_");
     mechanic_support_for_key(&key)
+}
+
+/// True when the LCARS pipeline recognizes `stat` on a `stat_modify` row: either the dynamic
+/// compile path maps it ([`crate::lcars::effect_spec_adapter::known_officer_stat`]), the static
+/// buff consumer reads it by name, or it is a known non-combat token. Anything else compiles to
+/// nothing (DESIGN.md §3.8 graceful degradation) and deserves a validation warning.
+fn is_known_lcars_stat_token(stat: &str) -> bool {
+    let key = stat.trim().to_lowercase().replace('-', "_");
+    crate::lcars::effect_spec_adapter::known_officer_stat(&key)
+        // Static-buff key read by apply_static_buffs_to_combatant but not a dynamic modifier.
+        || key == "shield_deflection"
+        || is_non_combat_key(&key)
 }
 
 /// Canonical `officers.canonical.json` uses PascalCase `modifier` strings; [`normalize_key`] turns them
@@ -2035,4 +2059,68 @@ pub fn validate_buildings_dataset(path: &str) -> Result<ValidationReport, String
     }
 
     Ok(report)
+}
+
+#[cfg(test)]
+mod lcars_stat_token_tests {
+    use super::*;
+
+    fn stat_modify_effect(stat: &str) -> lcars::LcarsEffect {
+        lcars::LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some(stat.to_string()),
+            target: None,
+            operator: Some("add".to_string()),
+            value: Some(0.2),
+            trigger: Some("on_round_start".to_string()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        }
+    }
+
+    fn diagnostics_for_stat(stat: &str) -> Vec<ValidationDiagnostic> {
+        let ability = lcars::LcarsAbility {
+            name: "test".to_string(),
+            effects: vec![stat_modify_effect(stat)],
+        };
+        let mut report = ValidationReport::default();
+        validate_lcars_ability(&mut report, "officer[test]", "bridge_ability", &ability);
+        report.diagnostics
+    }
+
+    #[test]
+    fn misspelled_stat_yields_unknown_stat_warning() {
+        let diags = diagnostics_for_stat("weapn_damage");
+        assert!(
+            diags
+                .iter()
+                .any(|d| matches!(d.severity, ValidationSeverity::Warning)
+                    && d.message.contains("unknown stat 'weapn_damage'")),
+            "expected unknown-stat warning, got {diags:?}"
+        );
+    }
+
+    #[test]
+    fn known_dynamic_and_static_stats_yield_no_unknown_stat_warning() {
+        for stat in [
+            "weapon_damage",
+            "crit_damage",
+            "shots_per_attack",
+            "shield_deflection",
+            "officer_stat_all",
+            "mining_rate",
+        ] {
+            let diags = diagnostics_for_stat(stat);
+            assert!(
+                diags.iter().all(|d| !d.message.contains("unknown stat")),
+                "stat '{stat}' wrongly flagged: {diags:?}"
+            );
+        }
+    }
 }

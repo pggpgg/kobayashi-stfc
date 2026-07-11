@@ -474,6 +474,13 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
     }
 }
 
+/// True when `stat` is a token the LCARS `stat_modify` compile pipeline recognizes as a dynamic
+/// officer modifier. Used by data validation to flag misspelled stats (which otherwise compile
+/// to nothing and are silently ignored in combat).
+pub fn known_officer_stat(stat: &str) -> bool {
+    stat_to_officer_modifier(stat).is_some()
+}
+
 fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
     match stat.trim() {
         "weapon_damage" | "attack" => Some(AbilityModifierSpec::WeaponDamage),
@@ -1311,7 +1318,8 @@ mod tests {
     }
 
     /// [`lcars_effect_to_combat_effect_spec`] scalar + modifier must stay aligned with
-    /// [`crate::lcars::resolver::resolve_effect`] `stat_modify` / `weapon_damage` / `add` semantics (`1 + value` → [`AbilityEffect::AttackMultiplier`]).
+    /// [`crate::lcars::resolver::resolve_effect`] `stat_modify` / `weapon_damage` / `add` semantics
+    /// (additive bonus fraction `value` → [`AbilityEffect::AttackMultiplier`]).
     #[test]
     fn lcars_spec_weapon_damage_scalar_matches_resolver_attack_multiplier() {
         let officer = LcarsOfficer {
@@ -1370,9 +1378,8 @@ mod tests {
             ref e => panic!("expected AttackMultiplier, got {e:?}"),
         };
         assert!(
-            (m - (1.0 + raw)).abs() < 1e-12,
-            "resolver mult {m} vs 1+spec_scalar {}",
-            1.0 + raw
+            (m - raw).abs() < 1e-12,
+            "resolver additive bonus {m} vs spec_scalar {raw}"
         );
     }
 

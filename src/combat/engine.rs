@@ -1623,18 +1623,14 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     let total_damage = st.total_hull_damage + st.total_shield_damage;
     let attacker_hull_remaining = (attacker.hull_health - st.total_attacker_hull_damage).max(0.0);
     let defender_hull_remaining = (defender.hull_health - st.total_hull_damage).max(0.0);
-    let winner_by_round_limit = rounds_completed == MAX_COMBAT_ROUNDS
+    // Both ships alive at the configured round cap = timeout. In game a timed-out fight yields
+    // no kill/loot (the attacker survives but does not win), so a timeout is always a loss for
+    // the attacker — there is no hull-comparison tiebreak. `winner_by_round_limit` reports that
+    // the round limit (config.rounds, not just MAX_COMBAT_ROUNDS) is what ended the fight.
+    let winner_by_round_limit = rounds_completed == rounds_to_simulate
         && defender_hull_remaining > 0.0
         && attacker_hull_remaining > 0.0;
-    let attacker_won = if attacker_hull_remaining <= 0.0 {
-        false
-    } else if defender_hull_remaining <= 0.0 {
-        true
-    } else if winner_by_round_limit {
-        attacker_hull_remaining >= defender_hull_remaining
-    } else {
-        false
-    };
+    let attacker_won = attacker_hull_remaining > 0.0 && defender_hull_remaining <= 0.0;
 
     SimulationResult {
         total_damage: round_f64(total_damage),
@@ -2005,8 +2001,11 @@ fn apply_round_end_phase(
     );
     *total_attacker_hull_damage += lethal_damage;
     *attacker_hull_gross_damage_this_round += lethal_damage;
-    *total_attacker_hull_damage += attacker_burning_damage * round_end_apex_factor;
-    *attacker_hull_gross_damage_this_round += attacker_burning_damage * round_end_apex_factor;
+    // The attacker's own burning tick is self-inflicted DOT: the DEFENDER's apex barrier /
+    // the attacker's apex shred (round_end_apex_factor, outbound direction) must not scale it —
+    // same as the other player-inbound round-end terms above (end_of_round_damage, lethal).
+    *total_attacker_hull_damage += attacker_burning_damage;
+    *attacker_hull_gross_damage_this_round += attacker_burning_damage;
 
     // Regen: shield and hull restoration at round end from attacker's crew (officer/data regen effects apply to the ship with the crew).
     let shield_regen = phase_effects_round.composed_shield_regen();
@@ -2199,7 +2198,8 @@ fn roll_defender_round_start_shots_bonus(
                 let duration = duration_rounds.max(1);
                 defender_shots_bonus_entries.push(ShotsBonusEntry {
                     bonus: bonus_pct,
-                    expires_round: round_index + duration,
+                    // Active for `duration` rounds counting the earn round (ring convention).
+                    expires_round: round_index + duration - 1,
                     scope: effect.weapon_scope,
                 });
             }
@@ -2495,7 +2495,8 @@ fn roll_attacker_round_start_procs(
                 let duration = duration_rounds.max(1);
                 shots_bonus_entries.push(ShotsBonusEntry {
                     bonus: bonus_pct,
-                    expires_round: round_index + duration,
+                    // Active for `duration` rounds counting the earn round (ring convention).
+                    expires_round: round_index + duration - 1,
                     scope: effect.weapon_scope,
                 });
             }
