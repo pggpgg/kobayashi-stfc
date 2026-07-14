@@ -541,7 +541,19 @@ Task:
 
 ---
 
-## 11. Per-tier/level value curves for ship hull abilities (all player ships)
+## 11. Per-tier/level value curves for ship hull abilities (all player ships) ✅
+
+**Status (2026-07-14):** Implemented — the normalizer auto-detects varying live `values[]` and emits
+`level_scaled_values` for every catalogued, non-noop, non-overridden ability (67 abilities on
+59 ships gained curves; the 5 previously flagged stay value-identical). Index semantics
+ground-truthed as **level − 1**, not tier: live curve lengths always match `max_level` (Ent-D 60
+live / 12 tiers, Augur 45 live / 9 tiers). Curves truncate to max level so out-of-range requests
+resolve to the max-level value; `value_override` and `combat_noop` suppress emission. No engine
+change — the existing `ship_ability_value_for_level` / `to_ship_record` plumbing resolves the
+curves. Coverage in `tests/ship_hull_ability_level_curves.rs`; DESIGN.md ship-hull-ability
+section updated. Median max-level/L1 magnitude ratio ≈ 4×, so optimizer results shift for
+high-tier ships. Follow-up flagged: `uss_athena` `2357321655` reaches 20,000,000 raw at T15/L75 —
+smells like a missing `post_scale` on that catalog row.
 
 **a) The issue.** Upstream ship JSON gives each hull ability a `values[]` curve, but the
 normalizer writes only `values[0]` onto `data/ships_extended/*.json` — except for a hand-wired
