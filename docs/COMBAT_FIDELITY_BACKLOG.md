@@ -374,7 +374,18 @@ Implementation sketch:
 
 ---
 
-## 7. Q Junior's Twist — 20-round engagement limit (46 hostiles)
+## 7. Q Junior's Twist — 20-round engagement limit (46 hostiles) ✅
+
+**Status (2026-07-15):** Implemented — `HostileEngagementRoundLimit { rounds }` + catalog
+`hostile_engagement_round_limit` (bucket `engagement_limit_combat`). The engine caps
+`rounds_to_simulate` at the seat's limit; a hostile still alive at the cap is a timeout and
+therefore a **loss** (the PR #256 timeout rule already encodes "not destroyed = not won", so no
+separate outcome flag was needed — `winner_by_round_limit` keeps its meaning). **Deviation from
+the prompt below:** only `755115993` (loca 73055, 23 hostiles) carries the "within 20 rounds"
+clause; `1104294321` (loca 73051, a *disjoint* 23-hostile set) is the 1v1 restriction only and
+stays noop under the dedicated `q_trials_flavor` bucket. Modeled via a generator branch anchored
+on "q junior's twist" + "within N rounds" (stable phrasing) rather than an overrides row.
+Coverage in `tests/hostile_engagement_round_limit.rs`.
 
 **a) The issue.** The Q Trials Borg hostiles (`755115993`, `1104294321`, 23 hostiles each) carry
 mostly-flavor text, but one clause is mechanical: "Just defeat the Borg Polygon **within 20
@@ -411,7 +422,17 @@ Implementation sketch:
 
 ---
 
-## 8. Defender shield regen for "first N rounds" texts — Plausible Deniability (~15 hostiles)
+## 8. Defender shield regen for "first N rounds" texts — Plausible Deniability (~15 hostiles) ✅
+
+**Status (2026-07-15):** Implemented — catalog `shield_regen_max_fraction` (bucket
+`shield_regen_combat`) resolving to a defender `ShieldRegenMaxFraction` seat at **round end**
+with `round_cap: 5` → `RoundRange` (the defender round-end path filters by condition, so the cap
+is honored automatically). The defender-side regen wiring already existed
+(`composed_shield_regen_max_fraction`, `src/combat/engine.rs`); the change is the resolver
+mapping (`shield_regen_max_fraction` in `ship_ability_effect_from_catalog`) plus the generator
+branch. **Scope surprise:** text-match enumeration found **82 ability ids / 140 hostile
+instances** with the identical text, not ~5 ids × 3 hostiles. Coverage in
+`tests/hostile_first_rounds_shield_regen.rs`.
 
 **a) The issue.** Section-31-era hostiles (`932011628`, `3926823774`, and siblings — ~5 ids × 3
 hostiles) read "Recovers X% of total SHP for the first 5 rounds of combat." The engine already has

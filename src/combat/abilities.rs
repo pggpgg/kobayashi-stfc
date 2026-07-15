@@ -331,6 +331,13 @@ pub enum AbilityEffect {
     HostileSelfMorale {
         duration_rounds: u32,
     },
+    /// Q Junior's Twist (Q Trials Borg, loca 73055): the engagement ends after `rounds` combat
+    /// rounds. If the hostile is still alive at the cap the fight is a **loss** for the attacker
+    /// (timeout semantics, DESIGN.md §4.4 — no hull-comparison tiebreak). Resolved out of band at
+    /// combat setup by capping `rounds_to_simulate` — a no-op in the per-timing accumulator.
+    HostileEngagementRoundLimit {
+        rounds: u32,
+    },
     /// Strike Down secondary: force the player's effective shield mitigation to 0% for the fight
     /// (incoming counter-fire). Resolved out of band at combat setup.
     HostileAttackerShieldMitigationZero,
@@ -1046,6 +1053,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileLethalCombatBegin { .. }
         | AbilityEffect::HostileSelfMorale { .. }
+        | AbilityEffect::HostileEngagementRoundLimit { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression
         | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1282,6 +1290,19 @@ pub fn hostile_self_morale_duration(crew: &CrewConfiguration) -> Option<u32> {
         if let AbilityEffect::HostileSelfMorale { duration_rounds } = s.ability.effect {
             let d = duration_rounds.max(1);
             best = Some(best.map_or(d, |b| b.max(d)));
+        }
+    }
+    best
+}
+
+/// Q Junior's Twist (or similar) engagement round limit from defender crew. Returns `None`
+/// when no seat exists. When multiple seats exist, takes the strictest (minimum) limit.
+pub fn hostile_engagement_round_limit(crew: &CrewConfiguration) -> Option<u32> {
+    let mut best: Option<u32> = None;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileEngagementRoundLimit { rounds } = s.ability.effect {
+            let r = rounds.max(1);
+            best = Some(best.map_or(r, |b| b.min(r)));
         }
     }
     best

@@ -49,13 +49,13 @@
       "effect_type": "combat_noop"
     },
     "11622922": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2898103316",
       "sample_level": 59,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "15103847": {
       "bucket": "isolytic_combat",
@@ -265,13 +265,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "125667262": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2157982730",
       "sample_level": 58,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "132548428": {
       "bucket": "apex_combat",
@@ -319,13 +319,13 @@
       "effect_type": "combat_noop"
     },
     "139581963": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "310479587",
       "sample_level": 70,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "141505792": {
       "bucket": "outpost_scope",
@@ -562,13 +562,13 @@
       "effect_type": "combat_noop"
     },
     "297481181": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "3462763153",
       "sample_level": 55,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "304257853": {
       "bucket": "pierce_combat",
@@ -1102,22 +1102,22 @@
       "effect_type": "isolytic_damage"
     },
     "517545481": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2281639710",
       "sample_level": 53,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "520133001": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2886783720",
       "sample_level": 56,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "522378175": {
       "bucket": "isolytic_combat",
@@ -1138,13 +1138,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "532565157": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "406620955",
       "sample_level": 59,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "544870924": {
       "bucket": "other_review",
@@ -1165,13 +1165,13 @@
       "effect_type": "apex_barrier"
     },
     "560331275": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1242657738",
       "sample_level": 71,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "560780010": {
       "bucket": "other_review",
@@ -1219,13 +1219,13 @@
       "effect_type": "combat_noop"
     },
     "567961927": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "154276889",
       "sample_level": 50,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "574280882": {
       "bucket": "other_review",
@@ -1255,13 +1255,13 @@
       "effect_type": "isolytic_defense"
     },
     "579951584": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1103884540",
       "sample_level": 62,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "587718019": {
       "bucket": "other_review",
@@ -1309,13 +1309,13 @@
       "effect_type": "combat_noop"
     },
     "602616371": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2389521016",
       "sample_level": 51,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "615446678": {
       "bucket": "crit_combat",
@@ -1426,13 +1426,13 @@
       "effect_type": "apex_barrier"
     },
     "653419967": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1362221044",
       "sample_level": 67,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "654446844": {
       "bucket": "isolytic_combat",
@@ -1554,13 +1554,13 @@
       "effect_type": "combat_noop"
     },
     "725282893": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "3933682880",
       "sample_level": 51,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "728010019": {
       "bucket": "pierce_combat",
@@ -1635,13 +1635,13 @@
       "effect_type": "combat_noop"
     },
     "755115993": {
-      "bucket": "other_review",
+      "bucket": "engagement_limit_combat",
       "loca_id": 73055,
       "hostile_count": 23,
       "sample_hostile_id": "1063917329",
       "sample_level": 66,
       "text_snippet": "q junior's twist\nq junior: \"let's see how you handle this borg ship when it's--\"\n\nq: \"if the continuum's told you once, they've told you a thousand times; don't provoke the borg!\"\n\nq: \"excuse us, independent. i need to have a little chat wi",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_engagement_round_limit"
     },
     "758947342": {
       "bucket": "outpost_scope",
@@ -1932,22 +1932,22 @@
       "effect_type": "crit_damage"
     },
     "930022463": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2750918153",
       "sample_level": 56,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "932011628": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "2116861042",
       "sample_level": 67,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "933340679": {
       "bucket": "other_review",
@@ -2248,13 +2248,13 @@
       "effect_type": "isolytic_damage"
     },
     "1082203558": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1665329672",
       "sample_level": 58,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1085156443": {
       "bucket": "isolytic_combat",
@@ -2311,7 +2311,7 @@
       "effect_type": "combat_noop"
     },
     "1104294321": {
-      "bucket": "other_review",
+      "bucket": "q_trials_flavor",
       "loca_id": 73051,
       "hostile_count": 23,
       "sample_hostile_id": "1098304183",
@@ -2446,22 +2446,22 @@
       "effect_type": "apex_barrier"
     },
     "1175795558": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2056334172",
       "sample_level": 53,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1176612190": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "3523007170",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1178349037": {
       "bucket": "pierce_combat",
@@ -2482,13 +2482,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1191296542": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1550647643",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1199703434": {
       "bucket": "isolytic_combat",
@@ -2653,13 +2653,13 @@
       "effect_type": "combat_noop"
     },
     "1271201639": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2204610896",
       "sample_level": 56,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1271329828": {
       "bucket": "xindi_crit_debuff",
@@ -2752,13 +2752,13 @@
       "effect_type": "isolytic_damage"
     },
     "1306779768": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "2093852431",
       "sample_level": 70,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1314167258": {
       "bucket": "isolytic_combat",
@@ -2887,13 +2887,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1383740011": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "39263396",
       "sample_level": 52,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1392366606": {
       "bucket": "outpost_scope",
@@ -2932,22 +2932,22 @@
       "effect_type": "combat_noop"
     },
     "1404909238": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2441527361",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1407983511": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "1858325108",
       "sample_level": 68,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1408273502": {
       "bucket": "xindi_crit_debuff",
@@ -3031,13 +3031,13 @@
       "effect_type": "combat_noop"
     },
     "1436143355": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "3866453590",
       "sample_level": 66,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1437471319": {
       "bucket": "apex_combat",
@@ -3049,13 +3049,13 @@
       "effect_type": "apex_barrier"
     },
     "1444170909": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1187321062",
       "sample_level": 50,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1454405135": {
       "bucket": "other_review",
@@ -3094,13 +3094,13 @@
       "effect_type": "combat_noop"
     },
     "1479243483": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1259552151",
       "sample_level": 66,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1481068241": {
       "bucket": "hyperthermic_decay_combat",
@@ -3130,13 +3130,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1494214549": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2688730762",
       "sample_level": 69,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1509727797": {
       "bucket": "outpost_scope",
@@ -3337,13 +3337,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1597753629": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2614645341",
       "sample_level": 55,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1598792156": {
       "bucket": "other_review",
@@ -3644,22 +3644,22 @@
       "effect_type": "crit_damage"
     },
     "1756146051": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2506491067",
       "sample_level": 59,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1758146994": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "3269170702",
       "sample_level": 55,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1761033105": {
       "bucket": "other_review",
@@ -3797,13 +3797,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1814329704": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1578559839",
       "sample_level": 71,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1823160651": {
       "bucket": "isolytic_combat",
@@ -3815,13 +3815,13 @@
       "effect_type": "isolytic_defense"
     },
     "1825422830": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1365719388",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1832742035": {
       "bucket": "isolytic_combat",
@@ -3851,22 +3851,22 @@
       "effect_type": "combat_noop"
     },
     "1852997150": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2710762668",
       "sample_level": 64,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1854487046": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "898331759",
       "sample_level": 58,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1857764392": {
       "bucket": "crit_combat",
@@ -3959,13 +3959,13 @@
       "effect_type": "isolytic_damage"
     },
     "1887667158": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1833252439",
       "sample_level": 54,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1890129326": {
       "bucket": "outpost_scope",
@@ -3977,13 +3977,13 @@
       "effect_type": "combat_noop"
     },
     "1890300409": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "27926657",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1896851005": {
       "bucket": "isolytic_combat",
@@ -4085,13 +4085,13 @@
       "effect_type": "combat_noop"
     },
     "1967899808": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "4150156002",
       "sample_level": 52,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1972507854": {
       "bucket": "other_review",
@@ -4103,13 +4103,13 @@
       "effect_type": "combat_noop"
     },
     "1972829143": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2459080583",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "1985024671": {
       "bucket": "pierce_combat",
@@ -4274,13 +4274,13 @@
       "effect_type": "crit_damage"
     },
     "2055497967": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "664411271",
       "sample_level": 50,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2055765509": {
       "bucket": "other_review",
@@ -4382,13 +4382,13 @@
       "effect_type": "isolytic_defense"
     },
     "2096389830": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "4067144972",
       "sample_level": 59,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2097561252": {
       "bucket": "pierce_combat",
@@ -4698,22 +4698,22 @@
       "effect_type": "combat_noop"
     },
     "2239742922": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "878249855",
       "sample_level": 52,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2243900812": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "2054594023",
       "sample_level": 65,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2245740174": {
       "bucket": "armada_scope",
@@ -4788,13 +4788,13 @@
       "effect_type": "crit_damage"
     },
     "2275759645": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "155380895",
       "sample_level": 70,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2276724525": {
       "bucket": "other_review",
@@ -4842,13 +4842,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2299102171": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "347839657",
       "sample_level": 67,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2308415685": {
       "bucket": "armada_scope",
@@ -4959,13 +4959,13 @@
       "effect_type": "combat_noop"
     },
     "2371501754": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2330058483",
       "sample_level": 56,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2372297685": {
       "bucket": "other_review",
@@ -5031,13 +5031,13 @@
       "effect_type": "combat_noop"
     },
     "2388592734": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "102498875",
       "sample_level": 65,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2394856105": {
       "bucket": "isolytic_combat",
@@ -5139,13 +5139,13 @@
       "effect_type": "apex_barrier"
     },
     "2448298367": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1693577865",
       "sample_level": 65,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2457844037": {
       "bucket": "isolytic_combat",
@@ -5230,13 +5230,13 @@
       "effect_type": "combat_noop"
     },
     "2490925371": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1797798847",
       "sample_level": 54,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2504760425": {
       "bucket": "armada_scope",
@@ -5275,13 +5275,13 @@
       "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "2518795428": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "1272400341",
       "sample_level": 61,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2522855101": {
       "bucket": "other_review",
@@ -5465,13 +5465,13 @@
       "effect_type": "isolytic_defense"
     },
     "2595381221": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2649210961",
       "sample_level": 62,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2601239532": {
       "bucket": "isolytic_combat",
@@ -5601,13 +5601,13 @@
       "effect_type": "combat_noop"
     },
     "2663276843": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2417707353",
       "sample_level": 61,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2663913037": {
       "bucket": "isolytic_combat",
@@ -5664,13 +5664,13 @@
       "effect_type": "isolytic_damage"
     },
     "2680695759": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "3433066326",
       "sample_level": 52,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2687917193": {
       "bucket": "outpost_scope",
@@ -5763,13 +5763,13 @@
       "effect_type": "combat_noop"
     },
     "2742888908": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1330081608",
       "sample_level": 51,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2747222231": {
       "bucket": "outpost_scope",
@@ -5961,13 +5961,13 @@
       "effect_type": "combat_noop"
     },
     "2825968780": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "3609838044",
       "sample_level": 50,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2836223364": {
       "bucket": "isolytic_combat",
@@ -6132,13 +6132,13 @@
       "effect_type": "crit_damage"
     },
     "2922610677": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "4043998971",
       "sample_level": 55,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "2925556291": {
       "bucket": "other_review",
@@ -6285,13 +6285,13 @@
       "effect_type": "isolytic_damage"
     },
     "3033415855": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "1413030429",
       "sample_level": 69,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3035918177": {
       "bucket": "hyperthermic_decay_combat",
@@ -6312,13 +6312,13 @@
       "effect_type": "combat_noop"
     },
     "3050573609": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1230182689",
       "sample_level": 63,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3050785463": {
       "bucket": "isolytic_combat",
@@ -6339,13 +6339,13 @@
       "effect_type": "combat_noop"
     },
     "3052847101": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "3020952182",
       "sample_level": 54,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3058245871": {
       "bucket": "armada_scope",
@@ -6546,13 +6546,13 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "3144982821": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2483972217",
       "sample_level": 51,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3147230042": {
       "bucket": "aggregation_hyperthermic_manual",
@@ -6619,13 +6619,13 @@
       "effect_type": "isolytic_damage"
     },
     "3172001074": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1454014641",
       "sample_level": 71,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3172395625": {
       "bucket": "isolytic_combat",
@@ -6754,13 +6754,13 @@
       "effect_type": "apex_barrier"
     },
     "3227686887": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "3418155571",
       "sample_level": 63,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3245140032": {
       "bucket": "isolytic_combat",
@@ -6907,13 +6907,13 @@
       "effect_type": "isolytic_defense"
     },
     "3313103059": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "1092997689",
       "sample_level": 66,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3314561654": {
       "bucket": "isolytic_combat",
@@ -7015,13 +7015,13 @@
       "effect_type": "combat_noop"
     },
     "3369602767": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1494140796",
       "sample_level": 64,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3371637013": {
       "bucket": "outpost_scope",
@@ -7033,13 +7033,13 @@
       "effect_type": "combat_noop"
     },
     "3371789973": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2230094449",
       "sample_level": 52,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3381138213": {
       "bucket": "isolytic_combat",
@@ -7060,13 +7060,13 @@
       "effect_type": "crit_damage"
     },
     "3391157960": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "2308192177",
       "sample_level": 68,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3392084194": {
       "bucket": "isolytic_combat",
@@ -7078,13 +7078,13 @@
       "effect_type": "isolytic_defense"
     },
     "3397979147": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "2565849404",
       "sample_level": 50,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3405988097": {
       "bucket": "pierce_combat",
@@ -7249,13 +7249,13 @@
       "effect_type": "isolytic_damage"
     },
     "3463289955": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1012429023",
       "sample_level": 58,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3467668976": {
       "bucket": "other_review",
@@ -7384,13 +7384,13 @@
       "effect_type": "combat_noop"
     },
     "3515845182": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "2724494058",
       "sample_level": 62,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3524241781": {
       "bucket": "crit_combat",
@@ -7420,13 +7420,13 @@
       "effect_type": "combat_noop"
     },
     "3538984498": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1608156121",
       "sample_level": 58,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3548631981": {
       "bucket": "other_review",
@@ -7933,13 +7933,13 @@
       "effect_type": "crit_damage"
     },
     "3865859985": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "1366470362",
       "sample_level": 64,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3866744950": {
       "bucket": "crit_combat",
@@ -8005,13 +8005,13 @@
       "effect_type": "isolytic_damage"
     },
     "3881020497": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "3259108523",
       "sample_level": 57,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3881525121": {
       "bucket": "other_review",
@@ -8032,22 +8032,22 @@
       "effect_type": "combat_noop"
     },
     "3905710602": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2652857230",
       "sample_level": 57,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3907807721": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "789065582",
       "sample_level": 59,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3908120389": {
       "bucket": "pierce_combat",
@@ -8059,13 +8059,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3926823774": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 3,
       "sample_hostile_id": "2500655267",
       "sample_level": 63,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3928325821": {
       "bucket": "other_review",
@@ -8086,13 +8086,13 @@
       "effect_type": "combat_noop"
     },
     "3939220699": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1000510818",
       "sample_level": 53,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3941723756": {
       "bucket": "pierce_combat",
@@ -8158,13 +8158,13 @@
       "effect_type": "combat_noop"
     },
     "3971336896": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "985843135",
       "sample_level": 57,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "3974291326": {
       "bucket": "isolytic_combat",
@@ -8474,13 +8474,13 @@
       "effect_type": "isolytic_defense"
     },
     "4107040543": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "2184641046",
       "sample_level": 61,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "4108020492": {
       "bucket": "outpost_scope",
@@ -8546,13 +8546,13 @@
       "effect_type": "combat_noop"
     },
     "4119700463": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "666834438",
       "sample_level": 68,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "4122060986": {
       "bucket": "other_review",
@@ -8573,13 +8573,13 @@
       "effect_type": "crit_damage"
     },
     "4123370781": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 2,
       "sample_hostile_id": "3962195935",
       "sample_level": 69,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "4128248407": {
       "bucket": "outpost_scope",
@@ -8672,13 +8672,13 @@
       "effect_type": "combat_noop"
     },
     "4168866605": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "1126991781",
       "sample_level": 60,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "4178048713": {
       "bucket": "armada_scope",
@@ -8717,13 +8717,13 @@
       "effect_type": "combat_noop"
     },
     "4208173944": {
-      "bucket": "other_review",
+      "bucket": "shield_regen_combat",
       "loca_id": 35017,
       "hostile_count": 1,
       "sample_hostile_id": "908785850",
       "sample_level": 51,
       "text_snippet": "plausible deniability\nrecovers {0:#.#%} of total shp for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "shield_regen_max_fraction"
     },
     "4209070030": {
       "bucket": "other_review",
