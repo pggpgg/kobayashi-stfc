@@ -37,7 +37,10 @@ struct AbilityCatalogEntry {
     condition_opponent_hostile_tags: Option<Vec<String>>,
     #[serde(default)]
     round_cap: Option<u32>,
-    /// When true, emit [`ShipAbility::level_scaled_values`] from every upstream `values[]` row (still one [`ShipAbility`]).
+    /// Force-emit [`ShipAbility::level_scaled_values`] even when the upstream curve is constant.
+    /// Curves are otherwise auto-detected: any catalogued, non-noop, non-overridden ability whose
+    /// live `values[]` entries vary gets a per-level curve (index = ship level − 1, truncated to
+    /// the ship's max level).
     #[serde(default)]
     values_scale_with_ship_level: bool,
     /// Multiply normalized numeric `value` / curve entries after the usual `value_is_percentage` scaling (e.g. Borg Omicron uses `0.001` on upstream “percent × 100” rows).
@@ -279,6 +282,8 @@ fn raw_to_extended(
         })
         .unwrap_or_default();
 
+    let max_ship_level = levels.iter().map(|l| l.level).max().unwrap_or(0) as usize;
+
     let abilities = ability_catalog.and_then(|catalog| {
         let arr = raw.get("ability")?.as_array()?;
         let mut out = Vec::new();
@@ -304,20 +309,55 @@ fn raw_to_extended(
                 continue;
             };
 
-            let scale_curve = entry.values_scale_with_ship_level;
             let post = entry.post_scale.unwrap_or(1.0);
-            let level_scaled_values = if scale_curve {
-                let mut curve: Vec<f64> = Vec::with_capacity(values_arr.len());
-                for item in values_arr {
+            // Upstream `values[]` is a fixed-width array whose live (non-zero-tail) portion is a
+            // per-level curve (index = ship level − 1; live length matches the ship's max level).
+            let scaled_curve: Vec<f64> = values_arr
+                .iter()
+                .map(|item| {
                     let raw_value = item.get("value").and_then(Value::as_f64).unwrap_or(0.0);
                     let v = if value_is_percentage {
                         raw_value * 0.01
                     } else {
                         raw_value
                     };
-                    curve.push(v * post);
+                    v * post
+                })
+                .collect();
+            let live_len = scaled_curve
+                .iter()
+                .rposition(|v| *v != 0.0)
+                .map_or(0, |i| i + 1);
+            let live_varies = scaled_curve[..live_len]
+                .iter()
+                .any(|v| *v != scaled_curve[0]);
+            let wants_curve = entry.values_scale_with_ship_level || live_varies;
+            let level_scaled_values = if wants_curve && entry.value_override.is_some() {
+                // A leaked curve would overwrite the override at ship resolution time.
+                if entry.values_scale_with_ship_level {
+                    eprintln!(
+                        "warning: ability {} sets both values_scale_with_ship_level and value_override; override wins, curve suppressed",
+                        id_str
+                    );
                 }
-                Some(curve)
+                None
+            } else if wants_curve && entry.effect_type != "combat_noop" {
+                let cap = if max_ship_level > 0 {
+                    max_ship_level
+                } else {
+                    live_len
+                };
+                if live_varies && live_len > 1 && live_len < cap {
+                    eprintln!(
+                        "warning: ability {} varying values[] live length {} < ship max level {}; may not be a per-level curve",
+                        id_str, live_len, cap
+                    );
+                }
+                // Some upstream curves keep rising past the ship's level cap; truncating keeps
+                // out-of-range level requests resolving to the max-level value via the
+                // last-positive fallback in ship_ability_value_for_level.
+                let truncated_len = live_len.min(cap).max(1);
+                Some(scaled_curve[..truncated_len].to_vec())
             } else {
                 None
             };
