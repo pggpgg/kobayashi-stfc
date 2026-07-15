@@ -56,12 +56,6 @@ jobs:
           # count bounded (runner disk has been exhausted by unpruned caches before).
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      # The 69 integration-test binaries each statically link the full lib; linking
-      # dominates the warm workspace rebuild. mold replaces the default linker via an
-      # ld symlink (no RUSTFLAGS change, so cached dependency artifacts stay valid).
-      - name: Use mold linker
-        uses: rui314/setup-mold@v1
-
       - name: cargo fmt --check
         run: cargo fmt --all -- --check
 
@@ -161,9 +155,6 @@ jobs:
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Use mold linker
-        uses: rui314/setup-mold@v1
-
       - name: cargo build --release
         run: cargo build --release
 
@@ -190,9 +181,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: Use mold linker
-        uses: rui314/setup-mold@v1
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
@@ -322,9 +310,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: Use mold linker
-        uses: rui314/setup-mold@v1
 
       - name: Build backend (release)
         run: cargo build --release
