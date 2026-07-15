@@ -1223,8 +1223,9 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
             let effective_apex_shred =
                 (attacker.apex_shred + phase_effects.composed_apex_shred_bonus()).max(0.0);
-            let effective_apex_barrier =
-                (defender.apex_barrier + phase_effects.composed_apex_barrier_bonus()).max(0.0);
+            // Attacker-crew ApexBarrierBonus seats are defensive (counter-fire path only);
+            // outbound damage faces only the defender's own barrier.
+            let effective_apex_barrier = defender.apex_barrier.max(0.0);
             let apex_damage_factor =
                 compute_apex_damage_factor(effective_apex_shred, effective_apex_barrier);
 
@@ -1972,8 +1973,9 @@ fn apply_round_end_phase(
 
     let round_end_apex_shred =
         (attacker.apex_shred + phase_effects_round.composed_apex_shred_bonus()).max(0.0);
-    let round_end_apex_barrier =
-        (defender.apex_barrier + phase_effects_round.composed_apex_barrier_bonus()).max(0.0);
+    // Same convention as the per-shot outbound site: the attacker's own barrier seats
+    // do not shield the defender from the attacker's round-end/burning damage.
+    let round_end_apex_barrier = defender.apex_barrier.max(0.0);
     let round_end_apex_factor =
         10000.0 / (10000.0 + round_end_apex_barrier / (1.0 + round_end_apex_shred).max(EPSILON));
     let bonus_damage = phase_effects_round.compose_round_end_damage(attacker.end_of_round_damage);
@@ -3636,8 +3638,17 @@ fn fire_defender_counter(p: FireDefenderCounter) {
 
     let mut counter_hull_damage_this_subround = false;
 
+    // Player apex barrier = flat stat (profile / component sources) + condition-filtered
+    // crew seats (officer / ship hull / research ApexBarrierBonus, e.g. Athena's Valor
+    // gated on Venari Ral defenders).
+    let counter_apex_barrier = (attacker.apex_barrier
+        + crate::combat::abilities::attacker_apex_barrier_bonus_active(
+            attacker_crew,
+            &defender_ctx,
+        ))
+    .max(0.0);
     let counter_apex_factor =
-        compute_apex_damage_factor(defender.apex_shred.max(0.0), attacker.apex_barrier.max(0.0));
+        compute_apex_damage_factor(defender.apex_shred.max(0.0), counter_apex_barrier);
 
     let mut counter_simd_damage_batch: Vec<f64> =
         if use_experimental_simd_damage_after_apex_base && def_effective_shots > 0 {

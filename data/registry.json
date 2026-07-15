@@ -6,20 +6,20 @@
   },
   "ships": {
     "source": "data-stfc-space",
-    "data_version": "stfcspace-ships-2026-07-14",
-    "last_updated": "2026-07-14",
+    "data_version": "stfcspace-ships-2026-07-15",
+    "last_updated": "2026-07-15",
     "path": "ships_extended/index.json"
-  },
-  "hostiles": {
-    "source": "data-stfc-space",
-    "data_version": "stfcspace-hostiles-2026-06-30",
-    "last_updated": "2026-06-30",
-    "path": "hostiles/index.json"
   },
   "officer_eligibility": {
     "source": "community_spreadsheet",
     "data_version": "cheat-sheet-m90-17rc",
     "last_updated": "2026-06-23",
     "path": "officers/eligibility_matrix.json"
+  },
+  "hostiles": {
+    "source": "data-stfc-space",
+    "data_version": "stfcspace-hostiles-2026-06-30",
+    "last_updated": "2026-06-30",
+    "path": "hostiles/index.json"
   }
 }

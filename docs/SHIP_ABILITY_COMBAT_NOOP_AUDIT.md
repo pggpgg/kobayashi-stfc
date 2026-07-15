@@ -189,3 +189,38 @@ normalize_data_stfc_space`.
    while breached) or resets.
 3. Confirm the crit-damage bonus is additive to the crit-damage stat (current model) and not
    multiplicative — this is the one place STFC's convention is debated.
+
+### 6.6 U.S.S. Athena pass + apex-barrier defensive rewiring (2026-07-15)
+
+Official sources (all quote consistent values): the
+[Update 91 feature highlight](https://startrekfleetcommand.com/news/update-91-feature-highlight-the-u-s-s-athena/),
+the [support FAQ](https://scopely.helpshift.com/hc/en/19-star-trek-fleet-command/faq/8799-the-uss-athena/),
+and the [Critical Mitigation guide](https://startrekfleetcommand.com/news/starfleet-academy-remote-campus-critical-mitigation/).
+Both officially quoted scaling values sit at upstream `values[24]` (level 25): Fury 110,000
+renders "11,000,000%" under the `{0:#.#%}` ×100 convention, Revenge 310,000 renders flat via
+`{0:#}` — which ground-truths the value conventions for all four rows.
+
+| id | Ability | Catalog `effect_type` | Change (2026-07-15) |
+| --- | --- | --- | --- |
+| `2357321655` | Athena's Fury | `attack_multiplier` (VENRA-gated) | None — scale validated (raw values are bonus fractions; 85,000 at L1 → 20,000,000 at L75 is intentional hard-counter design). Endpoints now pinned in tests. |
+| `1913694321` | Athena's Revenge | `crit_mitigation_rating` (VENRA-gated) | Was a mis-classified **ungated** `apex_barrier`. Now modeled: flat Critical Mitigation rating → `HostileCritDamageReduction` with `reduction = CM / (CM + 50,000)` (formula pinned by the official worked example: 83,000 ⇒ 62.41% of the full crit damage). Always active; the resolver's 0.95 clamp binds above rating 950,000 (Revenge exceeds it from ~mid levels). |
+| `2506949026` | Athena's Valor | `apex_barrier` (VENRA-gated) | Was ungated — a spurious 10M barrier in every fight. Gate added. |
+| `39689355` | Athena's Wrath | `combat_noop` | Wave Defense vs Academy Drones is outside simulated scenarios (and no Academy Drone faction tag exists); was an ungated 15M barrier in every fight. |
+
+Athena's Solace (Programmable Matter immunity, flavor inside loca 91001's combined text) has no
+separate upstream row; it becomes relevant only if Programmable Matter itself is modeled
+(see COMBAT_FIDELITY_BACKLOG.md item 13).
+
+**Apex-barrier seat rewiring (engine).** Attacker-crew `ApexBarrierBonus` seats (officer / ship
+hull / research) were previously composed into the **defender's** barrier on the player's own
+outbound fire — i.e. a player ship's barrier ability *reduced its own damage* and provided no
+defense (pre-fix, the Athena's ungated 25M of barrier seats crushed her outbound damage ~2500×
+against every hostile). Apex Barrier is a defensive stat: seats now feed the **counter-fire**
+apex factor (`compute_apex_damage_factor(defender_shred, attacker_barrier)`) via the
+condition-aware [`attacker_apex_barrier_bonus_active`](../src/combat/abilities.rs), and outbound
+fire faces only the defender's own barrier. Flat profile/component sources already used the
+counter-fire path and are unchanged. Known approximation: PvP **defender** barrier seats are
+folded in unconditionally at scenario build (`hostile_apex_barrier_bonus_from_defender_crew`
+ignores seat conditions), so a faction-gated barrier on a PvP defender applies vs all attackers.
+Tests: `tests/combat_tests.rs` (officer + tag-gated barrier, both directions),
+`tests/ship_ability_athena_venari_ral.rs`.

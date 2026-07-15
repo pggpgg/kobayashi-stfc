@@ -1439,6 +1439,28 @@ pub fn hostile_apex_barrier_bonus_from_defender_crew(crew: &CrewConfiguration) -
     bonus.max(0.0)
 }
 
+/// Player apex barrier bonus from attacker crew seats (officer / ship hull / research
+/// `ApexBarrierBonus`) whose condition holds this round. Apex Barrier is a defensive stat:
+/// it raises the barrier term of the counter-fire apex damage factor
+/// (`compute_apex_damage_factor(defender_shred, attacker_barrier)`), reducing incoming
+/// counter damage. It never applies to the player's own outbound fire.
+pub fn attacker_apex_barrier_bonus_active(crew: &CrewConfiguration, ctx: &CombatContext) -> f64 {
+    let mut bonus = 0.0_f64;
+    for s in &crew.seats {
+        if let AbilityEffect::ApexBarrierBonus(v) = s.ability.effect {
+            if s.ability
+                .condition
+                .as_ref()
+                .is_some_and(|c| !c.evaluate(ctx))
+            {
+                continue;
+            }
+            bonus += v.max(0.0);
+        }
+    }
+    bonus.max(0.0)
+}
+
 /// Flat hostile crit-damage floor bonus from defender crew (Aggregation offense bundles).
 pub fn hostile_crit_damage_floor_bonus_from_defender_crew(crew: &CrewConfiguration) -> f64 {
     let mut bonus = 0.0_f64;

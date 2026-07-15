@@ -105,6 +105,23 @@ pub fn ship_ability_effect_from_catalog(
                 stacks: false,
             })
         }
+        // Flat Critical Mitigation rating (e.g. Athena's Revenge). The stat reduces true
+        // critical damage taken with diminishing returns: reduction = CM / (CM + 50,000),
+        // pinned by the official worked example (rating 83,000 ⇒ 62.41% of the full crit
+        // damage) in the Remote Campus Critical Mitigation guide. Always active (the
+        // ability text carries no duration); the 0.95 clamp binds above rating 950,000.
+        "crit_mitigation_rating" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            let rating = value.max(0.0);
+            Some(AbilityEffect::HostileCritDamageReduction {
+                reduction: (rating / (rating + 50_000.0)).clamp(0.0, 0.95),
+                duration_rounds: u32::MAX,
+                additive_percentage_points: false,
+                stacks: false,
+            })
+        }
         "hostile_counter_stat_debuff" | "hostile_pierce_accuracy_debuff" => {
             if timing != TimingWindow::CombatBegin {
                 return None;

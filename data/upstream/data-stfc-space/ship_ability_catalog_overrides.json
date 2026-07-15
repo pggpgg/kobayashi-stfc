@@ -46,6 +46,26 @@
       "ignore_upstream_value_is_percentage": true,
       "condition_opponent_faction": "venari_ral"
     },
+    "1913694321": {
+      "timing": "combat_begin",
+      "effect_type": "crit_mitigation_rating",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_faction": "venari_ral"
+    },
+    "2506949026": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_faction": "venari_ral"
+    },
+    "39689355": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
     "593579233": {
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",

@@ -84,7 +84,9 @@ def modeled(
     condition_defender_hull_breach: bool = False,
     condition_opponent_faction: str | None = None,
     condition_opponent_ship_class: str | None = None,
+    condition_opponent_hostile_tags: list[str] | None = None,
     round_cap: int | None = None,
+    values_scale_with_ship_level: bool = False,
 ) -> dict:
     d: dict = {
         "timing": timing,
@@ -107,6 +109,10 @@ def modeled(
     cap = None if duration_rounds is not None else round_cap
     if cap is not None and cap > 0:
         d["round_cap"] = int(cap)
+    if values_scale_with_ship_level:
+        d["values_scale_with_ship_level"] = True
+    if condition_opponent_hostile_tags:
+        d["condition_opponent_hostile_tags"] = list(condition_opponent_hostile_tags)
     return d
 
 
