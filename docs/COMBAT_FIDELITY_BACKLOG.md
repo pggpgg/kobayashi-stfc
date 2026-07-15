@@ -504,6 +504,15 @@ sit in the same function (`resolve_vehicle_weapon_crit`, `src/combat/crit.rs`) w
 ordering (reduction → floor → hull-breach), so aligning them is contained — the open question is
 which convention is right, which needs community evidence rather than code archaeology.
 
+**New evidence (2026-07-15).** The official
+[Critical Mitigation guide](https://startrekfleetcommand.com/news/starfleet-academy-remote-campus-critical-mitigation/)
+works an example where a 62.41% mitigation reduces the **full** critical damage of a hit
+(754,443,565,600 → 283,625,400,601), not just the bonus above ×1.0 — supporting the existing
+full-multiplier convention for the mitigation/percentage family. (`crit_mitigation_rating`,
+added for Athena's Revenge, feeds this same path.) The Xindi additive-points path is a distinct
+stat family; the "uniform bonus-only rule" suggested in the prompt below should be re-weighed
+against this evidence before implementing.
+
 **b) Prompt.**
 
 ```
@@ -552,8 +561,12 @@ resolve to the max-level value; `value_override` and `combat_noop` suppress emis
 change — the existing `ship_ability_value_for_level` / `to_ship_record` plumbing resolves the
 curves. Coverage in `tests/ship_hull_ability_level_curves.rs`; DESIGN.md ship-hull-ability
 section updated. Median max-level/L1 magnitude ratio ≈ 4×, so optimizer results shift for
-high-tier ships. Follow-up flagged: `uss_athena` `2357321655` reaches 20,000,000 raw at T15/L75 —
-smells like a missing `post_scale` on that catalog row.
+high-tier ships. The initially-flagged `uss_athena` `2357321655` magnitude (20,000,000 raw at
+T15/L75) was **validated, not a bug** — official sources confirm 11,000,000% at level 25
+(= upstream values[24] under the `{0:#.#%}` fraction convention); the real Athena defects were
+elsewhere and fixed in the 2026-07-15 pass (see SHIP_ABILITY_COMBAT_NOOP_AUDIT.md §6.6:
+Revenge misclassification → `crit_mitigation_rating`, missing VENRA gates, Wrath noop, and the
+apex-barrier defensive rewiring).
 
 **a) The issue.** Upstream ship JSON gives each hull ability a `values[]` curve, but the
 normalizer writes only `values[0]` onto `data/ships_extended/*.json` — except for a hand-wired

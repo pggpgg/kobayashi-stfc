@@ -1348,7 +1348,7 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
     };
     let defender_no_bonus = Combatant {
         id: "defender".to_string(),
-        attack: 0.0,
+        attack: 100.0,
         mitigation: 0.0,
         armor: 0.0,
         shield_deflection: 0.0,
@@ -1415,13 +1415,23 @@ fn officer_apex_barrier_bonus_at_combat_begin_reduces_damage_taken() {
         &config,
         &crew_with_apex_barrier,
     );
-    // Defender has 5k base barrier; officer adds 5k â†’ effective 10k. Without officer: factor = 10000/15000 = 2/3 â†’ 133.33. With officer: factor = 10000/20000 = 0.5 â†’ 100.
-    assert!(
-        with_ability.total_damage < without.total_damage,
-        "officer Apex Barrier bonus should reduce damage taken"
-    );
+    // Apex Barrier is defensive: the attacker's officer bonus never shields the defender
+    // from the attacker's own fire. Outbound faces only the defender's 5k barrier
+    // (factor = 10000/15000 = 2/3 → 133.33) with or without the officer.
     approx_eq(without.total_damage, 200.0 * (10000.0 / 15000.0), 0.5);
-    approx_eq(with_ability.total_damage, 100.0, 0.5);
+    approx_eq(with_ability.total_damage, 200.0 * (10000.0 / 15000.0), 0.5);
+    // On counter-fire the officer's +5k barrier applies (factor 10000/15000 vs 1.0),
+    // so the attacker ends the round with more hull remaining.
+    assert!(
+        without.attacker_hull_remaining < attacker.hull_health,
+        "defender counter-fire should damage the attacker in the baseline run"
+    );
+    assert!(
+        with_ability.attacker_hull_remaining > without.attacker_hull_remaining,
+        "officer Apex Barrier bonus should reduce counter damage taken (with: {}, without: {})",
+        with_ability.attacker_hull_remaining,
+        without.attacker_hull_remaining
+    );
 }
 
 #[test]
@@ -1774,7 +1784,7 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
     };
     let defender = Combatant {
         id: "defender".to_string(),
-        attack: 0.0,
+        attack: 100.0,
         mitigation: 0.0,
         armor: 0.0,
         shield_deflection: 0.0,
@@ -1842,9 +1852,20 @@ fn defender_hostile_tag_mask_gates_apex_barrier_bonus() {
     };
     let no_tag = simulate_combat(&attacker, &defender, &cfg_no_tag, &crew);
     let tagged = simulate_combat(&attacker, &defender, &cfg_tagged, &crew);
+    // Apex Barrier is defensive: outbound damage is identical either way (the gate never
+    // shields the defender from the attacker's own fire) …
+    approx_eq(no_tag.total_damage, tagged.total_damage, 0.01);
+    // … and the +5k barrier reduces counter damage taken only when the hostile-tag mask
+    // matches the seat's condition.
     assert!(
-        tagged.total_damage < no_tag.total_damage,
-        "hostile-tag-gated apex barrier bonus should reduce damage only when mask matches"
+        no_tag.attacker_hull_remaining < attacker.hull_health,
+        "defender counter-fire should damage the attacker in the ungated run"
+    );
+    assert!(
+        tagged.attacker_hull_remaining > no_tag.attacker_hull_remaining,
+        "hostile-tag-gated apex barrier bonus should reduce counter damage only when mask matches (tagged: {}, no_tag: {})",
+        tagged.attacker_hull_remaining,
+        no_tag.attacker_hull_remaining
     );
 }
 

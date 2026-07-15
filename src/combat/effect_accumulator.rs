@@ -396,10 +396,6 @@ impl EffectAccumulator {
         self.stacks.composed_for(EffectStatKey::ApexShredBonus)
     }
 
-    pub(crate) fn composed_apex_barrier_bonus(&self) -> f64 {
-        self.stacks.composed_for(EffectStatKey::ApexBarrierBonus)
-    }
-
     pub(crate) fn composed_shield_regen(&self) -> f64 {
         self.stacks.composed_for(EffectStatKey::ShieldRegen)
     }
