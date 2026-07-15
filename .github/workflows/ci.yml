@@ -18,9 +18,17 @@
 
 name: CI
 
+# Efficiency (2026-07-15): push triggers only on main — PR branches are covered by the
+# pull_request event alone, so a branch push no longer starts two identical full runs
+# (the push- and PR-triggered runs landed in different concurrency groups and neither
+# cancelled the other). Rust caching uses Swatinem/rust-cache (re-saves each main run and
+# prunes stale target/ artifacts — the old actions/cache key only saved when Cargo.lock
+# changed, so restored caches grew stale, and unpruned caches have exhausted runner disk
+# before). Coverage is main-only (informational, no threshold gate); the release build +
+# cargo audit run as a parallel job off the test job's critical path.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -41,16 +49,12 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          # PRs restore from main's cache; only main runs save, keeping the cache
+          # count bounded (runner disk has been exhausted by unpruned caches before).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: cargo fmt --check
         run: cargo fmt --all -- --check
@@ -124,6 +128,20 @@ jobs:
             data_validation_report.md
           retention-days: 21
 
+  rust_release:
+    name: Rust release build + audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
       - name: cargo build --release
         run: cargo build --release
 
@@ -137,6 +155,8 @@ jobs:
 
   rust_coverage:
     name: Rust coverage
+    # Informational only (no threshold gate) — run on main, not on every PR push.
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -144,16 +164,10 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
@@ -278,6 +292,11 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build backend (release)
         run: cargo build --release
