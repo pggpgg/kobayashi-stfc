@@ -13,8 +13,14 @@ cargo fmt --all -- --check
 echo "=== cargo clippy ==="
 cargo clippy --all-targets -- -D warnings
 
-echo "=== cargo test ==="
-cargo test
+if command -v cargo-nextest >/dev/null 2>&1; then
+  echo "=== cargo nextest run (+ doctests) ==="
+  cargo nextest run
+  cargo test --doc
+else
+  echo "=== cargo test (install cargo-nextest for the faster CI-parity runner) ==="
+  cargo test
+fi
 
 echo "=== root scripts (node:test import helpers) ==="
 npm run test:scripts

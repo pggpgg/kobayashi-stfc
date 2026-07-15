@@ -1,3 +1,5 @@
+# cargo-nextest configuration (https://nexte.st/docs/configuration/).
+
 [profile.default]
 # Fail fast on the first failure for quick local feedback.
 fail-fast = true
@@ -5,9 +7,18 @@ fail-fast = true
 status-level = "pass"
 # Final output only shows failures and the summary.
 final-status-level = "flaky"
-# Skip sync tests — they use in-process file locks incompatible with nextest's
-# per-process model.  Use `cargo test` for those.
-filter = "not test(/server::sync::tests/)"
+
+# nextest runs each test in its own process, so the in-process SYNC_TEST_LOCK mutex in
+# src/server/sync.rs tests cannot serialize their access to the shared profiles/ files.
+# (A previous `filter = "not test(...)"` key tried to skip them, but `filter` is not a
+# recognized profile option — the tests still ran and raced.) Run the module
+# single-threaded via a test group instead; everything else keeps full parallelism.
+[test-groups]
+sync-profile-files = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'test(server::sync::tests)'
+test-group = 'sync-profile-files'
 
 [profile.ci]
 # CI profile: slower but catches flaky tests by retrying once.

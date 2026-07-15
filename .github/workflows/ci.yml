@@ -62,11 +62,24 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --all-targets -- -D warnings
 
-      - name: cargo test
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: cargo nextest run
         # Includes CombatEffectSpec integration tests (research / LCARS / mixed).
+        # nextest schedules tests across the ~30 integration-test binaries in parallel
+        # (cargo test runs binaries sequentially); the sync-test serialization lives in
+        # .config/nextest.toml. Doctests are not supported by nextest — run them separately.
         env:
           CI: true
-        run: cargo test
+        run: cargo nextest run --profile ci
+
+      - name: cargo test --doc
+        env:
+          CI: true
+        run: cargo test --doc
 
       - name: Research catalog integration tests
         env:
