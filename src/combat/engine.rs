@@ -703,7 +703,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         st.defender_morale_rounds_remaining = st.defender_morale_rounds_remaining.max(duration);
     }
 
-    let rounds_to_simulate = config.rounds.min(MAX_COMBAT_ROUNDS);
+    // Q Junior's Twist (HostileEngagementRoundLimit): the engagement ends after N rounds. If the
+    // hostile is still alive at the cap the timeout rule below makes the fight a loss (DESIGN.md
+    // §4.4 — a timeout is always a loss for the attacker), which matches the trial failing when
+    // the hostile is not destroyed within the limit. No RNG — only caps rounds when a seat exists.
+    let engagement_round_limit =
+        crate::combat::abilities::hostile_engagement_round_limit(defender_crew)
+            .unwrap_or(MAX_COMBAT_ROUNDS);
+    let rounds_to_simulate = config
+        .rounds
+        .min(MAX_COMBAT_ROUNDS)
+        .min(engagement_round_limit);
     st.shots_bonus_entries
         .reserve(rounds_to_simulate.min(32) as usize);
     st.defender_shots_bonus_entries
@@ -1627,7 +1637,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
     // Both ships alive at the configured round cap = timeout. In game a timed-out fight yields
     // no kill/loot (the attacker survives but does not win), so a timeout is always a loss for
     // the attacker — there is no hull-comparison tiebreak. `winner_by_round_limit` reports that
-    // the round limit (config.rounds, not just MAX_COMBAT_ROUNDS) is what ended the fight.
+    // the round limit (config.rounds, a hostile engagement limit like Q Junior's Twist, or
+    // MAX_COMBAT_ROUNDS) is what ended the fight.
     let winner_by_round_limit = rounds_completed == rounds_to_simulate
         && defender_hull_remaining > 0.0
         && attacker_hull_remaining > 0.0;

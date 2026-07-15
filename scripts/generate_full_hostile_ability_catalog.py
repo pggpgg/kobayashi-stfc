@@ -688,6 +688,33 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             "hostile_shield_bypass",
         )
 
+    # Plausible Deniability (S31-era hostiles): "Recovers {0:#.#%} of total SHP for the first
+    # 5 rounds of combat." Fraction of MAX shield HP restored at the end of each round while
+    # the round cap holds (round_cap → RoundRange gates rounds 1..=N).
+    if "recovers" in p and "of total shp" in p and rc is not None:
+        return m(
+            "round_end",
+            "shield_regen_max_fraction",
+            value_is_percentage=not frac,
+            ignore_upstream_value_is_percentage=frac,
+            _bucket="shield_regen_combat",
+        )
+
+    # Q Trials (Q Junior's Twist): flavor dialogue with one mechanical clause per variant.
+    # loca 73055 "defeat the Borg Polygon within 20 rounds" → engagement round limit (the engine
+    # caps rounds_to_simulate; a still-alive hostile at the cap is a timeout loss, DESIGN.md §4.4).
+    # loca 73051 is the 1v1 restriction only — no modelable single-ship mechanic (documented noop).
+    if "q junior's twist" in p:
+        lim = re.search(r"within\s+(\d+)\s+rounds", p)
+        if lim and int(lim.group(1)) > 0:
+            return m(
+                "combat_begin",
+                "hostile_engagement_round_limit",
+                value_override=int(lim.group(1)),
+                _bucket="engagement_limit_combat",
+            )
+        return dict(NOOP), "q_trials_flavor"
+
     # Shield-related (drain, restore) — defer unless clear pattern
     if "shield" in p and ("drain" in p or "decreas" in p):
         return dict(NOOP), "shield_combat_review"

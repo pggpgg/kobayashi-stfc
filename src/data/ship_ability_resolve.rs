@@ -213,6 +213,12 @@ pub fn ship_ability_effect_from_catalog(
 
         "shield_regen" | "shield_hp_repair" => Some(AbilityEffect::ShieldRegen(value)),
 
+        // Fraction of MAX shield HP restored per application ("recovers X% of total SHP") —
+        // same stat naming as the LCARS adapter (`shield_regen_max_fraction`).
+        "shield_regen_max_fraction" | "shield_regen_max_pct" | "shield_hp_repair_max_pct" => {
+            Some(AbilityEffect::ShieldRegenMaxFraction(value))
+        }
+
         "hull_regen" | "hull_hp_repair" | "hull_repair" => {
             if timing == TimingWindow::Kill {
                 Some(AbilityEffect::OnKillHullRegen(value))

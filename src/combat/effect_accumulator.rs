@@ -968,6 +968,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
+                | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1170,6 +1171,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
+                | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1334,6 +1336,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
+                | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1500,6 +1503,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
+                | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1672,6 +1676,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
+                | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -1880,6 +1885,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
+                | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
@@ -2145,6 +2151,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileLethalCombatBegin { .. }
         | AbilityEffect::HostileSelfMorale { .. }
+        | AbilityEffect::HostileEngagementRoundLimit { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,

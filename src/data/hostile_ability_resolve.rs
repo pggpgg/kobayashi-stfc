@@ -214,6 +214,19 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 chance: normalize_probability(chance),
             })
         }
+        // Q Junior's Twist: engagement ends after `value` rounds; still-alive hostile = loss.
+        "hostile_engagement_round_limit" | "engagement_round_limit" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            let rounds = value.round();
+            if !(1.0..=u32::MAX as f64).contains(&rounds) {
+                return None;
+            }
+            Some(AbilityEffect::HostileEngagementRoundLimit {
+                rounds: rounds as u32,
+            })
+        }
         "hostile_self_morale" | "intraluminary_self_morale" => {
             if timing != TimingWindow::CombatBegin {
                 return None;
@@ -758,6 +771,114 @@ mod tests {
             &[],
         )
         .is_none());
+    }
+
+    #[test]
+    fn q_junior_twist_engagement_round_limit_maps_at_combat_begin_only() {
+        let effect = hostile_ability_effect_from_catalog(
+            "hostile_engagement_round_limit",
+            TimingWindow::CombatBegin,
+            1.0,
+            20.0,
+            None,
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        );
+        assert!(matches!(
+            effect,
+            Some(AbilityEffect::HostileEngagementRoundLimit { rounds: 20 })
+        ));
+
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "755115993": {
+                  "timing": "combat_begin",
+                  "effect_type": "hostile_engagement_round_limit",
+                  "value_is_percentage": false,
+                  "ignore_upstream_value_is_percentage": true,
+                  "value_override": 20
+                }
+              }
+            }"#,
+        )
+        .unwrap();
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":755115993,"value_is_percentage":true,"values":[{"chance":1,"value":0}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        match crew.seats[0].ability.effect {
+            AbilityEffect::HostileEngagementRoundLimit { rounds } => assert_eq!(rounds, 20),
+            ref other => panic!("expected HostileEngagementRoundLimit, got {other:?}"),
+        }
+
+        // Wrong timing window and non-positive round counts resolve to no seat.
+        assert!(hostile_ability_effect_from_catalog(
+            "hostile_engagement_round_limit",
+            TimingWindow::RoundStart,
+            1.0,
+            20.0,
+            None,
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        )
+        .is_none());
+        assert!(hostile_ability_effect_from_catalog(
+            "hostile_engagement_round_limit",
+            TimingWindow::CombatBegin,
+            1.0,
+            0.0,
+            None,
+            None,
+            None,
+            None,
+            &[],
+            &[],
+        )
+        .is_none());
+    }
+
+    #[test]
+    fn plausible_deniability_round_end_shield_regen_max_fraction_with_round_cap() {
+        let catalog: HostileAbilityCatalog = serde_json::from_str(
+            r#"{
+              "entries": {
+                "932011628": {
+                  "timing": "round_end",
+                  "effect_type": "shield_regen_max_fraction",
+                  "value_is_percentage": false,
+                  "ignore_upstream_value_is_percentage": true,
+                  "round_cap": 5
+                }
+              }
+            }"#,
+        )
+        .unwrap();
+        // {0:#.#%} convention: the upstream value is a FRACTION (0.2 renders "20%").
+        let raw: Vec<Value> = vec![serde_json::from_str(
+            r#"{"id":932011628,"value_is_percentage":true,"values":[{"chance":1,"value":0.2}]}"#,
+        )
+        .unwrap()];
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        assert_eq!(crew.seats.len(), 1);
+        let seat = &crew.seats[0];
+        match seat.ability.effect {
+            AbilityEffect::ShieldRegenMaxFraction(f) => assert!((f - 0.2).abs() < 1e-9),
+            ref other => panic!("expected ShieldRegenMaxFraction, got {other:?}"),
+        }
+        assert_eq!(seat.ability.timing, TimingWindow::RoundEnd);
+        assert_eq!(
+            seat.ability.condition,
+            Some(AbilityCondition::RoundRange { min: 1, max: 5 })
+        );
     }
 
     #[test]

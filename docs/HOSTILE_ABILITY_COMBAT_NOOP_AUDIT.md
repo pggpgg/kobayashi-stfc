@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-09 / Intraluminary):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **439** modeled for defender-side counter-fire (`defender_crew`), **543** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-15 / Plausible Deniability + Q Junior's Twist):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **522** modeled for defender-side counter-fire (`defender_crew`), **460** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Fidelity pass (2026-07-08):** Four engine/resolver fixes plus five newly modeled text families:
 
@@ -59,6 +59,23 @@ Coverage: `tests/hostile_fidelity_new_mechanics.rs` (`dilithium_*`); resolver un
 
 Coverage: `tests/hostile_fidelity_new_mechanics.rs` (`intraluminary_*`); resolver unit in `src/data/hostile_ability_resolve.rs`.
 
+**Plausible Deniability (2026-07-15 follow-up):** 82 identical-text `other_review` noops → `shield_regen_max_fraction` (bucket `shield_regen_combat`, 140 hostile instances — S31-era hostiles). Text: "Recovers {0:#.#%} of total SHP for the first 5 rounds of combat"; upstream value is a fraction (`{0:#.#%}` convention, e.g. `0.2` renders "20%"). Maps to a defender `ShieldRegenMaxFraction` seat at **round end** (a recovery per round while the fight is under way; the round-start alternative would waste round 1 on full shields) gated to rounds 1..=5 via `round_cap` → `AbilityCondition::RoundRange`. The defender round-end regen path (`composed_shield_regen_max_fraction` over condition-filtered round-end effects, `src/combat/engine.rs`) was already wired — this is a catalog + resolver-mapping change only (`shield_regen_max_fraction` added to `ship_ability_effect_from_catalog`, same stat naming as the LCARS adapter). Backlog #8 estimated ~5 ids × 3 hostiles; text-match enumeration found 82 ids.
+
+| Ability id family | Ids | Hostiles | Mapping |
+| --- | ---: | ---: | --- |
+| Plausible Deniability (e.g. `932011628`, `3926823774`) | 82 | 140 | `shield_regen_max_fraction` @ `round_end`, `round_cap: 5`, value = upstream fraction of max SHP per round |
+
+Coverage: `tests/hostile_first_rounds_shield_regen.rs`; resolver unit in `src/data/hostile_ability_resolve.rs`.
+
+**Q Junior's Twist (2026-07-15 follow-up):** The Q Trials Borg texts leave `other_review`. Only the loca 73055 variant (`755115993`, 23 hostiles) carries a mechanical clause — "Just defeat the Borg Polygon **within 20 rounds**" — and maps to the new `hostile_engagement_round_limit` (bucket `engagement_limit_combat`): the engine caps `rounds_to_simulate` at the limit, and a hostile still alive at the cap is a **timeout loss** (DESIGN.md §4.4 — matches the official Q's Trials rule that the trial fails when the target is not destroyed; scopely.helpshift.com Q's Trials FAQ). The loca 73051 variant (`1104294321`, 23 hostiles, a **disjoint** hostile set) is the 1v1 restriction only — no modelable single-ship mechanic, kept noop under the dedicated `q_trials_flavor` bucket. Backlog #7 assumed both ids carried the limit; the ability texts say otherwise.
+
+| Ability id | Hostiles | Mapping |
+| --- | ---: | --- |
+| `755115993` | 23 | `hostile_engagement_round_limit` @ `combat_begin`, `value_override: 20` (generator parses "within N rounds") |
+| `1104294321` | 23 | `combat_noop` (`q_trials_flavor`) — 1v1 restriction, out of scope |
+
+Coverage: `tests/hostile_engagement_round_limit.rs`; resolver unit in `src/data/hostile_ability_resolve.rs`.
+
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
 
 | Ability id | Hostiles | Primary effect | Notes |
@@ -110,34 +127,43 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 982 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 439 |
-| `combat_noop` (catalogued, inert in sim) | 543 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 522 |
+| `combat_noop` (catalogued, inert in sim) | 460 |
 
-**Modeled effect types (439 ids):**
+**Modeled effect types (522 ids, refreshed 2026-07-15):**
 
 | `effect_type` | Ids |
 | --- | ---: |
 | `isolytic_damage` | 88 |
 | `isolytic_defense` | 82 |
+| `shield_regen_max_fraction` | 82 |
+| `hostile_counter_pierce_multiplier` | 82 |
+| `crit_damage` | 82 |
 | `apex_barrier` | 54 |
-| `attack_multiplier` | 22 |
-| `hostile_hyperthermic_decay` | 4 |
+| `hostile_hyperthermic_decay` | 22 |
+| `hostile_lethal_unless_attacker_faction` | 5 |
+| `attack_multiplier` | 4 |
 | `hostile_crit_damage_reduction` | 3 |
-| `hostile_crit_damage_floor` | 2 |
 | `hostile_lethal_combat_begin` | 2 |
+| `crit_chance` (+ `crit_damage` / `hostile_crit_damage_floor` extra seats) | 2 |
+| `hostile_crit_damage_floor` | 2 |
+| `burning` | 2 |
 | `shield_mitigation_bypass` | 2 |
 | `hostile_isolytic_vulnerability` | 1 |
-| `hostile_self_morale` | 1 |
-| `crit_chance` (+ `crit_damage` / `hostile_crit_damage_floor` extra seats) | 1 |
+| `hostile_engagement_round_limit` | 1 |
 | `hostile_lethal_end_of_round` | 1 |
+| `defender_on_hit_weapon_damage_stack` | 1 |
+| `defender_on_hit_crit_chance_stack` | 1 |
+| `hull_breach` | 1 |
 | `hostile_kemocite_weaponry` | 1 |
+| `hostile_self_morale` | 1 |
 
 **Not yet modeled (high instance count, remain `combat_noop`):**
 
 - PvP player targeting (2 ids, 388 instances): Deadlock / Dismantlement — default PvE path is ship vs NPC hostile (Hole Puncher / Immolator modeled 2026-07-08)
 - Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (356 ids, 547 instances): Temporal Dreadnought regen, etc. (Intraluminary modeled 2026-07-09)
+- `other_review` (272 ids, 361 instances): Temporal Dreadnought regen, etc. (Plausible Deniability + Q Junior's Twist modeled 2026-07-15)
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -159,6 +185,9 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Defender per-hit stacks | 2 | 34 | **Modeled (2026-07-08)** — Critical Breach / Rising Fire → `defender_on_hit_*_stack` |
 | Dilithium Destabilization | 2 | 27 | **Modeled (2026-07-08)** — chance-gated combat-begin instant kill → `hostile_lethal_combat_begin` (chance from upstream `values[].chance`) |
 | Intraluminary self-morale | 1 | 17 | **Modeled (2026-07-09)** — combat-begin `hostile_self_morale` → defender Morale for rest of combat (+10% counter pierce, any hull class) |
+| Shield regen first-N-rounds | 82 | 140 | **Modeled (2026-07-15)** — Plausible Deniability → `shield_regen_max_fraction` @ `round_end` + `round_cap: 5` (fraction of max SHP per round) |
+| Engagement round limit | 1 | 23 | **Modeled (2026-07-15)** — Q Junior's Twist (loca 73055) → `hostile_engagement_round_limit` 20; still-alive hostile at the cap = timeout loss |
+| Q Trials flavor (1v1) | 1 | 23 | **Keep noop** — Q Junior's Twist 1v1 variant (loca 73051), no modelable single-ship mechanic |
 | Player hull breach at combat start | 1 | 17 | **Modeled (2026-07-08)** — Hole Puncher → `hull_breach` on the player for rest of combat |
 | Player burning at combat start (Immolator) | 1 | 17 | **Modeled (2026-07-08)** — Immolator → `burning` on the player for rest of combat |
 | Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
@@ -167,7 +196,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 356 | 547 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 272 | 361 | **Shard triage** — extend generator or overrides per pattern |
 
 ---
 
