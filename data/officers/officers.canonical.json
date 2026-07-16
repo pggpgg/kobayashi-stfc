@@ -20341,6 +20341,230 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "1143746577"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "4254531671",
+          "attributes": "faction_id=3132466015",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyHullFaction"
+          ],
+          "description": "Enterprising Mind: increases all Raw Isogenite dropped by Origin Sector [OGN] Hostiles and Armadas by X (economy; upstream rank 4-5 values not yet published).",
+          "modifier": "HostileLoot",
+          "operation": "MultiplyAdd",
+          "slot": "captain",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            3.0,
+            3.5,
+            3.5,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "ability_id": "1985036786",
+          "attributes": "faction_id=3132466015",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyHullFaction"
+          ],
+          "description": "Isolytic Diversity: increases Isolytic Damage by X versus Origin Sector [OGN] Hostiles and Armadas.",
+          "modifier": "IsolyticDamage",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            10.0,
+            14.0,
+            18.0,
+            23.0,
+            30.0
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "IDIC",
+      "id": "female-spock-c21a12",
+      "name": "Female Spock",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "191750013"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "3920125729",
+          "attributes": "faction_id=3132466015",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyHullFaction"
+          ],
+          "description": "Tooth and Claw: Cat Spock increases your weapons base Critical Damage by X versus Origin Sector [OGN] Hostiles and Armadas.",
+          "modifier": "CritDamage",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            60.0,
+            100.0,
+            150.0,
+            200.0,
+            250.0
+          ]
+        },
+        {
+          "ability_id": "2014315757",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyHostile",
+            "TargetNotArmada"
+          ],
+          "description": "Mental Agility: increases Apex Barrier by X versus non-Armada Hostiles.",
+          "modifier": "ApexBarrier",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            1500.0,
+            3000.0,
+            5000.0,
+            7000.0,
+            10000.0
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "IDIC",
+      "id": "cat-spock-61edec",
+      "name": "Cat Spock",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "3756148543"
+    },
+    {
+      "abilities": [
+        {
+          "ability_id": "2532991358",
+          "attributes": "faction_id=3132466015",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyHullFaction"
+          ],
+          "description": "Quantum Diplomacy: increases Isolytic Defense by X versus Origin Sector [OGN] Hostiles and Armadas.",
+          "modifier": "IsolyticDefense",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            200.0,
+            300.0,
+            400.0,
+            550.0,
+            800.0
+          ]
+        },
+        {
+          "ability_id": "4209774397",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyPlayer",
+            "SelfMining"
+          ],
+          "description": "My Mine to Your Mine: increases Apex Barrier by X versus Players if attacked while on a Capture or Mining Node.",
+          "modifier": "ApexBarrier",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2000.0,
+            5000.0,
+            9000.0,
+            14000.0,
+            20000.0
+          ]
+        }
+      ],
+      "faction": "Federation",
+      "group": "IDIC",
+      "id": "ambassador-spock-e7945f",
+      "name": "Ambassador Spock",
+      "rarity": "epic",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "slot": "unknown",
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "source_officer_id": "984296764"
     }
   ],
   "schema_version": 1,
