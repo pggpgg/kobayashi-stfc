@@ -73,3 +73,9 @@ genesis-lythe-82d460: "No captain (Chain of Command). Bridge shield_regen_max_fr
 jirali-551c28: "Entirely out-of-combat: captain Beam Augmenter (extra Borg Cube cutting-beam charge), bridge Tech Expert (cutting-beam loot), and BD Black Market Mechanic (repair-speed cascade) all map to :non_combat tags (no in-fight damage/hull/shield effect)."
 chancellor-ake-225a78: "No captain (Chain of Command). Bridge isolytic_cascade_damage vs Battleship hostiles is Wave-Defense-gated (literal_false): inert. BD Explorer crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles."
 deidamia-50f1da: "No captain (Chain of Command). Bridge isolytic_cascade_damage vs Interceptor hostiles is Wave-Defense-gated (literal_false): inert. BD Battleship crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles."
+
+# July 2026 Update 92 (IDIC) batch — Origin Sector [OGN] Spock trio (synergy group 54).
+# OGN gating uses EnemyHullFaction faction_id=3132466015 (shared by Quantum Adjudicator / Guardian / Tesseract).
+female-spock-c21a12: "Captain Enterprising Mind is Isogenite loot (economy → :non_combat; upstream rank 4-5 values unpublished, stored as 0). Bridge isolytic_damage at combat start is OGN-faction-gated: active only vs Origin Sector hostiles/armadas."
+cat-spock-61edec: "No captain (Chain of Command). Bridge base crit_damage at combat start is OGN-faction-gated (up to 25,000% at rank 5 — matches Update 92 notes). BD apex_barrier vs non-Armada hostiles is unconditional on the default hostile path."
+ambassador-spock-e7945f: "No captain (Chain of Command). Bridge isolytic_defense at combat start is OGN-faction-gated. BD My Mine to Your Mine is node-defense-only (SelfMining → literal_false): inert in all sim paths."

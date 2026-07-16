@@ -167,3 +167,11 @@ Cardassian Torture Actuator,chaos,12,3671752041,isolytic_damage,1.5,add
 Cardassian Torture Actuator,chaos,12,3671752041,apex_barrier,9100,add
 Tan Ru,chaos,12,3019166168,weapon_damage,0.36,add
 Tan Ru,chaos,12,3019166168,crit_damage,0.03,add
+[PRO] The Great Teacher,forbidden,12,2762874205,isolytic_damage,0.022,add
+[PRO] The Great Teacher,forbidden,12,2762874205,apex_barrier,17000,add
+[PRO] Photonic Warhead,forbidden,12,405065334,isolytic_damage,0.0015,add
+[PRO] Photonic Warhead,forbidden,12,405065334,crit_chance,0.21,add
+Automated Personnel Unit,chaos,12,2363465154,weapon_damage,0.1265,add
+Automated Personnel Unit,chaos,12,2363465154,isolytic_damage,0.52,add
+Automated Personnel Unit,chaos,12,2363465154,apex_barrier,1750,add
+Vinculum,chaos,12,1923553327,hull_hp,0,add
