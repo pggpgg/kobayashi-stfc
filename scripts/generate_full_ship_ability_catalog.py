@@ -600,11 +600,19 @@ def classify_single_ability(_loca: int, text: str) -> dict:
                 ignore_upstream_value_is_percentage=False,
             )
         if "ignor" in p and "shield" in p:
+            # "ignores X% of ... shields" is a shield-mitigation bypass
+            # (AbilityEffect::ShieldMitigationBypassFraction, Harrison Sabotage precedent),
+            # not pierce: pierce is an additive term that also helps against shieldless
+            # targets, bypass scales the target's shield mitigation. `{0:#.#%}` placeholders
+            # render fractions (upstream 1 → 100%); plain `{0}%` texts carry percent points.
             return m(
                 "combat_begin",
-                "pierce_bonus",
-                value_is_percentage=True,
-                ignore_upstream_value_is_percentage=False,
+                "shield_mitigation_bypass",
+                value_is_percentage="%}" not in p,
+                ignore_upstream_value_is_percentage=True,
+                condition_opponent_hostile_tags=(
+                    ["breen_warship"] if "breen warship" in p else None
+                ),
             )
         if "shield piercing" in p or "armor piercing" in p:
             return m(

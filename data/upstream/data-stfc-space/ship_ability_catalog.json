@@ -620,9 +620,12 @@
     },
     "2432056626": {
       "timing": "combat_begin",
-      "effect_type": "pierce_bonus",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "effect_type": "shield_mitigation_bypass",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_hostile_tags": [
+        "breen_warship"
+      ]
     },
     "2441576367": {
       "timing": "combat_begin",

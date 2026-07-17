@@ -6,6 +6,8 @@ This document expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `c
 
 **Track E update (2026-06-07):** The two breach-gated cumulative crit proc chains — Hegh'ta "Open the Wound" (`3432906971`) and Rotarran "Bird of Prey" (`2195955652`) — are now **modeled** (see §6.5), dropping the noop inventory from **67 → 65**. An earlier revision of §6.2 mislabeled these proc chains with the ids `2520552521` / `3014221215`; those two ids are in fact economy abilities (transogen loot / tritanium mining) and remain `combat_noop`.
 
+**Reclassification (2026-07-17, backlog item 9):** U.S.S. Vengeance **Advanced Sabotage** (`2432056626`, "ignores {0:#.#%} of Breen Warship [BRN] shields") moved from `pierce_bonus` to `shield_mitigation_bypass` (`AbilityEffect::ShieldMitigationBypassFraction`, Harrison Sabotage outbound path) — a +1.0 pierce additive was the wrong mechanic and ignored the Breen gate. The row now resolves to a 100% bypass (upstream value 1, `{0:#.#%}` placeholder → fraction) gated on the new `breen_warship` hostile tag (Warship/Elite/Primarch, `loca_id` 80600–80602, 8 hostiles). The generator's `ignor`+`shield` branch emits the bypass; the inventory of "Shield/Armor Piercing" **stat** texts (5 ids) legitimately stays `pierce_bonus`. Tests: `tests/vengeance_advanced_sabotage.rs`. No noop-inventory change.
+
 **Inventory drift vs prior audits:** Six ids left the noop list: `509252162` (`attack_multiplier`), `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Shard detail: [docs/audit_shards/](audit_shards/).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).

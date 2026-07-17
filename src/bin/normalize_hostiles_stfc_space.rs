@@ -167,6 +167,11 @@ fn curated_hostile_tags_for_upstream(
         push_unique("gorn_hunter");
     }
 
+    // Breen Warship (80600) / Elite (80601) / Primarch (80602) — U.S.S. Vengeance Advanced Sabotage gate.
+    if matches!(loca_id, Some(80600..=80602)) {
+        push_unique("breen_warship");
+    }
+
     const CONQUEROR_BORG_IDS: &[u64] = &[
         316662618, 467189343, 500305250, 622949343, 778146301, 80039078, 864202735, 1117012705,
         1137196075, 1361645982, 1361807236, 1379653470, 1458200336, 1472989983, 1851381248,
