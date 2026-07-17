@@ -33,6 +33,12 @@ struct AbilityCatalogEntry {
     condition_opponent_faction: Option<String>,
     #[serde(default)]
     condition_opponent_ship_class: Option<String>,
+    /// Negative hull-class gate ("vs non-Armada hostiles"): see [`ShipAbility::condition_opponent_ship_class_not`].
+    #[serde(default)]
+    condition_opponent_ship_class_not: Option<String>,
+    /// NPC-hostile gate ("against hostiles", inert in PvP): see [`ShipAbility::condition_defender_is_npc_hostile`].
+    #[serde(default)]
+    condition_defender_is_npc_hostile: bool,
     #[serde(default)]
     condition_opponent_hostile_tags: Option<Vec<String>>,
     #[serde(default)]
@@ -388,6 +394,10 @@ fn raw_to_extended(
                 condition_defender_hull_breach: entry.condition_defender_hull_breach,
                 condition_opponent_faction: entry.condition_opponent_faction.clone(),
                 condition_opponent_ship_class: entry.condition_opponent_ship_class.clone(),
+                condition_opponent_ship_class_not: entry
+                    .condition_opponent_ship_class_not
+                    .clone(),
+                condition_defender_is_npc_hostile: entry.condition_defender_is_npc_hostile,
                 condition_opponent_hostile_tags: entry.condition_opponent_hostile_tags.clone(),
                 round_cap: entry.round_cap,
                 level_scaled_values,

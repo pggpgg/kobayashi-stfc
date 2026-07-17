@@ -224,3 +224,29 @@ folded in unconditionally at scenario build (`hostile_apex_barrier_bonus_from_de
 ignores seat conditions), so a faction-gated barrier on a PvP defender applies vs all attackers.
 Tests: `tests/combat_tests.rs` (officer + tag-gated barrier, both directions),
 `tests/ship_ability_athena_venari_ral.rs`.
+
+### 6.7 U.S.S. Dauntless — Seek and Destroy kit (2026-07-17)
+
+Sources: the [feature article](https://startrekfleetcommand.com/news/the-u-s-s-dauntless-revolutionizing-the-hostile-hunt/)
+and [support FAQ](https://scopely.helpshift.com/hc/en/19-star-trek-fleet-command/faq/8588-the-dauntless/)
+(both qualitative only); numeric scale pinned by the
+[stfc.space render of ship 754460943](https://stfc.space/ships/754460943): Active Sweep shows
+145,000% at level 1 → 1,200,000% at level 75, i.e. upstream `values[]` (1450 … 12000) are
+engine-ready bonus fractions under the `{0:#.#%}` ×100 convention — same as Athena's Fury (§6.6).
+
+| id | Ability | Catalog `effect_type` | Change (2026-07-17) |
+| --- | --- | --- | --- |
+| `1905773933` | Active Sweep | `attack_multiplier` (non-armada-gated, per-level curve) | Was a mis-classified second flat `apex_barrier` (1450 → 12000): loca 83002's combined description also contains the Active Apex Barrier paragraph, and the generator's "apex barrier … increas" pattern matched first — silently discarding the ship's headline damage bonus (+145,000% → +1,200,000% base damage). |
+| `985810609` | Active Apex Barrier | `apex_barrier` (non-armada-gated) | Type/value were correct (flat 40,000); gained the non-armada gate. |
+| `3658971555` | Aft Expansion | `combat_noop` | Loot economy row — unchanged. |
+| `915894112` | Aggregation Plunder | `combat_noop` | Loot economy row — unchanged. |
+
+Both modeled rows carry two new catalog fields: `condition_opponent_ship_class_not: "armada"`
+(negative hull-class gate → `Not(DefenderShipTypeIs(Armada))`) and
+`condition_defender_is_npc_hostile: true` (→ `AbilityCondition::DefenderIsNpcHostile`, keeping
+the bonuses inert in simulated PvP — Seek and Destroy cannot target players); see
+[`ability_condition_from_ship_ability`](../src/combat/condition.rs). The in-game "while Seek and
+Destroy is active" toggle has no engine concept; both bonuses are modeled always-on, which is the
+right approximation for hostile-hunt sims (a Dauntless PvE fight *is* a Seek-and-Destroy fight)
+while the gates keep them inert where the toggle cannot apply (armadas, players).
+Tests: `tests/ship_ability_dauntless_seek_and_destroy.rs`.
