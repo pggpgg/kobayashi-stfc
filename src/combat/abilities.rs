@@ -276,6 +276,13 @@ pub enum AbilityEffect {
     /// Flat bonus to hostile [`crate::combat::types::Combatant::crit_damage_floor`] on counter-fire
     /// (Aggregation offense bundles). Applied at scenario build.
     HostileCritDamageFloorBonus(f64),
+    /// Programmable Matter: multiply the player's outbound post-apex damage pool by
+    /// `1 - fraction` ("reduces the final damage done by player weapons by X%"). Static
+    /// defender-crew seat, resolved once per fight via
+    /// [`hostile_final_damage_reduction_from_defender_crew`]; counter-fire is unaffected.
+    HostileFinalDamageReduction {
+        fraction: f64,
+    },
     /// Player ship hull ability (U.S.S. Intrepid): additive armor / deflection / dodge proxy — same
     /// fraction applied to counter-fire mitigation and dodge bonus sums at combat begin.
     HostileEngagementDefensiveBonus(f64),
@@ -1026,6 +1033,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileHyperthermicDecay { .. }
         | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
         | AbilityEffect::HostileCounterPierceMultiplier { .. }
+        | AbilityEffect::HostileFinalDamageReduction { .. }
         | AbilityEffect::HostileCritDamageFloorBonus(_) => {}
         AbilityEffect::HostileCounterStatDebuff {
             reduction,
@@ -1215,6 +1223,18 @@ pub fn hostile_kemocite_attack_multiplier_bonus(crew: &CrewConfiguration, stacks
         return 0.0;
     }
     stacks as f64 * growth
+}
+
+/// Total [`AbilityEffect::HostileFinalDamageReduction`] from the hostile defender crew, clamped
+/// to `[0, 1]`. The engine multiplies the player's outbound post-apex damage by `1 - total`.
+pub fn hostile_final_damage_reduction_from_defender_crew(crew: &CrewConfiguration) -> f64 {
+    let mut total = 0.0_f64;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileFinalDamageReduction { fraction } = s.ability.effect {
+            total += fraction.max(0.0);
+        }
+    }
+    total.min(1.0)
 }
 
 /// True when the hostile defender crew carries **Isolytic Vulnerability** (only isolytic damage applies).

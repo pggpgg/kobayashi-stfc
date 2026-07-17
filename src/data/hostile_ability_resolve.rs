@@ -76,6 +76,20 @@ pub struct HostileAbilityCatalogEntry {
     /// Ship ids exempt from the faction gate (e.g. `uss_vengeance`).
     #[serde(default)]
     pub allowed_attacker_ship_ids: Vec<String>,
+    /// When `"chance"`, the seat's raw value comes from upstream `values[0].chance` instead of
+    /// `values[0].value`. Multi-stat texts (e.g. Double Down, Something To Prove) reuse the
+    /// `chance` field as the second text placeholder `{1}`; the seat's proc chance is then 100%.
+    #[serde(default)]
+    pub value_source: Option<String>,
+    /// Negate the resolved value — self-debuff texts like
+    /// "this hostile's Isolytic Defense is reduced by {0:#.#%}".
+    #[serde(default)]
+    pub negate_value: bool,
+    /// Player hull-class gate (`battleship` / `explorer` / `interceptor` / `survey`): the seat
+    /// applies only when the attacking ship's class matches (Mutually Assured Destruction,
+    /// Assimilator Data Cube Isolytic Vulnerability).
+    #[serde(default)]
+    pub condition_attacker_ship_type: Option<String>,
     #[serde(default)]
     pub extra_seats: Vec<HostileAbilityCatalogEntry>,
 }
@@ -294,6 +308,13 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 additive_factor: value.max(0.0),
             })
         }
+        // Programmable Matter: "reduces the final damage done by player weapons by {0:#.#%}".
+        // Applied as a multiplier on the player's outbound post-apex pool (standard + isolytic).
+        "hostile_final_damage_reduction" | "final_damage_reduction" => {
+            Some(AbilityEffect::HostileFinalDamageReduction {
+                fraction: value.clamp(0.0, 1.0),
+            })
+        }
         "hostile_crit_damage_floor" | "crit_damage_floor" => {
             Some(AbilityEffect::HostileCritDamageFloorBonus(value.max(0.0)))
         }
@@ -360,6 +381,13 @@ fn ability_condition_from_hostile_entry(
     if let Some(cap) = entry.round_cap.filter(|c| *c > 0) {
         parts.push(AbilityCondition::RoundRange { min: 1, max: cap });
     }
+    if let Some(ship_type) = entry
+        .condition_attacker_ship_type
+        .as_deref()
+        .and_then(crate::combat::types::ShipType::from_data_slug)
+    {
+        parts.push(AbilityCondition::AttackerShipTypeIs(ship_type));
+    }
     combine_optional_and(parts)
 }
 
@@ -371,19 +399,33 @@ fn push_hostile_catalog_seat(
     let Some(timing) = parse_ship_ability_timing(&entry.timing) else {
         return;
     };
-    let normalized_value = if entry.crit_reduction_additive_points {
-        entry.value_override.unwrap_or(parsed.value)
+    let value_from_chance = entry.value_source.as_deref() == Some("chance");
+    let raw_value = if value_from_chance {
+        parsed.chance
+    } else {
+        parsed.value
+    };
+    let mut normalized_value = if entry.crit_reduction_additive_points {
+        entry.value_override.unwrap_or(raw_value)
     } else {
         entry.value_override.unwrap_or_else(|| {
             normalize_catalog_value(
                 entry.value_is_percentage,
                 entry.ignore_upstream_value_is_percentage,
                 parsed.upstream_value_is_percentage,
-                parsed.value,
+                raw_value,
             )
         })
     };
-    let chance = parsed.chance;
+    if entry.negate_value {
+        normalized_value = -normalized_value;
+    }
+    // `chance` doubles as a stat value on value_source="chance" rows — the seat itself always fires.
+    let chance = if value_from_chance {
+        100.0
+    } else {
+        parsed.chance
+    };
     let Some(mut effect) = hostile_ability_effect_from_catalog(
         &entry.effect_type,
         timing,
@@ -516,19 +558,32 @@ pub fn hostile_abilities_to_defender_crew_via_spec(
         let Some(entry) = catalog.entries.get(parsed.id.as_str()) else {
             continue;
         };
-        let normalized_value = entry.value_override.unwrap_or_else(|| {
+        let raw_value = if entry.value_source.as_deref() == Some("chance") {
+            parsed.chance
+        } else {
+            parsed.value
+        };
+        let mut normalized_value = entry.value_override.unwrap_or_else(|| {
             normalize_catalog_value(
                 entry.value_is_percentage,
                 entry.ignore_upstream_value_is_percentage,
                 parsed.upstream_value_is_percentage,
-                parsed.value,
+                raw_value,
             )
         });
+        if entry.negate_value {
+            normalized_value = -normalized_value;
+        }
+        let spec_chance = if entry.value_source.as_deref() == Some("chance") {
+            100.0
+        } else {
+            parsed.chance
+        };
         let spec =
             crate::data::hostile_ability_effect_spec_adapter::hostile_ability_to_combat_effect_spec(
                 &parsed.id,
                 entry,
-                parsed.chance,
+                spec_chance,
                 normalized_value,
             );
         let Some(spec) = spec else {

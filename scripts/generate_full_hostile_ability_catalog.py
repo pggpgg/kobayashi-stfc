@@ -85,6 +85,9 @@ def modeled(
     weapon_index: int | None = None,
     allowed_attacker_factions: list[str] | None = None,
     allowed_attacker_ship_ids: list[str] | None = None,
+    value_source: str | None = None,
+    negate_value: bool = False,
+    condition_attacker_ship_type: str | None = None,
     extra_seats: list[dict] | None = None,
 ) -> dict:
     d: dict = {
@@ -120,6 +123,12 @@ def modeled(
         d["allowed_attacker_factions"] = list(allowed_attacker_factions)
     if allowed_attacker_ship_ids:
         d["allowed_attacker_ship_ids"] = list(allowed_attacker_ship_ids)
+    if value_source is not None:
+        d["value_source"] = value_source
+    if negate_value:
+        d["negate_value"] = True
+    if condition_attacker_ship_type is not None:
+        d["condition_attacker_ship_type"] = condition_attacker_ship_type
     if extra_seats:
         d["extra_seats"] = extra_seats
     return d
@@ -298,7 +307,7 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     # (hyperthermic decay + mitigation inflation + offense bundles). Do not first-match-wins here.
     if "hyperthermic decay" in p and "mitigation stat" in p:
         return dict(NOOP), "aggregation_hyperthermic_manual"
-    if "hyperthermic decay" in p and "apex barrier" in p:
+    if "hyperthermic decay" in p and "apex barrier" in p and "isolytic" not in p:
         return dict(NOOP), "aggregation_hyperthermic_manual"
     if (
         "weapon damage" in p
@@ -503,16 +512,185 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             "crit_floor_modeled",
         )
 
-    # Isolytic
-    if "isolytic" in p and ("defense" in p or "defence" in p):
-        return m(
-            "combat_begin",
-            "isolytic_defense",
-            value_is_percentage=True,
-            ignore_upstream_value_is_percentage=False,
-            _bucket="isolytic_combat",
-        )
+    # ── Isolytic (value-scale conventions ground-truthed 2026-07-16, backlog #13) ──
+    # C#-style % placeholders ({0:0.#%} / {1:#.#%}) render the upstream number ×100, so the
+    # upstream value is already an engine-unit FRACTION regardless of the row's
+    # value_is_percentage flag (68.1 renders "6810%"). Multi-stat texts reuse values[0].chance
+    # as the second placeholder {1} (Double Down: value=apex barrier, chance=isolytic defense).
     if "isolytic" in p:
+        # Something To Prove: damage {0:%} + apex shred of its target {1:%} (from chance).
+        if re.search(r"increases isolytic damage by \{0[^}]*%\}", p) and re.search(
+            r"shreds the apex barrier of its target by \{1[^}]*%\}", p
+        ):
+            return m(
+                "combat_begin",
+                "isolytic_damage",
+                extra_seats=[modeled("combat_begin", "apex_shred", value_source="chance")],
+                _bucket="isolytic_combat",
+            )
+        # Double Down: apex barrier {0} (flat, from value) + isolytic defense {1:%} (from chance)
+        # + hardcoded crit-damage floor.
+        if re.search(r"increases isolytic defen[cs]e by \{1[^}]*%\}", p) and re.search(
+            r"apex barrier by \{0[^}]*\}", p
+        ):
+            extras = [modeled("combat_begin", "apex_barrier")]
+            floor_m = re.search(r"critical damage cannot fall below (\d+(?:\.\d+)?)%", p)
+            if floor_m:
+                extras.append(
+                    modeled(
+                        "combat_begin",
+                        "hostile_crit_damage_floor",
+                        value_override=float(floor_m.group(1)) / 100.0,
+                    )
+                )
+            return m(
+                "combat_begin",
+                "isolytic_defense",
+                value_source="chance",
+                extra_seats=extras,
+                _bucket="isolytic_combat",
+            )
+        # Isolytic Dampeners bundles (ACAD wave-defense drones / Programmable Matter):
+        # hardcoded "increases its Isolytic Defense by 1000%" + per-variant extras.
+        damp_m = re.search(r"increases its isolytic defen[cs]e by (\d+(?:\.\d+)?)%", p)
+        if damp_m:
+            extras = []
+            if "can only be damaged by isolytic damage" in p:
+                extras.append(
+                    modeled("combat_begin", "hostile_isolytic_vulnerability", value_override=0)
+                )
+            if re.search(r"increases apex barrier by \{0[^}]*\}", p):
+                extras.append(modeled("combat_begin", "apex_barrier"))
+            # Programmable Matter: round-start final-damage reduction {0:%} + full player
+            # shield drain (modeled as forced-zero player shield mitigation, as Strike Down).
+            if re.search(r"reduces the final damage done by player weapons by \{0[^}]*%\}", p):
+                extras.append(modeled("combat_begin", "hostile_final_damage_reduction"))
+                extras.append(
+                    modeled(
+                        "combat_begin",
+                        "hostile_attacker_shield_mitigation_zero",
+                        value_override=0,
+                    )
+                )
+            hyper_m = re.search(
+                r"applies (\d+(?:\.\d+)?)% hyperthermic decay to the player'?s hull", p
+            )
+            if hyper_m and ("first round" in p or "for 1 round" in p):
+                extras.append(
+                    modeled(
+                        "round_start",
+                        "hostile_hyperthermic_decay",
+                        value_override=float(hyper_m.group(1)) / 100.0,
+                        round_cap=1,
+                    )
+                )
+            return m(
+                "combat_begin",
+                "isolytic_defense",
+                value_override=float(damp_m.group(1)) / 100.0,
+                extra_seats=extras or None,
+                _bucket="isolytic_combat",
+            )
+        # Conditional self-debuffs: "this hostile's Isolytic Defense is reduced/lowered by X"
+        # when fighting a specific player hull class (Mutually Assured Destruction, Burned in a
+        # Fire, Assimilator Data Cube / Explorer Isolytic Vulnerability).
+        red_m = re.search(
+            r"isolytic defen[cs]e is (?:reduced|lowered) by (?:\{\d[^}]*%\}|(\d+(?:\.\d+)?)%)", p
+        )
+        if red_m:
+            hull_class = next(
+                (c for c in ("battleship", "explorer", "interceptor") if c in p), None
+            )
+            if hull_class:
+                kwargs = {}
+                if red_m.group(1) is not None:
+                    kwargs["value_override"] = float(red_m.group(1)) / 100.0
+                return m(
+                    "combat_begin",
+                    "isolytic_defense",
+                    negate_value=True,
+                    condition_attacker_ship_type=hull_class,
+                    _bucket="isolytic_combat",
+                    **kwargs,
+                )
+        # Replicated Honorguard Apex: 4-stat bundle with no numbers and no placeholders;
+        # upstream value (0.01, flag=true) cannot be attributed to any single stat.
+        if "honorguard apex" in p:
+            return dict(NOOP), "isolytic_multi_review"
+        # Take the Shot: hardcoded self cascade bonus ("increases their isolytic cascade
+        # damage by 100% for 2 rounds" — rolling round-start refresh ≈ static for the fight).
+        casc_m = re.search(r"isolytic cascade damage by (\d+(?:\.\d+)?)%", p)
+        if casc_m:
+            return m(
+                "combat_begin",
+                "isolytic_cascade",
+                value_override=float(casc_m.group(1)) / 100.0,
+                _bucket="isolytic_combat",
+            )
+        # Hardcoded single-value damage texts ("Isolytic Damage is increased by 100%",
+        # "increases Isolytic Damage by 1500% and Apex Barrier by 20000, ...").
+        hard_m = re.search(r"isolytic damage (?:is )?increased by (\d+(?:\.\d+)?)%", p) or re.search(
+            r"increases isolytic damage by (\d+(?:\.\d+)?)%", p
+        )
+        if hard_m:
+            extras = []
+            ab_m = re.search(r"apex barrier by (\d[\d,]*)\b", p)
+            if ab_m:
+                extras.append(
+                    modeled(
+                        "combat_begin",
+                        "apex_barrier",
+                        value_override=float(ab_m.group(1).replace(",", "")),
+                    )
+                )
+            cd_m = re.search(r"critical damage by (\d+(?:\.\d+)?)%", p)
+            if cd_m:
+                extras.append(
+                    modeled(
+                        "combat_begin",
+                        "crit_damage",
+                        value_override=float(cd_m.group(1)) / 100.0,
+                    )
+                )
+            return m(
+                "combat_begin",
+                "isolytic_damage",
+                value_override=float(hard_m.group(1)) / 100.0,
+                extra_seats=extras or None,
+                _bucket="isolytic_combat",
+            )
+        # Single %-placeholder rows: upstream value is a fraction — never divide by 100
+        # (fixes the flag=true subfamily, e.g. loca 86307, previously scaled 100× too small).
+        if re.search(r"isolytic damage by \{\d[^}]*%\}", p):
+            extras = None
+            shred_m = re.search(r"shreds the apex barrier of its target by (\d+(?:\.\d+)?)%", p)
+            if shred_m:
+                extras = [
+                    modeled(
+                        "combat_begin",
+                        "apex_shred",
+                        value_override=float(shred_m.group(1)) / 100.0,
+                    )
+                ]
+            return m(
+                "combat_begin",
+                "isolytic_damage",
+                extra_seats=extras,
+                _bucket="isolytic_combat",
+            )
+        if re.search(r"isolytic defen[cs]e by \{\d[^}]*%\}", p):
+            return m("combat_begin", "isolytic_defense", _bucket="isolytic_combat")
+        # Fallback (no placeholder, no hardcoded number): keep the legacy flag-driven scale.
+        # Covers Black Market Armaments / Krenim Temporal Core / Static Displacer-style
+        # multi-stat texts whose per-stat values cannot be read off the text; unvalidated.
+        if "defense" in p or "defence" in p:
+            return m(
+                "combat_begin",
+                "isolytic_defense",
+                value_is_percentage=True,
+                ignore_upstream_value_is_percentage=False,
+                _bucket="isolytic_combat",
+            )
         return m(
             "combat_begin",
             "isolytic_damage",

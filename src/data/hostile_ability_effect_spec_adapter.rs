@@ -138,6 +138,9 @@ mod tests {
             round_cap: None,
             allowed_attacker_factions: Vec::new(),
             allowed_attacker_ship_ids: Vec::new(),
+            value_source: None,
+            negate_value: false,
+            condition_attacker_ship_type: None,
             extra_seats: Vec::new(),
         };
         let spec =

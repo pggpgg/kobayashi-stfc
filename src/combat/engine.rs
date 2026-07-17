@@ -202,6 +202,9 @@ pub struct PreCombatSetup {
     pub defender_isolytic_vulnerability: bool,
     /// Strike Down: force player incoming shield mitigation to 0% for the fight.
     pub attacker_shield_mitigation_forced_zero: bool,
+    /// Programmable Matter: multiplier on the player's outbound post-apex damage pool
+    /// (`1 - Σ final-damage-reduction fractions`, clamped to `[0, 1]`; `1.0` = no reduction).
+    pub outbound_final_damage_factor: f64,
     /// Pre-allocated Arc for attacker ship id slug — avoids String clone per construction.
     pub attacker_ship_id_arc: std::sync::Arc<str>,
     /// Pre-allocated Arc for engagement enemy types — avoids EnemyTypes clone per construction.
@@ -391,6 +394,10 @@ pub fn build_combat_setup_with_officer_stat(
     );
     let attacker_shield_mitigation_forced_zero =
         crate::combat::abilities::hostile_attacker_shield_mitigation_zero_active(&defender_crew);
+    let outbound_final_damage_factor = 1.0
+        - crate::combat::abilities::hostile_final_damage_reduction_from_defender_crew(
+            &defender_crew,
+        );
 
     PreCombatSetup {
         attacker: attacker.clone(),
@@ -417,6 +424,7 @@ pub fn build_combat_setup_with_officer_stat(
         faction_gate_instant_loss,
         defender_isolytic_vulnerability,
         attacker_shield_mitigation_forced_zero,
+        outbound_final_damage_factor,
         round_start_effects,
         attack_phase_effects,
         defense_phase_effects,
@@ -1236,8 +1244,11 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             // Attacker-crew ApexBarrierBonus seats are defensive (counter-fire path only);
             // outbound damage faces only the defender's own barrier.
             let effective_apex_barrier = defender.apex_barrier.max(0.0);
+            // Programmable Matter final-damage reduction rides the per-shot apex factor: both
+            // multiply the combined post-compose pool (standard + isolytic), scalar and SIMD.
             let apex_damage_factor =
-                compute_apex_damage_factor(effective_apex_shred, effective_apex_barrier);
+                compute_apex_damage_factor(effective_apex_shred, effective_apex_barrier)
+                    * setup.outbound_final_damage_factor;
 
             let base_shots = attacker.weapon_base_shots(weapon_index);
             let effective_shots = effective_shots_for_weapon(
