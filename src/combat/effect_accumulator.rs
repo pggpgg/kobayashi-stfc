@@ -960,6 +960,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileHyperthermicDecay { .. }
                 | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileFinalDamageReduction { .. }
                 | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
@@ -1163,6 +1164,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileHyperthermicDecay { .. }
                 | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileFinalDamageReduction { .. }
                 | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
@@ -1328,6 +1330,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileHyperthermicDecay { .. }
                 | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileFinalDamageReduction { .. }
                 | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
@@ -1495,6 +1498,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileHyperthermicDecay { .. }
                 | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileFinalDamageReduction { .. }
                 | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
@@ -1668,6 +1672,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileHyperthermicDecay { .. }
                 | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileFinalDamageReduction { .. }
                 | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
@@ -1877,6 +1882,7 @@ impl EffectAccumulator {
                 | AbilityEffect::DefenderShieldDrainPerRound { .. }
                 | AbilityEffect::HostileHyperthermicDecay { .. }
                 | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
+                | AbilityEffect::HostileFinalDamageReduction { .. }
                 | AbilityEffect::HostileCritDamageFloorBonus(_)
                 | AbilityEffect::HostileEngagementDefensiveBonus(_)
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
@@ -2142,6 +2148,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::HostileHyperthermicDecay { .. }
         | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
         | AbilityEffect::HostileCounterPierceMultiplier { .. }
+        | AbilityEffect::HostileFinalDamageReduction { .. }
         | AbilityEffect::HostileCritDamageFloorBonus(_) => effect,
         AbilityEffect::HostileEngagementDefensiveBonus(_) => effect,
         AbilityEffect::BreachCumulativeCritChancePerHit(_)

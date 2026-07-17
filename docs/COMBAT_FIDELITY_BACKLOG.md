@@ -678,7 +678,23 @@ Method (this exact loop shipped PR #252):
 
 ---
 
-## 13. Ground-truth the isolytic value-scale conventions (252 ids, ~1,500 instances)
+## 13. Ground-truth the isolytic value-scale conventions (252 ids, ~1,500 instances) ✅
+
+**Resolved 2026-07-16.** Evidence table over 174 isolytic-mapped ids / 1,568 hostile instances;
+157 catalog ids re-scoped (all within the isolytic family — no neighboring-family transitions).
+Validated conventions and the per-family outcomes are documented in
+[HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md) header ("Isolytic
+value-scale audit (2026-07-16)") and DESIGN.md's isolytic bullet; pinned in
+`tests/isolytic_value_scale.rs`. Highlights: `%`-placeholders are fractions regardless of the
+upstream flag (Something To Prove was 100× too small); multi-stat texts reuse `values[0].chance`
+as placeholder `{1}` (Double Down defense came from the apex-barrier slot, up to 800× off);
+Isolytic Dampeners bundles hardcode 1000% (upstream values were noise, incl. a +1,000,000%
+seat from a flat apex barrier); Programmable Matter re-modeled per step 4 (new
+`hostile_final_damage_reduction` engine hook + Strike Down shield-mitigation-zero proxy);
+battleship/explorer self-debuffs now negative and hull-class-gated (`negate_value`,
+`condition_attacker_ship_type`). Honorguard Apex → `isolytic_multi_review` noop. Black Market
+Armaments / Krenim Temporal Core / Static Displacer keep the legacy flag-driven scale,
+documented as unvalidated.
 
 **a) The issue.** Isolytic damage/defense is the *largest modeled* family (170 ids at
 combat-begin plus armada rows), but its numeric scaling was flagged "not guaranteed 1:1 with

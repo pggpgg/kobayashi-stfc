@@ -3806,13 +3806,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "1823160651": {
-      "bucket": "isolytic_combat",
+      "bucket": "isolytic_multi_review",
       "loca_id": 86121,
       "hostile_count": 30,
       "sample_hostile_id": "1119847302",
       "sample_level": 53,
       "text_snippet": "replicated honorguard apex\nincreases its isolytic damage, isolytic defense and apex barrier, and shreds the apex barrier of its target at the start of combat.",
-      "effect_type": "isolytic_defense"
+      "effect_type": "combat_noop"
     },
     "1825422830": {
       "bucket": "shield_regen_combat",
@@ -5166,14 +5166,13 @@
       "effect_type": "crit_damage"
     },
     "2466223538": {
-      "bucket": "aggregation_hyperthermic_manual",
+      "bucket": "isolytic_combat",
       "loca_id": 90513,
       "hostile_count": 22,
       "sample_hostile_id": "1145300067",
       "sample_level": 66,
       "text_snippet": "apex defense\nincreases apex barrier by {0:#} on combat start.\n\nisolytic dampeners\nthis hostile increases its isolytic defense by 1000%.\n\nhull decay\napplies 8% hyperthermic decay to the player's hull on combat start for 1 round.\n\nthis hostil",
-      "effect_type": "isolytic_defense",
-      "overridden": true
+      "effect_type": "isolytic_defense"
     },
     "2467180610": {
       "bucket": "other_review",
@@ -8335,7 +8334,7 @@
       "sample_hostile_id": "1327059298",
       "sample_level": 60,
       "text_snippet": "take the shot\non round start against players, mirror picard increases their isolytic cascade damage by 100% for 2 rounds.\n\nanticollective\non round start against players with assimilate, mirror picard increases their apex barrier by 30000 fo",
-      "effect_type": "isolytic_damage"
+      "effect_type": "isolytic_cascade"
     },
     "4024382545": {
       "bucket": "other_review",

@@ -2,7 +2,16 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-15 / Plausible Deniability + Q Junior's Twist):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **522** modeled for defender-side counter-fire (`defender_crew`), **460** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-16 / isolytic value-scale audit):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **521** modeled for defender-side counter-fire (`defender_crew`), **461** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+
+**Isolytic value-scale audit (2026-07-16, backlog #13):** 157 catalog ids re-scoped, all inside the isolytic family (85 damage→damage, 70 defense→defense, 1 defense→`combat_noop`, 1 damage→`isolytic_cascade`); pinned in `tests/isolytic_value_scale.rs`. Ground-truthed conventions:
+
+- **`%`-format placeholders are fractions regardless of the upstream flag.** `{0:0.#%}` renders the raw number ×100, so flag=true rows were being divided by 100 wrongly. "Something To Prove" (13 ids, 173 hostiles): 68.1 → +6,810% isolytic damage, previously 0.681 (100× too small).
+- **Multi-stat texts reuse `values[0].chance` as placeholder `{1}`** (new catalog field `value_source: "chance"`; the seat's proc chance is then 100%). "Double Down" (13 ids, 173 hostiles): `value` 36,250 is the flat apex barrier (`{0:#.#}`), `chance` 16.25 is the isolytic defense fraction (`{1:0.#%}`) — the old seat used the barrier value as defense (+36,250% on flag=false rows). Also emits the barrier and the hardcoded crit-damage floor (100%) as extra seats; "Something To Prove" emits `apex_shred` from `chance` (+740%).
+- **Hardcoded texts pin `value_override`.** Isolytic Dampeners bundles ("increases its Isolytic Defense by 1000%", 9 ids, ~190 hostiles incl. ACAD wave-defense drones): defense 10.0 (upstream values 0.5–10,000 were passed through raw or ÷100 — up to +1,000,000% on the Apex Defense variant, whose `{0:#}` value is actually a flat apex barrier, now a separate seat). Isolytic Simulator also emits `hostile_isolytic_vulnerability` ("can only be damaged by Isolytic Damage" — previously dropped) and the 8–10% round-1 `hostile_hyperthermic_decay` companions. Interdimensional Threat I/II/III keep their (already correct) damage fractions as explicit overrides plus new `apex_barrier` / `crit_damage` extra seats; Take the Shot maps to `isolytic_cascade` 1.0 (was flag-driven 0.01).
+- **Programmable Matter (4 ids, 91 hostiles)** re-modeled: `{0:#.#%}` (0.5 / 0.99) is a **final-damage reduction**, not isolytic defense → new engine hook `hostile_final_damage_reduction` (multiplies the player's outbound post-apex pool by `1 − X`, riding the per-shot apex factor; counter-fire unaffected); "completely drains your shields" → `hostile_attacker_shield_mitigation_zero` (Strike Down hook); dampener defense 10.0 + round-1 hyperthermic as above.
+- **Conditional self-debuffs** ("Isolytic Defense is reduced/lowered by X% when in combat with a battleship/explorer", 42 ids, 56 hostiles): negative seats (new `negate_value`) gated by new `condition_attacker_ship_type` → `AttackerShipTypeIs` (previously unconditional positive buffs).
+- **Left as-is (documented unvalidated):** no-placeholder, no-number multi-stat texts keep the legacy flag-driven scale — Black Market Armaments (6 ids, 71 hostiles), Krenim Temporal Core (4 ids, ~84), Static Displacer/Collider (2 ids, 24; also under-modeled: text is cumulative-per-round, seat is static +100%), Judicious Preparation / Isolytic Maul-style single-stat proxies. Replicated Honorguard Apex (1 id, 30 hostiles) → `isolytic_multi_review` noop: 4 stats, no numbers, upstream value 0.01 unattributable (old seat was +0.01% defense — noise). Hostile-side piercing lines (Isolytic Maul "+500% all piercing") stay unmodeled: counter-fire mitigation carries no hostile pierce term (DESIGN.md §3.5).
 
 **Fidelity pass (2026-07-08):** Four engine/resolver fixes plus five newly modeled text families:
 
@@ -127,15 +136,16 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 982 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 522 |
-| `combat_noop` (catalogued, inert in sim) | 460 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 521 |
+| `combat_noop` (catalogued, inert in sim) | 461 |
 
-**Modeled effect types (522 ids, refreshed 2026-07-15):**
+**Modeled effect types (521 ids, refreshed 2026-07-16):**
 
 | `effect_type` | Ids |
 | --- | ---: |
-| `isolytic_damage` | 88 |
-| `isolytic_defense` | 82 |
+| `isolytic_damage` | 87 |
+| `isolytic_defense` | 81 |
+| `isolytic_cascade` | 1 |
 | `shield_regen_max_fraction` | 82 |
 | `hostile_counter_pierce_multiplier` | 82 |
 | `crit_damage` | 82 |
@@ -173,7 +183,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 
 | Bucket | Unique ids | Hostile instances | Decision |
 | --- | ---: | ---: | --- |
-| Isolytic combat-start | 170 | 1,498 | **Modeled** — `combat_begin` + `isolytic_damage` / `isolytic_defense` |
+| Isolytic combat-start | 170 | 1,498 | **Modeled** — `combat_begin` + `isolytic_damage` / `isolytic_defense` (+ `isolytic_cascade`, `apex_shred`/`apex_barrier`/`hostile_final_damage_reduction` extra seats); value scales ground-truthed 2026-07-16, see header; Honorguard → `isolytic_multi_review` noop |
 | Apex barrier | 54 | 368 | **Modeled** — `combat_begin` + `apex_barrier` |
 | Crit multi-stat | 2 | 378 | **Modeled** — Critical Training + Ruthless Pursuit emit `crit_chance` plus `crit_damage` / `hostile_crit_damage_floor` extra seats |
 | Crit damage floor | 2 | 273 | **Modeled** — Diverted Power emits `hostile_crit_damage_floor` |
@@ -214,13 +224,13 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `1782396999` | 69 | apex_combat | `apex_barrier` | Not So Wounded — apex barrier |
 | `3257135627` | 69 | isolytic_combat | `isolytic_damage` | Augmented Force — isolytic at combat start |
 | `390948510` | 53 | crit_multi_stat_modeled | `crit_chance` (`round_cap: 4`) + `crit_damage` / `hostile_crit_damage_floor` extra seats | Ruthless Pursuit — +100% crit chance first 4 rounds, +350% crit damage, 50% crit floor |
-| `658066283` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Vulnerability |
+| `658066283` | 53 | isolytic_combat | `hostile_isolytic_vulnerability` | Isolytic Vulnerability |
 | `986116981` | 53 | burning_combat_start | `burning` | Persistence Hunter — 100% burning on the player for 6 rounds at combat start |
 | `1745201100` | 53 | isolytic_combat | `isolytic_damage` | Isolytic Maul |
 | `1271329828` | 45 | xindi_crit_debuff | `hostile_crit_damage_reduction` + lethal extra seat | Doomed Species + Xindi Weaponry particle beam |
 | `141924765` | 14 | xindi_crit_debuff | `hostile_crit_damage_reduction` + Denticle extra seat | Be Like Water + Denticle Blade (30% proc gates weapon slot 5) |
 | `3445799437` | 45 | hostile_shield_bypass | `shield_mitigation_bypass` | Blade's Tip — 100% bypass of player shield mitigation on counter |
-| `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — reduces final damage (review mapping) |
+| `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — dampener defense 10.0 + `hostile_final_damage_reduction` 0.5 + SM→0 + round-1 hyperthermic (2026-07-16) |
 | `3196612078` | 39 | hostile_shield_bypass | `shield_mitigation_bypass` | Strength of the Ibix — 100% bypass (10 shots are weapon components, not this seat) |
 | `1088929105` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | S31 Elite — Klingon/Romulan designed ships only |
 | `1539285779` | 30 | armada_scope | `combat_noop` | Armada isolytic defense |
