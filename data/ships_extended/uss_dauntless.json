@@ -1450,7 +1450,7 @@
     {
       "id": "1905773933",
       "timing": "combat_begin",
-      "effect_type": "apex_barrier",
+      "effect_type": "attack_multiplier",
       "value": 1450.0,
       "duration_rounds": null,
       "condition_morale": false,
@@ -1458,6 +1458,8 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true,
       "condition_opponent_hostile_tags": null,
       "round_cap": null,
       "level_scaled_values": [
@@ -1577,6 +1579,8 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true,
       "condition_opponent_hostile_tags": null,
       "round_cap": null
     }

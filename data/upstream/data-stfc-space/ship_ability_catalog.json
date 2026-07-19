@@ -1,5 +1,5 @@
 {
-  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Optional overrides (merged last): ship_ability_catalog_overrides.json. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction, condition_opponent_ship_class, round_cap. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.",
+  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Optional overrides (merged last): ship_ability_catalog_overrides.json. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction, condition_opponent_ship_class, condition_opponent_ship_class_not, condition_defender_is_npc_hostile, round_cap. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.",
   "entries": {
     "34867572": {
       "timing": "combat_begin",
@@ -224,7 +224,9 @@
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true
     },
     "987222969": {
       "timing": "combat_begin",
@@ -497,9 +499,12 @@
     },
     "1905773933": {
       "timing": "combat_begin",
-      "effect_type": "apex_barrier",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true
     },
     "1913694321": {
       "timing": "combat_begin",

@@ -667,7 +667,8 @@ def main() -> None:
             "Optional overrides (merged last): ship_ability_catalog_overrides.json. "
             "Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; "
             "optional condition_morale, condition_defender_burning, condition_defender_hull_breach, "
-            "condition_opponent_faction, condition_opponent_ship_class, round_cap. "
+            "condition_opponent_faction, condition_opponent_ship_class, condition_opponent_ship_class_not, "
+            "condition_defender_is_npc_hostile, round_cap. "
             "combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md."
         ),
         "entries": dict(sorted(entries.items(), key=lambda kv: int(kv[0]))),

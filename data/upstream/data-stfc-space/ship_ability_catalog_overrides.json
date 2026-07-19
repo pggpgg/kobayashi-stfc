@@ -111,6 +111,23 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "values_scale_with_ship_level": true
+    },
+    "1905773933": {
+      "timing": "combat_begin",
+      "effect_type": "attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true
+    },
+    "985810609": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true
     }
   }
 }
