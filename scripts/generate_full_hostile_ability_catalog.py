@@ -908,6 +908,103 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             )
         return dict(NOOP), "q_trials_flavor"
 
+    # ── other_review triage slice (backlog item 12, 2026-07-19) ──────────────────────────
+
+    # Exploitation / Pre-Assimilation Tactics (loca 35014-16 / 36008-10): "Increases damage
+    # against {Interceptors|Battleships|Explorers} by {0:#.#%} for the first 5 rounds of
+    # combat." Counter-fire damage bonus gated on the ATTACKING player's hull class;
+    # {0:#.#%} → upstream value is a fraction (values[0] = 1 → +100%); rc → RoundRange 1..=5.
+    ship_class_damage = re.search(
+        r"increases damage against (interceptor|battleship|explorer)s by", p
+    )
+    if ship_class_damage and rc is not None:
+        return m(
+            "combat_begin",
+            "attack_multiplier",
+            value_is_percentage=not frac,
+            ignore_upstream_value_is_percentage=frac,
+            condition_attacker_ship_type=ship_class_damage.group(1),
+            _bucket="ship_class_damage_combat",
+        )
+
+    # Ravager's Lance (loca 52051-56): "Freebooters have a buff of +{500|1500}% to all their
+    # piercing stats." Counter-fire pierce percentage multiplier (Pen of Kahless hook,
+    # ×(1+X)); upstream values are meaningful bonus multipliers matching the text (5 / 15).
+    if re.search(r"buff of \+\d+% to all their piercing stats", p):
+        return m(
+            "combat_begin",
+            "hostile_counter_pierce_multiplier",
+            value_is_percentage=False,
+            ignore_upstream_value_is_percentage=True,
+            _bucket="pierce_combat",
+        )
+
+    # Species 8472 Energy Focused Beam (loca 55050): charges from combat start, fires after
+    # N rounds destroying the opponent. hostile_lethal_end_of_round fires when
+    # round_index % interval == 0, so interval N = lethal at the END of round N — kill it
+    # within N-1 rounds or lose. Upstream values are all-zero; the mechanic is text-only.
+    beam = re.search(r"after (\d+) rounds the beam fires", p)
+    if beam and "destroy" in p:
+        return m(
+            "round_end",
+            "hostile_lethal_end_of_round",
+            round_interval=int(beam.group(1)),
+            round_cap=None,
+            _bucket="scheduled_lethal_combat",
+        )
+
+    # Q Trials Borg Defense Protocol α (loca 73050/73054): the Cutting Beam fires on the
+    # hostile's SECOND weapon of every round, dealing lethal damage. round_interval 1 would
+    # fire at the end of EVERY round including one where the attacker already destroyed the
+    # hostile (hostile_lethal_end_of_round has no defender-alive gate), turning legitimate
+    # round-1 kills into mutual-death losses — and weapon slot 2 already carries a flat
+    # 2M x 4/round component in the hostile record. Kept noop pending a defender-alive gate
+    # on the lethal hook (engine extension; see backlog item 12 leftovers).
+    if "cutting beam" in p and "every round" in p and "lethal damage" in p:
+        return dict(NOOP), "scheduled_lethal_review"
+
+    # Victory Is Life (loca 47001): post-victory hull restore — no in-combat effect.
+    if "fully restores hull health when victorious" in p:
+        return dict(NOOP), "post_combat_flavor"
+
+    # Shield Disruptors (loca 55049): every hostile weapon hit reduces the PLAYER's shield
+    # mitigation by 10% for 1 round. Needs a new DefenderOnHitStack stat + an ungated
+    # trigger — deferred engine-extension candidate (backlog item 12 leftovers); upstream
+    # values are real (0.10).
+    if "reduces the target ship" in p and "shield mitigation" in p:
+        return dict(NOOP), "on_hit_mitigation_review"
+
+    # Oppressive Resilience (loca 46001): stacking crit chance at the END of each round —
+    # needs hostile-side accumulate mechanics (engine work); deferred.
+    if "increases critical chance" in p and "at the end of each round" in p:
+        return dict(NOOP), "stacking_crit_review"
+
+    # Adapt, Overcome (loca 88101/03/05): fleet-composition (one of each hull class) +
+    # station-building gate — a multi-ship requirement outside the single-ship scenario.
+    if "unless the attacking player includes one of each ship type" in p:
+        return dict(NOOP), "fleet_composition_gate"
+
+    # Quantum Resonance Beam (loca 89101/03/05) / Evolutionary Assimilation (loca 89106):
+    # already modeled OUT of catalog (lane B — conqueror-borg hostile tags gate the
+    # quantum-beam / evo-assim instant-loss paths in src/combat/); the catalog rows stay
+    # noop so the lane is not double-applied.
+    if "immediately destroys any player ship that is not a borg sphere" in p:
+        return dict(NOOP), "conqueror_borg_lane_b"
+    if "evolutionary assimilation" in p and "officers are present" in p:
+        return dict(NOOP), "conqueror_borg_lane_b"
+
+    # Gravimetric Torpedoes (loca 51050): narrative Foreknowledge / Vi'dar Talios mechanic,
+    # no in-combat scalar to model.
+    if "foreknowledge" in p and "borg" in p:
+        return dict(NOOP), "borg_cube_flavor"
+
+    # Reflections (loca 69501): "On round start against players … Assimilate" — PvP-scoped
+    # (the existing PvP guard keys on "enemy player", which this wording misses).
+    if "against players" in p and "assimilate" in p:
+        return dict(NOOP), "pvp_player_target"
+
+    # ── end item-12 slice ─────────────────────────────────────────────────────────────────
+
     # Shield-related (drain, restore) — defer unless clear pattern
     if "shield" in p and ("drain" in p or "decreas" in p):
         return dict(NOOP), "shield_combat_review"

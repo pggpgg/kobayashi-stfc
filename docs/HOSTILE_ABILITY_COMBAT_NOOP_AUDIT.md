@@ -87,6 +87,8 @@ Coverage: `tests/hostile_engagement_round_limit.rs`; resolver unit in `src/data/
 
 **Energy-Dampening Field (2026-07-19, backlog #5):** One `other_review` noop → the new `hostile_shield_damage_routing` (bucket `shield_routing_combat`). Breen Warship `3780549486` (loca 80601, 8 hostiles — Warship/Elite/Primarch): "directs 100% of incoming damage to its Shields and regenerates 25% of its shield health at the start of each round. This cannot be altered by officers, Forbidden Tech, etc." Resolved out of band at combat setup (`PreCombatSetup.defender_shield_damage_routing_regen`): while routing is active every outbound damage term — per-shot weapon fire (scalar and SIMD lanes), round-end bonus/burning, combat-end — is split with effective shield mitigation **1.0**, so everything lands in the shield pool and only overflow past remaining SHP spills to hull (`apply_shield_hull_split`'s existing overflow semantics); at the start of each round the defender regains 25% of MAX shield HP, clamped to max. No RNG. Sustained DPS below the 25%/round break-even therefore never touches hull and times out (a loss, DESIGN.md §4.4); burst above the pool + regen breaks through. **Bypass immunity with a designed-counter carve-out:** the per-hit officer/FT `shield_mitigation_bypass` accumulator channel is ignored while routing is active; only `CrewSeat::Ship` bypass seats whose condition names the defender's hostile tags (U.S.S. Vengeance **Advanced Sabotage**, `breen_warship`-gated — the in-game counter to this exact mechanic) fold into the routing override at setup, sending their fraction of damage straight to hull. Upstream `values[]` are noise (uniform 50s); the text hardcodes 100%/25%, so the generator pins `value_override: 0.25` (regex on "regenerates N% of its shield health"). Coverage: `tests/hostile_breen_energy_dampening.rs` (8 tests incl. exact regen arithmetic and both carve-out directions).
 
+**`other_review` triage slice (2026-07-19, backlog #12):** The remaining 271-id bucket collapses into 29 loca-text families; this pass swept all of them except the item-6 Temporal Dreadnought pair. **Modeled (181 ids / 204 instances, existing hooks only — no engine changes):** *Exploitation* ×3 (loca 35014–16) + *Pre-Assimilation Tactics* ×3 (loca 36008–10), 102 ids / 132 instances → `attack_multiplier` gated on the attacking player's hull class (`condition_attacker_ship_type`) with `round_cap: 5` (`{0:#.#%}` fraction, `values[0] = 1` → deterministic ×2 counter-fire damage vs the named class for rounds 1–5); *Ravager's Lance* (loca 52051–56), 48 ids / 48 instances → `hostile_counter_pierce_multiplier` from meaningful upstream values (+500% → 5, +1500% → 15); *Energy Focused Beam* (loca 55050), 31 ids / 31 instances → `hostile_lethal_end_of_round` with `round_interval: 8` (the Species 8472 beam destroys the attacker at the end of round 8 — kill it in ≤7 rounds; the mutual-death edge at exactly round 8 matches the No Mercy precedent). **Named noop buckets (88 ids / 149 instances):** Victory Is Life → `post_combat_flavor` (post-victory heal); Shield Disruptors → `on_hit_mitigation_review` (needs a new on-hit stat + ungated trigger — engine-extension candidate, upstream values are real 0.10); Oppressive Resilience → `stacking_crit_review` (round-end stacking crit needs accumulate mechanics); Defense Protocol α → `scheduled_lethal_review` (a `round_interval: 1` lethal would turn legitimate round-1 kills into mutual-death losses because `hostile_lethal_end_of_round` has no defender-alive gate — engine-extension candidate; weapon slot 2 already carries a flat 2M×4/round component); Adapt, Overcome → `fleet_composition_gate` (multi-ship + station-building requirement); Quantum Resonance Beam + Evolutionary Assimilation → `conqueror_borg_lane_b` (already modeled out of catalog via the conqueror-borg hostile tags — carrier tags verified; rows stay noop so the lane is not double-applied); Gravimetric Torpedoes → `borg_cube_flavor`; Reflections → `pvp_player_target` ("against players" wording missed the existing `enemy player` guard). Coverage: `tests/hostile_other_review_triage.rs`.
+
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
 
 | Ability id | Hostiles | Primary effect | Notes |
@@ -138,23 +140,24 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 982 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 522 |
-| `combat_noop` (catalogued, inert in sim) | 460 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 703 |
+| `combat_noop` (catalogued, inert in sim) | 279 |
 
-**Modeled effect types (522 ids, refreshed 2026-07-19):**
+**Modeled effect types (703 ids, refreshed 2026-07-19):**
 
 | `effect_type` | Ids |
 | --- | ---: |
+| `hostile_counter_pierce_multiplier` | 130 |
+| `attack_multiplier` | 106 |
 | `isolytic_damage` | 87 |
 | `isolytic_defense` | 81 |
 | `isolytic_cascade` | 1 |
 | `shield_regen_max_fraction` | 82 |
-| `hostile_counter_pierce_multiplier` | 82 |
 | `crit_damage` | 82 |
 | `apex_barrier` | 54 |
+| `hostile_lethal_end_of_round` | 32 |
 | `hostile_hyperthermic_decay` | 22 |
 | `hostile_lethal_unless_attacker_faction` | 5 |
-| `attack_multiplier` | 4 |
 | `hostile_crit_damage_reduction` | 3 |
 | `hostile_lethal_combat_begin` | 2 |
 | `crit_chance` (+ `crit_damage` / `hostile_crit_damage_floor` extra seats) | 2 |
@@ -164,7 +167,6 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | `hostile_isolytic_vulnerability` | 1 |
 | `hostile_engagement_round_limit` | 1 |
 | `hostile_shield_damage_routing` | 1 |
-| `hostile_lethal_end_of_round` | 1 |
 | `defender_on_hit_weapon_damage_stack` | 1 |
 | `defender_on_hit_crit_chance_stack` | 1 |
 | `hull_breach` | 1 |
@@ -176,7 +178,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 - PvP player targeting (2 ids, 388 instances): Deadlock / Dismantlement — default PvE path is ship vs NPC hostile (Hole Puncher / Immolator modeled 2026-07-08)
 - Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (271 ids, 353 instances): Temporal Dreadnought regen, etc. (Plausible Deniability + Q Junior's Twist modeled 2026-07-15; Energy-Dampening Field 2026-07-19)
+- `other_review` (2 ids, 18 instances): only the item-6 Temporal Dreadnought pair remains (2026-07-19 triage slice swept the other 269 ids — see header)
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -190,7 +192,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Apex barrier | 54 | 368 | **Modeled** — `combat_begin` + `apex_barrier` |
 | Crit multi-stat | 2 | 378 | **Modeled** — Critical Training + Ruthless Pursuit emit `crit_chance` plus `crit_damage` / `hostile_crit_damage_floor` extra seats |
 | Crit damage floor | 2 | 273 | **Modeled** — Diverted Power emits `hostile_crit_damage_floor` |
-| Pierce first-N-rounds | 82 | 142 | **Modeled (2026-07-08)** — Pen of Kahless → `hostile_counter_pierce_multiplier` + `round_cap` (was "Defense stat review") |
+| Pierce (first-N-rounds + flat buffs) | 130 | 190 | **Modeled (2026-07-08 / 2026-07-19)** — Pen of Kahless → `hostile_counter_pierce_multiplier` + `round_cap`; Ravager's Lance flat +500%/+1500% tiers added by the item-12 slice |
 | Crit first-N-rounds | 82 | 142 | **Modeled (2026-07-08)** — Revolutionary Spirit → `crit_damage` + `round_cap` |
 | Hyperthermic decay per-round | 18 | 108 | **Modeled (2026-07-08)** — Psionic Assault → `round_start` + `hostile_hyperthermic_decay` |
 | Burning at combat start | 1 | 53 | **Modeled (2026-07-08)** — Persistence Hunter → `combat_begin` + `burning` on the player |
@@ -201,6 +203,15 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Shield regen first-N-rounds | 82 | 140 | **Modeled (2026-07-15)** — Plausible Deniability → `shield_regen_max_fraction` @ `round_end` + `round_cap: 5` (fraction of max SHP per round) |
 | Engagement round limit | 1 | 23 | **Modeled (2026-07-15)** — Q Junior's Twist (loca 73055) → `hostile_engagement_round_limit` 20; still-alive hostile at the cap = timeout loss |
 | Shield-damage routing (Breen) | 1 | 8 | **Modeled (2026-07-19)** — Energy-Dampening Field → `hostile_shield_damage_routing` 0.25; all damage to shields (overflow spills), 25%/round regen, officer/FT bypass immune, Vengeance tag-gated hull bypass carved out |
+| Ship-class-gated damage | 102 | 132 | **Modeled (2026-07-19)** — Exploitation / Pre-Assimilation Tactics → `attack_multiplier` + `condition_attacker_ship_type` + `round_cap: 5` (×2 counter-fire vs the named player hull class, rounds 1–5) |
+| Scheduled lethal (charged beam) | 31 | 31 | **Modeled (2026-07-19)** — Energy Focused Beam → `hostile_lethal_end_of_round` `round_interval: 8` (kill within 7 rounds or lose) |
+| Scheduled lethal review | 2 | 10 | **Keep noop** — Defense Protocol α: `round_interval: 1` would make round-1 kills mutual-death losses (no defender-alive gate on the lethal hook); engine-extension candidate |
+| Post-combat flavor | 34 | 34 | **Keep noop** — Victory Is Life (post-victory hull restore, no in-combat effect) |
+| On-hit mitigation review | 31 | 31 | **Keep noop** — Shield Disruptors (−10% player SM per hit, 1 round); needs a new on-hit stat + ungated trigger; engine-extension candidate |
+| Stacking crit review | 7 | 7 | **Keep noop** — Oppressive Resilience (round-end stacking crit chance); needs hostile-side accumulate mechanics |
+| Fleet composition gate | 3 | 13 | **Keep noop** — Adapt, Overcome (one-of-each-hull-class + Warp Dive Bar built; multi-ship scope) |
+| Conqueror Borg lane B | 4 | 17 | **Keep noop in catalog** — Quantum Resonance Beam / Evolutionary Assimilation are modeled out of catalog via hostile tags (rows stay noop so the lane is not double-applied) |
+| Borg cube flavor | 6 | 6 | **Keep noop** — Gravimetric Torpedoes (narrative Foreknowledge / Vi'dar Talios mechanic) |
 | Q Trials flavor (1v1) | 1 | 23 | **Keep noop** — Q Junior's Twist 1v1 variant (loca 73051), no modelable single-ship mechanic |
 | Player hull breach at combat start | 1 | 17 | **Modeled (2026-07-08)** — Hole Puncher → `hull_breach` on the player for rest of combat |
 | Player burning at combat start (Immolator) | 1 | 17 | **Modeled (2026-07-08)** — Immolator → `burning` on the player for rest of combat |
@@ -210,7 +221,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 271 | 353 | **Shard triage** — extend generator or overrides per pattern |
+| Other / review | 2 | 18 | **Item 6** — only the Temporal Dreadnought pair remains (Charged Quantum Hull Repair + Neutralised Shift) |
 
 ---
 
