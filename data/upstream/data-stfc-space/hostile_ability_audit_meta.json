@@ -13,7 +13,7 @@
       "effect_type": "isolytic_defense"
     },
     "6284447": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1848004292",
@@ -22,13 +22,13 @@
       "effect_type": "combat_noop"
     },
     "6708501": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "2217023162",
       "sample_level": 62,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "8698875": {
       "bucket": "apex_combat",
@@ -76,13 +76,13 @@
       "effect_type": "isolytic_defense"
     },
     "23454293": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "434295500",
       "sample_level": 59,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "31794032": {
       "bucket": "isolytic_combat",
@@ -94,7 +94,7 @@
       "effect_type": "isolytic_defense"
     },
     "36466459": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3142082698",
@@ -121,13 +121,13 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "67301964": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "3375010649",
       "sample_level": 55,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "75877953": {
       "bucket": "pierce_combat",
@@ -139,13 +139,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "82618606": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "3073530330",
       "sample_level": 51,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "84457918": {
       "bucket": "crit_combat",
@@ -184,7 +184,7 @@
       "effect_type": "isolytic_defense"
     },
     "95624470": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3671684035",
@@ -202,13 +202,13 @@
       "effect_type": "apex_barrier"
     },
     "104211507": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "1203412547",
       "sample_level": 38,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "106286813": {
       "bucket": "crit_combat",
@@ -238,22 +238,22 @@
       "effect_type": "isolytic_damage"
     },
     "117227122": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "1892438128",
       "sample_level": 35,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "122934471": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2935868428",
       "sample_level": 60,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "123695932": {
       "bucket": "pierce_combat",
@@ -346,13 +346,13 @@
       "effect_type": "hostile_crit_damage_reduction"
     },
     "155308381": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "192387181",
       "sample_level": 43,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "157363054": {
       "bucket": "apex_combat",
@@ -364,7 +364,7 @@
       "effect_type": "apex_barrier"
     },
     "163305675": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "695130461",
@@ -382,22 +382,22 @@
       "effect_type": "hostile_lethal_combat_begin"
     },
     "169505753": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "3463250137",
       "sample_level": 43,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "174528555": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "1374041280",
       "sample_level": 67,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "179038787": {
       "bucket": "apex_combat",
@@ -409,7 +409,7 @@
       "effect_type": "apex_barrier"
     },
     "183835698": {
-      "bucket": "other_review",
+      "bucket": "conqueror_borg_lane_b",
       "loca_id": 89101,
       "hostile_count": 3,
       "sample_hostile_id": "2813867447",
@@ -445,7 +445,7 @@
       "effect_type": "crit_damage"
     },
     "213041740": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3753600618",
@@ -463,7 +463,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "215852350": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1994996613",
@@ -499,13 +499,13 @@
       "effect_type": "apex_barrier"
     },
     "242599264": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "2534356333",
       "sample_level": 55,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "249152341": {
       "bucket": "pierce_combat",
@@ -535,7 +535,7 @@
       "effect_type": "isolytic_defense"
     },
     "263488486": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3094800473",
@@ -580,22 +580,22 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "306487042": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3153281329",
       "sample_level": 42,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "310178995": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "1221207870",
       "sample_level": 63,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "319956703": {
       "bucket": "armada_scope",
@@ -616,13 +616,13 @@
       "effect_type": "isolytic_damage"
     },
     "322843557": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "3292967341",
       "sample_level": 58,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "324656870": {
       "bucket": "armada_scope",
@@ -652,13 +652,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "332664960": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3679325415",
       "sample_level": 49,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "333094448": {
       "bucket": "crit_combat",
@@ -670,13 +670,13 @@
       "effect_type": "crit_damage"
     },
     "342269298": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "1168810269",
       "sample_level": 53,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "348165139": {
       "bucket": "outpost_scope",
@@ -706,7 +706,7 @@
       "effect_type": "combat_noop"
     },
     "353489227": {
-      "bucket": "other_review",
+      "bucket": "borg_cube_flavor",
       "loca_id": 51050,
       "hostile_count": 1,
       "sample_hostile_id": "2896745013",
@@ -715,13 +715,13 @@
       "effect_type": "combat_noop"
     },
     "354606680": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "1362229790",
       "sample_level": 56,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "356773633": {
       "bucket": "crit_combat",
@@ -769,7 +769,7 @@
       "effect_type": "apex_barrier"
     },
     "373738713": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2223057037",
@@ -787,16 +787,16 @@
       "effect_type": "crit_damage"
     },
     "375941532": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "611428494",
       "sample_level": 55,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "376049433": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1329692939",
@@ -850,13 +850,13 @@
       "effect_type": "crit_damage"
     },
     "398205826": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "1112612723",
       "sample_level": 67,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "406628692": {
       "bucket": "isolytic_combat",
@@ -877,13 +877,13 @@
       "effect_type": "combat_noop"
     },
     "417738358": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "893920041",
       "sample_level": 53,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "417858229": {
       "bucket": "isolytic_combat",
@@ -913,13 +913,13 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "431717803": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "345118757",
       "sample_level": 51,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "436377471": {
       "bucket": "crit_combat",
@@ -994,13 +994,13 @@
       "effect_type": "apex_barrier"
     },
     "461421820": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "198109251",
       "sample_level": 51,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "462471550": {
       "bucket": "isolytic_combat",
@@ -1066,13 +1066,13 @@
       "effect_type": "combat_noop"
     },
     "498648242": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "3311561275",
       "sample_level": 58,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "508229635": {
       "bucket": "apex_combat",
@@ -1084,13 +1084,13 @@
       "effect_type": "apex_barrier"
     },
     "515549269": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "1683863135",
       "sample_level": 56,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "517068498": {
       "bucket": "isolytic_combat",
@@ -1147,13 +1147,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "544870924": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3992193472",
       "sample_level": 46,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "553151777": {
       "bucket": "apex_combat",
@@ -1174,22 +1174,22 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "560780010": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "1274986483",
       "sample_level": 53,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "560862974": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "516588665",
       "sample_level": 59,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "562714114": {
       "bucket": "crit_combat",
@@ -1210,13 +1210,13 @@
       "effect_type": "isolytic_defense"
     },
     "567505052": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "884849156",
       "sample_level": 54,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "567961927": {
       "bucket": "shield_regen_combat",
@@ -1228,7 +1228,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "574280882": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1152850581",
@@ -1264,7 +1264,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "587718019": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "51758524",
@@ -1291,13 +1291,13 @@
       "effect_type": "combat_noop"
     },
     "597006792": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "1970403096",
       "sample_level": 60,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "598222571": {
       "bucket": "outpost_scope",
@@ -1336,13 +1336,13 @@
       "effect_type": "combat_noop"
     },
     "623012318": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "2833358414",
       "sample_level": 59,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "626271424": {
       "bucket": "apex_combat",
@@ -1354,7 +1354,7 @@
       "effect_type": "apex_barrier"
     },
     "628296683": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2713698978",
@@ -1363,13 +1363,13 @@
       "effect_type": "combat_noop"
     },
     "633791558": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "1637582882",
       "sample_level": 62,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "636056044": {
       "bucket": "pierce_combat",
@@ -1390,13 +1390,13 @@
       "effect_type": "isolytic_defense"
     },
     "640959276": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "2399843975",
       "sample_level": 70,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "647021341": {
       "bucket": "isolytic_combat",
@@ -1408,13 +1408,13 @@
       "effect_type": "isolytic_defense"
     },
     "652222683": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "2196547097",
       "sample_level": 60,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "652442242": {
       "bucket": "apex_combat",
@@ -1454,16 +1454,16 @@
       "overridden": true
     },
     "658172375": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "2079029824",
       "sample_level": 56,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "663345959": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "3760222388",
@@ -1482,7 +1482,7 @@
       "overridden": true
     },
     "672374424": {
-      "bucket": "other_review",
+      "bucket": "borg_cube_flavor",
       "loca_id": 51050,
       "hostile_count": 1,
       "sample_hostile_id": "987668316",
@@ -1536,7 +1536,7 @@
       "effect_type": "isolytic_damage"
     },
     "722784906": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3673092396",
@@ -1545,13 +1545,13 @@
       "effect_type": "combat_noop"
     },
     "725094130": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "4282066159",
       "sample_level": 40,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "725282893": {
       "bucket": "shield_regen_combat",
@@ -1626,7 +1626,7 @@
       "effect_type": "combat_noop"
     },
     "750815541": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_review",
       "loca_id": 73054,
       "hostile_count": 5,
       "sample_hostile_id": "1366188504",
@@ -1662,7 +1662,7 @@
       "effect_type": "crit_damage"
     },
     "765792252": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "879718917",
@@ -1716,22 +1716,22 @@
       "effect_type": "hostile_crit_damage_floor"
     },
     "792207871": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "3612722009",
       "sample_level": 57,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "796770133": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2682232620",
       "sample_level": 39,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "798446838": {
       "bucket": "crit_combat",
@@ -1824,22 +1824,22 @@
       "effect_type": "combat_noop"
     },
     "855529086": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "1568770974",
       "sample_level": 50,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "858941878": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "774295170",
       "sample_level": 52,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "877244657": {
       "bucket": "pierce_combat",
@@ -1851,7 +1851,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "887524387": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "4046646104",
@@ -1878,7 +1878,7 @@
       "effect_type": "isolytic_damage"
     },
     "900383452": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2082423663",
@@ -1905,13 +1905,13 @@
       "effect_type": "combat_noop"
     },
     "917025890": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "3035332912",
       "sample_level": 53,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "918418075": {
       "bucket": "armada_scope",
@@ -1950,13 +1950,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "933340679": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "1661429319",
       "sample_level": 71,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "934639236": {
       "bucket": "aggregation_hyperthermic_manual",
@@ -1978,7 +1978,7 @@
       "effect_type": "combat_noop"
     },
     "951569010": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "4127674789",
@@ -2032,7 +2032,7 @@
       "effect_type": "apex_barrier"
     },
     "968215138": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3075666847",
@@ -2050,7 +2050,7 @@
       "effect_type": "isolytic_defense"
     },
     "977137700": {
-      "bucket": "other_review",
+      "bucket": "borg_cube_flavor",
       "loca_id": 51050,
       "hostile_count": 1,
       "sample_hostile_id": "307311846",
@@ -2059,7 +2059,7 @@
       "effect_type": "combat_noop"
     },
     "984920114": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "218968372",
@@ -2068,7 +2068,7 @@
       "effect_type": "combat_noop"
     },
     "985763926": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "4234443975",
@@ -2113,22 +2113,22 @@
       "effect_type": "combat_noop"
     },
     "1018440844": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "2256715049",
       "sample_level": 60,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1020514494": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "2899428840",
       "sample_level": 53,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1023494604": {
       "bucket": "isolytic_combat",
@@ -2149,13 +2149,13 @@
       "effect_type": "isolytic_defense"
     },
     "1030495842": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "1354240117",
       "sample_level": 53,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1033243562": {
       "bucket": "armada_scope",
@@ -2203,13 +2203,13 @@
       "effect_type": "crit_damage"
     },
     "1059081556": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2784371429",
       "sample_level": 40,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1065422632": {
       "bucket": "pierce_combat",
@@ -2230,13 +2230,13 @@
       "effect_type": "combat_noop"
     },
     "1070692923": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "2694430532",
       "sample_level": 58,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1070977437": {
       "bucket": "isolytic_combat",
@@ -2293,22 +2293,22 @@
       "effect_type": "crit_damage"
     },
     "1097075322": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "982302201",
       "sample_level": 50,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1100812073": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2765364323",
       "sample_level": 45,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1104294321": {
       "bucket": "q_trials_flavor",
@@ -2347,7 +2347,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1121381480": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2335958199",
@@ -2410,13 +2410,13 @@
       "effect_type": "isolytic_damage"
     },
     "1158315257": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "1652365466",
       "sample_level": 54,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1161679300": {
       "bucket": "isolytic_combat",
@@ -2428,7 +2428,7 @@
       "effect_type": "isolytic_defense"
     },
     "1164521798": {
-      "bucket": "other_review",
+      "bucket": "fleet_composition_gate",
       "loca_id": 88105,
       "hostile_count": 5,
       "sample_hostile_id": "1543801118",
@@ -2500,13 +2500,13 @@
       "effect_type": "isolytic_damage"
     },
     "1204870252": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "3711389747",
       "sample_level": 50,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1206267116": {
       "bucket": "faction_gate_lethal",
@@ -2518,34 +2518,34 @@
       "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "1207693099": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "3189527841",
       "sample_level": 54,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1219163911": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "860870732",
       "sample_level": 70,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1224543235": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "1265230501",
       "sample_level": 58,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1229610926": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2126934434",
@@ -2599,22 +2599,22 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "1236106151": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "2649738786",
       "sample_level": 55,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1250744709": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "3713939962",
       "sample_level": 56,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1256048139": {
       "bucket": "crit_combat",
@@ -2644,13 +2644,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1266162710": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "1930223488",
       "sample_level": 51,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1271201639": {
       "bucket": "shield_regen_combat",
@@ -2671,7 +2671,7 @@
       "effect_type": "hostile_crit_damage_reduction"
     },
     "1273665813": {
-      "bucket": "other_review",
+      "bucket": "conqueror_borg_lane_b",
       "loca_id": 89105,
       "hostile_count": 6,
       "sample_hostile_id": "3021977695",
@@ -2734,13 +2734,13 @@
       "effect_type": "crit_damage"
     },
     "1295181079": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "2369749889",
       "sample_level": 45,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1302946336": {
       "bucket": "isolytic_combat",
@@ -2770,16 +2770,16 @@
       "effect_type": "isolytic_defense"
     },
     "1316294838": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "2010359187",
       "sample_level": 40,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1318141273": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "4033459870",
@@ -2788,7 +2788,7 @@
       "effect_type": "combat_noop"
     },
     "1320721033": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2675996337",
@@ -2815,13 +2815,13 @@
       "effect_type": "isolytic_damage"
     },
     "1341103972": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "1242815889",
       "sample_level": 57,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1343118777": {
       "bucket": "apex_combat",
@@ -2986,13 +2986,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1421713322": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "2845463508",
       "sample_level": 51,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1424701255": {
       "bucket": "armada_scope",
@@ -3058,22 +3058,22 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "1454405135": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2967277364",
       "sample_level": 43,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1454558038": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "3641498830",
       "sample_level": 48,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1461510348": {
       "bucket": "apex_combat",
@@ -3085,13 +3085,13 @@
       "effect_type": "apex_barrier"
     },
     "1468132362": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "3540631017",
       "sample_level": 52,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1479243483": {
       "bucket": "shield_regen_combat",
@@ -3148,13 +3148,13 @@
       "effect_type": "combat_noop"
     },
     "1515413014": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "1155256648",
       "sample_level": 53,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1517014049": {
       "bucket": "armada_scope",
@@ -3184,13 +3184,13 @@
       "effect_type": "crit_damage"
     },
     "1521244938": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "1940627084",
       "sample_level": 60,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1524408358": {
       "bucket": "crit_combat",
@@ -3202,16 +3202,16 @@
       "effect_type": "crit_damage"
     },
     "1528676120": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "720443256",
       "sample_level": 59,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1529330893": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2064854936",
@@ -3229,13 +3229,13 @@
       "effect_type": "apex_barrier"
     },
     "1535250409": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "313942623",
       "sample_level": 52,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1537349722": {
       "bucket": "outpost_scope",
@@ -3256,13 +3256,13 @@
       "effect_type": "combat_noop"
     },
     "1550812445": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "1462659943",
       "sample_level": 58,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1552909495": {
       "bucket": "outpost_scope",
@@ -3274,7 +3274,7 @@
       "effect_type": "combat_noop"
     },
     "1558727613": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1538839444",
@@ -3283,7 +3283,7 @@
       "effect_type": "combat_noop"
     },
     "1562590199": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "565189938",
@@ -3346,13 +3346,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "1598792156": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "1866227988",
       "sample_level": 55,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1602409901": {
       "bucket": "armada_scope",
@@ -3373,13 +3373,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1614080299": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "691861484",
       "sample_level": 51,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1617145485": {
       "bucket": "crit_combat",
@@ -3445,13 +3445,13 @@
       "effect_type": "isolytic_damage"
     },
     "1648682615": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2837068447",
       "sample_level": 35,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1651219904": {
       "bucket": "faction_gate_lethal",
@@ -3481,13 +3481,13 @@
       "effect_type": "crit_damage"
     },
     "1675628310": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "197527720",
       "sample_level": 62,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1683274562": {
       "bucket": "armada_scope",
@@ -3499,7 +3499,7 @@
       "effect_type": "combat_noop"
     },
     "1685418579": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "145288685",
@@ -3580,13 +3580,13 @@
       "effect_type": "isolytic_damage"
     },
     "1722939248": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "1510705485",
       "sample_level": 47,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1725866349": {
       "bucket": "crit_combat",
@@ -3608,13 +3608,13 @@
       "overridden": true
     },
     "1729731395": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "2441772837",
       "sample_level": 50,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1745201100": {
       "bucket": "isolytic_combat",
@@ -3626,13 +3626,13 @@
       "effect_type": "isolytic_damage"
     },
     "1745672917": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "2571008331",
       "sample_level": 53,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1755868978": {
       "bucket": "crit_combat",
@@ -3662,7 +3662,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "1761033105": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3434673645",
@@ -3725,13 +3725,13 @@
       "effect_type": "combat_noop"
     },
     "1791966246": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "1389342785",
       "sample_level": 56,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1795139232": {
       "bucket": "armada_scope",
@@ -3752,7 +3752,7 @@
       "effect_type": "isolytic_damage"
     },
     "1800330789": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3158185203",
@@ -3779,7 +3779,7 @@
       "effect_type": "apex_barrier"
     },
     "1809878057": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1891338783",
@@ -3833,22 +3833,22 @@
       "effect_type": "isolytic_defense"
     },
     "1843676315": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "3195425892",
       "sample_level": 69,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1852892615": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "3705615381",
       "sample_level": 55,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1852997150": {
       "bucket": "shield_regen_combat",
@@ -3878,13 +3878,13 @@
       "effect_type": "crit_damage"
     },
     "1862511209": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "686932469",
       "sample_level": 50,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1864696978": {
       "bucket": "armada_scope",
@@ -4013,7 +4013,7 @@
       "effect_type": "combat_noop"
     },
     "1911566426": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2505100039",
@@ -4022,22 +4022,22 @@
       "effect_type": "combat_noop"
     },
     "1927739772": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "1542854772",
       "sample_level": 51,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "1940584191": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "2557640440",
       "sample_level": 53,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1947681300": {
       "bucket": "isolytic_combat",
@@ -4049,13 +4049,13 @@
       "effect_type": "isolytic_damage"
     },
     "1951732172": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "3369868971",
       "sample_level": 60,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1952060049": {
       "bucket": "isolytic_combat",
@@ -4067,7 +4067,7 @@
       "effect_type": "isolytic_damage"
     },
     "1963739289": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1760912096",
@@ -4076,13 +4076,13 @@
       "effect_type": "combat_noop"
     },
     "1964247131": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "3001553529",
       "sample_level": 61,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1967899808": {
       "bucket": "shield_regen_combat",
@@ -4094,7 +4094,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "1972507854": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3694195343",
@@ -4121,13 +4121,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1986478644": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "76840757",
       "sample_level": 60,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "1994532183": {
       "bucket": "isolytic_combat",
@@ -4148,13 +4148,13 @@
       "effect_type": "combat_noop"
     },
     "1999051629": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "4201303530",
       "sample_level": 55,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2012849567": {
       "bucket": "isolytic_combat",
@@ -4211,22 +4211,22 @@
       "effect_type": "combat_noop"
     },
     "2030718251": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "4129171693",
       "sample_level": 40,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "2036686101": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "516811158",
       "sample_level": 61,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2038803748": {
       "bucket": "crit_combat",
@@ -4256,13 +4256,13 @@
       "effect_type": "crit_damage"
     },
     "2044202743": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "1951781722",
       "sample_level": 59,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2052990014": {
       "bucket": "crit_combat",
@@ -4283,16 +4283,16 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "2055765509": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "3071602141",
       "sample_level": 57,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2062884166": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1696616155",
@@ -4301,13 +4301,13 @@
       "effect_type": "combat_noop"
     },
     "2069932064": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "2195080704",
       "sample_level": 48,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2074720718": {
       "bucket": "isolytic_combat",
@@ -4319,31 +4319,31 @@
       "effect_type": "isolytic_damage"
     },
     "2075737298": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "3203190904",
       "sample_level": 38,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2077059795": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "1497289216",
       "sample_level": 51,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2082805390": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "1087256760",
       "sample_level": 63,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2086163012": {
       "bucket": "armada_scope",
@@ -4364,13 +4364,13 @@
       "effect_type": "apex_barrier"
     },
     "2091579274": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "3536322995",
       "sample_level": 68,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2091633650": {
       "bucket": "isolytic_combat",
@@ -4409,7 +4409,7 @@
       "effect_type": "isolytic_damage"
     },
     "2098195473": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "4124198801",
@@ -4427,13 +4427,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2105941894": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "2969586462",
       "sample_level": 69,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2110501802": {
       "bucket": "armada_scope",
@@ -4463,13 +4463,13 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "2128670118": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "3687135035",
       "sample_level": 65,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2130531733": {
       "bucket": "isolytic_combat",
@@ -4518,22 +4518,22 @@
       "overridden": true
     },
     "2160121095": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "4064468168",
       "sample_level": 56,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2162628154": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "118232372",
       "sample_level": 66,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2174617864": {
       "bucket": "armada_scope",
@@ -4545,31 +4545,31 @@
       "effect_type": "combat_noop"
     },
     "2174890781": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "787401105",
       "sample_level": 51,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2175571757": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "1405673104",
       "sample_level": 65,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2179945265": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "629693511",
       "sample_level": 57,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2183267359": {
       "bucket": "armada_scope",
@@ -4581,13 +4581,13 @@
       "effect_type": "combat_noop"
     },
     "2186180322": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "4181596967",
       "sample_level": 57,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2193458493": {
       "bucket": "hyperthermic_decay_combat",
@@ -4680,7 +4680,7 @@
       "effect_type": "crit_damage"
     },
     "2237185391": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3219364467",
@@ -4743,7 +4743,7 @@
       "effect_type": "combat_noop"
     },
     "2251952295": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1356984695",
@@ -4752,13 +4752,13 @@
       "effect_type": "combat_noop"
     },
     "2252014445": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "298788050",
       "sample_level": 45,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2264420026": {
       "bucket": "armada_scope",
@@ -4797,22 +4797,22 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "2276724525": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "3736593676",
       "sample_level": 67,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2284207482": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "1902922567",
       "sample_level": 63,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2291206649": {
       "bucket": "crit_multi_stat_modeled",
@@ -4869,13 +4869,13 @@
       "effect_type": "apex_barrier"
     },
     "2323961142": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "3186572907",
       "sample_level": 70,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2332777769": {
       "bucket": "pierce_combat",
@@ -4914,7 +4914,7 @@
       "effect_type": "apex_barrier"
     },
     "2345379113": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "34623937",
@@ -4941,7 +4941,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2367779009": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2791573581",
@@ -4950,13 +4950,13 @@
       "effect_type": "combat_noop"
     },
     "2369619563": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "367296919",
       "sample_level": 71,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2371501754": {
       "bucket": "shield_regen_combat",
@@ -4968,13 +4968,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "2372297685": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "2571159713",
       "sample_level": 60,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2376733751": {
       "bucket": "isolytic_combat",
@@ -5022,7 +5022,7 @@
       "effect_type": "isolytic_defense"
     },
     "2385536989": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2345625121",
@@ -5049,13 +5049,13 @@
       "effect_type": "isolytic_defense"
     },
     "2396253855": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "410074819",
       "sample_level": 54,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2420808243": {
       "bucket": "armada_scope",
@@ -5103,31 +5103,31 @@
       "effect_type": "combat_noop"
     },
     "2441600618": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "1663855787",
       "sample_level": 54,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2442026344": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "2313949251",
       "sample_level": 68,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2442718669": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "1926949147",
       "sample_level": 52,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2447761113": {
       "bucket": "apex_combat",
@@ -5175,16 +5175,16 @@
       "effect_type": "isolytic_defense"
     },
     "2467180610": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "2394190564",
       "sample_level": 61,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2471610569": {
-      "bucket": "other_review",
+      "bucket": "fleet_composition_gate",
       "loca_id": 88103,
       "hostile_count": 5,
       "sample_hostile_id": "1121284456",
@@ -5202,7 +5202,7 @@
       "effect_type": "crit_damage"
     },
     "2481788113": {
-      "bucket": "other_review",
+      "bucket": "conqueror_borg_lane_b",
       "loca_id": 89103,
       "hostile_count": 6,
       "sample_hostile_id": "1379653470",
@@ -5220,13 +5220,13 @@
       "effect_type": "hostile_crit_damage_floor"
     },
     "2490276629": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "274638656",
       "sample_level": 60,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2490925371": {
       "bucket": "shield_regen_combat",
@@ -5283,7 +5283,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "2522855101": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "412291336",
@@ -5319,7 +5319,7 @@
       "effect_type": "isolytic_defense"
     },
     "2529148672": {
-      "bucket": "other_review",
+      "bucket": "borg_cube_flavor",
       "loca_id": 51050,
       "hostile_count": 1,
       "sample_hostile_id": "3574232379",
@@ -5337,13 +5337,13 @@
       "effect_type": "combat_noop"
     },
     "2532776007": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "2074659466",
       "sample_level": 69,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2537271250": {
       "bucket": "isolytic_combat",
@@ -5382,7 +5382,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2556197069": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1211676814",
@@ -5391,13 +5391,13 @@
       "effect_type": "combat_noop"
     },
     "2556216862": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3405617098",
       "sample_level": 51,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "2560325528": {
       "bucket": "weapon_damage_combat",
@@ -5446,13 +5446,13 @@
       "effect_type": "combat_noop"
     },
     "2593073040": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "480945050",
       "sample_level": 54,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2594656055": {
       "bucket": "isolytic_combat",
@@ -5491,13 +5491,13 @@
       "effect_type": "combat_noop"
     },
     "2621497293": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "4079329803",
       "sample_level": 55,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2630700770": {
       "bucket": "isolytic_combat",
@@ -5536,13 +5536,13 @@
       "effect_type": "isolytic_defense"
     },
     "2640216166": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "2669675029",
       "sample_level": 57,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2640287449": {
       "bucket": "aggregation_offense_manual",
@@ -5555,7 +5555,7 @@
       "overridden": true
     },
     "2643951824": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3020384814",
@@ -5582,13 +5582,13 @@
       "effect_type": "isolytic_damage"
     },
     "2649093634": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "951891481",
       "sample_level": 56,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2657382858": {
       "bucket": "armada_scope",
@@ -5681,13 +5681,13 @@
       "effect_type": "combat_noop"
     },
     "2688570084": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "3702921133",
       "sample_level": 55,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2689539427": {
       "bucket": "isolytic_combat",
@@ -5699,13 +5699,13 @@
       "effect_type": "isolytic_defense"
     },
     "2689650622": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "3445633140",
       "sample_level": 65,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2700653112": {
       "bucket": "armada_scope",
@@ -5735,13 +5735,13 @@
       "effect_type": "crit_damage"
     },
     "2723215231": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "1506690653",
       "sample_level": 68,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2732558015": {
       "bucket": "outpost_scope",
@@ -5789,22 +5789,22 @@
       "effect_type": "crit_damage"
     },
     "2757701912": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "3246706394",
       "sample_level": 52,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2767248573": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "1045630304",
       "sample_level": 51,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2769037272": {
       "bucket": "outpost_scope",
@@ -5852,16 +5852,16 @@
       "effect_type": "isolytic_defense"
     },
     "2785255697": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "1529268794",
       "sample_level": 59,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2785440358": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2756535714",
@@ -5933,7 +5933,7 @@
       "effect_type": "crit_damage"
     },
     "2810472756": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1491022781",
@@ -5996,7 +5996,7 @@
       "effect_type": "combat_noop"
     },
     "2846485559": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2673007389",
@@ -6014,13 +6014,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2852278773": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "833006423",
       "sample_level": 37,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "2855373168": {
       "bucket": "armada_scope",
@@ -6041,7 +6041,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2863086141": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "917316615",
@@ -6077,13 +6077,13 @@
       "effect_type": "isolytic_defense"
     },
     "2889405208": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "267818769",
       "sample_level": 52,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2900494005": {
       "bucket": "armada_scope",
@@ -6104,7 +6104,7 @@
       "effect_type": "combat_noop"
     },
     "2915775005": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2090833817",
@@ -6140,31 +6140,31 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "2925556291": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52056,
       "hostile_count": 1,
       "sample_hostile_id": "439930770",
       "sample_level": 54,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2926010577": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "2379133344",
       "sample_level": 53,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2927441711": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "2809354720",
       "sample_level": 58,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2936293636": {
       "bucket": "isolytic_combat",
@@ -6185,7 +6185,7 @@
       "effect_type": "combat_noop"
     },
     "2951109685": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1803622461",
@@ -6194,7 +6194,7 @@
       "effect_type": "combat_noop"
     },
     "2973184125": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2299800207",
@@ -6203,16 +6203,16 @@
       "effect_type": "combat_noop"
     },
     "2974433798": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "1171399672",
       "sample_level": 62,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "2977042158": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1081891879",
@@ -6356,7 +6356,7 @@
       "effect_type": "combat_noop"
     },
     "3066099110": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "3158469406",
@@ -6365,31 +6365,31 @@
       "effect_type": "combat_noop"
     },
     "3068724731": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "2134323627",
       "sample_level": 66,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3073423152": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52051,
       "hostile_count": 1,
       "sample_hostile_id": "2434668841",
       "sample_level": 40,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3078017073": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "959332374",
       "sample_level": 59,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3086451244": {
       "bucket": "pierce_combat",
@@ -6401,7 +6401,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3088493342": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1155348316",
@@ -6455,13 +6455,13 @@
       "effect_type": "combat_noop"
     },
     "3121809952": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "4256122040",
       "sample_level": 51,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3122741936": {
       "bucket": "outpost_scope",
@@ -6473,16 +6473,16 @@
       "effect_type": "combat_noop"
     },
     "3124723836": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "272456609",
       "sample_level": 50,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3126493455": {
-      "bucket": "other_review",
+      "bucket": "conqueror_borg_lane_b",
       "loca_id": 89106,
       "hostile_count": 2,
       "sample_hostile_id": "1361807236",
@@ -6491,13 +6491,13 @@
       "effect_type": "combat_noop"
     },
     "3126503788": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "3746682534",
       "sample_level": 71,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3131866576": {
       "bucket": "outpost_scope",
@@ -6509,7 +6509,7 @@
       "effect_type": "combat_noop"
     },
     "3137872798": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2500725952",
@@ -6527,7 +6527,7 @@
       "effect_type": "combat_noop"
     },
     "3141167758": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2103142137",
@@ -6573,13 +6573,13 @@
       "effect_type": "combat_noop"
     },
     "3150306311": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "820365641",
       "sample_level": 50,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3164692420": {
       "bucket": "pierce_combat",
@@ -6591,13 +6591,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3165256234": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "708169056",
       "sample_level": 60,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3165681827": {
       "bucket": "crit_combat",
@@ -6636,13 +6636,13 @@
       "effect_type": "isolytic_damage"
     },
     "3175139552": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "3828410927",
       "sample_level": 60,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3176252437": {
       "bucket": "isolytic_combat",
@@ -6654,13 +6654,13 @@
       "effect_type": "isolytic_damage"
     },
     "3177722107": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "1162501573",
       "sample_level": 59,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3192420133": {
       "bucket": "outpost_scope",
@@ -6690,7 +6690,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3206032362": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "4144558321",
@@ -6699,13 +6699,13 @@
       "effect_type": "combat_noop"
     },
     "3215408872": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 2,
       "sample_hostile_id": "1095035183",
       "sample_level": 64,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3217437809": {
       "bucket": "isolytic_combat",
@@ -6717,7 +6717,7 @@
       "effect_type": "isolytic_damage"
     },
     "3219620798": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "1152344061",
@@ -6726,7 +6726,7 @@
       "effect_type": "combat_noop"
     },
     "3220905370": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1729086792",
@@ -6798,13 +6798,13 @@
       "effect_type": "isolytic_damage"
     },
     "3264449884": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "2127541458",
       "sample_level": 60,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3270609978": {
       "bucket": "armada_scope",
@@ -6825,16 +6825,16 @@
       "effect_type": "combat_noop"
     },
     "3291411701": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "2139715687",
       "sample_level": 66,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3293605329": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "2314873780",
@@ -6843,22 +6843,22 @@
       "effect_type": "combat_noop"
     },
     "3294701834": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3603095811",
       "sample_level": 58,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3297858846": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "3199828223",
       "sample_level": 60,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3302816245": {
       "bucket": "isolytic_combat",
@@ -6879,7 +6879,7 @@
       "effect_type": "crit_damage"
     },
     "3305822680": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "1602896695",
@@ -6933,13 +6933,13 @@
       "effect_type": "isolytic_damage"
     },
     "3330151150": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "3909498204",
       "sample_level": 54,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3331427750": {
       "bucket": "pierce_combat",
@@ -6951,22 +6951,22 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3334230711": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "647800794",
       "sample_level": 58,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3339716871": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "3716283131",
       "sample_level": 52,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3353377682": {
       "bucket": "defender_on_hit_stack",
@@ -7005,13 +7005,13 @@
       "effect_type": "isolytic_damage"
     },
     "3369132510": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "2759091505",
       "sample_level": 50,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3369602767": {
       "bucket": "shield_regen_combat",
@@ -7131,13 +7131,13 @@
       "effect_type": "isolytic_defense"
     },
     "3415686015": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "1826809341",
       "sample_level": 40,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3416181644": {
       "bucket": "isolytic_combat",
@@ -7176,22 +7176,22 @@
       "effect_type": "isolytic_damage"
     },
     "3427043908": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "3755411858",
       "sample_level": 45,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3431782200": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "157478508",
       "sample_level": 43,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3435621456": {
       "bucket": "armada_scope",
@@ -7203,7 +7203,7 @@
       "effect_type": "combat_noop"
     },
     "3437854206": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2385908422",
@@ -7257,7 +7257,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "3467668976": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "1319722162",
@@ -7275,7 +7275,7 @@
       "effect_type": "isolytic_defense"
     },
     "3476335565": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3082470834",
@@ -7302,13 +7302,13 @@
       "effect_type": "combat_noop"
     },
     "3489403964": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3346723010",
       "sample_level": 52,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3490732542": {
       "bucket": "isolytic_combat",
@@ -7320,13 +7320,13 @@
       "effect_type": "isolytic_defense"
     },
     "3491452074": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "163376990",
       "sample_level": 50,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3493292661": {
       "bucket": "isolytic_combat",
@@ -7347,13 +7347,13 @@
       "effect_type": "crit_damage"
     },
     "3500505461": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "3349711041",
       "sample_level": 48,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3503588487": {
       "bucket": "player_hull_breach_combat_start",
@@ -7374,13 +7374,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3511884181": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52053,
       "hostile_count": 1,
       "sample_hostile_id": "2641072555",
       "sample_level": 48,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3515845182": {
       "bucket": "shield_regen_combat",
@@ -7401,16 +7401,16 @@
       "effect_type": "crit_damage"
     },
     "3529890913": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "751559530",
       "sample_level": 52,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3536939253": {
-      "bucket": "other_review",
+      "bucket": "borg_cube_flavor",
       "loca_id": 51050,
       "hostile_count": 1,
       "sample_hostile_id": "2848387622",
@@ -7428,13 +7428,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "3548631981": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "3265490939",
       "sample_level": 57,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3553563713": {
       "bucket": "armada_scope",
@@ -7563,13 +7563,13 @@
       "effect_type": "combat_noop"
     },
     "3642613384": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "3954838530",
       "sample_level": 50,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3658324855": {
       "bucket": "armada_scope",
@@ -7599,7 +7599,7 @@
       "effect_type": "isolytic_defense"
     },
     "3669273787": {
-      "bucket": "other_review",
+      "bucket": "pvp_player_target",
       "loca_id": 69501,
       "hostile_count": 6,
       "sample_hostile_id": "1327059298",
@@ -7617,13 +7617,13 @@
       "effect_type": "combat_noop"
     },
     "3678193011": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 2,
       "sample_hostile_id": "1748519893",
       "sample_level": 64,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3679636736": {
       "bucket": "armada_scope",
@@ -7680,13 +7680,13 @@
       "effect_type": "combat_noop"
     },
     "3702568670": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "3686843526",
       "sample_level": 60,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3719105199": {
       "bucket": "isolytic_combat",
@@ -7716,7 +7716,7 @@
       "effect_type": "combat_noop"
     },
     "3730217323": {
-      "bucket": "other_review",
+      "bucket": "borg_cube_flavor",
       "loca_id": 51050,
       "hostile_count": 1,
       "sample_hostile_id": "2476153569",
@@ -7725,25 +7725,25 @@
       "effect_type": "combat_noop"
     },
     "3746550377": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "1698112265",
       "sample_level": 58,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3748226023": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "3847232266",
       "sample_level": 56,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3752771552": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "2962399470",
@@ -7752,16 +7752,16 @@
       "effect_type": "combat_noop"
     },
     "3765538820": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36010,
       "hostile_count": 1,
       "sample_hostile_id": "4162054878",
       "sample_level": 50,
       "text_snippet": "pre-assimilation tactics\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3777726433": {
-      "bucket": "other_review",
+      "bucket": "post_combat_flavor",
       "loca_id": 47001,
       "hostile_count": 1,
       "sample_hostile_id": "3600971833",
@@ -7815,7 +7815,7 @@
       "effect_type": "isolytic_defense"
     },
     "3797564109": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_review",
       "loca_id": 73050,
       "hostile_count": 5,
       "sample_hostile_id": "1098304183",
@@ -7860,7 +7860,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3825538982": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "852023108",
@@ -7887,22 +7887,22 @@
       "effect_type": "crit_damage"
     },
     "3845968517": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "2123929264",
       "sample_level": 55,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3850396933": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52054,
       "hostile_count": 1,
       "sample_hostile_id": "2036699984",
       "sample_level": 52,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3852598818": {
       "bucket": "pierce_combat",
@@ -7950,16 +7950,16 @@
       "effect_type": "crit_damage"
     },
     "3867337071": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "391051525",
       "sample_level": 43,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3873489911": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "665920666",
@@ -7977,13 +7977,13 @@
       "effect_type": "isolytic_defense"
     },
     "3876946905": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "427164523",
       "sample_level": 38,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3879916022": {
       "bucket": "isolytic_combat",
@@ -8013,7 +8013,7 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "3881525121": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2759172575",
@@ -8067,16 +8067,16 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "3928325821": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 2,
       "sample_hostile_id": "2733508825",
       "sample_level": 64,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "3931375635": {
-      "bucket": "other_review",
+      "bucket": "fleet_composition_gate",
       "loca_id": 88101,
       "hostile_count": 3,
       "sample_hostile_id": "2238381162",
@@ -8211,7 +8211,7 @@
       "effect_type": "combat_noop"
     },
     "3985714265": {
-      "bucket": "other_review",
+      "bucket": "on_hit_mitigation_review",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2934559468",
@@ -8229,7 +8229,7 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3997179682": {
-      "bucket": "other_review",
+      "bucket": "stacking_crit_review",
       "loca_id": 46001,
       "hostile_count": 1,
       "sample_hostile_id": "3590948821",
@@ -8256,13 +8256,13 @@
       "effect_type": "isolytic_defense"
     },
     "4004540063": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "3470942104",
       "sample_level": 58,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4011037992": {
       "bucket": "isolytic_combat",
@@ -8274,13 +8274,13 @@
       "effect_type": "isolytic_damage"
     },
     "4013960081": {
-      "bucket": "other_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 55050,
       "hostile_count": 1,
       "sample_hostile_id": "630088945",
       "sample_level": 60,
       "text_snippet": "energy focused beam\nat the start of combat the species 8472 bio-ship begins charging it's energy focused beam. after 8 rounds the beam fires destroying its opponent. \n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "4017602022": {
       "bucket": "apex_combat",
@@ -8337,13 +8337,13 @@
       "effect_type": "isolytic_cascade"
     },
     "4024382545": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52055,
       "hostile_count": 1,
       "sample_hostile_id": "10264305",
       "sample_level": 57,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4030525751": {
       "bucket": "apex_combat",
@@ -8554,13 +8554,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "4122060986": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35014,
       "hostile_count": 1,
       "sample_hostile_id": "3586679837",
       "sample_level": 59,
       "text_snippet": "interceptor exploitation\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4123186050": {
       "bucket": "crit_combat",
@@ -8689,13 +8689,13 @@
       "effect_type": "combat_noop"
     },
     "4189919192": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "550215157",
       "sample_level": 58,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4196040311": {
       "bucket": "isolytic_combat",
@@ -8725,31 +8725,31 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "4209070030": {
-      "bucket": "other_review",
+      "bucket": "pierce_combat",
       "loca_id": 52052,
       "hostile_count": 1,
       "sample_hostile_id": "3923455101",
       "sample_level": 38,
       "text_snippet": "ravager\u2019s lance\nfreebooters have a buff of +1500% to all their piercing stats.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_counter_pierce_multiplier"
     },
     "4209455474": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36008,
       "hostile_count": 1,
       "sample_hostile_id": "2612297468",
       "sample_level": 54,
       "text_snippet": "pre-assimilation tactics\nincreases damage against interceptors by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4223989592": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35016,
       "hostile_count": 1,
       "sample_hostile_id": "3463351628",
       "sample_level": 56,
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4225036102": {
       "bucket": "outpost_scope",
@@ -8806,13 +8806,13 @@
       "effect_type": "isolytic_damage"
     },
     "4242376060": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 35015,
       "hostile_count": 1,
       "sample_hostile_id": "1932169907",
       "sample_level": 57,
       "text_snippet": "battleship exploitation\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4253379791": {
       "bucket": "armada_scope",
@@ -8833,13 +8833,13 @@
       "effect_type": "isolytic_damage"
     },
     "4272313075": {
-      "bucket": "other_review",
+      "bucket": "ship_class_damage_combat",
       "loca_id": 36009,
       "hostile_count": 1,
       "sample_hostile_id": "550863403",
       "sample_level": 55,
       "text_snippet": "pre-assimilation tactics\nincreases damage against battleships by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "4284873990": {
       "bucket": "armada_scope",

@@ -662,7 +662,28 @@ Steps:
 
 ---
 
-## 12. Continue the `other_review` shard triage (366 ids, ~750 instances remain)
+## 12. Continue the `other_review` shard triage (366 ids, ~750 instances remain) ✅
+
+**Status (2026-07-19):** Slice complete — the bucket (271 ids / 353 instances at the time) collapsed
+into 29 loca-text families and was swept in one pass, entirely via generator branches onto
+**existing** effect types (zero engine changes). Modeled: Exploitation / Pre-Assimilation Tactics
+(102 ids → `attack_multiplier` + `condition_attacker_ship_type` + `round_cap: 5`), Ravager's Lance
+(48 ids → `hostile_counter_pierce_multiplier`, values 5 / 15), Energy Focused Beam (31 ids →
+`hostile_lethal_end_of_round` `round_interval: 8`). The rest moved to named noop buckets — see the
+2026-07-19 section in [HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md).
+`other_review` now holds only the item-6 Temporal Dreadnought pair (2 ids / 18 instances).
+Coverage: `tests/hostile_other_review_triage.rs`.
+
+**Deferred engine-extension candidates surfaced by the slice** (each currently a named noop bucket):
+
+- **Shield Disruptors** (`on_hit_mitigation_review`, 31 hostiles): every hostile weapon hit reduces
+  the player's shield mitigation by 10% for 1 round — needs a new `DefenderOnHitStack` stat variant
+  plus an ungated (always-on) trigger; upstream values are real (0.10).
+- **Oppressive Resilience** (`stacking_crit_review`, 7 hostiles): +crit chance at the END of each
+  round, stacking — needs hostile-side accumulate mechanics.
+- **Defense Protocol α** (`scheduled_lethal_review`, 10 hostiles): lethal Cutting Beam on the
+  hostile's 2nd weapon of every round — needs a defender-alive gate on
+  `hostile_lethal_end_of_round` so a legitimate round-1 kill doesn't become a mutual-death loss.
 
 **a) The issue.** After PR #252, the biggest remaining bucket is still `other_review` — the long
 tail of unclassified hostile ability texts. Issues 1–8 above cover its high-count heads;
