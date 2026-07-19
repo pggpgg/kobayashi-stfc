@@ -971,6 +971,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
+                | AbilityEffect::HostileShieldDamageRouting { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1175,6 +1176,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
+                | AbilityEffect::HostileShieldDamageRouting { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1341,6 +1343,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
+                | AbilityEffect::HostileShieldDamageRouting { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1509,6 +1512,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
+                | AbilityEffect::HostileShieldDamageRouting { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1683,6 +1687,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
+                | AbilityEffect::HostileShieldDamageRouting { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -1893,6 +1898,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileSelfMorale { .. }
                 | AbilityEffect::HostileEngagementRoundLimit { .. }
                 | AbilityEffect::HostileAttackerShieldMitigationZero
+                | AbilityEffect::HostileShieldDamageRouting { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
                 | AbilityEffect::RandomDefenderState { .. }
@@ -2160,6 +2166,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::HostileSelfMorale { .. }
         | AbilityEffect::HostileEngagementRoundLimit { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
+        | AbilityEffect::HostileShieldDamageRouting { .. }
         | AbilityEffect::ConquerorBorgBeamSuppression => effect,
         AbilityEffect::DefenderFireDelay { .. } => effect,
         AbilityEffect::RandomDefenderState { .. } => effect,

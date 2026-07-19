@@ -283,7 +283,20 @@ Implementation sketch:
 
 ---
 
-## 5. Energy-Dampening Field — Breen shield-routing + regen (8 hostiles)
+## 5. Energy-Dampening Field — Breen shield-routing + regen (8 hostiles) ✅
+
+**Status (2026-07-19):** Implemented — `HostileShieldDamageRouting { regen_max_fraction }` +
+catalog `hostile_shield_damage_routing` (bucket `shield_routing_combat`, `value_override: 0.25`
+— the upstream `values[]` are noise, the text hardcodes 100%/25%). Resolved at setup
+(`PreCombatSetup.defender_shield_damage_routing_regen`); while active, every outbound damage
+term (per-shot scalar + SIMD lanes, round-end bonus/burning, combat-end) splits with effective
+shield mitigation 1.0 — overflow spills to hull via `apply_shield_hull_split`'s existing
+overflow semantics — and the defender regains 25% of max SHP at round start (no RNG).
+**Bypass immunity:** the officer/FT bypass accumulator channel is ignored; only tag-gated
+`CrewSeat::Ship` bypass seats (Vengeance Advanced Sabotage, the designed counter from item 9 /
+PR #265) fold into the setup-resolved override. Coverage in
+`tests/hostile_breen_energy_dampening.rs` (break-even timeout, burst breakthrough, exact regen
+arithmetic, both carve-out directions).
 
 **a) The issue.** `3780549486` (Breen Warship, 8 hostiles): "directs 100% of incoming damage to
 its Shields and regenerates 25% of its shield health at the start of each round. This cannot be

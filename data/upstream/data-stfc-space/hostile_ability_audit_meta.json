@@ -7779,13 +7779,13 @@
       "effect_type": "isolytic_defense"
     },
     "3780549486": {
-      "bucket": "other_review",
+      "bucket": "shield_routing_combat",
       "loca_id": 80601,
       "hostile_count": 8,
       "sample_hostile_id": "1088521327",
       "sample_level": 71,
       "text_snippet": "energy-dampening field\nusing advanced experimental shield technology the breen warship directs 100% of incoming damage to its shields and regenerates 25% of its shield health at the start of each round.\n\nthis cannot be altered by officers, ",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_shield_damage_routing"
     },
     "3785063115": {
       "bucket": "apex_combat",

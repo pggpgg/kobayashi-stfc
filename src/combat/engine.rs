@@ -205,6 +205,13 @@ pub struct PreCombatSetup {
     /// Programmable Matter: multiplier on the player's outbound post-apex damage pool
     /// (`1 - Σ final-damage-reduction fractions`, clamped to `[0, 1]`; `1.0` = no reduction).
     pub outbound_final_damage_factor: f64,
+    /// Breen Energy-Dampening Field: when `Some`, all outbound damage routes into the hostile's
+    /// shield pool (overflow spills to hull) and the hostile regenerates this fraction of max
+    /// shield HP at the start of each round.
+    pub defender_shield_damage_routing_regen: Option<f64>,
+    /// Designed-counter bypass fraction vs an active shield-damage routing (tag-gated ship-hull
+    /// bypass only, e.g. Vengeance Advanced Sabotage); `0.0` when routing is inactive.
+    pub shield_routing_counter_bypass: f64,
     /// Pre-allocated Arc for attacker ship id slug — avoids String clone per construction.
     pub attacker_ship_id_arc: std::sync::Arc<str>,
     /// Pre-allocated Arc for engagement enemy types — avoids EnemyTypes clone per construction.
@@ -398,6 +405,19 @@ pub fn build_combat_setup_with_officer_stat(
         - crate::combat::abilities::hostile_final_damage_reduction_from_defender_crew(
             &defender_crew,
         );
+    let defender_shield_damage_routing_regen =
+        crate::combat::abilities::hostile_shield_damage_routing_regen(&defender_crew);
+    // Only tag-gated ship-hull bypass seats count as the routing's designed counter; the
+    // officer/FT bypass accumulator channel is ignored while routing is active ("cannot be
+    // altered by officers, Forbidden Tech…").
+    let shield_routing_counter_bypass = if defender_shield_damage_routing_regen.is_some() {
+        crate::combat::abilities::shield_routing_counter_bypass_fraction(
+            &attacker_crew,
+            &combat_begin_ctx,
+        )
+    } else {
+        0.0
+    };
 
     PreCombatSetup {
         attacker: attacker.clone(),
@@ -425,6 +445,8 @@ pub fn build_combat_setup_with_officer_stat(
         defender_isolytic_vulnerability,
         attacker_shield_mitigation_forced_zero,
         outbound_final_damage_factor,
+        defender_shield_damage_routing_regen,
+        shield_routing_counter_bypass,
         round_start_effects,
         attack_phase_effects,
         defense_phase_effects,
@@ -730,8 +752,23 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         .reserve(rounds_to_simulate.min(64) as usize);
     let mut rounds_completed = 0u32;
 
+    // Breen Energy-Dampening Field: precompute the outbound split override. While routing is
+    // active, all outbound damage is directed into the shield pool (mitigation 1.0) except the
+    // designed-counter bypass resolved at setup; the per-hit officer/FT bypass channel is ignored.
+    let shield_routing_mitigation_override = setup
+        .defender_shield_damage_routing_regen
+        .map(|_| (1.0 - setup.shield_routing_counter_bypass).clamp(0.0, 1.0));
+
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
+
+        // Breen Energy-Dampening Field: the hostile regenerates a fraction of MAX shield HP at
+        // the start of each round, before round-start effects read vitals. No RNG.
+        if let Some(regen) = setup.defender_shield_damage_routing_regen {
+            st.defender_shield_remaining = (st.defender_shield_remaining
+                + regen * defender.shield_health.max(0.0))
+            .min(defender.shield_health.max(0.0));
+        }
 
         let skip_defender_counter_attack = st.defender_weapon_fire_delayed_rounds > 0;
         if st.defender_weapon_fire_delayed_rounds > 0 {
@@ -1288,6 +1325,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
                 defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
                 defender_receive_damage_effects,
                 defender_isolytic_vulnerability: setup.defender_isolytic_vulnerability,
+                shield_routing_mitigation_override,
             });
 
             // Re-arm on-hit crit stacks: a weapon that fired (hits are guaranteed in this
@@ -1489,6 +1527,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
             &mut st.attacker_hull_gross_damage_this_round,
             &mut st.attacker_shield_remaining,
             &mut st.defender_shield_remaining,
+            &mut st.total_shield_damage,
+            setup.defender_shield_damage_routing_regen.is_some(),
         );
 
         st.defender_burning_rounds = st.defender_burning_rounds.saturating_sub(1);
@@ -1640,6 +1680,7 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         &mut st.defender_shield_remaining,
         &mut st.total_shield_damage,
         &mut st.total_hull_damage,
+        setup.defender_shield_damage_routing_regen.is_some(),
     );
 
     let total_damage = st.total_hull_damage + st.total_shield_damage;
@@ -1790,6 +1831,7 @@ fn apply_combat_end_phase(
     defender_shield_remaining: &mut f64,
     total_shield_damage: &mut f64,
     total_hull_damage: &mut f64,
+    shield_routing_active: bool,
 ) {
     let combat_end_ctx = ctx_template.at(
         rounds_completed,
@@ -1855,9 +1897,15 @@ fn apply_combat_end_phase(
     // Apply CombatEnd damage from attacker crew effects to the defender.
     let ce_defender_damage = combat_end_acc.compose_round_end_damage(0.0);
     if ce_defender_damage > 0.0 {
+        // Breen shield-damage routing directs this non-weapon damage into the shield pool too.
+        let ce_shield_mitigation = if shield_routing_active {
+            1.0
+        } else {
+            defender.shield_mitigation
+        };
         let (dmg_to_shield, dmg_to_hull) = apply_shield_hull_split(
             ce_defender_damage,
-            defender.shield_mitigation,
+            ce_shield_mitigation,
             *defender_shield_remaining,
         );
         *defender_shield_remaining = (*defender_shield_remaining - dmg_to_shield).max(0.0);
@@ -1924,6 +1972,8 @@ fn apply_round_end_phase(
     attacker_hull_gross_damage_this_round: &mut f64,
     attacker_shield_remaining: &mut f64,
     defender_shield_remaining: &mut f64,
+    total_shield_damage: &mut f64,
+    shield_routing_active: bool,
 ) -> (f64, f64, f64) {
     phase_effects_round.add_effects(
         TimingWindow::RoundEnd,
@@ -2012,8 +2062,20 @@ fn apply_round_end_phase(
     } else {
         0.0
     };
-    // Round-end and burning apply to hull only (shields do not absorb these).
-    *total_hull_damage += (bonus_damage + burning_damage) * round_end_apex_factor;
+    // Round-end and burning apply to hull only (shields do not absorb these) — except under
+    // Breen shield-damage routing, where ALL incoming damage is directed into the shield pool
+    // (overflow past remaining SHP spills to hull; the designed-counter bypass is a weapon-fire
+    // mechanic and does not apply to these non-weapon terms).
+    let round_end_defender_damage = (bonus_damage + burning_damage) * round_end_apex_factor;
+    if shield_routing_active {
+        let (re_to_shield, re_to_hull) =
+            apply_shield_hull_split(round_end_defender_damage, 1.0, *defender_shield_remaining);
+        *defender_shield_remaining = (*defender_shield_remaining - re_to_shield).max(0.0);
+        *total_shield_damage += re_to_shield;
+        *total_hull_damage += re_to_hull;
+    } else {
+        *total_hull_damage += round_end_defender_damage;
+    }
     *total_attacker_hull_damage += defender.end_of_round_damage;
     *attacker_hull_gross_damage_this_round += defender.end_of_round_damage;
     let lethal_damage = hostile_lethal_end_of_round_hull_damage(
@@ -2670,6 +2732,10 @@ struct FireAttackerWeapon<'a> {
     defender_inbound_defense_filtered: &'a [ActiveAbilityEffect],
     defender_receive_damage_effects: &'a [ActiveAbilityEffect],
     defender_isolytic_vulnerability: bool,
+    /// `Some(effective mitigation)` while Breen shield-damage routing is active: replaces the
+    /// normal mitigation/bypass composition so all damage routes to shields, less only the
+    /// setup-resolved designed-counter bypass. `None` = normal path.
+    shield_routing_mitigation_override: Option<f64>,
 }
 
 /// Attacker outbound fire for one weapon sub-round: the per-shot hit loop (attack roll, mitigation,
@@ -2711,6 +2777,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         defender_inbound_defense_filtered,
         defender_receive_damage_effects,
         defender_isolytic_vulnerability,
+        shield_routing_mitigation_override,
     } = p;
     let weapon_index_u = weapon_index as u32;
     let mut simd_damage_batch: Vec<f64> = if use_simd_outbound_weapon_path && effective_shots > 0 {
@@ -3254,15 +3321,22 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             // Additive bonuses (e.g. Quantum Slipstream cumulative debuff) compose first,
             // then any multiplicative bypass (e.g. Harrison "Sabotage") scales the result
             // by (1 - bypass). Bypass total is clamped to [0, 1] so it cannot exceed 100%.
-            let pre_bypass_shield_mitigation = (defender.shield_mitigation
-                + phase_effects.composed_shield_mitigation_bonus()
-                + inbound_defender_effects.composed_shield_mitigation_bonus())
-            .clamp(0.0, 1.0);
-            let total_bypass_fraction = (phase_effects.composed_shield_mitigation_bypass()
-                + inbound_defender_effects.composed_shield_mitigation_bypass())
-            .clamp(0.0, 1.0);
+            // Under Breen shield-damage routing the composition is replaced wholesale: all
+            // damage routes to shields (mitigation 1.0) less only the designed-counter bypass;
+            // the per-hit officer/FT bypass channel cannot alter it.
             let effective_shield_mitigation =
-                (pre_bypass_shield_mitigation * (1.0 - total_bypass_fraction)).clamp(0.0, 1.0);
+                if let Some(routed_mitigation) = shield_routing_mitigation_override {
+                    routed_mitigation
+                } else {
+                    let pre_bypass_shield_mitigation = (defender.shield_mitigation
+                        + phase_effects.composed_shield_mitigation_bonus()
+                        + inbound_defender_effects.composed_shield_mitigation_bonus())
+                    .clamp(0.0, 1.0);
+                    let total_bypass_fraction = (phase_effects.composed_shield_mitigation_bypass()
+                        + inbound_defender_effects.composed_shield_mitigation_bypass())
+                    .clamp(0.0, 1.0);
+                    (pre_bypass_shield_mitigation * (1.0 - total_bypass_fraction)).clamp(0.0, 1.0)
+                };
             let shield_mitigation = if st.defender_shield_remaining > 0.0 {
                 effective_shield_mitigation
             } else {

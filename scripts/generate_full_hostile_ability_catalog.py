@@ -866,6 +866,21 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             "hostile_shield_bypass",
         )
 
+    # Breen Warship "Energy-Dampening Field": "directs 100% of incoming damage to its Shields
+    # and regenerates 25% of its shield health at the start of each round. This cannot be
+    # altered by officers, Forbidden Tech, etc." All outbound damage routes into the shield
+    # pool (overflow spills to hull); the regen fraction comes from the text — the upstream
+    # values[] are noise (uniform 50s) — so value_override pins it.
+    if "directs 100% of incoming damage to its shields" in p and "regenerates" in p:
+        regen_match = re.search(r"regenerates\s+(\d+(?:\.\d+)?)%\s+of its shield health", p)
+        regen_fraction = float(regen_match.group(1)) / 100.0 if regen_match else 0.25
+        return m(
+            "combat_begin",
+            "hostile_shield_damage_routing",
+            value_override=regen_fraction,
+            _bucket="shield_routing_combat",
+        )
+
     # Plausible Deniability (S31-era hostiles): "Recovers {0:#.#%} of total SHP for the first
     # 5 rounds of combat." Fraction of MAX shield HP restored at the end of each round while
     # the round cap holds (round_cap → RoundRange gates rounds 1..=N).

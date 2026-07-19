@@ -6689,10 +6689,10 @@
     },
     "3780549486": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_shield_damage_routing",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0.25
     },
     "3785063115": {
       "timing": "combat_begin",
