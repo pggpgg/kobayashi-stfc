@@ -126,6 +126,16 @@ pub fn ability_condition_from_ship_ability(ability: &ShipAbility) -> Option<Abil
             parts.push(AbilityCondition::DefenderShipTypeIs(st));
         }
     }
+    if let Some(ref slug) = ability.condition_opponent_ship_class_not {
+        if let Some(st) = ShipType::from_data_slug(slug) {
+            parts.push(AbilityCondition::Not(Box::new(
+                AbilityCondition::DefenderShipTypeIs(st),
+            )));
+        }
+    }
+    if ability.condition_defender_is_npc_hostile {
+        parts.push(AbilityCondition::DefenderIsNpcHostile);
+    }
     if let Some(ref tags) = ability.condition_opponent_hostile_tags {
         if !tags.is_empty() {
             if let Some(mask) = required_mask_from_condition_slugs(tags) {
@@ -392,6 +402,8 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: Some("klingon".into()),
             condition_opponent_ship_class: Some("battleship".into()),
+            condition_opponent_ship_class_not: None,
+            condition_defender_is_npc_hostile: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
@@ -408,6 +420,41 @@ mod tests {
         };
         let from_research = ability_condition_from_research_bonus_key(&key).unwrap();
         assert_eq!(from_ship, from_research);
+    }
+
+    #[test]
+    fn ship_ability_opponent_ship_class_not_builds_negated_ship_type_gate() {
+        // "vs non-Armada hostiles" rows (e.g. Dauntless Seek and Destroy kit).
+        let ship = ShipAbility {
+            id: "t".into(),
+            timing: "combat_begin".into(),
+            effect_type: "attack_multiplier".into(),
+            value: 1.0,
+            duration_rounds: None,
+            condition_morale: false,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            condition_opponent_faction: None,
+            condition_opponent_ship_class: None,
+            condition_opponent_ship_class_not: Some("armada".into()),
+            condition_defender_is_npc_hostile: false,
+            condition_opponent_hostile_tags: None,
+            round_cap: None,
+            level_scaled_values: None,
+        };
+        let cond = ability_condition_from_ship_ability(&ship).unwrap();
+        assert_eq!(
+            cond,
+            AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                ShipType::Armada
+            )))
+        );
+        assert!(evaluate_ability_condition(&cond, &sample_ctx()));
+        let ctx_armada = CombatContext {
+            defender_ship_type: ShipType::Armada,
+            ..sample_ctx()
+        };
+        assert!(!evaluate_ability_condition(&cond, &ctx_armada));
     }
 
     #[test]

@@ -94,6 +94,14 @@ pub struct ShipAbility {
     /// Gated on defending ship hull class (`battleship`, `explorer`, `interceptor`, …); matches [`crate::combat::ShipType`] serde names.
     #[serde(default)]
     pub condition_opponent_ship_class: Option<String>,
+    /// Negative hull-class gate: effect applies only when the defender is **not** this class
+    /// (e.g. `armada` for "vs non-Armada hostiles" ability text such as Dauntless Seek and Destroy).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition_opponent_ship_class_not: Option<String>,
+    /// Gated on the defender being an NPC hostile (not a player ship): "against hostiles" ability
+    /// text that must stay inert in PvP (e.g. Dauntless Seek and Destroy cannot target players).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub condition_defender_is_npc_hostile: bool,
     /// Gated on defending hostile tags (AND: every listed slug must map to a set bit on the defender mask). See [`crate::combat::hostile_tags`].
     #[serde(default)]
     pub condition_opponent_hostile_tags: Option<Vec<String>>,

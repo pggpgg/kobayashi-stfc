@@ -82,6 +82,16 @@ fn ship_ability_condition_specs(ability: &ShipAbility) -> Vec<AbilityConditionSp
             ship_type: ship_class.clone(),
         });
     }
+    if let Some(ref ship_class) = ability.condition_opponent_ship_class_not {
+        parts.push(AbilityConditionSpec::Not {
+            inner: Box::new(AbilityConditionSpec::DefenderShipTypeIs {
+                ship_type: ship_class.clone(),
+            }),
+        });
+    }
+    if ability.condition_defender_is_npc_hostile {
+        parts.push(AbilityConditionSpec::DefenderIsNpcHostile);
+    }
     if let Some(ref round_cap) = ability.round_cap {
         parts.push(AbilityConditionSpec::RoundRange {
             min: 1,
@@ -212,6 +222,8 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: Some("klingon".into()),
             condition_opponent_ship_class: None,
+            condition_opponent_ship_class_not: None,
+            condition_defender_is_npc_hostile: false,
             condition_opponent_hostile_tags: None,
             round_cap: Some(5),
             level_scaled_values: None,
@@ -239,6 +251,37 @@ mod tests {
     }
 
     #[test]
+    fn ship_ability_opponent_ship_class_not_maps_to_negated_ship_type_spec() {
+        // "vs non-Armada hostiles" rows (e.g. Dauntless Seek and Destroy kit).
+        let ability = ShipAbility {
+            id: "test_ability".into(),
+            timing: "combat_begin".into(),
+            effect_type: "attack_multiplier".into(),
+            value: 1450.0,
+            duration_rounds: None,
+            condition_morale: false,
+            condition_defender_burning: false,
+            condition_defender_hull_breach: false,
+            condition_opponent_faction: None,
+            condition_opponent_ship_class: None,
+            condition_opponent_ship_class_not: Some("armada".into()),
+            condition_defender_is_npc_hostile: false,
+            condition_opponent_hostile_tags: None,
+            round_cap: None,
+            level_scaled_values: None,
+        };
+        let spec = ship_ability_to_combat_effect_spec(&ability).expect("should map");
+        assert_eq!(
+            spec.conditions,
+            vec![AbilityConditionSpec::Not {
+                inner: Box::new(AbilityConditionSpec::DefenderShipTypeIs {
+                    ship_type: "armada".into()
+                })
+            }]
+        );
+    }
+
+    #[test]
     fn unmapped_effect_type_returns_none() {
         let ability = ShipAbility {
             id: "unknown".into(),
@@ -251,6 +294,8 @@ mod tests {
             condition_defender_hull_breach: false,
             condition_opponent_faction: None,
             condition_opponent_ship_class: None,
+            condition_opponent_ship_class_not: None,
+            condition_defender_is_npc_hostile: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,

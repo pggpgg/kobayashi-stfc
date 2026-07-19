@@ -204,6 +204,8 @@ fn crit_mitigation_rating_conversion_matches_official_example() {
         condition_defender_hull_breach: false,
         condition_opponent_faction: None,
         condition_opponent_ship_class: None,
+        condition_opponent_ship_class_not: None,
+        condition_defender_is_npc_hostile: false,
         condition_opponent_hostile_tags: None,
         round_cap: None,
         level_scaled_values: None,
