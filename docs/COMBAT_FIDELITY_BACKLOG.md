@@ -470,7 +470,18 @@ Steps:
 
 ---
 
-## 9. Ship-side "ignore enemy shields" mapped to pierce instead of shield-mitigation bypass
+## 9. Ship-side "ignore enemy shields" mapped to pierce instead of shield-mitigation bypass ✅
+
+**Status (2026-07-17):** Implemented. The inventory found exactly **one** live instance, not a
+family: U.S.S. Vengeance **Advanced Sabotage** (`2432056626`, loca 80501) — the other five
+`pierce_bonus` rows are genuine "Shield/Armor Piercing" stat buffs and stay pierce. Reclassified
+to `shield_mitigation_bypass` (100% bypass: upstream value 1 with a `{0:#.#%}` placeholder),
+gated on a new `breen_warship` hostile tag (`HOSTILE_TAG_MASK_BREEN_WARSHIP`; Breen Warship /
+Elite / Primarch, `loca_id` 80600–80602, 8 hostiles, tagged by the hostiles normalizer). No
+engine change — the outbound `ShieldMitigationBypassFraction` path already existed. Tests:
+`tests/vengeance_advanced_sabotage.rs` (bypass helps vs shielded Breen, inert vs shieldless
+target and vs untagged hostiles). Docs: DESIGN.md §3.6 bullet,
+[SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) header note.
 
 **a) The issue.** DESIGN.md §3.6 flags this player-ship-side gap: Breen-style hull abilities
 ("ignore X% of enemy shields", e.g. Blade's Tip-adjacent player hulls) are catalogued as

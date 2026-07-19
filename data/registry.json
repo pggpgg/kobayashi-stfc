@@ -1,14 +1,15 @@
 {
-  "syndicate_reputation": {
-    "source": "community_spreadsheet",
-    "last_updated": "2026-06-26",
-    "path": "syndicate_reputation.json"
-  },
   "hostiles": {
     "source": "data-stfc-space",
-    "data_version": "stfcspace-hostiles-2026-06-30",
-    "last_updated": "2026-06-30",
+    "data_version": "stfcspace-hostiles-2026-07-17",
+    "last_updated": "2026-07-17",
     "path": "hostiles/index.json"
+  },
+  "officer_eligibility": {
+    "source": "community_spreadsheet",
+    "data_version": "cheat-sheet-m90-17rc",
+    "last_updated": "2026-06-23",
+    "path": "officers/eligibility_matrix.json"
   },
   "ships": {
     "source": "data-stfc-space",
@@ -16,10 +17,9 @@
     "last_updated": "2026-07-17",
     "path": "ships_extended/index.json"
   },
-  "officer_eligibility": {
+  "syndicate_reputation": {
     "source": "community_spreadsheet",
-    "data_version": "cheat-sheet-m90-17rc",
-    "last_updated": "2026-06-23",
-    "path": "officers/eligibility_matrix.json"
+    "last_updated": "2026-06-26",
+    "path": "syndicate_reputation.json"
   }
 }

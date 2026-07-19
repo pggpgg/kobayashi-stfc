@@ -56,9 +56,9 @@ pub use export_csv::{
     export_to_defender, parse_fight_export, ship_type_from_name, FightExport, FightExportEvent,
 };
 pub use hostile_tags::{
-    HOSTILE_TAG_MASK_AGGREGATION_HOSTILE, HOSTILE_TAG_MASK_CONQUEROR_BORG,
-    HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR, HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR,
-    HOSTILE_TAG_MASK_GORN_HUNTER,
+    HOSTILE_TAG_MASK_AGGREGATION_HOSTILE, HOSTILE_TAG_MASK_BREEN_WARSHIP,
+    HOSTILE_TAG_MASK_CONQUEROR_BORG, HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR,
+    HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR, HOSTILE_TAG_MASK_GORN_HUNTER,
 };
 pub use log_import_normalize::{
     expand_collapsed_repeat_events, tag_stats_snapshot_sources_client_default,
