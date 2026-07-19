@@ -315,6 +315,17 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 fraction: value.clamp(0.0, 1.0),
             })
         }
+        // Breen Energy-Dampening Field: all incoming damage routes to the hostile's shields
+        // (overflow spills to hull); `value` is the fraction of MAX shield HP regenerated at
+        // the start of each round. Resolved out of band at combat setup.
+        "hostile_shield_damage_routing" | "shield_damage_routing" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileShieldDamageRouting {
+                regen_max_fraction: value.clamp(0.0, 1.0),
+            })
+        }
         "hostile_crit_damage_floor" | "crit_damage_floor" => {
             Some(AbilityEffect::HostileCritDamageFloorBonus(value.max(0.0)))
         }

@@ -348,6 +348,16 @@ pub enum AbilityEffect {
     /// Strike Down secondary: force the player's effective shield mitigation to 0% for the fight
     /// (incoming counter-fire). Resolved out of band at combat setup.
     HostileAttackerShieldMitigationZero,
+    /// Breen Warship **Energy-Dampening Field**: 100% of the player's outbound damage routes
+    /// into the hostile's shield pool (overflow past remaining SHP spills to hull) and the
+    /// hostile regenerates `regen_max_fraction` of max shield HP at the start of each round.
+    /// Per the text ("cannot be altered by officers, Forbidden Tech…"), the officer/FT
+    /// shield-bypass accumulator channel does not punch through; only tag-gated ship-hull
+    /// bypass abilities — the designed counter, e.g. U.S.S. Vengeance Advanced Sabotage —
+    /// do (see [`shield_routing_counter_bypass_fraction`]). Resolved out of band at combat setup.
+    HostileShieldDamageRouting {
+        regen_max_fraction: f64,
+    },
     /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables the
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
@@ -1063,6 +1073,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileSelfMorale { .. }
         | AbilityEffect::HostileEngagementRoundLimit { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
+        | AbilityEffect::HostileShieldDamageRouting { .. }
         | AbilityEffect::ConquerorBorgBeamSuppression
         | AbilityEffect::DefenderOnHitStack { .. } => {}
     }
@@ -1313,6 +1324,62 @@ pub fn hostile_self_morale_duration(crew: &CrewConfiguration) -> Option<u32> {
         }
     }
     best
+}
+
+/// Breen Energy-Dampening Field (or similar) shield-damage-routing regen fraction from
+/// defender crew. Returns `None` when no routing seat exists; the fraction is of MAX shield
+/// HP, restored at the start of each round. When multiple seats exist, takes the max.
+pub fn hostile_shield_damage_routing_regen(crew: &CrewConfiguration) -> Option<f64> {
+    let mut best: Option<f64> = None;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileShieldDamageRouting { regen_max_fraction } = s.ability.effect {
+            let f = regen_max_fraction.clamp(0.0, 1.0);
+            best = Some(best.map_or(f, |b: f64| b.max(f)));
+        }
+    }
+    best
+}
+
+/// Attacker shield-bypass fraction that counts as a **designed counter** to a hostile's
+/// shield-damage routing (Breen "Energy-Dampening Field"). Per the ability text the routing
+/// "cannot be altered by officers, Forbidden Tech, etc.", so only [`CrewSeat::Ship`] rows whose
+/// condition names the defender's hostile tags qualify (the hull ability built to counter this
+/// exact hostile family, e.g. U.S.S. Vengeance Advanced Sabotage vs `breen_warship`); the seat's
+/// full condition must also pass against `ctx`. Officer / forbidden-tech bypass seats never
+/// qualify. Summed and clamped to `[0, 1]`.
+pub fn shield_routing_counter_bypass_fraction(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+) -> f64 {
+    let mut total = 0.0_f64;
+    for s in &crew.seats {
+        if s.seat != CrewSeat::Ship {
+            continue;
+        }
+        let AbilityEffect::ShieldMitigationBypassFraction(v) = s.ability.effect else {
+            continue;
+        };
+        let Some(cond) = &s.ability.condition else {
+            continue;
+        };
+        if condition_names_hostile_tags(cond) && cond.evaluate(ctx) {
+            total += v.max(0.0);
+        }
+    }
+    total.min(1.0)
+}
+
+/// True when the condition tree contains a positive [`AbilityCondition::DefenderHostileTagsAllPresent`]
+/// gate (the signature of an ability designed against a specific hostile family). Does not
+/// recurse through `Not` — a negated tag gate targets everything *except* that family.
+fn condition_names_hostile_tags(cond: &AbilityCondition) -> bool {
+    match cond {
+        AbilityCondition::DefenderHostileTagsAllPresent { .. } => true,
+        AbilityCondition::And(list) | AbilityCondition::Or(list) => {
+            list.iter().any(condition_names_hostile_tags)
+        }
+        _ => false,
+    }
 }
 
 /// Q Junior's Twist (or similar) engagement round limit from defender crew. Returns `None`
