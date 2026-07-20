@@ -25,10 +25,10 @@
     },
     "6284447": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "6708501": {
       "timing": "combat_begin",
@@ -96,10 +96,10 @@
     },
     "36466459": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "56799195": {
       "timing": "round_start",
@@ -395,10 +395,10 @@
     },
     "215852350": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "215970807": {
       "timing": "combat_begin",
@@ -1079,10 +1079,10 @@
     },
     "587718019": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "588934861": {
       "timing": "combat_begin",
@@ -1148,10 +1148,10 @@
     },
     "628296683": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "633791558": {
       "timing": "combat_begin",
@@ -1338,10 +1338,10 @@
     },
     "722784906": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "725094130": {
       "timing": "round_end",
@@ -1709,10 +1709,10 @@
     },
     "951569010": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "952685419": {
       "timing": "combat_begin",
@@ -1757,10 +1757,10 @@
     },
     "968215138": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "976915952": {
       "timing": "combat_begin",
@@ -2034,10 +2034,10 @@
     },
     "1121381480": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1127557836": {
       "timing": "combat_begin",
@@ -2204,10 +2204,10 @@
     },
     "1229610926": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1230069942": {
       "timing": "combat_begin",
@@ -2410,10 +2410,10 @@
     },
     "1320721033": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1324185618": {
       "timing": "combat_begin",
@@ -2780,10 +2780,10 @@
     },
     "1529330893": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1529335059": {
       "timing": "combat_begin",
@@ -2835,10 +2835,10 @@
     },
     "1562590199": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1563593763": {
       "timing": "combat_begin",
@@ -3026,10 +3026,10 @@
     },
     "1685418579": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1692898062": {
       "timing": "combat_begin",
@@ -3170,10 +3170,10 @@
     },
     "1761033105": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1762762543": {
       "timing": "combat_begin",
@@ -3519,10 +3519,10 @@
     },
     "1963739289": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "1964247131": {
       "timing": "combat_begin",
@@ -4080,10 +4080,10 @@
     },
     "2251952295": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2252014445": {
       "timing": "combat_begin",
@@ -4344,10 +4344,10 @@
     },
     "2385536989": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2388592734": {
       "timing": "round_end",
@@ -4676,10 +4676,10 @@
     },
     "2556197069": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2556216862": {
       "timing": "round_end",
@@ -4883,10 +4883,10 @@
     },
     "2643951824": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2645316647": {
       "timing": "combat_begin",
@@ -5213,10 +5213,10 @@
     },
     "2810472756": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2811564588": {
       "timing": "combat_begin",
@@ -5295,10 +5295,10 @@
     },
     "2863086141": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2864985839": {
       "timing": "combat_begin",
@@ -5447,10 +5447,10 @@
     },
     "2973184125": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "2974433798": {
       "timing": "combat_begin",
@@ -5607,10 +5607,10 @@
     },
     "3088493342": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3089280874": {
       "timing": "combat_begin",
@@ -5690,10 +5690,10 @@
     },
     "3137872798": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3140773716": {
       "timing": "combat_begin",
@@ -5874,10 +5874,10 @@
     },
     "3220905370": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3221004456": {
       "timing": "combat_begin",
@@ -6260,10 +6260,10 @@
     },
     "3437854206": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3445799437": {
       "timing": "combat_begin",
@@ -6830,10 +6830,10 @@
     },
     "3825538982": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3829027098": {
       "timing": "combat_begin",
@@ -6919,10 +6919,10 @@
     },
     "3873489911": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3875067859": {
       "timing": "combat_begin",
@@ -6992,10 +6992,10 @@
     },
     "3881525121": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3883346925": {
       "timing": "combat_begin",
@@ -7177,10 +7177,10 @@
     },
     "3985714265": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "defender_on_hit_shield_mitigation_reduction",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 1
     },
     "3989697543": {
       "timing": "combat_begin",

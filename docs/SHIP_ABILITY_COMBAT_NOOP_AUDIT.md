@@ -75,6 +75,13 @@ Counts are approximate because a few lines span multiple themes (e.g. Trellium m
 
 Affected ids: `1800726742`, `2529591723`, `3087961933`, `3803001941`, `644714972`, `1851148569`, `2289346504`.
 
+**Crozier convention closed (2026-07-19; documentation-only):** Gunboat Diplomacy's modeled
+fractional reduction continues to scale the hostile's **full** critical damage. The official
+[Critical Mitigation guide](https://startrekfleetcommand.com/news/starfleet-academy-remote-campus-critical-mitigation/)
+uses that convention in its worked example. No catalog or engine change was needed; Xindi's
+additive-points reduction remains a distinct bonus-only family. See
+[COMBAT_FIDELITY_BACKLOG.md §10](COMBAT_FIDELITY_BACKLOG.md).
+
 ---
 
 ## 4. Drift control (regeneration)

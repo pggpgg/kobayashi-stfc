@@ -127,24 +127,27 @@ fn effective_incoming_shield_mitigation(
     (base_sm + extra + attacker_self_bonus).clamp(0.0, 1.0)
 }
 
-/// Attacker shield mitigation when taking hostile counter-fire, after hostile bypass (e.g. Xindi
-/// Strength of the Ibix). Mirrors outbound `mitigation × (1 - bypass)` semantics.
+/// Attacker shield mitigation when taking hostile counter-fire, after per-hit Shield Disruptors
+/// stacks and hostile bypass (e.g. Xindi Strength of the Ibix). Ordering is base/self bonuses →
+/// additive on-hit reduction → multiplicative bypass, with clamps at each boundary.
 #[inline]
 fn effective_counter_incoming_shield_mitigation(
     base_sm: f64,
     config: &SimulationConfig,
     round_index: u32,
     attacker_self_bonus: f64,
+    on_hit_reduction: f64,
     hostile_bypass_fraction: f64,
     force_zero: bool,
 ) -> f64 {
-    let pre_bypass = effective_incoming_shield_mitigation(
+    let pre_on_hit_reduction = effective_incoming_shield_mitigation(
         base_sm,
         config,
         round_index,
         attacker_self_bonus,
         force_zero,
     );
+    let pre_bypass = (pre_on_hit_reduction - on_hit_reduction.max(0.0)).clamp(0.0, 1.0);
     let bypass = hostile_bypass_fraction.clamp(0.0, 1.0);
     (pre_bypass * (1.0 - bypass)).clamp(0.0, 1.0)
 }
@@ -1091,8 +1094,8 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
         st.defender_shots_bonus_entries
             .retain(|e| e.expires_round >= round_index);
         let def_b_shots = ShotsBonusSums::from_entries(&st.defender_shots_bonus_entries);
-        // Critical Breach / Rising Fire: prune expired per-hit stacks (active while
-        // round_index <= expires_round; Seska/shots-bonus convention).
+        // Critical Breach / Rising Fire / Shield Disruptors: prune expired per-hit stacks
+        // (active while round_index <= expires_round; Seska/shots-bonus convention).
         st.defender_on_hit_stack_entries
             .retain(|e| e.expires_round >= round_index);
 
@@ -3878,9 +3881,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         let mut defender_phase_effects = defender_phase_template.clone();
         defender_phase_effects.set_trace_contributions(trace.is_enabled());
 
-        // Rising Fire / Critical Breach: sum live stacks before this hit so a stack earned on
-        // hit N boosts hit N+1 of the same round ("prior events only").
-        let (on_hit_crit_chance_sum, on_hit_weapon_damage_sum) =
+        // Rising Fire / Critical Breach / Shield Disruptors: sum live stacks before this hit so
+        // a stack earned on hit N affects hit N+1 of the same round ("prior events only").
+        let (on_hit_crit_chance_sum, on_hit_weapon_damage_sum, on_hit_shield_mitigation_sum) =
             sum_defender_on_hit_stacks(&st.defender_on_hit_stack_entries);
         if on_hit_crit_chance_sum > 0.0 {
             defender_phase_effects.add_effect(
@@ -4047,6 +4050,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 config,
                 round_index,
                 phase_effects.composed_attacker_shield_mitigation_bonus(),
+                on_hit_shield_mitigation_sum,
                 defender_phase_effects.composed_shield_mitigation_bypass(),
                 attacker_shield_mitigation_forced_zero,
             );
@@ -4328,6 +4332,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 config,
                 round_index,
                 phase_effects.composed_attacker_shield_mitigation_bonus(),
+                on_hit_shield_mitigation_sum,
                 defender_phase_effects.composed_shield_mitigation_bypass(),
                 attacker_shield_mitigation_forced_zero,
             )
@@ -4602,7 +4607,7 @@ struct ShotsBonusEntry {
     scope: WeaponTypeScope,
 }
 
-/// One Critical Breach / Rising Fire stack: additive `bonus` while `round_index <= expires_round`.
+/// One hostile per-hit stack: additive `bonus` while `round_index <= expires_round`.
 /// Expiry matches Seska / shots-bonus: active for `duration_rounds` counting the earn round
 /// (`expires_round = round_index + duration_rounds - 1`).
 #[derive(Clone, Copy)]
@@ -4612,16 +4617,18 @@ struct DefenderOnHitStackEntry {
     stat: DefenderOnHitStat,
 }
 
-fn sum_defender_on_hit_stacks(entries: &[DefenderOnHitStackEntry]) -> (f64, f64) {
+fn sum_defender_on_hit_stacks(entries: &[DefenderOnHitStackEntry]) -> (f64, f64, f64) {
     let mut crit = 0.0;
     let mut weapon = 0.0;
+    let mut shield_mitigation = 0.0;
     for e in entries {
         match e.stat {
             DefenderOnHitStat::CritChance => crit += e.bonus,
             DefenderOnHitStat::WeaponDamage => weapon += e.bonus,
+            DefenderOnHitStat::ShieldMitigationReduction => shield_mitigation += e.bonus,
         }
     }
-    (crit, weapon)
+    (crit, weapon, shield_mitigation)
 }
 
 fn maybe_push_defender_on_hit_stacks<'a, I>(st: &mut CombatRunState, effects: I, round_index: u32)
@@ -4642,6 +4649,7 @@ where
             continue;
         }
         let gate_ok = match requires {
+            DefenderOnHitGate::Always => true,
             DefenderOnHitGate::AttackerBurning => st.attacker_burning_rounds > 0,
             DefenderOnHitGate::AttackerHullBreach => st.attacker_hull_breach_rounds > 0,
         };
@@ -4764,7 +4772,8 @@ struct CombatRunState {
     defender_morale_rounds_remaining: u32,
     shots_bonus_entries: Vec<ShotsBonusEntry>,
     defender_shots_bonus_entries: Vec<ShotsBonusEntry>,
-    /// Critical Breach / Rising Fire per-hit stacks (active while `round_index <= expires_round`).
+    /// Critical Breach / Rising Fire / Shield Disruptors per-hit stacks (active while
+    /// `round_index <= expires_round`).
     defender_on_hit_stack_entries: Vec<DefenderOnHitStackEntry>,
     /// Per-weapon expiry round for the attacker's on-hit crit-damage stack
     /// ([`AbilityEffect::OnHitCritDamageStack`]); `0` = no active stack. Index = weapon_index

@@ -126,6 +126,7 @@ mod tests {
     use super::*;
     use crate::data::data_registry::DataRegistry;
     use crate::data::heuristics::BelowDecksPoolMode;
+    use crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
     use crate::optimizer::monte_carlo::scenario::DefenderOpponent;
     use crate::optimizer::OptimizerStrategy;
 
@@ -145,7 +146,9 @@ mod tests {
             strategy: OptimizerStrategy::LinearEval,
             below_decks_pool_mode: BelowDecksPoolMode::Strict,
             seed_population: Vec::new(),
-            profile_id: None,
+            // Keep catalog-ranking tests independent of the user's mutable
+            // default roster in profiles/index.json.
+            profile_id: Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             tiered_scout_sims: None,
             tiered_top_k: None,
             tiered_scout_uniform: false,

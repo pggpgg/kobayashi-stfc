@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-19 / Temporal Dreadnought regeneration):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **704** modeled for defender-side combat (`defender_crew`), **278** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-19 / Shield Disruptors follow-up):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **735** modeled for defender-side combat (`defender_crew`), **247** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Isolytic value-scale audit (2026-07-16, backlog #13):** 157 catalog ids re-scoped, all inside the isolytic family (85 damage→damage, 70 defense→defense, 1 defense→`combat_noop`, 1 damage→`isolytic_cascade`); pinned in `tests/isolytic_value_scale.rs`. Ground-truthed conventions:
 
@@ -89,6 +89,9 @@ Coverage: `tests/hostile_engagement_round_limit.rs`; resolver unit in `src/data/
 
 **Temporal Dreadnought regeneration (2026-07-19, backlog #6):** Charged Quantum Hull Repair (`1004890011`, 9 hostiles) leaves `other_review` → `hostile_full_regen_unless_attacker_ship` (bucket `temporal_dreadnought_regen`), restoring the defender's full shield and hull pools at each round start. Static Collider Cannon (`1070977437`, 9 hostiles) keeps its `isolytic_damage` primary mapping and gains an extra `hostile_full_shield_regen_unless_attacker_ship` seat; its text promises full shields but not hull restoration. Both seats are disabled for the Relativity identifier (`uss_relativity`, upstream id `442815157`, or normalized display name); the Relativity's Anti-Charged / Anti-Static Shift hull abilities (`78080222`, `1160666017`) exist but remain `combat_noop`, so ship identity is the current always-active counter proxy. Neutralised Shift (`709082712`, 9 hostiles) stays noop and moves from `other_review` to `temporal_dreadnought_flavor`. The generator's `other_review` bucket is now empty. No RNG; a non-Relativity burst that kills within one round still wins before the next restore. Coverage: `tests/hostile_temporal_dreadnought_regen.rs`.
 
+> The following paragraph is the original triage snapshot; its Shield Disruptors clause is
+> superseded by the modeled follow-up below.
+
 **`other_review` triage slice (2026-07-19, backlog #12):** The remaining 271-id bucket collapses into 29 loca-text families; this pass swept all of them except the item-6 Temporal Dreadnought pair. **Modeled (181 ids / 204 instances, existing hooks only — no engine changes):** *Exploitation* ×3 (loca 35014–16) + *Pre-Assimilation Tactics* ×3 (loca 36008–10), 102 ids / 132 instances → `attack_multiplier` gated on the attacking player's hull class (`condition_attacker_ship_type`) with `round_cap: 5` (`{0:#.#%}` fraction, `values[0] = 1` → deterministic ×2 counter-fire damage vs the named class for rounds 1–5); *Ravager's Lance* (loca 52051–56), 48 ids / 48 instances → `hostile_counter_pierce_multiplier` from meaningful upstream values (+500% → 5, +1500% → 15); *Energy Focused Beam* (loca 55050), 31 ids / 31 instances → `hostile_lethal_end_of_round` with `round_interval: 8` (the Species 8472 beam destroys the attacker at the end of round 8 — kill it in ≤7 rounds; the mutual-death edge at exactly round 8 matches the No Mercy precedent). **Named noop buckets (88 ids / 149 instances):** Victory Is Life → `post_combat_flavor` (post-victory heal); Shield Disruptors → `on_hit_mitigation_review` (needs a new on-hit stat + ungated trigger — engine-extension candidate, upstream values are real 0.10); Oppressive Resilience → `stacking_crit_review` (round-end stacking crit needs accumulate mechanics); Defense Protocol α → `scheduled_lethal_review` (a `round_interval: 1` lethal would turn legitimate round-1 kills into mutual-death losses because `hostile_lethal_end_of_round` has no defender-alive gate — engine-extension candidate; weapon slot 2 already carries a flat 2M×4/round component); Adapt, Overcome → `fleet_composition_gate` (multi-ship + station-building requirement); Quantum Resonance Beam + Evolutionary Assimilation → `conqueror_borg_lane_b` (already modeled out of catalog via the conqueror-borg hostile tags — carrier tags verified; rows stay noop so the lane is not double-applied); Gravimetric Torpedoes → `borg_cube_flavor`; Reflections → `pvp_player_target` ("against players" wording missed the existing `enemy player` guard). Coverage: `tests/hostile_other_review_triage.rs`.
 
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
@@ -137,15 +140,24 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 
 ---
 
+**Shield Disruptors follow-up (2026-07-19):** 31 ids / 31 instances moved from the historical
+`on_hit_mitigation_review` slice to `on_hit_mitigation_combat` and
+`defender_on_hit_shield_mitigation_reduction`. Each hostile weapon hit pushes a −0.10 additive
+shield-mitigation stack after resolving that hit; subsequent hits in the same round see the stack,
+and all such stacks expire before the next round (`duration_rounds: 1`). This is the same
+prior-events-only timing used by Critical Breach / Rising Fire, with a new ungated `Always` trigger.
+The remaining named-noop portion of that historical slice is therefore 57 ids / 118 instances.
+Coverage: `tests/hostile_other_review_triage.rs`.
+
 ## 2. Inventory
 
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 982 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 704 |
-| `combat_noop` (catalogued, inert in sim) | 278 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 735 |
+| `combat_noop` (catalogued, inert in sim) | 247 |
 
-**Modeled effect types (704 ids, refreshed 2026-07-19):**
+**Modeled effect types (735 ids, refreshed 2026-07-19):**
 
 | `effect_type` | Ids |
 | --- | ---: |
@@ -158,6 +170,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | `crit_damage` | 82 |
 | `apex_barrier` | 54 |
 | `hostile_lethal_end_of_round` | 32 |
+| `defender_on_hit_shield_mitigation_reduction` | 31 |
 | `hostile_hyperthermic_decay` | 22 |
 | `hostile_lethal_unless_attacker_faction` | 5 |
 | `hostile_crit_damage_reduction` | 3 |
@@ -212,7 +225,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Scheduled lethal (charged beam) | 31 | 31 | **Modeled (2026-07-19)** — Energy Focused Beam → `hostile_lethal_end_of_round` `round_interval: 8` (kill within 7 rounds or lose) |
 | Scheduled lethal review | 2 | 10 | **Keep noop** — Defense Protocol α: `round_interval: 1` would make round-1 kills mutual-death losses (no defender-alive gate on the lethal hook); engine-extension candidate |
 | Post-combat flavor | 34 | 34 | **Keep noop** — Victory Is Life (post-victory hull restore, no in-combat effect) |
-| On-hit mitigation review | 31 | 31 | **Keep noop** — Shield Disruptors (−10% player SM per hit, 1 round); needs a new on-hit stat + ungated trigger; engine-extension candidate |
+| On-hit shield mitigation | 31 | 31 | **Modeled (2026-07-19)** — Shield Disruptors → `defender_on_hit_shield_mitigation_reduction`; each hit pushes −0.10 SM points for subsequent hits in the earn round, then expires |
 | Stacking crit review | 7 | 7 | **Keep noop** — Oppressive Resilience (round-end stacking crit chance); needs hostile-side accumulate mechanics |
 | Fleet composition gate | 3 | 13 | **Keep noop** — Adapt, Overcome (one-of-each-hull-class + Warp Dive Bar built; multi-ship scope) |
 | Conqueror Borg lane B | 4 | 17 | **Keep noop in catalog** — Quantum Resonance Beam / Evolutionary Assimilation are modeled out of catalog via hostile tags (rows stay noop so the lane is not double-applied) |

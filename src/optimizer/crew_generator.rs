@@ -260,6 +260,11 @@ pub fn build_officer_pools_from_registry(
     }
 
     if officers.is_empty() {
+        tracing::warn!(
+            profile_id = profile_id.unwrap_or("<default>"),
+            roster_path = %roster_path,
+            "optimizer officer pool is empty after roster filtering"
+        );
         return None;
     }
 
@@ -309,6 +314,16 @@ pub fn build_officer_pools_from_registry(
     );
 
     if captains.is_empty() || bridge.len() < BRIDGE_SLOTS || below_decks.len() < below_decks_slots {
+        tracing::warn!(
+            profile_id = profile_id.unwrap_or("<default>"),
+            roster_path = %roster_path,
+            captains = captains.len(),
+            bridge = bridge.len(),
+            below_decks = below_decks.len(),
+            required_bridge = BRIDGE_SLOTS,
+            required_below_decks = below_decks_slots,
+            "optimizer officer pools cannot fill a legal crew"
+        );
         return None;
     }
 

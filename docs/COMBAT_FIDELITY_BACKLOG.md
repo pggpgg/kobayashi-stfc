@@ -543,62 +543,25 @@ Steps:
 
 ---
 
-## 10. Crozier crit-damage-reduction convention — full multiplier vs bonus-only
+## 10. Crozier crit-damage-reduction convention — full multiplier ✅
 
-**a) The issue.** The engine has two conventions for "reduces critical damage": the Xindi
-defender-side debuff subtracts percentage points from the crit *bonus* (multiplier above ×1.0,
-can't push below ×1.0 — refined 2026-06-16), while the player-side Crozier "Gunboat Diplomacy"
-(`hostile_crit_damage_reduction`, multiplicative fraction path) still multiplies the hostile's
-*full* crit multiplier: `crit_mult × (1 − reduction)`, which can push a crit below ×1.0 — i.e.
-a "reduced crit" that deals less than a normal hit. DESIGN.md explicitly flags this as an
-approximation ("the client may apply reduction only to the crit bonus portion"). The two paths
-sit in the same function (`resolve_vehicle_weapon_crit`, `src/combat/crit.rs`) with documented
-ordering (reduction → floor → hull-breach), so aligning them is contained — the open question is
-which convention is right, which needs community evidence rather than code archaeology.
+**Status (2026-07-19): Resolved as documentation-only.** No combat-code, catalog, fixture, or
+calibration change is required. The existing Crozier `hostile_crit_damage_reduction` convention is
+retained: percentage/fractional mitigation scales the **full** critical-damage multiplier before
+the critical-damage-floor clamp and hull-breach amplification.
 
-**New evidence (2026-07-15).** The official
-[Critical Mitigation guide](https://startrekfleetcommand.com/news/starfleet-academy-remote-campus-critical-mitigation/)
-works an example where a 62.41% mitigation reduces the **full** critical damage of a hit
-(754,443,565,600 → 283,625,400,601), not just the bonus above ×1.0 — supporting the existing
-full-multiplier convention for the mitigation/percentage family. (`crit_mitigation_rating`,
-added for Athena's Revenge, feeds this same path.) The Xindi additive-points path is a distinct
-stat family; the "uniform bonus-only rule" suggested in the prompt below should be re-weighed
-against this evidence before implementing.
+The deciding evidence is the official
+[Critical Mitigation guide](https://startrekfleetcommand.com/news/starfleet-academy-remote-campus-critical-mitigation/),
+whose worked example applies 62.41% mitigation to the full critical damage of a hit
+(754,443,565,600 → 283,625,400,601), yielding 283,625,400,601. That matches the engine's existing
+`crit_mult × (1 − reduction)` path and rejects the proposed bonus-only alternative
+`1 + (crit_mult − 1) × (1 − reduction)` for this percentage/fractional mitigation family.
 
-**b) Prompt.**
-
-```
-In the KOBAYASHI repo, reconcile the two crit-damage-reduction conventions in
-src/combat/crit.rs::resolve_vehicle_weapon_crit. Read docs/COMBAT_FIDELITY_BACKLOG.md § "Shared
-context" first.
-
-Current state (read the function's doc comment — the ordering contract is documented):
-- attacker_crit_reduction_additive (Xindi path): subtracts points from the crit BONUS,
-  floor at ×1.0 before the crit-damage-floor clamp. Refined 2026-06-16, considered correct.
-- attacker_crit_reduction_mult (Crozier "Gunboat Diplomacy" path): multiplies the FULL crit
-  multiplier by (1 − reduction), which can take a crit below ×1.0 (worse than a non-crit).
-  DESIGN.md §3.6 "Implemented (example)" flags this as an approximation of in-game wording.
-
-Task:
-1. Research which convention STFC uses for percentage crit-damage reduction (community wikis,
-   stfc.space tooltips, Reddit/Discord mechanics threads — cite what you find; per
-   docs/NOT_ROADMAP.md do NOT propose collecting new recorded fights). The most defensible
-   uniform rule is: percentage reductions scale the crit BONUS: mult' = 1 + (mult − 1) × (1 − r),
-   never below ×1.0. If evidence is inconclusive, implement that rule and document it as the
-   chosen convention in the function docs and DESIGN.md.
-2. Change the attacker_crit_reduction_mult branch accordingly, preserving the documented
-   reduction → floor → hull-breach ordering and the counter-fire call sites' behavior
-   (grep hostile_crit_damage_reduction_active_at_round in src/combat/engine.rs — the
-   multiplicative fraction is summed and clamped to 0.95 in
-   src/combat/abilities.rs::hostile_crit_damage_reduction_active_at_round).
-3. Update the unit tests in src/combat/crit.rs (several assert the current full-multiplier
-   behavior, e.g. attacker_crit_reduction_mult_fraction_on_outbound_after_additive) and any
-   integration tests referencing Crozier; run the calibration drift fixtures — if one moves,
-   inspect whether its band encoded the old convention before recalibrating, and justify any
-   band change in the fixture comment.
-4. Update DESIGN.md §3.6 (the Crozier "Implemented (example)" paragraph) to state the new
-   convention and remove the approximation caveat.
-```
+The Xindi `attacker_crit_reduction_additive` path remains intentionally different: it subtracts
+percentage points from the crit *bonus* and cannot push the multiplier below ×1.0 before the floor.
+It represents an additive-points debuff family, not Crozier/Critical Mitigation's fractional
+mitigation family. The shared ordering in `resolve_vehicle_weapon_crit` remains reduction → floor →
+hull-breach.
 
 ---
 
@@ -684,14 +647,19 @@ bucket, so `other_review` is now empty. Coverage: `tests/hostile_other_review_tr
 
 **Deferred engine-extension candidates surfaced by the slice** (each currently a named noop bucket):
 
-- **Shield Disruptors** (`on_hit_mitigation_review`, 31 hostiles): every hostile weapon hit reduces
-  the player's shield mitigation by 10% for 1 round — needs a new `DefenderOnHitStack` stat variant
-  plus an ungated (always-on) trigger; upstream values are real (0.10).
 - **Oppressive Resilience** (`stacking_crit_review`, 7 hostiles): +crit chance at the END of each
   round, stacking — needs hostile-side accumulate mechanics.
 - **Defense Protocol α** (`scheduled_lethal_review`, 10 hostiles): lethal Cutting Beam on the
   hostile's 2nd weapon of every round — needs a defender-alive gate on
   `hostile_lethal_end_of_round` so a legitimate round-1 kill doesn't become a mutual-death loss.
+
+**Follow-up (2026-07-19) — Shield Disruptors modeled:** all 31 ids / 31 hostile instances moved
+from `on_hit_mitigation_review` to `on_hit_mitigation_combat`. Each hit pushes a 0.10 additive-point
+reduction to the player's shield-mitigation fraction for the remainder of the earn round. Hit N is
+resolved before its stack is pushed, so hit N+1 sees prior stacks; `duration_rounds: 1` expires them
+before the next round. The implementation extends `DefenderOnHitStack` with
+`ShieldMitigationReduction` and an `Always` gate. Coverage:
+`tests/hostile_other_review_triage.rs`.
 
 **a) The issue.** After PR #252, the biggest remaining bucket is still `other_review` — the long
 tail of unclassified hostile ability texts. Issues 1–8 above cover its high-count heads;

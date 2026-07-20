@@ -1008,11 +1008,16 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         return dict(NOOP), "post_combat_flavor"
 
     # Shield Disruptors (loca 55049): every hostile weapon hit reduces the PLAYER's shield
-    # mitigation by 10% for 1 round. Needs a new DefenderOnHitStack stat + an ungated
-    # trigger — deferred engine-extension candidate (backlog item 12 leftovers); upstream
-    # values are real (0.10).
+    # mitigation by 10 percentage points for the rest of the earn round. The stack is pushed
+    # after hit N, so it affects hit N+1 (prior-events-only), and expires before the next round.
+    # Upstream values are already engine-ready fractions (0.10, value_is_percentage=false).
     if "reduces the target ship" in p and "shield mitigation" in p:
-        return dict(NOOP), "on_hit_mitigation_review"
+        return m(
+            "combat_begin",
+            "defender_on_hit_shield_mitigation_reduction",
+            duration_rounds=1,
+            _bucket="on_hit_mitigation_combat",
+        )
 
     # Oppressive Resilience (loca 46001): stacking crit chance at the END of each round —
     # needs hostile-side accumulate mechanics (engine work); deferred.

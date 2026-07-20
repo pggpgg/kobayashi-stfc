@@ -384,6 +384,14 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 requires: crate::combat::abilities::DefenderOnHitGate::AttackerBurning,
             })
         }
+        "defender_on_hit_shield_mitigation_reduction"
+        | "hostile_on_hit_shield_mitigation_reduction"
+        | "shield_disruptors" => Some(AbilityEffect::DefenderOnHitStack {
+            stat: crate::combat::abilities::DefenderOnHitStat::ShieldMitigationReduction,
+            per_hit: value.max(0.0),
+            duration_rounds: duration_rounds.unwrap_or(1).max(1),
+            requires: crate::combat::abilities::DefenderOnHitGate::Always,
+        }),
         // Catalog value is a *bonus fraction* (0.2 = +20%, 125 = +12500% — matching upstream
         // ability text); the engine's proc accumulator expects a full multiplier.
         "attack_multiplier" | "weapon_damage" | "attack" => {
