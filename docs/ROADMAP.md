@@ -1,34 +1,94 @@
 # Roadmap
 
-What's shipped and what's planned. Explicit non-goals live in [NOT_ROADMAP.md](NOT_ROADMAP.md).
+Future work for KOBAYASHI. This document is intentionally forward-looking: it should say what is worth doing next, what order roughly makes sense, and where deeper planning lives. Shipped work belongs in PRs, release notes, or the specialized design docs that describe the current system.
 
-_Last updated 2026-06-30. The June 2026 audit backlog (engine decomposition, assurance gates, upstream drift automation, June patch content, import faction resolution, and related prep) is **shipped**, as is PvE crew-search-space reduction — captain/below-decks bans, the eligibility-matrix filter, and the [`search-space-report`](PVE_CREW_SEARCH_SPACE_REDUCTION.md) measurement harness (bans + eligibility cut the full-catalog space 46×–5,400× by scenario). **Component upgrades is also shipped** (PR #231, recalibrated PR #235): synced per-component ids from `profiles/*/ships.imported.json` now resolve into stat deltas over the base tier/level row and merge into both attacker and PvP-defender stats at scenario build ([`ship.rs`](../src/data/ship.rs) `apply_component_overrides_to_ship_record`, [`data_registry.rs`](../src/data/data_registry.rs) `resolve_ship_with_tier_level_and_imported_components`, [`scenario.rs`](../src/optimizer/monte_carlo/scenario.rs)). Durable design detail lives in linked docs, not here._
+Explicit non-goals live in [NOT_ROADMAP.md](NOT_ROADMAP.md). The next-generation optimizer plan lives in [OPTIMIZER_AMBITIOUS_ROADMAP.md](OPTIMIZER_AMBITIOUS_ROADMAP.md), and the longer-range research-lab vision lives in [KOBAYASHI_MOONSHOT_ROADMAP.md](KOBAYASHI_MOONSHOT_ROADMAP.md).
 
-For the next-generation optimizer research and implementation path, see [OPTIMIZER_AMBITIOUS_ROADMAP.md](OPTIMIZER_AMBITIOUS_ROADMAP.md). For the bigger frontier-model vision, see [KOBAYASHI_MOONSHOT_ROADMAP.md](KOBAYASHI_MOONSHOT_ROADMAP.md).
+_Last updated 2026-07-20._
 
-## Planned
+## Near-Term Priorities
 
-- **Product polish & speed (web UI)** — The next main goal. The engine, data, and optimizer are mature (officer modeling fidelity ~maxed, search well-tuned, component upgrades shipped); focus is refining the React SPA. The app is solid at desktop width — incremental refinement, not a rebuild.
+### Product Polish and Speed
 
-  **Shipped (2026-06-26):**
-  - **React Router v7 readiness** — opted into `v7_startTransition` / `v7_relativeSplatPath`; console deprecation warnings cleared ([`main.tsx`](../frontend/src/main.tsx)).
-  - **Optimize ("Strategy") panel density** — the ~40-control panel now keeps the common path visible (seeds → strategy → tiered → ranking) and collapses the advanced groups (chain grind, novelty/diversity, search constraints, search scope) behind native `<details>` sections ([`OptimizePanel.tsx`](../frontend/src/components/OptimizePanel.tsx); `.opt-section` in [`index.css`](../frontend/src/index.css)).
-  - **Narrow / vertical-screen layout** — the side rail collapses to a full-width top bar ≤768px, and the crew + strategy/results columns stack ≤900px, on both the Workspace and PvP pages. Driven by media queries on `.app-shell` / `.rail` / `.workspace-body` / `.optimize-panel` / `.pvp-results`; the relevant layout styles were moved out of inline props so no `!important` is needed.
-  - **Component-upgrade visibility (2026-06-27)** — a workspace-header chip shows whether the active profile's synced ship components add stats over the base hull tier (amber "⬆ +deltas" with a full-breakdown tooltip) or match it (muted), via the new profile-aware `GET /api/ships/:id/component-overrides`. The override path already computed the deltas and discarded them; it now returns a [`ComponentOverrideSummary`](../src/data/ship.rs) so the UI confirms the shipped component-upgrades backend is actually applied to sim/optimize ([`WorkspaceHeader.tsx`](../frontend/src/components/WorkspaceHeader.tsx)).
-  - **Inline-style consolidation (2026-06-29)** — repeated inline `style={{…}}` objects hoisted into typed module-scope `styles` constants across the four heaviest SPA views: [`SimResults`](../frontend/src/components/SimResults.tsx) (76→58), [`OptimizePanel`](../frontend/src/components/OptimizePanel.tsx) (58→44), [`RosterProfile`](../frontend/src/pages/RosterProfile.tsx) (152→94), [`Sensitivity`](../frontend/src/pages/Sensitivity.tsx) (76→30). 136 inline-style sites removed, net −214 source lines; the hoisted objects are also no longer re-allocated per render. Behavior-preserving (value-identical replacement), verified by `tsc` / `biome` / 155 Vitest tests ([PR #239](https://github.com/pggpgg/kobayashi-stfc/pull/239)).
-  - **Sensitivity-table de-dup (2026-06-30)** — [`SobolResults`](../frontend/src/components/SobolResults.tsx) and [`MorrisResults`](../frontend/src/components/MorrisResults.tsx) were genuine near-duplicates (identical `fmtFloat` helper, sort-button row, and zebra-striped table shell) and now share a generic [`SortableStatTable`](../frontend/src/components/SortableStatTable.tsx); `fmtFloat`/`fmtPct` moved to [`lib/sensitivityFormat.ts`](../frontend/src/lib/sensitivityFormat.ts), also adopted by `SobolPairs` and `SensitivityResults`. SobolResults 298→225 lines, MorrisResults 255→184. Scoped down from this roadmap's original "Shared `ResultsTable<T>`" framing — on inspection `SimResults` doesn't paginate like the other two and isn't a near-duplicate of them (row-selection, real pagination, a compare-distributions panel, three mode-dependent column sets), so it was excluded rather than forced into the same abstraction. Behavior-preserving: existing Vitest coverage for both components passed unmodified, plus new tests for the extracted pieces.
-  - **Design tokens (2026-06-30)** — added a 12-entry `--space-*`/`--radius-1` scale to [`index.css`](../frontend/src/index.css) alongside the existing color tokens; the hoisted `styles` constants in [`SimResults`](../frontend/src/components/SimResults.tsx), [`OptimizePanel`](../frontend/src/components/OptimizePanel.tsx), [`RosterProfile`](../frontend/src/pages/RosterProfile.tsx), and [`Sensitivity`](../frontend/src/pages/Sensitivity.tsx) now reference `var(--space-*)`/`var(--radius-1)` instead of magic numbers. Value-identical — each token carries the exact literal it replaces, with px and rem values kept as separate tokens rather than merged even where they coincide at the browser default font size, since only rem scales with a user's font-size preference. Verified via computed-style inspection in the browser plus `tsc` / `biome` / 166 Vitest tests.
-  - **Split `RosterProfile.tsx` (2026-06-30)** — extracted the mod-sync banner, profile-attributes card, buildings/research summaries, and roster-import/bonuses tabs into their own components under [`components/`](../frontend/src/components/), plus a shared [`RosterProfileTechSlot`](../frontend/src/components/RosterProfileTechSlot.tsx) deduping the forbidden-tech/chaos-tech blocks (structurally identical, differing only by data). [`RosterProfile.tsx`](../frontend/src/pages/RosterProfile.tsx) itself drops **1,446 → 405** lines. Scoped down from this roadmap's original "stat / comparator / search blocks" framing — on inspection the file has no comparator or search UI; the actual seams were the five concerns above. Behavior-preserving: existing Vitest coverage passed unmodified, plus live verification of the import and bonus-save flows through the new components.
+Keep refining the React SPA as a working tool, not a marketing surface. The main product risk is not missing a giant redesign; it is friction in repeated day-to-day use.
 
-  Verified at 375px (phone), 850px, and 1280px on both Workspace and PvP: no horizontal page overflow, and the wide recommendations table scrolls within its own `overflow:auto` box.
+Planned focus:
 
-## Assessed, no action planned
+- Make dense optimizer controls easier to scan without hiding important state.
+- Improve result-table readability for wide recommendation sets and narrow screens.
+- Surface method provenance, confidence, and caveats in compact result-row affordances.
+- Keep profile, component, sync, and roster state visible enough that users can trust which inputs drove a recommendation.
+- Continue extracting shared UI pieces only where it reduces real duplication or render churn.
 
-From the 2026-06-09 audit, these came back clean or justified — don't re-litigate without new evidence (line/allow counts refreshed 2026-06-30):
+### Recommendation Quality
 
-- `scenario.rs` (~3,800 → ~4,300 lines) is large but well-factored internally; no split needed.
-- The `clippy::too_many_arguments` allows (39 → 56) are justified by the registry/DTO architecture.
-- Error handling: panics are confined to defensive asserts, malformed API input 400s cleanly, job registries are bounded with prune-on-insert.
-- Dependencies: minimal, stable, no git deps, no duplicates.
-- Station-defense conditions remain a non-goal — see [NOT_ROADMAP.md](NOT_ROADMAP.md).
-- Full-catalog exhaustive search over the broad `red_moving_space` hostile category stays impractical at realistic confirm depth (~17 B crews even after bans + eligibility, per [PVE_CREW_SEARCH_SPACE_REDUCTION.md](PVE_CREW_SEARCH_SPACE_REDUCTION.md)). Tiered/genetic search and per-profile owned-roster narrowing are the intended reducers there — not further catalog-wide bans, which would risk dropping functional crews for ~1% space savings.
+Improve the crews Kobayashi finds without making the optimizer harder to reason about. Exact legality filters stay authoritative; heuristics should prioritize, explore, or allocate budget, not silently delete valid crews.
+
+Planned focus:
+
+- Add local refinement around tiered and genetic finalists: one-slot bridge swaps, below-decks swaps, captain-preserving variants, and small repair neighborhoods.
+- Add Pareto tags and recommendation reasons over existing metrics such as win rate, loss rate, round-1 kills, hull remaining, defender hull remaining, confidence width, and chain-grind utility.
+- Expand benchmark controls so new lanes are judged against current tiered, genetic, analytical, warm-start, and stratified-random baselines.
+- Use observation logs and method provenance to explain which search path found each recommendation and whether it was confirmed deeply enough.
+
+See [OPTIMIZER_AMBITIOUS_ROADMAP.md](OPTIMIZER_AMBITIOUS_ROADMAP.md) for the staged implementation plan.
+
+### Evidence and Provenance
+
+Make recommendations and simulations easier to audit. Kobayashi should be able to answer "what inputs, simulator version, data snapshot, method, seed budget, and uncertainty produced this result?"
+
+Planned focus:
+
+- Broaden run manifests for optimize, simulate, import, calibration, and benchmark jobs.
+- Add stronger simulator and catalog fingerprints to durable optimizer observations.
+- Improve retention, compaction, and offline tooling for observation logs.
+- Expose uncertainty and evidence level in API responses where the UI can use them.
+- Keep trace diffs and calibration residuals structured enough to support future hypothesis testing.
+
+### Combat and Data Fidelity
+
+Keep the simulator aligned with known STFC mechanics while avoiding speculative overreach. New mechanics should be grounded in upstream ability text, existing engine hooks, community-documented behavior, or controlled fixtures.
+
+Planned focus:
+
+- Continue retiring high-impact `combat_noop` ability families from the ship and hostile audits.
+- Keep upstream drift detection actionable after data refreshes.
+- Extend hostile faction and ship-type mapping when new upstream ids appear.
+- Improve validation warnings where malformed or unsupported data would otherwise compile to no effect.
+- Preserve deterministic seeded behavior when adding new mechanics or RNG draws.
+
+See [HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md) and [SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) for detailed inventories.
+
+## Later Horizons
+
+### Optimizer Portfolio
+
+After the practical recommendation-quality work, turn the optimizer into an explicit portfolio of search lanes:
+
+- beam search with diversity lanes
+- quality-diversity archives
+- adaptive simulation budgets and racing
+- surrogate-assisted proposals that nominate, never crown, crews
+- richer substitute search for missing officers or low-rarity alternatives
+
+### Combat Research Loop
+
+Build toward a simulator that can compare hypotheses instead of treating every uncertain mechanic as a single hard-coded truth:
+
+- named mechanic hypotheses behind deterministic switches
+- residual clustering by mechanic family
+- experiment suggestions for the smallest fight set that would distinguish hypotheses
+- evidence-linked patches and regression traces
+
+### Strategic Planning
+
+Extend beyond single-fight crew selection once combat recommendations are auditable enough:
+
+- chain-grind planning with repair and risk constraints
+- officer and ship upgrade marginal-value estimates
+- event and progression planning for a real profile
+- support-buff, exocomp, and resource-allocation tradeoffs
+
+## Out of Scope
+
+Do not add completed-work summaries here. If a shipped item needs durable documentation, update the design or subsystem doc that explains the current behavior. If an idea is intentionally deferred or declined, put it in [NOT_ROADMAP.md](NOT_ROADMAP.md).

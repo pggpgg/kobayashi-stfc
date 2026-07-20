@@ -43,7 +43,7 @@ Reference and design docs for KOBAYASHI. The main [README](../README.md) is the 
 
 ## Process
 
-- [ROADMAP.md](ROADMAP.md) — shipped vs planned features.
+- [ROADMAP.md](ROADMAP.md) — future work and planning priorities.
 - [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) — how to curate 30–50 snapshot-bound fights for calibration (reference; not on roadmap — see [NOT_ROADMAP.md](NOT_ROADMAP.md)).
 - [NOT_ROADMAP.md](NOT_ROADMAP.md) — explicit non-goals.
 - [HUMAN_INTERVENTION_TASKS.md](HUMAN_INTERVENTION_TASKS.md) — maintainer tasks that require human judgment (data curation, calibration decisions).

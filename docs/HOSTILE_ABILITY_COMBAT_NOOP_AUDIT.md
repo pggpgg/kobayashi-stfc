@@ -1,6 +1,6 @@
 # Structured audit: hostile `ability[]` coverage
 
-This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
+This is the authoritative inventory of upstream hostile abilities that are modeled, intentionally ignored, or still candidates for combat support.
 
 **Catalog revision (2026-07-19 / Shield Disruptors follow-up):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **735** modeled for defender-side combat (`defender_crew`), **247** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 

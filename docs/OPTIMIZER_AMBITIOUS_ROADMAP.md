@@ -1,16 +1,10 @@
 # Ambitious Optimizer Roadmap
 
-This roadmap is for the next generation of Kobayashi's crew optimizer: not just a faster exhaustive search, but a search system that learns where good crews live, explains tradeoffs, and spends simulation budget where it changes decisions.
+Future work for the next generation of Kobayashi's crew optimizer. This roadmap focuses on capabilities that have not been built yet: better finalist refinement, richer recommendations, explicit discovery lanes, adaptive simulation budgets, and eventually learned search that remains subordinate to the simulator.
 
-It builds on the current foundation:
+Current optimizer behavior belongs in [DESIGN.md](DESIGN.md), [PERFORMANCE.md](PERFORMANCE.md), and [CREW_OPTIMIZATION_METHODS.md](CREW_OPTIMIZATION_METHODS.md). Completed implementation details should not accumulate here.
 
-- production hard filters: roster, seat legality, bans, scenario eligibility, duplicate prevention, and constraints
-- closed-form analytical ranking and prefiltering
-- tiered scout to confirm Monte Carlo
-- genetic search with warm starts, repair, adaptive mutation, and final confirmation
-- optimize history, learned below-decks sampling, novelty-aware ranking, and confidence intervals
-
-The goal is not to replace these pieces. The goal is to make them into an explicit optimizer portfolio.
+_Last updated 2026-07-20._
 
 ## North Star
 
@@ -19,124 +13,48 @@ Kobayashi should become a multi-stage, self-auditing search engine:
 ```text
 profile + ship + hostile
   -> exact role pools and legality funnel
-  -> proxy ranking and search lanes
-  -> diverse discovery: beam, random, genetic, MAP-Elites, local repair
-  -> adaptive simulation budget: racing, successive halving, confidence bounds
-  -> high-depth confirmation with common seeds
-  -> Pareto recommendations with explanations and substitute crews
+  -> proxy ranking and independent search lanes
+  -> diverse discovery: random, genetic, beam, archive, local repair
+  -> adaptive simulation budget: racing, confidence bounds, seed panels
+  -> high-depth confirmation
+  -> Pareto recommendations, explanations, and substitute crews
   -> durable observations for future learned search
 ```
 
-The product experience should feel simple: ask for a crew and get several trustworthy choices, each with a reason. Under the hood, Kobayashi should know which method found each crew, how much evidence supports it, and whether a cheaper method would have found the same answer.
+The product experience should remain simple: ask for a crew and get several trustworthy choices, each with a reason. Under the hood, Kobayashi should know which method found each crew, how much evidence supports it, and whether a cheaper method would have found the same answer.
 
 ## Principles
 
 1. **Exact filters may delete. Soft heuristics may only prioritize.**
-   Eligibility, duplicate prevention, seat legality, owned roster, and impossible conditions are hard gates. Proxy scores, archetypes, learned models, and meta assumptions must stay as ordering, sampling, or budget allocation signals unless proven exact.
+   Eligibility, duplicate prevention, seat legality, owned roster, and impossible conditions are hard gates. Proxy scores, archetypes, learned models, and meta assumptions stay as ordering, sampling, or budget-allocation signals unless proven exact.
 
-2. **Every clever method needs a boring baseline.**
-   A stratified random search should run in benchmarks and, for wide searches, optionally in production as a small exploration lane. If a new method cannot beat that baseline, delete or demote it.
+2. **Every search method needs a simple control.**
+   New lanes must be compared with stratified random, tiered, genetic, analytical, and warm-start baselines under equal budgets.
 
 3. **Simulation remains the judge.**
-   Surrogates, beam scores, and Bayesian proposals can nominate crews. They do not crown winners.
+   Surrogates, beam scores, and Bayesian proposals may nominate crews. They do not crown winners.
 
-4. **Diversity is product quality, not just algorithmic decoration.**
-   Users need fast, safe, low-variance, accessible, and matchup-specific crews. Returning ten near-identical variants of one top crew is usually worse than returning a real menu of strong alternatives.
+4. **Diversity is product quality.**
+   Users need fast, safe, low-variance, accessible, and matchup-specific crews. Returning near-identical variants of one winner is usually worse than returning a real menu of strong alternatives.
 
-5. **Telemetry before tuning.**
-   Do not tune beam widths, prune thresholds, mutation rates, or learned models without recording enough stage-level data to know what changed.
+5. **Telemetry comes before tuning.**
+   Do not tune beam widths, prune thresholds, mutation rates, or learned models without enough stage-level evidence to measure the effect.
 
-## Phase 0: Measurement Spine
+## Phase 1: Better Recommendations
 
-Make the optimizer observable enough that future changes can be judged scientifically.
+These are the highest-confidence improvements because they reuse existing finalists, role pools, simulation outputs, and legality machinery.
 
-### 0.1 Candidate Funnel Telemetry
+### 1.1 Local Refinement and Large-Neighborhood Repair
 
-Record per optimize run:
-
-- raw role pool sizes by seat
-- counts after roster, bans, eligibility, constraints, and duplicate/canonicalization
-- generated candidate count
-- warm-start count and dedupe count
-- analytical prefilter from/kept counts
-- scout candidate count, scout trial count, confirm candidate count, confirm trial count
-- optimize history hits
-- final result count
-- elapsed time per phase
-- cancellation point, if any
-
-This extends the current budget telemetry into a full optimizer funnel. It should be emitted in logs, optionally appended to profile telemetry, and summarized in API responses for advanced mode.
-
-**Status:** implemented for the current optimizer paths. Kobayashi now emits API, log, and budget-telemetry counts for raw role pools, ban-list filtering, eligibility filtering, roster narrowing, final constrained pools, generated candidates, warm-start/dedupe, constraints, analytical prefilter, scout/confirm candidates, history hits, final results, coarse phase durations, and structured async cancellation points. Result rows now carry `method_provenance`. Remaining Phase 0 measurement work is 0.2 durable simulation observations and 0.3 controlled optimizer benchmarks; future lanes should add their own method-specific subphase timings as they land.
-
-### 0.2 Simulation Observation Log
-
-Create a durable `optimize_observations` store keyed by:
-
-- profile hash and profile id
-- ship id, tier, level, component hash
-- hostile/scenario hash
-- support buff and PvP defender fingerprint
-- officer catalog version
-- simulator version
-- candidate crew hash
-- method that proposed the crew
-- trials, seed range or seed panel id, objective metrics, confidence intervals
-
-This should not replace `optimize_history` immediately. Start as append-only telemetry, then graduate into a reusable dataset for surrogate evaluation and cache reuse.
-
-**Status:** first slice implemented. When `KOBAYASHI_OPTIMIZE_OBSERVATIONS=1`, Kobayashi appends final ranked crew observations to `profiles/{id}/optimize_observations.jsonl` or `KOBAYASHI_OPTIMIZE_OBSERVATIONS_PATH`. Rows include profile id/hash, scenario/request context, method provenance, crew hash/material, trial count, score, objective metrics, and confidence intervals. Remaining 0.2 work: catalog/simulator version fingerprints beyond crate version, richer hostile/support fingerprints, offline dataset tooling, retention/compaction, and reuse by surrogate search.
-
-### 0.3 Benchmark Harness With Controls
-
-Add an optimizer benchmark suite that compares:
-
-- current tiered
-- current genetic
-- analytical-only
-- stratified random baseline
-- known warm-start crews
-- any new lane added later
-
-Score each method by:
-
-- best confirmed crew found under equal wall-clock and equal trial budgets
-- top-K recall against deeper confirmation on small search spaces
-- diversity of finalists
-- stability across seeds
-- regret versus the best discovered crew
-- false-negative rate of any prefilter
-
-**Status:** first slice implemented. `cargo run --release --bin optimizer_method_bench` runs built-in optimizer method comparisons over fixed scenarios and optional `--seed-panel` values, then emits JSONL (or `--pretty`) rows for `tiered`, `genetic`, `linear_eval`, `warm_start_tiered`, and a benchmark-only `random_stratified` control. Rows include budgets, elapsed time, candidate funnel/trial accounting where available, top crew identity, top-K material diversity metrics, best discovered win-rate, and per-method regret. Remaining 0.3 work: equalized wall-clock/trial budget modes, deeper reference sweeps for top-K recall/false-negative scoring, CI artifact wiring, and baseline thresholds.
-
-## Phase 1: Better Recommendations Without New Magic
-
-These are high confidence improvements because they reuse Kobayashi's existing simulator and ranking outputs.
-
-### 1.1 Stratified Random Baseline
-
-Add a small random exploration lane:
-
-- sample valid crews after the exact filters
-- stratify by captain, faction, rarity, archetype tags, and below-decks families
-- reserve a configurable percentage of scout budget for unusual combinations
-- write method label `random_stratified`
-
-This is both a benchmark control and an antidote to overconfident proxy rankings.
-
-**Status:** implemented. [`src/optimizer/random_stratified.rs`](../src/optimizer/random_stratified.rs) samples legal crews from the eligibility-filtered pools, round-robin across captain (faction, rarity) cells with below-decks group-family rotation, deterministic per seed. Two production surfaces: `strategy: "random_stratified"` runs a standalone control lane (pure random candidate set → tiered scout → confirm; ignores warm-start, skips the analytical prefilter and optimize-history preconfirm reuse), and `tiered_random_exploration_pct` (0, 0.5] swaps that fraction of the tiered scout candidate list — budget-neutral, post-prefilter — for random crews. Both label result rows `method_provenance: "random_stratified"` and report `random_exploration_candidates` in the funnel telemetry; the SPA exposes the strategy option and a "Random exploration %" tiered control. `optimizer_method_bench`'s `random_stratified` control now calls the same production sampler. Remaining 1.1 work: archetype/ability-tag strata (beyond faction/rarity/group) once tags exist, and default-on evaluation for the tiered slice after benchmark comparisons justify it.
-
-### 1.2 Local Refinement and Large-Neighborhood Repair
-
-After tiered/genetic finalists, search nearby:
+Search around tiered and genetic finalists using:
 
 - one-slot bridge swaps
 - one-slot below-decks swaps
-- captain swap while preserving support officers
-- swap one trigger producer or consumer
-- destroy-repair neighborhoods: remove 2-3 officers and rebuild from high-fit compatible pools
+- captain swaps that preserve compatible support officers
+- trigger-producer or trigger-consumer replacement
+- destroy-repair neighborhoods that remove two or three officers and rebuild from high-fit compatible pools
 
-Use scout depth first, then confirm only improvements and diverse near-ties. This is the first "ambitious but practical" quality jump: Kobayashi already has finalists, role pools, legality repair, and shared scenario data.
+Use scout depth first, then confirm only improvements and diverse near-ties. Preserve the source crew and changed slots so the UI can explain how refinement improved the recommendation.
 
 Method labels:
 
@@ -144,351 +62,259 @@ Method labels:
 - `local_captain_swap`
 - `large_neighborhood_repair`
 
-User-facing payoff: "This recommendation came from improving the genetic winner by replacing X with Y."
+### 1.2 Pareto Frontier Recommendations
 
-### 1.3 Pareto Frontier Recommendations
+Compute Pareto fronts over metrics already produced by simulation:
 
-Compute Pareto fronts over metrics Kobayashi already has:
-
-- win rate
-- loss rate
-- stall rate
+- win, loss, and stall rates
 - round-1 kill rate
 - average hull remaining
 - average defender hull remaining
 - confidence interval width
-- chain-grind efficiency
-- roster accessibility or rarity score
+- chain-grind utility
+- roster accessibility or rarity cost
 
-Expose views:
+Keep the scalar score as the default sort while adding `pareto_tags` and `recommendation_reason` to result rows. Initial user-facing views should cover safest, fastest farming, best chain crew, best substitute, and most different competitive crew.
 
-- safest
-- fastest farming
-- highest damage
-- lowest variance
-- best chain crew
-- best substitute
-- most different from current crew
+### 1.3 Evidence and Provenance Completion
 
-Keep the current scalar score as the default sort, but let the API return `pareto_tags` and `recommendation_reason`.
+Make each recommendation auditable from input through confirmation:
 
-### 1.4 Method Provenance
+- preserve every proposing method, not only the final method label
+- distinguish discovery, promotion, and confirmation stages
+- fingerprint the simulator, officer catalog, profile, ship components, hostile, support buffs, and seed panel
+- expose evidence level, uncertainty reason, and confirmation depth in API results
+- retain enough local-refinement context to explain changed officers and measured gain
 
-Every result row should know how it was discovered:
+Harden durable observation storage with retention, compaction, schema migration, and offline inspection tools. Observation reuse must be fingerprint-safe and must never cross incompatible simulator or data versions.
 
-- warm start
-- history
-- analytical prefilter
-- tiered scout
-- genetic
-- random baseline
-- local refine
-- future beam
-- future quality-diversity archive
-- future surrogate proposal
+### 1.4 Controlled Benchmark Expansion
 
-This makes optimizer behavior debuggable and gives the UI honest explanations.
+Extend optimizer benchmarks with:
+
+- equal wall-clock and equal-trial budget modes
+- deeper reference sweeps on tractable search spaces
+- top-K recall and prefilter false-negative scoring
+- diversity and stability metrics across seed panels
+- CI artifacts and regression thresholds
+- method-specific subphase timings for every new lane
+
+Benchmarks should answer both "did this method find a stronger crew?" and "did it add a useful recommendation family?"
+
+### 1.5 Richer Random Exploration Strata
+
+Add ability and archetype tags to random exploration strata, then evaluate whether a small default-on exploration share improves recall without materially increasing latency. Keep this lane independent enough to detect blind spots shared by analytical, tiered, and genetic search.
 
 ## Phase 2: Explicit Discovery Lanes
 
-Make search strategy a portfolio rather than a single path.
+Turn search strategy into a portfolio of independent candidate proposers that feed a shared simulation and confirmation pipeline.
 
 ### 2.1 Beam Search With Diversity Lanes
 
-Build crews slot by slot and retain partial candidates. Use separate beams instead of one global beam:
+Build crews slot by slot and retain partial candidates in separate beams:
 
-- damage beam
-- survivability beam
-- round-1 kill beam
-- long-fight sustain beam
-- anti-dodge/high-accuracy beam
-- shield-bypass/isolytic beam
-- low-rarity or owned-roster substitute beam
-- per-captain beam for top captain families
+- damage
+- survivability
+- round-1 kill
+- long-fight sustain
+- anti-dodge and high-accuracy
+- shield-bypass and isolytic
+- low-rarity or owned-roster substitutes
+- per-captain family
 
-The hard part is partial scoring. Start conservative:
-
-- use existing analytical expected damage for partials
-- add bridge synergy score
-- add static gate match score
-- add profile headroom score
-- add diversity penalty
-
-Beam search should feed tiered scout, genetic seeds, local refinement, and Pareto views. It should not delete the random lane.
+Score partial crews conservatively using analytical expected damage, static gate matches, bridge synergy, profile headroom, and a diversity penalty. Beam output should feed scout, genetic seeds, local refinement, and Pareto views; it must not displace the random control.
 
 ### 2.2 Quality-Diversity Archive
 
-Add a MAP-Elites-inspired archive: keep the best crew per behavioral cell instead of only the global top score.
+Add a bounded MAP-Elites-style archive that keeps the best crew in each behavioral cell instead of retaining only the global top score.
 
-Possible behavior dimensions:
+Candidate dimensions include:
 
-- fight length bucket
-- round-1 kill probability bucket
-- hull remaining bucket
-- damage archetype: direct, crit, isolytic, apex, shield bypass
-- trigger package: morale, burning, hull breach, on-kill, none
+- fight-length bucket
+- round-1 kill probability
+- hull remaining
+- damage archetype
+- trigger package
 - captain family or faction
-- rarity/accessibility bucket
-- PvE/PvP/armada scenario family
+- rarity and accessibility
+- scenario family
 
-This is a better fit for Kobayashi than pure "find one optimum" search because players often need substitutes, safe crews, fast crews, and matchup-specific crews. It also gives the UI a search-space atlas: "here are the best crews of each kind."
+Start in benchmarks, prove that the archive produces competitive and materially different crews, then expose a bounded production lane.
 
-Start offline or benchmark-only, then move into production as a bounded archive lane.
+### 2.3 Cross-Entropy Sampler
 
-### 2.3 Cross-Entropy / Estimation-of-Distribution Sampler
+Learn probability weights over captains, bridge slots, below-decks officers, officer packages, and archetype tags:
 
-Implement an adaptive sampler that learns probability weights over:
+1. Sample legal crews from the current distribution.
+2. Scout them on a shared seed panel.
+3. Select elites using confidence-aware scores.
+4. Update material weights while preserving a minimum entropy floor.
+5. Repeat for a bounded number of rounds.
 
-- captains
-- bridge officers by slot
-- below-decks officers
-- pair and triple packages
-- archetype tags
-
-Loop:
-
-1. sample valid crews from the current distribution
-2. scout them
-3. choose elites by confirmed or scout-adjusted score
-4. update sampling weights toward elite material while preserving entropy
-5. repeat for a few rounds
-
-This is simpler than a full learned surrogate and can reuse the same repair/legality machinery as genetic search. It may outperform GA on wide categorical spaces because it learns population-level officer/package weights directly.
+Compare this lane with genetic and stratified-random search on wide categorical spaces.
 
 ### 2.4 Hyperband-Style Racing
 
-Generalize tiered scout into explicit brackets:
+Generalize scout and confirmation into explicit multi-fidelity brackets:
 
 ```text
-bracket A: many crews, very few trials
+bracket A: many crews, few trials
 bracket B: fewer crews, moderate trials
-bracket C: finalists, high trials
+bracket C: finalists, deep trials
 ```
 
-Use confidence-aware elimination:
-
-- promote crews whose confidence intervals overlap the top-K boundary
-- keep archetype/captain strata alive long enough to avoid early specialist elimination
-- use common random numbers or fixed seed panels for fair comparisons
-
-This evolves Kobayashi's current adaptive scout into a principled multi-fidelity evaluator.
+Promote crews whose confidence intervals overlap the top-K boundary. Keep captain and archetype strata alive long enough to avoid eliminating specialists from noisy early samples. Use common seed panels for comparisons and independent seeds for final confirmation.
 
 ## Phase 3: Learned Search
 
-Only do this after Phase 0 creates the observation store. The first learned system should be modest, inspectable, and subordinate to the simulator.
+Learned search begins only after observations are versioned, inspectable, and benchmarked. The first model should be modest, explainable, and unable to bypass simulator confirmation.
 
 ### 3.1 Feature Store
 
-For each candidate, derive features:
+Derive stable candidate and scenario features:
 
-- officer ids by role
-- officer tags and ability tags
-- captain/bridge/below-decks role indicators
-- static condition match flags
-- faction and synergy counts
-- stat buckets after profile and ship resolution
+- officer ids, roles, tags, and ability tags
+- static condition matches
+- faction, synergy, and trigger-package counts
+- resolved ship and profile stat buckets
 - hostile type, faction, level, mitigation, shield, dodge, and damage profile
-- fight archetype estimates
-- prior observations for similar candidate/material
+- fight-archetype estimates
+- compatible historical observations
 
-Write this as a Rust feature extraction module first. Model training can happen out of process.
+Implement feature extraction in Rust and version its schema independently from any trained model.
 
 ### 3.2 Surrogate Ranker
 
-Start with models that handle categorical features and missingness well:
+Evaluate models that handle categorical features and missingness well, starting with tree-based rankers and TPE- or SMAC-style proposers. Use uncertainty or an explicit exploration term to prevent collapse onto stale meta crews.
 
-- random forest or gradient-boosted trees
-- TPE-style proposal model
-- SMAC-style random-forest surrogate
-- BOHB-style combination of model proposals plus multi-fidelity racing
-
-Use the model to propose candidates and allocate budget. Do not use it as final ranking.
-
-Success criteria:
+Promotion criteria:
 
 - beats stratified random under equal scout budget
 - improves top-K recall over analytical prefilter alone
-- uncertainty or exploration term prevents collapse onto stale meta crews
-- degrades gracefully after officer catalog updates
+- remains useful after officer-catalog changes
+- never supplies an unconfirmed final recommendation
 
-### 3.3 Active Learning Loop
+### 3.3 Active Learning
 
-Let the optimizer ask useful questions:
+Use disagreement and uncertainty to propose the next simulation batch:
 
-- which untested captain family has high uncertainty?
-- which near-frontier crew needs more trials?
-- which surrogate-predicted crew disagrees most with analytical scoring?
-- which local neighborhood around a winner is underexplored?
+- underexplored captain families
+- near-frontier crews that need more trials
+- analytical and surrogate disagreements
+- sparse local neighborhoods around winners
 
-The output is a candidate batch for scout, not a final answer.
+The output is always a candidate batch for simulation, not a recommendation.
 
-### 3.4 Recommendation Explanations From Counterfactuals
+### 3.4 Counterfactual Explanations
 
-Generate explanations by cheap ablation and replacement tests:
+Generate recommendation explanations from measured ablations and replacements:
 
-- remove each officer and replace with the best legal alternative
-- report marginal value estimates with uncertainty
-- flag trigger dependencies: "Y matters because X supplies burning"
-- flag profile sensitivity: "accuracy is valuable here because this hostile has high dodge"
+- replace each officer with the best legal alternative
+- estimate marginal value with uncertainty
+- identify trigger dependencies
+- report scenario or profile sensitivity that changes the preferred crew
 
-This is more trustworthy than natural-language explanations invented from tags alone.
+Prefer these measured explanations over prose inferred from tags alone.
 
 ## Phase 4: Multi-Scenario and Fleet-Aware Optimization
 
-Kobayashi should eventually optimize not just one fight, but a player's intent.
+### 4.1 Robust Search Across Target Sets
 
-### 4.1 Robust Crew Search Across Hostile Sets
-
-Optimize against a set of targets:
-
-- common grind hostiles in a level band
-- all relevant armada variants
-- PvP attacker classes
-- station/outpost scenario families when in scope
-
-Objectives:
-
-- max average performance
-- max worst-case performance
-- choose one crew that is "good enough" across a range
-- choose a small set of crews that covers the range
+Optimize over target collections such as hostile level bands, armada variants, or PvP attacker classes. Support average-case, worst-case, and small-cover-set objectives without weakening scenario legality.
 
 ### 4.2 Substitute Crew Planner
 
-Given a recommended crew and missing officer(s), find substitutes by:
+Given a recommendation and unavailable officers, find replacements by trigger role, stat contribution, archetype cell, and local refinement. Report the expected performance loss and confidence interval for each substitute crew.
 
-- same trigger role
-- same stat bucket
-- same archetype cell
-- local refinement around the unavailable crew
-- Pareto-preserving replacement
+### 4.3 Campaign and Chain Policies
 
-This should become a first-class player feature.
-
-### 4.3 Campaign / Chain Policies
-
-For chain grind, optimize policy-level outcomes:
+Optimize policy-level outcomes:
 
 - fights before repair
 - expected repair cost
 - median and lower-bound chain length
-- low-variance chain survival
-- speed with minimum safety constraint
+- low-variance survival
+- speed subject to a safety constraint
 
-This should share the Pareto and racing machinery, but use chain-specific objectives.
+Share Pareto and racing machinery while keeping chain-specific objectives explicit.
 
 ## Phase 5: Compute Engine Upgrades
 
-Do these after search algorithms are better. Algorithmic budget reduction should come before hardware heroics.
+Pursue compute work after algorithmic budget reductions have measurable benchmarks.
 
 ### 5.1 Candidate Representation
 
-Move hot optimizer paths toward:
-
-- compact officer ids
-- slot bitsets
-- canonical tuple hashes
-- precomputed role eligibility bitsets
-- precomputed pair and package scores
-- structure-of-arrays batches for numeric simulation inputs
-
-This improves exhaustive, tiered, random, local, and learned lanes together.
+Move hot optimizer paths toward compact officer ids, slot bitsets, canonical tuple hashes, precomputed eligibility and package scores, and structure-of-arrays simulation batches.
 
 ### 5.2 Common Random Numbers and Seed Panels
 
-Use paired comparisons where possible:
-
-- scout candidates on identical seed panels
-- compare local neighbors using identical seeds
-- reserve independent seeds for final confirmation
-
-This can reduce ranking noise without changing combat math.
+Compare scout candidates and local neighbors on identical seed panels, then reserve independent seeds for final confirmation. Measure variance reduction and guard deterministic replay across every search lane.
 
 ### 5.3 SIMD and Batch Simulation
 
-Continue CPU-first:
-
-- batch candidates by similar ability structure
-- separate static preprocessing from round loop
-- vectorize uniform numeric kernels where branch behavior is low
-- keep scalar trace/debug parity
-
-GPU work is a later experiment. Kobayashi's ability system is branchy enough that better search will likely beat GPU acceleration for a long while.
+Batch candidates with similar ability structure, separate static preprocessing from the round loop, and vectorize uniform numeric kernels while retaining scalar trace and debug parity. Treat GPU simulation as a later experiment only if profiling shows it can beat better search and CPU batching.
 
 ## Phase 6: Meta-Optimizer
 
-Once multiple lanes exist, add a scheduler that decides how to spend a fixed budget.
+Once several lanes are proven, add a scheduler that allocates a fixed budget using scenario shape, roster size, historical method performance, candidate-funnel telemetry, and user intent.
 
-Inputs:
-
-- candidate funnel telemetry
-- historical method performance by scenario
-- current roster size
-- hostile archetype
-- user objective: fast answer, exact answer, diverse answers, chain survival
-
-Outputs:
+It should choose:
 
 - which lanes run
 - budget per lane
-- scout depth
-- confirm depth
+- scout and confirmation depth
 - exploration quota
+- diversity target
 
-This is the point where Kobayashi starts optimizing the optimizer.
+The scheduler itself must be benchmarked against a fixed allocation policy.
 
 ## Suggested Implementation Order
 
-1. [x] Extend optimizer telemetry and result provenance.
-2. [x] Add stratified random baseline and benchmark it against current tiered/genetic.
-3. Add local refinement around finalists.
-4. Add Pareto tags and recommendation reasons to API/UI.
-5. Generalize tiered scout into Hyperband-style racing with strata.
-6. Add beam search as a discovery lane.
-7. Add observation logging and feature extraction.
-8. Add quality-diversity archive offline, then production-bounded.
-9. Add cross-entropy sampler.
-10. Add first surrogate proposer and compare it to random, beam, GA, and analytical.
-11. Add robust multi-scenario optimization.
-12. Add meta-scheduler.
+1. Local refinement around finalists.
+2. Pareto tags and recommendation reasons.
+3. Observation fingerprints, retention, and benchmark gates.
+4. Hyperband-style racing with protected strata.
+5. Beam search as a discovery lane.
+6. Quality-diversity archive in benchmarks, then bounded production use.
+7. Cross-entropy sampling.
+8. Feature extraction and a surrogate proposer.
+9. Robust multi-scenario and substitute optimization.
+10. Meta-scheduling across proven lanes.
 
 ## Validation Gates
 
-Every roadmap item should include:
+Every roadmap item must include:
 
 - deterministic seed reproducibility
 - candidate legality tests
 - hard-filter false-negative tests
-- benchmark comparison against stratified random
+- comparison with stratified random and existing production methods
 - small-space recall against deeper exhaustive or near-exhaustive search
-- method provenance in results
+- method and evidence provenance in results
 - no model-only final recommendations
-- no unbounded telemetry growth
+- bounded telemetry and observation growth
 
-## Where This Fits In The Codebase
+## Likely Code Ownership
 
-Likely modules:
+- `src/optimizer/mod.rs`: portfolio orchestration, provenance, and funnel telemetry
+- `src/optimizer/crew_generator.rs`: role pools, canonicalization, bitsets, random and beam generation
+- `src/optimizer/tiered.rs`: racing, seed panels, and confidence scheduling
+- `src/optimizer/genetic.rs`: quality-diversity emitters, cross-entropy seeds, and local repair integration
+- `src/optimizer/ranking.rs`: Pareto tags, recommendation reasons, and frontier helpers
+- `src/data/optimize_history.rs`: migration toward fingerprinted observation reuse
+- `src/data/budget_telemetry.rs`: method and subphase measurements
+- `frontend/src/components/SimResults.tsx`: Pareto and reason display
+- `frontend/src/components/OptimizePanel.tsx`: portfolio strategy, exploration budget, and objective presets
 
-- `src/optimizer/mod.rs`: orchestration, strategy portfolio, provenance, funnel telemetry
-- `src/optimizer/crew_generator.rs`: role pools, canonicalization, bitsets, random/beam candidate generation
-- `src/optimizer/tiered.rs`: racing, successive halving, seed panels, confidence scheduling
-- `src/optimizer/genetic.rs`: quality-diversity emitters, cross-entropy seeds, local repair integration
-- `src/optimizer/ranking.rs`: Pareto tags, recommendation reasons, frontier helpers
-- `src/data/optimize_history.rs`: migration path toward observation storage
-- `src/data/budget_telemetry.rs`: wider optimizer telemetry
-- `frontend/src/components/SimResults.tsx`: Pareto/reason display
-- `frontend/src/components/OptimizePanel.tsx`: advanced controls for portfolio strategy, exploration budget, and objective presets
+## Research Influences
 
-## Research Influences Worth Borrowing
-
-- **MAP-Elites / quality diversity**: keep high-performing solutions across behavior cells, not only the single best solution. This maps naturally to Kobayashi recommendation families.
-- **Hyperband / successive halving**: allocate increasing simulation resources only to promising candidates.
-- **BOHB**: combine model-guided proposals with Hyperband-style multi-fidelity evaluation.
-- **SMAC / random-forest Bayesian optimization**: good fit for categorical search spaces and noisy simulation results.
-- **TPE**: a pragmatic proposal model for high-dimensional conditional/categorical configurations.
-- **Cross-Entropy / estimation-of-distribution methods**: learn sampling distributions over strong officer/material combinations.
-- **Large-neighborhood search**: improve strong crews by destroying and repairing meaningful chunks instead of only one-slot swaps.
-- **Racing algorithms**: eliminate statistically weak candidates while respecting noisy objectives.
+- **MAP-Elites / quality diversity:** retain strong solutions across behavior cells.
+- **Hyperband / successive halving:** increase simulation depth only for promising candidates.
+- **BOHB:** combine model proposals with multi-fidelity evaluation.
+- **SMAC and TPE:** propose candidates in noisy categorical spaces.
+- **Cross-entropy methods:** learn sampling distributions over strong officer packages.
+- **Large-neighborhood search:** improve crews by destroying and repairing meaningful subsets.
+- **Racing algorithms:** eliminate statistically weak candidates while respecting noisy objectives.
 
 Primary references:
 
@@ -501,21 +327,8 @@ Primary references:
 
 ## Explicit Deferrals
 
-- Do not build a learned model before observation data exists.
-- Do not let surrogate output bypass full simulator confirmation.
-- Do not add broad functional-officer bans to make counts look better.
-- Do not start with GPU simulation.
-- Do not make the default UI expose every optimizer knob. Advanced mode can have controls; the normal path should ask for intent.
-
-## The Ambitious Bet
-
-Kobayashi can become more than a simulator plus optimizer. It can become an experimental search laboratory for STFC combat:
-
-- it discovers strong crews,
-- maps why they work,
-- offers substitutes,
-- measures its own uncertainty,
-- learns from past simulations,
-- and can say when it does not know enough yet.
-
-That is the right kind of ambition: not mysticism, just a very good machine with a memory and a conscience.
+- Do not build a learned model before observation data is versioned and benchmarkable.
+- Do not let surrogate output bypass simulator confirmation.
+- Do not add broad functional-officer bans to reduce candidate counts.
+- Do not begin with GPU simulation.
+- Do not expose every optimizer control in the default UI.

@@ -1,5 +1,5 @@
-//! Integration coverage for the 2026-07-19 `other_review` triage slice (backlog item 12,
-//! docs/COMBAT_FIDELITY_BACKLOG.md): Exploitation / Pre-Assimilation ship-class-gated
+//! Integration coverage for the 2026-07-19 `other_review` triage slice documented in
+//! docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md: Exploitation / Pre-Assimilation ship-class-gated
 //! counter-fire damage, Ravager's Lance flat pierce multipliers, and the Species 8472
 //! Energy Focused Beam scheduled lethal.
 

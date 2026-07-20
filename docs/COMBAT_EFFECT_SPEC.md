@@ -25,7 +25,7 @@ All of these adapt into `CombatEffectSpec`.
 The first shipped slice focused on **parity and migration safety**, not a full rewrite of combat:
 
 - **In scope:** typed IR + serde + validation; compiler to existing engine types; research → spec → attack-phase seats (sole path in `research_derived_attack_phase_seats`); optional `KOBAYASHI_COMBAT_EFFECT_SPEC_ENABLE=0` for diagnostics; LCARS → spec adapter for tooling and parity; optional HTTP debug for LCARS rows (`GET /api/debug/combat-effect-spec/officers/:id` when `KOBAYASHI_COMBAT_EFFECT_SPEC_DEBUG=1`).
-- **Out of scope for that slice:** replacing every LCARS code path in the live resolver in one step; changing engine timing windows or damage formulas for migration convenience (see [ROADMAP.md](ROADMAP.md) non-goals).
+- **Out of scope for that slice:** replacing every LCARS code path in the live resolver in one step; changing engine timing windows or damage formulas for migration convenience.
 
 ## Canonical schema
 
@@ -323,12 +323,11 @@ Phase 1 delivers the **canonical IR + serde**, a **compiler to existing engine s
 
 Dynamic officer LCARS effects (`stat_modify`, `morale`, `burning`, `hull_breach`, `assimilated`, and the other `resolve_effect` modes) are authored in YAML as before, adapted by [`src/lcars/effect_spec_adapter.rs`](../src/lcars/effect_spec_adapter.rs), and compiled by [`compile_officer_combat_spec`](../src/combat/effect_spec_compile.rs) in [`src/lcars/resolver.rs`](../src/lcars/resolver.rs) (`resolve_effect`). **Runtime `Ability.condition` on those effects** is the AND-combined compile of `CombatEffectSpec.conditions` (same IR as YAML `condition` via `lcars_condition_to_spec`); if YAML has a `condition` block the adapter cannot encode, `lcars_effect_to_combat_effect_spec` returns no row (no ungated effect). Canonical condition tokens are mapped by [`map_canonical_condition_token`](../src/lcars/canonical_conditions.rs) for validation and reporting. Static passive-permanent `stat_modify` rows and `extra_attack` proc aggregation stay in `resolve_crew_to_buff_set` unchanged.
 
-- **Parity:** [`tests/lcars_captain_spec_parity_tests.rs`](../tests/lcars_captain_spec_parity_tests.rs) compares the spec pipeline to `resolve_officer_ability` for captain maneuvers (tiers 1–5) and samples bridge / below-decks tiers; [`tests/lcars_combat_effect_spec_parity_tests.rs`](../tests/lcars_combat_effect_spec_parity_tests.rs) covers synthetic LCARS rows.
-- **Next (optional follow-up):** extend IR/compiler for any new LCARS `effect_type` values before they appear in `captain_ability` (the parity test allow-list will fail CI if an unlisted type ships).
+- **Parity:** unit tests in [`effect_spec_adapter.rs`](../src/lcars/effect_spec_adapter.rs) compare adapter output with `resolve_officer_ability` semantics and cover synthetic LCARS rows; resolver and compiler tests cover the runtime path.
+- **Next (optional follow-up):** extend the IR and compiler whenever a new LCARS `effect_type` needs runtime support, and add adapter/compiler parity coverage with it.
 
 ## Non-goals
 
 - Replacing LCARS YAML as officer authoring input.
 - Committing to raw stfc.cc field names as the internal runtime API.
 - Expanding unsupported mechanics without engine evidence/tests.
-

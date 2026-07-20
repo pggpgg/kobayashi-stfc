@@ -1036,8 +1036,8 @@ fn sobol_sensitivity_command(args: &[String]) -> Result<(), String> {
 }
 
 /// `kobayashi search-space-report` — report the crew-search-space reduction (officer-pool sizes and
-/// legal crew counts) at each optimizer filter stage, per combat scenario. Closes roadmap item #1's
-/// "measure and track each reduction's effect" sub-bullet; see docs/PVE_CREW_SEARCH_SPACE_REDUCTION.md.
+/// legal crew counts) at each optimizer filter stage, per combat scenario. See
+/// `docs/PVE_CREW_SEARCH_SPACE_REDUCTION.md`.
 fn search_space_report_command(args: &[String]) -> Result<(), String> {
     use kobayashi::combat::EnemyType;
     use kobayashi::data::data_registry::DataRegistry;

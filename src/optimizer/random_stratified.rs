@@ -1,5 +1,4 @@
-//! Stratified random crew sampling — the `random_stratified` lane
-//! (docs/OPTIMIZER_AMBITIOUS_ROADMAP.md §1.1).
+//! Stratified random crew sampling — the `random_stratified` lane and benchmark control.
 //!
 //! Samples legal crews from the same eligibility-filtered officer pools the
 //! generator uses, stratified so coverage spreads across captain

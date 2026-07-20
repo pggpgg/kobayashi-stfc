@@ -1,6 +1,6 @@
 //! U.S.S. Vengeance Advanced Sabotage: 100% shield-mitigation bypass vs Breen Warships only.
 //!
-//! Backlog item 9 (docs/COMBAT_FIDELITY_BACKLOG.md): "ignores {0:#.#%} of Breen Warship [BRN]
+//! "Ignores {0:#.#%} of Breen Warship [BRN]
 //! shields" is a shield-mitigation bypass (Harrison Sabotage precedent), not pierce — bypass
 //! helps only against a shielded target, pierce would also help against a shieldless one.
 

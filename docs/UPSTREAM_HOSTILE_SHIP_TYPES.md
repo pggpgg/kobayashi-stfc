@@ -69,7 +69,5 @@ cargo run --bin report_unknown_mappings -- --output /tmp/unknown_mappings.md
 
 ## See also
 
-- [ROADMAP.md](ROADMAP.md) — section *Hostile upstream `ship_type`*
 - [STFC_SPACE_DATA_STRATEGY.md](STFC_SPACE_DATA_STRATEGY.md) — hostile model / import overview
 - [DESIGN.md](DESIGN.md) — defender `ship_type` / LCARS note
-

@@ -136,7 +136,7 @@ Bug reports — especially *"the optimizer ranks X but in-game Y wins"* — are 
 
 ## Roadmap
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for shipped features and what's planned, and [docs/NOT_ROADMAP.md](docs/NOT_ROADMAP.md) for explicit non-goals.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for future work and planning priorities, and [docs/NOT_ROADMAP.md](docs/NOT_ROADMAP.md) for explicit non-goals.
 
 ---
 

@@ -1,4 +1,4 @@
-//! Breen Warship "Energy-Dampening Field" (backlog item 5, docs/COMBAT_FIDELITY_BACKLOG.md):
+//! Breen Warship "Energy-Dampening Field":
 //! 100% of incoming damage routes to the hostile's shields (overflow spills to hull) and the
 //! hostile regenerates 25% of max shield HP at the start of each round. Per the ability text
 //! ("This cannot be altered by officers, Forbidden Tech, etc.") officer/FT shield-bypass does

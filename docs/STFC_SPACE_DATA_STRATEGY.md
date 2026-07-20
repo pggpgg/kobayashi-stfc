@@ -44,7 +44,7 @@ This document describes how Kobayashi imports ship and hostile data from **data.
 - `ability`: Full upstream `ability` array
 - `resources`: Parsed drop ranges from upstream `resources[]`
 
-**Upstream `ship_type` (u32):** Separate from hull line (`hull_type` → `ship_class`). Kobayashi maintains a reverse-engineered mapping in `src/data/upstream_hostile_ship_type.rs` and applies it at combat time via `HostileRecord::ship_type_for_combat` (e.g. value `1` = armada target). Enumerated ids and evidence: [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md). See also [ROADMAP.md](ROADMAP.md) § *Hostile upstream `ship_type`* and [DESIGN.md](DESIGN.md) §3 (LCARS conditions / defender class note).
+**Upstream `ship_type` (u32):** Separate from hull line (`hull_type` → `ship_class`). Kobayashi maintains a reverse-engineered mapping in `src/data/upstream_hostile_ship_type.rs` and applies it at combat time via `HostileRecord::ship_type_for_combat` (e.g. value `1` = armada target). Enumerated ids, evidence, and open triage live in [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md); see also [DESIGN.md](DESIGN.md) §3 for LCARS conditions and defender-class behavior.
 
 **Hostile Index** — Lookup catalog in `data/hostiles/index.json`:
 

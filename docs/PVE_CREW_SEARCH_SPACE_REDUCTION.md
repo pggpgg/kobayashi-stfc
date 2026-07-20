@@ -1,8 +1,7 @@
 # PvE crew-search-space reduction — measurement
 
-Closes the "measure and track each reduction's effect on candidate count and projected
-exhaustive-search runtime" sub-bullet of roadmap item #1. Regenerate any time the officer catalog,
-ban list, or eligibility matrix changes:
+Measures each search-space reduction's effect on candidate count and projected exhaustive-search
+runtime. Regenerate any time the officer catalog, ban list, or eligibility matrix changes:
 
 ```bash
 cargo build --release

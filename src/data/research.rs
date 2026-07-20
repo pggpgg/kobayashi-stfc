@@ -351,8 +351,9 @@ pub(crate) fn skip_owner_faction_merge_for_defender_gated_hull_shield(
         && matches!(bonus.stat.as_str(), "hull_hp" | "shield_hp")
 }
 
-/// Dual gate applies at scenario build only when the defender gate is **faction-only** (rows that also need morale / hull class /
-/// burning still need attack-phase seats — not merged here; see roadmap).
+/// Dual gate applies at scenario build only when the defender gate is **faction-only**. Rows that
+/// also need morale, hull class, or burning still need attack-phase seats; see
+/// `docs/research_conditional_routing.md`.
 fn dual_gate_hull_shield_scenario_apply_condition(key: &ResearchBonusConditionKey) -> bool {
     key.defender_faction
         .as_ref()

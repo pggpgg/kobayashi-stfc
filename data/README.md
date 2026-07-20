@@ -18,7 +18,7 @@
 
 ## Buildings: sync and optimizer
 
-Buildings are fully modeled for ship combat; optional and backlog items (station defense, strict validation report, building API/UI) are in [docs/ROADMAP.md](../docs/ROADMAP.md) § Buildings.
+Buildings are fully modeled for ship combat. Mapping gaps are tracked in [building_gaps.md](../docs/building_gaps.md); station defense remains explicitly out of scope in [NOT_ROADMAP.md](../docs/NOT_ROADMAP.md#buildings--scenarios).
 
 - **Where the optimizer reads building state:** `profiles/{profile_id}/buildings.imported.json` (see `profile_index::profile_path(profile_id, BUILDINGS_IMPORTED)`). The scenario loader uses the resolved profile id (default when none specified) and loads that file; building bonuses are merged into the player profile for combat.
 - **Ops level for building context:** Building level rows can have `ops_min`/`ops_max`; only rows matching the player’s Operations level are applied. The optimizer infers ops level from **Operations Center** (building id `ops_center`, game bid 0) in the synced buildings list. If sync does not include ops_center or bid 0 does not resolve, ops_level is `None` and all level rows are applied. You can override by setting `profile.ops_level` in the profile JSON so simulation works without sync.

@@ -1224,7 +1224,8 @@ pub struct SearchSpaceStage {
 /// crew count at each progressive optimizer filter — raw legality, then the curation ban list, then
 /// the functional eligibility matrix (with its below-decks heuristic fallback). The stages are
 /// monotonic (each pool ⊆ the previous), so adjacent differences are the marginal effect of that
-/// reduction. Used by the `search-space-report` CLI to document roadmap item #1.
+/// reduction. Used by the `search-space-report` CLI and documented in
+/// `docs/PVE_CREW_SEARCH_SPACE_REDUCTION.md`.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SearchSpaceReport {
     /// Scenario key (snake_case `EnemyType`, e.g. `"red_moving_space"`).

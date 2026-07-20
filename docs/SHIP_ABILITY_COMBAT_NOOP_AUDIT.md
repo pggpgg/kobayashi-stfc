@@ -1,6 +1,6 @@
 # Structured audit: `combat_noop` ship abilities
 
-This document expands on [ROADMAP.md](ROADMAP.md) § Ship Abilities — audit `combat_noop`.
+This is the authoritative inventory of upstream ship abilities that are modeled, intentionally ignored, or still candidates for combat support.
 
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
@@ -79,8 +79,8 @@ Affected ids: `1800726742`, `2529591723`, `3087961933`, `3803001941`, `644714972
 fractional reduction continues to scale the hostile's **full** critical damage. The official
 [Critical Mitigation guide](https://startrekfleetcommand.com/news/starfleet-academy-remote-campus-critical-mitigation/)
 uses that convention in its worked example. No catalog or engine change was needed; Xindi's
-additive-points reduction remains a distinct bonus-only family. See
-[COMBAT_FIDELITY_BACKLOG.md §10](COMBAT_FIDELITY_BACKLOG.md).
+additive-points reduction remains a distinct bonus-only family. The active convention is documented
+in [DESIGN.md](DESIGN.md) alongside the combat implementation.
 
 ---
 
@@ -217,8 +217,9 @@ renders "11,000,000%" under the `{0:#.#%}` ×100 convention, Revenge 310,000 ren
 | `39689355` | Athena's Wrath | `combat_noop` | Wave Defense vs Academy Drones is outside simulated scenarios (and no Academy Drone faction tag exists); was an ungated 15M barrier in every fight. |
 
 Athena's Solace (Programmable Matter immunity, flavor inside loca 91001's combined text) has no
-separate upstream row; it becomes relevant only if Programmable Matter itself is modeled
-(see COMBAT_FIDELITY_BACKLOG.md item 13).
+separate upstream row; it becomes relevant only if Programmable Matter itself is modeled. The
+current hostile-side treatment is documented in
+[HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md).
 
 **Apex-barrier seat rewiring (engine).** Attacker-crew `ApexBarrierBonus` seats (officer / ship
 hull / research) were previously composed into the **defender's** barrier on the player's own

@@ -1,5 +1,5 @@
-//! Pinning tests for the isolytic value-scale conventions ground-truthed 2026-07-16
-//! (COMBAT_FIDELITY_BACKLOG.md #13). One representative catalog id per scale family,
+//! Pinning tests for the isolytic value-scale conventions ground-truthed 2026-07-16 and documented
+//! in docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md. One representative catalog id per scale family,
 //! resolved from the real upstream hostile record through the shipped catalog:
 //!
 //! - `{0:0.#%}`-style percent placeholders render the upstream number ×100, so the upstream

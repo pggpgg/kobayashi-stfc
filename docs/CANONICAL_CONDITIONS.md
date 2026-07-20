@@ -60,7 +60,7 @@ These tokens have **no dedicated `CombatContext` field** (or no field for the ov
 - **`literal_true` / `literal_false`**: fixed boolean gates for scenario-literal canonical tokens above; resolve to `[AbilityCondition::LiteralBool](../src/combat/abilities.rs)` (`[lcars_condition_to_spec](../src/lcars/effect_spec_adapter.rs)`).
 - **`engagement_includes`**: already used for `TargetNotSoloArmada` / `EnemyGroupArmadas` (group armadas); extended for **`SelfAtSoloArmada`** → `solo_armadas`.
 - `**not`**: `[AbilityCondition::Not](../src/combat/abilities.rs)` + LCARS `type: not` with exactly one child (`[lcars_condition_to_spec](../src/lcars/effect_spec_adapter.rs)`).
-- `**TargetIsArmada` / `TargetNotArmada`**: canonical aliases for armada gating (see roadmap “canonical condition tokens”).
+- `**TargetIsArmada` / `TargetNotArmada`**: canonical aliases for armada gating; both resolve through the condition mappings documented above.
 - `**TargetHasAssimilated`**: LCARS `defender_assimilated`; opponent-side assimilate duration (`defender_assimilated_active`), driven by defender crew assimilate procs in `[engine.rs](../src/combat/engine.rs)` (canonical data pairs with `EnemyPlayer` for PvP vs assimilating opponents).
 - **`EnemyHullFaction`**: not in `map_canonical_condition_token` alone; `generate_lcars` strips the token, reads `faction_id=` from `attributes`, and emits LCARS `defender_hull_faction_id`. This matches upstream hostile `faction.id` exactly (distinct from coarse `[OpponentFactionTag](../src/combat/types.rs)` / `defender_faction_is`, where e.g. Eclipse may be `Unknown`).
 

@@ -307,9 +307,9 @@ Conditions gate whether an effect activates. They are predicates evaluated by th
 | `not`                   | `conditions` (one child)  | Negates a single sub-condition (e.g. opponent is not `armada`)                                                                                              |
 
 
-Hull slugs match `[ShipType::from_data_slug](src/combat/types.rs)`: `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
+Hull slugs match `[ShipType::from_data_slug](../src/combat/types.rs)`: `battleship`, `explorer`, `interceptor`, `survey`, `armada`. In combat, the engine sets **defender** hull class from the hostile and **attacker** hull class from the player ship record.
 
-**Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on `[HostileRecord](../src/data/hostile.rs)` as `upstream_ship_type`. It is **not** hull class (hull line comes from `hull_type` → `ship_class` via [`hostile_hull_type_raw_to_ship_class`](../src/data/hostile.rs); player ships use [`player_hull_type_raw_to_ship_class`](../src/data/hostile.rs)). Kobayashi maps selected integers in `[upstream_hostile_ship_type_profile](../src/data/upstream_hostile_ship_type.rs)`; `[HostileRecord::ship_type_for_combat](../src/data/hostile.rs)` uses that mapping so the defender’s effective class can be `[ShipType::Armada](../src/combat/types.rs)` for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. Maintainer table of known ids: [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md). Ongoing reverse engineering and backlog items: [ROADMAP.md](ROADMAP.md) (section *Hostile upstream `ship_type`*).
+**Upstream hostile `ship_type` (data.stfc.space):** The JSON field `ship_type` is stored on `[HostileRecord](../src/data/hostile.rs)` as `upstream_ship_type`. It is **not** hull class (hull line comes from `hull_type` → `ship_class` via [`hostile_hull_type_raw_to_ship_class`](../src/data/hostile.rs); player ships use [`player_hull_type_raw_to_ship_class`](../src/data/hostile.rs)). Kobayashi maps selected integers in `[upstream_hostile_ship_type_profile](../src/data/upstream_hostile_ship_type.rs)`; `[HostileRecord::ship_type_for_combat](../src/data/hostile.rs)` uses that mapping so the defender’s effective class can be `[ShipType::Armada](../src/combat/types.rs)` for **armada targets** (currently `upstream_ship_type == 1`, aligned with UI string “ARMADA TARGET”). Unmapped values fall back to hull-derived `ship_class` only. The maintainer table of known ids and open reverse-engineering notes lives in [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md).
 
 `kobayashi validate <lcars_dir>` rejects effects whose `condition` does not resolve (unknown `type`, missing `ship_type` / `faction` / `faction_id` where required, unknown slug, empty `and` / `or`, or `not` without exactly one child).
 
@@ -496,7 +496,7 @@ The engine implements the canonical STFC client order (from community toolbox / 
   - Attacker fires weapon `i` (if present), then defender fires weapon `i` (if present).
 3. **End of round:** `END_ROUND` → ability activation record, burning tick (1% of target max hull per round while burning active), regen, temporary-effect cleanup, then next round (max 100).
 
-Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon with the scalar `attack` is used (backward compatible). Trace events for attack/damage include optional `weapon_index` for parity with logs (see [docs/combat_log_format.md](docs/combat_log_format.md)).
+Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon with the scalar `attack` is used (backward compatible). Trace events for attack/damage include optional `weapon_index` for parity with logs (see [combat_log_format.md](combat_log_format.md)).
 
 ### 3.7 Stacking Rules
 
@@ -521,7 +521,7 @@ Combatants have an optional `weapons: Vec<WeaponStats>`; when empty, one weapon 
 
 The combat engine is the hot loop. Every design decision here affects throughput by millions of simulations.
 
-The implemented entry points are functions such as `simulate_combat_with_defender_faction_and_defender_crew` in `src/combat/engine.rs`: they take resolved attacker/defender `[Combatant](src/combat/types.rs)` values, crew context, a `[SimulationConfig](src/combat/types.rs)` (seed, optional trace mode, chain carry-over hull damage), and return a `[SimulationResult](src/combat/types.rs)`. Scenario building (ship + hostile + profile + LCARS resolution) lives in the data/optimizer layers before the hot loop runs.
+The implemented entry points are functions such as `simulate_combat_with_defender_faction_and_defender_crew` in `src/combat/engine.rs`: they take resolved attacker/defender `[Combatant](../src/combat/types.rs)` values, crew context, a `[SimulationConfig](../src/combat/types.rs)` (seed, optional trace mode, chain carry-over hull damage), and return a `[SimulationResult](../src/combat/types.rs)`. Scenario building (ship + hostile + profile + LCARS resolution) lives in the data/optimizer layers before the hot loop runs.
 
 Key design constraints:
 
@@ -562,7 +562,7 @@ for each round (1..MAX_ROUNDS):
 
 ### 4.4 Output
 
-A single fight returns `[SimulationResult](src/combat/types.rs)` (serialized for API/replay when tracing is on):
+A single fight returns `[SimulationResult](../src/combat/types.rs)` (serialized for API/replay when tracing is on):
 
 ```rust
 pub struct SimulationResult {
@@ -578,7 +578,7 @@ pub struct SimulationResult {
 }
 ```
 
-The Monte Carlo layer aggregates many `SimulationResult` values into win rate, hull remaining, R1 kill rate, etc. A minimal `[FightResult { won }](src/combat/types.rs)` exists for tests/stubs only; it is not the combat engine’s real output.
+The Monte Carlo layer aggregates many `SimulationResult` values into win rate, hull remaining, R1 kill rate, etc. A minimal `[FightResult { won }](../src/combat/types.rs)` exists for tests/stubs only; it is not the combat engine’s real output.
 
 **Round-limit outcome (2026-07-10):** when both ships survive to the configured round cap (`SimulationConfig::rounds`, clamped to `MAX_COMBAT_ROUNDS = 100`), the fight is a **timeout**: `winner_by_round_limit` is true and `attacker_won` is always false — in game a timed-out fight yields no kill/loot (the attacker survives but does not win), so there is no hull-comparison tiebreak. Read the historically-named flag as "ended by round limit". The optimizer layers count these as **stalls**, distinct from losses (see `distribution_for_crew` / chain `failed_on_stall`).
 
@@ -596,14 +596,14 @@ The Monte Carlo layer aggregates many `SimulationResult` values into win rate, h
 
 ### 4.6 Effect ownership, `CombatContext`, and defender-side crews
 
-The combat loop always instantiates two [`Combatant`](src/combat/types.rs) values in fixed roles: **attacker** (first) and **defender** (second). [`CombatContext`](src/combat/abilities.rs) fields such as `defender_hull_pct`, `defender_faction`, and `defender_ship_type` describe **that geometry** (who is being shot in the primary outbound arc), not “the ship whose YAML file defined this effect.”
+The combat loop always instantiates two [`Combatant`](../src/combat/types.rs) values in fixed roles: **attacker** (first) and **defender** (second). [`CombatContext`](../src/combat/abilities.rs) fields such as `defender_hull_pct`, `defender_faction`, and `defender_ship_type` describe **that geometry** (who is being shot in the primary outbound arc), not “the ship whose YAML file defined this effect.”
 
-LCARS trigger mapping ([`effect_trigger_timing`](src/lcars/resolver.rs)) attaches labels such as **self** vs **enemy** to [`TimingWindow`](src/combat/abilities.rs) values (for example [`SelfShieldBreak`](src/combat/abilities.rs) vs [`ShieldBreak`](src/combat/abilities.rs)). In PvE today, “self” is consistently the **player attacker**; when a second officer-driven crew is attached to the defender (PvP-shaped defender or scripted tests), the engine must treat **effect owner** explicitly:
+LCARS trigger mapping ([`effect_trigger_timing`](../src/lcars/resolver.rs)) attaches labels such as **self** vs **enemy** to [`TimingWindow`](../src/combat/abilities.rs) values (for example [`SelfShieldBreak`](../src/combat/abilities.rs) vs [`ShieldBreak`](../src/combat/abilities.rs)). In PvE today, “self” is consistently the **player attacker**; when a second officer-driven crew is attached to the defender (PvP-shaped defender or scripted tests), the engine must treat **effect owner** explicitly:
 
-- **Effect owner**: the combatant whose [`CrewConfiguration`](src/combat/abilities.rs) produced the [`ActiveAbilityEffect`](src/combat/abilities.rs) row (attacker crew vs merged defender crew: hostile ship abilities + optional player-defender officers).
+- **Effect owner**: the combatant whose [`CrewConfiguration`](../src/combat/abilities.rs) produced the [`ActiveAbilityEffect`](../src/combat/abilities.rs) row (attacker crew vs merged defender crew: hostile ship abilities + optional player-defender officers).
 - **CombatContext**: still the global fight snapshot for condition gating (hull/shield fractions, factions, tags, assimilated flags for each side).
 
-Future work when expanding defender officers: decide per mechanic whether “self” in LCARS is interpreted in the **author’s** hull frame (the defender’s ship when evaluating defender-owned rows) while keeping `CombatContext` as the single shared condition struct, vs introducing a parallel context or resolver pass. The prototype **inbound** path ([`simulate_combat_from_setup`](src/combat/engine.rs)) applies defender-owned [`TimingWindow::DefensePhase`](src/combat/abilities.rs) stacks when resolving **outbound** hits against the defender using the same round `CombatContext` as the attacker (correct for global gates like `defender_hull_pct`).
+Future work when expanding defender officers: decide per mechanic whether “self” in LCARS is interpreted in the **author’s** hull frame (the defender’s ship when evaluating defender-owned rows) while keeping `CombatContext` as the single shared condition struct, vs introducing a parallel context or resolver pass. The prototype **inbound** path ([`simulate_combat_from_setup`](../src/combat/engine.rs)) applies defender-owned [`TimingWindow::DefensePhase`](../src/combat/abilities.rs) stacks when resolving **outbound** hits against the defender using the same round `CombatContext` as the attacker (correct for global gates like `defender_hull_pct`).
 
 ---
 
@@ -696,13 +696,13 @@ The baseline approach. Run N thousand iterations of a given crew vs. a given hos
 
 Reduce combat to closed-form math: expected damage per round given stats. Skip simulation entirely and just compute the answer. Dramatically faster, but only works for abilities without complex variance. Useful as a fast pre-filter.
 
-**Matchup priors (non-genetic paths):** Before optional truncation (`analytical_prefilter_keep` / auto), the optimizer sorts candidates by a composite score: closed-form [`expected_damage`](src/optimizer/analytical.rs) plus small priors from [`src/optimizer/matchup_priors.rs`](src/optimizer/matchup_priors.rs) (static LCARS gate hints vs the defender, encounter heuristics, overlap with client warm-start, persisted `optimize_history` reference crews when `optimize_cache_key` matches — reference crews are **not** prepended to the candidate list — and a **captain–bridge synergy tier** bump from canonical `Officer::group` + `officer`-slot abilities via [`bridge_synergy_prefilter_score`](src/data/heuristics.rs)). The **genetic** strategy does not use this analytical sort.
+**Matchup priors (non-genetic paths):** Before optional truncation (`analytical_prefilter_keep` / auto), the optimizer sorts candidates by a composite score: closed-form [`expected_damage`](../src/optimizer/analytical.rs) plus small priors from [`src/optimizer/matchup_priors.rs`](../src/optimizer/matchup_priors.rs) (static LCARS gate hints vs the defender, encounter heuristics, overlap with client warm-start, persisted `optimize_history` reference crews when `optimize_cache_key` matches — reference crews are **not** prepended to the candidate list — and a **captain–bridge synergy tier** bump from canonical `Officer::group` + `officer`-slot abilities via [`bridge_synergy_prefilter_score`](../src/data/heuristics.rs)). The **genetic** strategy does not use this analytical sort.
 
 **Hard pruning** (dropping candidates solely because static gates look “failed”) is intentionally not the default: it can remove true optima when conditions are unknown or abilities are mis-ranked analytically; a future explicit API flag could revisit this.
 
 ### 6.2.1 Linear eval (implemented)
 
-**Strategy:** `linear_eval` (`src/optimizer/linear_eval.rs`). Generates the same candidate crews as exhaustive (warm-start, constraints, pool mode), evaluates each with [`expected_damage`](src/optimizer/analytical.rs), and returns a ranked list — **no Monte Carlo**, no analytical prefilter truncation, no matchup priors in the sort key (pure expected hull damage).
+**Strategy:** `linear_eval` (`src/optimizer/linear_eval.rs`). Generates the same candidate crews as exhaustive (warm-start, constraints, pool mode), evaluates each with [`expected_damage`](../src/optimizer/analytical.rs), and returns a ranked list — **no Monte Carlo**, no analytical prefilter truncation, no matchup priors in the sort key (pure expected hull damage).
 
 **Use case:** Fast “which crew deals the most damage?” scouting over large officer pools before running tiered or exhaustive confirmation.
 
@@ -772,7 +772,7 @@ The catalog covers 18 stats. `crit_damage_reduction` was previously included as 
 
 **Method.** One stat at a time (OAT) with paired Common Random Numbers — baseline run uses seeds `s0..s0+N`, each perturbed run uses the *same* seeds. We compute per-seed Δ, then a 95% paired t-interval (large-N normal approximation, `z = 1.959963…`). When a perturbation changes a branch (e.g. extra crit triggers an extra weapon roll), downstream RNG draws *diverge* from the baseline for that seed — pairing still helps because the initial state is shared, but variance reduction is partial. The reported CI reflects whatever variance survives.
 
-**Engine limitations** (tracked in [ROADMAP.md § Stat modeling improvements](ROADMAP.md)):
+**Resolved modeling limitations:**
 
 - ~~`armor`, `shield_deflection`, `dodge`, `damage_reduction` collapse into one `Combatant.mitigation` scalar in `apply_profile_to_attacker`, so the v1 sensitivity catalog exposes a single aggregated `mitigation` row instead of four separate ones.~~ **Resolved.** Each component is tracked as its own `Combatant` field; the inbound counter-fire path in `engine.rs` applies ship-type coefficients (`c_armor·armor + c_shield·shield_deflection + c_dodge·(dodge + dodge_bonus) + damage_reduction + mitigation_additive`). Sensitivity catalog exposes four `StatKey` variants (`Armor`, `ShieldDeflection`, `Dodge`, `DamageReduction`).
 - ~~Critical Damage Floor research feeds the same `crit_damage` engine field as headline crit damage; no separate floor clamp is modeled.~~ **Resolved.** The 4 "Critical Damage Floor" research nodes route to a dedicated `crit_damage_floor` profile key; [`Combatant::crit_damage_floor`](../src/combat/types.rs) is populated separately from `crit_multiplier`. The per-shot resolution in [`resolve_vehicle_weapon_crit`](../src/combat/crit.rs) applies the clamp `effective = max(reduced, floor)` AFTER attacker-outbound crit-damage reduction and BEFORE hull-breach amplification (hull breach is an amplification on the reduced+floored base, not on the raw multiplier). The clamp activates whenever an attacker-outbound crit-damage reduction is present — currently sourced from PvP opponent profiles' `player_crit_damage_reduction` via a `HostileCritDamageReduction` seat on the defender's crew (see [scenario.rs](../src/optimizer/monte_carlo/scenario.rs)). In PvE with no opponent-side CDR, the floor is dormant and the unclamped multiplier flows through (regression-guarded). Exposed as `StatKey::CritDamageFloor` in the sensitivity catalog (additive perturbation, default δ = 0.10).
@@ -801,11 +801,11 @@ Across `r` trajectories each stat collects exactly `r` EE samples.
 
 **Caveats and limits.**
 
-- Morris is a **screening** method. σ flags stats whose effect depends on other stats but does **not** identify which specific pairs interact; the SPA UI surfaces a heuristic "Interacts?" dot when `σ > 0.5 × μ\*`. Pairwise variance decomposition requires Sobol indices — tracked under Planned in [ROADMAP.md](ROADMAP.md).
+- Morris is a **screening** method. σ flags stats whose effect depends on other stats but does **not** identify which specific pairs interact; the SPA UI surfaces a heuristic "Interacts?" dot when `σ > 0.5 × μ\*`. Use the Sobol method below when pairwise variance decomposition is needed.
 - Same engine limitations as v1 OAT apply (`crit_damage_reduction` is not in the perturbable catalog — see § 6.9 for why).
 - Cumulative perturbation on clamped stats (e.g. `Mitigation` clamps to `[0, 1]`) is mildly order-dependent if an intermediate step hits the clamp. With default per-stat δs (≤ 0.10 on a [0, 1] scale) this is rare and treated as part of the model's inherent variance — the determinism property is preserved per seed.
 
-**Future work.** Sobol indices shipped — see § 6.9.2 for first/total/pairwise.
+For first-order, total-order, and pairwise indices, see the Sobol method in § 6.9.2.
 
 ### 6.9.2 Sobol variance decomposition (Saltelli design, S_i / S_T_i / S_ij)
 
