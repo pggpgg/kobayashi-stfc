@@ -358,6 +358,16 @@ pub enum AbilityEffect {
     HostileShieldDamageRouting {
         regen_max_fraction: f64,
     },
+    /// Temporal Dreadnought phase alignment: restore the selected defender pools to full at the
+    /// start of every combat round unless the attacking ship is an allowed counter. Charged
+    /// Dreadnoughts restore shields + hull; Static Dreadnoughts restore shields only. The current
+    /// catalog counter is the U.S.S. Relativity (its Anti-Charged / Anti-Static Shift abilities
+    /// are always-active hull abilities). Resolved out of band at combat setup / round start.
+    HostileFullRegenUnlessAttackerShip {
+        restore_shields: bool,
+        restore_hull: bool,
+        allow_uss_relativity: bool,
+    },
     /// Marker: Borg Sphere **Quantum Nullification Pulse** vs Conqueror Borg — disables the
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
@@ -1074,6 +1084,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileEngagementRoundLimit { .. }
         | AbilityEffect::HostileAttackerShieldMitigationZero
         | AbilityEffect::HostileShieldDamageRouting { .. }
+        | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
         | AbilityEffect::ConquerorBorgBeamSuppression
         | AbilityEffect::DefenderOnHitStack { .. } => {}
     }
@@ -1338,6 +1349,41 @@ pub fn hostile_shield_damage_routing_regen(crew: &CrewConfiguration) -> Option<f
         }
     }
     best
+}
+
+/// Temporal Dreadnought full-pool regeneration that remains active for `attacker_ship_id`.
+/// Returns `(restore_shields, restore_hull)`, combining multiple applicable seats. The U.S.S.
+/// Relativity disables seats that name it as the counter; other ships leave them active.
+pub fn hostile_full_regen_unless_attacker_ship(
+    crew: &CrewConfiguration,
+    attacker_ship_id: &str,
+) -> Option<(bool, bool)> {
+    // Scenario ingress accepts canonical slugs, upstream numeric ids, and normalized names; the
+    // Combatant retains the caller's identifier. Recognize every supported Relativity form.
+    let normalized_ship_id: String = attacker_ship_id
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect();
+    let attacker_is_relativity =
+        normalized_ship_id == "ussrelativity" || normalized_ship_id == "442815157";
+    let mut restore_shields = false;
+    let mut restore_hull = false;
+    for s in &crew.seats {
+        if let AbilityEffect::HostileFullRegenUnlessAttackerShip {
+            restore_shields: seat_shields,
+            restore_hull: seat_hull,
+            allow_uss_relativity,
+        } = s.ability.effect
+        {
+            if attacker_is_relativity && allow_uss_relativity {
+                continue;
+            }
+            restore_shields |= seat_shields;
+            restore_hull |= seat_hull;
+        }
+    }
+    (restore_shields || restore_hull).then_some((restore_shields, restore_hull))
 }
 
 /// Attacker shield-bypass fraction that counts as a **designed counter** to a hostile's

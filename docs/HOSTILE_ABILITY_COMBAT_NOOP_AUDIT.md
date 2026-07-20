@@ -2,7 +2,7 @@
 
 This document expands on [ROADMAP.md](ROADMAP.md) §6 — hostile-ability coverage audit.
 
-**Catalog revision (2026-07-16 / isolytic value-scale audit):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **521** modeled for defender-side counter-fire (`defender_crew`), **461** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
+**Catalog revision (2026-07-19 / Temporal Dreadnought regeneration):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **704** modeled for defender-side combat (`defender_crew`), **278** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Isolytic value-scale audit (2026-07-16, backlog #13):** 157 catalog ids re-scoped, all inside the isolytic family (85 damage→damage, 70 defense→defense, 1 defense→`combat_noop`, 1 damage→`isolytic_cascade`); pinned in `tests/isolytic_value_scale.rs`. Ground-truthed conventions:
 
@@ -87,6 +87,8 @@ Coverage: `tests/hostile_engagement_round_limit.rs`; resolver unit in `src/data/
 
 **Energy-Dampening Field (2026-07-19, backlog #5):** One `other_review` noop → the new `hostile_shield_damage_routing` (bucket `shield_routing_combat`). Breen Warship `3780549486` (loca 80601, 8 hostiles — Warship/Elite/Primarch): "directs 100% of incoming damage to its Shields and regenerates 25% of its shield health at the start of each round. This cannot be altered by officers, Forbidden Tech, etc." Resolved out of band at combat setup (`PreCombatSetup.defender_shield_damage_routing_regen`): while routing is active every outbound damage term — per-shot weapon fire (scalar and SIMD lanes), round-end bonus/burning, combat-end — is split with effective shield mitigation **1.0**, so everything lands in the shield pool and only overflow past remaining SHP spills to hull (`apply_shield_hull_split`'s existing overflow semantics); at the start of each round the defender regains 25% of MAX shield HP, clamped to max. No RNG. Sustained DPS below the 25%/round break-even therefore never touches hull and times out (a loss, DESIGN.md §4.4); burst above the pool + regen breaks through. **Bypass immunity with a designed-counter carve-out:** the per-hit officer/FT `shield_mitigation_bypass` accumulator channel is ignored while routing is active; only `CrewSeat::Ship` bypass seats whose condition names the defender's hostile tags (U.S.S. Vengeance **Advanced Sabotage**, `breen_warship`-gated — the in-game counter to this exact mechanic) fold into the routing override at setup, sending their fraction of damage straight to hull. Upstream `values[]` are noise (uniform 50s); the text hardcodes 100%/25%, so the generator pins `value_override: 0.25` (regex on "regenerates N% of its shield health"). Coverage: `tests/hostile_breen_energy_dampening.rs` (8 tests incl. exact regen arithmetic and both carve-out directions).
 
+**Temporal Dreadnought regeneration (2026-07-19, backlog #6):** Charged Quantum Hull Repair (`1004890011`, 9 hostiles) leaves `other_review` → `hostile_full_regen_unless_attacker_ship` (bucket `temporal_dreadnought_regen`), restoring the defender's full shield and hull pools at each round start. Static Collider Cannon (`1070977437`, 9 hostiles) keeps its `isolytic_damage` primary mapping and gains an extra `hostile_full_shield_regen_unless_attacker_ship` seat; its text promises full shields but not hull restoration. Both seats are disabled for the Relativity identifier (`uss_relativity`, upstream id `442815157`, or normalized display name); the Relativity's Anti-Charged / Anti-Static Shift hull abilities (`78080222`, `1160666017`) exist but remain `combat_noop`, so ship identity is the current always-active counter proxy. Neutralised Shift (`709082712`, 9 hostiles) stays noop and moves from `other_review` to `temporal_dreadnought_flavor`. The generator's `other_review` bucket is now empty. No RNG; a non-Relativity burst that kills within one round still wins before the next restore. Coverage: `tests/hostile_temporal_dreadnought_regen.rs`.
+
 **`other_review` triage slice (2026-07-19, backlog #12):** The remaining 271-id bucket collapses into 29 loca-text families; this pass swept all of them except the item-6 Temporal Dreadnought pair. **Modeled (181 ids / 204 instances, existing hooks only — no engine changes):** *Exploitation* ×3 (loca 35014–16) + *Pre-Assimilation Tactics* ×3 (loca 36008–10), 102 ids / 132 instances → `attack_multiplier` gated on the attacking player's hull class (`condition_attacker_ship_type`) with `round_cap: 5` (`{0:#.#%}` fraction, `values[0] = 1` → deterministic ×2 counter-fire damage vs the named class for rounds 1–5); *Ravager's Lance* (loca 52051–56), 48 ids / 48 instances → `hostile_counter_pierce_multiplier` from meaningful upstream values (+500% → 5, +1500% → 15); *Energy Focused Beam* (loca 55050), 31 ids / 31 instances → `hostile_lethal_end_of_round` with `round_interval: 8` (the Species 8472 beam destroys the attacker at the end of round 8 — kill it in ≤7 rounds; the mutual-death edge at exactly round 8 matches the No Mercy precedent). **Named noop buckets (88 ids / 149 instances):** Victory Is Life → `post_combat_flavor` (post-victory heal); Shield Disruptors → `on_hit_mitigation_review` (needs a new on-hit stat + ungated trigger — engine-extension candidate, upstream values are real 0.10); Oppressive Resilience → `stacking_crit_review` (round-end stacking crit needs accumulate mechanics); Defense Protocol α → `scheduled_lethal_review` (a `round_interval: 1` lethal would turn legitimate round-1 kills into mutual-death losses because `hostile_lethal_end_of_round` has no defender-alive gate — engine-extension candidate; weapon slot 2 already carries a flat 2M×4/round component); Adapt, Overcome → `fleet_composition_gate` (multi-ship + station-building requirement); Quantum Resonance Beam + Evolutionary Assimilation → `conqueror_borg_lane_b` (already modeled out of catalog via the conqueror-borg hostile tags — carrier tags verified; rows stay noop so the lane is not double-applied); Gravimetric Torpedoes → `borg_cube_flavor`; Reflections → `pvp_player_target` ("against players" wording missed the existing `enemy player` guard). Coverage: `tests/hostile_other_review_triage.rs`.
 
 **Xindi (2026-06-16):** Fixed a PvP classifier false positive on NPC text (`enemy players ship` ≠ PvP `enemy player`). Modeled ability ids:
@@ -140,10 +142,10 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | Metric | Count |
 | --- | ---: |
 | Unique upstream ability ids | 982 |
-| Modeled (`effect_type` ≠ `combat_noop`) | 703 |
-| `combat_noop` (catalogued, inert in sim) | 279 |
+| Modeled (`effect_type` ≠ `combat_noop`) | 704 |
+| `combat_noop` (catalogued, inert in sim) | 278 |
 
-**Modeled effect types (703 ids, refreshed 2026-07-19):**
+**Modeled effect types (704 ids, refreshed 2026-07-19):**
 
 | `effect_type` | Ids |
 | --- | ---: |
@@ -167,6 +169,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 | `hostile_isolytic_vulnerability` | 1 |
 | `hostile_engagement_round_limit` | 1 |
 | `hostile_shield_damage_routing` | 1 |
+| `hostile_full_regen_unless_attacker_ship` | 1 |
 | `defender_on_hit_weapon_damage_stack` | 1 |
 | `defender_on_hit_crit_chance_stack` | 1 |
 | `hull_breach` | 1 |
@@ -178,7 +181,7 @@ Calibration fixtures: `tests/fixtures/recorded_fights/drift_conqueror_borg_*.jso
 - PvP player targeting (2 ids, 388 instances): Deadlock / Dismantlement — default PvE path is ship vs NPC hostile (Hole Puncher / Immolator modeled 2026-07-08)
 - Armada scope (125 ids, 260 instances)
 - Outpost scope (56 ids, 163 instances)
-- `other_review` (2 ids, 18 instances): only the item-6 Temporal Dreadnought pair remains (2026-07-19 triage slice swept the other 269 ids — see header)
+- `other_review`: **0 ids / 0 instances** after the Temporal Dreadnought pass; remaining noops are in named, reviewable buckets.
 
 Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability_catalog.py` and filter `effect_type == combat_noop` in the catalog JSON.
 
@@ -203,6 +206,8 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Shield regen first-N-rounds | 82 | 140 | **Modeled (2026-07-15)** — Plausible Deniability → `shield_regen_max_fraction` @ `round_end` + `round_cap: 5` (fraction of max SHP per round) |
 | Engagement round limit | 1 | 23 | **Modeled (2026-07-15)** — Q Junior's Twist (loca 73055) → `hostile_engagement_round_limit` 20; still-alive hostile at the cap = timeout loss |
 | Shield-damage routing (Breen) | 1 | 8 | **Modeled (2026-07-19)** — Energy-Dampening Field → `hostile_shield_damage_routing` 0.25; all damage to shields (overflow spills), 25%/round regen, officer/FT bypass immune, Vengeance tag-gated hull bypass carved out |
+| Temporal Dreadnought regeneration | 1 | 9 | **Modeled (2026-07-19)** — Charged Quantum Hull Repair → full shields + hull each round unless the attacker is `uss_relativity` |
+| Temporal Dreadnought flavor | 1 | 9 | **Keep noop** — Neutralised Shift explicitly says the Neutral variant has no phase alignment; moved to a named flavor bucket |
 | Ship-class-gated damage | 102 | 132 | **Modeled (2026-07-19)** — Exploitation / Pre-Assimilation Tactics → `attack_multiplier` + `condition_attacker_ship_type` + `round_cap: 5` (×2 counter-fire vs the named player hull class, rounds 1–5) |
 | Scheduled lethal (charged beam) | 31 | 31 | **Modeled (2026-07-19)** — Energy Focused Beam → `hostile_lethal_end_of_round` `round_interval: 8` (kill within 7 rounds or lose) |
 | Scheduled lethal review | 2 | 10 | **Keep noop** — Defense Protocol α: `round_interval: 1` would make round-1 kills mutual-death losses (no defender-alive gate on the lethal hook); engine-extension candidate |
@@ -221,7 +226,7 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
 | Economy | 1 | 30 | **Keep noop** |
-| Other / review | 2 | 18 | **Item 6** — only the Temporal Dreadnought pair remains (Charged Quantum Hull Repair + Neutralised Shift) |
+| Other / review | 0 | 0 | **Cleared (2026-07-19)** — item 6 modeled Charged regeneration and named the Neutral flavor row |
 
 ---
 

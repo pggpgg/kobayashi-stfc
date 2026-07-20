@@ -1799,10 +1799,13 @@
     },
     "1004890011": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_full_regen_unless_attacker_ship",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0,
+      "allowed_attacker_ship_ids": [
+        "uss_relativity"
+      ]
     },
     "1013840137": {
       "timing": "combat_begin",
@@ -1927,7 +1930,19 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_damage",
       "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "ignore_upstream_value_is_percentage": false,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_full_shield_regen_unless_attacker_ship",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0,
+          "allowed_attacker_ship_ids": [
+            "uss_relativity"
+          ]
+        }
+      ]
     },
     "1082203558": {
       "timing": "round_end",

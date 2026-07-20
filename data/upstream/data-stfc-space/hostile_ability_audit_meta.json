@@ -1509,7 +1509,7 @@
       "effect_type": "combat_noop"
     },
     "709082712": {
-      "bucket": "other_review",
+      "bucket": "temporal_dreadnought_flavor",
       "loca_id": 75304,
       "hostile_count": 9,
       "sample_hostile_id": "1420655807",
@@ -2086,13 +2086,13 @@
       "effect_type": "burning"
     },
     "1004890011": {
-      "bucket": "other_review",
+      "bucket": "temporal_dreadnought_regen",
       "loca_id": 75301,
       "hostile_count": 9,
       "sample_hostile_id": "2253944433",
       "sample_level": 53,
       "text_snippet": "charged quantum hull repair\nequipped with power hull reinforcement technology, the charged temporal dreadnoughts replenish their shields instantly and restore their hull each round of combat if the u.s.s. relativity anti-charged shift abili",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_full_regen_unless_attacker_ship"
     },
     "1013840137": {
       "bucket": "armada_scope",

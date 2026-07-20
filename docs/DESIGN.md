@@ -539,6 +539,8 @@ LCARS YAML → parsed Officer → ResolvedAbilities → BuffSet
                                                       └── triggered_effects (evaluated on trigger)
 ```
 
+**Temporal Dreadnought phase alignment (2026-07-19):** Charged Quantum Hull Repair restores defender shields and hull to full at round start; Static Collider Cannon keeps its isolytic-damage seat and restores shields only. `HostileFullRegenUnlessAttackerShip` is resolved once at setup into full-pool round-start flags and is disabled when the attacker identifies as the Relativity (canonical slug `uss_relativity`, upstream id `442815157`, or normalized display name; its anti-shift hull abilities are always active but remain catalog `combat_noop`). A hostile killed during the attack phase does not reach another regeneration tick. Coverage: `tests/hostile_temporal_dreadnought_regen.rs`.
+
 Static buffs (passive `stat_modify` with permanent duration) are folded into the ship's effective stats before round 1. Only dynamic effects remain in the loop.
 
 ### 4.3 Fight Loop

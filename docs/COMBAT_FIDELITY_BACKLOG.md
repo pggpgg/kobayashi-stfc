@@ -344,16 +344,24 @@ Implementation sketch:
 
 ---
 
-## 6. Temporal Dreadnought conditional regeneration (18 hostiles)
+## 6. Temporal Dreadnought conditional regeneration (18 hostiles) ✅
 
-**a) The issue.** Charged/Static Temporal Dreadnoughts (`1004890011` + its Static twin, 9 hostiles
-each) "replenish their shields instantly and restore their hull each round of combat if the
-U.S.S. Relativity Anti-[Charged/Static] Shift Ability is not active". Real gameplay: only the
-Relativity (with the right ability) can kill them; everyone else faces a full-heal-per-round wall.
-The sim ignores this, so the optimizer will recommend arbitrary ships. Model: per-round full
-shield + hull restore on the defender, gated OFF when the attacker ship is the Relativity (ship-id
-gate; checking for the actual counter-ability on the ship record is the stretch goal — the ship
-catalog may or may not model the Relativity ability, verify).
+**Status (2026-07-19):** Implemented — Charged Quantum Hull Repair (`1004890011`) maps to
+`HostileFullRegenUnlessAttackerShip` and restores full shields + hull at round start; Static
+Collider Cannon (`1070977437`) keeps its existing `isolytic_damage` primary seat and gains a
+shield-only regeneration extra seat. Both are disabled when the attacker identifies as the
+Relativity (canonical slug, upstream numeric id, or normalized display name); its two anti-shift
+hull abilities exist in the ship catalog but are `combat_noop`, so the ship-identity gate is the
+documented approximation. Neutralised Shift
+(`709082712`) remains inert under the named `temporal_dreadnought_flavor` bucket. Coverage:
+`tests/hostile_temporal_dreadnought_regen.rs`.
+
+**a) The issue.** Charged and Static Temporal Dreadnoughts (9 hostiles each) have different
+anti-shift mechanics. Charged (`1004890011`) replenishes shields and restores hull each round;
+Static (`1070977437`) increases isolytic damage cumulatively and replenishes shields, but does not
+claim hull restoration. Both mechanics are suppressed by the matching U.S.S. Relativity
+anti-shift ability. Previously the simulator ignored the restoration, so it could recommend ships
+that cannot make persistent progress against these targets.
 
 **b) Prompt.**
 
@@ -361,10 +369,10 @@ catalog may or may not model the Relativity ability, verify).
 In the KOBAYASHI repo, model Temporal Dreadnought conditional full-regeneration. Read
 docs/COMBAT_FIDELITY_BACKLOG.md § "Shared context" first.
 
-Target: id 1004890011 ("Charged Quantum Hull Repair", 9 hostiles) and find its Static twin in
-data/upstream/data-stfc-space/hostile_ability_audit_meta.json (search text_snippet for "Static").
-Text: replenish shields instantly and restore hull each round unless the U.S.S. Relativity
-anti-shift ability is active. Also note id 709082712 ("Neutralised Shift") is pure flavor for the
+Target: id 1004890011 ("Charged Quantum Hull Repair", 9 hostiles: full shields + hull) and id
+1070977437 ("Static Collider Cannon", 9 hostiles: full shields only, plus its existing isolytic
+seat). Both are disabled by the matching U.S.S. Relativity anti-shift ability. Also note id
+709082712 ("Neutralised Shift") is pure flavor for the
 NEUTRAL variant (explicitly killable without the Relativity) — leave it noop but re-bucket it to
 an explicit flavor bucket so it stops polluting other_review.
 
@@ -374,10 +382,9 @@ Implementation sketch:
    data/upstream/data-stfc-space/ship_ability_catalog.json (they may be combat_noop there — if
    so, gate on attacker ship id alone and document the approximation; CombatContext already
    carries attacker_ship_id, used by e.g. the Vengeance-style gates if issue #1 landed first).
-2. New effect, e.g. AbilityEffect::HostileFullRegenUnlessAttackerShip { ship_ids } with
-   round_start timing: at round start, restore defender shields to max and undo the round's hull
-   damage (set st.total_hull_damage back to its start-of-round snapshot — check what state is
-   available; you may need to record the snapshot at round start).
+2. New effect, e.g. AbilityEffect::HostileFullRegenUnlessAttackerShip { ship_ids } resolved at
+   round start: restore defender shields to max for both variants and reset cumulative hull damage
+   only for Charged.
 3. Engine wiring at the round-start section of simulate_combat_from_setup; no RNG.
 4. Generator branches for both texts; regenerate + diff catalog vs HEAD.
 5. Tests: non-Relativity attacker cannot reduce the dreadnought's hull across rounds (fight hits
@@ -671,8 +678,9 @@ into 29 loca-text families and was swept in one pass, entirely via generator bra
 (48 ids → `hostile_counter_pierce_multiplier`, values 5 / 15), Energy Focused Beam (31 ids →
 `hostile_lethal_end_of_round` `round_interval: 8`). The rest moved to named noop buckets — see the
 2026-07-19 section in [HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md).
-`other_review` now holds only the item-6 Temporal Dreadnought pair (2 ids / 18 instances).
-Coverage: `tests/hostile_other_review_triage.rs`.
+Item #6 subsequently modeled Charged regeneration and moved Neutralised Shift to a named flavor
+bucket, so `other_review` is now empty. Coverage: `tests/hostile_other_review_triage.rs` and
+`tests/hostile_temporal_dreadnought_regen.rs`.
 
 **Deferred engine-extension candidates surfaced by the slice** (each currently a named noop bucket):
 

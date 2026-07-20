@@ -326,6 +326,44 @@ pub(crate) fn hostile_ability_effect_from_catalog(
                 regen_max_fraction: value.clamp(0.0, 1.0),
             })
         }
+        // Temporal Dreadnought phase alignment. Charged restores both pools; Static restores
+        // shields only. The marker is resolved at setup and applied at each round start.
+        "hostile_full_regen_unless_attacker_ship"
+        | "full_regen_unless_attacker_ship"
+        | "temporal_dreadnought_full_regen" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            let allow_uss_relativity = allowed_attacker_ship_ids
+                .iter()
+                .any(|id| id.trim().eq_ignore_ascii_case("uss_relativity"));
+            if !allow_uss_relativity {
+                return None;
+            }
+            Some(AbilityEffect::HostileFullRegenUnlessAttackerShip {
+                restore_shields: true,
+                restore_hull: true,
+                allow_uss_relativity,
+            })
+        }
+        "hostile_full_shield_regen_unless_attacker_ship"
+        | "full_shield_regen_unless_attacker_ship"
+        | "temporal_dreadnought_full_shield_regen" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            let allow_uss_relativity = allowed_attacker_ship_ids
+                .iter()
+                .any(|id| id.trim().eq_ignore_ascii_case("uss_relativity"));
+            if !allow_uss_relativity {
+                return None;
+            }
+            Some(AbilityEffect::HostileFullRegenUnlessAttackerShip {
+                restore_shields: true,
+                restore_hull: false,
+                allow_uss_relativity,
+            })
+        }
         "hostile_crit_damage_floor" | "crit_damage_floor" => {
             Some(AbilityEffect::HostileCritDamageFloorBonus(value.max(0.0)))
         }

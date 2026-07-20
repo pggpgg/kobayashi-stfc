@@ -209,6 +209,10 @@ pub struct PreCombatSetup {
     /// shield pool (overflow spills to hull) and the hostile regenerates this fraction of max
     /// shield HP at the start of each round.
     pub defender_shield_damage_routing_regen: Option<f64>,
+    /// Temporal Dreadnought phase-alignment regeneration, already disabled when the attacker is
+    /// the U.S.S. Relativity. Charged restores both pools; Static restores shields only.
+    pub defender_full_shield_regen_each_round: bool,
+    pub defender_full_hull_regen_each_round: bool,
     /// Designed-counter bypass fraction vs an active shield-damage routing (tag-gated ship-hull
     /// bypass only, e.g. Vengeance Advanced Sabotage); `0.0` when routing is inactive.
     pub shield_routing_counter_bypass: f64,
@@ -407,6 +411,12 @@ pub fn build_combat_setup_with_officer_stat(
         );
     let defender_shield_damage_routing_regen =
         crate::combat::abilities::hostile_shield_damage_routing_regen(&defender_crew);
+    let (defender_full_shield_regen_each_round, defender_full_hull_regen_each_round) =
+        crate::combat::abilities::hostile_full_regen_unless_attacker_ship(
+            &defender_crew,
+            &attacker.id,
+        )
+        .unwrap_or((false, false));
     // Only tag-gated ship-hull bypass seats count as the routing's designed counter; the
     // officer/FT bypass accumulator channel is ignored while routing is active ("cannot be
     // altered by officers, Forbidden Tech…").
@@ -446,6 +456,8 @@ pub fn build_combat_setup_with_officer_stat(
         attacker_shield_mitigation_forced_zero,
         outbound_final_damage_factor,
         defender_shield_damage_routing_regen,
+        defender_full_shield_regen_each_round,
+        defender_full_hull_regen_each_round,
         shield_routing_counter_bypass,
         round_start_effects,
         attack_phase_effects,
@@ -761,6 +773,17 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
+
+        // Temporal Dreadnought phase alignment: surviving Charged variants restore shields and
+        // hull to full; Static variants restore shields only. The setup flags are false for the
+        // U.S.S. Relativity, whose always-active anti-shift hull abilities disable the mechanic.
+        // Applying before ordinary round-start effects ensures their conditions see healed vitals.
+        if setup.defender_full_shield_regen_each_round {
+            st.defender_shield_remaining = defender.shield_health.max(0.0);
+        }
+        if setup.defender_full_hull_regen_each_round {
+            st.total_hull_damage = 0.0;
+        }
 
         // Breen Energy-Dampening Field: the hostile regenerates a fraction of MAX shield HP at
         // the start of each round, before round-start effects read vitals. No RNG.

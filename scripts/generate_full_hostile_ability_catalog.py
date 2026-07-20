@@ -162,6 +162,46 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         bucket = kwargs.pop("_bucket", "modeled_combat")
         return modeled(timing, effect_type, **kwargs), bucket
 
+    # Temporal Dreadnought phase alignment. Charged variants fully restore shields + hull each
+    # round; Static variants fully restore shields while retaining their existing isolytic-damage
+    # seat. Both mechanics are disabled by the U.S.S. Relativity's always-active anti-shift hull
+    # abilities. The Neutral variant is explanatory flavor and intentionally stays inert.
+    relativity_counter = ["uss_relativity"]
+    if (
+        "charged temporal dreadnoughts replenish their shields instantly" in p
+        and "restore their hull each round" in p
+        and "anti-charged shift ability" in p
+    ):
+        return m(
+            "combat_begin",
+            "hostile_full_regen_unless_attacker_ship",
+            value_override=0,
+            allowed_attacker_ship_ids=relativity_counter,
+            _bucket="temporal_dreadnought_regen",
+        )
+    if (
+        "static temporal dreadnoughts increase their isolytic damage cumulatively" in p
+        and "replenish their shields instantly" in p
+        and "anti-static shift ability" in p
+    ):
+        return m(
+            "combat_begin",
+            "isolytic_damage",
+            value_is_percentage=True,
+            ignore_upstream_value_is_percentage=False,
+            extra_seats=[
+                modeled(
+                    "combat_begin",
+                    "hostile_full_shield_regen_unless_attacker_ship",
+                    value_override=0,
+                    allowed_attacker_ship_ids=relativity_counter,
+                )
+            ],
+            _bucket="isolytic_combat",
+        )
+    if "neutral temporal dreadnoughts have no phase alignment" in p:
+        return dict(NOOP), "temporal_dreadnought_flavor"
+
     # Combat-start player burn/breach (Xindi Hole Puncher / Immolator). Must run BEFORE the
     # broad "enemy player" PvP short-circuit so these NPC texts are not bucketed as PvP.
     if (

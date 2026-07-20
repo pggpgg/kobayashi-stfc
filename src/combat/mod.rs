@@ -29,6 +29,7 @@ pub use abilities::{
     defender_shield_drain_per_round_from_crew, hostile_apex_barrier_bonus_from_defender_crew,
     hostile_crit_damage_floor_bonus_from_defender_crew,
     hostile_defender_mitigation_additive_factor_from_defender_crew, hostile_engagement_round_limit,
+    hostile_full_regen_unless_attacker_ship,
     hostile_hyperthermic_decay_fraction_from_defender_crew, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
     CrewSeat, CrewSeatContext, DefenderOnHitGate, DefenderOnHitStat, TimingWindow, WeaponTypeScope,
