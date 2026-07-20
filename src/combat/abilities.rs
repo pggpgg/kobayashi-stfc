@@ -415,11 +415,16 @@ pub enum DefenderOnHitStat {
     CritChance,
     /// Additive bonus fraction on counter-fire `pre_attack_multiplier` (0.15 → ×(1 + Σ0.15)).
     WeaponDamage,
+    /// Additive points removed from the player's shield-mitigation fraction on subsequent
+    /// hostile hits (0.10 = −10 percentage points). The final mitigation is clamped to `[0, 1]`.
+    ShieldMitigationReduction,
 }
 
 /// Player-state gate for [`AbilityEffect::DefenderOnHitStack`] (attacker = player in PvE).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DefenderOnHitGate {
+    /// Always push a stack when the hostile weapon hit lands (Shield Disruptors).
+    Always,
     /// Requires [`CombatContext::attacker_burning_active`].
     AttackerBurning,
     /// Requires [`CombatContext::attacker_hull_breach_active`].

@@ -5,7 +5,8 @@
 
 use kobayashi::combat::{
     simulate_combat_with_defender_faction_and_defender_crew, AbilityEffect, Combatant,
-    CrewConfiguration, OpponentFactionTag, ShipType, SimulationConfig, TraceMode, WeaponStats,
+    CrewConfiguration, DefenderOnHitGate, DefenderOnHitStat, OpponentFactionTag, ShipType,
+    SimulationConfig, TraceMode, WeaponStats,
 };
 use kobayashi::data::hostile_ability_resolve::{
     hostile_abilities_to_defender_crew, hostile_ability_catalog_for_default_path,
@@ -89,6 +90,86 @@ fn run(
         false,
         defender_crew,
     )
+}
+
+/// Species 8472 Shield Disruptors (loca 55049): every hostile weapon hit pushes a −10
+/// percentage-point player shield-mitigation stack for the rest of that round. Hit N earns the
+/// stack after its damage is resolved, so only subsequent hits use it.
+#[test]
+fn shield_disruptors_reduce_player_shield_mitigation_per_hit_for_one_round() {
+    let rec = resolve_hostile("1848004292").expect("shield disruptors carrier");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let resolved = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let disruptor_seats: Vec<_> = resolved
+        .seats
+        .iter()
+        .filter(|s| {
+            matches!(
+                s.ability.effect,
+                AbilityEffect::DefenderOnHitStack {
+                    stat: DefenderOnHitStat::ShieldMitigationReduction,
+                    per_hit,
+                    duration_rounds: 1,
+                    requires: DefenderOnHitGate::Always,
+                } if (per_hit - 0.10).abs() < 1e-9
+            )
+        })
+        .cloned()
+        .collect();
+    assert_eq!(
+        disruptor_seats.len(),
+        1,
+        "expected one real-data Shield Disruptors seat"
+    );
+    let disruptor_crew = CrewConfiguration {
+        seats: disruptor_seats,
+    };
+
+    let mut attacker = combatant(
+        "att",
+        10_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    attacker.shield_health = 10_000_000.0;
+    attacker.shield_mitigation = 0.80;
+    let defender = combatant(
+        "1848004292",
+        50_000_000.0,
+        WeaponStats {
+            attack: 100_000.0,
+            shots: Some(3),
+            ..Default::default()
+        },
+    );
+    let empty = CrewConfiguration { seats: vec![] };
+
+    for rounds in [1, 2] {
+        let cfg = pve_config(rounds, 29);
+        let baseline = run(&attacker, &defender, &cfg, ShipType::Explorer, &empty);
+        let disrupted = run(
+            &attacker,
+            &defender,
+            &cfg,
+            ShipType::Explorer,
+            &disruptor_crew,
+        );
+        let baseline_hull_loss = 10_000_000.0 - baseline.attacker_hull_remaining;
+        let disrupted_hull_loss = 10_000_000.0 - disrupted.attacker_hull_remaining;
+        let expected_baseline = 60_000.0 * f64::from(rounds);
+        let expected_disrupted = 90_000.0 * f64::from(rounds);
+        assert!(
+            (baseline_hull_loss - expected_baseline).abs() < 1e-6,
+            "rounds={rounds}: baseline should keep 80% SM on all three hits (got {baseline_hull_loss})"
+        );
+        assert!(
+            (disrupted_hull_loss - expected_disrupted).abs() < 1e-6,
+            "rounds={rounds}: hits should use 80%, 70%, 60% SM each round (got {disrupted_hull_loss})"
+        );
+    }
 }
 
 /// Hostile 1362229790 carries Interceptor Exploitation (354606680): +100% damage against

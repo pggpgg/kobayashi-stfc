@@ -264,6 +264,7 @@ pub fn sample_stratified_random_crews(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
 
     fn registry() -> std::sync::Arc<DataRegistry> {
         DataRegistry::load().expect("data registry required for sampler tests")
@@ -276,7 +277,9 @@ mod tests {
             below_decks_slots: 3,
             below_decks_pool_mode: BelowDecksPoolMode::Strict,
             enemy_type: EnemyType::RedMovingSpace,
-            profile_id: None,
+            // Unit tests must not depend on whichever mutable local profile is
+            // currently selected in profiles/index.json.
+            profile_id: Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             constraints: None,
             exclude_hashes: None,
         }

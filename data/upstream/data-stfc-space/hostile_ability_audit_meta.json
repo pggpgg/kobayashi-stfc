@@ -13,13 +13,13 @@
       "effect_type": "isolytic_defense"
     },
     "6284447": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1848004292",
       "sample_level": 58,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "6708501": {
       "bucket": "ship_class_damage_combat",
@@ -94,13 +94,13 @@
       "effect_type": "isolytic_defense"
     },
     "36466459": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3142082698",
       "sample_level": 48,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "56799195": {
       "bucket": "hyperthermic_decay_combat",
@@ -463,13 +463,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "215852350": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1994996613",
       "sample_level": 45,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "215970807": {
       "bucket": "outpost_scope",
@@ -1264,13 +1264,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "587718019": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "51758524",
       "sample_level": 43,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "588934861": {
       "bucket": "outpost_scope",
@@ -1354,13 +1354,13 @@
       "effect_type": "apex_barrier"
     },
     "628296683": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2713698978",
       "sample_level": 60,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "633791558": {
       "bucket": "ship_class_damage_combat",
@@ -1536,13 +1536,13 @@
       "effect_type": "isolytic_damage"
     },
     "722784906": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3673092396",
       "sample_level": 50,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "725094130": {
       "bucket": "scheduled_lethal_combat",
@@ -1978,13 +1978,13 @@
       "effect_type": "combat_noop"
     },
     "951569010": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "4127674789",
       "sample_level": 42,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "952685419": {
       "bucket": "crit_combat",
@@ -2032,13 +2032,13 @@
       "effect_type": "apex_barrier"
     },
     "968215138": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3075666847",
       "sample_level": 55,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "976915952": {
       "bucket": "isolytic_combat",
@@ -2347,13 +2347,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1121381480": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2335958199",
       "sample_level": 60,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1127557836": {
       "bucket": "armada_scope",
@@ -2545,13 +2545,13 @@
       "effect_type": "hostile_lethal_end_of_round"
     },
     "1229610926": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2126934434",
       "sample_level": 50,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1230069942": {
       "bucket": "pierce_combat",
@@ -2788,13 +2788,13 @@
       "effect_type": "combat_noop"
     },
     "1320721033": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2675996337",
       "sample_level": 52,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1324185618": {
       "bucket": "crit_combat",
@@ -3211,13 +3211,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "1529330893": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2064854936",
       "sample_level": 46,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1529335059": {
       "bucket": "apex_combat",
@@ -3283,13 +3283,13 @@
       "effect_type": "combat_noop"
     },
     "1562590199": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "565189938",
       "sample_level": 51,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1563593763": {
       "bucket": "armada_scope",
@@ -3499,13 +3499,13 @@
       "effect_type": "combat_noop"
     },
     "1685418579": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "145288685",
       "sample_level": 43,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1692898062": {
       "bucket": "outpost_scope",
@@ -3662,13 +3662,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "1761033105": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3434673645",
       "sample_level": 55,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1762762543": {
       "bucket": "armada_scope",
@@ -4067,13 +4067,13 @@
       "effect_type": "isolytic_damage"
     },
     "1963739289": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1760912096",
       "sample_level": 40,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "1964247131": {
       "bucket": "ship_class_damage_combat",
@@ -4743,13 +4743,13 @@
       "effect_type": "combat_noop"
     },
     "2251952295": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1356984695",
       "sample_level": 47,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2252014445": {
       "bucket": "pierce_combat",
@@ -5022,13 +5022,13 @@
       "effect_type": "isolytic_defense"
     },
     "2385536989": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2345625121",
       "sample_level": 50,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2388592734": {
       "bucket": "shield_regen_combat",
@@ -5382,13 +5382,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2556197069": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1211676814",
       "sample_level": 39,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2556216862": {
       "bucket": "scheduled_lethal_combat",
@@ -5555,13 +5555,13 @@
       "overridden": true
     },
     "2643951824": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "3020384814",
       "sample_level": 60,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2645316647": {
       "bucket": "crit_combat",
@@ -5933,13 +5933,13 @@
       "effect_type": "crit_damage"
     },
     "2810472756": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1491022781",
       "sample_level": 35,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2811564588": {
       "bucket": "pierce_combat",
@@ -6041,13 +6041,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "2863086141": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "917316615",
       "sample_level": 53,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2864985839": {
       "bucket": "isolytic_combat",
@@ -6194,13 +6194,13 @@
       "effect_type": "combat_noop"
     },
     "2973184125": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2299800207",
       "sample_level": 51,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "2974433798": {
       "bucket": "ship_class_damage_combat",
@@ -6401,13 +6401,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3088493342": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1155348316",
       "sample_level": 40,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3089280874": {
       "bucket": "apex_combat",
@@ -6509,13 +6509,13 @@
       "effect_type": "combat_noop"
     },
     "3137872798": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2500725952",
       "sample_level": 40,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3140773716": {
       "bucket": "armada_scope",
@@ -6726,13 +6726,13 @@
       "effect_type": "combat_noop"
     },
     "3220905370": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "1729086792",
       "sample_level": 38,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3221004456": {
       "bucket": "armada_scope",
@@ -7203,13 +7203,13 @@
       "effect_type": "combat_noop"
     },
     "3437854206": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2385908422",
       "sample_level": 37,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3445799437": {
       "bucket": "hostile_shield_bypass",
@@ -7860,13 +7860,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "3825538982": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "852023108",
       "sample_level": 58,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3829027098": {
       "bucket": "isolytic_combat",
@@ -7959,13 +7959,13 @@
       "effect_type": "hostile_lethal_end_of_round"
     },
     "3873489911": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "665920666",
       "sample_level": 62,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3875067859": {
       "bucket": "isolytic_combat",
@@ -8013,13 +8013,13 @@
       "effect_type": "shield_regen_max_fraction"
     },
     "3881525121": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2759172575",
       "sample_level": 35,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3883346925": {
       "bucket": "outpost_scope",
@@ -8211,13 +8211,13 @@
       "effect_type": "combat_noop"
     },
     "3985714265": {
-      "bucket": "on_hit_mitigation_review",
+      "bucket": "on_hit_mitigation_combat",
       "loca_id": 55049,
       "hostile_count": 1,
       "sample_hostile_id": "2934559468",
       "sample_level": 49,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
-      "effect_type": "combat_noop"
+      "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "3989697543": {
       "bucket": "pierce_combat",

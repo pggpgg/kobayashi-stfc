@@ -3,8 +3,21 @@
 //! resolve time. This test greps the combat module for forbidden patterns and fails if any
 //! show up — guarding the zero-allocation hot-loop guarantee documented in CLAUDE.md.
 
-use std::path::PathBuf;
-use std::process::Command;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+fn rust_files_below(dir: &Path, files: &mut Vec<PathBuf>) {
+    let entries =
+        fs::read_dir(dir).unwrap_or_else(|err| panic!("failed to read {}: {err}", dir.display()));
+    for entry in entries {
+        let path = entry.expect("combat directory entry").path();
+        if path.is_dir() {
+            rust_files_below(&path, files);
+        } else if path.extension().is_some_and(|ext| ext == "rs") {
+            files.push(path);
+        }
+    }
+}
 
 #[test]
 fn combat_module_has_no_drop_logging() {
@@ -24,19 +37,27 @@ fn combat_module_has_no_drop_logging() {
         "warn_span!",
     ];
 
+    let mut files = Vec::new();
+    rust_files_below(&combat_dir, &mut files);
+    files.sort();
+
     let mut violations: Vec<String> = Vec::new();
-    for pattern in forbidden {
-        let output = Command::new("grep")
-            .args(["-rn", "--include=*.rs", pattern, "src/combat"])
-            .output()
-            .expect("grep should be available");
-        let hits = String::from_utf8_lossy(&output.stdout);
-        for line in hits.lines() {
-            // grep returns "path:lineno:content" — filter doc-comment mentions if any sneak in.
-            if line.contains("//") || line.contains("///") {
+    for path in files {
+        let source = fs::read_to_string(&path)
+            .unwrap_or_else(|err| panic!("failed to read {}: {err}", path.display()));
+        for (line_index, line) in source.lines().enumerate() {
+            if line.trim_start().starts_with("//") {
                 continue;
             }
-            violations.push(format!("{pattern} → {line}"));
+            for pattern in forbidden {
+                if line.contains(pattern) {
+                    violations.push(format!(
+                        "{pattern} → {}:{}:{line}",
+                        path.display(),
+                        line_index + 1
+                    ));
+                }
+            }
         }
     }
 

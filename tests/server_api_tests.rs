@@ -2,7 +2,7 @@ use axum::body::Body;
 use axum::extract::connect_info::ConnectInfo;
 use axum::http::{Method, Request, StatusCode};
 use kobayashi::data::data_registry::DataRegistry;
-use kobayashi::data::profile_index::profile_data_dir;
+use kobayashi::data::profile_index::{profile_data_dir, DEMO_PROFILE_ID};
 use kobayashi::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
 use kobayashi::server::routes::build_router;
 use std::net::SocketAddr;
@@ -34,8 +34,8 @@ async fn route_request(method: &str, path: &str, body: &str) -> TestResponse {
     route_request_ex(method, path, body, None, &[]).await
 }
 
-/// Optimize scenarios need enough roster breadth for legal crews; bundled `demo` profile only lists
-/// two officers, so use the no-roster synthetic id (full canonical catalog) like replay-seed tests.
+/// Optimize scenarios need enough roster breadth for legal crews; a user's mutable default profile
+/// may not, so use the no-roster synthetic id (full canonical catalog) like replay-seed tests.
 async fn route_request_optimize(body: &str) -> TestResponse {
     route_request_ex(
         "POST",
@@ -1451,10 +1451,17 @@ async fn simulate_partial_crew_captain_only_is_allowed() {
 #[serial_test::serial]
 #[tokio::test]
 async fn simulate_partial_crew_with_demo_profile() {
-    // Same as above but using the demo profile (default when no x-profile-id header is sent)
+    // Same as above but explicitly using the bundled demo profile. Omitting the header would make
+    // this test depend on the user's mutable profiles/index.json default.
     let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
-    // No profile header → server picks default = demo
-    let response = route_request("POST", "/api/simulate", body).await;
+    let response = route_request_ex(
+        "POST",
+        "/api/simulate",
+        body,
+        None,
+        &[("x-profile-id", DEMO_PROFILE_ID)],
+    )
+    .await;
     assert_eq!(
         response.status_code, 200,
         "demo profile partial crew should succeed: {}",
