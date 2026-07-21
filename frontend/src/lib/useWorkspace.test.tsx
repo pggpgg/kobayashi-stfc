@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { WorkspaceModeProvider } from "../contexts/WorkspaceModeContext";
 import type { Preset } from "./api";
+import { getLoopBestRecord, savePendingLoopRun } from "./loopsWorkspaceStorage";
 import { useWorkspace } from "./useWorkspace";
 
 const { apiMocks, doneOptimizeStatus } = vi.hoisted(() => {
@@ -94,6 +95,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe("useWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     sessionStorage.clear();
     apiMocks.mockGetOptimizeStatus.mockResolvedValue(doneOptimizeStatus);
   });
@@ -387,6 +389,56 @@ describe("useWorkspace", () => {
         "Roster fallback was used.",
       ]);
     });
+  });
+
+  it("restores a pending loop run and saves its completed optimizer best", async () => {
+    sessionStorage.setItem(
+      "kobayashi_active_optimize_job_v1",
+      JSON.stringify({ jobId: "job-loop-1", profileId: "p1" }),
+    );
+    savePendingLoopRun("p1", {
+      loopId: "actian",
+      loopName: "Actian",
+      targetId: "2918121098",
+      targetName: "Actian Apex",
+      targetLevel: 49,
+      goalId: "one_round",
+      shipId: "mantis",
+      shipPolicy: "recommended",
+      specialtyShipIds: ["mantis"],
+    });
+    apiMocks.mockGetOptimizeStatus.mockResolvedValueOnce({
+      ...doneOptimizeStatus,
+      result: {
+        ...doneOptimizeStatus.result,
+        scenario: {
+          ...doneOptimizeStatus.result.scenario,
+          ship: "mantis",
+          hostile: "2918121098",
+        },
+        recommendations: [
+          {
+            captain: "Five of Eleven",
+            bridge: ["Khan", "Georgiou"],
+            below_decks: ["The Doctor"],
+            win_rate: 0.96,
+            r1_kill_rate: 0.72,
+            avg_hull_remaining: 0.81,
+            avg_defender_hull_remaining: 0,
+          },
+        ],
+      },
+    });
+
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+
+    await waitFor(() => {
+      expect(
+        getLoopBestRecord("p1", "actian", "2918121098", "one_round")
+          ?.roundOneKillRate,
+      ).toBe(0.72);
+    });
+    expect(result.current.workspaceInfo).toMatch(/New Actian best saved/);
   });
 
   it("trims below-deck slots when ship level decreases", async () => {
