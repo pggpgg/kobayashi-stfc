@@ -129,7 +129,18 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
         })
         .collect();
 
-    ranked.sort_by(
+    sort_ranked_rows(&mut ranked);
+
+    ranked
+}
+
+/// Sort ranked rows in place: descending score (or, for linear-eval rows, descending
+/// `expected_hull_damage`; for chain-grind rows, descending win_rate then avg_hull_remaining),
+/// tie-broken deterministically. Extracted so ordering logic exists in exactly one place —
+/// both [`rank_results`] and any caller that merges extra rows into an already-ranked list
+/// (e.g. local refinement) sort through this same comparator.
+pub fn sort_ranked_rows(rows: &mut [RankedCrewResult]) {
+    rows.sort_by(
         |left, right| match (left.expected_hull_damage, right.expected_hull_damage) {
             (Some(l), Some(r)) => r
                 .total_cmp(&l)
@@ -148,8 +159,6 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
             },
         },
     );
-
-    ranked
 }
 
 fn material_officer_set(r: &RankedCrewResult) -> HashSet<&str> {

@@ -108,6 +108,8 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         optimize_cache_key: None,
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
+
+        local_refinement: None,
     }
 }
 
