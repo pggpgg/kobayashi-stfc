@@ -77,15 +77,40 @@ const ALL_GOALS: readonly LoopGoalId[] = [
 ];
 
 /**
+ * Patterns that are allowed to match zero hostiles in the installed catalog,
+ * because the content is not published upstream yet — keyed by loop id, holding
+ * indices into that loop's `hostilePatterns`.
+ *
+ * Everything *not* listed here must match at least one hostile or
+ * `loopsCatalog.test.ts` fails. That distinction matters: a pattern matching
+ * nothing is normally a typo (see `apex-raiders`, which shipped as "Apex Raider"
+ * and silently rendered an empty ladder), but Klingon and Romulan War Armadas
+ * genuinely do not exist in the community catalog — only six armada families do.
+ * Without this split the liveness test would have to choose between failing on
+ * legitimate future-proofing and missing real typos.
+ */
+export const FUTURE_PATTERN_EXEMPTIONS: Record<string, readonly number[]> = {
+  // 1 = /klingon war armada/i, 2 = /romulan war armada/i
+  "faction-armadas": [1, 2],
+};
+
+/**
  * Data-driven loop catalog. Hostile ids are deliberately not embedded here: the
  * ladder is resolved from the installed hostile catalog, so upstream refreshes can
  * add levels without a frontend release.
+ *
+ * Note what that does *not* cover: it keeps working when upstream adds levels to a
+ * family already matched, but a family whose *name* changes (or was never right)
+ * silently resolves to nothing. The liveness test above is what catches that.
  */
 export const LOOP_CATALOG: readonly LoopDefinition[] = [
   {
     id: "faction-armadas",
     name: "Faction armadas",
-    summary: "Federation, Klingon, and Romulan armada progression.",
+    // Only Federation War Armadas are published upstream today; the Klingon and
+    // Romulan patterns below are kept for when they appear but currently resolve
+    // nothing, so the summary must not promise them.
+    summary: "War armada progression. Federation targets only in current data.",
     progression: "Faction credits, reputation, materials, and ship progression",
     engagement: "armada",
     hostilePatterns: [
@@ -173,12 +198,15 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
   },
   {
     id: "eclipse",
-    name: "Eclipse & Exchange",
-    summary: "Eclipse hostiles and Exchange armada targets in Rogue space.",
+    name: "Exchange convoys",
+    // `/eclipse/i` matched nothing in the installed catalog — Eclipse hostiles are
+    // not published under that name upstream — so the loop is named for what it
+    // actually resolves rather than implying Eclipse targets are listed.
+    summary: "Exchange transport, bank, and vault targets in Rogue space.",
     progression: "Eclipse security codes, Rogue research, and Stella particles",
     engagement: "hostile",
     minOps: 27,
-    hostilePatterns: [/exchange (transport|bank|vault)/i, /eclipse/i],
+    hostilePatterns: [/exchange (transport|bank|vault)/i],
     shipPolicy: "recommended",
     specialtyShipIds: ["stella"],
     specialtyShipLabel: "Stella",
@@ -305,11 +333,14 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
   },
   {
     id: "apex-raiders",
-    name: "Apex Raiders",
-    summary: "Apex Raider targets built around chain-clearing combat.",
+    name: "Frontier Raiders",
+    // Named "Apex Raider" here originally, which matches zero hostiles: upstream
+    // calls these "Frontier Raider" / "Frontier Raider HAZ". The loop rendered an
+    // empty ladder for every player until this was corrected.
+    summary: "Frontier Raider targets built around chain-clearing combat.",
     progression: "GS-31 parts, research, and wave-defense progression",
     engagement: "hostile",
-    hostilePatterns: [/apex raider/i],
+    hostilePatterns: [/frontier raider/i],
     shipPolicy: "recommended",
     specialtyShipIds: ["gs_31"],
     specialtyShipLabel: "GS-31",
@@ -377,6 +408,21 @@ export function resolveLoopHostiles(
         }) ||
         a.ship_class.localeCompare(b.ship_class),
     );
+}
+
+/**
+ * Ladder order for *climbing*, lowest level first.
+ *
+ * [`resolveLoopHostiles`] sorts descending because the ladder is displayed with the
+ * hardest target at the top. Progression runs the other way, so the climb runner
+ * and frontier logic need the reverse — kept as a separate function rather than
+ * changing the display sort.
+ */
+export function resolveLoopHostilesAscending(
+  hostiles: readonly HostileListItem[],
+  loop: LoopDefinition,
+): HostileListItem[] {
+  return resolveLoopHostiles(hostiles, loop).reverse();
 }
 
 export function loopGoal(goalId: LoopGoalId): LoopGoal {
