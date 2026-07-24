@@ -60,6 +60,12 @@ function policyLabel(policy: "required" | "recommended" | "open"): string {
 }
 
 function BestCrewSummary({ record }: { record: LoopBestRecord }) {
+  // Under chain grind the engine reuses `avg_hull_remaining` to carry the chain's
+  // *secondary* objective (see SimulationResult's note), and for this workspace that
+  // secondary is a loot-per-hull proxy — an unbounded number, not a hull fraction.
+  // Rendering it as "% hull" produced readings like "24241% hull". Chain records
+  // therefore report the chain metrics they actually hold.
+  const isChain = record.chainSuccessRate != null;
   return (
     <div className="loop-best">
       <div className="loop-best__heading">Saved best</div>
@@ -70,9 +76,26 @@ function BestCrewSummary({ record }: { record: LoopBestRecord }) {
           : ""}
       </div>
       <div className="loop-best__metrics">
-        <span>{percent(record.winRate)} wins</span>
-        <span>{percent(record.roundOneKillRate)} R1</span>
-        <span>{percent(record.averageHullRemaining)} hull</span>
+        {isChain ? (
+          <>
+            <span
+              title={`Chance of completing ${record.chainKillsTarget ?? "N"} consecutive kills`}
+            >
+              {percent(record.chainSuccessRate ?? 0)} chain
+              {record.chainKillsTarget ? ` ×${record.chainKillsTarget}` : ""}
+            </span>
+            <span>{percent(record.winRate)} wins</span>
+            <span>{percent(record.roundOneKillRate)} R1</span>
+          </>
+        ) : (
+          <>
+            <span>{percent(record.winRate)} wins</span>
+            <span>{percent(record.roundOneKillRate)} R1</span>
+            <span title="Mean attacker hull remaining">
+              {percent(record.averageHullRemaining)} hull
+            </span>
+          </>
+        )}
       </div>
       <div className="loop-best__ship">
         {record.shipId} · T{record.shipTier} L{record.shipLevel}
