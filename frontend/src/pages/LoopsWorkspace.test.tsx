@@ -76,4 +76,27 @@ describe("LoopsWorkspace", () => {
       expect(screen.getByText("handoff:actian:actian-49")).toBeTruthy();
     });
   });
+
+  it("shows progress status per rung and points at the next target", async () => {
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/loops" element={<LoopsWorkspace />} />
+            <Route path="/" element={<WorkspaceStateProbe />} />
+          </Routes>
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Actian" }));
+    await screen.findByText("Actian Apex");
+
+    // Nothing measured yet: the lowest rung is the one to attack, and the rung
+    // above it is not reachable.
+    expect(screen.getAllByText("· untried")).toHaveLength(1);
+    expect(screen.getAllByText("🔒 locked")).toHaveLength(1);
+    expect(screen.getByLabelText("Next rung to attack")).toBeTruthy();
+    expect(screen.getByText(/0 cleared/)).toBeTruthy();
+  });
 });

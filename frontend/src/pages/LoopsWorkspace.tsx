@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { RungStatusBadge } from "../components/RungStatusBadge";
 import { useProfile } from "../contexts/ProfileContext";
 import {
   fetchHostiles,
@@ -8,6 +9,7 @@ import {
   type HostileListItem,
   type ShipListItem,
 } from "../lib/api";
+import { loopFrontier } from "../lib/loopRungStatus";
 import {
   hostileLabel,
   LOOP_CATALOG,
@@ -15,6 +17,7 @@ import {
   type LoopGoalId,
   loopGoal,
   resolveLoopHostiles,
+  resolveLoopHostilesAscending,
 } from "../lib/loopsCatalog";
 import {
   getLoopBestRecord,
@@ -169,6 +172,25 @@ export default function LoopsWorkspace() {
     () => listLoopRecords(activeProfileId),
     [activeProfileId, recordsRevision],
   );
+  /**
+   * Rung status for the selected goal, plus which rung to attack next. Computed over
+   * the *ascending* ladder because progression runs bottom-up, while `levels` above
+   * is sorted for display with the hardest target first.
+   */
+  const frontier = useMemo(() => {
+    const ascending = resolveLoopHostilesAscending(hostiles, selectedLoop);
+    const bestByTargetId = new Map(
+      ascending.map((hostile) => [
+        hostile.id,
+        getLoopBestRecord(activeProfileId, selectedLoop.id, hostile.id, goalId),
+      ]),
+    );
+    return loopFrontier(
+      ascending.map((hostile) => hostile.id),
+      bestByTargetId,
+      goalId,
+    );
+  }, [hostiles, selectedLoop, activeProfileId, goalId, recordsRevision]);
   const loopRecords = allRecords.filter(
     (record) => record.loopId === selectedLoop.id,
   );
@@ -354,7 +376,8 @@ export default function LoopsWorkspace() {
               <h3>Climb toward stronger targets</h3>
             </div>
             <span>
-              {completedTargets.size} / {loopHostiles.length} targets recorded
+              {frontier.clearedCount} cleared · {completedTargets.size} /{" "}
+              {loopHostiles.length} recorded
             </span>
           </div>
 
@@ -397,6 +420,18 @@ export default function LoopsWorkspace() {
                               <span>
                                 {classLabel(hostile.ship_class)} · {hostile.id}
                               </span>
+                              <div style={{ marginTop: "0.25rem" }}>
+                                <RungStatusBadge
+                                  info={
+                                    frontier.statuses.get(hostile.id) ?? {
+                                      status: "untried",
+                                      metric: null,
+                                      best: null,
+                                    }
+                                  }
+                                  isNext={frontier.nextTargetId === hostile.id}
+                                />
+                              </div>
                             </div>
                             <button
                               type="button"
