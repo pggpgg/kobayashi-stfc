@@ -26,6 +26,7 @@ import {
   listLoopRecords,
   savePendingLoopRun,
 } from "../lib/loopsWorkspaceStorage";
+import { useLoopClimb } from "../lib/useLoopClimb";
 
 const SELECTED_LOOP_KEY = "kobayashi_loops_selected";
 
@@ -76,6 +77,62 @@ function BestCrewSummary({ record }: { record: LoopBestRecord }) {
       <div className="loop-best__ship">
         {record.shipId} · T{record.shipTier} L{record.shipLevel}
       </div>
+    </div>
+  );
+}
+
+function ClimbControls({
+  climb,
+  onStart,
+  nextTargetId,
+  totalRungs,
+}: {
+  climb: ReturnType<typeof useLoopClimb>;
+  onStart: () => void;
+  nextTargetId: string | null;
+  totalRungs: number;
+}) {
+  const { plan, progress, isClimbing } = climb;
+  const done = plan?.results.length ?? 0;
+  const current = plan?.rungs[plan.cursor];
+
+  if (isClimbing) {
+    return (
+      <div className="loop-climb loop-climb--running">
+        <span>
+          Climbing {current ? `level ${current.targetLevel}` : "…"} · rung{" "}
+          {(plan?.cursor ?? 0) + 1} of {plan?.rungs.length ?? totalRungs}
+          {progress?.progress ? ` · ${Math.round(progress.progress)}%` : ""}
+        </span>
+        <button type="button" onClick={climb.cancel}>
+          Cancel climb
+        </button>
+      </div>
+    );
+  }
+
+  const summary =
+    plan && plan.status !== "running" && done > 0
+      ? `Last climb: ${plan.results.filter((r) => r.outcome === "cleared").length} cleared of ${done} attempted${
+          plan.status === "cancelled" ? " (cancelled)" : ""
+        }`
+      : null;
+
+  return (
+    <div className="loop-climb">
+      <button
+        type="button"
+        onClick={onStart}
+        disabled={totalRungs === 0 || !nextTargetId}
+        title={
+          nextTargetId
+            ? "Run each rung in turn from your frontier upward, warm-starting from the rung below"
+            : "Every rung on this ladder is already cleared"
+        }
+      >
+        {nextTargetId ? "Climb this loop" : "Ladder cleared"}
+      </button>
+      {summary && <small>{summary}</small>}
     </div>
   );
 }
@@ -198,9 +255,45 @@ export default function LoopsWorkspace() {
     loopRecords.map((record) => record.targetId),
   );
 
+  const climb = useLoopClimb(activeProfileId);
+
+  // Refresh the ladder as each rung completes so badges track the climb live.
+  useEffect(() => {
+    if (climb.plan) setRecordsRevision((revision) => revision + 1);
+  }, [climb.plan]);
+
   const selectLoop = (id: string) => {
+    if (climb.isClimbing) return;
     setSelectedLoopId(id);
     setSelectedShipId("");
+  };
+
+  const startClimb = () => {
+    const shipId = selectedShipId;
+    if (!shipId) {
+      setError("Choose a ship before climbing this loop.");
+      return;
+    }
+    const ascending = resolveLoopHostilesAscending(hostiles, selectedLoop);
+    if (ascending.length === 0) return;
+    const ship = ships.find((candidate) => candidate.id === shipId);
+    climb.start({
+      loopId: selectedLoop.id,
+      loopName: selectedLoop.name,
+      goalId,
+      shipId,
+      shipPolicy: selectedLoop.shipPolicy,
+      specialtyShipIds: [...selectedLoop.specialtyShipIds],
+      shipTier: ship?.tier ?? 1,
+      shipLevel: ship?.level ?? 1,
+      rungs: ascending.map((hostile) => ({
+        targetId: hostile.id,
+        targetName: hostileLabel(hostile),
+        targetLevel: hostile.level,
+      })),
+      // Resume above the frontier rather than re-proving rungs already cleared.
+      startAtIndex: frontier.frontierIndex + 1,
+    });
   };
 
   const openOptimizer = (
@@ -291,6 +384,7 @@ export default function LoopsWorkspace() {
                     : "loop-picker"
                 }
                 onClick={() => selectLoop(loop.id)}
+                disabled={climb.isClimbing}
               >
                 <span>{loop.name}</span>
                 {count > 0 && <small>{count} saved</small>}
@@ -319,7 +413,7 @@ export default function LoopsWorkspace() {
 
             <div className="loop-controls">
               <label>
-                Optimization goal
+                Rank crews by
                 <select
                   value={goalId}
                   onChange={(event) =>
@@ -374,6 +468,12 @@ export default function LoopsWorkspace() {
             <div>
               <div className="loops-eyebrow">Progression ladder</div>
               <h3>Climb toward stronger targets</h3>
+              <ClimbControls
+                climb={climb}
+                onStart={startClimb}
+                nextTargetId={frontier.nextTargetId}
+                totalRungs={loopHostiles.length}
+              />
             </div>
             <span>
               {frontier.clearedCount} cleared · {completedTargets.size} /{" "}
@@ -436,6 +536,14 @@ export default function LoopsWorkspace() {
                             <button
                               type="button"
                               onClick={() => openOptimizer(hostile, best)}
+                              // One CPU permit server-side: a manual run started
+                              // mid-climb would hang until the climb releases it.
+                              disabled={climb.isClimbing}
+                              title={
+                                climb.isClimbing
+                                  ? "Unavailable while this loop is climbing"
+                                  : undefined
+                              }
                             >
                               {best ? "Re-optimize" : "Optimize"}
                             </button>
