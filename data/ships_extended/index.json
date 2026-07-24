@@ -1,11 +1,16 @@
 {
-  "data_version": "stfcspace-ships-2026-07-17",
+  "data_version": "stfcspace-ships-2026-07-24",
   "source_note": "From normalize_data_stfc_space",
   "ships": [
     {
       "id": "b_rel",
       "ship_name": "B'REL",
       "ship_class": "explorer"
+    },
+    {
+      "id": "ra_ul_reaver",
+      "ship_name": "RA'UL REAVER",
+      "ship_class": "survey"
     },
     {
       "id": "legionary",

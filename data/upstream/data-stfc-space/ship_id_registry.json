@@ -633,6 +633,12 @@
       "ship_class": "survey"
     },
     {
+      "numeric_id": 1227320105,
+      "id": "ra_ul_reaver",
+      "ship_name": "RA'UL REAVER",
+      "ship_class": "survey"
+    },
+    {
       "numeric_id": 2468986074,
       "id": "selkie",
       "ship_name": "SELKIE",

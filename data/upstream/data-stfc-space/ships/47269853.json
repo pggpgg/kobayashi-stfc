@@ -6865,7 +6865,80 @@
       "value_type": true
     }
   ],
-  "scrap": [],
+  "scrap": [
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 32659200,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 34292160,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 37558080,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 40824000,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 44089920,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 47355840,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 50621760,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 53887680,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 57153600,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 60419520,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 63685440,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 47269853,
+      "scrap_time_seconds": 66951360,
+      "level": 0,
+      "resources": []
+    }
+  ],
   "base_scrap": [
     {
       "resource_id": 743985951,
