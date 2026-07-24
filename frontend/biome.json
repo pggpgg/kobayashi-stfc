@@ -6,7 +6,12 @@
     "useIgnoreFile": false
   },
   "files": {
-    "includes": ["**", "!!**/dist", "!!src/lib/api/generated.d.ts"]
+    "includes": [
+      "**",
+      "!!**/dist",
+      "!!**/coverage",
+      "!!src/lib/api/generated.d.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
