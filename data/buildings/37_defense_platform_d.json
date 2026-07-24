@@ -1,7 +1,7 @@
 {
   "id": "building_37",
   "building_name": "Defense Platform D",
-  "data_version": "stfcspace-2026-06-26",
+  "data_version": "stfcspace-2026-07-24",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {

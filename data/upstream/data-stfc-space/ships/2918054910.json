@@ -12206,10 +12206,435 @@
         }
       ],
       "type": 3
+    },
+    {
+      "id": 2049408801,
+      "art_id": 153,
+      "loca_id": 92702,
+      "cost": [
+        {
+          "resource_id": 2616811562,
+          "amount": 120
+        }
+      ],
+      "buffs": [
+        {
+          "id": 2150975615,
+          "value_is_percentage": true,
+          "values": [
+            {
+              "value": 10,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            },
+            {
+              "value": 0,
+              "chance": 1
+            }
+          ],
+          "art_id": 999,
+          "loca_id": 92702,
+          "show_percentage": true,
+          "value_type": 0
+        }
+      ],
+      "type": 3
     }
   ],
   "xp_amount": 3000,
   "asa": [
+    {
+      "id": 2241953928,
+      "art_id": 14,
+      "loca_id": 53
+    },
     {
       "id": 1074876653,
       "art_id": 376,
