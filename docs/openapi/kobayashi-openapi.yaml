@@ -1751,7 +1751,11 @@ components:
                 description: >
                   Optimizer source/method label for this row, such as `exhaustive_mc`,
                   `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`,
-                  or `linear_eval`.
+                  or `linear_eval`. When the tiered `local_refinement` pass produced a row, the
+                  label instead identifies the refinement neighborhood that found it:
+                  `local_swap` (one bridge/below-decks seat changed), `local_captain_swap`
+                  (captain changed), or `large_neighborhood_repair` (two or more seats changed
+                  via destroy-repair).
               expected_hull_damage:
                 type: number
                 description: >
@@ -2591,6 +2595,28 @@ components:
             bypass the analytical proxy (budget-neutral exploration slice). Injected crews are
             labeled `random_stratified` in `method_provenance` when they reach the results.
             Typical values 0.05–0.2. Omitted or 0 = off.
+        local_refinement:
+          type: boolean
+          description: >
+            Tiered strategy only. Opt-in local-refinement hill-climb around the top tiered
+            finalists after the main search finishes: single-slot bridge/below-decks swaps,
+            captain swaps, and destroy-repair neighborhoods, scored through the same ranking as
+            the main search. Runs after the main search as a small marginal cost, not a second
+            full search. Omitted or false = off (default). Ignored for every other strategy.
+        local_refinement_seeds:
+          type: integer
+          minimum: 1
+          maximum: 16
+          description: >
+            Local refinement only: how many top tiered finalists to hill-climb from. Omitted uses
+            the refinement module's default (3).
+        local_refinement_rounds:
+          type: integer
+          minimum: 1
+          maximum: 8
+          description: >
+            Local refinement only: maximum accepted improving moves per seed crew. Omitted uses
+            the refinement module's default (3).
         exhaustive_scout_sims:
           type: integer
           minimum: 1

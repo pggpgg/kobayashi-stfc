@@ -21,6 +21,10 @@ pub const MAX_CANDIDATES: u32 = 2_000_000;
 pub const MAX_ANALYTICAL_PREFILTER_KEEP: u32 = 500_000;
 pub const MAX_TIERED_SCOUT_SIMS: u32 = 100_000;
 pub const MAX_TIERED_TOP_K: u32 = 500;
+/// Upper bound for `local_refinement_seeds` (tiered strategy only).
+pub const MAX_LOCAL_REFINEMENT_SEEDS: u32 = 16;
+/// Upper bound for `local_refinement_rounds` (tiered strategy only).
+pub const MAX_LOCAL_REFINEMENT_ROUNDS: u32 = 8;
 pub const MAX_NOVELTY_DIVERSE_TOP: u32 = 500;
 pub const MAX_NOVELTY_POOL: u32 = 10_000;
 pub const MAX_WARM_START_CREWS: usize = 24;
@@ -164,6 +168,20 @@ pub struct OptimizeRequest {
     /// Omitted or 0 = off.
     #[serde(default)]
     pub tiered_random_exploration_pct: Option<f64>,
+    /// Tiered strategy only (roadmap §1.1): opt-in local-refinement hill-climb around the top
+    /// finalists after the main tiered search finishes (single-slot swaps, captain swaps,
+    /// destroy-repair neighborhoods). Omitted or false = off (default). Ignored for every other
+    /// strategy.
+    #[serde(default)]
+    pub local_refinement: Option<bool>,
+    /// Local refinement only: how many top tiered finalists to hill-climb from (1..=16). Omitted
+    /// uses the refinement module's default (3).
+    #[serde(default)]
+    pub local_refinement_seeds: Option<u32>,
+    /// Local refinement only: maximum accepted improving moves per seed crew (1..=8). Omitted
+    /// uses the refinement module's default (3).
+    #[serde(default)]
+    pub local_refinement_rounds: Option<u32>,
     /// Exhaustive strategy only: scout-phase sims per crew before ranking (pair with `exhaustive_scout_top_keep`).
     #[serde(default)]
     pub exhaustive_scout_sims: Option<u32>,
@@ -386,6 +404,27 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
             errors.push(ValidationIssue {
                 field: "tiered_top_k",
                 messages: vec![format!("if set, must be between 1 and {MAX_TIERED_TOP_K}")],
+            });
+        }
+    }
+
+    if let Some(s) = request.local_refinement_seeds {
+        if !(1..=MAX_LOCAL_REFINEMENT_SEEDS).contains(&s) {
+            errors.push(ValidationIssue {
+                field: "local_refinement_seeds",
+                messages: vec![format!(
+                    "if set, must be between 1 and {MAX_LOCAL_REFINEMENT_SEEDS}"
+                )],
+            });
+        }
+    }
+    if let Some(r) = request.local_refinement_rounds {
+        if !(1..=MAX_LOCAL_REFINEMENT_ROUNDS).contains(&r) {
+            errors.push(ValidationIssue {
+                field: "local_refinement_rounds",
+                messages: vec![format!(
+                    "if set, must be between 1 and {MAX_LOCAL_REFINEMENT_ROUNDS}"
+                )],
             });
         }
     }
