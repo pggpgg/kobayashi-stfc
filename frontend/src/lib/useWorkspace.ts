@@ -23,6 +23,7 @@ import {
   savePreset,
   simulate,
 } from "./api";
+import { loopGoal } from "./loopsCatalog";
 import {
   clearPendingLoopRun,
   type LoopRunContext,
@@ -314,6 +315,18 @@ export function useWorkspace() {
       if (loopRun.goalId === "kills_per_hull") {
         setChainGrindEnabled(true);
         setChainSecondary("max_loot_per_hull_proxy");
+      }
+      // Goals that rank on something other than win rate fight the optimizer's own
+      // fitness, which prunes toward a win-rate/hull blend before the client ever
+      // re-ranks. Exhaustive search does no such pruning, so the ranking becomes
+      // meaningful rather than decorative.
+      //
+      // Pre-selected rather than forced: this path is attended — the player sees the
+      // runtime estimate update and can switch strategy before pressing Run
+      // Optimize. The unattended climb runner makes this decision differently, since
+      // nobody is there to read the estimate.
+      if (loopGoal(loopRun.goalId).requestsExhaustiveSearch) {
+        setOptimizerStrategy("exhaustive");
       }
       setWorkspaceInfo(
         `${loopRun.loopName} · Level ${loopRun.targetLevel} · ${loopRun.targetName}. Run Optimize to update this ladder rung; an improved crew will be saved automatically.`,

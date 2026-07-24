@@ -12,40 +12,65 @@ export interface LoopGoal {
   label: string;
   shortLabel: string;
   description: string;
+  /**
+   * Whether the optimizer's built-in win-rate-first pruning works against this
+   * ranking, so an exhaustive search should be requested when it is affordable.
+   */
+  requestsExhaustiveSearch?: boolean;
 }
 
+/**
+ * What the player is ranking crews by.
+ *
+ * Called a *ranking* preference rather than an "optimization goal" on purpose. Only
+ * `kills_per_hull` changes what the server actually searches for (it turns on
+ * chain-grind simulation); the rest re-rank the crews the optimizer already found.
+ * That distinction matters because the optimizer's internal fitness is a fixed blend
+ * of win rate and hull remaining, so genetic and tiered search *prune* toward that
+ * before any client-side re-rank — a crew excellent at round-one kills but middling
+ * on win rate can be discarded before it is ever simulated.
+ *
+ * `requestsExhaustiveSearch` marks the goals where that pruning actively fights the
+ * ranking, so the climb/handoff can ask for an exhaustive search when the scenario is
+ * small enough to afford one, making the re-rank meaningful instead of decorative.
+ */
 export const LOOP_GOALS: readonly LoopGoal[] = [
   {
     id: "one_round",
-    label: "One-round kills",
+    label: "Rank by one-round kills",
     shortLabel: "R1 kill",
-    description: "Maximize the chance that the target dies in round one.",
+    description:
+      "Ranks the crews found by round-one kill rate. Searches exhaustively when the scenario is small enough; otherwise the default win-rate-first search may never surface the true best round-one crew.",
+    requestsExhaustiveSearch: true,
   },
   {
     id: "damage_dealt",
-    label: "Most damage dealt",
+    label: "Rank by damage dealt",
     shortLabel: "Damage",
     description:
-      "Push the target hull as low as possible, even before a kill is reliable.",
+      "Ranks by how low the target's hull ends up, useful before a kill is reliable. Searches exhaustively when affordable, for the same reason as round-one kills.",
+    requestsExhaustiveSearch: true,
   },
   {
     id: "no_hits",
-    label: "No hits received",
+    label: "Rank by hull preserved",
     shortLabel: "Untouched",
-    description: "Favor winning crews that preserve the most hull.",
+    description:
+      "Prefers winning crews that keep the most hull. This matches what the optimizer already searches for, so the ranking is reliable.",
   },
   {
     id: "kills_per_hull",
-    label: "Most kills per hull",
+    label: "Optimize for repeat kills",
     shortLabel: "Grind",
     description:
-      "Use chain-grind simulation and favor repeat kills with low hull loss.",
+      "The one goal that changes the search itself: runs chain-grind simulation for consecutive kills with hull carrying over, then ranks by how often the chain completes.",
   },
   {
     id: "smallest_ship",
-    label: "Smallest viable ship",
+    label: "Rank by smallest viable ship",
     shortLabel: "Smallest ship",
-    description: "Track the lowest ship tier and level that can win reliably.",
+    description:
+      "Among results that still win, prefers the lowest ship tier and level. Note it ranks the ship you selected — it does not yet search across your other ships.",
   },
 ] as const;
 
