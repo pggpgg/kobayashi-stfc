@@ -178,6 +178,7 @@ mod tests {
             optimize_cache_key: None,
             enable_learned_pair_prior: false,
             learned_officer_scores: None,
+            local_refinement: None,
         }
     }
 

@@ -12,6 +12,7 @@ pub mod monte_carlo;
 pub mod officer_learning;
 pub mod random_stratified;
 pub mod ranking;
+pub mod refinement;
 pub mod sensitivity;
 pub mod sensitivity_morris;
 pub mod sensitivity_sobol;
@@ -53,7 +54,8 @@ use crate::optimizer::monte_carlo::{
 use crate::optimizer::random_stratified::{
     sample_stratified_random_crews, StratifiedSampleParams, DEFAULT_RANDOM_STRATIFIED_CANDIDATES,
 };
-use crate::optimizer::ranking::{rank_results, RankedCrewResult};
+use crate::optimizer::ranking::{rank_results, sort_ranked_rows, RankedCrewResult};
+use crate::optimizer::refinement::{refine_finalists, RefinementContext};
 use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, tiered_scout_sims_for_workload,
     tiered_top_k_for_workload, TieredScoutBudgetStats, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
@@ -464,6 +466,10 @@ pub struct OptimizeRunOutcome {
     /// (standalone `random_stratified` lane or the tiered exploration slice).
     /// Used downstream for per-row method provenance. Empty when the lane did not run.
     pub random_exploration_hashes: HashSet<u64>,
+    /// Local-refinement provenance for rows added by an opt-in post-search hill-climb
+    /// (tiered strategy only; see [`OptimizationScenario::local_refinement`]), keyed by
+    /// canonical crew hash. Empty when refinement did not run.
+    pub refinement_provenance: HashMap<u64, crate::optimizer::refinement::RefinementProvenance>,
 }
 
 /// Progress update for async optimize jobs (SSE / polling): phase label, counts, optional partial top crews.
@@ -594,6 +600,12 @@ pub struct OptimizationScenario<'a> {
     /// officer sampling instead of stride-based sampling (closes the learning loop).
     pub learned_officer_scores:
         Option<crate::optimizer::officer_learning::OfficerPerformanceScores>,
+    /// Opt-in local-refinement hill-climb, tiered strategy only: runs after the main tiered
+    /// search finishes, hill-climbing around its top finalists (single-slot swaps, captain
+    /// swaps, and destroy-repair neighborhoods) to spend a small marginal sim budget looking
+    /// for nearby improvements the main search happened not to sample. `None` = off (default);
+    /// ignored for every other strategy.
+    pub local_refinement: Option<crate::optimizer::refinement::LocalRefinementParams>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -639,6 +651,7 @@ impl Default for OptimizationScenario<'_> {
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
+            local_refinement: None,
         }
     }
 }
@@ -1540,7 +1553,7 @@ where
             let budget_hints_storage = scenario
                 .profile_id
                 .and_then(crate::optimizer::budget_hints::load_for_profile);
-            let (ranked, scout_budget) = run_tiered_with_registry_with_progress(
+            let (mut ranked, scout_budget) = run_tiered_with_registry_with_progress(
                 registry,
                 scenario.ship,
                 scenario.hostile,
@@ -1567,7 +1580,84 @@ where
                 scenario.tiered_pq_abandon_margin,
                 &mut on_progress,
             );
+
+            // Counted before refinement on purpose: the funnel describes the *candidate pipeline*
+            // (generated → warm-start → constraints → prefilter → tiered → confirmed), and refined
+            // crews are synthesized after that pipeline has already run rather than drawn from it.
+            // Counting them here would make the confirmed stage report crews that never entered
+            // the funnel at all.
             let confirmed_candidates = ranked.len();
+
+            // Local refinement (roadmap §1.1): opt-in post-search hill-climb around the top
+            // tiered finalists (single-slot swaps, captain swaps, destroy-repair). Tiered-only;
+            // genetic is deliberately out of scope. Runs after the main search has already spent
+            // its budget, so it is a small marginal cost rather than a second full search. When
+            // `scenario.local_refinement` is `None` (default), this block is skipped and behavior
+            // is byte-identical to before this feature existed.
+            let mut refinement_provenance: HashMap<
+                u64,
+                crate::optimizer::refinement::RefinementProvenance,
+            > = HashMap::new();
+            if let Some(refinement_params) = scenario.local_refinement.as_ref() {
+                if !ranked.is_empty() {
+                    if let Some(pools) = build_officer_pools_from_registry(
+                        registry,
+                        scenario.below_decks_pool_mode,
+                        Some(scenario.enemy_type),
+                        scenario.profile_id,
+                        scenario.below_decks_slots,
+                        scenario.constraints.as_ref(),
+                    ) {
+                        let refinement_shared = build_shared_scenario_data_from_registry(
+                            registry,
+                            scenario.ship,
+                            scenario.hostile,
+                            scenario.ship_tier,
+                            scenario.ship_level,
+                            scenario.profile_id,
+                            scenario_support_buff_request(scenario),
+                            scenario.defender_opponent,
+                            scenario.player_defender_officer_crew.clone(),
+                            scenario.pvp.clone(),
+                        );
+                        let seeds: Vec<(CrewCandidate, f64)> = ranked
+                            .iter()
+                            .take(refinement_params.seed_crews)
+                            .map(|row| {
+                                (
+                                    CrewCandidate {
+                                        captain: row.captain.clone(),
+                                        bridge: row.bridge.clone(),
+                                        below_decks: row.below_decks.clone(),
+                                    },
+                                    f64::from(row.score.value),
+                                )
+                            })
+                            .collect();
+                        let refinement_ctx = RefinementContext {
+                            shared: &refinement_shared,
+                            pools: &pools,
+                            constraints: scenario.constraints.as_ref(),
+                            chain_grind: scenario.chain_grind.clone(),
+                            seed: scenario.seed,
+                        };
+                        // Cooperative cancellation for refinement is out of scope for this
+                        // change; the pass always runs to completion once started.
+                        let refinement_outcome =
+                            refine_finalists(&refinement_ctx, &seeds, refinement_params, || true);
+                        if !refinement_outcome.results.is_empty() {
+                            // Score each merged batch through the shared ranking independently,
+                            // then re-sort the combined list: per-row score does not depend on
+                            // the other rows, so this is equivalent to ranking them together.
+                            let mut refined_rows = rank_results(refinement_outcome.results);
+                            ranked.append(&mut refined_rows);
+                            sort_ranked_rows(&mut ranked);
+                        }
+                        refinement_provenance = refinement_outcome.provenance;
+                    }
+                }
+            }
+
             let mut candidate_funnel = OptimizeCandidateFunnel::with_counts(
                 generated_candidates,
                 scenario.warm_start.len(),
@@ -1590,6 +1680,7 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: hits,
                 random_exploration_hashes,
+                refinement_provenance,
             }
         }
         OptimizerStrategy::Exhaustive => {
@@ -1707,6 +1798,7 @@ where
                     exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
                     random_exploration_hashes: HashSet::new(),
+                    refinement_provenance: HashMap::new(),
                 };
             }
 
@@ -1749,6 +1841,7 @@ where
                         exhaustive_adaptive_budget: Some(budget),
                         optimize_history_confirm_hits: hits,
                         random_exploration_hashes: HashSet::new(),
+                        refinement_provenance: HashMap::new(),
                     };
                 }
                 return OptimizeRunOutcome {
@@ -1760,6 +1853,7 @@ where
                     exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
                     random_exploration_hashes: HashSet::new(),
+                    refinement_provenance: HashMap::new(),
                 };
             }
 
@@ -1778,6 +1872,7 @@ where
                     exhaustive_adaptive_budget: None,
                     optimize_history_confirm_hits: 0,
                     random_exploration_hashes: HashSet::new(),
+                    refinement_provenance: HashMap::new(),
                 };
             }
 
@@ -1849,6 +1944,7 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes: HashSet::new(),
+                refinement_provenance: HashMap::new(),
             }
         }
         OptimizerStrategy::Genetic => {
@@ -1880,6 +1976,7 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes: HashSet::new(),
+                refinement_provenance: HashMap::new(),
             }
         }
         OptimizerStrategy::LinearEval => {
@@ -1903,6 +2000,7 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes: HashSet::new(),
+                refinement_provenance: HashMap::new(),
             }
         }
         OptimizerStrategy::RandomStratified => {
@@ -1978,6 +2076,7 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes,
+                refinement_provenance: HashMap::new(),
             }
         }
     }
@@ -2030,6 +2129,7 @@ pub fn optimize_crew(
         optimize_cache_key: None,
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
+        local_refinement: None,
     })
 }
 
@@ -2530,6 +2630,7 @@ mod tests {
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
+            local_refinement: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -2687,6 +2788,7 @@ mod tests {
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
+            local_refinement: None,
         };
         let strat = super::candidate_strategy_from_scenario(&scenario);
         let n = count_effective_optimize_candidates(
@@ -2763,6 +2865,7 @@ mod tests {
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
+            local_refinement: None,
         };
         let out =
             optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true, || true);
@@ -2833,6 +2936,7 @@ mod tests {
             optimize_cache_key: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
+            local_refinement: None,
         };
         let mut adaptive = uniform.clone();
         adaptive.tiered_scout_uniform = false;

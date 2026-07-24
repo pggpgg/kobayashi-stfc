@@ -360,6 +360,16 @@ Local search starts from a good crew and tries small changes.
 
 Run local search around all finalist crews, not just the single current winner. Keep a visited set so equivalent swaps are not re-tested.
 
+### Kobayashi use
+
+Implemented as the local-refinement pass ([`src/optimizer/refinement.rs`](../src/optimizer/refinement.rs)): opt-in via `local_refinement: true` on the optimize request, **tiered strategy only**, running after the main search has spent its budget. `local_refinement_seeds` (default 3) sets how many finalists to climb from and `local_refinement_rounds` (default 3) caps accepted moves per seed.
+
+Three neighborhoods are enumerated deterministically — every legal one-slot substitution (coordinate descent over captain, bridge, and below-decks seats), and destroy-repair neighborhoods that vacate two slots and refill them from the ranked pools. Officers already seated elsewhere are skipped during generation, so neighbors are duplicate-free by construction rather than by later filtering.
+
+The "expensive if every neighbor requires deep simulation" weakness above is handled the same way tiered handles it: each round scouts the neighbors *and the incumbent* at shallow depth, promotes only neighbors that beat the incumbent's scout score, and pays full confirmation sims on that shortlist alone. Re-scouting the incumbent each round matters — comparing a shallow neighbor against a deeply-confirmed incumbent would reject good neighbors on depth alone. A round with no scout-level improvement, or a confirmation that fails to reproduce a scout-level gain, stops the climb rather than drifting on noise. A visited set spans all seeds, so overlapping neighborhoods are never re-simulated.
+
+Result rows carry `method_provenance: "local_swap"`, `"local_captain_swap"`, or `"large_neighborhood_repair"`. The label is derived from the diff against the source finalist rather than from the operator that produced the crew, so a crew that improved over several hops is labeled by what actually changed. Refinement also records the source crew, the changed seats, and the measured before/after score, so a recommendation can explain how it was improved.
+
 ## 11. Pareto frontier search
 
 Many crew decisions are multi-objective. A single scalar score may hide important tradeoffs.

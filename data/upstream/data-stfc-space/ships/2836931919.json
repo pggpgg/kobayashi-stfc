@@ -4563,7 +4563,62 @@
       "value_type": true
     }
   ],
-  "scrap": [],
+  "scrap": [
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    },
+    {
+      "hull_id": 2836931919,
+      "scrap_time_seconds": 0,
+      "level": 0,
+      "resources": []
+    }
+  ],
   "base_scrap": [
     {
       "resource_id": 743985951,

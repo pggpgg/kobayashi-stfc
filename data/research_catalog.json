@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-06-26",
+  "last_updated": "2026-07-24",
   "items": [
     {
       "rid": 2999437,
@@ -19085,7 +19085,7 @@
     },
     {
       "rid": 888854331,
-      "name": "TC PvE Damage",
+      "name": "TC PvE Energy Damage",
       "data_version": "stfcspace-upstream",
       "source_note": "data.stfc.space research API",
       "levels": [

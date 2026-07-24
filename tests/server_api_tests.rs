@@ -739,6 +739,76 @@ async fn optimize_tiered_random_exploration_slice_reports_funnel() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn optimize_tiered_local_refinement_labels_refined_rows() {
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
+    let response = route_request_optimize(body).await;
+
+    assert_eq!(response.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["effective_strategy"], "tiered");
+
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(!recommendations.is_empty());
+
+    const REFINEMENT_LABELS: &[&str] = &[
+        "local_swap",
+        "local_captain_swap",
+        "large_neighborhood_repair",
+    ];
+    let mut saw_refinement_label = false;
+    for recommendation in recommendations {
+        let provenance = recommendation["method_provenance"].as_str().unwrap_or("");
+        assert!(
+            !provenance.is_empty(),
+            "every row should carry a non-empty method_provenance label"
+        );
+        if REFINEMENT_LABELS.contains(&provenance) {
+            saw_refinement_label = true;
+        }
+    }
+    // Deterministic for this fixed seed/body (SplitMix64, same seed -> same fight outcomes):
+    // the refinement pass finds and confirms at least one improving neighbor, so at least one
+    // row must carry one of the three refinement labels rather than falling back to
+    // "tiered_confirmed" — this is what actually exercises the hash-agreement between
+    // `ranked_crew_hash` and the refinement module's canonical crew hash.
+    assert!(
+        saw_refinement_label,
+        "expected at least one row labeled with a local-refinement method, got: {:?}",
+        recommendations
+            .iter()
+            .map(|r| r["method_provenance"].as_str().unwrap_or(""))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_endpoint_rejects_out_of_range_local_refinement_seeds() {
+    let response = route_request(
+        "POST",
+        "/api/optimize",
+        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"strategy":"tiered","local_refinement":true,"local_refinement_seeds":99}"#,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    assert!(errors
+        .iter()
+        .any(|error| error["field"] == "local_refinement_seeds"));
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn optimize_endpoint_rejects_out_of_range_random_exploration_pct() {
     let response = route_request(
         "POST",

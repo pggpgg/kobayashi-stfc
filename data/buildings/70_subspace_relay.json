@@ -1,7 +1,7 @@
 {
   "id": "building_70",
   "building_name": "Subspace Relay",
-  "data_version": "stfcspace-2026-06-26",
+  "data_version": "stfcspace-2026-07-24",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {
