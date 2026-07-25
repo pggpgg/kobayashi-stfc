@@ -867,15 +867,14 @@ pub fn run_genetic_optimizer(
                 }
             }
 
-            // Reassemble in population order
-            population
-                .iter()
-                .map(|c| {
-                    slot_by_hash
-                        .remove(&crew_candidate_stable_hash(c))
-                        .expect("every population member has a sim row")
-                })
-                .collect()
+            // Reassemble in population order. The population can legitimately
+            // contain duplicate crews — canonicalized seeds collapse bridge/
+            // below-deck permutations into identical crews, and elitism can carry
+            // a crew forward alongside a regenerated copy — so look up the shared
+            // row by hash instead of removing it. Removing panicked on the second
+            // copy of any duplicate, which in release builds (`panic = "abort"`)
+            // aborts the whole server process.
+            reassemble_sim_results_in_population_order(&population, &slot_by_hash)
         } else {
             // ── Legacy: run full sims on the entire population ──
             match run_monte_carlo_parallel_deduped_chunked_with_shared(
@@ -984,6 +983,65 @@ pub fn run_genetic_optimizer(
     (best_individuals, false, stats)
 }
 
+/// Reassemble one [`SimulationResult`] per population member, in population order.
+///
+/// `slot_by_hash` holds exactly one row per *unique* crew hash, but a GA population
+/// can contain duplicate crews (see the call site). Each occurrence looks up — and
+/// clones — the shared row rather than removing it, so duplicates resolve to the
+/// same result. `SimulationResult` is small (scalars + the crew candidate), so the
+/// per-member clone is negligible next to the Monte Carlo cost.
+///
+/// The `unwrap_or_else` branch is unreachable in practice — every population member
+/// is either in the elite cache or was simulated this generation — but degrading to
+/// a zeroed (all-loss) row keeps `sim_results` aligned 1:1 with `population` and
+/// guarantees the optimizer worker can never panic here (release builds abort on
+/// panic, which would take down the whole server process).
+fn reassemble_sim_results_in_population_order(
+    population: &[CrewCandidate],
+    slot_by_hash: &HashMap<u64, SimulationResult>,
+) -> Vec<SimulationResult> {
+    population
+        .iter()
+        .map(|c| {
+            let hash = crew_candidate_stable_hash(c);
+            slot_by_hash.get(&hash).cloned().unwrap_or_else(|| {
+                debug_assert!(false, "GA population member has no sim row (hash {hash})");
+                zeroed_loss_result(c.clone())
+            })
+        })
+        .collect()
+}
+
+/// A zeroed, all-loss [`SimulationResult`] for `candidate`. Used only as the
+/// unreachable-path fallback in [`reassemble_sim_results_in_population_order`];
+/// a crew scored this way sorts to the bottom rather than corrupting alignment.
+fn zeroed_loss_result(candidate: CrewCandidate) -> SimulationResult {
+    SimulationResult {
+        candidate,
+        trials_run: 0,
+        win_rate: 0.0,
+        win_rate_ci_low: 0.0,
+        win_rate_ci_high: 0.0,
+        stall_rate: 0.0,
+        stall_rate_ci_low: 0.0,
+        stall_rate_ci_high: 0.0,
+        loss_rate: 1.0,
+        loss_rate_ci_low: 1.0,
+        loss_rate_ci_high: 1.0,
+        r1_kill_rate: 0.0,
+        r1_kill_rate_ci_low: 0.0,
+        r1_kill_rate_ci_high: 0.0,
+        avg_hull_remaining: 0.0,
+        avg_hull_remaining_ci_low: 0.0,
+        avg_hull_remaining_ci_high: 0.0,
+        avg_defender_hull_remaining: 0.0,
+        avg_defender_hull_remaining_ci_low: 0.0,
+        avg_defender_hull_remaining_ci_high: 0.0,
+        chain: None,
+        expected_hull_damage: None,
+    }
+}
+
 /// Run genetic optimization and return ranked results (same shape as optimize_scenario).
 /// Runs a final Monte Carlo pass on top candidates with requested sim count, then ranks.
 /// Progress callback returns false to abort.
@@ -1058,12 +1116,15 @@ pub fn run_genetic_optimizer_ranked_with_stats(
 #[cfg(test)]
 mod tests {
     use super::{
-        crossover, init_population_seeded, mutate, random_crew, repair_crew, GeneticConfig,
+        crew_candidate_stable_hash, crossover, init_population_seeded, mutate, random_crew,
+        reassemble_sim_results_in_population_order, repair_crew, zeroed_loss_result, GeneticConfig,
+        SimulationResult,
     };
     use crate::combat::rng::Rng;
     use crate::optimizer::crew_generator::{
         CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
     };
+    use std::collections::HashMap;
 
     fn small_pools() -> OfficerPools {
         OfficerPools {
@@ -1110,6 +1171,84 @@ mod tests {
             bridge: b.iter().map(|s| (*s).into()).collect(),
             below_decks: bd.iter().map(|s| (*s).into()).collect(),
         }
+    }
+
+    fn sim_row(c: &CrewCandidate, win_rate: f64) -> SimulationResult {
+        let mut row = zeroed_loss_result(c.clone());
+        row.win_rate = win_rate;
+        row.loss_rate = 1.0 - win_rate;
+        row.trials_run = 100;
+        row
+    }
+
+    #[test]
+    fn reassembly_tolerates_duplicate_crews_without_panicking() {
+        // Regression: with `incremental_fitness` on (always true for seeded runs),
+        // a population that contains the same crew twice — e.g. canonicalized seeds
+        // that collapsed to an identical crew, or an elitism carryover — must not
+        // panic. `slot_by_hash` holds a single row for the shared hash; the old
+        // `.remove().expect()` panicked on the second occurrence.
+        let a = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let dup = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let b = make_crew("CapB", &["B3", "B4"], &["D4", "D5", "D1"]);
+        let population = vec![a.clone(), dup.clone(), b.clone()];
+        assert_eq!(
+            crew_candidate_stable_hash(&a),
+            crew_candidate_stable_hash(&dup),
+            "identical crews must share a stable hash"
+        );
+
+        let mut slot_by_hash: HashMap<u64, SimulationResult> = HashMap::new();
+        slot_by_hash.insert(crew_candidate_stable_hash(&a), sim_row(&a, 0.7));
+        slot_by_hash.insert(crew_candidate_stable_hash(&b), sim_row(&b, 0.4));
+
+        let out = reassemble_sim_results_in_population_order(&population, &slot_by_hash);
+
+        // 1:1 alignment with population, and both copies reuse the shared row.
+        assert_eq!(out.len(), population.len());
+        assert_eq!(out[0].win_rate, 0.7);
+        assert_eq!(out[1].win_rate, 0.7);
+        assert_eq!(out[2].win_rate, 0.4);
+    }
+
+    #[test]
+    fn permuted_seeds_collapse_into_a_duplicate_population_member() {
+        // The production trigger for the regression above: two seeds that are mere
+        // permutations of one crew. `init_population_seeded` canonicalizes each seed
+        // by sorting bridge / below_decks, then pushes it unconditionally — nothing
+        // dedupes — so both land in the population sharing one stable hash. Heuristic
+        // seed files and warm-start lists routinely differ only in officer order, so
+        // this needs no unusual input to happen.
+        let pools = small_pools();
+        let authored_one_way = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let same_crew_reordered = make_crew("CapA", &["B2", "B1"], &["D3", "D1", "D2"]);
+
+        let population = init_population_seeded(
+            &pools,
+            2,
+            &[authored_one_way, same_crew_reordered],
+            42,
+            DEFAULT_BELOW_DECKS_SLOTS,
+            None,
+        );
+
+        assert_eq!(population.len(), 2);
+        let shared_hash = crew_candidate_stable_hash(&population[0]);
+        assert_eq!(
+            shared_hash,
+            crew_candidate_stable_hash(&population[1]),
+            "permuted seeds must canonicalize to one hash"
+        );
+
+        // One row for the shared hash, as the incremental-fitness path builds it.
+        let mut slot_by_hash: HashMap<u64, SimulationResult> = HashMap::new();
+        slot_by_hash.insert(shared_hash, sim_row(&population[0], 0.6));
+
+        let out = reassemble_sim_results_in_population_order(&population, &slot_by_hash);
+
+        assert_eq!(out.len(), 2, "must stay 1:1 with the population");
+        assert_eq!(out[0].win_rate, 0.6);
+        assert_eq!(out[1].win_rate, 0.6);
     }
 
     #[test]
