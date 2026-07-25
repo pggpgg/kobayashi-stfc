@@ -2580,7 +2580,7 @@ export interface components {
                 [key: string]: unknown;
             };
             recommendations: ({
-                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. */
+                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. When the tiered `local_refinement` pass produced a row, the label instead identifies the refinement neighborhood that found it: `local_swap` (one bridge/below-decks seat changed), `local_captain_swap` (captain changed), or `large_neighborhood_repair` (two or more seats changed via destroy-repair). */
                 method_provenance?: string;
                 /** @description Closed-form expected total hull damage over the fight (linear_eval only). */
                 expected_hull_damage?: number;
@@ -2954,6 +2954,12 @@ export interface components {
             tiered_confirm_budget_cap_mult?: number;
             /** @description Tiered strategy only. Fraction of the scout candidate list — after warm-start, constraints, and analytical prefilter — replaced with stratified-random crews that bypass the analytical proxy (budget-neutral exploration slice). Injected crews are labeled `random_stratified` in `method_provenance` when they reach the results. Typical values 0.05–0.2. Omitted or 0 = off. */
             tiered_random_exploration_pct?: number;
+            /** @description Tiered strategy only. Opt-in local-refinement hill-climb around the top tiered finalists after the main search finishes: single-slot bridge/below-decks swaps, captain swaps, and destroy-repair neighborhoods, scored through the same ranking as the main search. Runs after the main search as a small marginal cost, not a second full search. Omitted or false = off (default). Ignored for every other strategy. */
+            local_refinement?: boolean;
+            /** @description Local refinement only: how many top tiered finalists to hill-climb from. Omitted uses the refinement module's default (3). */
+            local_refinement_seeds?: number;
+            /** @description Local refinement only: maximum accepted improving moves per seed crew. Omitted uses the refinement module's default (3). */
+            local_refinement_rounds?: number;
             /** @description Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep. Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking. */
             exhaustive_scout_sims?: number;
             /** @description Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked crews receive the full per-crew simulation_count (others keep scout statistics). */
