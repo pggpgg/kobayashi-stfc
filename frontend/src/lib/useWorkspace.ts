@@ -23,6 +23,14 @@ import {
   savePreset,
   simulate,
 } from "./api";
+import { loopGoal } from "./loopsCatalog";
+import {
+  clearPendingLoopRun,
+  type LoopRunContext,
+  loadPendingLoopRun,
+  saveLoopOptimizationResult,
+  savePendingLoopRun,
+} from "./loopsWorkspaceStorage";
 import {
   clearPersistedOptimizeJob,
   persistOptimizeJob,
@@ -198,6 +206,11 @@ export function useWorkspace() {
   const [chainSecondary, setChainSecondary] = useState<
     "min_hull_damage" | "max_loot_per_hull_proxy"
   >("min_hull_damage");
+  const [loopRunContext, setLoopRunContext] = useState<LoopRunContext | null>(
+    null,
+  );
+  const loopRunContextRef = useRef<LoopRunContext | null>(null);
+  loopRunContextRef.current = loopRunContext;
 
   // Optimize constraints (comma-separated lists; groups JSON optional)
   const [optimizeMustInclude, setOptimizeMustInclude] = useState("");
@@ -285,9 +298,40 @@ export function useWorkspace() {
   const sseAttemptRef = useRef(0);
   const usePollingOnlyRef = useRef(false);
 
-  // Load preset from location state
+  // Load a preset and optional loop-ladder handoff from location state.
   useEffect(() => {
-    const preset = (location.state as { preset?: Preset } | null)?.preset;
+    const routeState = location.state as {
+      preset?: Preset;
+      loopRun?: LoopRunContext;
+    } | null;
+    const preset = routeState?.preset;
+    const loopRun = routeState?.loopRun;
+    if (loopRun) {
+      loopRunContextRef.current = loopRun;
+      setLoopRunContext(loopRun);
+      savePendingLoopRun(activeProfileId, loopRun);
+      setShipId(loopRun.shipId);
+      setScenarioId(loopRun.targetId);
+      if (loopRun.goalId === "kills_per_hull") {
+        setChainGrindEnabled(true);
+        setChainSecondary("max_loot_per_hull_proxy");
+      }
+      // Goals that rank on something other than win rate fight the optimizer's own
+      // fitness, which prunes toward a win-rate/hull blend before the client ever
+      // re-ranks. Exhaustive search does no such pruning, so the ranking becomes
+      // meaningful rather than decorative.
+      //
+      // Pre-selected rather than forced: this path is attended — the player sees the
+      // runtime estimate update and can switch strategy before pressing Run
+      // Optimize. The unattended climb runner makes this decision differently, since
+      // nobody is there to read the estimate.
+      if (loopGoal(loopRun.goalId).requestsExhaustiveSearch) {
+        setOptimizerStrategy("exhaustive");
+      }
+      setWorkspaceInfo(
+        `${loopRun.loopName} · Level ${loopRun.targetLevel} · ${loopRun.targetName}. Run Optimize to update this ladder rung; an improved crew will be saved automatically.`,
+      );
+    }
     if (preset) {
       setShipId(preset.ship);
       setScenarioId(preset.scenario);
@@ -298,9 +342,26 @@ export function useWorkspace() {
         bridge: [bridge[0] ?? null, bridge[1] ?? null],
         belowDeck: c?.below_deck ?? [],
       });
-      navigate(".", { replace: true, state: {} });
     }
-  }, [location.state, navigate]);
+    if (preset || loopRun) navigate(".", { replace: true, state: {} });
+  }, [activeProfileId, location.state, navigate]);
+
+  // Preserve loop attribution across a page refresh while a background optimize
+  // job is still running. The pending marker is cleared after a completed result.
+  useEffect(() => {
+    if (loopRunContext) return;
+    const pending = loadPendingLoopRun(activeProfileId);
+    if (pending) {
+      loopRunContextRef.current = pending;
+      setLoopRunContext(pending);
+      setShipId(pending.shipId);
+      setScenarioId(pending.targetId);
+      if (pending.goalId === "kills_per_hull") {
+        setChainGrindEnabled(true);
+        setChainSecondary("max_loot_per_hull_proxy");
+      }
+    }
+  }, [activeProfileId, loopRunContext]);
 
   // Close SSE, reconnect timers, and polling on unmount
   useEffect(() => {
@@ -601,7 +662,8 @@ export function useWorkspace() {
     usePollingOnlyRef.current = false;
     sseAttemptRef.current = 0;
     if (status.status === "done" && status.result) {
-      setRecommendations(status.result.recommendations ?? []);
+      const completedRecommendations = status.result.recommendations ?? [];
+      setRecommendations(completedRecommendations);
       setResultWarnings(status.result.warnings ?? []);
       setUnresolvedOfficers([]);
       setLastOptimizeEffectiveStrategy(
@@ -609,8 +671,32 @@ export function useWorkspace() {
       );
       saveWarmStartFromRecommendations(
         optimizeWarmStartCacheKey(),
-        status.result.recommendations ?? [],
+        completedRecommendations,
       );
+      const activeLoopRun = loopRunContextRef.current;
+      if (
+        activeLoopRun &&
+        activeLoopRun.targetId === status.result.scenario?.hostile
+      ) {
+        const saved = saveLoopOptimizationResult({
+          profileId: activeProfileId,
+          context: activeLoopRun,
+          shipId: status.result.scenario?.ship ?? shipId,
+          shipTier,
+          shipLevel,
+          recommendations: completedRecommendations,
+        });
+        clearPendingLoopRun(activeProfileId);
+        if (saved.saved) {
+          setWorkspaceInfo(
+            `New ${activeLoopRun.loopName} best saved for Level ${activeLoopRun.targetLevel} (${activeLoopRun.targetName}). Return to Loops workspace to see the updated ladder.`,
+          );
+        } else if (saved.record) {
+          setWorkspaceInfo(
+            `Optimization finished, but the saved ${activeLoopRun.loopName} best for this goal is still stronger.`,
+          );
+        }
+      }
       const hits = status.result.scenario?.optimize_history_confirm_hits ?? 0;
       setCachedWarmStartBadge(typeof hits === "number" && hits > 0);
       setSimResult(null);

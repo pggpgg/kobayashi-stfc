@@ -11,6 +11,9 @@ vi.mock("./pages/Workspace", () => ({
 vi.mock("./pages/ResultsLibrary", () => ({
   default: () => <div>ResultsLibraryPageMarker</div>,
 }));
+vi.mock("./pages/LoopsWorkspace", () => ({
+  default: () => <div>LoopsWorkspacePageMarker</div>,
+}));
 vi.mock("./pages/RosterProfile", () => ({
   default: () => <div>RosterProfilePageMarker</div>,
 }));
@@ -46,8 +49,13 @@ describe("App navigation", () => {
     expect(screen.getByText("WorkspacePageMarker")).toBeTruthy();
   });
 
-  it("navigates to Results Library, Roster, and Data via shell links", async () => {
+  it("navigates to Loops, Results Library, Roster, and Data via shell links", async () => {
     renderApp("/");
+
+    fireEvent.click(screen.getByRole("link", { name: "Loops workspace" }));
+    await waitFor(() => {
+      expect(screen.getByText("LoopsWorkspacePageMarker")).toBeTruthy();
+    });
 
     fireEvent.click(screen.getByRole("link", { name: "Results Library" }));
     await waitFor(() => {

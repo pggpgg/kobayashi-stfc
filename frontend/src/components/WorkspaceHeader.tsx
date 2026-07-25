@@ -1,4 +1,11 @@
-import { type CSSProperties, memo, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useProfile } from "../contexts/ProfileContext";
 import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import type {
@@ -216,6 +223,12 @@ export default memo(function WorkspaceHeader({
   const [levels, setLevels] = useState<number[]>([1, 10, 20, 30, 40, 50, 60]);
   const [componentOverrides, setComponentOverrides] =
     useState<ComponentOverrides | null>(null);
+  // Async catalog loads must see a preset/loop selection made after their
+  // request started; otherwise their initial empty-prop closure picks row zero.
+  const latestShipId = useRef(shipId);
+  const latestScenarioId = useRef(scenarioId);
+  latestShipId.current = shipId;
+  latestScenarioId.current = scenarioId;
   const selectedRosterShip = useMemo(
     () => ships.find((s) => s.id === shipId),
     [ships, shipId],
@@ -235,7 +248,7 @@ export default memo(function WorkspaceHeader({
         if (!c) {
           setShips(list);
           setShipsLoadState("done");
-          if (list.length && !shipId) {
+          if (list.length && !latestShipId.current) {
             const first = list[0];
             if (first) {
               onShipIdChange(first.id);
@@ -342,7 +355,9 @@ export default memo(function WorkspaceHeader({
     let c = false;
     fetchHostiles().then((list) => {
       if (!c) setHostiles(list);
-      if (list.length && !scenarioId) onScenarioIdChange(list[0]?.id ?? "");
+      if (list.length && !latestScenarioId.current) {
+        onScenarioIdChange(list[0]?.id ?? "");
+      }
     });
     return () => {
       c = true;

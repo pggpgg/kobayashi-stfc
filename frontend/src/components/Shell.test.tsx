@@ -35,6 +35,11 @@ describe("Shell", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText("Workspace")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Loops workspace" })
+        .getAttribute("href"),
+    ).toBe("/loops");
     expect(screen.getByText("Main content")).toBeTruthy();
     expect(screen.getByRole("link", { name: "PvP" }).getAttribute("href")).toBe(
       "/pvp",

@@ -9,6 +9,7 @@ const DataMechanics = lazy(() => import("./pages/DataMechanics"));
 const PvpWorkspace = lazy(() => import("./pages/PvpWorkspace"));
 const Sensitivity = lazy(() => import("./pages/Sensitivity"));
 const Learn = lazy(() => import("./pages/Learn"));
+const LoopsWorkspace = lazy(() => import("./pages/LoopsWorkspace"));
 
 function RouteFallback() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Workspace />} />
+          <Route path="/loops" element={<LoopsWorkspace />} />
           <Route path="/pvp" element={<PvpWorkspace />} />
           <Route path="/sensitivity" element={<Sensitivity />} />
           <Route path="/results" element={<ResultsLibrary />} />
