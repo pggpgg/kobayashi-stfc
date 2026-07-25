@@ -31,7 +31,7 @@ use crate::optimizer::monte_carlo::scenario::{
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_scout_phase_with_shared,
-    run_monte_carlo_with_shared_variable_iterations, SimulationResult,
+    run_monte_carlo_with_shared_variable_iterations, zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::OptimizeProgressTick;
@@ -282,6 +282,35 @@ pub struct TieredScoutBudgetStats {
 
 fn simulation_trials_sum(rows: &[SimulationResult]) -> u64 {
     rows.iter().map(|r| r.trials_run as u64).sum()
+}
+
+/// Unwrap the confirmation slots into one row per crew, in `crews` order.
+///
+/// `slots` is allocated 1:1 with `crews`, and by the time confirmation finishes every slot is
+/// filled — either from `preconfirmed` or from this phase's fresh Monte Carlo. Both used to be
+/// asserted with `expect`, which under release `panic = "abort"` turned a broken alignment
+/// invariant into a whole-process abort instead of a failed job. Zipping bounds the walk by the
+/// shorter side and an unfilled slot degrades to an all-loss row, so the caller always gets a
+/// vector aligned with `crews`; debug builds still fail loudly.
+fn take_confirmation_slots(
+    slots: Vec<Option<SimulationResult>>,
+    crews: &[CrewCandidate],
+) -> Vec<SimulationResult> {
+    debug_assert_eq!(
+        slots.len(),
+        crews.len(),
+        "confirm slots must be 1:1 with crews"
+    );
+    slots
+        .into_iter()
+        .zip(crews.iter())
+        .map(|(slot, crew)| {
+            slot.unwrap_or_else(|| {
+                debug_assert!(false, "tiered confirm slot not filled for {}", crew.captain);
+                zeroed_loss_result(crew.clone())
+            })
+        })
+        .collect()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -673,10 +702,7 @@ where
     );
     let confirmation_results: Vec<SimulationResult> = if pending_crews.is_empty() {
         drop(shared);
-        confirmation_slots
-            .into_iter()
-            .map(|o| o.expect("preconfirmed fills all top-K slots"))
-            .collect()
+        take_confirmation_slots(confirmation_slots, &top_crews)
     } else {
         let n_pending = pending_crews.len();
         let num_batches = monte_carlo_batch_count_for_candidates(n_pending).max(1);
@@ -701,22 +727,25 @@ where
             );
             fresh.extend(part);
         }
-        let mut fi = 0usize;
+        // Fill unconfirmed slots from the fresh rows, driven by an iterator so a slot count that
+        // disagrees with the row count degrades instead of indexing out of bounds. Release builds
+        // abort on panic, so a broken alignment invariant here would take the server down rather
+        // than failing this job.
+        let mut fresh_rows = fresh.iter();
         for slot in &mut confirmation_slots {
             if slot.is_none() {
-                *slot = Some(fresh[fi].clone());
-                fi += 1;
+                let Some(row) = fresh_rows.next() else {
+                    debug_assert!(false, "more unconfirmed slots than fresh MC rows");
+                    break;
+                };
+                *slot = Some(row.clone());
             }
         }
-        assert_eq!(
-            fi,
-            fresh.len(),
+        debug_assert!(
+            fresh_rows.next().is_none(),
             "pending confirm slots must match fresh MC rows"
         );
-        confirmation_slots
-            .into_iter()
-            .map(|o| o.expect("tiered confirm slot filled"))
-            .collect()
+        take_confirmation_slots(confirmation_slots, &top_crews)
     };
     info!(
         phase = "tiered_confirm",

@@ -9,7 +9,7 @@ use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::SharedScenarioData;
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_scout_phase_with_shared,
-    run_monte_carlo_with_shared_variable_iterations, SimulationResult,
+    run_monte_carlo_with_shared_variable_iterations, zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
@@ -212,33 +212,53 @@ where
                 fresh_by_hash.insert(crew_candidate_stable_hash(&r.candidate), r);
             }
         }
-        let mut fi = 0usize;
+        // Fill the unconfirmed slots from this phase's fresh rows, in `pending_crews` order.
+        //
+        // Driven by an iterator over `pending_crews` rather than an index into it, so a slot count
+        // that disagrees with the pending count can never index out of bounds. Rows are looked up
+        // and cloned rather than removed: `fresh_by_hash` holds one entry per distinct hash, so a
+        // duplicate crew in `pending_crews` would make a second `remove` return `None`. Both used
+        // to panic, and release builds abort on panic — taking the server down with the job. The
+        // invariants still hold today (`prepend_warm_start_dedupe` makes candidates hash-unique),
+        // so the fallbacks are unreachable and assert loudly in debug.
+        let mut pending = pending_crews.iter();
         for slot in &mut confirmation_slots {
             if slot.is_none() {
-                let c = &pending_crews[fi];
-                let h = crew_candidate_stable_hash(c);
-                *slot = Some(
-                    fresh_by_hash
-                        .remove(&h)
-                        .expect("fresh exhaustive confirm row"),
-                );
-                fi += 1;
+                let Some(crew) = pending.next() else {
+                    debug_assert!(false, "more unconfirmed slots than pending confirm crews");
+                    break;
+                };
+                let hash = crew_candidate_stable_hash(crew);
+                *slot = Some(fresh_by_hash.get(&hash).cloned().unwrap_or_else(|| {
+                    debug_assert!(false, "no fresh exhaustive confirm row (hash {hash})");
+                    zeroed_loss_result(crew.clone())
+                }));
             }
         }
-        assert_eq!(fi, pending_crews.len());
+        debug_assert!(
+            pending.next().is_none(),
+            "fewer unconfirmed slots than pending confirm crews"
+        );
     } else {
         drop(shared);
     }
 
-    for (i, crew) in top_crews.iter().enumerate() {
+    // Drain the slots into the confirmed map. Zipping the two together bounds the walk by the
+    // shorter of the pair, so a slot vector out of step with `top_crews` degrades instead of
+    // panicking (release aborts on panic, which would kill the server, not just this job).
+    for (crew, slot) in top_crews.iter().zip(confirmation_slots.iter_mut()) {
         let h = crew_candidate_stable_hash(crew);
-        let row = confirmation_slots
-            .get_mut(i)
-            .expect("slot index")
-            .take()
-            .expect("exhaustive confirm slot filled");
+        let row = slot.take().unwrap_or_else(|| {
+            debug_assert!(false, "exhaustive confirm slot not filled (hash {h})");
+            zeroed_loss_result(crew.clone())
+        });
         confirmed_by_hash.insert(h, row);
     }
+    debug_assert_eq!(
+        top_crews.len(),
+        confirmation_slots.len(),
+        "confirm slots must be 1:1 with top crews"
+    );
 
     let mut merged: Vec<SimulationResult> = Vec::with_capacity(total);
     for c in candidates {

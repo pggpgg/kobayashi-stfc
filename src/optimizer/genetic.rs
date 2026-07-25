@@ -26,7 +26,7 @@ use crate::optimizer::monte_carlo::scenario::{
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_parallel,
-    run_monte_carlo_parallel_deduped_chunked_with_shared, SimulationResult,
+    run_monte_carlo_parallel_deduped_chunked_with_shared, zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::{HashMap, HashSet};
@@ -1010,36 +1010,6 @@ fn reassemble_sim_results_in_population_order(
             })
         })
         .collect()
-}
-
-/// A zeroed, all-loss [`SimulationResult`] for `candidate`. Used only as the
-/// unreachable-path fallback in [`reassemble_sim_results_in_population_order`];
-/// a crew scored this way sorts to the bottom rather than corrupting alignment.
-fn zeroed_loss_result(candidate: CrewCandidate) -> SimulationResult {
-    SimulationResult {
-        candidate,
-        trials_run: 0,
-        win_rate: 0.0,
-        win_rate_ci_low: 0.0,
-        win_rate_ci_high: 0.0,
-        stall_rate: 0.0,
-        stall_rate_ci_low: 0.0,
-        stall_rate_ci_high: 0.0,
-        loss_rate: 1.0,
-        loss_rate_ci_low: 1.0,
-        loss_rate_ci_high: 1.0,
-        r1_kill_rate: 0.0,
-        r1_kill_rate_ci_low: 0.0,
-        r1_kill_rate_ci_high: 0.0,
-        avg_hull_remaining: 0.0,
-        avg_hull_remaining_ci_low: 0.0,
-        avg_hull_remaining_ci_high: 0.0,
-        avg_defender_hull_remaining: 0.0,
-        avg_defender_hull_remaining_ci_low: 0.0,
-        avg_defender_hull_remaining_ci_high: 0.0,
-        chain: None,
-        expected_hull_damage: None,
-    }
 }
 
 /// Run genetic optimization and return ranked results (same shape as optimize_scenario).
