@@ -24,6 +24,11 @@ data/import/*.xlsx
 # Local reference spreadsheets in repo root
 Copy of STFC Cheat Sheet - M86 (1.4RC).xlsx
 
+# Claude Code worktrees. These are real git worktrees, so committing one lands a
+# gitlink with no .gitmodules entry — every actions/checkout post-cleanup then dies on
+# `git submodule foreach` with exit 128. Keep them out of the index.
+.claude/worktrees/
+
 # Env files (secrets)
 .env
 .env.local
