@@ -70,6 +70,26 @@ pub enum CrewSlot {
     BelowDecks(usize),
 }
 
+impl CrewSlot {
+    /// Seat-group label for API payloads.
+    pub fn group_label(self) -> &'static str {
+        match self {
+            CrewSlot::Captain => "captain",
+            CrewSlot::Bridge(_) => "bridge",
+            CrewSlot::BelowDecks(_) => "below_decks",
+        }
+    }
+
+    /// Index within the seat group, or `None` for the captain — a group of one, where an index
+    /// would be noise rather than information.
+    pub fn index(self) -> Option<usize> {
+        match self {
+            CrewSlot::Captain => None,
+            CrewSlot::Bridge(i) | CrewSlot::BelowDecks(i) => Some(i),
+        }
+    }
+}
+
 /// One seat's before/after officer names.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SlotChange {

@@ -81,6 +81,23 @@ function formatDeltaValue(value: number, fmt: "int" | "pct" | "mult"): string {
   return `${sign}${Math.round(value)}`;
 }
 
+/**
+ * Parenthetical after the time estimate, e.g. ` (1,240 crews, ×3 chain)`.
+ *
+ * Each qualifier stands alone: a chain multiplier explains the *time*, so it has to show even when
+ * the candidate count is unavailable (0), and an empty list renders nothing rather than `()`.
+ */
+function formatEstimateQualifiers(estimate: OptimizeEstimate): string {
+  const parts: string[] = [];
+  if (estimate.estimated_candidates > 0) {
+    parts.push(`${estimate.estimated_candidates.toLocaleString()} crews`);
+  }
+  if (estimate.chain_kills_target != null) {
+    parts.push(`×${estimate.chain_kills_target} chain`);
+  }
+  return parts.length > 0 ? ` (${parts.join(", ")})` : "";
+}
+
 /** Non-zero component deltas as "label value" strings (short or long labels). */
 function componentDeltaEntries(
   deltas: ComponentOverrideDeltas,
@@ -539,14 +556,17 @@ export default memo(function WorkspaceHeader({
         <span
           hidden={guided}
           style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
+          title={
+            estimate.chain_kills_target != null
+              ? `Worst case: charges every trial for the full ${estimate.chain_kills_target}-kill chain. Chains that fail early cost less.`
+              : undefined
+          }
         >
           Est. ~
           {estimate.estimated_seconds < 1
             ? "<1"
             : estimate.estimated_seconds.toFixed(1)}{" "}
-          s
-          {estimate.estimated_candidates > 0 &&
-            ` (${estimate.estimated_candidates} crews)`}
+          s{formatEstimateQualifiers(estimate)}
         </span>
       )}
       {lastOptimizeDurationMs != null && (

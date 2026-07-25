@@ -288,6 +288,8 @@ export default function Workspace() {
             onTieredRandomExplorationPctChange={
               ws.setTieredRandomExplorationPct
             }
+            localRefinement={ws.localRefinement}
+            onLocalRefinementChange={ws.setLocalRefinement}
             noveltyLambdaText={ws.noveltyLambdaText}
             onNoveltyLambdaTextChange={ws.setNoveltyLambdaText}
             noveltyDiverseTopText={ws.noveltyDiverseTopText}

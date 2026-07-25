@@ -510,6 +510,17 @@ paths:
           in: query
           schema:
             type: integer
+        - name: chain_kills_target
+          in: query
+          description: >
+            Consecutive kills per trial when the run this estimates will use chain grind
+            (`chain.kills_target` on the optimize body). A chain trial simulates up to this many
+            fights instead of one, so the estimate scales by it; omit for a single-fight run.
+            Clamped to 1..=50 like the request body.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
         - $ref: "#/components/parameters/QueryProfile"
         - $ref: "#/components/parameters/HeaderProfileId"
       responses:
@@ -1536,6 +1547,19 @@ components:
           type: integer
         estimated_seconds:
           type: number
+          description: >
+            Predicted wall time, clamped to 0.1s–1h for display. With `chain_kills_target` set this
+            is a worst case: it assumes every trial runs the full chain, while chains that fail
+            early cost less.
+        chain_kills_target:
+          type: integer
+          description: >
+            Echo of the `chain_kills_target` query parameter. Present only when the client sent one.
+        chain_fights_per_trial_upper_bound:
+          type: integer
+          description: >
+            Fights per trial the estimate charged for — equal to `chain_kills_target`. Present only
+            when the client sent one.
 
     OptimizeStartResponse:
       type: object
@@ -1751,15 +1775,86 @@ components:
                 description: >
                   Optimizer source/method label for this row, such as `exhaustive_mc`,
                   `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`,
-                  or `linear_eval`. When the tiered `local_refinement` pass produced a row, the
+                  or `linear_eval`. When the `local_refinement` pass produced a row, the
                   label instead identifies the refinement neighborhood that found it:
                   `local_swap` (one bridge/below-decks seat changed), `local_captain_swap`
                   (captain changed), or `large_neighborhood_repair` (two or more seats changed
                   via destroy-repair).
+              trials_run:
+                type: integer
+                description: >
+                  Monte Carlo trials actually run for this row. Lower than the requested `sims` for
+                  rows a scout phase ranked but never promoted to confirmation, so this is the depth
+                  of evidence behind the row's rates and intervals. 0 when unknown (synthetic or
+                  closed-form rows).
               expected_hull_damage:
                 type: number
                 description: >
                   Closed-form expected total hull damage over the fight (linear_eval only).
+              refinement:
+                type: object
+                description: >
+                  Present only on rows the `local_refinement` pass produced. Records which finalist
+                  the row was refined from, which seats changed, and the measured score gain that
+                  got the change accepted.
+                required:
+                  [
+                    kind,
+                    source_captain,
+                    source_bridge,
+                    source_below_decks,
+                    changed_slots,
+                    baseline_score,
+                    refined_score,
+                    gain,
+                  ]
+                properties:
+                  kind:
+                    type: string
+                    enum: [local_swap, local_captain_swap, large_neighborhood_repair]
+                    description: Refinement neighborhood; same value as `method_provenance`.
+                  source_captain:
+                    type: string
+                  source_bridge:
+                    type: array
+                    items:
+                      type: string
+                  source_below_decks:
+                    type: array
+                    items:
+                      type: string
+                  changed_slots:
+                    type: array
+                    description: Every seat that differs from the source finalist.
+                    items:
+                      type: object
+                      required: [slot, from, to]
+                      properties:
+                        slot:
+                          type: string
+                          enum: [captain, bridge, below_decks]
+                        index:
+                          type: integer
+                          description: >
+                            Seat index within `bridge` / `below_decks` in the canonicalized crew.
+                            Absent for the captain, which is a group of one.
+                        from:
+                          type: string
+                          description: Officer who held the seat in the source finalist.
+                        to:
+                          type: string
+                          description: Officer who holds it in this row.
+                  baseline_score:
+                    type: number
+                    description: Confirmed ranking score of the source finalist.
+                  refined_score:
+                    type: number
+                    description: Confirmed ranking score of this row.
+                  gain:
+                    type: number
+                    description: >
+                      `refined_score - baseline_score`. Always positive: refinement only keeps
+                      improvements that survive confirmation depth.
         duration_ms:
           type: integer
         notes:
@@ -2598,17 +2693,21 @@ components:
         local_refinement:
           type: boolean
           description: >
-            Tiered strategy only. Opt-in local-refinement hill-climb around the top tiered
+            Tiered and genetic strategies. Opt-in local-refinement hill-climb around the top
             finalists after the main search finishes: single-slot bridge/below-decks swaps,
             captain swaps, and destroy-repair neighborhoods, scored through the same ranking as
             the main search. Runs after the main search as a small marginal cost, not a second
-            full search. Omitted or false = off (default). Ignored for every other strategy.
+            full search. Rows it produces carry a refinement `method_provenance` label and a
+            `refinement` detail object. Omitted or false = off (default). Ignored for every other
+            strategy: exhaustive already evaluated the space a neighborhood would re-propose,
+            `linear_eval` runs no Monte Carlo to confirm an improvement against, and
+            `random_stratified` is a benchmark control that must stay unassisted.
         local_refinement_seeds:
           type: integer
           minimum: 1
           maximum: 16
           description: >
-            Local refinement only: how many top tiered finalists to hill-climb from. Omitted uses
+            Local refinement only: how many top finalists to hill-climb from. Omitted uses
             the refinement module's default (3).
         local_refinement_rounds:
           type: integer

@@ -262,6 +262,43 @@ fn resolve_effective_optimize_strategy(
     (strategy, true)
 }
 
+/// One seat local refinement changed, relative to the finalist it refined.
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
+pub struct RefinementSlotChange {
+    /// Seat group: `captain`, `bridge`, or `below_decks`.
+    pub slot: String,
+    /// Seat index within `bridge` / `below_decks` in the canonicalized crew. Absent for the
+    /// captain, which is a group of one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index: Option<u32>,
+    /// Officer who held the seat in the source finalist.
+    pub from: String,
+    /// Officer who holds it in this row.
+    pub to: String,
+}
+
+/// How the local-refinement pass arrived at a row: which finalist it started from, which seats it
+/// changed, and the measured score gain that got the change accepted.
+///
+/// Present only on rows whose `method_provenance` is a refinement neighborhood.
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
+pub struct RefinementDetail {
+    /// Neighborhood that produced the row; same value as `method_provenance`.
+    pub kind: String,
+    pub source_captain: String,
+    pub source_bridge: Vec<String>,
+    pub source_below_decks: Vec<String>,
+    /// Every seat that differs from the source finalist.
+    pub changed_slots: Vec<RefinementSlotChange>,
+    /// Confirmed ranking score of the source finalist.
+    pub baseline_score: f64,
+    /// Confirmed ranking score of this row.
+    pub refined_score: f64,
+    /// `refined_score - baseline_score`. Always positive: refinement only keeps improvements that
+    /// survive confirmation depth.
+    pub gain: f64,
+}
+
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct CrewRecommendation {
     pub captain: String,
@@ -269,6 +306,10 @@ pub struct CrewRecommendation {
     pub below_decks: Vec<String>,
     /// Method/source path that produced or injected this row (e.g. `exhaustive_mc`, `warm_start`).
     pub method_provenance: String,
+    /// Monte Carlo trials actually run for this row. Lower than the requested `sims` for rows a
+    /// scout phase ranked but never promoted to confirmation, so it is the depth of evidence behind
+    /// the row's rates and intervals. 0 when unknown (synthetic or closed-form rows).
+    pub trials_run: usize,
     pub win_rate: f64,
     pub win_rate_ci_low: f64,
     pub win_rate_ci_high: f64,
@@ -292,6 +333,10 @@ pub struct CrewRecommendation {
     /// Closed-form expected hull damage when ranked by linear eval (no Monte Carlo).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expected_hull_damage: Option<f64>,
+    /// Set when the local-refinement pass produced this row: the finalist it came from, the seats
+    /// it changed, and the measured gain.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub refinement: Option<RefinementDetail>,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -305,15 +350,40 @@ pub struct OptimizeConstraintsSummary {
     pub below_decks_must_include: usize,
 }
 
+/// Build the API view of a refinement provenance record.
+fn refinement_detail_from_provenance(provenance: &RefinementProvenance) -> RefinementDetail {
+    RefinementDetail {
+        kind: provenance.kind.method_label().to_string(),
+        source_captain: provenance.source_crew.captain.clone(),
+        source_bridge: provenance.source_crew.bridge.clone(),
+        source_below_decks: provenance.source_crew.below_decks.clone(),
+        changed_slots: provenance
+            .changed_slots
+            .iter()
+            .map(|change| RefinementSlotChange {
+                slot: change.slot.group_label().to_string(),
+                index: change.slot.index().map(|i| i as u32),
+                from: change.from.clone(),
+                to: change.to.clone(),
+            })
+            .collect(),
+        baseline_score: provenance.baseline_score,
+        refined_score: provenance.refined_score,
+        gain: provenance.gain(),
+    }
+}
+
 fn crew_recommendation_from_ranked(
     r: &RankedCrewResult,
     method_provenance: impl Into<String>,
+    refinement: Option<RefinementDetail>,
 ) -> CrewRecommendation {
     CrewRecommendation {
         captain: r.captain.clone(),
         bridge: r.bridge.clone(),
         below_decks: r.below_decks.clone(),
         method_provenance: method_provenance.into(),
+        trials_run: r.trials_run,
         win_rate: r.win_rate,
         win_rate_ci_low: r.win_rate_ci_low,
         win_rate_ci_high: r.win_rate_ci_high,
@@ -334,6 +404,7 @@ fn crew_recommendation_from_ranked(
         avg_defender_hull_remaining_ci_high: r.avg_defender_hull_remaining_ci_high,
         chain: r.chain.clone(),
         expected_hull_damage: r.expected_hull_damage,
+        refinement,
     }
 }
 
@@ -513,8 +584,8 @@ fn recommendation_method_provenance(
     // legitimately be a heuristic seed or warm-start row even if it happens to collide with
     // one of those hashes; refinement is the most specific true statement about its origin,
     // so it is checked first among the hash-based lookups.
-    if let Some(label) = meta.refinement_labels.get(&h).copied() {
-        return label;
+    if let Some(provenance) = meta.refinement_provenance.get(&h) {
+        return provenance.kind.method_label();
     }
     if meta.heuristic_hashes.contains(&h) {
         return if meta.fast_discovery || meta.is_seeded_genetic {
@@ -813,10 +884,12 @@ struct OptimizeGatherMeta {
     /// Stable hashes of stratified-random crews injected into the scout set
     /// (`random_stratified` strategy or the tiered exploration slice).
     random_exploration_hashes: HashSet<u64>,
-    /// Method-provenance label (`local_swap` | `local_captain_swap` | `large_neighborhood_repair`)
-    /// for rows produced by the tiered-only local-refinement pass, keyed by ranked-crew hash.
-    /// Empty when refinement did not run.
-    refinement_labels: HashMap<u64, &'static str>,
+    /// Local-refinement provenance keyed by ranked-crew hash: the neighborhood that found the row,
+    /// the finalist it was refined from, the seats that changed, and the measured gain. Supplies
+    /// both the row's method-provenance label (`local_swap` | `local_captain_swap` |
+    /// `large_neighborhood_repair`) and its `refinement` detail object. Empty when refinement did
+    /// not run.
+    refinement_provenance: HashMap<u64, RefinementProvenance>,
     below_decks_slots: usize,
     optimize_constraints: Option<OptimizeConstraintsSummary>,
     optimize_history_confirm_hits: u32,
@@ -892,7 +965,9 @@ impl OptimizeProgressSink {
                 ranked
                     .iter()
                     .take(5)
-                    .map(|r| crew_recommendation_from_ranked(r, "heuristics"))
+                    // Previews are emitted while the search is still running, before any
+                    // refinement pass exists to attribute a row to.
+                    .map(|r| crew_recommendation_from_ranked(r, "heuristics", None))
                     .collect(),
             );
         });
@@ -947,6 +1022,7 @@ impl OptimizeProgressSink {
                                         } else {
                                             progress_phase_method_provenance(tick.phase)
                                         },
+                                        None,
                                     )
                                 })
                                 .collect(),
@@ -1135,7 +1211,7 @@ fn gather_optimize_simulation_results(
     let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
     let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
     let mut random_exploration_hashes: HashSet<u64> = HashSet::new();
-    let mut refinement_labels: HashMap<u64, &'static str> = HashMap::new();
+    let mut refinement_provenance: HashMap<u64, RefinementProvenance> = HashMap::new();
 
     let defender_static_support_inactive_labels = match (
         registry.support_buffs_catalog(),
@@ -1461,25 +1537,32 @@ fn gather_optimize_simulation_results(
     let analytical_prefilter = if !heuristics_only {
         let optimizer_started = Instant::now();
         let optimizer_phase = optimizer_strategy_to_api_label(strategy);
-        // Local refinement is tiered-only and opt-in; every other strategy leaves it `None`
-        // regardless of what the client sent (validated separately in `requests::validate_request`).
-        let local_refinement =
-            if strategy == OptimizerStrategy::Tiered && request.local_refinement == Some(true) {
-                let defaults = LocalRefinementParams::default();
-                Some(LocalRefinementParams {
-                    seed_crews: request
-                        .local_refinement_seeds
-                        .map(|n| n as usize)
-                        .unwrap_or(defaults.seed_crews),
-                    max_rounds: request
-                        .local_refinement_rounds
-                        .map(|n| n as usize)
-                        .unwrap_or(defaults.max_rounds),
-                    ..defaults
-                })
-            } else {
-                None
-            };
+        // Local refinement is opt-in and supported on the two lanes that produce a ranked list of
+        // finalists worth hill-climbing from — tiered and genetic. Every other strategy leaves it
+        // `None` regardless of what the client sent: exhaustive already evaluated the whole space
+        // a neighborhood would re-propose, linear_eval runs no Monte Carlo to confirm an
+        // improvement against, and random_stratified is a benchmark control whose whole purpose is
+        // to stay an unassisted baseline.
+        let refinement_supported = matches!(
+            strategy,
+            OptimizerStrategy::Tiered | OptimizerStrategy::Genetic
+        );
+        let local_refinement = if refinement_supported && request.local_refinement == Some(true) {
+            let defaults = LocalRefinementParams::default();
+            Some(LocalRefinementParams {
+                seed_crews: request
+                    .local_refinement_seeds
+                    .map(|n| n as usize)
+                    .unwrap_or(defaults.seed_crews),
+                max_rounds: request
+                    .local_refinement_rounds
+                    .map(|n| n as usize)
+                    .unwrap_or(defaults.max_rounds),
+                ..defaults
+            })
+        } else {
+            None
+        };
         let scenario = OptimizationScenario {
             ship: &request.ship,
             hostile: scenario_hostile.as_str(),
@@ -1564,13 +1647,7 @@ fn gather_optimize_simulation_results(
         tiered_scout_budget_for_response = outcome.tiered_scout_budget;
         exhaustive_adaptive_budget_for_response = outcome.exhaustive_adaptive_budget;
         random_exploration_hashes = outcome.random_exploration_hashes.clone();
-        refinement_labels = outcome
-            .refinement_provenance
-            .iter()
-            .map(|(hash, provenance): (&u64, &RefinementProvenance)| {
-                (*hash, provenance.kind.method_label())
-            })
-            .collect();
+        refinement_provenance = outcome.refinement_provenance.clone();
         if strategy == OptimizerStrategy::Tiered {
             if let (Some(pid), Some(key), Some((n, scout, tk))) = (
                 profile_id,
@@ -1671,7 +1748,7 @@ fn gather_optimize_simulation_results(
         warm_start_hashes,
         curated_warm_start_hashes,
         random_exploration_hashes,
-        refinement_labels,
+        refinement_provenance,
         below_decks_slots,
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
         optimize_history_confirm_hits,
@@ -2075,7 +2152,15 @@ fn build_optimize_response(
         },
         recommendations: ranked_results
             .iter()
-            .map(|r| crew_recommendation_from_ranked(r, recommendation_method_provenance(meta, r)))
+            .map(|r| {
+                crew_recommendation_from_ranked(
+                    r,
+                    recommendation_method_provenance(meta, r),
+                    meta.refinement_provenance
+                        .get(&ranked_crew_hash(r))
+                        .map(refinement_detail_from_provenance),
+                )
+            })
             .collect(),
         duration_ms: Some(duration_ms),
         notes,

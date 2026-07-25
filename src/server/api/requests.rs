@@ -21,9 +21,9 @@ pub const MAX_CANDIDATES: u32 = 2_000_000;
 pub const MAX_ANALYTICAL_PREFILTER_KEEP: u32 = 500_000;
 pub const MAX_TIERED_SCOUT_SIMS: u32 = 100_000;
 pub const MAX_TIERED_TOP_K: u32 = 500;
-/// Upper bound for `local_refinement_seeds` (tiered strategy only).
+/// Upper bound for `local_refinement_seeds` (tiered and genetic strategies).
 pub const MAX_LOCAL_REFINEMENT_SEEDS: u32 = 16;
-/// Upper bound for `local_refinement_rounds` (tiered strategy only).
+/// Upper bound for `local_refinement_rounds` (tiered and genetic strategies).
 pub const MAX_LOCAL_REFINEMENT_ROUNDS: u32 = 8;
 pub const MAX_NOVELTY_DIVERSE_TOP: u32 = 500;
 pub const MAX_NOVELTY_POOL: u32 = 10_000;
@@ -168,13 +168,13 @@ pub struct OptimizeRequest {
     /// Omitted or 0 = off.
     #[serde(default)]
     pub tiered_random_exploration_pct: Option<f64>,
-    /// Tiered strategy only (roadmap §1.1): opt-in local-refinement hill-climb around the top
-    /// finalists after the main tiered search finishes (single-slot swaps, captain swaps,
+    /// Tiered and genetic strategies (roadmap §1.1): opt-in local-refinement hill-climb around the
+    /// top finalists after the main search finishes (single-slot swaps, captain swaps,
     /// destroy-repair neighborhoods). Omitted or false = off (default). Ignored for every other
     /// strategy.
     #[serde(default)]
     pub local_refinement: Option<bool>,
-    /// Local refinement only: how many top tiered finalists to hill-climb from (1..=16). Omitted
+    /// Local refinement only: how many top finalists to hill-climb from (1..=16). Omitted
     /// uses the refinement module's default (3).
     #[serde(default)]
     pub local_refinement_seeds: Option<u32>,
@@ -871,24 +871,28 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
     }
 }
 
-/// Parses query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional `below_decks_pool_mode`, optional ship_tier, ship_level, below_decks_slots.
-#[allow(clippy::type_complexity)]
+/// Parsed `GET /api/optimize/estimate` query.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OptimizeEstimateQuery {
+    pub ship: String,
+    pub hostile: String,
+    pub sims: u32,
+    pub max_candidates: Option<u32>,
+    pub below_decks_pool_mode: crate::data::heuristics::BelowDecksPoolMode,
+    pub ship_tier: Option<u32>,
+    pub ship_level: Option<u32>,
+    pub below_decks_slots: Option<u32>,
+    /// Consecutive kills per trial when the client intends a chain-grind run (`chain.kills_target`
+    /// on the optimize body). `None` = a single fight per trial, which is what the cost estimate
+    /// assumes by default. Clamped to `1..=`[`MAX_CHAIN_KILLS_TARGET`] like the request body.
+    pub chain_kills_target: Option<u32>,
+}
+
+/// Parses the query string for optimize estimate: ship, hostile, sims, optional max_candidates,
+/// optional `below_decks_pool_mode`, ship_tier, ship_level, below_decks_slots, chain_kills_target.
 pub fn parse_optimize_estimate_query(
     query: &str,
-) -> Result<
-    (
-        String,
-        String,
-        u32,
-        Option<u32>,
-        crate::data::heuristics::BelowDecksPoolMode,
-        Option<u32>,
-        Option<u32>,
-        Option<u32>,
-    ),
-    OptimizePayloadError,
-> {
+) -> Result<OptimizeEstimateQuery, OptimizePayloadError> {
     let mut ship = String::new();
     let mut hostile = String::new();
     let mut sims = DEFAULT_SIMS;
@@ -897,6 +901,7 @@ pub fn parse_optimize_estimate_query(
     let mut ship_tier: Option<u32> = None;
     let mut ship_level: Option<u32> = None;
     let mut below_decks_slots: Option<u32> = None;
+    let mut chain_kills_target: Option<u32> = None;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -924,6 +929,12 @@ pub fn parse_optimize_estimate_query(
                 "ship_tier" => ship_tier = value.parse().ok(),
                 "ship_level" => ship_level = value.parse().ok(),
                 "below_decks_slots" => below_decks_slots = value.parse().ok(),
+                "chain_kills_target" => {
+                    chain_kills_target = value
+                        .parse::<u32>()
+                        .ok()
+                        .map(|kt| kt.clamp(1, MAX_CHAIN_KILLS_TARGET));
+                }
                 _ => {}
             }
         }
@@ -932,16 +943,17 @@ pub fn parse_optimize_estimate_query(
         .as_deref()
         .and_then(crate::data::heuristics::BelowDecksPoolMode::parse_api_str)
         .unwrap_or(crate::data::heuristics::BelowDecksPoolMode::Strict);
-    Ok((
+    Ok(OptimizeEstimateQuery {
         ship,
         hostile,
         sims,
         max_candidates,
-        mode,
+        below_decks_pool_mode: mode,
         ship_tier,
         ship_level,
         below_decks_slots,
-    ))
+        chain_kills_target,
+    })
 }
 
 #[cfg(test)]
@@ -1035,35 +1047,62 @@ mod parse_optimize_body_tests {
     #[test]
     fn estimate_query_pool_mode_relaxed() {
         use crate::data::heuristics::BelowDecksPoolMode;
-        let (_, _, _, _, mode, _, _, _) =
-            parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=relaxed")
-                .expect("parse");
-        assert_eq!(mode, BelowDecksPoolMode::Relaxed);
+        let q = parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=relaxed")
+            .expect("parse");
+        assert_eq!(q.below_decks_pool_mode, BelowDecksPoolMode::Relaxed);
     }
 
     #[test]
     fn estimate_query_pool_mode_scored() {
         use crate::data::heuristics::BelowDecksPoolMode;
-        let (_, _, _, _, mode, _, _, _) =
-            parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=scored")
-                .expect("parse");
-        assert_eq!(mode, BelowDecksPoolMode::Scored);
+        let q = parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=scored")
+            .expect("parse");
+        assert_eq!(q.below_decks_pool_mode, BelowDecksPoolMode::Scored);
     }
 
     #[test]
     fn estimate_query_pool_mode_strict_default_when_absent() {
         use crate::data::heuristics::BelowDecksPoolMode;
-        let (_, _, _, _, mode, _, _, _) =
-            parse_optimize_estimate_query("ship=s&hostile=h").expect("parse");
-        assert_eq!(mode, BelowDecksPoolMode::Strict);
+        let q = parse_optimize_estimate_query("ship=s&hostile=h").expect("parse");
+        assert_eq!(q.below_decks_pool_mode, BelowDecksPoolMode::Strict);
     }
 
     #[test]
     fn estimate_query_pool_mode_unknown_falls_back_to_strict() {
         use crate::data::heuristics::BelowDecksPoolMode;
-        let (_, _, _, _, mode, _, _, _) =
-            parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=garbage")
-                .expect("parse");
-        assert_eq!(mode, BelowDecksPoolMode::Strict);
+        let q = parse_optimize_estimate_query("ship=s&hostile=h&below_decks_pool_mode=garbage")
+            .expect("parse");
+        assert_eq!(q.below_decks_pool_mode, BelowDecksPoolMode::Strict);
+    }
+
+    #[test]
+    fn estimate_query_chain_kills_target_absent_by_default() {
+        let q = parse_optimize_estimate_query("ship=s&hostile=h").expect("parse");
+        assert_eq!(q.chain_kills_target, None);
+    }
+
+    #[test]
+    fn estimate_query_chain_kills_target_parses() {
+        let q =
+            parse_optimize_estimate_query("ship=s&hostile=h&chain_kills_target=7").expect("parse");
+        assert_eq!(q.chain_kills_target, Some(7));
+    }
+
+    #[test]
+    fn estimate_query_chain_kills_target_clamps_to_the_request_body_bounds() {
+        use super::MAX_CHAIN_KILLS_TARGET;
+        let over = parse_optimize_estimate_query("ship=s&hostile=h&chain_kills_target=9999")
+            .expect("parse");
+        assert_eq!(over.chain_kills_target, Some(MAX_CHAIN_KILLS_TARGET));
+        let under =
+            parse_optimize_estimate_query("ship=s&hostile=h&chain_kills_target=0").expect("parse");
+        assert_eq!(under.chain_kills_target, Some(1));
+    }
+
+    #[test]
+    fn estimate_query_chain_kills_target_ignores_garbage() {
+        let q = parse_optimize_estimate_query("ship=s&hostile=h&chain_kills_target=lots")
+            .expect("parse");
+        assert_eq!(q.chain_kills_target, None);
     }
 }

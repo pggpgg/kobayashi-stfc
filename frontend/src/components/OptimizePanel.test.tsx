@@ -41,6 +41,8 @@ const baseProps = {
   onTieredTopKChange: vi.fn(),
   tieredRandomExplorationPct: null as number | null,
   onTieredRandomExplorationPctChange: vi.fn(),
+  localRefinement: false,
+  onLocalRefinementChange: vi.fn(),
   noveltyLambdaText: "",
   onNoveltyLambdaTextChange: vi.fn(),
   noveltyDiverseTopText: "",
@@ -212,6 +214,45 @@ describe("OptimizePanel", () => {
       screen.getByRole("checkbox", { name: /Learned pair prior/i }),
     );
     expect(fn).toHaveBeenCalledWith(false);
+  });
+
+  it("offers the refine-finalists toggle on the lanes that support it", () => {
+    for (const strategy of ["tiered", "genetic"] as const) {
+      const view = render(
+        <OptimizePanel {...baseProps} optimizerStrategy={strategy} />,
+      );
+      expect(
+        screen.getByRole("checkbox", { name: /Refine finalists/i }),
+      ).toBeTruthy();
+      view.unmount();
+    }
+  });
+
+  it("hides the refine-finalists toggle where the server ignores it", () => {
+    for (const strategy of ["exhaustive", "linear_eval"] as const) {
+      const view = render(
+        <OptimizePanel {...baseProps} optimizerStrategy={strategy} />,
+      );
+      expect(
+        screen.queryByRole("checkbox", { name: /Refine finalists/i }),
+      ).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it("toggles refine finalists", () => {
+    const fn = vi.fn();
+    render(
+      <OptimizePanel
+        {...baseProps}
+        optimizerStrategy="tiered"
+        onLocalRefinementChange={fn}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Refine finalists/i }),
+    );
+    expect(fn).toHaveBeenCalledWith(true);
   });
 
   it("calls onTieredScoutSimsChange and clamps to 100,000", () => {
