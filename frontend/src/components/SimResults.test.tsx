@@ -176,6 +176,82 @@ describe("SimResults", () => {
     expect(screen.getByText("Tiered")).toBeTruthy();
   });
 
+  it("labels a refined row with its neighborhood and measured gain", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Janeway",
+          bridge: ["Ent-E Data", "Tuvok"],
+          below_decks: ["Seven"],
+          win_rate: 0.91,
+          stall_rate: 0.05,
+          loss_rate: 0.04,
+          avg_hull_remaining: 0.55,
+        }),
+        method_provenance: "local_swap",
+        refinement: {
+          kind: "local_swap",
+          source_captain: "Janeway",
+          source_bridge: ["Ent-E Data", "Kim"],
+          source_below_decks: ["Seven"],
+          changed_slots: [
+            { slot: "bridge", index: 1, from: "Kim", to: "Tuvok" },
+          ],
+          baseline_score: 0.72,
+          refined_score: 0.765,
+          gain: 0.045,
+        },
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    // The raw label `local_swap` would be meaningless in the table.
+    expect(screen.getByText("Seat swap")).toBeTruthy();
+    expect(screen.getByText("+4.5")).toBeTruthy();
+    // Which officer moved lives in the tooltip so the cell stays narrow.
+    expect(screen.getByTitle(/Bridge 2: Kim → Tuvok/)).toBeTruthy();
+  });
+
+  it("shows a trials column only when rows differ in confirmation depth", () => {
+    const shallow = {
+      ...crewRec({
+        captain: "Kirk",
+        bridge: ["Spock"],
+        below_decks: ["Scotty"],
+        win_rate: 0.8,
+        stall_rate: 0.1,
+        loss_rate: 0.1,
+        avg_hull_remaining: 0.4,
+      }),
+      trials_run: 60,
+    };
+    const deep = {
+      ...crewRec({
+        captain: "Picard",
+        bridge: ["Riker"],
+        below_decks: ["Worf"],
+        win_rate: 0.85,
+        stall_rate: 0.1,
+        loss_rate: 0.05,
+        avg_hull_remaining: 0.45,
+      }),
+      trials_run: 4000,
+    };
+
+    const uniform = render(
+      <SimResults
+        {...baseProps}
+        recommendations={[shallow, { ...deep, trials_run: 60 }]}
+      />,
+    );
+    expect(screen.queryByText("Trials")).toBeNull();
+    uniform.unmount();
+
+    render(<SimResults {...baseProps} recommendations={[shallow, deep]} />);
+    expect(screen.getByText("Trials")).toBeTruthy();
+    expect(screen.getByText("60")).toBeTruthy();
+    expect(screen.getByText("4k")).toBeTruthy();
+  });
+
   it("renders recommendation rows", () => {
     const recs: CrewRecommendation[] = [
       crewRec({

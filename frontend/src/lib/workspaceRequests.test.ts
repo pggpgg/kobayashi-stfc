@@ -340,6 +340,64 @@ describe("buildWorkspaceOptimizeStartBody", () => {
     expect(body.tiered_random_exploration_pct).toBe(0.15);
   });
 
+  it("sends local_refinement on the lanes that run the pass", () => {
+    for (const strategy of ["tiered", "genetic"] as const) {
+      const body = buildWorkspaceOptimizeStartBody({
+        shipId: "S",
+        scenarioId: "H",
+        simsPerCrew: 1000,
+        maxCandidates: null,
+        optimizerStrategy: strategy,
+        belowDecksPoolMode: "strict",
+        selectedSeeds: [],
+        heuristicsOnly: false,
+        belowDecksStrategy: "ordered",
+        shipTier: 1,
+        shipLevel: 50,
+        localRefinement: true,
+      });
+      expect(body.local_refinement).toBe(true);
+    }
+  });
+
+  it("omits local_refinement where the server would ignore it", () => {
+    for (const strategy of ["exhaustive", "linear_eval"] as const) {
+      const body = buildWorkspaceOptimizeStartBody({
+        shipId: "S",
+        scenarioId: "H",
+        simsPerCrew: 1000,
+        maxCandidates: null,
+        optimizerStrategy: strategy,
+        belowDecksPoolMode: "strict",
+        selectedSeeds: [],
+        heuristicsOnly: false,
+        belowDecksStrategy: "ordered",
+        shipTier: 1,
+        shipLevel: 50,
+        localRefinement: true,
+      });
+      expect(body).not.toHaveProperty("local_refinement");
+    }
+  });
+
+  it("omits local_refinement when the toggle is off", () => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "tiered",
+      belowDecksPoolMode: "strict",
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 1,
+      shipLevel: 50,
+      localRefinement: false,
+    });
+    expect(body).not.toHaveProperty("local_refinement");
+  });
+
   it("omits tiered fields when strategy is not tiered even if values are set", () => {
     const body = buildWorkspaceOptimizeStartBody({
       shipId: "S",

@@ -785,6 +785,249 @@ async fn optimize_tiered_local_refinement_labels_refined_rows() {
     );
 }
 
+const REFINEMENT_METHOD_LABELS: &[&str] = &[
+    "local_swap",
+    "local_captain_swap",
+    "large_neighborhood_repair",
+];
+
+/// Assert every refined row's `refinement` detail is self-consistent, and return how many carried
+/// one. Shared by the tiered and genetic exposure tests so both hold the payload to one contract.
+fn assert_refinement_details_are_coherent(recommendations: &[serde_json::Value]) -> usize {
+    let mut refined = 0usize;
+    for row in recommendations {
+        let label = row["method_provenance"].as_str().unwrap_or("");
+        let is_refined = REFINEMENT_METHOD_LABELS.contains(&label);
+        let detail = row.get("refinement");
+        if !is_refined {
+            assert!(
+                detail.is_none(),
+                "row labeled {label} should not carry a refinement detail: {row}"
+            );
+            continue;
+        }
+        refined += 1;
+        let detail = detail.unwrap_or_else(|| panic!("row labeled {label} needs a detail: {row}"));
+        assert_eq!(
+            detail["kind"].as_str(),
+            Some(label),
+            "detail kind must agree with method_provenance: {row}"
+        );
+
+        let baseline = detail["baseline_score"].as_f64().expect("baseline_score");
+        let refined_score = detail["refined_score"].as_f64().expect("refined_score");
+        let gain = detail["gain"].as_f64().expect("gain");
+        assert!(
+            (gain - (refined_score - baseline)).abs() < 1e-9,
+            "gain must be refined_score - baseline_score: {row}"
+        );
+        // Refinement only keeps neighbors that beat the source at confirmation depth, so a
+        // non-positive gain would mean an accepted move that measured no improvement.
+        assert!(gain > 0.0, "accepted refinement must gain score: {row}");
+
+        let changed = detail["changed_slots"]
+            .as_array()
+            .expect("changed_slots array");
+        assert!(
+            !changed.is_empty(),
+            "a refined row differs from its source in at least one seat: {row}"
+        );
+        // The kind is derived from the diff, so the two must agree about how much moved.
+        match label {
+            "large_neighborhood_repair" => assert!(
+                changed.len() >= 2,
+                "destroy-repair changes two or more seats: {row}"
+            ),
+            _ => assert_eq!(changed.len(), 1, "single-slot kinds change one seat: {row}"),
+        }
+        for change in changed {
+            let slot = change["slot"].as_str().expect("slot label");
+            assert!(
+                matches!(slot, "captain" | "bridge" | "below_decks"),
+                "unexpected slot group {slot}: {row}"
+            );
+            assert_eq!(
+                change.get("index").is_some(),
+                slot != "captain",
+                "index is present for seat groups and absent for the captain: {change}"
+            );
+            let from = change["from"].as_str().expect("from");
+            let to = change["to"].as_str().expect("to");
+            assert_ne!(from, to, "a changed seat must change officer: {change}");
+            if label == "local_captain_swap" {
+                assert_eq!(
+                    slot, "captain",
+                    "captain-swap kind changes the captain: {row}"
+                );
+            }
+        }
+        // The source crew must be a different crew, not a reordering of this one.
+        let source = (
+            detail["source_captain"].as_str().unwrap_or(""),
+            sorted_names(&detail["source_bridge"]),
+            sorted_names(&detail["source_below_decks"]),
+        );
+        let row_crew = (
+            row["captain"].as_str().unwrap_or(""),
+            sorted_names(&row["bridge"]),
+            sorted_names(&row["below_decks"]),
+        );
+        assert_ne!(
+            source, row_crew,
+            "refined row must differ from its source crew: {row}"
+        );
+    }
+    refined
+}
+
+fn sorted_names(value: &serde_json::Value) -> Vec<String> {
+    let mut names: Vec<String> = value
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .map(|v| v.as_str().unwrap_or("").to_string())
+                .collect()
+        })
+        .unwrap_or_default();
+    names.sort();
+    names
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_tiered_local_refinement_exposes_provenance_detail() {
+    // Same scenario as `optimize_tiered_local_refinement_labels_refined_rows`, which pins that this
+    // seed produces at least one refined row; this asserts what that row now reports about itself.
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
+    let response = route_request_optimize(body).await;
+    assert_eq!(response.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+
+    let refined = assert_refinement_details_are_coherent(recommendations);
+    assert!(
+        refined > 0,
+        "expected at least one refined row to expose a refinement detail, got: {:?}",
+        recommendations
+            .iter()
+            .map(|r| r["method_provenance"].as_str().unwrap_or(""))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_genetic_accepts_local_refinement() {
+    // Refinement was tiered-only when it shipped; genetic produces the same kind of ranked finalist
+    // list, so the pass applies there too. This asserts the endpoint accepts the flag on the
+    // genetic lane and that anything it contributes is coherent. That the pass *runs* is asserted
+    // in `tests/local_refinement_lanes.rs`, which can read the pass's own stats — over HTTP an
+    // accepted improvement is not guaranteed, because the genetic lane's finalists reach a perfect
+    // score against the bundled catalog and leave no headroom to climb into.
+    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"genetic","local_refinement":true}"#;
+    let response = route_request_optimize(body).await;
+    assert_eq!(response.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["scenario"]["effective_strategy"], "genetic");
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(!recommendations.is_empty());
+
+    assert_refinement_details_are_coherent(recommendations);
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_recommendations_report_trials_run() {
+    // Exhaustive Monte Carlo runs the requested depth on every crew, so `trials_run` pins to
+    // `sims`. This is the reading that gives the field meaning elsewhere: it is the count of trials
+    // actually run, not an echo of the request.
+    let exhaustive = route_request_optimize(
+        r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":5,"max_candidates":24,"strategy":"exhaustive"}"#,
+    )
+    .await;
+    assert_eq!(exhaustive.status_code, 200);
+    let payload: serde_json::Value =
+        serde_json::from_str(&exhaustive.body).expect("response should be valid json");
+    let rows = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(!rows.is_empty());
+    for row in rows {
+        assert_eq!(
+            row["trials_run"].as_u64(),
+            Some(150),
+            "exhaustive runs the requested depth on every crew: {row}"
+        );
+    }
+
+    // Tiered allocates confirmation depth adaptively, so its rows report whatever budget they
+    // actually received rather than the requested `sims`.
+    let tiered = route_request_optimize(
+        r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":5,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":25,"tiered_top_k":2}"#,
+    )
+    .await;
+    assert_eq!(tiered.status_code, 200);
+    let payload: serde_json::Value =
+        serde_json::from_str(&tiered.body).expect("response should be valid json");
+    let rows = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(!rows.is_empty());
+    for row in rows {
+        let trials = row["trials_run"]
+            .as_u64()
+            .unwrap_or_else(|| panic!("every row reports trials_run: {row}"));
+        assert!(trials > 0, "a simulated row ran trials: {row}");
+    }
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_estimate_scales_with_chain_kills_target() {
+    // Sized so both estimates land inside the 0.1s–1h display clamp: below the floor every
+    // scenario reports 0.1s and the scaling would be invisible.
+    let base_path =
+        "/api/optimize/estimate?ship=saladin&hostile=2918121098&sims=100000&max_candidates=20000";
+    let single = route_request("GET", base_path, "").await;
+    assert_eq!(single.status_code, 200);
+    let single: serde_json::Value = serde_json::from_str(&single.body).expect("json");
+    assert!(
+        single.get("chain_kills_target").is_none(),
+        "single-fight estimates stay silent about chain: {single}"
+    );
+
+    let chained = route_request("GET", &format!("{base_path}&chain_kills_target=5"), "").await;
+    assert_eq!(chained.status_code, 200);
+    let chained: serde_json::Value = serde_json::from_str(&chained.body).expect("json");
+    assert_eq!(chained["chain_kills_target"], 5);
+    assert_eq!(chained["chain_fights_per_trial_upper_bound"], 5);
+    assert_eq!(
+        chained["estimated_candidates"], single["estimated_candidates"],
+        "chain changes cost per trial, not the candidate count"
+    );
+
+    let single_seconds = single["estimated_seconds"].as_f64().expect("seconds");
+    let chained_seconds = chained["estimated_seconds"].as_f64().expect("seconds");
+    assert!(
+        single_seconds > 0.1 && chained_seconds < 3600.0,
+        "both estimates must be inside the display clamp for the ratio below to mean anything \
+         ({single_seconds}, {chained_seconds})"
+    );
+    // Five fights per trial instead of one. Tolerance covers the 0.1s rounding on both sides only.
+    assert!(
+        (chained_seconds - single_seconds * 5.0).abs() < 0.3,
+        "a 5-kill chain should estimate ~5x one fight ({chained_seconds} vs {single_seconds})"
+    );
+}
+
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_rejects_out_of_range_local_refinement_seeds() {

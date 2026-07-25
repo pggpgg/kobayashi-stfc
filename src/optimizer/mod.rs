@@ -55,7 +55,7 @@ use crate::optimizer::random_stratified::{
     sample_stratified_random_crews, StratifiedSampleParams, DEFAULT_RANDOM_STRATIFIED_CANDIDATES,
 };
 use crate::optimizer::ranking::{rank_results, sort_ranked_rows, RankedCrewResult};
-use crate::optimizer::refinement::{refine_finalists, RefinementContext};
+use crate::optimizer::refinement::{refine_finalists, RefinementContext, RefinementProvenance};
 use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, tiered_scout_sims_for_workload,
     tiered_top_k_for_workload, TieredScoutBudgetStats, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
@@ -467,9 +467,13 @@ pub struct OptimizeRunOutcome {
     /// Used downstream for per-row method provenance. Empty when the lane did not run.
     pub random_exploration_hashes: HashSet<u64>,
     /// Local-refinement provenance for rows added by an opt-in post-search hill-climb
-    /// (tiered strategy only; see [`OptimizationScenario::local_refinement`]), keyed by
+    /// (tiered and genetic strategies; see [`OptimizationScenario::local_refinement`]), keyed by
     /// canonical crew hash. Empty when refinement did not run.
-    pub refinement_provenance: HashMap<u64, crate::optimizer::refinement::RefinementProvenance>,
+    pub refinement_provenance: HashMap<u64, RefinementProvenance>,
+    /// Budget/effect accounting for the refinement pass. `Some` whenever the pass ran — including
+    /// when it ran and accepted nothing, which is what separates "the finalists were already local
+    /// optima at this depth" from "refinement never ran". `None` when it was off or skipped.
+    pub refinement_stats: Option<crate::optimizer::refinement::LocalRefinementStats>,
 }
 
 /// Progress update for async optimize jobs (SSE / polling): phase label, counts, optional partial top crews.
@@ -498,6 +502,20 @@ pub enum OptimizerStrategy {
     /// captain faction/rarity and below-decks family, then scout → confirm.
     /// Benchmark control; ignores warm-start and skips the analytical prefilter.
     RandomStratified,
+}
+
+impl OptimizerStrategy {
+    /// Stable label for structured logs. Matches the API's strategy strings so a log line and a
+    /// response's `effective_strategy` can be correlated without a translation table.
+    pub fn log_label(self) -> &'static str {
+        match self {
+            OptimizerStrategy::Exhaustive => "exhaustive",
+            OptimizerStrategy::Genetic => "genetic",
+            OptimizerStrategy::Tiered => "tiered",
+            OptimizerStrategy::LinearEval => "linear_eval",
+            OptimizerStrategy::RandomStratified => "random_stratified",
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -600,8 +618,8 @@ pub struct OptimizationScenario<'a> {
     /// officer sampling instead of stride-based sampling (closes the learning loop).
     pub learned_officer_scores:
         Option<crate::optimizer::officer_learning::OfficerPerformanceScores>,
-    /// Opt-in local-refinement hill-climb, tiered strategy only: runs after the main tiered
-    /// search finishes, hill-climbing around its top finalists (single-slot swaps, captain
+    /// Opt-in local-refinement hill-climb for the tiered and genetic strategies: runs after the
+    /// main search finishes, hill-climbing around its top finalists (single-slot swaps, captain
     /// swaps, and destroy-repair neighborhoods) to spend a small marginal sim budget looking
     /// for nearby improvements the main search happened not to sample. `None` = off (default);
     /// ignored for every other strategy.
@@ -1418,6 +1436,108 @@ where
     }
 }
 
+/// What a local-refinement pass did, for the caller to attach to its [`OptimizeRunOutcome`].
+#[derive(Debug, Clone, Default)]
+struct LocalRefinementPassReport {
+    provenance: HashMap<u64, RefinementProvenance>,
+    stats: Option<crate::optimizer::refinement::LocalRefinementStats>,
+}
+
+/// Run the opt-in local-refinement hill-climb around a finished search's top finalists
+/// (roadmap §1.1), appending confirmed improvements to `ranked` and re-sorting it.
+///
+/// Shared by the tiered and genetic lanes. Refinement needs nothing from the search that produced
+/// `ranked` beyond the rows themselves and their scores, and both lanes score through
+/// [`rank_results`], so the same pass applies to either without knowing which ran.
+///
+/// Returns an empty report — leaving `ranked` untouched — when refinement is off
+/// (`scenario.local_refinement` is `None`, the default), when the search found no finalists to
+/// climb from, or when officer pools cannot be built for the scenario. That makes a run with
+/// refinement disabled byte-identical to one from before the feature existed.
+fn run_local_refinement_pass(
+    registry: &DataRegistry,
+    scenario: &OptimizationScenario<'_>,
+    ranked: &mut Vec<RankedCrewResult>,
+    should_continue: impl FnMut() -> bool,
+) -> LocalRefinementPassReport {
+    let Some(params) = scenario.local_refinement.as_ref() else {
+        return LocalRefinementPassReport::default();
+    };
+    if ranked.is_empty() {
+        return LocalRefinementPassReport::default();
+    }
+    let Some(pools) = build_officer_pools_from_registry(
+        registry,
+        scenario.below_decks_pool_mode,
+        Some(scenario.enemy_type),
+        scenario.profile_id,
+        scenario.below_decks_slots,
+        scenario.constraints.as_ref(),
+    ) else {
+        return LocalRefinementPassReport::default();
+    };
+    let shared = build_shared_scenario_data_from_registry(
+        registry,
+        scenario.ship,
+        scenario.hostile,
+        scenario.ship_tier,
+        scenario.ship_level,
+        scenario.profile_id,
+        scenario_support_buff_request(scenario),
+        scenario.defender_opponent,
+        scenario.player_defender_officer_crew.clone(),
+        scenario.pvp.clone(),
+    );
+    let seeds: Vec<(CrewCandidate, f64)> = ranked
+        .iter()
+        .take(params.seed_crews)
+        .map(|row| {
+            (
+                CrewCandidate {
+                    captain: row.captain.clone(),
+                    bridge: row.bridge.clone(),
+                    below_decks: row.below_decks.clone(),
+                },
+                f64::from(row.score.value),
+            )
+        })
+        .collect();
+    let ctx = RefinementContext {
+        shared: &shared,
+        pools: &pools,
+        constraints: scenario.constraints.as_ref(),
+        chain_grind: scenario.chain_grind.clone(),
+        seed: scenario.seed,
+    };
+    let outcome = refine_finalists(&ctx, &seeds, params, should_continue);
+    // Logged unconditionally: a pass that generated neighbors and accepted none is the interesting
+    // case (the finalists were already local optima at this depth), and it is indistinguishable
+    // from a pass that never ran without these counts.
+    info!(
+        strategy = scenario.strategy.log_label(),
+        seed = scenario.seed,
+        seeds_refined = outcome.stats.seeds_refined as u64,
+        rounds_run = outcome.stats.rounds_run as u64,
+        neighbors_generated = outcome.stats.neighbors_generated as u64,
+        neighbors_scouted = outcome.stats.neighbors_scouted as u64,
+        neighbors_confirmed = outcome.stats.neighbors_confirmed as u64,
+        improvements_accepted = outcome.stats.improvements_accepted as u64,
+        "optimize_local_refinement_completed"
+    );
+    if !outcome.results.is_empty() {
+        // Score each merged batch through the shared ranking independently, then re-sort the
+        // combined list: per-row score does not depend on the other rows, so this is equivalent
+        // to ranking them together.
+        let mut refined_rows = rank_results(outcome.results);
+        ranked.append(&mut refined_rows);
+        sort_ranked_rows(ranked);
+    }
+    LocalRefinementPassReport {
+        provenance: outcome.provenance,
+        stats: Some(outcome.stats),
+    }
+}
+
 /// Like [optimize_scenario_with_progress] but uses [DataRegistry] for exhaustive path (no reload).
 /// Progress callback returns true to continue, false to abort (e.g. user cancelled).
 /// `eval_should_continue` is polled between genetic dedupe Monte Carlo chunks and at the start of
@@ -1588,75 +1708,12 @@ where
             // the funnel at all.
             let confirmed_candidates = ranked.len();
 
-            // Local refinement (roadmap §1.1): opt-in post-search hill-climb around the top
-            // tiered finalists (single-slot swaps, captain swaps, destroy-repair). Tiered-only;
-            // genetic is deliberately out of scope. Runs after the main search has already spent
-            // its budget, so it is a small marginal cost rather than a second full search. When
-            // `scenario.local_refinement` is `None` (default), this block is skipped and behavior
-            // is byte-identical to before this feature existed.
-            let mut refinement_provenance: HashMap<
-                u64,
-                crate::optimizer::refinement::RefinementProvenance,
-            > = HashMap::new();
-            if let Some(refinement_params) = scenario.local_refinement.as_ref() {
-                if !ranked.is_empty() {
-                    if let Some(pools) = build_officer_pools_from_registry(
-                        registry,
-                        scenario.below_decks_pool_mode,
-                        Some(scenario.enemy_type),
-                        scenario.profile_id,
-                        scenario.below_decks_slots,
-                        scenario.constraints.as_ref(),
-                    ) {
-                        let refinement_shared = build_shared_scenario_data_from_registry(
-                            registry,
-                            scenario.ship,
-                            scenario.hostile,
-                            scenario.ship_tier,
-                            scenario.ship_level,
-                            scenario.profile_id,
-                            scenario_support_buff_request(scenario),
-                            scenario.defender_opponent,
-                            scenario.player_defender_officer_crew.clone(),
-                            scenario.pvp.clone(),
-                        );
-                        let seeds: Vec<(CrewCandidate, f64)> = ranked
-                            .iter()
-                            .take(refinement_params.seed_crews)
-                            .map(|row| {
-                                (
-                                    CrewCandidate {
-                                        captain: row.captain.clone(),
-                                        bridge: row.bridge.clone(),
-                                        below_decks: row.below_decks.clone(),
-                                    },
-                                    f64::from(row.score.value),
-                                )
-                            })
-                            .collect();
-                        let refinement_ctx = RefinementContext {
-                            shared: &refinement_shared,
-                            pools: &pools,
-                            constraints: scenario.constraints.as_ref(),
-                            chain_grind: scenario.chain_grind.clone(),
-                            seed: scenario.seed,
-                        };
-                        // Cooperative cancellation for refinement is out of scope for this
-                        // change; the pass always runs to completion once started.
-                        let refinement_outcome =
-                            refine_finalists(&refinement_ctx, &seeds, refinement_params, || true);
-                        if !refinement_outcome.results.is_empty() {
-                            // Score each merged batch through the shared ranking independently,
-                            // then re-sort the combined list: per-row score does not depend on
-                            // the other rows, so this is equivalent to ranking them together.
-                            let mut refined_rows = rank_results(refinement_outcome.results);
-                            ranked.append(&mut refined_rows);
-                            sort_ranked_rows(&mut ranked);
-                        }
-                        refinement_provenance = refinement_outcome.provenance;
-                    }
-                }
-            }
+            let refinement = run_local_refinement_pass(
+                registry,
+                scenario,
+                &mut ranked,
+                &mut eval_should_continue,
+            );
 
             let mut candidate_funnel = OptimizeCandidateFunnel::with_counts(
                 generated_candidates,
@@ -1680,7 +1737,8 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: hits,
                 random_exploration_hashes,
-                refinement_provenance,
+                refinement_provenance: refinement.provenance,
+                refinement_stats: refinement.stats,
             }
         }
         OptimizerStrategy::Exhaustive => {
@@ -1799,6 +1857,7 @@ where
                     optimize_history_confirm_hits: 0,
                     random_exploration_hashes: HashSet::new(),
                     refinement_provenance: HashMap::new(),
+                    refinement_stats: None,
                 };
             }
 
@@ -1842,6 +1901,7 @@ where
                         optimize_history_confirm_hits: hits,
                         random_exploration_hashes: HashSet::new(),
                         refinement_provenance: HashMap::new(),
+                        refinement_stats: None,
                     };
                 }
                 return OptimizeRunOutcome {
@@ -1854,6 +1914,7 @@ where
                     optimize_history_confirm_hits: 0,
                     random_exploration_hashes: HashSet::new(),
                     refinement_provenance: HashMap::new(),
+                    refinement_stats: None,
                 };
             }
 
@@ -1873,6 +1934,7 @@ where
                     optimize_history_confirm_hits: 0,
                     random_exploration_hashes: HashSet::new(),
                     refinement_provenance: HashMap::new(),
+                    refinement_stats: None,
                 };
             }
 
@@ -1945,10 +2007,11 @@ where
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes: HashSet::new(),
                 refinement_provenance: HashMap::new(),
+                refinement_stats: None,
             }
         }
         OptimizerStrategy::Genetic => {
-            let ranked = optimize_scenario_genetic(
+            let mut ranked = optimize_scenario_genetic(
                 scenario,
                 |gen, max_gen, _| {
                     on_progress(OptimizeProgressTick {
@@ -1958,9 +2021,19 @@ where
                         partial_top: None,
                     })
                 },
-                eval_should_continue,
+                // Reborrowed rather than moved: the refinement pass below polls the same
+                // cancellation check after the generations finish.
+                &mut eval_should_continue,
             );
+            // Counted before refinement, matching tiered: the funnel describes the candidate
+            // pipeline, and refined crews are synthesized after it has already run.
             let confirmed_candidates = ranked.len();
+            let refinement = run_local_refinement_pass(
+                registry,
+                scenario,
+                &mut ranked,
+                &mut eval_should_continue,
+            );
             OptimizeRunOutcome {
                 ranked,
                 candidate_funnel: OptimizeCandidateFunnel {
@@ -1976,7 +2049,8 @@ where
                 exhaustive_adaptive_budget: None,
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes: HashSet::new(),
-                refinement_provenance: HashMap::new(),
+                refinement_provenance: refinement.provenance,
+                refinement_stats: refinement.stats,
             }
         }
         OptimizerStrategy::LinearEval => {
@@ -2001,6 +2075,7 @@ where
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes: HashSet::new(),
                 refinement_provenance: HashMap::new(),
+                refinement_stats: None,
             }
         }
         OptimizerStrategy::RandomStratified => {
@@ -2077,6 +2152,7 @@ where
                 optimize_history_confirm_hits: 0,
                 random_exploration_hashes,
                 refinement_provenance: HashMap::new(),
+                refinement_stats: None,
             }
         }
     }

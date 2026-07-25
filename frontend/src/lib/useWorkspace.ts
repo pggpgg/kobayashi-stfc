@@ -174,6 +174,8 @@ export function useWorkspace() {
   >(null);
   /** Analytical prefilter: learned pair co-occurrence prior (default on). */
   const [enableLearnedPairPrior, setEnableLearnedPairPrior] = useState(true);
+  /** Tiered/genetic: post-search hill-climb around the top finalists (default off). */
+  const [localRefinement, setLocalRefinement] = useState(false);
 
   /** Novelty (MMR): optional text fields; blank lambda = omit (pure strength order). */
   const [noveltyLambdaText, setNoveltyLambdaText] = useState("");
@@ -407,6 +409,9 @@ export function useWorkspace() {
             belowDecksPoolMode !== "strict" ? belowDecksPoolMode : undefined,
           ship_tier: shipTier > 0 ? shipTier : undefined,
           ship_level: shipLevel > 0 ? shipLevel : undefined,
+          // A chain trial runs consecutive fights, so the estimate has to charge for all of them;
+          // without this a 10-kill chain reads as costing what a single fight does.
+          chain_kills_target: chainGrindEnabled ? chainKillsTarget : undefined,
         },
         activeProfileId,
       )
@@ -429,6 +434,8 @@ export function useWorkspace() {
     shipTier,
     shipLevel,
     activeProfileId,
+    chainGrindEnabled,
+    chainKillsTarget,
   ]);
 
   // Fetch available heuristic seeds
@@ -969,6 +976,7 @@ export function useWorkspace() {
           tieredScoutSims,
           tieredTopK,
           tieredRandomExplorationPct,
+          localRefinement,
           fastDiscovery:
             fastDiscovery && selectedSeeds.length > 0 ? true : undefined,
           noveltyLambdaText,
@@ -1154,6 +1162,8 @@ export function useWorkspace() {
     setTieredTopK,
     tieredRandomExplorationPct,
     setTieredRandomExplorationPct,
+    localRefinement,
+    setLocalRefinement,
     enableLearnedPairPrior,
     setEnableLearnedPairPrior,
     noveltyLambdaText,

@@ -3,6 +3,7 @@ import {
   API_ERROR_CPU_BUSY,
   ApiError,
   formatApiError,
+  getOptimizeEstimate,
   getOptimizeStatus,
   parseApiError,
   simulate,
@@ -394,5 +395,62 @@ describe("simulate cpu_busy retry", () => {
     const result = await p;
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result.seed).toBe(1);
+  });
+});
+
+describe("getOptimizeEstimate chain cost", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function stubEstimate() {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        estimated_candidates: 100,
+        sims_per_crew: 1000,
+        estimated_seconds: 1.2,
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("sends chain_kills_target so the estimate charges for every chain fight", async () => {
+    const fetchMock = stubEstimate();
+    await getOptimizeEstimate({
+      ship: "saladin",
+      hostile: "2918121098",
+      sims: 1000,
+      chain_kills_target: 6,
+    });
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain("chain_kills_target=6");
+  });
+
+  it("omits chain_kills_target for a single-fight run", async () => {
+    const fetchMock = stubEstimate();
+    await getOptimizeEstimate({
+      ship: "saladin",
+      hostile: "2918121098",
+      sims: 1000,
+    });
+    expect(String(fetchMock.mock.calls[0][0])).not.toContain(
+      "chain_kills_target",
+    );
+  });
+
+  it("omits a 1-kill chain, which costs the same as one fight", async () => {
+    const fetchMock = stubEstimate();
+    await getOptimizeEstimate({
+      ship: "saladin",
+      hostile: "2918121098",
+      sims: 1000,
+      chain_kills_target: 1,
+    });
+    expect(String(fetchMock.mock.calls[0][0])).not.toContain(
+      "chain_kills_target",
+    );
   });
 });

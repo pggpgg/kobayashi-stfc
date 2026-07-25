@@ -220,6 +220,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   tieredTopK?: number | null;
   /** Tiered only: fraction (0, 0.5] of scout candidates swapped for stratified-random crews (omit = off). */
   tieredRandomExplorationPct?: number | null;
+  /** Tiered and genetic: hill-climb around the top finalists after the main search (omit = off). */
+  localRefinement?: boolean;
   /** Merge heuristic seeds into main optimize warm-start (requires non-empty selected seeds). */
   fastDiscovery?: boolean;
   /** MMR blend in (0, 1]; blank = omit (pure strength ordering). */
@@ -296,6 +298,13 @@ export function buildWorkspaceOptimizeStartBody(args: {
     args.tieredRandomExplorationPct != null &&
     args.tieredRandomExplorationPct > 0
       ? { tiered_random_exploration_pct: args.tieredRandomExplorationPct }
+      : {}),
+    // The server ignores the flag on the other strategies; omitting it there keeps the request
+    // body an honest description of what the run will do.
+    ...(args.localRefinement === true &&
+    (args.optimizerStrategy === "tiered" ||
+      args.optimizerStrategy === "genetic")
+      ? { local_refinement: true }
       : {}),
     ...(args.fastDiscovery === true ? { fast_discovery: true } : {}),
     ...noveltyFieldsForOptimizeBody({

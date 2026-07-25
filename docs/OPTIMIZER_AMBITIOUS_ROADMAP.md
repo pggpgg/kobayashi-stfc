@@ -62,9 +62,9 @@ Method labels:
 - `local_captain_swap`
 - `large_neighborhood_repair`
 
-**Status: first slice landed** — [`src/optimizer/refinement.rs`](../src/optimizer/refinement.rs), opt-in via `local_refinement` on the optimize request, wired into the **tiered** path only. Covers one-slot bridge/below-decks swaps, captain swaps preserving support officers, and two-slot destroy-repair, with scout-then-confirm budgeting and the three method labels above. See [CREW_OPTIMIZATION_METHODS.md §10](CREW_OPTIMIZATION_METHODS.md) for behavior.
+**Status: landed** — [`src/optimizer/refinement.rs`](../src/optimizer/refinement.rs), opt-in via `local_refinement` on the optimize request, wired into the **tiered and genetic** paths. Covers one-slot bridge/below-decks swaps, captain swaps preserving support officers, and two-slot destroy-repair, with scout-then-confirm budgeting, cooperative cancellation, and the three method labels above. Refined rows expose a `refinement` object (source crew, changed seats, baseline/refined score, measured gain) that the results table renders; the pass reports its own budget/effect counters so a pass that accepted nothing is distinguishable from one that never ran. See [CREW_OPTIMIZATION_METHODS.md §10](CREW_OPTIMIZATION_METHODS.md) for behavior.
 
-Still open on this item: refining **genetic** finalists (currently tiered-only), trigger-producer/consumer-targeted replacement as its own neighborhood, three-slot destroy-repair, cooperative cancellation of the refinement pass, and surfacing the recorded source crew and changed seats in the API and UI (the data is captured but not yet exposed).
+Still open on this item: trigger-producer/consumer-targeted replacement as its own neighborhood, and three-slot destroy-repair.
 
 ### 1.2 Pareto Frontier Recommendations
 

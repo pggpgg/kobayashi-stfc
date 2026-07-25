@@ -589,6 +589,28 @@ export interface ChainSimulationSummary {
   n_primary_successes: number;
 }
 
+/** One seat local refinement changed, relative to the finalist it refined. */
+export interface RefinementSlotChange {
+  slot: "captain" | "bridge" | "below_decks";
+  /** Seat index within bridge/below-decks; absent for the captain. */
+  index?: number;
+  from: string;
+  to: string;
+}
+
+/** How the local-refinement pass arrived at a row (present only on refined rows). */
+export interface RefinementDetail {
+  kind: "local_swap" | "local_captain_swap" | "large_neighborhood_repair";
+  source_captain: string;
+  source_bridge: string[];
+  source_below_decks: string[];
+  changed_slots: RefinementSlotChange[];
+  baseline_score: number;
+  refined_score: number;
+  /** refined_score - baseline_score; always positive. */
+  gain: number;
+}
+
 export interface CrewRecommendation {
   captain: string;
   /** API returns string[]; we accept string for backward compatibility. */
@@ -597,6 +619,11 @@ export interface CrewRecommendation {
   below_decks: string | string[];
   /** Optimizer source/method label for this row, when returned by the API. */
   method_provenance?: string;
+  /**
+   * Monte Carlo trials actually run for this row — the depth of evidence behind its rates, which
+   * is below the requested sims for rows a scout phase ranked but never promoted to confirmation.
+   */
+  trials_run?: number;
   win_rate: number;
   win_rate_ci_low: number;
   win_rate_ci_high: number;
@@ -620,6 +647,8 @@ export interface CrewRecommendation {
   chain?: ChainSimulationSummary;
   /** Closed-form expected hull damage when strategy was linear_eval. */
   expected_hull_damage?: number;
+  /** Present only when the local-refinement pass produced this row. */
+  refinement?: RefinementDetail;
 }
 
 export interface ChainGrindRequestBody {
@@ -731,6 +760,12 @@ export async function getOptimizeEstimate(
     ship_tier?: number | null;
     ship_level?: number | null;
     below_decks_slots?: number | null;
+    /**
+     * Consecutive kills per trial when the run being estimated will use chain grind. A chain trial
+     * simulates up to this many fights instead of one, so omitting it understates the cost of a
+     * chain run by that factor.
+     */
+    chain_kills_target?: number | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeEstimate> {
@@ -757,6 +792,9 @@ export async function getOptimizeEstimate(
   }
   if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
     search.set("below_decks_slots", String(params.below_decks_slots));
+  }
+  if (params.chain_kills_target != null && params.chain_kills_target > 1) {
+    search.set("chain_kills_target", String(params.chain_kills_target));
   }
   if (profileId) search.set("profile", profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;

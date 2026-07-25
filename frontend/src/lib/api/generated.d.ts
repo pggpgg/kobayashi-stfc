@@ -1056,6 +1056,8 @@ export interface paths {
                     ship_tier?: number;
                     ship_level?: number;
                     below_decks_slots?: number;
+                    /** @description Consecutive kills per trial when the run this estimates will use chain grind (`chain.kills_target` on the optimize body). A chain trial simulates up to this many fights instead of one, so the estimate scales by it; omit for a single-fight run. Clamped to 1..=50 like the request body. */
+                    chain_kills_target?: number;
                     /** @description Profile id (alternative to X-Profile-Id) */
                     profile?: components["parameters"]["QueryProfile"];
                 };
@@ -2456,7 +2458,12 @@ export interface components {
         OptimizeEstimateResponse: {
             estimated_candidates: number;
             sims_per_crew: number;
+            /** @description Predicted wall time, clamped to 0.1s–1h for display. With `chain_kills_target` set this is a worst case: it assumes every trial runs the full chain, while chains that fail early cost less. */
             estimated_seconds: number;
+            /** @description Echo of the `chain_kills_target` query parameter. Present only when the client sent one. */
+            chain_kills_target?: number;
+            /** @description Fights per trial the estimate charged for — equal to `chain_kills_target`. Present only when the client sent one. */
+            chain_fights_per_trial_upper_bound?: number;
         };
         OptimizeStartResponse: {
             job_id: string;
@@ -2580,10 +2587,40 @@ export interface components {
                 [key: string]: unknown;
             };
             recommendations: ({
-                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. When the tiered `local_refinement` pass produced a row, the label instead identifies the refinement neighborhood that found it: `local_swap` (one bridge/below-decks seat changed), `local_captain_swap` (captain changed), or `large_neighborhood_repair` (two or more seats changed via destroy-repair). */
+                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. When the `local_refinement` pass produced a row, the label instead identifies the refinement neighborhood that found it: `local_swap` (one bridge/below-decks seat changed), `local_captain_swap` (captain changed), or `large_neighborhood_repair` (two or more seats changed via destroy-repair). */
                 method_provenance?: string;
+                /** @description Monte Carlo trials actually run for this row. Lower than the requested `sims` for rows a scout phase ranked but never promoted to confirmation, so this is the depth of evidence behind the row's rates and intervals. 0 when unknown (synthetic or closed-form rows). */
+                trials_run?: number;
                 /** @description Closed-form expected total hull damage over the fight (linear_eval only). */
                 expected_hull_damage?: number;
+                /** @description Present only on rows the `local_refinement` pass produced. Records which finalist the row was refined from, which seats changed, and the measured score gain that got the change accepted. */
+                refinement?: {
+                    /**
+                     * @description Refinement neighborhood; same value as `method_provenance`.
+                     * @enum {string}
+                     */
+                    kind: "local_swap" | "local_captain_swap" | "large_neighborhood_repair";
+                    source_captain: string;
+                    source_bridge: string[];
+                    source_below_decks: string[];
+                    /** @description Every seat that differs from the source finalist. */
+                    changed_slots: {
+                        /** @enum {string} */
+                        slot: "captain" | "bridge" | "below_decks";
+                        /** @description Seat index within `bridge` / `below_decks` in the canonicalized crew. Absent for the captain, which is a group of one. */
+                        index?: number;
+                        /** @description Officer who held the seat in the source finalist. */
+                        from: string;
+                        /** @description Officer who holds it in this row. */
+                        to: string;
+                    }[];
+                    /** @description Confirmed ranking score of the source finalist. */
+                    baseline_score: number;
+                    /** @description Confirmed ranking score of this row. */
+                    refined_score: number;
+                    /** @description `refined_score - baseline_score`. Always positive: refinement only keeps improvements that survive confirmation depth. */
+                    gain: number;
+                };
             } & {
                 [key: string]: unknown;
             })[];
@@ -2954,9 +2991,9 @@ export interface components {
             tiered_confirm_budget_cap_mult?: number;
             /** @description Tiered strategy only. Fraction of the scout candidate list — after warm-start, constraints, and analytical prefilter — replaced with stratified-random crews that bypass the analytical proxy (budget-neutral exploration slice). Injected crews are labeled `random_stratified` in `method_provenance` when they reach the results. Typical values 0.05–0.2. Omitted or 0 = off. */
             tiered_random_exploration_pct?: number;
-            /** @description Tiered strategy only. Opt-in local-refinement hill-climb around the top tiered finalists after the main search finishes: single-slot bridge/below-decks swaps, captain swaps, and destroy-repair neighborhoods, scored through the same ranking as the main search. Runs after the main search as a small marginal cost, not a second full search. Omitted or false = off (default). Ignored for every other strategy. */
+            /** @description Tiered and genetic strategies. Opt-in local-refinement hill-climb around the top finalists after the main search finishes: single-slot bridge/below-decks swaps, captain swaps, and destroy-repair neighborhoods, scored through the same ranking as the main search. Runs after the main search as a small marginal cost, not a second full search. Rows it produces carry a refinement `method_provenance` label and a `refinement` detail object. Omitted or false = off (default). Ignored for every other strategy: exhaustive already evaluated the space a neighborhood would re-propose, `linear_eval` runs no Monte Carlo to confirm an improvement against, and `random_stratified` is a benchmark control that must stay unassisted. */
             local_refinement?: boolean;
-            /** @description Local refinement only: how many top tiered finalists to hill-climb from. Omitted uses the refinement module's default (3). */
+            /** @description Local refinement only: how many top finalists to hill-climb from. Omitted uses the refinement module's default (3). */
             local_refinement_seeds?: number;
             /** @description Local refinement only: maximum accepted improving moves per seed crew. Omitted uses the refinement module's default (3). */
             local_refinement_rounds?: number;

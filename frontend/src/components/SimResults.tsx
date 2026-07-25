@@ -13,6 +13,8 @@ import {
   crewRecommendationToSimulateCrew,
   formatApiError,
   formatOptimizePhaseLabel,
+  type RefinementDetail,
+  type RefinementSlotChange,
   type SimulateStats,
 } from "../lib/api";
 
@@ -130,13 +132,47 @@ function formatMethodProvenance(value: string | undefined): string {
     genetic: "Genetic",
     heuristic_seed: "Heuristic seed",
     heuristics: "Heuristics",
+    large_neighborhood_repair: "Rebuilt seats",
     linear_eval: "Linear eval",
+    local_captain_swap: "Captain swap",
+    local_swap: "Seat swap",
     monte_carlo: "Monte Carlo",
     seeded_genetic: "Seeded GA",
     tiered_confirmed: "Tiered",
     warm_start: "Warm start",
   };
   return value != null ? (map[value] ?? value.replace(/_/g, " ")) : "";
+}
+
+/**
+ * One line per changed seat, e.g. `Bridge: Kirk → Spock`. Used as the Method cell's tooltip on a
+ * refined row, so the row can say which officers refinement moved rather than only that it ran.
+ */
+function formatRefinementChanges(refinement: RefinementDetail): string {
+  const groupLabel: Record<RefinementSlotChange["slot"], string> = {
+    captain: "Captain",
+    bridge: "Bridge",
+    below_decks: "Below deck",
+  };
+  const seats = refinement.changed_slots
+    .map((change) => {
+      const seat =
+        change.index != null
+          ? `${groupLabel[change.slot]} ${change.index + 1}`
+          : groupLabel[change.slot];
+      return `${seat}: ${change.from} → ${change.to}`;
+    })
+    .join("\n");
+  const gain = (refinement.gain * 100).toFixed(2);
+  return `Refined from a finalist crew (+${gain} score):\n${seats}`;
+}
+
+/** Compact marker for how deeply a row was confirmed, or null when the API did not report it. */
+function formatTrialsRun(value: number | undefined): string | null {
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return value >= 1000
+    ? `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`
+    : String(value);
 }
 
 /** Scenario context for POST /api/compare/crews (Monte Carlo distributions). */
@@ -295,6 +331,16 @@ export default memo(function SimResults({
   const showMethodProvenance = recommendations.some(
     (r) => r.method_provenance != null && r.method_provenance.trim() !== "",
   );
+  // Only worth a column when the rows differ in depth: a table where every row was confirmed at the
+  // same budget says nothing the run settings do not already say.
+  const showTrialsRun = useMemo(() => {
+    const depths = new Set(
+      recommendations
+        .map((r) => r.trials_run)
+        .filter((n): n is number => n != null && n > 0),
+    );
+    return depths.size > 1;
+  }, [recommendations]);
   const numericTableHeaders = useMemo(
     () =>
       linearEvalMode
@@ -760,6 +806,14 @@ export default memo(function SimResults({
                   {showMethodProvenance && (
                     <th style={styles.thText}>Method</th>
                   )}
+                  {showTrialsRun && (
+                    <th
+                      style={styles.thNumeric}
+                      title="Monte Carlo trials actually run for this row — its depth of evidence"
+                    >
+                      Trials
+                    </th>
+                  )}
                   {numericTableHeaders.map((h) => (
                     <th key={h} style={styles.thNumeric}>
                       {h}
@@ -825,9 +879,31 @@ export default memo(function SimResults({
                       {showMethodProvenance && (
                         <td
                           style={styles.tdMethod}
-                          title={r.method_provenance ?? ""}
+                          title={
+                            r.refinement
+                              ? formatRefinementChanges(r.refinement)
+                              : (r.method_provenance ?? "")
+                          }
                         >
                           {formatMethodProvenance(r.method_provenance)}
+                          {r.refinement && (
+                            <span
+                              style={{
+                                color: "var(--text-muted)",
+                                marginLeft: "var(--space-4)",
+                              }}
+                            >
+                              {`+${(r.refinement.gain * 100).toFixed(1)}`}
+                            </span>
+                          )}
+                        </td>
+                      )}
+                      {showTrialsRun && (
+                        <td
+                          style={styles.tdNumeric}
+                          title={`${r.trials_run} Monte Carlo trials backed this row`}
+                        >
+                          {formatTrialsRun(r.trials_run) ?? "—"}
                         </td>
                       )}
                       {linearEvalMode ? (

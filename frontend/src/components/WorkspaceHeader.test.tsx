@@ -199,4 +199,84 @@ describe("WorkspaceHeader", () => {
     expect(chip.textContent).toContain("atk +60");
     expect(chip.textContent).toContain("hull +50");
   });
+
+  describe("cost estimate qualifiers", () => {
+    function renderWithEstimate(estimate: api.OptimizeEstimate) {
+      return render(
+        <ProfileProvider>
+          <WorkspaceModeProvider>
+            <WorkspaceHeader
+              shipId="ship1"
+              scenarioId="h1"
+              onShipIdChange={vi.fn()}
+              onScenarioIdChange={vi.fn()}
+              enemyType=""
+              onEnemyTypeChange={vi.fn()}
+              shipTier={1}
+              onShipTierChange={vi.fn()}
+              shipLevel={50}
+              onShipLevelChange={vi.fn()}
+              onBelowDeckUnlockLevelsChange={vi.fn()}
+              crew={emptyCrew}
+              simsPerCrew={1000}
+              onSimsPerCrewChange={vi.fn()}
+              estimate={estimate}
+              lastOptimizeDurationMs={null}
+              onRunSim={vi.fn()}
+              onRunOptimize={vi.fn()}
+              onCancelOptimize={vi.fn()}
+              onSavePreset={vi.fn()}
+              loadingSim={false}
+              loadingOptimize={false}
+              optimizeProgress={null}
+              optimizeCrewsDone={null}
+              optimizeTotalCrews={null}
+              selectedSupportBuffs={[]}
+              onSelectedSupportBuffsChange={vi.fn()}
+            />
+          </WorkspaceModeProvider>
+        </ProfileProvider>,
+      );
+    }
+
+    it("reports the chain multiplier that drove the estimate", async () => {
+      renderWithEstimate({
+        estimated_candidates: 1240,
+        sims_per_crew: 1000,
+        estimated_seconds: 14.8,
+        chain_kills_target: 3,
+        chain_fights_per_trial_upper_bound: 3,
+      });
+      const label = await screen.findByText(/Est\. ~14\.8 s/);
+      expect(label.textContent).toContain("1,240 crews");
+      expect(label.textContent).toContain("×3 chain");
+      // The scaling is an upper bound, and the UI has to say so.
+      expect(label.getAttribute("title")).toMatch(/Worst case/);
+    });
+
+    it("still reports the chain multiplier when the crew count is unavailable", async () => {
+      // A chain multiplier explains the *time*, so a 0 candidate count must not hide it.
+      renderWithEstimate({
+        estimated_candidates: 0,
+        sims_per_crew: 1000,
+        estimated_seconds: 0.1,
+        chain_kills_target: 5,
+        chain_fights_per_trial_upper_bound: 5,
+      });
+      const label = await screen.findByText(/Est\. ~/);
+      expect(label.textContent).toContain("×5 chain");
+      expect(label.textContent).not.toContain("crews");
+    });
+
+    it("adds no qualifiers for a single-fight run with no crew count", async () => {
+      renderWithEstimate({
+        estimated_candidates: 0,
+        sims_per_crew: 1000,
+        estimated_seconds: 0.1,
+      });
+      const label = await screen.findByText(/Est\. ~/);
+      expect(label.textContent).not.toContain("(");
+      expect(label.getAttribute("title")).toBeNull();
+    });
+  });
 });

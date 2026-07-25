@@ -2432,7 +2432,7 @@ pub fn optimize_estimate_payload(
     profile_id: Option<&str>,
 ) -> Result<String, OptimizePayloadError> {
     let query = path.split('?').nth(1).unwrap_or("");
-    let (
+    let requests::OptimizeEstimateQuery {
         ship,
         hostile,
         sims,
@@ -2440,8 +2440,9 @@ pub fn optimize_estimate_payload(
         below_decks_pool_mode,
         ship_tier,
         ship_level,
-        bd_explicit,
-    ) = requests::parse_optimize_estimate_query(query)?;
+        below_decks_slots: bd_explicit,
+        chain_kills_target,
+    } = requests::parse_optimize_estimate_query(query)?;
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
         return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
@@ -2486,14 +2487,27 @@ pub fn optimize_estimate_payload(
             generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)
         }
     };
-    let estimated_seconds =
-        (estimated_candidates as f64) * (sims as f64) * ESTIMATE_SEC_PER_CANDIDATE_SIM;
+    // A chain-grind trial simulates consecutive fights against the same target until one is lost,
+    // so it costs up to `kills_target` fights where the default estimate assumes one. Scaling by
+    // the target is the upper bound rather than the mean — chains that fail early are cheaper — but
+    // an estimate that assumed one fight understated a 10-kill chain by an order of magnitude,
+    // which is the failure mode that matters when the number is there to warn about runtime.
+    let chain_fights_per_trial = chain_kills_target.unwrap_or(1).max(1);
+    let estimated_seconds = (estimated_candidates as f64)
+        * (sims as f64)
+        * f64::from(chain_fights_per_trial)
+        * ESTIMATE_SEC_PER_CANDIDATE_SIM;
     let estimated_seconds = estimated_seconds.clamp(0.1, 3600.0); // clamp to 0.1s–1h for display
-    let payload = serde_json::json!({
+    let mut payload = serde_json::json!({
         "estimated_candidates": estimated_candidates,
         "sims_per_crew": sims,
         "estimated_seconds": (estimated_seconds * 10.0).round() / 10.0,
     });
+    if let Some(kt) = chain_kills_target {
+        // Reported so a client can say *why* the estimate jumped, and label it as a worst case.
+        payload["chain_kills_target"] = serde_json::json!(kt);
+        payload["chain_fights_per_trial_upper_bound"] = serde_json::json!(chain_fights_per_trial);
+    }
     serde_json::to_string(&payload).map_err(OptimizePayloadError::Parse)
 }
 

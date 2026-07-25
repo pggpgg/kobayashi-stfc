@@ -29,9 +29,12 @@ export const DEFAULT_PER_RUNG_TIMEOUT_MS = 10 * 60 * 1000;
  *
  * Goals that rank on something other than win rate want exhaustive search, because
  * the optimizer's own pruning discards candidates they care about. But nobody is
- * watching a climb to notice a runaway rung, and `/api/optimize/estimate` ignores
- * chain-grind cost, so the affordability test here is the bounded candidate count
- * rather than a predicted runtime.
+ * watching a climb to notice a runaway rung, so the affordability test here stays a
+ * bounded candidate count: that is a hard ceiling on the work, where a predicted
+ * runtime is only a cost model. `/api/optimize/estimate` does now charge for
+ * chain-grind fights (`chain_kills_target`), so switching to a predicted budget is
+ * possible — it would just cost a round-trip per rung and trade a guarantee for an
+ * estimate.
  */
 const MAX_EXHAUSTIVE_CANDIDATES = 2000;
 

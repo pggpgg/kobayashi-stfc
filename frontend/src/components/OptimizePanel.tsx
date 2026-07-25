@@ -51,6 +51,9 @@ interface OptimizePanelProps {
   /** Tiered only: scout exploration slice fraction (0, 0.5]; null = off. */
   tieredRandomExplorationPct: number | null;
   onTieredRandomExplorationPctChange: (value: number | null) => void;
+  /** Tiered and genetic: hill-climb around the top finalists after the main search. */
+  localRefinement: boolean;
+  onLocalRefinementChange: (value: boolean) => void;
   /** Blank = off. When set to a number in (0, 1], server reorders the recommendation head for diverse officer material (MMR + Jaccard). */
   noveltyLambdaText: string;
   onNoveltyLambdaTextChange: (value: string) => void;
@@ -248,6 +251,8 @@ export default memo(function OptimizePanel({
   onTieredTopKChange,
   tieredRandomExplorationPct,
   onTieredRandomExplorationPctChange,
+  localRefinement,
+  onLocalRefinementChange,
   noveltyLambdaText,
   onNoveltyLambdaTextChange,
   noveltyDiverseTopText,
@@ -528,6 +533,22 @@ export default memo(function OptimizePanel({
           >
             Learned pair prior
             <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
+          </span>
+        </label>
+      )}
+      {(optimizerStrategy === "tiered" || optimizerStrategy === "genetic") && (
+        <label style={checkboxLabelStyle}>
+          <input
+            type="checkbox"
+            checked={localRefinement}
+            onChange={(e) => onLocalRefinementChange(e.target.checked)}
+            style={{ margin: 0 }}
+          />
+          <span
+            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+          >
+            Refine finalists
+            <HelpHint text="After the main search finishes, hill-climb around its top crews: try every legal one-officer substitution, captain swaps that keep the support officers, and rebuilds of two seats at once. Only improvements that survive full confirmation sims are kept, and each one reports which officer changed and how much it gained. Costs a small extra slice of sims on top of the main search." />
           </span>
         </label>
       )}

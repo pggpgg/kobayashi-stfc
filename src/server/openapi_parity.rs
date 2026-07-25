@@ -150,6 +150,10 @@ mod response_wrappers {
         estimated_candidates: usize,
         sims_per_crew: u32,
         estimated_seconds: f64,
+        /// Present only when the client sent `chain_kills_target`.
+        chain_kills_target: Option<u32>,
+        /// Present only when the client sent `chain_kills_target`.
+        chain_fights_per_trial_upper_bound: Option<u32>,
     }
 
     #[derive(JsonSchema)]
