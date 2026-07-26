@@ -80,6 +80,10 @@ Compute Pareto fronts over metrics already produced by simulation:
 
 Keep the scalar score as the default sort while adding `pareto_tags` and `recommendation_reason` to result rows. Initial user-facing views should cover safest, fastest farming, best chain crew, best substitute, and most different competitive crew.
 
+**Status: landed** — [`src/optimizer/pareto.rs`](../src/optimizer/pareto.rs), applied to every optimize response (no request flag: the pass reads metrics simulation already produced and costs no trials). Rows carry `pareto_tags` — `pareto_optimal`, plus at most one row each of `safest`, `fastest_farming`, `best_chain`, `most_different` — and a `recommendation_reason` that includes a confirmation-depth caveat when the row was simulated less deeply than the table's deepest row. Ordering is untouched. The SPA renders a **Why** badge column with the reason as tooltip. See [CREW_OPTIMIZATION_METHODS.md §11](CREW_OPTIMIZATION_METHODS.md) for the objective set and the three tie/spread rules that keep the front small.
+
+Still open on this item: the **best-substitute** and roster-accessibility views, which need officer rarity and ownership these rows do not carry (see §4.2); consistency/variance as an objective; and per-view filter chips in the SPA rather than badges alone.
+
 ### 1.3 Evidence and Provenance Completion
 
 Make each recommendation auditable from input through confirmation:

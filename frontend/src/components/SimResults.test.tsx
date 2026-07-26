@@ -211,6 +211,60 @@ describe("SimResults", () => {
     expect(screen.getByTitle(/Bridge 2: Kim → Tuvok/)).toBeTruthy();
   });
 
+  it("badges recommendation views and keeps the reason in the tooltip", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Kirk",
+          bridge: ["Spock"],
+          below_decks: ["Scotty"],
+          win_rate: 0.9,
+          stall_rate: 0.05,
+          loss_rate: 0.05,
+          avg_hull_remaining: 0.3,
+        }),
+        pareto_tags: ["pareto_optimal"],
+        recommendation_reason: "No other crew is at least as good everywhere.",
+      },
+      {
+        ...crewRec({
+          captain: "Picard",
+          bridge: ["Riker"],
+          below_decks: ["Worf"],
+          win_rate: 0.87,
+          stall_rate: 0.12,
+          loss_rate: 0.01,
+          avg_hull_remaining: 0.8,
+        }),
+        pareto_tags: ["pareto_optimal", "safest"],
+        recommendation_reason:
+          "Lowest loss rate at 1.0%, keeping 80.0% hull on average.",
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.getByText("Why")).toBeTruthy();
+    // A named view says more than front membership, so it replaces the generic badge.
+    expect(screen.getByText("Safest")).toBeTruthy();
+    expect(screen.getByText("Pareto")).toBeTruthy();
+    expect(screen.getByTitle(/Lowest loss rate at 1\.0%/)).toBeTruthy();
+  });
+
+  it("omits the Why column when no row carries a recommendation tag", () => {
+    const recs: CrewRecommendation[] = [
+      crewRec({
+        captain: "Kirk",
+        bridge: ["Spock"],
+        below_decks: ["Scotty"],
+        win_rate: 0.9,
+        stall_rate: 0.05,
+        loss_rate: 0.05,
+        avg_hull_remaining: 0.3,
+      }),
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.queryByText("Why")).toBeNull();
+  });
+
   it("shows a trials column only when rows differ in confirmation depth", () => {
     const shallow = {
       ...crewRec({

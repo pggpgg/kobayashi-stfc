@@ -611,6 +611,17 @@ export interface RefinementDetail {
   gain: number;
 }
 
+/**
+ * Recommendation view a row leads. `pareto_optimal` can appear on many rows (front membership);
+ * the named views tag at most one row each.
+ */
+export type ParetoTag =
+  | "pareto_optimal"
+  | "safest"
+  | "fastest_farming"
+  | "best_chain"
+  | "most_different";
+
 export interface CrewRecommendation {
   captain: string;
   /** API returns string[]; we accept string for backward compatibility. */
@@ -649,6 +660,13 @@ export interface CrewRecommendation {
   expected_hull_damage?: number;
   /** Present only when the local-refinement pass produced this row. */
   refinement?: RefinementDetail;
+  /**
+   * Why this row is worth a look beyond its rank. Never affects ordering — the scalar score still
+   * sorts the table. Absent on untagged rows and on linear_eval runs.
+   */
+  pareto_tags?: ParetoTag[];
+  /** Plain-language reading of pareto_tags; present exactly when pareto_tags is non-empty. */
+  recommendation_reason?: string;
 }
 
 export interface ChainGrindRequestBody {

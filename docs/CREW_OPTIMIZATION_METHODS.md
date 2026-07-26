@@ -415,6 +415,34 @@ Store the Pareto frontier per scenario and expose preset views:
 - best owned-roster crew,
 - best low-rarity substitute.
 
+### Kobayashi use
+
+Implemented as a tagging pass over the finished result set ([`src/optimizer/pareto.rs`](../src/optimizer/pareto.rs)), applied in `build_optimize_response` and always on — it reads metrics the simulation already produced, so it costs no extra trials. It annotates only: the scalar ranking score still sorts the table, and the pass can neither reorder nor drop a crew.
+
+Rows carry `pareto_tags` (stable wire labels) and a `recommendation_reason` in plain language:
+
+| Tag | Meaning | Rows |
+| --- | --- | ---: |
+| `pareto_optimal` | Nothing else considered is at least as good on every objective | many |
+| `safest` | Lowest loss rate, tie-broken by hull left | ≤ 1 |
+| `fastest_farming` | Highest round-1 kill rate | ≤ 1 |
+| `best_chain` | Highest chain-grind success rate (chain runs only) | ≤ 1 |
+| `most_different` | Competitive crew sharing the fewest officers with the top row | ≤ 1 |
+
+Objectives are win rate, hull remaining, round-1 kill rate, damage dealt (`1 − defender hull remaining`), and `1 − loss rate`; chain runs swap the first two for chain success and its secondary. All are fractions oriented so higher is better, so no normalization step is needed.
+
+Three decisions shape what the pass will and will not say:
+
+- **Confidence-interval width is not an objective.** A row scouted on 20 trials has wider intervals than one confirmed on 2,000; folding that into dominance would let under-measured rows crowd the front. Depth is surfaced instead as a caveat sentence inside the reason ("Backed by 40 of the 2000 trials the deepest row got").
+- **Ties resolve to the better-ranked row.** Differences within `PARETO_EPSILON` (0.5 percentage points) count as equal, so Monte Carlo jitter cannot manufacture front members; and a row statistically indistinguishable from one above it stays unbadged, because it offers a reader nothing the stronger row does not. Without this the front swallowed 8 of 20 rows on a lopsided matchup.
+- **Named views need spread.** A view is skipped when its metric is flat across the considered rows, and `most_different` is skipped when nothing wins at all — a badge that every crew could equally wear is noise.
+
+Whole runs are skipped when there is nothing to trade off: `linear_eval` (no simulated rates) and single-result sets. Tagging is bounded to the first `PARETO_MAX_ROWS_CONSIDERED` (200) rows because dominance is O(n²) and optimize returns every simulated crew; rows past that stay untagged rather than mis-tagged.
+
+Not built here: accessibility, rarity, and substitute views. Ranking a crew by what a player owns needs roster and rarity data these rows do not carry, and belongs with the substitute planner.
+
+The SPA renders a **Why** column of badges with the reason as the cell tooltip, shown only when some row is tagged. A named view already implies front membership, so the generic `Pareto` badge appears only on rows that have nothing more specific to say.
+
 ## 12. Tournament-style evaluation
 
 Tournament evaluation tests many crews cheaply, then increases rigor only for survivors.

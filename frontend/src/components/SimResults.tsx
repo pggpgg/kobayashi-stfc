@@ -13,6 +13,7 @@ import {
   crewRecommendationToSimulateCrew,
   formatApiError,
   formatOptimizePhaseLabel,
+  type ParetoTag,
   type RefinementDetail,
   type RefinementSlotChange,
   type SimulateStats,
@@ -75,6 +76,20 @@ const styles = {
     color: "var(--text-muted)",
     whiteSpace: "nowrap",
     fontSize: "0.82rem",
+  },
+  tdWhy: {
+    padding: TABLE_CELL_PAD,
+    whiteSpace: "nowrap",
+  },
+  whyBadge: {
+    display: "inline-block",
+    padding: "1px var(--space-4)",
+    marginRight: "var(--space-4)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-1)",
+    color: "var(--text-muted)",
+    fontSize: "0.72rem",
+    lineHeight: 1.6,
   },
   tdNumeric: {
     padding: TABLE_NUM_PAD,
@@ -142,6 +157,43 @@ function formatMethodProvenance(value: string | undefined): string {
     warm_start: "Warm start",
   };
   return value != null ? (map[value] ?? value.replace(/_/g, " ")) : "";
+}
+
+/** Display order for recommendation badges: named views first, front membership last. */
+const PARETO_TAG_ORDER: readonly ParetoTag[] = [
+  "safest",
+  "fastest_farming",
+  "best_chain",
+  "most_different",
+  "pareto_optimal",
+] as const;
+
+const PARETO_TAG_LABELS: Record<ParetoTag, string> = {
+  safest: "Safest",
+  fastest_farming: "Fastest",
+  best_chain: "Best chain",
+  most_different: "Different",
+  pareto_optimal: "Pareto",
+};
+
+/**
+ * Badges to render for a row. A named view already implies front membership, so `Pareto` shows only
+ * when it is the whole story — otherwise every strong row would carry a badge that says nothing
+ * about how it differs from the row above it.
+ */
+export function visibleParetoTags(
+  tags: readonly ParetoTag[] | undefined,
+): ParetoTag[] {
+  if (tags == null || tags.length === 0) return [];
+  const named = PARETO_TAG_ORDER.filter(
+    (tag) => tag !== "pareto_optimal" && tags.includes(tag),
+  );
+  if (named.length > 0) return named;
+  return tags.includes("pareto_optimal") ? ["pareto_optimal"] : [];
+}
+
+export function formatParetoTag(tag: ParetoTag): string {
+  return PARETO_TAG_LABELS[tag] ?? tag;
 }
 
 /**
@@ -330,6 +382,12 @@ export default memo(function SimResults({
   const chainR1Header = chainMode ? "R1 (1st link)" : "R1 %";
   const showMethodProvenance = recommendations.some(
     (r) => r.method_provenance != null && r.method_provenance.trim() !== "",
+  );
+  // Runs the tagging pass declines (linear eval, single result) return no tags at all — no column.
+  const showWhy = useMemo(
+    () =>
+      recommendations.some((r) => visibleParetoTags(r.pareto_tags).length > 0),
+    [recommendations],
   );
   // Only worth a column when the rows differ in depth: a table where every row was confirmed at the
   // same budget says nothing the run settings do not already say.
@@ -803,6 +861,14 @@ export default memo(function SimResults({
                   <th style={styles.thText}>Captain</th>
                   <th style={styles.thText}>Bridge</th>
                   <th style={styles.thText}>Below Deck</th>
+                  {showWhy && (
+                    <th
+                      style={styles.thText}
+                      title="What this crew leads on, beyond its rank. Hover a badge for the full reason."
+                    >
+                      Why
+                    </th>
+                  )}
                   {showMethodProvenance && (
                     <th style={styles.thText}>Method</th>
                   )}
@@ -876,6 +942,18 @@ export default memo(function SimResults({
                           </td>
                         );
                       })}
+                      {showWhy && (
+                        <td
+                          style={styles.tdWhy}
+                          title={r.recommendation_reason ?? undefined}
+                        >
+                          {visibleParetoTags(r.pareto_tags).map((tag) => (
+                            <span key={tag} style={styles.whyBadge}>
+                              {formatParetoTag(tag)}
+                            </span>
+                          ))}
+                        </td>
+                      )}
                       {showMethodProvenance && (
                         <td
                           style={styles.tdMethod}
