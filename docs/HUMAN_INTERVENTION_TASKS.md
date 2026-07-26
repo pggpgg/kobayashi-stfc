@@ -26,7 +26,20 @@ Work the simulator or data pipeline cannot complete automatically: judgment, ups
 
 ## Research / CI environment
 
-1. **Broad research catalog for integration tests**
+1. **Weekly data refresh cannot open its PR** — needs a GitHub settings toggle only the account owner can flip.
+  `.github/workflows/data-refresh.yml` (Mondays 06:00 UTC) has failed at its final step on every run since 2026-06-15. Everything before it succeeds — fetch, normalize, `cargo test`, strict validation — and the branch **is** pushed; only PR creation is rejected:
+
+  ```text
+  ##[error]GitHub Actions is not permitted to create or approve pull requests.
+  ```
+
+  Because `peter-evans/create-pull-request` never reaches its `delete-branch: true` cleanup, each failed run strands an `automated/data-refresh-<run_id>` branch on the remote.
+
+  **Fix:** enable *Allow GitHub Actions to create and approve pull requests* under **Settings → Actions → General → Workflow permissions**. The repo-level API already reports `can_approve_pull_request_reviews: true`, so the remaining block is the **account-level** setting at <https://github.com/settings/actions>. Confirm with the next Monday run, or trigger `workflow_dispatch` manually.
+
+  Until it is fixed, refresh data by hand — `cargo xtask data-refresh -- --stfcspace` — as on `claude/upstream-data-refresh-2026-07-24`.
+
+2. **Broad research catalog for integration tests**
   `tests/scenario_research_integration_tests.rs` expects a populated `data/research_catalog.json` (see test message / `scripts/import_stfcspace_research.mjs`). Filling or refreshing that data is an operational/data task, not a code change.
 
 ---

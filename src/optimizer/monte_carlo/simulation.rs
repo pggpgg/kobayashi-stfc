@@ -60,7 +60,49 @@ pub struct SimulationResult {
     pub expected_hull_damage: Option<f64>,
 }
 
+/// A zeroed, all-loss [`SimulationResult`] for `candidate`.
+///
+/// Used only on the unreachable branch of the optimizer's row-alignment steps, where a crew
+/// must map to exactly one result row. Those steps used to `expect` the row's presence; since
+/// release builds set `panic = "abort"`, a broken alignment invariant took the whole server
+/// process down rather than failing one job. Degrading to an all-loss row keeps results aligned
+/// 1:1 with candidates and sorts the affected crew to the bottom instead of crashing.
+///
+/// Callers pair this with a `debug_assert!` so a genuinely broken invariant still fails loudly
+/// in debug and test builds.
+pub(crate) fn zeroed_loss_result(candidate: CrewCandidate) -> SimulationResult {
+    SimulationResult {
+        candidate,
+        trials_run: 0,
+        win_rate: 0.0,
+        win_rate_ci_low: 0.0,
+        win_rate_ci_high: 0.0,
+        stall_rate: 0.0,
+        stall_rate_ci_low: 0.0,
+        stall_rate_ci_high: 0.0,
+        loss_rate: 1.0,
+        loss_rate_ci_low: 1.0,
+        loss_rate_ci_high: 1.0,
+        r1_kill_rate: 0.0,
+        r1_kill_rate_ci_low: 0.0,
+        r1_kill_rate_ci_high: 0.0,
+        avg_hull_remaining: 0.0,
+        avg_hull_remaining_ci_low: 0.0,
+        avg_hull_remaining_ci_high: 0.0,
+        avg_defender_hull_remaining: 0.0,
+        avg_defender_hull_remaining_ci_low: 0.0,
+        avg_defender_hull_remaining_ci_high: 0.0,
+        chain: None,
+        expected_hull_damage: None,
+    }
+}
+
 /// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
+///
+/// **Order-sensitive**: `bridge` and `below_decks` hash in `Vec` order, so two spellings of one
+/// crew only collide once something canonicalizes them (see `refinement::canonicalize_crew` and
+/// `genetic::init_population_seeded`). Code that keys rows by this hash must tolerate duplicates
+/// whenever a canonicalizing path can feed it.
 pub fn crew_candidate_stable_hash(c: &CrewCandidate) -> u64 {
     let mut h = std::collections::hash_map::DefaultHasher::new();
     c.captain.hash(&mut h);
