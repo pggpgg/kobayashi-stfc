@@ -2621,6 +2621,10 @@ export interface components {
                     /** @description `refined_score - baseline_score`. Always positive: refinement only keeps improvements that survive confirmation depth. */
                     gain: number;
                 };
+                /** @description Why this row is worth a look beyond its rank. `pareto_optimal` means no other considered row is at least as good on every metric (win rate, hull left, round-1 kills, damage dealt, and risk — or chain success and its secondary in chain runs). The named views tag at most one row each: `safest` (lowest loss rate), `fastest_farming` (highest round-1 kill rate), `best_chain` (highest chain success, chain runs only), and `most_different` (competitive crew sharing the fewest officers with the top row). Tags never change ordering; the scalar score still sorts the table. Absent on untagged rows, on `linear_eval` runs (no simulated rates to trade off), and past the first 200 rows. */
+                pareto_tags?: ("pareto_optimal" | "safest" | "fastest_farming" | "best_chain" | "most_different")[];
+                /** @description Plain-language reading of `pareto_tags` for this row, plus a confirmation-depth caveat when the row was simulated less deeply than the deepest row in the table. Present exactly when `pareto_tags` is non-empty. */
+                recommendation_reason?: string;
             } & {
                 [key: string]: unknown;
             })[];

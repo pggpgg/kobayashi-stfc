@@ -33,6 +33,7 @@ use crate::optimizer::monte_carlo::{
     scenario::{build_shared_scenario_data_from_registry, DefenderOpponent},
     SimulationResult,
 };
+use crate::optimizer::pareto::highlight_rows;
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
 use crate::optimizer::refinement::{LocalRefinementParams, RefinementProvenance};
 use crate::optimizer::tiered::TieredScoutBudgetStats;
@@ -337,6 +338,16 @@ pub struct CrewRecommendation {
     /// it changed, and the measured gain.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refinement: Option<RefinementDetail>,
+    /// Why this row is worth a look beyond its rank: `pareto_optimal` (nothing else is at least as
+    /// good on every metric) plus at most one row each of `safest`, `fastest_farming`, `best_chain`,
+    /// and `most_different`. Empty for untagged rows, and for whole runs the pass declines to tag
+    /// (`linear_eval`, or a single result). Never affects ordering.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pareto_tags: Vec<String>,
+    /// One-or-two sentence plain-language reading of `pareto_tags`, with a confirmation-depth
+    /// caveat when this row was simulated less deeply than the deepest row in the table.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recommendation_reason: Option<String>,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -405,6 +416,30 @@ fn crew_recommendation_from_ranked(
         chain: r.chain.clone(),
         expected_hull_damage: r.expected_hull_damage,
         refinement,
+        // Filled by [`apply_pareto_highlights`] once the whole result set exists: a row's tags
+        // depend on the other rows, so progress previews (partial sets) stay untagged.
+        pareto_tags: Vec::new(),
+        recommendation_reason: None,
+    }
+}
+
+/// Attach Pareto tags and recommendation reasons to a finished result set.
+///
+/// `ranked` and `recommendations` are the same rows in the same order — the caller maps one to the
+/// other 1:1 — so highlights land on the row they were computed for.
+fn apply_pareto_highlights(
+    ranked: &[RankedCrewResult],
+    recommendations: &mut [CrewRecommendation],
+) {
+    debug_assert_eq!(ranked.len(), recommendations.len());
+    let highlights = highlight_rows(ranked);
+    for (rec, highlight) in recommendations.iter_mut().zip(highlights) {
+        rec.pareto_tags = highlight
+            .tags
+            .iter()
+            .map(|t| t.label().to_string())
+            .collect();
+        rec.recommendation_reason = highlight.reason;
     }
 }
 
@@ -2121,6 +2156,20 @@ fn build_optimize_response(
         ));
     }
 
+    let mut recommendations: Vec<CrewRecommendation> = ranked_results
+        .iter()
+        .map(|r| {
+            crew_recommendation_from_ranked(
+                r,
+                recommendation_method_provenance(meta, r),
+                meta.refinement_provenance
+                    .get(&ranked_crew_hash(r))
+                    .map(refinement_detail_from_provenance),
+            )
+        })
+        .collect();
+    apply_pareto_highlights(&ranked_results, &mut recommendations);
+
     OptimizeResponse {
         status: "ok",
         engine,
@@ -2150,18 +2199,7 @@ fn build_optimize_response(
             tiered_scout_budget: meta.tiered_scout_budget,
             exhaustive_adaptive_budget: meta.exhaustive_adaptive_budget,
         },
-        recommendations: ranked_results
-            .iter()
-            .map(|r| {
-                crew_recommendation_from_ranked(
-                    r,
-                    recommendation_method_provenance(meta, r),
-                    meta.refinement_provenance
-                        .get(&ranked_crew_hash(r))
-                        .map(refinement_detail_from_provenance),
-                )
-            })
-            .collect(),
+        recommendations,
         duration_ms: Some(duration_ms),
         notes,
         approximate_notes,

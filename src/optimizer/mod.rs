@@ -10,6 +10,7 @@ pub mod linear_eval;
 pub mod matchup_priors;
 pub mod monte_carlo;
 pub mod officer_learning;
+pub mod pareto;
 pub mod random_stratified;
 pub mod ranking;
 pub mod refinement;
