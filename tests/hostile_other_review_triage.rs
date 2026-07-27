@@ -378,3 +378,88 @@ fn energy_focused_beam_destroys_the_attacker_at_round_eight() {
     assert!(victory.attacker_won, "killing before round 8 must win");
     assert_eq!(victory.rounds_simulated, 1);
 }
+
+/// The kill and the beam land in the same round. A destroyed hostile does not fire, so round 8 is
+/// a win — before the defender-alive gate the beam took the attacker with it and the run scored a
+/// mutual-death loss.
+#[test]
+fn energy_focused_beam_does_not_fire_on_the_round_it_dies() {
+    let rec = resolve_hostile("1892438128").expect("energy focused beam carrier");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+
+    let attacker = combatant(
+        "att",
+        1_000_000.0,
+        WeaponStats {
+            attack: 1_000_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let unkillable = combatant(
+        "1892438128",
+        f64::MAX / 4.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+
+    // Size the hostile so the kill lands inside round 8 rather than guessing at the damage
+    // formula: measure the attacker's cumulative output through round 7 and through round 8.
+    let through_seven = run(
+        &attacker,
+        &unkillable,
+        &pve_config(7, 3),
+        ShipType::Explorer,
+        &crew,
+    );
+    let through_eight = run(
+        &attacker,
+        &unkillable,
+        &pve_config(12, 3),
+        ShipType::Explorer,
+        &crew,
+    );
+    assert_eq!(
+        through_eight.rounds_simulated, 8,
+        "control: an attacker that cannot kill still dies to the beam at round 8"
+    );
+    assert!(
+        through_eight.total_damage > through_seven.total_damage,
+        "round 8 must contribute damage for this test to place a kill inside it"
+    );
+    let hull_dying_in_round_eight = (through_seven.total_damage + through_eight.total_damage) / 2.0;
+
+    let defender = combatant(
+        "1892438128",
+        hull_dying_in_round_eight,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let result = run(
+        &attacker,
+        &defender,
+        &pve_config(12, 3),
+        ShipType::Explorer,
+        &crew,
+    );
+    assert_eq!(
+        result.rounds_simulated, 8,
+        "the kill should land in the same round the beam was scheduled to fire"
+    );
+    assert_eq!(result.defender_hull_remaining, 0.0, "the hostile died");
+    assert!(
+        result.attacker_won,
+        "a hostile destroyed in round 8 cannot fire its round-8 beam"
+    );
+    assert!(
+        result.attacker_hull_remaining > 0.0,
+        "the attacker must survive its own winning round"
+    );
+}

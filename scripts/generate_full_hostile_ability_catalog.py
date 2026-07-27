@@ -994,14 +994,20 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         )
 
     # Q Trials Borg Defense Protocol α (loca 73050/73054): the Cutting Beam fires on the
-    # hostile's SECOND weapon of every round, dealing lethal damage. round_interval 1 would
-    # fire at the end of EVERY round including one where the attacker already destroyed the
-    # hostile (hostile_lethal_end_of_round has no defender-alive gate), turning legitimate
-    # round-1 kills into mutual-death losses — and weapon slot 2 already carries a flat
-    # 2M x 4/round component in the hostile record. Kept noop pending a defender-alive gate
-    # on the lethal hook (engine extension; see backlog item 12 leftovers).
+    # hostile's SECOND weapon of every round, dealing lethal damage. round_interval 1 fires at
+    # the end of every round; hostile_lethal_end_of_round now skips a hostile destroyed in the
+    # same round, so a kill inside the round still wins instead of scoring a mutual death.
+    # Approximation: the beam resolves at round end rather than on weapon slot 2, so the
+    # attacker gets a full round of fire in before it lands — a strictly more generous read
+    # than the text, and it does not change who wins.
     if "cutting beam" in p and "every round" in p and "lethal damage" in p:
-        return dict(NOOP), "scheduled_lethal_review"
+        return m(
+            "round_end",
+            "hostile_lethal_end_of_round",
+            round_interval=1,
+            round_cap=None,
+            _bucket="scheduled_lethal_combat",
+        )
 
     # Victory Is Life (loca 47001): post-victory hull restore — no in-combat effect.
     if "fully restores hull health when victorious" in p:
