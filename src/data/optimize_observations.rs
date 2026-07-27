@@ -5,12 +5,22 @@
 //! surrogate models and optimizer benchmark analysis.
 
 use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::PathBuf;
+use std::io::{BufRead, BufReader, Write};
+use std::path::{Path, PathBuf};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::data::profile_index::{profile_path, OPTIMIZE_OBSERVATIONS_JSONL};
+
+/// Current row shape. `1` predates the reuse fingerprint, where `profile_hash` was a hash of the
+/// profile **id** and `simulator_version` was a constant crate version.
+pub const OPTIMIZE_OBSERVATION_SCHEMA_VERSION: u8 = 2;
+
+/// Rotate once the live log passes this size, so an always-on observation run cannot grow without
+/// bound. Override with `KOBAYASHI_OPTIMIZE_OBSERVATIONS_MAX_BYTES`.
+pub const MAX_OPTIMIZE_OBSERVATIONS_BYTES: u64 = 32 * 1024 * 1024;
+/// Generations kept beside the live file (`.1`, `.2`), so disk use is bounded at ~3× the cap.
+pub const OPTIMIZE_OBSERVATIONS_ROTATIONS: usize = 2;
 
 /// One final ranked crew observation from an optimize run.
 #[derive(Debug, Serialize)]
@@ -19,8 +29,15 @@ pub struct OptimizeObservationRow<'a> {
     pub ts_ms: u128,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_id: Option<&'a str>,
+    /// Digest of the profile's **contents** (the `profile` segment of
+    /// [`crate::data::optimize_fingerprint::ReuseFingerprint`]). Schema 1 rows carry a hash of the
+    /// profile *id* here instead.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_hash: Option<u64>,
+    /// Full reuse fingerprint of the run (`schema:engine:data:profile:scenario`), so an observation
+    /// can be matched against — or excluded from — a later build's data.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reuse_fingerprint: Option<&'a str>,
     pub simulator_version: &'a str,
     pub ship: &'a str,
     pub hostile: &'a str,
@@ -91,6 +108,12 @@ fn observations_enabled() -> bool {
     )
 }
 
+/// Path of the live observation log for a profile, or the `KOBAYASHI_OPTIMIZE_OBSERVATIONS_PATH`
+/// override. Public so the inspector CLI reads exactly what the writer writes.
+pub fn observations_log_path(profile_id: Option<&str>) -> Option<PathBuf> {
+    resolve_log_path(profile_id)
+}
+
 fn resolve_log_path(profile_id: Option<&str>) -> Option<PathBuf> {
     if let Ok(p) = std::env::var("KOBAYASHI_OPTIMIZE_OBSERVATIONS_PATH") {
         let t = p.trim();
@@ -125,6 +148,88 @@ pub fn maybe_append_rows<'a>(profile_id: Option<&str>, rows: &[OptimizeObservati
         };
         let _ = writeln!(f, "{line}");
     }
+    drop(f);
+    rotate_if_oversized(&path, max_observations_bytes());
+}
+
+fn max_observations_bytes() -> u64 {
+    std::env::var("KOBAYASHI_OPTIMIZE_OBSERVATIONS_MAX_BYTES")
+        .ok()
+        .and_then(|v| v.trim().parse::<u64>().ok())
+        .filter(|v| *v > 0)
+        .unwrap_or(MAX_OPTIMIZE_OBSERVATIONS_BYTES)
+}
+
+/// Shift `X.jsonl` → `X.jsonl.1` → `X.jsonl.2` (dropping the oldest) once the live file exceeds
+/// `cap`. Two renames and no rewriting, so appending stays cheap; a row-count cap would mean
+/// re-reading the whole file on every append.
+pub fn rotate_if_oversized(path: &Path, cap: u64) {
+    let Ok(meta) = std::fs::metadata(path) else {
+        return;
+    };
+    if meta.len() <= cap {
+        return;
+    }
+    let rotated_name = |generation: usize| {
+        let mut name = path.as_os_str().to_os_string();
+        name.push(format!(".{generation}"));
+        PathBuf::from(name)
+    };
+    for generation in (1..OPTIMIZE_OBSERVATIONS_ROTATIONS).rev() {
+        let _ = std::fs::rename(rotated_name(generation), rotated_name(generation + 1));
+    }
+    let _ = std::fs::rename(path, rotated_name(1));
+}
+
+/// Owned mirror of [`OptimizeObservationRow`] for reading a log back. Every field defaults so both
+/// schema 1 and 2 rows deserialize.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct OptimizeObservationRecord {
+    pub schema_version: u8,
+    pub ts_ms: u128,
+    pub profile_id: Option<String>,
+    pub profile_hash: Option<u64>,
+    pub reuse_fingerprint: Option<String>,
+    pub simulator_version: Option<String>,
+    pub ship: String,
+    pub hostile: String,
+    pub ship_tier: Option<u32>,
+    pub ship_level: Option<u32>,
+    pub enemy_type: Option<String>,
+    pub seed: u64,
+    pub sims_requested: u32,
+    pub trials_run: usize,
+    pub strategy: String,
+    pub method_provenance: String,
+    pub crew_hash: u64,
+    pub captain: String,
+    pub bridge: Vec<String>,
+    pub below_decks: Vec<String>,
+    pub win_rate: f64,
+    pub avg_hull_remaining: f64,
+    pub score: f32,
+}
+
+/// Read observation rows from `path`, newest last. Unparseable lines are skipped rather than failing
+/// the whole read, so a partially written tail cannot make the log unreadable.
+pub fn read_observation_records(
+    path: &Path,
+    limit: Option<usize>,
+) -> std::io::Result<Vec<OptimizeObservationRecord>> {
+    let file = std::fs::File::open(path)?;
+    let mut rows: Vec<OptimizeObservationRecord> = BufReader::new(file)
+        .lines()
+        .map_while(Result::ok)
+        .filter(|line| !line.trim().is_empty())
+        .filter_map(|line| serde_json::from_str(&line).ok())
+        .collect();
+    if let Some(limit) = limit {
+        if rows.len() > limit {
+            rows = rows.split_off(rows.len() - limit);
+        }
+    }
+    Ok(rows)
 }
 
 #[cfg(test)]
@@ -136,11 +241,12 @@ mod tests {
         let bridge = vec!["B".to_string(), "C".to_string()];
         let below_decks = vec!["D".to_string()];
         let row = OptimizeObservationRow {
-            schema_version: 1,
+            schema_version: OPTIMIZE_OBSERVATION_SCHEMA_VERSION,
             ts_ms: 1,
             profile_id: Some("demo"),
             profile_hash: Some(stable_text_hash("demo")),
-            simulator_version: "0.1.0",
+            reuse_fingerprint: Some("1:aaaa:bbbb:cccc:dddd"),
+            simulator_version: "engine-0000000000000001+0.1.0",
             ship: "saladin",
             hostile: "2918121098",
             ship_tier: Some(3),
@@ -185,5 +291,69 @@ mod tests {
         let s = serde_json::to_string(&row).expect("json");
         assert!(s.contains("\"method_provenance\":\"tiered_confirmed\""));
         assert!(s.contains("\"crew_hash\":42"));
+        assert!(s.contains("\"reuse_fingerprint\":\"1:aaaa:bbbb:cccc:dddd\""));
+    }
+
+    fn scratch_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("kobayashi_obs_{name}_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        dir
+    }
+
+    /// Schema-1 rows (no `reuse_fingerprint`, fewer fields) must still deserialize.
+    #[test]
+    fn reader_tolerates_both_schemas_and_skips_junk() {
+        let dir = scratch_dir("reader");
+        let path = dir.join("obs.jsonl");
+        std::fs::write(
+            &path,
+            concat!(
+                r#"{"schema_version":1,"ts_ms":1,"ship":"a","hostile":"h","strategy":"tiered","method_provenance":"tiered_confirmed","crew_hash":1,"captain":"C","win_rate":0.5}"#,
+                "\n",
+                "not json at all\n",
+                "\n",
+                r#"{"schema_version":2,"ts_ms":2,"ship":"b","hostile":"h","strategy":"genetic","method_provenance":"genetic","crew_hash":2,"captain":"D","win_rate":0.9,"reuse_fingerprint":"1:a:b:c:d"}"#,
+                "\n",
+            ),
+        )
+        .expect("write");
+        let rows = read_observation_records(&path, None).expect("read");
+        assert_eq!(rows.len(), 2, "junk line should be skipped, not fatal");
+        assert_eq!(rows[0].schema_version, 1);
+        assert!(rows[0].reuse_fingerprint.is_none());
+        assert_eq!(rows[1].reuse_fingerprint.as_deref(), Some("1:a:b:c:d"));
+
+        let tail = read_observation_records(&path, Some(1)).expect("read");
+        assert_eq!(tail.len(), 1);
+        assert_eq!(tail[0].ship, "b", "limit keeps the newest rows");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn rotation_keeps_bounded_generations() {
+        let dir = scratch_dir("rotate");
+        let path = dir.join("obs.jsonl");
+        std::fs::write(&path, "0123456789").expect("write");
+
+        rotate_if_oversized(&path, 100);
+        assert!(path.exists(), "under the cap: nothing moves");
+        assert!(!dir.join("obs.jsonl.1").exists());
+
+        rotate_if_oversized(&path, 4);
+        assert!(!path.exists(), "over the cap: live file rotates away");
+        assert!(dir.join("obs.jsonl.1").exists());
+
+        std::fs::write(&path, "abcdefghij").expect("write");
+        rotate_if_oversized(&path, 4);
+        assert!(dir.join("obs.jsonl.1").exists());
+        assert!(dir.join("obs.jsonl.2").exists());
+
+        std::fs::write(&path, "klmnopqrst").expect("write");
+        rotate_if_oversized(&path, 4);
+        assert!(
+            !dir.join("obs.jsonl.3").exists(),
+            "generations stay bounded at {OPTIMIZE_OBSERVATIONS_ROTATIONS}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

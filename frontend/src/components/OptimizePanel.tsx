@@ -85,6 +85,29 @@ interface OptimizePanelProps {
   ) => void;
   /** Last optimize reused server profile disk cache for tiered warm-start. */
   cachedWarmStartBadge?: boolean;
+  /**
+   * Fingerprint segment that invalidated saved confirmations on the last optimize (`engine`, `data`,
+   * `profile`, `scenario`, …), or `null` when nothing was refused.
+   */
+  staleCacheRefusedReason?: string | null;
+}
+
+/** Plain-language reason saved confirmations could not be trusted for this run. */
+function staleCacheRefusedReasonText(reason: string): string {
+  switch (reason) {
+    case "engine":
+      return "The combat engine changed since these results were saved.";
+    case "data":
+      return "The game data catalog changed since these results were saved.";
+    case "profile":
+      return "Your profile changed since these results were saved.";
+    case "scenario":
+      return "This ship or target resolves differently than when these results were saved.";
+    case "unfingerprinted":
+      return "These saved results predate result fingerprinting, so they cannot be verified.";
+    default:
+      return "Saved results no longer match this run.";
+  }
 }
 
 const selectStyle: CSSProperties = {
@@ -280,6 +303,7 @@ export default memo(function OptimizePanel({
   chainSecondary,
   onChainSecondaryChange,
   cachedWarmStartBadge = false,
+  staleCacheRefusedReason = null,
 }: OptimizePanelProps) {
   const toggleSeed = useCallback(
     (seed: string) => {
@@ -991,6 +1015,32 @@ export default memo(function OptimizePanel({
           <span style={{ marginLeft: 8 }}>
             Tiered scout/confirm skipped for crews restored from your profile
             optimize history.
+          </span>
+        </p>
+      ) : null}
+      {staleCacheRefusedReason && !loadingOptimize ? (
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontSize: "0.78rem",
+            color: "var(--text-muted)",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              padding: "2px 8px",
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated, var(--bg))",
+              fontWeight: 600,
+            }}
+          >
+            Saved results ignored
+          </span>
+          <span style={{ marginLeft: 8 }}>
+            {staleCacheRefusedReasonText(staleCacheRefusedReason)} Every crew
+            was re-simulated, so these numbers are fresh.
           </span>
         </p>
       ) : null}

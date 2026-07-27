@@ -17,9 +17,10 @@ use crate::data::heuristics::{
 };
 use crate::data::import::{load_imported_roster, roster_import_fallback_warning_message};
 use crate::data::officer::normalize_officer_lookup_key;
+use crate::data::optimize_fingerprint;
 use crate::data::optimize_history;
 use crate::data::optimize_observations::{
-    maybe_append_rows as maybe_append_observation_rows, stable_text_hash, OptimizeObservationRow,
+    maybe_append_rows as maybe_append_observation_rows, OptimizeObservationRow,
 };
 use crate::data::support_buffs;
 use crate::lcars::LcarsOfficer;
@@ -673,7 +674,17 @@ fn append_optimize_observations(
         .map(|d| d.as_millis())
         .unwrap_or(0);
     let strategy = optimizer_strategy_to_api_label(meta.strategy);
-    let profile_hash = profile_id.map(stable_text_hash);
+    // The `profile` segment of the run fingerprint: a digest of the profile's *contents*, unlike the
+    // schema-1 rows, which hashed the profile id and so never changed.
+    let profile_hash = optimize_fingerprint::ReuseFingerprint::decode(&meta.reuse_fingerprint)
+        .map(|fp| fp.profile);
+    // Crate version alone is not a simulator identity (it has never been bumped); pair it with the
+    // engine segment, which moves whenever combat behavior does.
+    let simulator_version = format!(
+        "engine-{:016x}+{}",
+        optimize_fingerprint::engine_fingerprint(),
+        env!("CARGO_PKG_VERSION")
+    );
     let chain_enabled = request.chain.as_ref().is_some_and(|chain| chain.enabled);
     let chain_kills_target = request.chain.as_ref().and_then(|chain| chain.kills_target);
     let support_buffs = non_empty_string_slice(request.support_buffs.as_ref());
@@ -683,11 +694,12 @@ fn append_optimize_observations(
     let rows: Vec<OptimizeObservationRow<'_>> = ranked_results
         .iter()
         .map(|r| OptimizeObservationRow {
-            schema_version: 1,
+            schema_version: crate::data::optimize_observations::OPTIMIZE_OBSERVATION_SCHEMA_VERSION,
             ts_ms,
             profile_id,
             profile_hash,
-            simulator_version: env!("CARGO_PKG_VERSION"),
+            reuse_fingerprint: Some(meta.reuse_fingerprint.as_str()),
+            simulator_version: simulator_version.as_str(),
             ship: request.ship.as_str(),
             hostile: request.hostile.as_str(),
             ship_tier: request.ship_tier,
@@ -781,6 +793,18 @@ pub struct ScenarioSummary {
     /// True when this run updated `optimize_history.json` for `optimize_cache_key`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub optimize_history_wrote: Option<bool>,
+    /// True when persisted confirmation stats existed for this `optimize_cache_key` but were refused
+    /// because the run's reuse fingerprint no longer matches. Every crew was re-simulated; this run's
+    /// numbers are fresh. Absent when there was nothing stored or the stored entry was usable.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_history_reuse_refused: Option<bool>,
+    /// Which fingerprint segment changed: `engine` | `data` | `profile` | `scenario` | `schema` |
+    /// `unfingerprinted` (entry written before fingerprinting existed).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_history_reuse_refused_component: Option<String>,
+    /// Reuse fingerprint this run computed (`schema:engine:data:profile:scenario`, hashes only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimize_reuse_fingerprint: Option<String>,
     /// Tiered runs: scout/confirm trial accounting (see `TieredScoutBudgetStats`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tiered_scout_budget: Option<TieredScoutBudgetStats>,
@@ -929,6 +953,13 @@ struct OptimizeGatherMeta {
     optimize_constraints: Option<OptimizeConstraintsSummary>,
     optimize_history_confirm_hits: u32,
     optimize_history_wrote: bool,
+    /// `Some(component)` when a history entry existed for this cache key but its reuse fingerprint no
+    /// longer matches, so stored metrics were refused: `engine` | `data` | `profile` | `scenario` |
+    /// `schema` | `unfingerprinted`.
+    optimize_history_reuse_refused: Option<&'static str>,
+    /// Reuse fingerprint this run computed ([`crate::data::optimize_fingerprint`]), for the response
+    /// and the observation rows.
+    reuse_fingerprint: String,
     tiered_scout_budget: Option<TieredScoutBudgetStats>,
     exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
     dropped_illegal_warm_start: usize,
@@ -1241,6 +1272,47 @@ fn gather_optimize_simulation_results(
             Some(t.to_string())
         }
     });
+    // Reuse fingerprint for `optimize_history`: computed once here, before anything reads the
+    // history file, and used both to gate metric reuse and to stamp what this run writes.
+    let reuse_fingerprint = optimize_fingerprint::compute_reuse_fingerprint(
+        registry,
+        profile_id,
+        &optimize_fingerprint::ReuseScenarioInputs {
+            ship: request.ship.as_str(),
+            hostile: request.hostile.as_str(),
+            ship_tier: request.ship_tier,
+            ship_level: request.ship_level,
+            below_decks_slots: below_decks_slots as u32,
+            enemy_type: request.enemy_type.as_deref(),
+            defender_opponent: if request.defender_opponent.defender_is_player_ship() {
+                "player"
+            } else {
+                "hostile"
+            },
+            support_buffs: request.support_buffs.as_deref(),
+            defender_support_buffs: request.defender_support_buffs.as_deref(),
+            defender_alliance_debuffs: request.defender_alliance_debuffs.as_deref(),
+            defender_ship: request.defender_ship.as_deref(),
+            defender_ship_tier: request.defender_ship_tier,
+            defender_ship_level: request.defender_ship_level,
+            defender_profile_id: request.defender_profile_id.as_deref(),
+        },
+    );
+    let reuse_fingerprint_encoded = reuse_fingerprint.encode();
+    // An entry may exist for this key but describe a different engine, catalog, profile, or matchup.
+    // Record which, so the response can say the stored metrics were refused rather than silently
+    // looking like a cache miss.
+    let optimize_history_reuse_refused = match (profile_id, cache_key_normalized.as_deref()) {
+        (Some(pid), Some(key)) => match optimize_history::history_entry_reuse_status(
+            pid,
+            key,
+            Some(reuse_fingerprint_encoded.as_str()),
+        ) {
+            optimize_history::HistoryReuseStatus::Mismatch(component) => Some(component),
+            _ => None,
+        },
+        _ => None,
+    };
     let mut optimize_history_confirm_hits = 0u32;
     let mut optimize_history_wrote = false;
     let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
@@ -1364,9 +1436,11 @@ fn gather_optimize_simulation_results(
         prior_reference_crews.len() + dropped_illegal_prior_refs
     );
 
+    let reuse_data_segment = format!("{:016x}", reuse_fingerprint.data_segment());
     let mut learned_officer_scores = match profile_id {
         Some(pid) => {
-            let scores = optimize_history::load_officer_scores(pid);
+            let scores =
+                optimize_history::load_officer_scores(pid, Some(reuse_data_segment.as_str()));
             if scores.is_empty() {
                 None
             } else {
@@ -1378,6 +1452,9 @@ fn gather_optimize_simulation_results(
 
     // Auto-tune exploration parameters from learning signals (Phase B of the local
     // learning loop).  Only fills in values the user did not specify.
+    //
+    // Gated on the reuse fingerprint: these signals are derived from the stored Wilson intervals, so
+    // a stale entry would silently reshape *this* run's confirm budget and abandon margin.
     let (auto_tuned_confirm_cap, auto_tuned_abandon_margin) =
         match (profile_id, cache_key_normalized.as_deref()) {
             (Some(pid), Some(key)) => {
@@ -1385,6 +1462,12 @@ fn gather_optimize_simulation_results(
                 let signals = file
                     .entries
                     .get(key)
+                    .filter(|entry| {
+                        optimize_history::entry_reuse_fingerprint_matches(
+                            entry,
+                            Some(reuse_fingerprint_encoded.as_str()),
+                        )
+                    })
                     .map(|entry| {
                         crate::optimizer::learning_signals::compute_learning_signals(entry)
                     })
@@ -1620,6 +1703,10 @@ fn gather_optimize_simulation_results(
             tiered_confirm_budget_cap_mult: request
                 .tiered_confirm_budget_cap_mult
                 .or(auto_tuned_confirm_cap),
+            // Cache identity uses the *requested* cap only — the same value
+            // `build_entry_from_ranked*` stores below. An auto-derived cap shapes this run's budget
+            // but must not shift identity, or every entry invalidates itself on the next run.
+            optimize_history_confirm_cap_mult: request.tiered_confirm_budget_cap_mult,
             tiered_random_exploration_pct: request
                 .tiered_random_exploration_pct
                 .filter(|_| strategy == OptimizerStrategy::Tiered),
@@ -1655,6 +1742,7 @@ fn gather_optimize_simulation_results(
             warm_start: scenario_warm_start,
             prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),
+            reuse_fingerprint: Some(reuse_fingerprint_encoded.clone()),
             enable_learned_pair_prior: request.enable_learned_pair_prior.unwrap_or(true),
             learned_officer_scores,
             local_refinement,
@@ -1704,6 +1792,7 @@ fn gather_optimize_simulation_results(
                     &chain_grind,
                     optimize_history::TIERED_BUDGET_POLICY_V2,
                     request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                    Some(reuse_fingerprint_encoded.clone()),
                     &outcome.ranked,
                 );
                 optimize_history_wrote =
@@ -1727,6 +1816,7 @@ fn gather_optimize_simulation_results(
                             optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
                             &chain_grind,
                             request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                            Some(reuse_fingerprint_encoded.clone()),
                             &outcome.ranked,
                         );
                         optimize_history_wrote |=
@@ -1740,8 +1830,12 @@ fn gather_optimize_simulation_results(
         if strategy != OptimizerStrategy::LinearEval {
             if let Some(pid) = profile_id {
                 if !outcome.ranked.is_empty() {
-                    let mut scores = optimize_history::load_officer_scores(pid);
+                    let mut scores = optimize_history::load_officer_scores(
+                        pid,
+                        Some(reuse_data_segment.as_str()),
+                    );
                     scores.update_from_results(&outcome.ranked, &request.hostile, &request.ship);
+                    scores.set_data_fingerprint(reuse_data_segment.as_str());
                     let _ = optimize_history::save_officer_scores(pid, &scores);
                 }
             }
@@ -1756,6 +1850,7 @@ fn gather_optimize_simulation_results(
             strategy = optimizer_strategy_to_api_label(strategy),
             optimize_history_confirm_hits,
             optimize_history_wrote,
+            optimize_history_reuse_refused,
             ranked_results = all_results.len() as u64,
             "optimize_main_phase_complete"
         );
@@ -1788,6 +1883,8 @@ fn gather_optimize_simulation_results(
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
         optimize_history_confirm_hits,
         optimize_history_wrote,
+        optimize_history_reuse_refused,
+        reuse_fingerprint: reuse_fingerprint_encoded,
         tiered_scout_budget: tiered_scout_budget_for_response,
         exhaustive_adaptive_budget: exhaustive_adaptive_budget_for_response,
         dropped_illegal_warm_start: warm_legality.dropped_wrong_shape
@@ -2103,6 +2200,15 @@ fn build_optimize_response(
                 .to_string(),
         );
     }
+    if let Some(component) = meta.optimize_history_reuse_refused {
+        approximate_notes.push(format!(
+            "Stored confirmation stats for this scenario were refused because the {} fingerprint changed since they were recorded; every crew was re-simulated.",
+            match component {
+                "unfingerprinted" => "run",
+                other => other,
+            }
+        ));
+    }
 
     append_optimize_observations(request, meta, &ranked_results, profile_id, sims, seed);
 
@@ -2196,6 +2302,14 @@ fn build_optimize_response(
             optimize_history_confirm_hits: (meta.optimize_history_confirm_hits > 0)
                 .then_some(meta.optimize_history_confirm_hits),
             optimize_history_wrote: meta.optimize_history_wrote.then_some(true),
+            optimize_history_reuse_refused: meta
+                .optimize_history_reuse_refused
+                .is_some()
+                .then_some(true),
+            optimize_history_reuse_refused_component: meta
+                .optimize_history_reuse_refused
+                .map(str::to_string),
+            optimize_reuse_fingerprint: Some(meta.reuse_fingerprint.clone()),
             tiered_scout_budget: meta.tiered_scout_budget,
             exhaustive_adaptive_budget: meta.exhaustive_adaptive_budget,
         },

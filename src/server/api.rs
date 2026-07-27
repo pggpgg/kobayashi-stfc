@@ -2298,7 +2298,12 @@ pub fn data_version_payload(registry: &DataRegistry) -> Result<String, serde_jso
         },
     ];
     let response = DataVersionResponse {
-        officer_version: Some("canonical".to_string()),
+        // The officer catalog carries no upstream `data_version`, so derive one from the loaded
+        // LCARS model — the same digest the reuse fingerprint's `data` segment folds in.
+        officer_version: Some(format!(
+            "canonical+{:016x}",
+            crate::data::optimize_fingerprint::officer_catalog_digest(registry)
+        )),
         hostile_version: hostile_index.and_then(|i| i.data_version.clone()),
         ship_version: ship_index.and_then(|i| i.data_version.clone()),
         mechanics,

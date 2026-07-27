@@ -20,6 +20,7 @@ pub mod officer;
 pub mod officer_ban;
 pub mod officer_eligibility;
 pub mod officer_stat_round;
+pub mod optimize_fingerprint;
 pub mod optimize_history;
 pub mod optimize_observations;
 pub mod profile;

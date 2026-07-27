@@ -243,6 +243,7 @@ fn main() {
         tiered_top_k: Some(32),
         tiered_scout_uniform: false,
         tiered_confirm_budget_cap_mult: None,
+        optimize_history_confirm_cap_mult: None,
         tiered_scout_priority_queue: true,
         tiered_pq_minimal_scout: Some(150),
         tiered_pq_selection_mult: Some(4),
@@ -266,6 +267,7 @@ fn main() {
         warm_start,
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
+        reuse_fingerprint: None,
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
 

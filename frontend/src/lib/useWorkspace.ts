@@ -154,6 +154,10 @@ export function useWorkspace() {
     useState<string | null>(null);
   /** True after last completed optimize reused profile disk cache for tiered scout/confirm. */
   const [cachedWarmStartBadge, setCachedWarmStartBadge] = useState(false);
+  /** Fingerprint segment that invalidated saved confirmations, or `null` when none were refused. */
+  const [staleCacheRefusedReason, setStaleCacheRefusedReason] = useState<
+    string | null
+  >(null);
 
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
@@ -706,6 +710,14 @@ export function useWorkspace() {
       }
       const hits = status.result.scenario?.optimize_history_confirm_hits ?? 0;
       setCachedWarmStartBadge(typeof hits === "number" && hits > 0);
+      // Saved results existed but describe a different engine, game data, profile, or matchup, so
+      // they were re-simulated. Say so: otherwise a refusal is indistinguishable from a cache miss.
+      setStaleCacheRefusedReason(
+        status.result.scenario?.optimize_history_reuse_refused === true
+          ? (status.result.scenario?.optimize_history_reuse_refused_component ??
+              "run")
+          : null,
+      );
       setSimResult(null);
       if (status.result.duration_ms != null)
         setLastOptimizeDurationMs(status.result.duration_ms);
@@ -713,6 +725,7 @@ export function useWorkspace() {
       const detail = status.error?.trim() || "Unknown error";
       setError(`Optimization failed: ${detail}`);
       setCachedWarmStartBadge(false);
+      setStaleCacheRefusedReason(null);
     }
     setLoadingOptimize(false);
     setOptimizeProgress(null);
@@ -924,6 +937,7 @@ export function useWorkspace() {
     setError(null);
     setWorkspaceInfo(null);
     setCachedWarmStartBadge(false);
+    setStaleCacheRefusedReason(null);
     setResultWarnings([]);
     setUnresolvedOfficers([]);
     setLoadingOptimize(true);
@@ -1024,6 +1038,7 @@ export function useWorkspace() {
 
   const handleCancelOptimize = () => {
     setCachedWarmStartBadge(false);
+    setStaleCacheRefusedReason(null);
     const jobId = currentOptimizeJobIdRef.current;
     clearPersistedOptimizeJob();
     currentOptimizeJobIdRef.current = null;
@@ -1129,6 +1144,7 @@ export function useWorkspace() {
     lastOptimizeDurationMs,
     lastOptimizeEffectiveStrategy,
     cachedWarmStartBadge,
+    staleCacheRefusedReason,
     // Optimization parameters
     simsPerCrew,
     setSimsPerCrew,

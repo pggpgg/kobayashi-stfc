@@ -2532,6 +2532,15 @@ export interface components {
             status: string;
             engine: string;
             scenario: {
+                /** @description True when persisted confirmation stats existed for this `optimize_cache_key` but were refused because the run's reuse fingerprint no longer matches. Every crew was re-simulated, so the reported numbers are fresh. Absent when nothing was stored or the stored entry was usable. */
+                optimize_history_reuse_refused?: boolean;
+                /**
+                 * @description Which fingerprint segment changed: the combat engine, the game-data catalogs, the player profile's contents, the resolved ship/hostile matchup, the fingerprint encoding itself, or `unfingerprinted` for entries written before fingerprinting existed.
+                 * @enum {string}
+                 */
+                optimize_history_reuse_refused_component?: "engine" | "data" | "profile" | "scenario" | "schema" | "unfingerprinted";
+                /** @description Reuse fingerprint this run computed, as `schema:engine:data:profile:scenario` (hashes only — no profile contents are exposed). */
+                optimize_reuse_fingerprint?: string;
                 /** @description Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final merged result width. */
                 optimizer_funnel?: {
                     /** @description Full-catalog raw role pools before ban/eligibility filters. */
@@ -3029,7 +3038,10 @@ export interface components {
             novelty_pool?: number;
             /** @description When true with novelty_lambda, crews from optimize_history for this profile + optimize_cache_key (matching chain fingerprint) are treated as redundancy anchors for MMR; they are not added as recommendations. */
             novelty_history_anchors?: boolean;
-            /** @description Opaque client fingerprint (e.g. workspace warm-start key). When set and the request runs with an active profile, the server may load matching `optimize_history.json` rows for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors (reference crews from history only; same chain fingerprint as this request’s `chain`). */
+            /**
+             * @description Opaque client fingerprint (e.g. workspace warm-start key). When set and the request runs with an active profile, the server may load matching `optimize_history.json` rows for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors (reference crews from history only; same chain fingerprint as this request’s `chain`).
+             *     This key is client-supplied and not a trust boundary: reusing stored **metrics** also requires the server-computed reuse fingerprint to match (engine, data catalogs, profile contents, resolved matchup). A mismatch re-simulates every crew and is reported as `scenario.optimize_history_reuse_refused`. Reuse of crew **identities** for matchup priors and novelty anchors is not fingerprint-gated — a good crew composition survives an engine fix — and those crews are re-validated against the live catalog and roster.
+             */
             optimize_cache_key?: string;
         };
         ReplaySeedCrew: {

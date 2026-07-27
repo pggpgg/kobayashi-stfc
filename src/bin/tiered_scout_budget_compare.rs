@@ -83,6 +83,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         tiered_top_k: Some(row.tiered_top_k),
         tiered_scout_uniform: uniform,
         tiered_confirm_budget_cap_mult: None,
+        optimize_history_confirm_cap_mult: None,
         tiered_scout_priority_queue: false,
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
@@ -106,6 +107,7 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
+        reuse_fingerprint: None,
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
 

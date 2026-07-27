@@ -224,6 +224,7 @@ fn scenario<'a>(
         tiered_top_k: Some(args.top_k),
         tiered_scout_uniform: false,
         tiered_confirm_budget_cap_mult: None,
+        optimize_history_confirm_cap_mult: None,
         tiered_scout_priority_queue: false,
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
@@ -247,6 +248,7 @@ fn scenario<'a>(
         warm_start,
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
+        reuse_fingerprint: None,
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
 

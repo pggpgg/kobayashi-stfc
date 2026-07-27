@@ -64,7 +64,12 @@ pub struct OptimizeHistoryEntry {
     /// [`TIERED_BUDGET_POLICY_V2`] for tiered entries; [`TIERED_BUDGET_POLICY_NA`] on
     /// non-tiered (e.g. exhaustive two-phase) entries.
     pub tiered_budget_policy: u8,
-    /// When set, must match the optimize request `tiered_confirm_budget_cap_mult` (global confirm shrink).
+    /// The confirm-shrink multiplier the writing run's **request** carried
+    /// (`tiered_confirm_budget_cap_mult`), and what a later run must match to reuse this entry.
+    ///
+    /// Deliberately the requested value, never the effective one: the server may auto-derive a cap
+    /// from this entry's own Wilson intervals, and keying on that derived value made every entry
+    /// reject itself on the next run (`OptimizationScenario::optimize_history_confirm_cap_mult`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tiered_confirm_cap_mult: Option<f32>,
     /// Exhaustive two-phase: scout sims per crew (meaningful when [`Self::optimize_history_kind`] is exhaustive).
@@ -76,6 +81,15 @@ pub struct OptimizeHistoryEntry {
     pub exhaustive_confirm_policy: u8,
     /// Same encoding as the SPA warm-start key chain segment (`0` vs `1:kt:secondary`).
     pub chain_fingerprint: String,
+    /// Server-side reuse fingerprint ([`crate::data::optimize_fingerprint`]) of the run that wrote
+    /// this entry: engine + catalogs + profile + resolved matchup. Distinct from
+    /// [`Self::chain_fingerprint`], which only encodes the chain-grind mode.
+    ///
+    /// `None` marks an entry written before fingerprinting existed. Metric reuse is refused for
+    /// those (fail closed); crew identities are still read (see
+    /// [`prior_reference_crews_from_entry`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reuse_fingerprint: Option<String>,
     pub crews: Vec<OptimizeHistoryCrewRecord>,
 }
 
@@ -250,14 +264,26 @@ pub fn save_history_file(profile_id: &str, file: &OptimizeHistoryFile) -> io::Re
 }
 
 /// Load per-profile learned officer scores from `profiles/{id}/officer_learning.json`.
-/// Returns a fresh empty score set when no file exists or the file is unreadable.
-pub fn load_officer_scores(profile_id: &str) -> OfficerPerformanceScores {
+/// Returns a fresh empty score set when no file exists, the file is unreadable, or it was
+/// accumulated under a different officer catalog than `expected_data_fingerprint` (the `data` segment
+/// of [`crate::data::optimize_fingerprint::ReuseFingerprint`]) — these scores are keyed by officer
+/// **name**, which a catalog refresh can orphan.
+pub fn load_officer_scores(
+    profile_id: &str,
+    expected_data_fingerprint: Option<&str>,
+) -> OfficerPerformanceScores {
     let path = profile_path(profile_id, OFFICER_LEARNING_JSON);
     if !path.exists() {
         return OfficerPerformanceScores::new();
     }
     let raw = fs::read_to_string(&path).unwrap_or_default();
-    serde_json::from_str(&raw).unwrap_or_else(|_| OfficerPerformanceScores::new())
+    let scores: OfficerPerformanceScores =
+        serde_json::from_str(&raw).unwrap_or_else(|_| OfficerPerformanceScores::new());
+    if scores.is_compatible_with_data_fingerprint(expected_data_fingerprint) {
+        scores
+    } else {
+        OfficerPerformanceScores::new()
+    }
 }
 
 /// Persist learned officer scores to `profiles/{id}/officer_learning.json`.
@@ -279,6 +305,13 @@ pub fn save_officer_scores(profile_id: &str, scores: &OfficerPerformanceScores) 
 ///
 /// Does **not** require `entry_matches_run` metadata equality: priors intentionally reuse past winners
 /// for the same client fingerprint and chain, even when sim counts or seeds differ.
+///
+/// Deliberately **not** gated on [`entry_reuse_fingerprint_matches`] either. This path consumes crew
+/// *identities*, not measured metrics — a good crew composition survives an engine fix or a profile
+/// edit — and the caller already re-validates every returned crew against the live registry and
+/// roster, dropping officers that no longer exist. Gating here would throw away the one signal
+/// history is legitimately good for across versions. Metric reuse is gated in
+/// [`preconfirmed_for_candidates`] and [`preconfirmed_for_exhaustive_two_phase`].
 pub fn prior_reference_crews_from_entry(
     entry: &OptimizeHistoryEntry,
     chain: &Option<ChainGrindParams>,
@@ -355,6 +388,10 @@ fn crew_record_to_ranked_anchor(r: &OptimizeHistoryCrewRecord) -> RankedCrewResu
 }
 
 /// Persisted top crews from `optimize_history.json` for novelty MMR redundancy only (never emitted as recommendations).
+///
+/// Ungated on the reuse fingerprint for the same reason as [`prior_reference_crews_from_entry`]:
+/// anchors are diversity references. The score derived from a stale `win_rate` can only shift the
+/// diversity ordering slightly; it never becomes a reported number.
 pub fn novelty_anchor_rows_for_profile_cache_key(
     profile_id: &str,
     cache_key: &str,
@@ -453,6 +490,76 @@ pub fn entry_matches_exhaustive_two_phase(
         && entry.tiered_confirm_cap_mult == tiered_confirm_cap_mult
 }
 
+/// Whether stored **metrics** on `entry` may be reused by a run whose fingerprint is `current`.
+///
+/// Fails closed: an entry with no stored fingerprint, or a run that could not compute one (bench
+/// binaries and other non-server callers), never reuses metrics. Cached win rates are reported to the
+/// user as freshly confirmed, so a wrong answer here is indistinguishable from a real result.
+pub fn entry_reuse_fingerprint_matches(
+    entry: &OptimizeHistoryEntry,
+    current: Option<&str>,
+) -> bool {
+    match (entry.reuse_fingerprint.as_deref(), current) {
+        (Some(stored), Some(current)) => stored == current,
+        _ => false,
+    }
+}
+
+/// Outcome of checking a cache key against this run, for the user-facing refusal signal.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HistoryReuseStatus {
+    /// Nothing stored for this key.
+    NoEntry,
+    /// Stored fingerprint matches; metrics may be reused.
+    Match,
+    /// An entry exists but its fingerprint no longer matches. Carries the segment that changed
+    /// (see [`crate::data::optimize_fingerprint::first_mismatched_component`]), or
+    /// `"unfingerprinted"` when the entry predates fingerprinting.
+    Mismatch(&'static str),
+}
+
+/// [`HistoryReuseStatus`] for a profile + cache key without building a preconfirmed map.
+pub fn history_entry_reuse_status(
+    profile_id: &str,
+    cache_key: &str,
+    current: Option<&str>,
+) -> HistoryReuseStatus {
+    if !validate_optimize_cache_key(cache_key) {
+        return HistoryReuseStatus::NoEntry;
+    }
+    let file = load_history_file(profile_id);
+    let Some(entry) = file.entries.get(cache_key) else {
+        return HistoryReuseStatus::NoEntry;
+    };
+    match (entry.reuse_fingerprint.as_deref(), current) {
+        (Some(stored), Some(current)) if stored == current => HistoryReuseStatus::Match,
+        (Some(stored), Some(current)) => HistoryReuseStatus::Mismatch(
+            crate::data::optimize_fingerprint::first_mismatched_component(stored, current)
+                .unwrap_or("scenario"),
+        ),
+        _ => HistoryReuseStatus::Mismatch("unfingerprinted"),
+    }
+}
+
+/// Preconfirmed map plus candidate hit count, once metadata and fingerprint guards have passed.
+fn preconfirmed_map_from_entry(
+    entry: &OptimizeHistoryEntry,
+    candidates: &[CrewCandidate],
+) -> (HashMap<u64, SimulationResult>, u32) {
+    let mut map: HashMap<u64, SimulationResult> = HashMap::new();
+    for row in &entry.crews {
+        let sim = row.to_simulation_result();
+        map.insert(crew_candidate_stable_hash(&sim.candidate), sim);
+    }
+    let mut hits: u32 = 0;
+    for c in candidates {
+        if map.contains_key(&crew_candidate_stable_hash(c)) {
+            hits += 1;
+        }
+    }
+    (map, hits)
+}
+
 /// Like [`preconfirmed_for_candidates`] for exhaustive two-phase runs (`optimize_history_kind` exhaustive).
 #[allow(clippy::too_many_arguments)]
 pub fn preconfirmed_for_exhaustive_two_phase(
@@ -466,6 +573,7 @@ pub fn preconfirmed_for_exhaustive_two_phase(
     chain: &Option<ChainGrindParams>,
     exhaustive_confirm_policy: u8,
     tiered_confirm_cap_mult: Option<f32>,
+    reuse_fingerprint: Option<&str>,
     candidates: &[CrewCandidate],
 ) -> (HashMap<u64, SimulationResult>, u32) {
     let chain_fp = chain_fingerprint(chain);
@@ -473,6 +581,9 @@ pub fn preconfirmed_for_exhaustive_two_phase(
     let Some(entry) = file.entries.get(cache_key) else {
         return (HashMap::new(), 0);
     };
+    if !entry_reuse_fingerprint_matches(entry, reuse_fingerprint) {
+        return (HashMap::new(), 0);
+    }
     if !entry_matches_exhaustive_two_phase(
         entry,
         sims,
@@ -486,18 +597,7 @@ pub fn preconfirmed_for_exhaustive_two_phase(
     ) {
         return (HashMap::new(), 0);
     }
-    let mut map: HashMap<u64, SimulationResult> = HashMap::new();
-    for row in &entry.crews {
-        let sim = row.to_simulation_result();
-        map.insert(crew_candidate_stable_hash(&sim.candidate), sim);
-    }
-    let mut hits: u32 = 0;
-    for c in candidates {
-        if map.contains_key(&crew_candidate_stable_hash(c)) {
-            hits += 1;
-        }
-    }
-    (map, hits)
+    preconfirmed_map_from_entry(entry, candidates)
 }
 
 /// Build preconfirmed map when file entry matches this run's tiered metadata.
@@ -514,6 +614,7 @@ pub fn preconfirmed_for_candidates(
     chain: &Option<ChainGrindParams>,
     tiered_budget_policy: u8,
     tiered_confirm_cap_mult: Option<f32>,
+    reuse_fingerprint: Option<&str>,
     candidates: &[CrewCandidate],
 ) -> (HashMap<u64, SimulationResult>, u32) {
     let chain_fp = chain_fingerprint(chain);
@@ -521,6 +622,9 @@ pub fn preconfirmed_for_candidates(
     let Some(entry) = file.entries.get(cache_key) else {
         return (HashMap::new(), 0);
     };
+    if !entry_reuse_fingerprint_matches(entry, reuse_fingerprint) {
+        return (HashMap::new(), 0);
+    }
     if !entry_matches_run(
         entry,
         sims,
@@ -535,18 +639,7 @@ pub fn preconfirmed_for_candidates(
     ) {
         return (HashMap::new(), 0);
     }
-    let mut map: HashMap<u64, SimulationResult> = HashMap::new();
-    for row in &entry.crews {
-        let sim = row.to_simulation_result();
-        map.insert(crew_candidate_stable_hash(&sim.candidate), sim);
-    }
-    let mut hits: u32 = 0;
-    for c in candidates {
-        if map.contains_key(&crew_candidate_stable_hash(c)) {
-            hits += 1;
-        }
-    }
-    (map, hits)
+    preconfirmed_map_from_entry(entry, candidates)
 }
 
 fn ranked_to_simulation(r: &RankedCrewResult) -> SimulationResult {
@@ -591,6 +684,7 @@ pub fn build_entry_from_ranked(
     chain: &Option<ChainGrindParams>,
     tiered_budget_policy: u8,
     tiered_confirm_cap_mult: Option<f32>,
+    reuse_fingerprint: Option<String>,
     ranked: &[RankedCrewResult],
 ) -> OptimizeHistoryEntry {
     let crews: Vec<OptimizeHistoryCrewRecord> = ranked
@@ -613,6 +707,7 @@ pub fn build_entry_from_ranked(
         exhaustive_scout_top_keep: None,
         exhaustive_confirm_policy: 0,
         chain_fingerprint: chain_fingerprint(chain),
+        reuse_fingerprint,
         crews,
     }
 }
@@ -627,6 +722,7 @@ pub fn build_entry_from_ranked_exhaustive_two_phase(
     exhaustive_confirm_policy: u8,
     chain: &Option<ChainGrindParams>,
     tiered_confirm_cap_mult: Option<f32>,
+    reuse_fingerprint: Option<String>,
     ranked: &[RankedCrewResult],
 ) -> OptimizeHistoryEntry {
     let crews: Vec<OptimizeHistoryCrewRecord> = ranked
@@ -649,6 +745,7 @@ pub fn build_entry_from_ranked_exhaustive_two_phase(
         exhaustive_scout_top_keep: Some(exhaustive_top_keep),
         exhaustive_confirm_policy,
         chain_fingerprint: chain_fingerprint(chain),
+        reuse_fingerprint,
         crews,
     }
 }
@@ -674,6 +771,7 @@ mod tests {
             exhaustive_scout_top_keep: Some(4),
             exhaustive_confirm_policy: EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
             chain_fingerprint: "0".into(),
+            reuse_fingerprint: None,
             crews: vec![],
         };
         assert!(entry_matches_exhaustive_two_phase(
@@ -735,6 +833,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
+            reuse_fingerprint: None,
             crews: vec![],
         };
         assert!(!entry_matches_run(
@@ -780,6 +879,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
+            reuse_fingerprint: None,
             crews: vec![],
         };
         assert!(!entry_matches_run(
@@ -825,6 +925,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
+            reuse_fingerprint: None,
             crews: vec![],
         };
         assert!(!entry_matches_run(
@@ -874,6 +975,7 @@ mod tests {
                     exhaustive_scout_top_keep: None,
                     exhaustive_confirm_policy: 0,
                     chain_fingerprint: "0".to_string(),
+                    reuse_fingerprint: None,
                     crews: vec![],
                 },
             );
@@ -926,6 +1028,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
+            reuse_fingerprint: None,
             crews: vec![
                 OptimizeHistoryCrewRecord::from_simulation(&dummy_sim(
                     CrewCandidate {
@@ -969,6 +1072,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".into(),
+            reuse_fingerprint: None,
             crews: vec![OptimizeHistoryCrewRecord::from_simulation(&dummy_sim(
                 CrewCandidate {
                     captain: "Solo".into(),
@@ -983,5 +1087,107 @@ mod tests {
             secondary: crate::optimizer::chain::ChainSecondaryObjective::MinHullDamage,
         });
         assert!(super::prior_reference_crews_from_entry(&entry, &chain).is_empty());
+    }
+
+    fn fingerprinted_entry(fingerprint: Option<&str>) -> OptimizeHistoryEntry {
+        OptimizeHistoryEntry {
+            updated_at_ms: 1,
+            sims: 100,
+            seed: 2,
+            tiered_scout_sims: 500,
+            tiered_top_k: 20,
+            n_candidates: 50,
+            optimize_history_kind: OPTIMIZE_HISTORY_KIND_TIERED,
+            tiered_scout_allocator: 1,
+            tiered_budget_policy: TIERED_BUDGET_POLICY_V2,
+            tiered_confirm_cap_mult: None,
+            exhaustive_scout_sims: None,
+            exhaustive_scout_top_keep: None,
+            exhaustive_confirm_policy: 0,
+            chain_fingerprint: "0".into(),
+            reuse_fingerprint: fingerprint.map(str::to_string),
+            crews: vec![OptimizeHistoryCrewRecord::from_simulation(&dummy_sim(
+                CrewCandidate {
+                    captain: "Cap".into(),
+                    bridge: vec!["B1".into()],
+                    below_decks: vec![],
+                },
+                0.9,
+            ))],
+        }
+    }
+
+    #[test]
+    fn reuse_fingerprint_must_match_exactly() {
+        let entry = fingerprinted_entry(Some("1:aaaa:bbbb:cccc:dddd"));
+        assert!(entry_reuse_fingerprint_matches(
+            &entry,
+            Some("1:aaaa:bbbb:cccc:dddd")
+        ));
+        assert!(!entry_reuse_fingerprint_matches(
+            &entry,
+            Some("1:aaaa:bbbb:cccc:ddde")
+        ));
+    }
+
+    /// Entries written before fingerprinting existed must not hand back metrics: there is no
+    /// evidence the engine or data behind them still matches.
+    #[test]
+    fn absent_stored_fingerprint_refuses_metric_reuse() {
+        let entry = fingerprinted_entry(None);
+        assert!(!entry_reuse_fingerprint_matches(&entry, Some("1:a:b:c:d")));
+    }
+
+    /// Callers that cannot compute a fingerprint (bench binaries, library users) fail closed rather
+    /// than silently reusing whatever is on disk.
+    #[test]
+    fn absent_current_fingerprint_refuses_metric_reuse() {
+        let entry = fingerprinted_entry(Some("1:aaaa:bbbb:cccc:dddd"));
+        assert!(!entry_reuse_fingerprint_matches(&entry, None));
+        assert!(!entry_reuse_fingerprint_matches(
+            &fingerprinted_entry(None),
+            None
+        ));
+    }
+
+    /// Crew identities stay reusable across an engine or profile change even though metrics do not.
+    #[test]
+    fn identity_paths_ignore_the_reuse_fingerprint() {
+        let entry = fingerprinted_entry(Some("1:stale:stale:stale:stale"));
+        let priors = super::prior_reference_crews_from_entry(&entry, &None);
+        assert_eq!(priors.len(), 1);
+        assert_eq!(priors[0].captain, "Cap");
+        assert_eq!(
+            super::novelty_anchor_rows_from_history_entry(&entry, &None).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn preconfirmed_map_from_entry_counts_candidate_hits() {
+        let entry = fingerprinted_entry(Some("1:a:b:c:d"));
+        let stored = CrewCandidate {
+            captain: "Cap".into(),
+            bridge: vec!["B1".into()],
+            below_decks: vec![],
+        };
+        let other = CrewCandidate {
+            captain: "Nobody".into(),
+            bridge: vec![],
+            below_decks: vec![],
+        };
+        let (map, hits) = preconfirmed_map_from_entry(&entry, &[stored, other]);
+        assert_eq!(map.len(), 1);
+        assert_eq!(hits, 1);
+    }
+
+    #[test]
+    fn officer_scores_reset_when_the_catalog_fingerprint_moves() {
+        let mut scores = OfficerPerformanceScores::new();
+        scores.set_data_fingerprint("catalog-a");
+        assert!(scores.is_compatible_with_data_fingerprint(Some("catalog-a")));
+        assert!(!scores.is_compatible_with_data_fingerprint(Some("catalog-b")));
+        // No recorded fingerprint: adopt rather than discard — sampling bias, never a reported number.
+        assert!(OfficerPerformanceScores::new().is_compatible_with_data_fingerprint(Some("any")));
     }
 }

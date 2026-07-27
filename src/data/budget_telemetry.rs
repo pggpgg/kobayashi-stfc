@@ -118,6 +118,12 @@ pub fn maybe_append_row<'a>(profile_id: Option<&str>, row: &BudgetTelemetryRow<'
         return;
     };
     let _ = writeln!(f, "{line}");
+    drop(f);
+    // Same unbounded-append hazard as the observation log; same bounded rotation.
+    crate::data::optimize_observations::rotate_if_oversized(
+        &path,
+        crate::data::optimize_observations::MAX_OPTIMIZE_OBSERVATIONS_BYTES,
+    );
 }
 
 #[cfg(test)]

@@ -317,6 +317,7 @@ export default function Workspace() {
             chainSecondary={ws.chainSecondary}
             onChainSecondaryChange={ws.setChainSecondary}
             cachedWarmStartBadge={ws.cachedWarmStartBadge}
+            staleCacheRefusedReason={ws.staleCacheRefusedReason}
           />
         )}
       </div>

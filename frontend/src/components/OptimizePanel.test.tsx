@@ -292,6 +292,18 @@ describe("OptimizePanel", () => {
     expect(screen.getByText("Cached warm start")).toBeTruthy();
   });
 
+  it("says why saved results were ignored and names the cause", () => {
+    render(<OptimizePanel {...baseProps} staleCacheRefusedReason="profile" />);
+    expect(screen.getByText("Saved results ignored")).toBeTruthy();
+    expect(screen.getByText(/Your profile changed/i)).toBeTruthy();
+    expect(screen.getByText(/re-simulated/i)).toBeTruthy();
+  });
+
+  it("hides the ignored-results notice when nothing was refused", () => {
+    render(<OptimizePanel {...baseProps} staleCacheRefusedReason={null} />);
+    expect(screen.queryByText("Saved results ignored")).toBeNull();
+  });
+
   it("shows linear eval strategy and hides tiered fields", () => {
     render(<OptimizePanel {...baseProps} optimizerStrategy="linear_eval" />);
     expect(
