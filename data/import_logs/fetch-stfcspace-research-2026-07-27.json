@@ -1,0 +1,12 @@
+{
+  "started": "2026-07-27T09:44:26.519Z",
+  "source": "https://data.stfc.space",
+  "segment": "research",
+  "mode": "missing-only",
+  "total": 2527,
+  "fetched": 0,
+  "skipped": 2527,
+  "failed": 0,
+  "failures": [],
+  "finished": "2026-07-27T09:44:26.612Z"
+}
