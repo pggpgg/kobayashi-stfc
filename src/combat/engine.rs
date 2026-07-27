@@ -2104,12 +2104,16 @@ fn apply_round_end_phase(
     }
     *total_attacker_hull_damage += defender.end_of_round_damage;
     *attacker_hull_gross_damage_this_round += defender.end_of_round_damage;
+    // Same "is the defender dead?" value the round loop checks once this phase returns, so a
+    // hostile destroyed this round cannot fire its scheduled lethal beam on the way down.
+    let defender_hull_after_round_end = (defender.hull_health - *total_hull_damage).max(0.0);
     let lethal_damage = hostile_lethal_end_of_round_hull_damage(
         defender_crew,
         &ctx_after_weapons,
         round_index,
         attacker.hull_health.max(0.0),
         *total_attacker_hull_damage,
+        defender_hull_after_round_end,
     );
     *total_attacker_hull_damage += lethal_damage;
     *attacker_hull_gross_damage_this_round += lethal_damage;

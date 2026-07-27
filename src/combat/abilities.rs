@@ -1185,13 +1185,23 @@ pub fn hostile_crit_damage_reduction_active_at_round(
 }
 
 /// Hull damage from Xindi-style lethal round-end weapons on the hostile defender crew.
+///
+/// `defender_hull_remaining` is the hostile's own HHP after every damage term of this round,
+/// matching the value the round loop uses to decide the fight is over. A destroyed hostile does
+/// not fire: without this gate a kill landing exactly on the interval round (round 8 for the
+/// Species 8472 Energy Focused Beam) would take the attacker with it and score a win as a
+/// mutual-death loss.
 pub fn hostile_lethal_end_of_round_hull_damage(
     crew: &CrewConfiguration,
     ctx: &CombatContext,
     round_index: u32,
     attacker_max_hull: f64,
     total_attacker_hull_damage: f64,
+    defender_hull_remaining: f64,
 ) -> f64 {
+    if defender_hull_remaining <= 0.0 {
+        return 0.0;
+    }
     let remaining = (attacker_max_hull - total_attacker_hull_damage).max(0.0);
     if remaining <= 0.0 {
         return 0.0;
@@ -2747,12 +2757,12 @@ mod tests {
         };
         let mut ctx = ctx_default();
         assert_eq!(
-            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0),
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0, 500.0),
             1000.0
         );
         ctx.defender_assimilated_active = true;
         assert_eq!(
-            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0),
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0, 500.0),
             0.0
         );
     }
@@ -2838,12 +2848,44 @@ mod tests {
         };
         let ctx = ctx_default();
         assert_eq!(
-            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 7, 1000.0, 0.0),
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 7, 1000.0, 0.0, 500.0),
             0.0
         );
         assert_eq!(
-            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 200.0),
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 200.0, 500.0),
             800.0
+        );
+    }
+
+    #[test]
+    fn hostile_lethal_end_of_round_skips_when_defender_destroyed() {
+        // The interval round is also the round the attacker killed the hostile: the beam must not
+        // fire, or the win is recorded as a mutual-death loss.
+        let crew = CrewConfiguration {
+            seats: vec![make_seat(
+                CrewSeat::Ship,
+                make_ability(
+                    "energy_focused_beam",
+                    AbilityClass::ShipAbility,
+                    TimingWindow::RoundEnd,
+                    AbilityEffect::HostileLethalEndOfRound {
+                        round_interval: 8,
+                        shots: 1,
+                        prevent_when_defender_assimilated: false,
+                    },
+                ),
+                None,
+            )],
+        };
+        let ctx = ctx_default();
+        assert_eq!(
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0, 0.0),
+            0.0
+        );
+        // A hostile that survived the same round still fires.
+        assert_eq!(
+            hostile_lethal_end_of_round_hull_damage(&crew, &ctx, 8, 1000.0, 0.0, 0.5),
+            1000.0
         );
     }
 

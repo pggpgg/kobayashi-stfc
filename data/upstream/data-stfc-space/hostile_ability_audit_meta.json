@@ -1626,13 +1626,13 @@
       "effect_type": "combat_noop"
     },
     "750815541": {
-      "bucket": "scheduled_lethal_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 73054,
       "hostile_count": 5,
       "sample_hostile_id": "1366188504",
       "sample_level": 42,
       "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg polygon fires its cutting beam dealing lethal damage to enemy ships.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "755115993": {
       "bucket": "engagement_limit_combat",
@@ -7815,13 +7815,13 @@
       "effect_type": "isolytic_defense"
     },
     "3797564109": {
-      "bucket": "scheduled_lethal_review",
+      "bucket": "scheduled_lethal_combat",
       "loca_id": 73050,
       "hostile_count": 5,
       "sample_hostile_id": "1098304183",
       "sample_level": 44,
       "text_snippet": "defense protocol \u03b1\non the second weapon of every round the borg type 03 fires its cutting beam dealing lethal damage to enemy ships.",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_lethal_end_of_round"
     },
     "3798250342": {
       "bucket": "isolytic_combat",
