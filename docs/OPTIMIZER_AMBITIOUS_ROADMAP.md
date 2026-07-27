@@ -4,7 +4,7 @@ Future work for the next generation of Kobayashi's crew optimizer. This roadmap 
 
 Current optimizer behavior belongs in [DESIGN.md](DESIGN.md), [PERFORMANCE.md](PERFORMANCE.md), and [CREW_OPTIMIZATION_METHODS.md](CREW_OPTIMIZATION_METHODS.md). Completed implementation details should not accumulate here.
 
-_Last updated 2026-07-20._
+_Last updated 2026-07-27._
 
 ## North Star
 
@@ -95,6 +95,14 @@ Make each recommendation auditable from input through confirmation:
 - retain enough local-refinement context to explain changed officers and measured gain
 
 Harden durable observation storage with retention, compaction, schema migration, and offline inspection tools. Observation reuse must be fingerprint-safe and must never cross incompatible simulator or data versions.
+
+**Status: fingerprint-safe reuse landed** — [`src/data/optimize_fingerprint.rs`](../src/data/optimize_fingerprint.rs). A `ReuseFingerprint` carries four independent segments — `engine` (a synthetic canary-fight digest plus combat-affecting env values and `COMBAT_ENGINE_BEHAVIOR_VERSION`), `data` (LCARS officer model, eligibility matrix, research/support-buff/forbidden-tech catalogs, ship/hostile index versions, hostile ability catalog), `profile` (contents of every combat-relevant file under `profiles/{id}/`), and `scenario` (the **resolved** `ShipRecord` and `HostileRecord`, buff selections, PvP defender) — so a mismatch is attributable rather than just fatal.
+
+Stored **metrics** are refused unless all four match: `preconfirmed_for_candidates`, `preconfirmed_for_exhaustive_two_phase`, and the learning-signal auto-tuner (which derived confirm-budget policy from stored Wilson intervals). Absent fingerprints fail closed, so pre-fingerprint entries and non-server callers never reuse. Crew **identities** stay ungated for matchup priors and novelty anchors — a good crew composition survives an engine fix, and those crews are already re-validated against the live catalog and roster. Officer-learning scores are name-keyed, so they reset on a `data` change only.
+
+Refusals are visible: `scenario.optimize_history_reuse_refused{,_component}` plus `optimize_reuse_fingerprint` on the optimize response, an `approximate_notes` line, and a "Saved results ignored" badge in the SPA. Observation and budget-telemetry JSONL logs rotate at a size cap (two generations), rows carry the fingerprint and a real simulator identity, and `kobayashi observations [--stale-only] [--summary] [--json]` inspects a log read-only, flagging rows whose fingerprint no longer matches the current build. The migration is non-destructive: `OPTIMIZE_HISTORY_SCHEMA` stays at 2 and old entries age out through the existing LRU.
+
+Still open on this item: preserving **every** proposing method rather than the single collapsed label, the discovery/promotion/confirmation stage model, explicit `evidence_level` / `uncertainty_reason` / `confirmation_depth` fields (`trials_run` is today's de-facto depth signal), seed-panel identity (there are no shared seed panels yet — see §5.2), and per-record schema migration for observation rows (the reader tolerates both schemas instead).
 
 ### 1.4 Controlled Benchmark Expansion
 

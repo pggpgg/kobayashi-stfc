@@ -35,6 +35,7 @@ enum Command {
     SobolSensitivity,
     Battlelogs,
     SearchSpaceReport,
+    Observations,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -77,6 +78,7 @@ fn parse_command() -> Option<Command> {
         Some("sobol-sensitivity") => Some(Command::SobolSensitivity),
         Some("battlelogs") => Some(Command::Battlelogs),
         Some("search-space-report") => Some(Command::SearchSpaceReport),
+        Some("observations") => Some(Command::Observations),
         _ => None,
     }
 }
@@ -1103,9 +1105,191 @@ fn search_space_report_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+/// `kobayashi observations` — read-only inspection of a profile's optimizer observation log
+/// (`profiles/{id}/optimize_observations.jsonl`, written when `KOBAYASHI_OPTIMIZE_OBSERVATIONS=1`).
+///
+/// Flags every row whose reuse fingerprint no longer matches this build, so it is obvious which
+/// stored observations describe a different engine, catalog, profile, or matchup. Writes nothing.
+fn observations_command(args: &[String]) -> Result<(), String> {
+    use kobayashi::data::data_registry::DataRegistry;
+    use kobayashi::data::optimize_fingerprint::{
+        compute_reuse_fingerprint, first_mismatched_component, ReuseScenarioInputs,
+    };
+    use kobayashi::data::optimize_observations::{
+        observations_log_path, read_observation_records, OptimizeObservationRecord,
+    };
+    use std::collections::BTreeMap;
+
+    let profile_id = parse_profile_arg(args).unwrap_or_else(|| resolve_profile_id_for_api(None));
+    let limit = parse_named_string_arg_main(args, "--limit").and_then(|s| s.parse::<usize>().ok());
+    let ship_filter = parse_named_string_arg_main(args, "--ship");
+    let hostile_filter = parse_named_string_arg_main(args, "--hostile");
+    let strategy_filter = parse_named_string_arg_main(args, "--strategy");
+    let stale_only = args.iter().any(|a| a == "--stale-only");
+    let summary_only = args.iter().any(|a| a == "--summary");
+    let as_json = args.iter().any(|a| a == "--json");
+
+    let path = match parse_named_string_arg_main(args, "--path") {
+        Some(p) => std::path::PathBuf::from(p),
+        None => observations_log_path(Some(profile_id.as_str())).ok_or_else(|| {
+            format!("could not resolve an observation log path for profile '{profile_id}'")
+        })?,
+    };
+    if !path.exists() {
+        return Err(format!(
+            "no observation log at {} (set KOBAYASHI_OPTIMIZE_OBSERVATIONS=1 and run an optimize first)",
+            path.display()
+        ));
+    }
+
+    let rows = read_observation_records(&path, limit)
+        .map_err(|e| format!("read {}: {e}", path.display()))?;
+    let matches_filters = |row: &OptimizeObservationRecord| {
+        ship_filter.as_deref().is_none_or(|s| row.ship == s)
+            && hostile_filter.as_deref().is_none_or(|h| row.hostile == h)
+            && strategy_filter.as_deref().is_none_or(|s| row.strategy == s)
+    };
+
+    // Each row records the matchup it was measured on, so staleness is judged per row against a
+    // fingerprint recomputed for that same matchup under the current build.
+    let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
+    let mut current_by_matchup: BTreeMap<String, String> = BTreeMap::new();
+    let mut stale_reason: Vec<(usize, Option<&'static str>)> = Vec::new();
+    for (index, row) in rows.iter().enumerate() {
+        let matchup = format!(
+            "{}|{}|{}|{}|{}",
+            row.ship,
+            row.hostile,
+            row.ship_tier.unwrap_or(0),
+            row.ship_level.unwrap_or(0),
+            row.enemy_type.as_deref().unwrap_or("")
+        );
+        let current = current_by_matchup
+            .entry(matchup)
+            .or_insert_with(|| {
+                compute_reuse_fingerprint(
+                    &registry,
+                    row.profile_id.as_deref().or(Some(profile_id.as_str())),
+                    &ReuseScenarioInputs {
+                        ship: row.ship.as_str(),
+                        hostile: row.hostile.as_str(),
+                        ship_tier: row.ship_tier,
+                        ship_level: row.ship_level,
+                        enemy_type: row.enemy_type.as_deref(),
+                        defender_opponent: "hostile",
+                        ..Default::default()
+                    },
+                )
+                .encode()
+            })
+            .clone();
+        let reason = match row.reuse_fingerprint.as_deref() {
+            Some(stored) => first_mismatched_component(stored, &current),
+            None => Some("unfingerprinted"),
+        };
+        stale_reason.push((index, reason));
+    }
+
+    let selected: Vec<(&OptimizeObservationRecord, Option<&'static str>)> = stale_reason
+        .iter()
+        .map(|(index, reason)| (&rows[*index], *reason))
+        .filter(|(row, reason)| matches_filters(row) && (!stale_only || reason.is_some()))
+        .collect();
+
+    let mut by_reason: BTreeMap<&str, usize> = BTreeMap::new();
+    let mut by_strategy: BTreeMap<&str, usize> = BTreeMap::new();
+    for (row, reason) in &selected {
+        *by_reason.entry(reason.unwrap_or("current")).or_default() += 1;
+        *by_strategy.entry(row.strategy.as_str()).or_default() += 1;
+    }
+    let first_ts = selected.first().map(|(r, _)| r.ts_ms).unwrap_or(0);
+    let last_ts = selected.last().map(|(r, _)| r.ts_ms).unwrap_or(0);
+
+    if as_json {
+        let payload = serde_json::json!({
+            "path": path.display().to_string(),
+            "profile_id": profile_id,
+            "rows_read": rows.len(),
+            "rows_selected": selected.len(),
+            "first_ts_ms": first_ts,
+            "last_ts_ms": last_ts,
+            "by_fingerprint_status": by_reason,
+            "by_strategy": by_strategy,
+            "rows": (!summary_only).then(|| {
+                selected
+                    .iter()
+                    .map(|(row, reason)| {
+                        serde_json::json!({
+                            "ts_ms": row.ts_ms,
+                            "schema_version": row.schema_version,
+                            "ship": row.ship,
+                            "hostile": row.hostile,
+                            "strategy": row.strategy,
+                            "method_provenance": row.method_provenance,
+                            "captain": row.captain,
+                            "bridge": row.bridge,
+                            "below_decks": row.below_decks,
+                            "trials_run": row.trials_run,
+                            "win_rate": row.win_rate,
+                            "avg_hull_remaining": row.avg_hull_remaining,
+                            "reuse_fingerprint": row.reuse_fingerprint,
+                            "stale_component": reason,
+                        })
+                    })
+                    .collect::<Vec<_>>()
+            }),
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&payload).map_err(|e| format!("serialize: {e}"))?
+        );
+        return Ok(());
+    }
+
+    println!("# Optimizer observations\n");
+    println!("- log: `{}`", path.display());
+    println!("- profile: `{profile_id}`");
+    println!("- rows: {} read, {} shown", rows.len(), selected.len());
+    if !selected.is_empty() {
+        println!("- timestamps (ms): {first_ts} … {last_ts}");
+    }
+    println!("\n## Fingerprint status\n");
+    if by_reason.is_empty() {
+        println!("_no rows matched the filters._");
+    } else {
+        println!("| status | rows |");
+        println!("|---|---|");
+        for (status, count) in &by_reason {
+            println!("| {status} | {count} |");
+        }
+    }
+    if !summary_only && !selected.is_empty() {
+        println!("\n## Rows\n");
+        println!(
+            "| ts_ms | ship | hostile | strategy | method | captain | trials | win% | status |"
+        );
+        println!("|---|---|---|---|---|---|---|---|---|");
+        for (row, reason) in &selected {
+            println!(
+                "| {} | {} | {} | {} | {} | {} | {} | {:.1} | {} |",
+                row.ts_ms,
+                row.ship,
+                row.hostile,
+                row.strategy,
+                row.method_provenance,
+                row.captain,
+                row.trials_run,
+                row.win_rate * 100.0,
+                reason.unwrap_or("current"),
+            );
+        }
+    }
+    Ok(())
+}
+
 fn print_usage() {
     eprintln!(
-        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|morris-sensitivity|sobol-sensitivity|battlelogs|search-space-report> [args]\n\
+        "usage: kobayashi <serve|simulate|optimize|import|validate|validate-log|generate-lcars|mitigation-sensitivity|sensitivity|morris-sensitivity|sobol-sensitivity|battlelogs|search-space-report|observations> [args]\n\
 simulate: kobayashi simulate <rounds> <seed> [--profile <id>] [--defender-faction <slug>] [--hostile <id>]\n\
   or kobayashi simulate --attacker-id <id> --attacker-attack <f64> ... [--defender-faction <slug>] [--hostile <id>] [--profile <id>]\n\
 optimize: kobayashi optimize <ship> <hostile> <sims> [--profile <id>]\n\
@@ -1117,7 +1301,8 @@ sensitivity: kobayashi sensitivity --ship <id> --hostile <id> --captain <id> --b
 morris-sensitivity: kobayashi morris-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--sims <n>] [--r <trajectories>] [--seed <n>] [--profile <id>]\n\
 sobol-sensitivity: kobayashi sobol-sensitivity --ship <id> --hostile <id> --captain <id> --bridge <id,id,...> [--below-decks <id,...>] [--ship-tier <n>] [--ship-level <n>] [--metric hull|win|rounds|defender_hull] [--n <samples>] [--seed <n>] [--profile <id>]\n\
 battlelogs: kobayashi battlelogs [--profile <id>] [--sample]\n\
-search-space-report: kobayashi search-space-report [--enemy-type <scenario>] [--below-decks-slots <n>] [--mode strict|scored|relaxed] [--sims <n>] [--json]"
+search-space-report: kobayashi search-space-report [--enemy-type <scenario>] [--below-decks-slots <n>] [--mode strict|scored|relaxed] [--sims <n>] [--json]\n\
+observations: kobayashi observations [--profile <id>] [--path <p>] [--limit <n>] [--ship <id>] [--hostile <id>] [--strategy <s>] [--stale-only] [--summary] [--json]"
     );
 }
 
@@ -1210,6 +1395,13 @@ fn main() {
         Some(Command::SearchSpaceReport) => {
             if let Err(err) = search_space_report_command(&command_args) {
                 eprintln!("search-space-report error: {err}");
+                print_usage();
+                exit_code = 2;
+            }
+        }
+        Some(Command::Observations) => {
+            if let Err(err) = observations_command(&command_args) {
+                eprintln!("observations error: {err}");
                 print_usage();
                 exit_code = 2;
             }

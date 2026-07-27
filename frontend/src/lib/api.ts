@@ -760,6 +760,16 @@ export interface OptimizeResponse {
     optimize_history_confirm_hits?: number | null;
     /** True when the server wrote an entry to `optimize_history.json` for this run. */
     optimize_history_wrote?: boolean | null;
+    /**
+     * True when stored confirmations existed for this cache key but were refused because the run's
+     * reuse fingerprint changed (engine, game data, profile, or matchup). Every crew was
+     * re-simulated, so this run's numbers are fresh.
+     */
+    optimize_history_reuse_refused?: boolean | null;
+    /** Which fingerprint segment changed: `engine` | `data` | `profile` | `scenario` | `schema` | `unfingerprinted`. */
+    optimize_history_reuse_refused_component?: string | null;
+    /** Reuse fingerprint this run computed (`schema:engine:data:profile:scenario`). */
+    optimize_reuse_fingerprint?: string | null;
   };
   recommendations: CrewRecommendation[];
   duration_ms?: number;

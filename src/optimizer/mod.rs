@@ -548,7 +548,25 @@ pub struct OptimizationScenario<'a> {
     pub tiered_scout_uniform: bool,
     /// Tiered: when set, shrink per-top-K confirmation totals so the sum does not exceed `floor(mult * K * simulation_count)`.
     /// Exhaustive two-phase: same cap applies to the width-based confirmation pass on the top-`keep` crews.
+    ///
+    /// This is the **effective** cap for *this* run, which the server may have auto-derived from
+    /// learning signals when the caller did not ask for one. Use
+    /// [`Self::optimize_history_confirm_cap_mult`] — not this — as the `optimize_history` cache key.
     pub tiered_confirm_budget_cap_mult: Option<f64>,
+    /// Confirm cap the **caller asked for**, used only as the `optimize_history` compatibility key
+    /// (`OptimizeHistoryEntry::tiered_confirm_cap_mult`, which stores the same value).
+    ///
+    /// Kept separate from [`Self::tiered_confirm_budget_cap_mult`] because the auto-tuner derives a
+    /// cap *from* the stored entry: folding that derived value into cache identity made every entry
+    /// reject itself on the next run, so the cache never hit on the default path. Cache identity has
+    /// to depend on the request, not on something computed from the cached entry.
+    ///
+    /// Consequence, on purpose: rows reused from an entry written under a different auto-derived cap
+    /// carry the confirmation depth they were measured at, which can differ from this run's fresh
+    /// rows. Tiered results are already depth-heterogeneous (scout-only vs confirmed rows), and
+    /// `recommendation_reason` discloses it (roadmap §1.2), so reuse stays honest — whereas a cache
+    /// that never hits is simply wasted.
+    pub optimize_history_confirm_cap_mult: Option<f64>,
     /// Tiered only: when true, use priority-queue-based scout scheduling instead of the default
     /// coarse→refine adaptive scout. Promising crews get more trials sooner; hopeless crews are
     /// abandoned early. Uses `tiered_pq_minimal_scout` (default 100), `tiered_pq_selection_mult`
@@ -612,6 +630,11 @@ pub struct OptimizationScenario<'a> {
     pub prior_reference_crews: Vec<CrewCandidate>,
     /// Opaque client fingerprint for [`crate::data::optimize_history`] when `profile_id` is set.
     pub optimize_cache_key: Option<String>,
+    /// Server-computed reuse fingerprint ([`crate::data::optimize_fingerprint`]) covering the engine,
+    /// catalogs, profile, and resolved matchup. Required to reuse **stored metrics** from
+    /// `optimize_history`: `None` refuses reuse, so callers that never persist history (bench
+    /// binaries, library users) fail closed without extra wiring.
+    pub reuse_fingerprint: Option<String>,
     /// Analytical prefilter only: include learned pair co-occurrence prior from warm-start/history refs.
     pub enable_learned_pair_prior: bool,
     /// Optional per-officer performance scores loaded from optimize history.
@@ -645,6 +668,7 @@ impl Default for OptimizationScenario<'_> {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            optimize_history_confirm_cap_mult: None,
             tiered_scout_priority_queue: false,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
@@ -668,6 +692,7 @@ impl Default for OptimizationScenario<'_> {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            reuse_fingerprint: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
@@ -710,7 +735,10 @@ fn tiered_preconfirmed_map(
                 tiered_scout_allocator_id(scenario),
                 &scenario.chain_grind,
                 crate::data::optimize_history::TIERED_BUDGET_POLICY_V2,
-                scenario.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                // The requested cap, not the effective one: the auto-tuner derives its cap from this
+                // very entry, so keying on the derived value made entries reject themselves.
+                scenario.optimize_history_confirm_cap_mult.map(|x| x as f32),
+                scenario.reuse_fingerprint.as_deref(),
                 candidates,
             )
         }
@@ -742,7 +770,10 @@ fn exhaustive_two_phase_preconfirmed_map(
                 exhaustive_top_keep,
                 &scenario.chain_grind,
                 crate::data::optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
-                scenario.tiered_confirm_budget_cap_mult.map(|x| x as f32),
+                // The requested cap, not the effective one: the auto-tuner derives its cap from this
+                // very entry, so keying on the derived value made entries reject themselves.
+                scenario.optimize_history_confirm_cap_mult.map(|x| x as f32),
+                scenario.reuse_fingerprint.as_deref(),
                 candidates,
             )
         }
@@ -2181,6 +2212,7 @@ pub fn optimize_crew(
         tiered_top_k: None,
         tiered_scout_uniform: false,
         tiered_confirm_budget_cap_mult: None,
+        optimize_history_confirm_cap_mult: None,
         tiered_scout_priority_queue: false,
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
@@ -2204,6 +2236,7 @@ pub fn optimize_crew(
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
+        reuse_fingerprint: None,
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
         local_refinement: None,
@@ -2682,6 +2715,7 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            optimize_history_confirm_cap_mult: None,
             tiered_scout_priority_queue: false,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
@@ -2705,6 +2739,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            reuse_fingerprint: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
@@ -2840,6 +2875,7 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            optimize_history_confirm_cap_mult: None,
             tiered_scout_priority_queue: false,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
@@ -2863,6 +2899,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            reuse_fingerprint: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
@@ -2917,6 +2954,7 @@ mod tests {
             tiered_top_k: None,
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
+            optimize_history_confirm_cap_mult: None,
             tiered_scout_priority_queue: false,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
@@ -2940,6 +2978,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            reuse_fingerprint: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
@@ -2988,6 +3027,7 @@ mod tests {
             tiered_top_k: Some(10),
             tiered_scout_uniform: true,
             tiered_confirm_budget_cap_mult: None,
+            optimize_history_confirm_cap_mult: None,
             tiered_scout_priority_queue: false,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
@@ -3011,6 +3051,7 @@ mod tests {
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
+            reuse_fingerprint: None,
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,

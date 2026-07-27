@@ -162,7 +162,9 @@ Explicit `strategy` values: `tiered`, `exhaustive`, `genetic`, and `linear_eval`
 
 Resolved defaults: [`tiered_scout_sims_for_workload`](../src/optimizer/tiered.rs), [`tiered_top_k_for_workload`](../src/optimizer/tiered.rs).
 
-**Optimize history:** matching crews reuse stored scout/confirm rows ([`optimize_history::preconfirmed_for_candidates`](../src/data/optimize_history.rs)).
+**Optimize history:** matching crews reuse stored scout/confirm rows ([`optimize_history::preconfirmed_for_candidates`](../src/data/optimize_history.rs)). Reuse requires the run's **reuse fingerprint** to match (engine, data catalogs, profile contents, resolved matchup — see [`optimize_fingerprint`](../src/data/optimize_fingerprint.rs)) *and* the stored run metadata to line up: sims, seed, candidate count, scout allocator, budget policy, chain mode, and the **requested** `tiered_confirm_budget_cap_mult`.
+
+The requested cap, not the effective one: the learning-signal auto-tuner derives a cap from the stored entry's own Wilson intervals, so keying identity on the derived value made every entry reject itself on the next run and the cache never hit. Rows reused from an entry written under a different auto-derived cap keep the confirmation depth they were measured at; `recommendation_reason` discloses depth differences.
 
 ---
 

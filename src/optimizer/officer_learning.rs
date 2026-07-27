@@ -20,10 +20,23 @@ pub struct OfficerScoreKey {
     pub ship_type: String,
 }
 
+/// On-disk shape version for `officer_learning.json`.
+pub const OFFICER_LEARNING_SCHEMA: u32 = 1;
+
 /// Per-officer performance score derived from optimization history.
 /// Higher score = officer appeared more frequently in top-ranked crews for this matchup.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OfficerPerformanceScores {
+    /// On-disk shape version. `0` on files written before versioning; those are adopted as-is
+    /// rather than discarded (see [`crate::data::optimize_history::load_officer_scores`]).
+    #[serde(default)]
+    schema: u32,
+    /// `data` segment of the [`crate::data::optimize_fingerprint::ReuseFingerprint`] these scores
+    /// were accumulated under. Keys are officer **names**, so a catalog change can orphan them —
+    /// the loader resets on mismatch. Engine and profile changes are irrelevant here: these scores
+    /// only bias candidate sampling, they never become a reported metric.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    data_fingerprint: Option<String>,
     /// Scores keyed by `(officer_name, hostile_faction, ship_type)`.
     scores: HashMap<OfficerScoreKey, f64>,
     /// Minimum score assigned to officers with no history (ensures all have non-zero prob).
@@ -39,6 +52,8 @@ pub struct OfficerPerformanceScores {
 impl Default for OfficerPerformanceScores {
     fn default() -> Self {
         Self {
+            schema: OFFICER_LEARNING_SCHEMA,
+            data_fingerprint: None,
             scores: HashMap::new(),
             floor: 0.01,
             epsilon: 0.20,
@@ -56,10 +71,38 @@ impl OfficerPerformanceScores {
     /// Create with custom parameters.
     pub fn with_params(floor: f64, epsilon: f64, decay: f64) -> Self {
         Self {
+            schema: OFFICER_LEARNING_SCHEMA,
+            data_fingerprint: None,
             scores: HashMap::new(),
             floor: floor.max(0.0),
             epsilon: epsilon.clamp(0.0, 1.0),
             decay: decay.clamp(0.0, 1.0),
+        }
+    }
+
+    /// Catalog fingerprint these scores were accumulated under, if recorded.
+    pub fn data_fingerprint(&self) -> Option<&str> {
+        self.data_fingerprint.as_deref()
+    }
+
+    /// Stamp the catalog fingerprint (and current schema) before persisting.
+    pub fn set_data_fingerprint(&mut self, fingerprint: &str) {
+        self.schema = OFFICER_LEARNING_SCHEMA;
+        self.data_fingerprint = Some(fingerprint.to_string());
+    }
+
+    /// Whether these scores may be carried into a run whose catalog fingerprint is `expected`.
+    ///
+    /// A file with no recorded fingerprint is adopted rather than discarded: there is no evidence it
+    /// is stale, and these scores are only a sampling bias, never a reported number.
+    pub fn is_compatible_with_data_fingerprint(&self, expected: Option<&str>) -> bool {
+        if self.schema > OFFICER_LEARNING_SCHEMA {
+            return false;
+        }
+        match (self.data_fingerprint.as_deref(), expected) {
+            (Some(stored), Some(expected)) => stored == expected,
+            (Some(_), None) => true,
+            (None, _) => true,
         }
     }
 

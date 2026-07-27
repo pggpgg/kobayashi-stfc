@@ -206,6 +206,7 @@ mod tests {
             exhaustive_scout_top_keep: None,
             exhaustive_confirm_policy: 0,
             chain_fingerprint: "0".to_string(),
+            reuse_fingerprint: None,
             crews,
         }
     }
