@@ -14,7 +14,9 @@ use kobayashi::parallel::init_from_env;
 
 fn main() {
     init_from_env();
-    let ship = "saladin";
+    // Must resolve, or the scenario builder synthesizes a toy fight from the id strings and this
+    // measures nothing real — same trap the Criterion bench fell into. See the bench's module doc.
+    let ship = "uss_saladin";
     let hostile = "2918121098";
     let seed = 12345u64;
     let iterations = 1000;

@@ -7,9 +7,10 @@ Benchmarks were run after implementing the sim efficiency plan (lazy trace, pre-
 CI (`[.github/workflows/benchmark-regression.yml](../.github/workflows/benchmark-regression.yml)`) runs Criterion on `**ubuntu-24.04**` with `**CI=true**` and `**KOBAYASHI_RAYON_THREADS=2**`, then `[cargo xtask bench-check](../xtask/src/main.rs)` compares medians to the committed `[benchmark_results.log](../benchmark_results.log)`.
 
 - **Rule:** for every benchmark id listed in the log, the current run fails if `median_ns > baseline_median × 1.10` (strictly more than 10% slower). The set of ids in the log must match the set under `target/criterion/**/new/estimates.json`.
-- **Fixed seeds:** simulator benches use `SimulationConfig::seed = 7` (`[benches/simulator_bench.rs](../benches/simulator_bench.rs)`). Monte Carlo benches use `seed = 42` with ship `saladin` / hostile `2918121098` (`[benches/monte_carlo_parallel_bench.rs](../benches/monte_carlo_parallel_bench.rs)`).
+- **Fixed seeds:** simulator benches use `SimulationConfig::seed = 7` (`[benches/simulator_bench.rs](../benches/simulator_bench.rs)`). Monte Carlo benches use `seed = 42` with ship `uss_saladin` / hostile `2918121098` (`[benches/monte_carlo_parallel_bench.rs](../benches/monte_carlo_parallel_bench.rs)`).
+- **Bench ids must resolve.** An unresolvable ship or hostile id does not fail the bench — the scenario builder substitutes a fight synthesized from hashing the id strings (~260–540 defender hull), so the bench silently measures a toy fight. The Monte Carlo bench used `saladin` (not a ship id; `uss_saladin` is) until 2026-07-28 and did exactly that; switching to the real id roughly **doubled** its medians. When adding or editing a bench scenario, check the id against `data/ships_extended/index.json` / `data/hostiles/index.json`.
 - **Refreshing the baseline:** after a `**v*`** tag push, the Release workflow’s Linux job uploads `benchmark_results.fresh.log` as artifact `**benchmark-results-log**` and publishes it on the GitHub Release as `**benchmark_results.log**`. Copy that file to the repo root (replace `[benchmark_results.log](../benchmark_results.log)`), adjust the `#` header comments if needed, and open a PR to `main`.
-- **Local refresh (same env as CI):** from repo root:
+- **Local refresh (same env vars as CI, _not_ the same hardware):** from repo root:
 
 ```bash
 export CI=true
@@ -18,8 +19,30 @@ cargo bench --bench simulator --bench monte_carlo_parallel --bench simd_damage_k
 cargo xtask bench-check --write-baseline
 ```
 
+  ⚠️ **Do not commit a locally-generated baseline.** The env vars match CI but the CPU does not, and the gate compares CI medians against whatever is committed. Measured 2026-07-28 on an Apple-silicon laptop: `simulator/combat_100_rounds` **776 ns local vs 1579 ns** in the committed CI baseline — roughly 2× faster. Committing laptop numbers would put every subsequent CI run permanently over the `× 1.10` threshold. Use this locally to *inspect* a change, and refresh the committed log from `bench-refresh-baseline.yml` (below) so the numbers come from the gate's own runner.
+
 - **Noise:** shared GitHub runners vary; if the gate flakes, re-run the workflow or refresh the log from a fresh Linux release artifact. Prefer `**ubuntu-24.04`** for the committed numbers so they match the gate runner.
 - **Paired fallback (hardware drift):** when the committed-baseline comparison fails, the workflow re-benches `main` **on the same runner** (shared `CARGO_TARGET_DIR`, so only the kobayashi crates rebuild) and gates on the paired PR-vs-main medians instead. A true regression still fails (it regresses vs `main` too); a stale-baseline false positive passes and the sticky comment tells you to dispatch `bench-refresh-baseline.yml`. Motivation: on 2026-07-08 (PR #252) GitHub runner hardware changed 2-thread Rayon scaling from ~1.76× to ~1.05×, making `monte_carlo/parallel` fail +53% against the committed baseline — on `main` itself as well.
+
+### Pending: `monte_carlo/*` baseline refresh (2026-07-28)
+
+The committed `monte_carlo/sequential` and `monte_carlo/parallel` medians were measured against the
+**synthesized fallback fight** (`saladin` did not resolve), so they are stale by roughly a factor of
+two now that the bench uses `uss_saladin`. Measured on one laptop, same env vars, before → after:
+
+| bench | phantom scenario | real scenario | change |
+| --- | ---: | ---: | ---: |
+| `monte_carlo/sequential` | 78.4 ms | 172.1 ms | +119% |
+| `monte_carlo/parallel` | 71.4 ms | 141.6 ms | +99% |
+
+2-thread parallel speedup also improves, 1.10× → 1.22×: a real fight gives the threads more work
+per unit of fixed setup. `simulator/*` is unaffected — those benches build `Combatant`s directly and
+never resolve an id.
+
+**Until the baseline is refreshed from `bench-refresh-baseline.yml`, the Criterion gate fails on
+this scenario, and the paired PR-vs-`main` fallback fails too** (both sides move together only once
+`main` carries the fix). That failure is the expected consequence of measuring real combat, not a
+performance regression.
 
 ## benchmark_parallel_speedup (64 candidates × 1000 iterations)
 
@@ -97,7 +120,7 @@ Where it bites: matchups where a properly-statted ship **wins reliably but takes
 | **0.01 (default)** | **10%** | **1.06×** | ✅ |
 | 0.005 | 10% | 1.10× | ✅ |
 
-Other scenarios (margin 0.01): expensive borderline `21007889` (44s) → 9% pruned, **1.06×**; Enterprise-D vs `3931453197` (hull 0.92–0.93, *tight*) → 0% pruned, neutral (crews are genuinely near-equal — nothing to prune); saladin one-shot saturated-win → 0% pruned, neutral. Winner identical in every case.
+Other scenarios (margin 0.01): expensive borderline `21007889` (44s) → 9% pruned, **1.06×**; Enterprise-D vs `3931453197` (hull 0.92–0.93, *tight*) → 0% pruned, neutral (crews are genuinely near-equal — nothing to prune); `saladin` one-shot saturated-win → 0% pruned, neutral. Winner identical in every case. (That last scenario used the id `saladin`, which does not resolve — so its "one-shot saturated win" was the synthesized fallback fight, not a real matchup. The conclusion still holds for genuinely dominant matchups; see the bench-id note under [Regression gate](#regression-gate).)
 
 **Where it does *not* help:** dominant one-shot matchups (`win=1, hull=1` for every crew — `avg_hull_remaining` is an overkill ratio clamped to 1.0) and hopeless matchups (`win=0`). There is no spread to exploit, so abandonment correctly prunes nothing and is ~neutral. The win is real but **modest (~5–10%) and confined to the "wins-but-bleeds" regime**, because only the clearly-worst ~10% of crews sit far enough below the cut to prune safely; survivors still run ≥ `min_trials`.
 
@@ -107,7 +130,9 @@ Other scenarios (margin 0.01): expensive borderline `21007889` (44s) → 9% prun
 
 ## Tier 5: resolve-cache fix for the analytical prefilter (2026-06)
 
-Profiling a real `optimize --ship saladin --hostile 2918121098` run (macOS `sample` on a `[profile.profiling]` build) showed **~85% of samples in JSON file loading + serde deserialization**, not the combat loop. Root cause: the **analytical prefilter** sorts ~10^5 candidates, and the fallback scenario-build path (`scenario_to_combat_input_from_shared` → `computed_defender_mitigation`) called the free `resolve_hostile` / `resolve_ship`, each of which **re-read and re-parsed the ~1 MB `data/hostiles/index.json` from disk on every call** (the per-record LRU in `data_registry.rs` does not cover these free functions).
+Profiling an `optimize --ship saladin --hostile 2918121098` run (macOS `sample` on a `[profile.profiling]` build) showed **~85% of samples in JSON file loading + serde deserialization**, not the combat loop. Root cause: the **analytical prefilter** sorts ~10^5 candidates, and the fallback scenario-build path (`scenario_to_combat_input_from_shared` → `computed_defender_mitigation`) called the free `resolve_hostile` / `resolve_ship`, each of which **re-read and re-parsed the ~1 MB `data/hostiles/index.json` from disk on every call** (the per-record LRU in `data_registry.rs` does not cover these free functions).
+
+> **Why this run was on the fallback path:** `saladin` is not a ship id (`uss_saladin` is), and an unresolvable id routes the scenario build through exactly that fallback. The wasted re-parsing was real and the memoization fix below is real, but the **~46× end-to-end number is specific to the fallback path**, which resolved ids no longer take. Since 2026-07-28 the CLI and API reject unresolvable ids outright, so a run like this one is not reachable through them.
 
 Fix: process-wide memoization of `resolve_hostile` and `resolve_ship_with_tier_level` keyed by lookup args (`src/data/loader.rs`, `RwLock<HashMap<…>>`, same static-data assumption as the record LRU). The first call for a key parses the index once; subsequent calls are an O(1) lookup + a small record clone.
 
