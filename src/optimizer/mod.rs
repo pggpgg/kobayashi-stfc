@@ -8,6 +8,7 @@ pub mod genetic;
 pub mod learning_signals;
 pub mod linear_eval;
 pub mod matchup_priors;
+pub mod method_bench;
 pub mod monte_carlo;
 pub mod officer_learning;
 pub mod pareto;

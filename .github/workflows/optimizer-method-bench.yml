@@ -1,0 +1,69 @@
+# Roadmap §1.4: cross-method optimizer benchmark — recall/regret gate plus a JSONL artifact.
+#
+# Not a PR gate. This runs the optimizer for real (minutes, not seconds), and unlike the Criterion
+# job it measures search quality rather than speed, so it belongs on a schedule where a failure
+# means "the optimizer got worse" instead of "the runner was busy". Dispatch it manually when a PR
+# touches src/optimizer/.
+
+name: Optimizer method bench
+
+on:
+  schedule:
+    # Mondays 07:00 UTC, an hour after the data refresh, so a refresh-driven change shows up here.
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: optimizer-method-bench-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  method_bench:
+    name: Recall and regret vs baseline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      KOBAYASHI_RAYON_THREADS: "2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-methodbench-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-methodbench-cargo-
+
+      - name: Run bench and compare to baseline
+        id: gate
+        run: |
+          set -euo pipefail
+          cargo xtask optimizer-bench-check \
+            --jsonl-out optimizer-method-bench.jsonl \
+            --markdown-out optimizer-method-bench.md
+
+      - name: Summary
+        if: always() && hashFiles('optimizer-method-bench.md') != ''
+        run: cat optimizer-method-bench.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload bench records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimizer-method-bench
+          path: |
+            optimizer-method-bench.jsonl
+            optimizer-method-bench.md
+          if-no-files-found: warn
+          retention-days: 90

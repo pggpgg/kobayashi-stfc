@@ -608,6 +608,73 @@ exact filters + proxy scoring + diverse search + adaptive simulation + Pareto re
 - Validate heuristic winners against the full combat simulator before presenting them as best.
 - Prefer reproducible random seeds for debugging and benchmark comparisons.
 
+## 16. Cross-method benchmarking (roadmap §1.4)
+
+`optimizer_method_bench` (`src/bin/optimizer_method_bench.rs`) runs the lanes; the scoring that
+makes them comparable lives in [`src/optimizer/method_bench.rs`](../src/optimizer/method_bench.rs).
+
+### Equal-budget modes
+
+`--budget-mode` decides whether two lanes are comparable at all.
+
+| mode | what it does |
+|---|---|
+| `native` (default) | Each lane keeps its own CLI knobs. Honest for "how does the product behave today", useless for ranking methods. |
+| `equal-trials` | Every lane is sized to `--trial-budget` Monte Carlo trials. Depth is held fixed and breadth is solved for, because depth is what makes a result trustworthy. |
+| `equal-wall-clock` | Every lane is sized to `--wall-clock-ms`, from its own measured trial rate. |
+
+Wall-clock mode runs each lane twice at different probe sizes and fits `ms = fixed + trials / rate`.
+A single probe charges the lane's fixed setup to every trial, underestimates the rate, and lands
+50–90% under target; the two-point fit removes that term.
+
+Every record carries `budget.projected_trials`, `realized_trials`, and `budget_utilization`. A
+utilization well under 1.0 means the lane could not spend its budget — normally because the
+candidate space is smaller than the budget's breadth, which quietly turns an equal-budget
+comparison into "every lane searched everything". **Pick a trial budget whose breadth is below the
+case's candidate count**, or the comparison measures nothing. `linear_eval` runs no trials at all,
+so both equal-budget modes report `budget.applied: false` with a reason instead of pretending.
+
+### Reference sweep, recall, and regret
+
+`--reference-sweep` evaluates a bounded candidate set deeply with no prefilter and no search
+heuristic, giving recall and regret a ground truth. Two properties of it matter:
+
+- `covers_generator_space` says only that `--reference-max-crews` did not bind. It is **not**
+  exhaustiveness over the legal space: `CrewGenerator` narrows officer pools before enumerating, so
+  lanes that sample or evolve crews straight from the pools routinely propose crews the reference
+  never enumerated. `lane_best_crew_in_reference_set` reports that per lane.
+- Regret is measured on an **independent confirmation seed** (`confirmation_seed`). Every winner —
+  the reference's and each lane's — was chosen by maximizing a noisy score over many crews, so
+  scoring them on the seed that selected them flatters whichever search looked at the most crews.
+  The confirmation pass re-evaluates the reference's top-K and every lane's winner together on one
+  neutral seed; `regret_confirmed_on_independent_seed` records that it ran.
+
+Prefer **`score_regret_vs_reference`** over the win-rate variant. PvE win rate saturates: in most
+matchups every legal crew wins or every legal crew loses, and `win_rate_discriminates: false` marks
+those cases. The ranking score still separates crews by hull remaining and round-1 kills.
+
+### Prefilter false negatives
+
+`--prefilter-keep 64,128` runs the production analytical prefilter over the reference's evaluated
+crews and counts how many reference top-K crews it deleted. The prefilter is a soft filter, so
+every top-K crew it drops before Monte Carlo is a crew the search can no longer find.
+`win_rate_loss_at_best` separates "dropped several good crews" from "dropped the winner".
+
+### Stability and the CI gate
+
+With a `--seed-panel`, the run emits one `stability` record per (case, method): win-rate spread,
+`distinct_best_crews`, `modal_best_crew_share`, and mean recall/regret. A lane that wins on average
+but answers differently on every seed is not the same product as one that answers consistently.
+
+`cargo xtask optimizer-bench-check` runs the configuration stored in
+`optimizer_method_bench_baseline.json` and enforces three rules: a recall floor, a score-regret
+ceiling, and a control-ordering rule requiring every lane to stay within `control_margin` of the
+stratified random control. The bench is bit-deterministic per seed — identical output across thread
+counts — so the tolerances absorb intentional changes rather than noise. `.github/workflows/
+optimizer-method-bench.yml` runs it weekly and on dispatch, uploading the JSONL and Markdown.
+
+Refresh the baseline with `--write-baseline` and explain the change in the PR.
+
 ## Suggested next implementation milestones
 
 1. Add per-search telemetry: candidate counts after each filter, scout count, sim count, cache hit rate, and finalist count.

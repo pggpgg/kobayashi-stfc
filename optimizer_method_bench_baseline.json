@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "note": "Roadmap §1.4 gate. Per-method reference top-K recall and ranking-score regret for the cross-method optimizer benchmark. The bench is bit-deterministic per seed (identical output at 2 and at all threads), so these tolerances absorb intentional optimizer changes, not measurement noise. Regenerate with `cargo xtask optimizer-bench-check --write-baseline` after an intentional change, and say why in the PR. KNOWN FINDING, not a passing grade: on this case at this budget the stratified random control reaches 0.0 score regret while tiered sits at ~0.0063, because the crews random samples are outside CrewGenerator's narrowed proposal space (see lane field `lane_best_crew_in_reference_set`). `control_margin` is set wide enough to tolerate that known gap so the gate still catches a further regression; closing the gap is tracked in docs/OPTIMIZER_AMBITIOUS_ROADMAP.md §1.4.",
+  "config": {
+    "case": "saladin_corvus",
+    "methods": [
+      "tiered",
+      "genetic",
+      "warm_start_tiered",
+      "random_stratified"
+    ],
+    "budget_mode": "equal-trials",
+    "trial_budget": 40000,
+    "seed_panel": [
+      7,
+      11,
+      13,
+      17,
+      23
+    ],
+    "reference_sims": 400,
+    "reference_max_crews": 800,
+    "recall_top_k": 10,
+    "prefilter_keep": [
+      64,
+      128
+    ],
+    "profile": "demo"
+  },
+  "tolerances": {
+    "recall_drop": 0.1,
+    "score_regret_increase": 0.002,
+    "control_margin": 0.01
+  },
+  "methods": {
+    "genetic": {
+      "top_k_recall_mean": 0.0,
+      "score_regret_mean": 0.0005457520484924317
+    },
+    "random_stratified": {
+      "top_k_recall_mean": 0.0,
+      "score_regret_mean": 0.0
+    },
+    "tiered": {
+      "top_k_recall_mean": 0.36,
+      "score_regret_mean": 0.006274855136871338
+    },
+    "warm_start_tiered": {
+      "top_k_recall_mean": 0.36,
+      "score_regret_mean": 0.004052412509918213
+    }
+  }
+}
