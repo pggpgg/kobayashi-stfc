@@ -44,7 +44,7 @@ fn mitigation_player_vs_player_is_deterministic() {
     let registry = DataRegistry::load().expect("registry");
     let ent = registry
         .resolve_ship_with_tier_level("uss_enterprise_d", Some(5), Some(50))
-        .expect("enterprise");
+        .expect("uss_enterprise");
     let rot = registry
         .resolve_ship_with_tier_level("rotarran", Some(5), Some(50))
         .expect("rotarran");

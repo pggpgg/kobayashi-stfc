@@ -66,7 +66,7 @@ fn tags(row: &Value) -> Vec<String> {
 #[tokio::test]
 async fn optimize_tags_a_front_and_explains_every_tagged_row() {
     let payload = optimize(
-        r#"{"ship":"saladin","hostile":"2918121098","sims":80,"seed":7,"max_candidates":60}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":80,"seed":7,"max_candidates":60}"#,
     )
     .await;
     let rows = recommendations(&payload);
@@ -119,7 +119,7 @@ async fn optimize_tags_a_front_and_explains_every_tagged_row() {
 #[tokio::test]
 async fn tagging_leaves_the_ranking_order_untouched() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":80,"seed":7,"max_candidates":60}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":80,"seed":7,"max_candidates":60}"#;
     let rows = recommendations(&optimize(body).await).clone();
 
     let crew_of = |row: &Value| {
@@ -153,7 +153,7 @@ async fn tagging_leaves_the_ranking_order_untouched() {
 #[tokio::test]
 async fn linear_eval_rows_carry_no_tags() {
     let payload = optimize(
-        r#"{"ship":"saladin","hostile":"2918121098","strategy":"linear_eval","max_candidates":40}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","strategy":"linear_eval","max_candidates":40}"#,
     )
     .await;
     let rows = recommendations(&payload);

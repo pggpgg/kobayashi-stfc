@@ -1,6 +1,7 @@
 mod execution;
 mod pvp;
 mod requests;
+mod scenario_resolution;
 
 pub use pvp::{validate_scenario_target, ScenarioTarget, ScenarioTargetFields};
 
@@ -808,19 +809,31 @@ pub fn simulate_payload(
     profile_id: Option<&str>,
 ) -> Result<String, SimulateError> {
     let req: SimulateRequest = serde_json::from_str(body).map_err(SimulateError::Parse)?;
-    if let Err(errors) = validate_scenario_target(&ScenarioTargetFields {
+    let target = match validate_scenario_target(&ScenarioTargetFields {
         hostile: Some(req.hostile.clone()),
         defender_ship: req.defender_ship.clone(),
         defender_ship_tier: req.defender_ship_tier,
         defender_ship_level: req.defender_ship_level,
         defender_profile_id: req.defender_profile_id.clone(),
     }) {
+        Ok(target) => target,
+        Err(errors) => {
+            return Err(SimulateError::Validation(
+                scenario_resolution::issues_to_message(errors),
+            ))
+        }
+    };
+    // An unresolved ship or hostile id would otherwise reach the engine's synthetic fallback and
+    // come back as a 100%-win-rate answer. See scenario_resolution.
+    if let Err(errors) = scenario_resolution::validate_scenario_resolves(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &target,
+    ) {
         return Err(SimulateError::Validation(
-            errors
-                .into_iter()
-                .flat_map(|e| e.messages)
-                .collect::<Vec<_>>()
-                .join("; "),
+            scenario_resolution::issues_to_message(errors),
         ));
     }
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
@@ -1094,19 +1107,29 @@ pub fn compare_crews_payload(
     profile_id: Option<&str>,
 ) -> Result<String, CompareCrewsError> {
     let req: CompareCrewsRequest = serde_json::from_str(body).map_err(CompareCrewsError::Parse)?;
-    if let Err(errors) = validate_scenario_target(&ScenarioTargetFields {
+    let target = match validate_scenario_target(&ScenarioTargetFields {
         hostile: Some(req.hostile.clone()),
         defender_ship: req.defender_ship.clone(),
         defender_ship_tier: req.defender_ship_tier,
         defender_ship_level: req.defender_ship_level,
         defender_profile_id: req.defender_profile_id.clone(),
     }) {
+        Ok(target) => target,
+        Err(errors) => {
+            return Err(CompareCrewsError::Validation(
+                scenario_resolution::issues_to_message(errors),
+            ))
+        }
+    };
+    if let Err(errors) = scenario_resolution::validate_scenario_resolves(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &target,
+    ) {
         return Err(CompareCrewsError::Validation(
-            errors
-                .into_iter()
-                .flat_map(|e| e.messages)
-                .collect::<Vec<_>>()
-                .join("; "),
+            scenario_resolution::issues_to_message(errors),
         ));
     }
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
@@ -1531,6 +1554,20 @@ pub fn replay_optimize_seed_payload(
     if req.hostile.trim().is_empty() {
         return Err(ReplaySeedError::Validation(
             "hostile must not be empty".to_string(),
+        ));
+    }
+    // Replay is PvE-only, so the target is always the hostile.
+    if let Err(errors) = scenario_resolution::validate_scenario_resolves(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &pvp::ScenarioTarget::Pve {
+            hostile: req.hostile.clone(),
+        },
+    ) {
+        return Err(ReplaySeedError::Validation(
+            scenario_resolution::issues_to_message(errors),
         ));
     }
 
@@ -2394,7 +2431,7 @@ pub fn optimize_payload(
 ) -> Result<String, OptimizePayloadError> {
     let request = parse_optimize_request_body(body)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
-    validate_request(&request, sims)?;
+    validate_request(registry, &request, sims)?;
     let response = execution::run_optimize(registry, &request, profile_id)?;
     serde_json::to_string(&response).map_err(OptimizePayloadError::Parse)
 }
@@ -2407,7 +2444,7 @@ pub fn optimize_start_payload(
 ) -> Result<String, OptimizePayloadError> {
     let request = parse_optimize_request_body(body)?;
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
-    validate_request(&request, sims)?;
+    validate_request(registry.as_ref(), &request, sims)?;
     let start_response = execution::start_optimize_job(registry, request, profile_id, cpu_permit)?;
     serde_json::to_string(&start_response).map_err(OptimizePayloadError::Parse)
 }

@@ -309,7 +309,16 @@ impl fmt::Display for OptimizePayloadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Parse(err) => write!(f, "{err}"),
-            Self::Validation(_) => write!(f, "invalid optimize request"),
+            // Render the issues: this Display is what the CLI and logs show, and "invalid
+            // request" without the offending field is not actionable.
+            Self::Validation(response) => {
+                write!(f, "{}", response.message)?;
+                for (i, issue) in response.errors.iter().enumerate() {
+                    let sep = if i == 0 { ": " } else { "; " };
+                    write!(f, "{sep}{}: {}", issue.field, issue.messages.join(", "))?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -337,7 +346,16 @@ pub fn parse_optimize_request_body(body: &str) -> Result<OptimizeRequest, Optimi
     serde_json::from_value(v).map_err(OptimizePayloadError::Parse)
 }
 
-pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), OptimizePayloadError> {
+/// Validate an optimize request.
+///
+/// Takes the registry so scenario ids are checked for real: an unresolvable ship or hostile does
+/// not fail downstream, it silently becomes a synthetic fight the caller wins in round 1 (see
+/// [`super::scenario_resolution`]).
+pub fn validate_request(
+    registry: &crate::data::data_registry::DataRegistry,
+    request: &OptimizeRequest,
+    sims: u32,
+) -> Result<(), OptimizePayloadError> {
     let mut errors: Vec<ValidationIssue> = Vec::new();
 
     if request.ship.trim().is_empty() {
@@ -347,16 +365,29 @@ pub fn validate_request(request: &OptimizeRequest, sims: u32) -> Result<(), Opti
         });
     }
 
-    if let Err(pvp_errors) =
-        super::pvp::validate_scenario_target(&super::pvp::ScenarioTargetFields {
-            hostile: Some(request.hostile.clone()),
-            defender_ship: request.defender_ship.clone(),
-            defender_ship_tier: request.defender_ship_tier,
-            defender_ship_level: request.defender_ship_level,
-            defender_profile_id: request.defender_profile_id.clone(),
-        })
-    {
-        errors.extend(pvp_errors);
+    match super::pvp::validate_scenario_target(&super::pvp::ScenarioTargetFields {
+        hostile: Some(request.hostile.clone()),
+        defender_ship: request.defender_ship.clone(),
+        defender_ship_tier: request.defender_ship_tier,
+        defender_ship_level: request.defender_ship_level,
+        defender_profile_id: request.defender_profile_id.clone(),
+    }) {
+        Ok(target) => {
+            // Only worth checking once the target's shape is valid; an empty ship id is already
+            // reported above, so skip the redundant "unknown ship" for it.
+            if !request.ship.trim().is_empty() {
+                if let Err(unresolved) = super::scenario_resolution::validate_scenario_resolves(
+                    registry,
+                    &request.ship,
+                    request.ship_tier,
+                    request.ship_level,
+                    &target,
+                ) {
+                    errors.extend(unresolved);
+                }
+            }
+        }
+        Err(pvp_errors) => errors.extend(pvp_errors),
     }
 
     if !(1..=MAX_SIMS).contains(&sims) {

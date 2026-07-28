@@ -15,7 +15,7 @@ use kobayashi::optimizer::{
     OptimizerStrategy,
 };
 
-const SHIP: &str = "saladin";
+const SHIP: &str = "uss_saladin";
 const HOSTILE: &str = "2918121098";
 
 fn run(

@@ -2990,7 +2990,7 @@ fn ship_ability_receive_damage_timing_emits_trace() {
 #[test]
 fn below_deck_morale_effect_triggers_morale_and_increases_damage() {
     let attacker = Combatant {
-        id: "enterprise".to_string(),
+        id: "uss_enterprise".to_string(),
         attack: 120.0,
         mitigation: 0.1,
         armor: 0.0,
@@ -3487,7 +3487,7 @@ fn multiple_morale_sources_combine_into_one_roll() {
 #[test]
 fn assimilated_reduces_officer_effectiveness_by_twenty_five_percent() {
     let attacker = Combatant {
-        id: "enterprise".to_string(),
+        id: "uss_enterprise".to_string(),
         attack: 100.0,
         mitigation: 0.0,
         armor: 0.0,

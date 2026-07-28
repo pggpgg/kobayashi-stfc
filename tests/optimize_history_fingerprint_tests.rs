@@ -27,9 +27,9 @@ use std::path::PathBuf;
 /// default path a user actually takes — including the learning-signal auto-tuner, which derives a cap
 /// from the stored entry on the second run. Cache identity uses the *requested* cap, so that derived
 /// value no longer invalidates the entry it came from.
-const TIERED_BODY: &str = r#"{"ship":"saladin","hostile":"2918121098","sims":60,"seed":5,"max_candidates":16,"strategy":"tiered","tiered_scout_sims":8,"tiered_top_k":2,"optimize_cache_key":"fingerprint-reuse-test-key"}"#;
+const TIERED_BODY: &str = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":60,"seed":5,"max_candidates":16,"strategy":"tiered","tiered_scout_sims":8,"tiered_top_k":2,"optimize_cache_key":"fingerprint-reuse-test-key"}"#;
 /// Same run, but asking for a specific confirm cap — a *requested* cap is still part of cache identity.
-const TIERED_BODY_WITH_PINNED_CAP: &str = r#"{"ship":"saladin","hostile":"2918121098","sims":60,"seed":5,"max_candidates":16,"strategy":"tiered","tiered_scout_sims":8,"tiered_top_k":2,"tiered_confirm_budget_cap_mult":2.0,"optimize_cache_key":"fingerprint-reuse-test-key"}"#;
+const TIERED_BODY_WITH_PINNED_CAP: &str = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":60,"seed":5,"max_candidates":16,"strategy":"tiered","tiered_scout_sims":8,"tiered_top_k":2,"tiered_confirm_budget_cap_mult":2.0,"optimize_cache_key":"fingerprint-reuse-test-key"}"#;
 const CACHE_KEY: &str = "fingerprint-reuse-test-key";
 
 /// Profile directory that exists but ships no `roster.imported.json`, so crew legality sees the full
@@ -343,4 +343,57 @@ async fn officer_learning_scores_reset_across_a_catalog_change() {
             .is_none(),
         "a catalog change must reset name-keyed scores"
     );
+}
+
+/// Two scenarios that differ only in an id neither of which resolves must still fingerprint
+/// differently.
+///
+/// The unresolved marker used to be a constant, so every unknown id collapsed to one segment —
+/// while the engine's synthetic fallback derives a *different* fight from each id string. Two
+/// different typos therefore looked like the same scenario and could reuse each other's stored
+/// results. Ingress rejects unresolvable ids now, but the fingerprint has to hold on its own.
+#[test]
+fn distinct_unresolvable_ids_do_not_share_a_scenario_fingerprint() {
+    use kobayashi::data::optimize_fingerprint::{scenario_fingerprint, ReuseScenarioInputs};
+
+    let registry = DataRegistry::load().expect("data registry");
+    let inputs = |ship: &'static str, hostile: &'static str| ReuseScenarioInputs {
+        ship,
+        hostile,
+        ship_tier: None,
+        ship_level: None,
+        below_decks_slots: 3,
+        enemy_type: None,
+        defender_opponent: "hostile",
+        support_buffs: None,
+        defender_support_buffs: None,
+        defender_alliance_debuffs: None,
+        defender_ship: None,
+        defender_ship_tier: None,
+        defender_ship_level: None,
+        defender_profile_id: None,
+    };
+
+    let unknown_hostile_a =
+        scenario_fingerprint(&registry, &inputs("uss_saladin", "__no_such_hostile_a__"));
+    let unknown_hostile_b =
+        scenario_fingerprint(&registry, &inputs("uss_saladin", "__no_such_hostile_b__"));
+    assert_ne!(
+        unknown_hostile_a, unknown_hostile_b,
+        "two different unresolvable hostiles must not share a fingerprint"
+    );
+
+    let unknown_ship_a =
+        scenario_fingerprint(&registry, &inputs("__no_such_ship_a__", "2918121098"));
+    let unknown_ship_b =
+        scenario_fingerprint(&registry, &inputs("__no_such_ship_b__", "2918121098"));
+    assert_ne!(
+        unknown_ship_a, unknown_ship_b,
+        "two different unresolvable ships must not share a fingerprint"
+    );
+
+    // And an unresolvable scenario must never collide with a real one.
+    let resolved = scenario_fingerprint(&registry, &inputs("uss_saladin", "2918121098"));
+    assert_ne!(resolved, unknown_hostile_a);
+    assert_ne!(resolved, unknown_ship_a);
 }

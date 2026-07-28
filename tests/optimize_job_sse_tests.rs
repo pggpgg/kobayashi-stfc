@@ -206,7 +206,7 @@ async fn optimize_job_stream_emits_running_updates_then_done() {
 #[tokio::test]
 async fn optimize_start_sse_stream_delivers_done_with_recommendations() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":1,"max_candidates":8}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":200,"seed":1,"max_candidates":8}"#;
     let start_body = post_json("/api/optimize/start", body, TEST_PROFILE_HEADERS).await;
     let payload: serde_json::Value =
         serde_json::from_str(&start_body).expect("start response json");

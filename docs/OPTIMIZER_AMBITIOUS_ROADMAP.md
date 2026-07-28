@@ -4,7 +4,7 @@ Future work for the next generation of Kobayashi's crew optimizer. This roadmap 
 
 Current optimizer behavior belongs in [DESIGN.md](DESIGN.md), [PERFORMANCE.md](PERFORMANCE.md), and [CREW_OPTIMIZATION_METHODS.md](CREW_OPTIMIZATION_METHODS.md). Completed implementation details should not accumulate here.
 
-_Last updated 2026-07-27._
+_Last updated 2026-07-28._
 
 ## North Star
 
@@ -116,6 +116,16 @@ Extend optimizer benchmarks with:
 - method-specific subphase timings for every new lane
 
 Benchmarks should answer both "did this method find a stronger crew?" and "did it add a useful recommendation family?"
+
+**Status: landed** — [`src/optimizer/method_bench.rs`](../src/optimizer/method_bench.rs) holds the scoring; `optimizer_method_bench` runs the lanes; `cargo xtask optimizer-bench-check` gates against [`optimizer_method_bench_baseline.json`](../optimizer_method_bench_baseline.json); `.github/workflows/optimizer-method-bench.yml` runs it weekly and uploads the JSONL + Markdown. Covers `--budget-mode native|equal-trials|equal-wall-clock` (wall-clock fits `ms = fixed + trials/rate` from two probe sizes, because a single probe charges setup to every trial and lands 50–90% under target), a deep reference sweep with top-K recall, prefilter false-negative scoring at chosen keep values, and per-(case, method) seed-panel stability. Regret is measured on an independent confirmation seed over the reference top-K plus every lane's winner, so the winner's curse does not reward whichever lane looked at the most crews. The gate enforces a recall floor, a regret ceiling, and a control-ordering rule against stratified random. Output is bit-deterministic per seed across thread counts. See [CREW_OPTIMIZATION_METHODS.md §16](CREW_OPTIMIZATION_METHODS.md).
+
+Three findings came out of building it, each an open item rather than a solved one:
+
+1. **The committed `saladin_numeric` case was measuring nothing.** `saladin` is not a ship id (`uss_saladin` is), and an unresolved ship or hostile id does not fail — it produces a fight the crew wins in round 1, every time, at any hostile level. The case is replaced by `saladin_corvus` (`uss_saladin` vs `1140710508`, a matchup where the ranking score actually separates crews) and the harness now refuses a case whose ids do not resolve. **The silent fallback itself is not fixed** and is not confined to the bench: any API or CLI caller that typos a ship or hostile id gets a 100%-win-rate answer instead of an error.
+2. **Stratified random beats tiered on this case at equal budget** — 0.0 mean score regret against tiered's ~0.0063 — because the crews random samples lie outside the narrowed proposal space `CrewGenerator` enumerates (`lane_best_crew_in_reference_set` is false for every random winner). Principle 2 says a lane that cannot beat random is not earning its complexity; the baseline's `control_margin` currently tolerates the gap so the gate still catches further regressions, and closing it means widening what the generator proposes, not tuning tiered.
+3. **PvE win rate rarely discriminates.** Across hostile levels the demo profile either wins every fight or loses every fight, with the cliff between levels 52 and 60; only the composite ranking score separates crews. Any future metric built on win rate alone will measure tie-break noise.
+
+Still open on this item: method-specific subphase timings (lane records carry total elapsed plus tiered scout/confirm trial counts, not a per-phase breakdown); the diversity metrics are computed per run but not yet aggregated across the seed panel; and the harness ships two cases on one profile, so it cannot yet show that a change generalizes across matchups.
 
 ### 1.5 Richer Random Exploration Strata
 
@@ -286,9 +296,9 @@ The scheduler itself must be benchmarked against a fixed allocation policy.
 
 ## Suggested Implementation Order
 
-1. Local refinement around finalists.
-2. Pareto tags and recommendation reasons.
-3. Observation fingerprints, retention, and benchmark gates.
+1. Local refinement around finalists. **(landed, §1.1)**
+2. Pareto tags and recommendation reasons. **(landed, §1.2)**
+3. Observation fingerprints, retention, and benchmark gates. **(landed, §1.3 and §1.4)**
 4. Hyperband-style racing with protected strata.
 5. Beam search as a discovery lane.
 6. Quality-diversity archive in benchmarks, then bounded production use.

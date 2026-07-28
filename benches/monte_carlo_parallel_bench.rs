@@ -2,7 +2,13 @@
 //!
 //! Run with: `cargo bench --bench monte_carlo_parallel`
 //! Or quick comparison: `cargo run --bin benchmark_parallel_speedup` (see src/bin)
-//! Uses `seed: 42`, ship `saladin`, hostile `2918121098` (see `docs/PERFORMANCE.md` regression gate).
+//! Uses `seed: 42`, ship `uss_saladin`, hostile `2918121098` (see `docs/PERFORMANCE.md` regression
+//! gate).
+//!
+//! Both ids must **resolve**. An unresolvable id does not fail: the scenario builder falls back to
+//! a fight synthesized from hashing the id strings (`src/optimizer/monte_carlo/scenario.rs`), so
+//! the bench would measure a ~260–540 hull toy defender instead of real combat. This bench used
+//! `saladin` — not a ship id — until 2026-07-28 and did exactly that.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use kobayashi::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
@@ -35,7 +41,7 @@ fn candidates(ship: &str, hostile: &str, seed: u64, min_count: usize) -> Vec<Cre
 
 fn bench_monte_carlo_sequential_vs_parallel(c: &mut Criterion) {
     init_from_env();
-    let ship = "saladin";
+    let ship = "uss_saladin";
     let hostile = "2918121098";
     let seed = 42u64;
     let iterations = 500;

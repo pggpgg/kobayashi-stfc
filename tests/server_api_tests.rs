@@ -318,7 +318,7 @@ async fn simulate_rejects_body_over_cpu_json_limit_with_413() {
 #[tokio::test]
 async fn optimize_endpoint_returns_ranked_recommendations() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
     let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
@@ -327,7 +327,7 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
         serde_json::from_str(&response.body).expect("response should be valid json");
 
     assert_eq!(payload["engine"], "optimizer_v1");
-    assert_eq!(payload["scenario"]["ship"], "saladin");
+    assert_eq!(payload["scenario"]["ship"], "uss_saladin");
     assert_eq!(payload["scenario"]["hostile"], "2918121098");
     assert_eq!(payload["scenario"]["sims"], 500);
     assert_eq!(payload["scenario"]["seed"], 7);
@@ -459,7 +459,7 @@ async fn optimize_endpoint_returns_ranked_recommendations() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_linear_eval_returns_expected_hull_damage_without_monte_carlo() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":16,"strategy":"linear_eval"}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":16,"strategy":"linear_eval"}"#;
     let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
@@ -502,7 +502,7 @@ async fn optimize_linear_eval_returns_expected_hull_damage_without_monte_carlo()
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_linear_eval_rejects_chain_grind() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","strategy":"linear_eval","chain":{"enabled":true,"kills_target":3}}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","strategy":"linear_eval","chain":{"enabled":true,"kills_target":3}}"#;
     let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 400);
     let payload: serde_json::Value =
@@ -518,7 +518,7 @@ async fn optimize_linear_eval_rejects_chain_grind() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_auto_strategy_respects_constraints_on_effective_candidate_count() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":80,"seed":42,"max_candidates":600,"constraints":{"must_include":["___kobayashi_nonexistent_officer___"]}}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":80,"seed":42,"max_candidates":600,"constraints":{"must_include":["___kobayashi_nonexistent_officer___"]}}"#;
     let response = route_request("POST", "/api/optimize", body).await;
     assert_eq!(response.status_code, 200, "body: {}", response.body);
 
@@ -539,11 +539,11 @@ async fn optimize_auto_strategy_respects_constraints_on_effective_candidate_coun
 #[tokio::test]
 async fn optimize_endpoint_changes_with_seed() {
     let response_a = route_request_optimize(
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":32}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":32}"#,
     )
     .await;
     let response_b = route_request_optimize(
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":8,"max_candidates":32}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":8,"max_candidates":32}"#,
     )
     .await;
 
@@ -556,7 +556,7 @@ async fn optimize_endpoint_changes_with_seed() {
 #[tokio::test]
 async fn optimize_endpoint_is_deterministic_for_fixed_seed() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":77,"max_candidates":64}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":77,"max_candidates":64}"#;
 
     let response_a = route_request("POST", "/api/optimize", body).await;
     let response_b = route_request("POST", "/api/optimize", body).await;
@@ -635,10 +635,158 @@ async fn optimize_endpoint_rejects_empty_ship_and_hostile() {
     );
 }
 
+/// An id that does not resolve must be rejected, not simulated.
+///
+/// Before this was enforced, an unresolvable ship or hostile reached the engine's synthetic
+/// fallback — a hash-derived toy fight with ~260–540 defender hull — and came back HTTP 200 with
+/// `win_rate: 1.0` and `r1_kill_rate: 1.0`. A typo produced a confident answer about a fight that
+/// never existed.
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_endpoint_rejects_a_ship_id_that_does_not_resolve() {
+    // "saladin" is not a ship id; "uss_saladin" is. The near-miss is the realistic typo.
+    let response = route_request_optimize(
+        r#"{"ship":"saladin","hostile":"2918121098","sims":20,"max_candidates":4}"#,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400, "body: {}", response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert_eq!(payload["status"], "error");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    let ship_messages = errors
+        .iter()
+        .find(|e| e["field"] == "ship")
+        .and_then(|e| e["messages"].as_array())
+        .expect("a ship validation error");
+    assert!(
+        ship_messages
+            .iter()
+            .any(|m| m.as_str().is_some_and(|m| m.contains("saladin"))),
+        "the error should name the offending id: {ship_messages:?}"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_endpoint_rejects_a_hostile_id_that_does_not_resolve() {
+    let response = route_request_optimize(
+        r#"{"ship":"uss_saladin","hostile":"definitely_not_a_hostile","sims":20,"max_candidates":4}"#,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400, "body: {}", response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let errors = payload["errors"]
+        .as_array()
+        .expect("errors should be array");
+    let hostile_messages = errors
+        .iter()
+        .find(|e| e["field"] == "hostile")
+        .and_then(|e| e["messages"].as_array())
+        .expect("a hostile validation error");
+    assert!(
+        hostile_messages.iter().any(|m| m
+            .as_str()
+            .is_some_and(|m| m.contains("definitely_not_a_hostile"))),
+        "the error should name the offending id: {hostile_messages:?}"
+    );
+}
+
+/// A tier the ship does not have resolves to `None` exactly like an unknown id does, so it reaches
+/// the same synthetic fallback and needs the same rejection.
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_endpoint_rejects_a_ship_tier_the_ship_does_not_have() {
+    let response = route_request_optimize(
+        r#"{"ship":"uss_saladin","hostile":"2918121098","ship_tier":99,"sims":20,"max_candidates":4}"#,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 400, "body: {}", response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    let messages = payload["errors"]
+        .as_array()
+        .and_then(|errors| errors.iter().find(|e| e["field"] == "ship"))
+        .and_then(|e| e["messages"].as_array())
+        .expect("a ship validation error");
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.as_str().is_some_and(|m| m.contains("tier"))),
+        "the error should say the tier is the problem: {messages:?}"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_endpoint_accepts_a_scenario_whose_ids_resolve() {
+    let response = route_request_optimize(
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":20,"seed":7,"max_candidates":8}"#,
+    )
+    .await;
+
+    assert_eq!(response.status_code, 200, "body: {}", response.body);
+    let payload: serde_json::Value =
+        serde_json::from_str(&response.body).expect("response should be valid json");
+    assert!(payload["recommendations"]
+        .as_array()
+        .is_some_and(|rows| !rows.is_empty()));
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn simulate_endpoint_rejects_ids_that_do_not_resolve() {
+    let crew = SERVER_API_TEST_CREW_718_LEGAL_JSON;
+    for (label, body) in [
+        (
+            "ship",
+            format!(
+                r#"{{"ship":"saladin","hostile":"2918121098","ship_level":{SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW},"crew":{crew},"num_sims":5}}"#
+            ),
+        ),
+        (
+            "hostile",
+            format!(
+                r#"{{"ship":"uss_saladin","hostile":"definitely_not_a_hostile","ship_level":{SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW},"crew":{crew},"num_sims":5}}"#
+            ),
+        ),
+    ] {
+        let response = route_request_ex(
+            "POST",
+            "/api/simulate",
+            &body,
+            None,
+            SERVER_API_TEST_PROFILE_HEADERS,
+        )
+        .await;
+        assert_eq!(
+            response.status_code, 400,
+            "unresolvable {label} should be rejected, got: {}",
+            response.body
+        );
+    }
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn optimize_start_rejects_ids_that_do_not_resolve() {
+    let response = route_request_optimize_start(
+        r#"{"ship":"saladin","hostile":"2918121098","sims":20,"max_candidates":4}"#,
+    )
+    .await;
+    assert_eq!(response.status_code, 400, "body: {}", response.body);
+}
+
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_random_stratified_strategy_labels_all_rows() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":300,"seed":9,"max_candidates":24,"strategy":"random_stratified"}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":300,"seed":9,"max_candidates":24,"strategy":"random_stratified"}"#;
     let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
@@ -684,7 +832,7 @@ async fn optimize_random_stratified_strategy_labels_all_rows() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_random_stratified_is_deterministic_for_fixed_seed() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":21,"max_candidates":12,"strategy":"random_stratified"}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":200,"seed":21,"max_candidates":12,"strategy":"random_stratified"}"#;
     let first = route_request_optimize(body).await;
     let second = route_request_optimize(body).await;
     assert_eq!(first.status_code, 200);
@@ -700,7 +848,7 @@ async fn optimize_random_stratified_is_deterministic_for_fixed_seed() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_tiered_random_exploration_slice_reports_funnel() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":300,"seed":5,"max_candidates":64,"strategy":"tiered","tiered_scout_sims":50,"tiered_top_k":4,"tiered_random_exploration_pct":0.25}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":300,"seed":5,"max_candidates":64,"strategy":"tiered","tiered_scout_sims":50,"tiered_top_k":4,"tiered_random_exploration_pct":0.25}"#;
     let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
@@ -740,7 +888,12 @@ async fn optimize_tiered_random_exploration_slice_reports_funnel() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_tiered_local_refinement_labels_refined_rows() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
+    // Hostile 1127817100 (level 31) on purpose: refinement can only accept a neighbour that
+    // measurably improves on a finalist, and this test profile carries no research or building
+    // buffs, so most matchups collapse to every crew winning at score 1.0 or every crew losing at
+    // 0.0 — neither leaves anything to improve. At level 31 this ship wins with real spread
+    // (~60 distinct scores across the legal crews), which is what gives the pass headroom.
+    let body = r#"{"ship":"uss_saladin","hostile":"1127817100","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
     let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
@@ -898,7 +1051,12 @@ fn sorted_names(value: &serde_json::Value) -> Vec<String> {
 async fn optimize_tiered_local_refinement_exposes_provenance_detail() {
     // Same scenario as `optimize_tiered_local_refinement_labels_refined_rows`, which pins that this
     // seed produces at least one refined row; this asserts what that row now reports about itself.
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
+    // Hostile 1127817100 (level 31) on purpose: refinement can only accept a neighbour that
+    // measurably improves on a finalist, and this test profile carries no research or building
+    // buffs, so most matchups collapse to every crew winning at score 1.0 or every crew losing at
+    // 0.0 — neither leaves anything to improve. At level 31 this ship wins with real spread
+    // (~60 distinct scores across the legal crews), which is what gives the pass headroom.
+    let body = r#"{"ship":"uss_saladin","hostile":"1127817100","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
     let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200);
 
@@ -928,7 +1086,7 @@ async fn optimize_genetic_accepts_local_refinement() {
     // in `tests/local_refinement_lanes.rs`, which can read the pass's own stats — over HTTP an
     // accepted improvement is not guaranteed, because the genetic lane's finalists reach a perfect
     // score against the bundled catalog and leave no headroom to climb into.
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"genetic","local_refinement":true}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":150,"seed":11,"max_candidates":24,"strategy":"genetic","local_refinement":true}"#;
     let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200);
 
@@ -950,7 +1108,7 @@ async fn optimize_recommendations_report_trials_run() {
     // `sims`. This is the reading that gives the field meaning elsewhere: it is the count of trials
     // actually run, not an echo of the request.
     let exhaustive = route_request_optimize(
-        r#"{"ship":"saladin","hostile":"2918121098","sims":150,"seed":5,"max_candidates":24,"strategy":"exhaustive"}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":150,"seed":5,"max_candidates":24,"strategy":"exhaustive"}"#,
     )
     .await;
     assert_eq!(exhaustive.status_code, 200);
@@ -971,7 +1129,7 @@ async fn optimize_recommendations_report_trials_run() {
     // Tiered allocates confirmation depth adaptively, so its rows report whatever budget they
     // actually received rather than the requested `sims`.
     let tiered = route_request_optimize(
-        r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":5,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":25,"tiered_top_k":2}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":200,"seed":5,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":25,"tiered_top_k":2}"#,
     )
     .await;
     assert_eq!(tiered.status_code, 200);
@@ -1034,7 +1192,7 @@ async fn optimize_endpoint_rejects_out_of_range_local_refinement_seeds() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"strategy":"tiered","local_refinement":true,"local_refinement_seeds":99}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":1000,"strategy":"tiered","local_refinement":true,"local_refinement_seeds":99}"#,
     )
     .await;
 
@@ -1056,7 +1214,7 @@ async fn optimize_endpoint_rejects_out_of_range_random_exploration_pct() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"tiered_random_exploration_pct":0.9}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":1000,"tiered_random_exploration_pct":0.9}"#,
     )
     .await;
 
@@ -1078,7 +1236,7 @@ async fn optimize_endpoint_rejects_zero_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":0}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":0}"#,
     )
     .await;
 
@@ -1098,7 +1256,7 @@ async fn optimize_endpoint_rejects_very_large_sims() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":5000000}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":5000000}"#,
     )
     .await;
 
@@ -1128,7 +1286,7 @@ async fn optimize_endpoint_rejects_excessive_max_candidates() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":1000,"max_candidates":3000000}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":1000,"max_candidates":3000000}"#,
     )
     .await;
 
@@ -1151,7 +1309,7 @@ async fn optimize_endpoint_rejects_zero_analytical_prefilter_keep() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"analytical_prefilter_keep":0}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":100,"analytical_prefilter_keep":0}"#,
     )
     .await;
 
@@ -1175,7 +1333,7 @@ async fn optimize_endpoint_rejects_zero_novelty_lambda() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"novelty_lambda":0}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":100,"novelty_lambda":0}"#,
     )
     .await;
     assert_eq!(response.status_code, 400);
@@ -1196,7 +1354,7 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_pool_set() {
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"novelty_pool":120}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":100,"novelty_pool":120}"#,
     )
     .await;
     assert_eq!(response.status_code, 400);
@@ -1217,7 +1375,7 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_history_anchors_
     let response = route_request(
         "POST",
         "/api/optimize",
-        r#"{"ship":"saladin","hostile":"2918121098","sims":100,"novelty_history_anchors":true}"#,
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":100,"novelty_history_anchors":true}"#,
     )
     .await;
     assert_eq!(response.status_code, 400);
@@ -1235,7 +1393,7 @@ async fn optimize_endpoint_requires_novelty_lambda_when_novelty_history_anchors_
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_endpoint_reports_analytical_prefilter_when_truncating() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":1,"max_candidates":80,"analytical_prefilter_keep":4}"#;
     let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200, "body: {}", response.body);
 
@@ -1310,7 +1468,7 @@ async fn optimize_validation_error_has_expected_schema() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_rejects_fast_discovery_without_heuristic_seeds() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":100,"seed":1,"max_candidates":32,"strategy":"tiered","fast_discovery":true}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":100,"seed":1,"max_candidates":32,"strategy":"tiered","fast_discovery":true}"#;
     let response = route_request("POST", "/api/optimize", body).await;
     assert_eq!(response.status_code, 400, "{}", response.body);
     let payload: serde_json::Value =
@@ -1331,7 +1489,7 @@ async fn optimize_rejects_fast_discovery_without_heuristic_seeds() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
-    let body = r#"{"ship":"saladin","hostile":"2918121098","sims":400,"seed":3,"max_candidates":48,"strategy":"tiered","heuristics_seeds":["heuristics-seed"],"fast_discovery":true}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":400,"seed":3,"max_candidates":48,"strategy":"tiered","heuristics_seeds":["heuristics-seed"],"fast_discovery":true}"#;
     let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200, "{}", response.body);
     let payload: serde_json::Value =
@@ -1362,7 +1520,7 @@ async fn optimize_fast_discovery_echoes_in_scenario_and_notes() {
 #[tokio::test]
 async fn async_optimize_start_poll_completes_with_recommendations() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":42,"max_candidates":16}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":42,"max_candidates":16}"#;
     let start = route_request_optimize_start(body).await;
     assert_eq!(start.status_code, 200, "body: {}", start.body);
     let payload: serde_json::Value =
@@ -1405,7 +1563,7 @@ async fn async_optimize_cancel_unknown_job_returns_404() {
 #[tokio::test]
 async fn async_optimize_cancel_after_done_is_idempotent_ok() {
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":200,"seed":1,"max_candidates":8}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":200,"seed":1,"max_candidates":8}"#;
     let start = route_request_optimize_start(body).await;
     assert_eq!(start.status_code, 200);
     let payload: serde_json::Value = serde_json::from_str(&start.body).expect("start json");
@@ -1441,7 +1599,7 @@ async fn async_optimize_cancel_after_done_is_idempotent_ok() {
 #[tokio::test]
 async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
     let body = format!(
-        r#"{{"ship":"saladin","hostile":"2918121098","ship_level":{lvl},"seed":77,"sim_index":12,"max_trace_events":50,"crew":{crew}}}"#,
+        r#"{{"ship":"uss_saladin","hostile":"2918121098","ship_level":{lvl},"seed":77,"sim_index":12,"max_trace_events":50,"crew":{crew}}}"#,
         lvl = SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW,
         crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
     );
@@ -1488,7 +1646,7 @@ async fn optimize_replay_seed_returns_trace_and_is_deterministic() {
 #[tokio::test]
 async fn optimize_replay_seed_trace_reports_applied_support_buffs() {
     let body = format!(
-        r#"{{"ship":"saladin","hostile":"2918121098","ship_level":{lvl},"seed":77,"sim_index":12,"max_trace_events":1,"crew":{crew},"support_buffs":["cerritos_support","not_a_real_support_buff_id"]}}"#,
+        r#"{{"ship":"uss_saladin","hostile":"2918121098","ship_level":{lvl},"seed":77,"sim_index":12,"max_trace_events":1,"crew":{crew},"support_buffs":["cerritos_support","not_a_real_support_buff_id"]}}"#,
         lvl = SERVER_API_TEST_SHIP_LEVEL_THREE_BELOW,
         crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
     );
@@ -1544,7 +1702,7 @@ async fn optimize_replay_seed_trace_reports_applied_support_buffs() {
 async fn compare_crews_returns_distribution_payload() {
     let crew = SERVER_API_TEST_CREW_718_LEGAL_JSON;
     let body = format!(
-        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":400,"seed":3,"below_decks_slots":3,"crews":[{crew},{crew}]}}"#,
+        r#"{{"ship":"uss_saladin","hostile":"2918121098","num_sims":400,"seed":3,"below_decks_slots":3,"crews":[{crew},{crew}]}}"#,
         crew = crew
     );
     let response = route_request_ex(
@@ -1576,7 +1734,7 @@ async fn compare_crews_returns_distribution_payload() {
 #[tokio::test]
 async fn simulate_unknown_support_buff_emits_warning() {
     let body = format!(
-        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":100,"seed":1,"below_decks_slots":3,"crew":{crew},"support_buffs":["not_a_real_support_buff_id"]}}"#,
+        r#"{{"ship":"uss_saladin","hostile":"2918121098","num_sims":100,"seed":1,"below_decks_slots":3,"crew":{crew},"support_buffs":["not_a_real_support_buff_id"]}}"#,
         crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
     );
     let response = route_request_ex(
@@ -1604,7 +1762,7 @@ async fn simulate_unknown_support_buff_emits_warning() {
 #[tokio::test]
 async fn simulate_support_buff_request_succeeds_without_warnings() {
     let with_buff = format!(
-        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":800,"seed":9001,"below_decks_slots":3,"crew":{crew},"support_buffs":["cerritos_support"]}}"#,
+        r#"{{"ship":"uss_saladin","hostile":"2918121098","num_sims":800,"seed":9001,"below_decks_slots":3,"crew":{crew},"support_buffs":["cerritos_support"]}}"#,
         crew = SERVER_API_TEST_CREW_718_LEGAL_JSON
     );
     let response = route_request_ex(
@@ -1638,7 +1796,7 @@ async fn simulate_support_buff_request_succeeds_without_warnings() {
 async fn compare_crews_accepts_support_buffs() {
     let crew = SERVER_API_TEST_CREW_718_LEGAL_JSON;
     let body = format!(
-        r#"{{"ship":"saladin","hostile":"2918121098","num_sims":200,"seed":5,"below_decks_slots":3,"support_buffs":["cerritos_support"],"crews":[{crew},{crew}]}}"#,
+        r#"{{"ship":"uss_saladin","hostile":"2918121098","num_sims":200,"seed":5,"below_decks_slots":3,"support_buffs":["cerritos_support"],"crews":[{crew},{crew}]}}"#,
         crew = crew
     );
     let response = route_request_ex(
@@ -1658,7 +1816,7 @@ async fn api_key_required_for_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
     let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
     let response = route_request_ex("POST", "/api/optimize", body, Some(lan), &[]).await;
     assert_eq!(response.status_code, 401, "{}", response.body);
@@ -1672,7 +1830,7 @@ async fn api_key_bearer_allows_non_loopback_when_configured() {
     std::env::set_var("KOBAYASHI_API_KEY", "unit-test-secret");
     std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
     let body =
-        r#"{"ship":"saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
+        r#"{"ship":"uss_saladin","hostile":"2918121098","sims":500,"seed":7,"max_candidates":64}"#;
     let lan: SocketAddr = "192.168.1.10:5555".parse().expect("lan");
     let response = route_request_ex(
         "POST",
@@ -1743,7 +1901,7 @@ async fn combat_effect_spec_debug_respects_env_gates() {
 async fn simulate_partial_crew_captain_only_is_allowed() {
     // Partial crew (captain only, null bridge slots) should succeed — legality check must allow
     // empty/unset officer slots. This is the exact scenario exercised by the E2E workspace test.
-    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
     let response = route_request_ex(
         "POST",
         "/api/simulate",
@@ -1766,7 +1924,7 @@ async fn simulate_partial_crew_captain_only_is_allowed() {
 async fn simulate_partial_crew_with_demo_profile() {
     // Same as above but explicitly using the bundled demo profile. Omitting the header would make
     // this test depend on the user's mutable profiles/index.json default.
-    let body = r#"{"ship":"saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
+    let body = r#"{"ship":"uss_saladin","hostile":"2918121098","num_sims":50,"seed":1,"ship_tier":1,"ship_level":50,"crew":{"captain":"annorax-830d35","bridge":[null,null],"below_deck":[]}}"#;
     let response = route_request_ex(
         "POST",
         "/api/simulate",

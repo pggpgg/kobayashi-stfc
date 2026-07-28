@@ -2,6 +2,7 @@
 //! Run from repo root: `cargo xtask --help`
 
 mod bench_check;
+mod optimizer_bench_check;
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
@@ -82,6 +83,24 @@ enum Commands {
         #[arg(long)]
         write_baseline: bool,
         /// Write Markdown summary (for CI PR comments)
+        #[arg(long)]
+        markdown_out: Option<PathBuf>,
+    },
+    /// Run the cross-method optimizer benchmark and gate recall/regret against a committed baseline
+    OptimizerBenchCheck {
+        /// Baseline JSON (relative to repo root unless absolute)
+        #[arg(long, default_value = "optimizer_method_bench_baseline.json")]
+        baseline: PathBuf,
+        /// Score an existing JSONL bench run instead of running the bench
+        #[arg(long)]
+        input: Option<PathBuf>,
+        /// Also save the bench output here (CI artifact)
+        #[arg(long)]
+        jsonl_out: Option<PathBuf>,
+        /// Overwrite the baseline's per-method expectations from this run (no compare)
+        #[arg(long)]
+        write_baseline: bool,
+        /// Write Markdown summary
         #[arg(long)]
         markdown_out: Option<PathBuf>,
     },
@@ -197,6 +216,23 @@ fn main() -> Result<()> {
                 write_baseline,
                 md,
             )?;
+        }
+        Commands::OptimizerBenchCheck {
+            baseline,
+            input,
+            jsonl_out,
+            write_baseline,
+            markdown_out,
+        } => {
+            let resolve = |p: PathBuf| if p.is_absolute() { p } else { repo.join(p) };
+            optimizer_bench_check::run(optimizer_bench_check::RunArgs {
+                baseline: resolve(baseline),
+                input: input.map(resolve),
+                jsonl_out: jsonl_out.map(resolve),
+                write_baseline,
+                markdown_out: markdown_out.map(resolve),
+                repo,
+            })?;
         }
         Commands::CheckUpstreamDrift {
             markdown_out,
