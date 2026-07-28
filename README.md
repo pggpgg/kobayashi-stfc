@@ -2,7 +2,9 @@
 
 **Komprehensive Officer Battle Analysis: Your Assets Simulated against Hostiles Iteratively**
 
-A high-performance Monte Carlo combat simulator and crew optimizer for [Star Trek Fleet Command](https://www.startrekfleetcommand.com/). Runs locally, uses every CPU core, ranks crews by the metrics that actually matter — no guesswork.
+KOBAYASHI is a Monte Carlo combat simulator and crew optimizer for
+[Star Trek Fleet Command](https://www.startrekfleetcommand.com/). It runs on your computer.
+It uses all CPU cores. It ranks each crew by the metrics that you select.
 
 [![CI](https://github.com/pggpgg/kobayashi-stfc/actions/workflows/ci.yml/badge.svg)](https://github.com/pggpgg/kobayashi-stfc/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -31,17 +33,33 @@ A high-performance Monte Carlo combat simulator and crew optimizer for [Star Tre
 
 ## Why KOBAYASHI
 
-STFC has **280+ officers** and growing. Each ability interacts with slot, rank, synergies, the hostile you're fighting, your ship's tier and level, your research, buildings, reputation, artifacts, exocomps, and forbidden tech. Finding the optimal crew by hand is a combinatorial nightmare.
+STFC has more than 280 officers, and the game adds more officers regularly. The result of
+an officer ability changes with the crew slot, the officer rank, the other officers in the
+crew, and the hostile. The ship tier, the ship level, and the player profile also change
+the result. The player profile contains the research, the buildings, the reputation, the
+artifacts, the exocomps, and the forbidden tech. Therefore you cannot find the best crew
+manually.
 
-KOBAYASHI solves this by brute force: thousands of fights per crew, every viable permutation, ranked by the metrics you choose — round-1 kill rate, win rate, hull remaining, fights before repair. Sub-microsecond per fight, embarrassingly parallel, deterministic per seed.
+KOBAYASHI solves this problem with a large number of simulations. It simulates thousands
+of fights for each crew and ranks the results. You select the metric: round-1 kill rate, win rate, hull
+remaining, or the number of fights before a repair. One fight takes less than one
+microsecond. The fights run in parallel on all cores. The same seed always gives the same
+result.
 
 **Highlights**
 
-- Monte Carlo combat engine modelling crits, procs, shield mitigation, armor, ability timing, decay/accumulate effects, and on-kill triggers
-- Three optimizer strategies — exhaustive sweep, tiered scout→confirm, genetic algorithm — auto-selected from search-space size
-- **LCARS** (Language for Combat Ability Resolution & Simulation): officer abilities live in declarative YAML, no code changes needed to add new officers
-- Player profile bonuses for research, buildings, reputation, artifacts, exocomps, and forbidden tech
-- Local-first: release archives bundle the server, web UI, runtime game data, and a starter profile; no Docker, no cloud
+- A Monte Carlo combat engine that models critical hits, procs, shield mitigation, armor,
+  ability timing, decay effects, accumulate effects, and on-kill triggers.
+- Three optimizer strategies: an exhaustive sweep, a tiered scout pass with a confirmation
+  pass, and a genetic algorithm. The server selects the strategy from the size of the
+  search space.
+- **LCARS** (Language for Combat Ability Resolution and Simulation). Officer abilities are
+  declarative YAML. You can add a new officer without a change to the code.
+- Player profile bonuses for the research, the buildings, the reputation, the artifacts,
+  the exocomps, and the forbidden tech.
+- Local-first operation. A release archive contains the server, the web interface, the
+  runtime game data, and a starter profile. You do not need Docker, and you do not need a
+  cloud account.
 
 ---
 
@@ -49,21 +67,32 @@ KOBAYASHI solves this by brute force: thousands of fights per crew, every viable
 
 ### For players
 
-Prebuilt binaries for Linux x86_64, macOS arm64, and Windows x86_64 are published on every tagged release.
+Each tagged release gives prebuilt binaries for Linux x86_64, macOS arm64, and Windows
+x86_64.
 
-1. Grab the archive for your OS from [Releases](https://github.com/pggpgg/kobayashi-stfc/releases), verify it against `SHA256SUMS` ([deployment notes](docs/DEPLOYMENT_SECURITY.md)), and extract it. The archive is self-contained; no repository checkout or build toolchain is required.
-2. From the extracted folder:
+1. Download the archive for your operating system from
+   [Releases](https://github.com/pggpgg/kobayashi-stfc/releases).
+2. Check the archive against `SHA256SUMS`. Refer to the
+   [deployment notes](docs/DEPLOYMENT_SECURITY.md).
+3. Extract the archive. The archive contains all the necessary files. You do not need a
+   repository checkout or a build toolchain.
+4. Start the server from the folder that you extracted:
 
    ```bash
    ./kobayashi serve
    # Windows PowerShell: .\kobayashi.exe serve
    ```
 
-3. Open <http://localhost:3000>.
+5. Open <http://localhost:3000>.
 
-Choose **Guided** mode in the left rail for a focused scenario → crew → run → results walkthrough. It uses your roster and hides advanced optimizer tuning until you switch back to Roster or Sandbox mode.
+Select **Guided** mode in the left rail to get a walkthrough with four steps: scenario,
+crew, run, and results. Guided mode uses your roster. It hides the advanced optimizer
+controls until you select Roster mode or Sandbox mode again.
 
-To pull your roster from the game in near-real time, set up the [STFC Community Mod sync](docs/SYNC.md). For LAN or internet exposure, read [Deployment & security](docs/DEPLOYMENT_SECURITY.md) — the API has no authentication on its default loopback bind.
+To get your roster from the game in near-real time, set up the
+[STFC Community Mod sync](docs/SYNC.md). Before you make the server available on a LAN or
+on the internet, read [Deployment and security](docs/DEPLOYMENT_SECURITY.md). The API has
+no authentication on the default loopback bind.
 
 ### For contributors
 
@@ -78,24 +107,52 @@ cargo test                                # backend tests
 ./scripts/local-ci.sh                     # full CI parity, locally
 ```
 
-- **Pre-commit, CI parity, branch protection** — [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Pre-commit hooks, CI parity, and branch protection** — [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Officer LCARS definitions** — [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md)
-- **Full CLI, env vars, ops tuning** — [CLAUDE.md](CLAUDE.md)
-- **Documentation index** — [docs/README.md](docs/README.md)
+- **The full CLI, the environment variables, and the operations controls** — [CLAUDE.md](CLAUDE.md)
+- **The documentation index** — [docs/README.md](docs/README.md)
+- **The documentation style guide** — [docs/STYLE_STE100.md](docs/STYLE_STE100.md)
 
 ---
 
 ## How it works
 
-**Combat engine.** A deterministic, zero-allocation fight loop in Rust. Each simulation takes well under a microsecond. Decay and accumulate buffs, on-kill triggers, extra-attack procs, shield→hull overflow on shield break, apex and isolytic mechanics, and player-profile bonuses are all modelled. Same seed → same outcome, every time. A small Python reference in [tools/combat_engine](tools/combat_engine/) mirrors the core math and is exercised in CI.
+**The combat engine.** The fight loop is deterministic, and it makes no allocation. It is
+written in Rust. One simulation takes much less than one microsecond. The engine models
+decay buffs, accumulate buffs, on-kill triggers, extra-attack procs, and the overflow from
+the shield to the hull when the shield breaks. It also models the apex mechanics, the
+isolytic mechanics, and the player profile bonuses. The same seed always gives the same
+result. A small Python reference in [tools/combat_engine](tools/combat_engine/) does the
+same core calculations, and CI runs it.
 
-**Optimizer.** Given a ship and a hostile, the optimizer searches the crew space. With `strategy` omitted on `/api/optimize`, the server auto-picks tiered vs exhaustive from the effective candidate count after warm-start and constraints. `strategy: "genetic"` runs a GA for very large spaces; `strategy: "tiered"` runs a cheap scout pass over all candidates then a confirmation pass over the top K. Synergy-tagged crews are simulated first, so cancelling early still leaves you with the best results found.
+**The optimizer.** You give the optimizer a ship and a hostile, and it searches the crew
+space. If you do not set `strategy` on `/api/optimize`, the server selects the tiered
+strategy or the exhaustive strategy. It selects from the effective candidate count after
+it applies the warm start and the constraints. `strategy: "genetic"` runs a genetic
+algorithm for a very large space. `strategy: "tiered"` runs a cheap scout pass over all
+the candidates, then a confirmation pass over the best K candidates. The optimizer
+simulates the crews with synergy tags first. Thus you keep the best results that it found
+if you stop the run early.
 
-**LCARS officers.** Officers live in [`data/officers/officers.lcars.yaml`](data/officers/), generated from a maintainer-curated canonical JSON. The resolver collapses YAML into a `BuffSet` at load time; the hot loop only evaluates dynamic effects (decay, accumulate, proc). Unknown effect types are logged and skipped — officers can ship before the engine fully supports every mechanic. Full grammar in [docs/DESIGN.md § LCARS](docs/DESIGN.md#3-lcars-language-specification); contributing officers in [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md).
+**The LCARS officers.** The officers are in
+[`data/officers/officers.lcars.yaml`](data/officers/). A maintainer keeps a canonical JSON
+file, and the tool generates the YAML from it. At load time the resolver collapses the
+YAML into a `BuffSet`. The hot loop then evaluates only the dynamic effects: decay,
+accumulate, and proc. The engine writes a log message for an unknown effect type and skips
+it. Therefore you can add an officer before the engine models every mechanic. For the full
+grammar, refer to [docs/DESIGN.md § LCARS](docs/DESIGN.md#3-lcars-language-specification).
+To contribute an officer, refer to [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md).
 
-**Player profile.** Non-officer bonuses (research, buildings, reputation, artifacts, exocomps, forbidden tech) merge into a profile applied as a pre-combat modifier layer. Sync your roster via [STFC Community Mod](docs/SYNC.md) or import a Spocks.club export from the Roster page. Request-scoped support buffs (Cerritos, Defiant reinforcement, Titan-A Fortification, …) are configured per simulation, not persisted to the profile.
+**The player profile.** The bonuses that do not come from officers merge into one profile.
+These bonuses come from the research, the buildings, the reputation, the artifacts, the
+exocomps, and the forbidden tech. The engine applies the profile as a modifier layer
+before combat. To get your roster, use the [STFC Community Mod](docs/SYNC.md) sync, or
+import a Spocks.club export from the Roster page. Support buffs (Cerritos, Defiant
+reinforcement, Titan-A Fortification, and others) apply to one simulation only. The server
+does not write them to the profile.
 
-Deeper coverage of combat formulas, optimizer theory, and the data pipeline lives in [docs/](docs/README.md).
+For more data about the combat formulas, the optimizer theory, and the data pipeline,
+refer to [docs/](docs/README.md).
 
 ---
 
@@ -118,33 +175,57 @@ kobayashi/
 └── docs/             design, deployment, performance, LCARS, data pipeline
 ```
 
-**Architecture at a glance.** Tokio + Axum 0.7 multi-threaded runtime; REST-first with Server-Sent Events for optimize-job progress; CPU-heavy handlers run under `spawn_blocking` behind a process-wide admission semaphore (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`). The React SPA is built separately and served from `frontend/dist`. At startup the binary discovers runtime assets from `KOBAYASHI_HOME`, the working directory, or the executable directory, so extracted release bundles work without a checkout. Deep dive: [CLAUDE.md § Architecture](CLAUDE.md) and [docs/DESIGN.md](docs/DESIGN.md).
+**The architecture.** The server uses Tokio and Axum 0.7 on a multi-thread runtime. The
+API is REST-first, and it uses Server-Sent Events for the progress of an optimize job. A
+handler that uses much CPU time runs under `spawn_blocking`. A semaphore for the full
+process controls how many of these handlers run together
+(`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`). The React SPA has its own build, and the server
+sends it from `frontend/dist`. At start the binary finds the runtime assets in
+`KOBAYASHI_HOME`, in the working directory, or in the directory of the executable.
+Therefore an extracted release archive runs without a checkout. For more data, refer to
+[CLAUDE.md § Architecture](CLAUDE.md) and [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 
 ## Contributing
 
-PRs welcome. Three good ways in:
+You can send a pull request. There are three good ways to help:
 
-- **Code** — build, test, and CI parity in [CONTRIBUTING.md](CONTRIBUTING.md). Every PR runs `cargo fmt`, `cargo clippy -D warnings`, `cargo test`, the frontend Biome+tsc+Vitest+build pipeline, and `cargo audit`.
-- **Officer definitions** — every officer is YAML. See [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md) for the schema, mapping tables, and the `generate_lcars` workflow.
-- **Real fight data** — the combat engine calibrates against recorded fights in `tests/fixtures/recorded_fights/`. If you can record damage-per-round, rounds-to-kill, or full fight logs, open an issue or PR with the fixture.
+- **Code.** For the build steps, the tests, and the CI parity, refer to
+  [CONTRIBUTING.md](CONTRIBUTING.md). Each pull request runs `cargo fmt`,
+  `cargo clippy -D warnings`, `cargo test`, `cargo audit`, and the frontend pipeline. The
+  frontend pipeline runs Biome, `tsc`, Vitest, and the build.
+- **Officer definitions.** Each officer is YAML. For the schema, the mapping tables, and
+  the `generate_lcars` operation, refer to
+  [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md).
+- **Data from real fights.** The combat engine calibrates against the recorded fights in
+  `tests/fixtures/recorded_fights/`. You can record the damage per round, the number of
+  rounds to a kill, or a full fight log. Then open an issue or a pull request with the
+  fixture.
 
-Bug reports — especially *"the optimizer ranks X but in-game Y wins"* — are valuable. Please include your crew, ship, hostile, and player profile.
+Bug reports are also of much value. For example, this report is very useful: *"the
+optimizer ranks crew X first, but crew Y wins in the game"*. Include your crew, your ship,
+the hostile, and your player profile.
 
 ---
 
 ## Roadmap
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for future work and planning priorities, and [docs/NOT_ROADMAP.md](docs/NOT_ROADMAP.md) for explicit non-goals.
+For the future work and the planning priorities, refer to
+[docs/ROADMAP.md](docs/ROADMAP.md). For the work that the project will not do, refer to
+[docs/NOT_ROADMAP.md](docs/NOT_ROADMAP.md).
 
 ---
 
 ## Acknowledgments
 
-- Inspired by [tu_optimize](https://github.com/zachanassian/tu_optimize), the Monte Carlo deck optimizer for Tyrant Unleashed.
-- The STFC community for reverse-engineering combat formulas.
-- The name references the [Kobayashi Maru](https://memory-alpha.fandom.com/wiki/Kobayashi_Maru_scenario) — because the only way to win is to change the conditions of the test.
+- The idea for this project comes from
+  [tu_optimize](https://github.com/zachanassian/tu_optimize), the Monte Carlo deck optimizer
+  for Tyrant Unleashed.
+- The STFC community found the combat formulas by reverse engineering.
+- The name comes from the
+  [Kobayashi Maru](https://memory-alpha.fandom.com/wiki/Kobayashi_Maru_scenario), because
+  the only way to win is to change the conditions of the test.
 
 ---
 

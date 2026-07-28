@@ -1,25 +1,46 @@
-# Syncing game state with the STFC Community Mod
+# Sync the game state with the STFC Community Mod
 
-Kobayashi can accept **quasi real-time** game state from the [STFC Community Mod](https://github.com/netniV/stfc-mod) (netniV/stfc-mod). When the mod is configured to send data to Kobayashi, officer roster updates from the game are written to the same roster file used by the optimizer, so crew recommendations stay in sync with what you own without manual file import.
+Kobayashi can accept the game state in near-real time from the
+[STFC Community Mod](https://github.com/netniV/stfc-mod) (netniV/stfc-mod). Configure the
+mod to send data to Kobayashi. The mod then writes each roster update from the game to the
+same roster file that the optimizer reads. Thus the crew recommendations agree with the
+officers that you own, and you do not import a file manually.
 
-This uses the same sync protocol as [Spocks.club](https://spocks.club/syncing/); you can point the mod at both Spocks.club and Kobayashi if you wish.
+The mod uses the same sync protocol as [Spocks.club](https://spocks.club/syncing/). You can
+send the data to Spocks.club and to Kobayashi at the same time.
 
-## Requirements
+## Prerequisites
 
-- [STFC Community Mod](https://github.com/netniV/stfc-mod/releases) installed and working with Star Trek Fleet Command (Windows or Wine/macOS as per the mod’s INSTALL.md).
-- Kobayashi server running (e.g. `kobayashi serve`) from either a source checkout or an extracted self-contained release. The binary discovers `data/` and `profiles/` beside itself; set `KOBAYASHI_HOME` only when storing those assets elsewhere.
+- The [STFC Community Mod](https://github.com/netniV/stfc-mod/releases) must be installed
+  and must operate correctly with Star Trek Fleet Command. Use Windows, or use Wine on
+  macOS, as the INSTALL.md file of the mod tells you.
+- The Kobayashi server must run, for example with `kobayashi serve`. You can start it from
+  a source checkout or from an extracted release archive. The binary finds `data/` and
+  `profiles/` next to itself. Set `KOBAYASHI_HOME` only when you keep these assets in
+  another location.
 
 ## Configuration
 
-### 1. Kobayashi (per-profile sync token)
+### 1. Kobayashi (the sync token of the profile)
 
-Sync auth is **per profile**, not a global env var. Each Kobayashi profile owns its own `sync_token` (a secret stored in `profiles/index.json`). The mod sends that exact token in the `stfc-sync-token` request header, and the server uses it to identify which profile to write to.
+Sync authentication is **per profile**. It is not a global environment variable. Each
+Kobayashi profile has its own `sync_token`. This token is a secret, and `profiles/index.json`
+holds it. The mod sends the same token in the `stfc-sync-token` request header. The server
+uses the token to find the profile to write to.
 
-A token is **always required**: `POST /api/sync/ingress` returns **401** whenever the header is missing or matches no profile — there is no "accept anything" mode. Find or manage per-profile tokens via `GET /api/profiles` (or the profile UI).
+A token is always necessary. `POST /api/sync/ingress` returns **401** when the header is
+absent, and also when the header matches no profile. There is no mode that accepts all
+requests. To find or manage the token of each profile, use `GET /api/profiles` or the
+profile page in the web interface.
 
-### 2. Community Mod (add Kobayashi as a sync target)
+### 2. The Community Mod (add Kobayashi as a sync target)
 
-Edit `community_patch_settings.toml` in your **game install folder** (the same directory as `version.dll`; on Windows often something like `C:\Games\Star Trek Fleet Command\...\default\game\`). See the mod’s INSTALL.md for the exact path on your system. Ensure sync is enabled and add a target for Kobayashi. **Turn on the mod’s officer sync toggle** (e.g. `officer = true` under `[sync]`) so the roster is sent.
+Edit `community_patch_settings.toml` in the **folder where you installed the game**. This
+is the same directory as `version.dll`. On Windows the path is often similar to
+`C:\Games\Star Trek Fleet Command\...\default\game\`. For the exact path on your system,
+refer to the INSTALL.md file of the mod. Make sure that sync is on, and add a target for
+Kobayashi. Also set the officer sync toggle of the mod to on, for example `officer = true`
+in the `[sync]` section. The mod then sends the roster.
 
 ```toml
 [patches]
@@ -42,70 +63,128 @@ url = "http://localhost:3000/api/sync/ingress"
 token = "<your Kobayashi profile's sync_token>"
 ```
 
-Set the Kobayashi target's `token` to the `sync_token` of the profile you want to sync into (find it via `GET /api/profiles` or the profile UI). A missing or unmatched token is rejected with **401**.
+Set the `token` of the Kobayashi target to the `sync_token` of the profile that you want to
+write to. To find the token, use `GET /api/profiles` or the profile page. The server
+rejects a request with **401** when the token is absent or matches no profile.
 
-Change the URL if Kobayashi runs on another host or port (e.g. `http://192.168.1.10:3000/api/sync/ingress`).
+Change the URL when Kobayashi runs on a different host or a different port, for example
+`http://192.168.1.10:3000/api/sync/ingress`.
 
-## Sync implementation status
+## The status of the sync implementation
 
-Sync is profile-scoped: the `stfc-sync-token` header identifies the profile, and data is written to that profile’s directory (`profiles/{profile_id}/...`). The optimizer reads from the default profile path. `GET /api/sync/status` returns those same paths. Run the server from the project root so `profiles/` and `data/` resolve.
-
+Sync has the scope of one profile. The `stfc-sync-token` header identifies the profile, and
+the server writes the data to the directory of that profile (`profiles/{profile_id}/...`).
+The optimizer reads from the path of the default profile. `GET /api/sync/status` returns
+the same paths. Start the server from the root of the project. The server then finds
+`profiles/` and `data/`.
 
 | Payload type                                                    | Persisted          | File / usage                                                                                                                                                                                       |
 | --------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| officer                                                         | Yes                | `profiles/{id}/roster.imported.json` — roster for “Owned only” and optimizer                                                                                                                       |
-| research                                                        | Yes                | `profiles/{id}/research.imported.json` — **full merged savepoint** of every `rid` + `level` synced for this profile (not filtered by `research_catalog.json`; catalog only affects combat bonuses) |
+| officer                                                         | Yes                | `profiles/{id}/roster.imported.json` — the roster for “Owned only” and for the optimizer                                                                                                           |
+| research                                                        | Yes                | `profiles/{id}/research.imported.json` — the **full merged savepoint** of each `rid` and `level` that the mod sent for this profile. The server does not filter it by `research_catalog.json`. The catalog changes the combat bonuses only. |
 | buildings / module                                              | Yes                | `profiles/{id}/buildings.imported.json`                                                                                                                                                            |
 | ships / ship                                                    | Yes                | `profiles/{id}/ships.imported.json`                                                                                                                                                                |
-| ft (forbidden tech)                                             | Yes                | `profiles/{id}/forbidden_tech.imported.json` — bonuses merged into optimizer profile                                                                                                               |
-| tech                                                            | Yes (same as ft)   | **STFC Community Mod** sends forbidden/chaos tech with JSON `type: "tech"` (fid, tier, level, shard_count). Written to the same `forbidden_tech.imported.json` as `ft`.                            |
-| buffs                                                           | Yes                | `profiles/{id}/buffs.imported.json` — global active buffs (`bid`, `level`, optional `expiry_time`). Removals use `type: "expired_buffs"` with `bid` (stfc-mod).                                    |
-| battlelogs                                                      | Yes                | `profiles/{id}/battlelogs.imported.json` — rolling window of the **last 50** battle log objects (append order within and across batches; older entries dropped).                                    |
+| ft (forbidden tech)                                             | Yes                | `profiles/{id}/forbidden_tech.imported.json` — the bonuses merge into the optimizer profile                                                                                                        |
+| tech                                                            | Yes (same as ft)   | The **STFC Community Mod** sends the forbidden tech and the chaos tech with the JSON `type: "tech"` (fid, tier, level, shard_count). The server writes them to the same `forbidden_tech.imported.json` as `ft`. |
+| buffs                                                           | Yes                | `profiles/{id}/buffs.imported.json` — the global active buffs (`bid`, `level`, optional `expiry_time`). To remove a buff, the mod sends `type: "expired_buffs"` with `bid`.                        |
+| battlelogs                                                      | Yes                | `profiles/{id}/battlelogs.imported.json` — a moving window of the **last 50** battle log objects. The server keeps the order in which it received them, and it drops the older entries.            |
 | resources, missions, traits, slots, inventory, jobs             | No (accepted, 200) | —                                                                                                                                                                                                  |
 
+## The data that the mod sends
 
-## What gets synced
+- **Officers.** The server merges each payload with `type: "officer"` into
+  `profiles/{id}/roster.imported.json`. It maps the officer id of the game (`oid`) to the
+  canonical officer id of Kobayashi with `data/officers/id_registry.json`. The optimizer
+  then uses this roster to limit the crew candidates to the officers that you own.
+- **Research.** The server merges each payload with `type: "research"` into
+  `profiles/{id}/research.imported.json`, by `rid`. To read the file, use
+  `load_imported_research`. When the research catalog is present
+  (`data/research_catalog.json`), the optimizer merges the research bonuses into the player
+  profile for combat. Refer to `data/README.md` § Research.
+- **Buildings.** The server merges each payload with `type: "buildings"` or
+  `type: "module"` into `profiles/{id}/buildings.imported.json`, by `bid`. The mod sends
+  `"module"`. The optimizer reads this file from the path of the default profile and merges
+  the building bonuses into the player profile. Refer to `data/README.md` § Buildings.
+- **Ships.** The server merges each payload with `type: "ships"` or `type: "ship"` into
+  `profiles/{id}/ships.imported.json`, by `psid`. The mod sends `"ship"`. To read the file,
+  use `load_imported_ships`. In **Roster mode** the ship list shows only the ships that you
+  own. The server maps the `hull_id` from the sync to the Kobayashi ship id with
+  `data/hull_id_registry.json`. When the game or the Kobayashi catalog gets new ships, make
+  the registry again with `node scripts/build_hull_id_registry.mjs`. Run this command from
+  the root of the project.
+- **Forbidden tech (`ft` or `tech`).** The server merges each payload with `type: "ft"` or
+  `type: "tech"` into `profiles/{id}/forbidden_tech.imported.json`, by `fid`. The mod uses
+  `"tech"`. To read the file, use `load_imported_forbidden_tech`. The server merges the
+  player state into the optimizer profile with `data/forbidden_chaos_tech.json`, by `fid`.
+- **Battlelogs.** For a payload with `type: "battlelogs"`, the server adds each element of
+  the array to `profiles/{id}/battlelogs.imported.json`. It then keeps only the **50**
+  objects that it received last, and drops the oldest objects first. It keeps each object
+  as the mod sent it, as opaque JSON, for calibration or for other tools later.
+- **The other types** (resources, missions, traits, slots, inventory, jobs). The server
+  accepts these payloads and returns 200, but it does not write them to a file.
 
-- **Officers**: Each sync payload with `type: "officer"` is merged into `profiles/{id}/roster.imported.json`. Game officer IDs (`oid`) are mapped to Kobayashi’s canonical officer IDs via `data/officers/id_registry.json`. The optimizer then uses this roster to restrict crew candidates to officers you own.
-- **Research**: Payloads with `type: "research"` are merged into `profiles/{id}/research.imported.json` (by `rid`). Load with `load_imported_research`. When a research catalog is present (`data/research_catalog.json`), the optimizer merges research bonuses into the player profile for combat (see `data/README.md` § Research).
-- **Buildings**: Payloads with `type: "buildings"` or `type: "module"` (the mod sends `"module"`) are merged into `profiles/{id}/buildings.imported.json` (by `bid`). The optimizer loads this from the default profile path and merges building bonuses into the player profile (see `data/README.md` § Buildings).
-- **Ships**: Payloads with `type: "ships"` or `type: "ship"` (the mod sends `"ship"`) are merged into `profiles/{id}/ships.imported.json` (by `psid`). Load with `load_imported_ships`. In **Roster mode**, the ship dropdown is restricted to ships you own; game `hull_id` from sync is mapped to Kobayashi ship id via `data/hull_id_registry.json`. When new ships are added to the game or to the Kobayashi catalog, regenerate the registry with `node scripts/build_hull_id_registry.mjs` (from the project root).
-- **Forbidden tech (`ft` or `tech`)**: Payloads with `type: "ft"` **or** `type: "tech"` (the mod uses `"tech"`) are merged into `profiles/{id}/forbidden_tech.imported.json` (by `fid`). Load with `load_imported_forbidden_tech`. Player state is merged into the optimizer profile using `data/forbidden_chaos_tech.json` by `fid`.
-- **Battlelogs**: Payloads with `type: "battlelogs"` append each array element to `profiles/{id}/battlelogs.imported.json`, then keep only the **50 most recently received** objects (FIFO drop). Objects are stored as sent (opaque JSON) for future calibration or tooling.
-- **Other types** (resources, missions, traits, slots, inventory, jobs): The server accepts the payloads and returns 200 but does not persist them.
+## The mapping of the officer id
 
-## Officer ID mapping
+The mod sends the officer id in the format of the game (`oid`). Kobayashi maps it to the
+canonical id, for example `kirk-1323b6`, with `data/officers/id_registry.json`. When the
+game gets a new officer that is not yet in the registry, Kobayashi skips that officer. It
+skips the officer until a maintainer or a data pipeline updates the registry.
 
-The mod sends officer IDs in the game’s format (`oid`). Kobayashi maps them to canonical IDs (e.g. `kirk-1323b6`) using `data/officers/id_registry.json`. If a new officer is added to the game and not yet in the registry, that officer will be skipped until the registry is updated (e.g. by a maintainer or a data pipeline).
+## How to check the sync
 
-## Verification
+Do these steps to make sure that the sync operates correctly:
 
-To confirm sync is working: (1) Open the game and trigger a sync (e.g. open the officers screen or change something). (2) Check that the profile’s `roster.imported.json` was updated (see `GET /api/sync/status` for the path). (3) In the Kobayashi web UI, enable “Owned only” in the crew builder and confirm the officer list matches your in-game roster.
+1. Open the game and cause a sync. For example, open the officers screen or change
+   something.
+2. Make sure that the server updated `roster.imported.json` for the profile. To find the
+   path, use `GET /api/sync/status`.
+3. In the Kobayashi web interface, turn on “Owned only” in the crew builder. Make sure that
+   the officer list agrees with your roster in the game.
 
-## API
+## The API
 
 - **Endpoint**: `POST /api/sync/ingress`
-- **Headers**: `Content-Type: application/json`; `stfc-sync-token: <profile sync_token>` (**required** — it identifies the target profile; missing or unmatched → 401).
-- **Body**: JSON array of objects. Each object has a `type` field; the first element’s `type` determines how the payload is handled (officer, research, buildings, ships, etc.). Shape per type matches the [Community Mod sync payloads](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc).
-- **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or similar; **401** if the `stfc-sync-token` is missing or matches no profile; **400** if the body is not a JSON array; **500** on a persist failure.
+- **Headers**: `Content-Type: application/json` and `stfc-sync-token: <profile sync_token>`.
+  The token is necessary. It identifies the target profile. The server returns 401 when the
+  token is absent or matches no profile.
+- **Body**: a JSON array of objects. Each object has a `type` field. The `type` of the first
+  element tells the server how to process the payload (officer, research, buildings, ships,
+  or another type). The shape of each type is the shape of the
+  [Community Mod sync payloads](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc).
+- **Response**: 200 with `{"status":"ok","accepted":["officer(N)"]}` or a similar body. The
+  server returns **401** when the `stfc-sync-token` is absent or matches no profile. It
+  returns **400** when the body is not a JSON array. It returns **500** when it cannot write
+  the file.
 - **Endpoint**: `GET /api/sync/status`
-- **Response**: 200 with, for the selected profile (`X-Profile-Id` / `?profile=`, else effective default): `profile_id`; the seven `*_path` fields (`roster_path`, `research_path`, `buildings_path`, `ships_path`, `forbidden_tech_path`, `buffs_path`, `battlelogs_path`); a last-modified timestamp per file — `last_modified_iso` for the roster and `<type>_last_modified_iso` for the rest (ISO8601 or null if the file is missing); `last_mod_sync_utc` when the mod has persisted a batch; and `research_catalog_loaded` / `research_catalog_item_count`.
+- **Response**: 200 with the data of the selected profile. The server selects the profile
+  from `X-Profile-Id` or from `?profile=`. If neither is present, it uses the effective
+  default profile. The body contains these fields:
+  - `profile_id`.
+  - The seven path fields: `roster_path`, `research_path`, `buildings_path`, `ships_path`,
+    `forbidden_tech_path`, `buffs_path`, and `battlelogs_path`.
+  - One last-modified timestamp for each file. The field is `last_modified_iso` for the
+    roster, and `<type>_last_modified_iso` for the other files. The value is an ISO8601
+    timestamp, or null when the file is absent.
+  - `last_mod_sync_utc`. The server sends this field after the mod wrote a batch.
+  - `research_catalog_loaded` and `research_catalog_item_count`.
 
-## Sync payload reference
+## Reference of the sync payloads
 
-The request body is a JSON array; the first element’s `type` field determines handling. Field shapes per type (source: [Community Mod sync.cc](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc)):
-
+The request body is a JSON array. The `type` field of the first element tells the server how
+to process the payload. The table gives the shape of each type. The source is the
+[Community Mod sync.cc](https://github.com/netniV/stfc-mod/blob/main/mods/src/patches/parts/sync.cc)
+file.
 
 | Type                       | Keys per item                                                                                                          | Notes                                                                                                                                                        |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **officer**                | `type`, `oid` (game id), `rank`, optional `tier` (preferred over `rank` when present), `level`, optional `shard_count` | Merged into `profiles/{id}/roster.imported.json`; `oid` mapped via `data/officers/id_registry.json`.                                                         |
-| **research**               | `type`, `rid` (int64), `level` (int32)                                                                                 | One object per research project level. Persisted to `profiles/{id}/research.imported.json`. Used for combat when `data/research_catalog.json` is present.    |
-| **buildings** / **module** | `type`, `bid` (int64), `level` (int32)                                                                                 | Starbase modules. The mod sends `type: "module"`; Kobayashi accepts both `"buildings"` and `"module"`. Persisted to `profiles/{id}/buildings.imported.json`. |
-| **ships** / **ship**       | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | Player ship instance. The mod sends `type: "ship"`; Kobayashi accepts both `"ships"` and `"ship"`. Persisted to `profiles/{id}/ships.imported.json`.         |
-| **ft**                     | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64)                                                          | Forbidden/chaos tech. Persisted to `profiles/{id}/forbidden_tech.imported.json`.                                                                             |
-| **tech**                   | Same fields as **ft**                                                                                                  | Same persistence as **ft** (stfc-mod queue name for forbidden/chaos tech).                                                                                   |
-| **buffs**                  | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds)                                        | Global active buffs → `profiles/{id}/buffs.imported.json`. Removals: `type: "expired_buffs"` with `bid`.                                                     |
-| **battlelogs**             | `type`, plus mod-defined fields per object                                                                              | Appended to `profiles/{id}/battlelogs.imported.json`; only the last **50** objects are kept (receive order).                                                 |
+| **officer**                | `type`, `oid` (game id), `rank`, optional `tier` (the server uses `tier` before `rank` when `tier` is present), `level`, optional `shard_count` | The server merges the item into `profiles/{id}/roster.imported.json`. It maps `oid` with `data/officers/id_registry.json`.                                    |
+| **research**               | `type`, `rid` (int64), `level` (int32)                                                                                 | One object for each research project level. The server writes it to `profiles/{id}/research.imported.json`. The server uses it for combat when `data/research_catalog.json` is present. |
+| **buildings** / **module** | `type`, `bid` (int64), `level` (int32)                                                                                 | Starbase modules. The mod sends `type: "module"`. Kobayashi accepts `"buildings"` and `"module"`. The server writes the item to `profiles/{id}/buildings.imported.json`. |
+| **ships** / **ship**       | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | One ship of the player. The mod sends `type: "ship"`. Kobayashi accepts `"ships"` and `"ship"`. The server writes the item to `profiles/{id}/ships.imported.json`. |
+| **ft**                     | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64)                                                          | Forbidden tech and chaos tech. The server writes the item to `profiles/{id}/forbidden_tech.imported.json`.                                                    |
+| **tech**                   | The same fields as **ft**                                                                                              | The server writes the item as it writes **ft**. This is the queue name of the mod for the forbidden tech and the chaos tech.                                  |
+| **buffs**                  | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds)                                        | The global active buffs go to `profiles/{id}/buffs.imported.json`. To remove a buff, the mod sends `type: "expired_buffs"` with `bid`.                        |
+| **battlelogs**             | `type`, and the other fields that the mod sets for each object                                                          | The server adds the item to `profiles/{id}/battlelogs.imported.json`. It keeps only the last **50** objects, in the order in which it received them.          |
 
-
-Other types (resources, missions, traits, slots, inventory, jobs) are accepted (200) but not persisted.
+The server accepts the other types (resources, missions, traits, slots, inventory, and jobs)
+and returns 200, but it does not write them to a file.
