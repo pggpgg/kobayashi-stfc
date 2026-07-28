@@ -1,7 +1,7 @@
 {
   "id": "dilithium_warehouse",
   "building_name": "Dilithium Warehouse",
-  "data_version": "stfcspace-2026-07-24",
+  "data_version": "stfcspace-2026-07-27",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "levels": [
     {

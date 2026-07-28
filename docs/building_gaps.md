@@ -1,6 +1,6 @@
 # Building bonus mapping gaps
 
-Directory: `/Users/pgagnong/Dev/kobayashi-stfc/data/buildings`
+Directory: `/home/runner/work/kobayashi-stfc/kobayashi-stfc/data/buildings`
 
 ## Opaque `buff_*` stats
 
