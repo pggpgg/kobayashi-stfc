@@ -22,27 +22,38 @@ cargo xtask bench-check --write-baseline
   ⚠️ **Do not commit a locally-generated baseline.** The env vars match CI but the CPU does not, and the gate compares CI medians against whatever is committed. Measured 2026-07-28 on an Apple-silicon laptop: `simulator/combat_100_rounds` **776 ns local vs 1579 ns** in the committed CI baseline — roughly 2× faster. Committing laptop numbers would put every subsequent CI run permanently over the `× 1.10` threshold. Use this locally to *inspect* a change, and refresh the committed log from `bench-refresh-baseline.yml` (below) so the numbers come from the gate's own runner.
 
 - **Noise:** shared GitHub runners vary; if the gate flakes, re-run the workflow or refresh the log from a fresh Linux release artifact. Prefer `**ubuntu-24.04`** for the committed numbers so they match the gate runner.
-- **Paired fallback (hardware drift):** when the committed-baseline comparison fails, the workflow re-benches `main` **on the same runner** (shared `CARGO_TARGET_DIR`, so only the kobayashi crates rebuild) and gates on the paired PR-vs-main medians instead. A true regression still fails (it regresses vs `main` too); a stale-baseline false positive passes and the sticky comment tells you to dispatch `bench-refresh-baseline.yml`. Motivation: on 2026-07-08 (PR #252) GitHub runner hardware changed 2-thread Rayon scaling from ~1.76× to ~1.05×, making `monte_carlo/parallel` fail +53% against the committed baseline — on `main` itself as well.
+- **Paired fallback (hardware drift):** when the committed-baseline comparison fails, the workflow re-benches `main` **on the same runner** (shared `CARGO_TARGET_DIR`, so only the kobayashi crates rebuild) and gates on the paired PR-vs-main medians instead. A true regression still fails (it regresses vs `main` too); a stale-baseline false positive passes and the sticky comment tells you to dispatch `bench-refresh-baseline.yml`. Motivation: on 2026-07-08 (PR #252) GitHub runner hardware changed 2-thread Rayon scaling from ~1.76× to ~1.05×, making `monte_carlo/parallel` fail +53% against the committed baseline — on `main` itself as well. **That attribution is now in doubt:** the bench was measuring a synthesized fallback fight at the time, and fixing it restored scaling to ~1.86× on current runners — see [the 2026-07-28 re-measurement](#monte_carlo-baseline-re-measured-on-a-real-scenario-2026-07-28).
 
-### Pending: `monte_carlo/*` baseline refresh (2026-07-28)
+### `monte_carlo/*` baseline re-measured on a real scenario (2026-07-28)
 
-The committed `monte_carlo/sequential` and `monte_carlo/parallel` medians were measured against the
-**synthesized fallback fight** (`saladin` did not resolve), so they are stale by roughly a factor of
-two now that the bench uses `uss_saladin`. Measured on one laptop, same env vars, before → after:
+The previous `monte_carlo/*` medians were measured against the **synthesized fallback fight**
+(`saladin` did not resolve), so switching the bench to `uss_saladin` moved them a long way. Both
+columns below are `ubuntu-24.04` / `KOBAYASHI_RAYON_THREADS=2` — the old column is the committed
+baseline from `workflow_dispatch_run_28978834323`, the new one from
+`workflow_dispatch_run_30368456054`:
 
 | bench | phantom scenario | real scenario | change |
 | --- | ---: | ---: | ---: |
-| `monte_carlo/sequential` | 78.4 ms | 172.1 ms | +119% |
-| `monte_carlo/parallel` | 71.4 ms | 141.6 ms | +99% |
+| `monte_carlo/sequential` | 170.5 ms | 445.1 ms | **2.61×** |
+| `monte_carlo/parallel` | 158.8 ms | 239.4 ms | **1.51×** |
+| `simulator/*` | 1571–1996 ns | 1699–2089 ns | 1.05–1.08× |
 
-2-thread parallel speedup also improves, 1.10× → 1.22×: a real fight gives the threads more work
-per unit of fixed setup. `simulator/*` is unaffected — those benches build `Combatant`s directly and
-never resolve an id.
+The `simulator/*` drift is unrelated — those benches build `Combatant`s directly and never resolve
+an id, so their ~7% is ordinary runner movement since the previous refresh.
 
-**Until the baseline is refreshed from `bench-refresh-baseline.yml`, the Criterion gate fails on
-this scenario, and the paired PR-vs-`main` fallback fails too** (both sides move together only once
-`main` carries the fix). That failure is the expected consequence of measuring real combat, not a
-performance regression.
+**2-thread scaling: 1.07× → 1.86×.** This is worth more than the absolute numbers, because it
+questions a diagnosis recorded below. The paired-PR-vs-`main` fallback was built after 2026-07-08
+(PR #252) on the reading that *runner hardware* had cut 2-thread Rayon scaling from ~1.76× to
+~1.05×. But that collapse is exactly what a phantom scenario produces once there is nothing left to
+parallelize — and the [Tier 5 resolve-cache fix](#tier-5-resolve-cache-fix-for-the-analytical-prefilter-2026-06)
+landed the month before, deleting the per-call JSON re-parsing that had been the fallback path's
+main parallelizable work. Measuring real combat restores scaling to ~1.86×, near the pre-2026-07-08
+figure, on current runners.
+
+So the more likely story is that the bench lost its parallel work to the memoization fix, not that
+the hardware changed. **This is a hypothesis, not a confirmed cause** — proving it needs a run of
+the pre-memoization code on a current runner. If it holds, the paired fallback is guarding against
+something that no longer exists and could be retired.
 
 ## benchmark_parallel_speedup (64 candidates × 1000 iterations)
 
