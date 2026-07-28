@@ -601,7 +601,14 @@ pub fn scenario_fingerprint(registry: &DataRegistry, inputs: &ReuseScenarioInput
         Some(json) => {
             canonical.push_str(&format!("hostile_record={:016x};", stable_text_hash(&json)))
         }
-        None => canonical.push_str("hostile_record=unresolved;"),
+        // Include the id: every unresolved hostile used to collapse to one marker, while the
+        // engine's synthetic fallback derives a *different* fight from each id string — so two
+        // different unknown hostiles fingerprinted alike and could reuse each other's results.
+        // Ingress now rejects unresolvable ids, but non-server callers still reach this.
+        None => canonical.push_str(&format!(
+            "hostile_record=unresolved:{};",
+            inputs.hostile.trim()
+        )),
     }
 
     push_buff_ids(&mut canonical, "support_buffs", inputs.support_buffs);
@@ -656,7 +663,13 @@ fn push_ship_record_digest(
         .and_then(|record| serde_json::to_string(&record).ok())
     {
         Some(json) => out.push_str(&format!("{label}={:016x};", stable_text_hash(&json))),
-        None => out.push_str(&format!("{label}=unresolved;")),
+        // Same reasoning as the unresolved hostile above: keep distinct unresolved ships distinct.
+        None => out.push_str(&format!(
+            "{label}=unresolved:{}:{}:{};",
+            ship.trim(),
+            tier.map_or_else(|| "-".to_string(), |t| t.to_string()),
+            level.map_or_else(|| "-".to_string(), |l| l.to_string())
+        )),
     }
 }
 

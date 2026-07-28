@@ -106,7 +106,9 @@ fn parse_optimize_args(args: &[String]) -> Result<OptimizeCliArgs, String> {
         });
     }
 
-    let mut ship = "saladin".to_string();
+    // Defaults must resolve: `saladin` is not a ship id, and since ingress rejects unresolvable
+    // ids, `kobayashi optimize --hostile <id>` with no `--ship` would fail on its own default.
+    let mut ship = "uss_saladin".to_string();
     let mut hostile = "2918121098".to_string();
     let mut sims: u32 = 5_000;
     let mut max_candidates: Option<u32> = None;
@@ -303,7 +305,9 @@ fn optimize_command(args: &[String]) -> Result<(), String> {
         .map_err(|e| format!("Failed to load data registry: {e}"))?;
     let payload =
         server::api::optimize_payload(registry.as_ref(), &body, Some(profile_id.as_str()))
-            .map_err(|err| format!("failed to build optimize response: {err}"))?;
+            // The error already names the failure (parse detail, or the offending fields);
+            // wrapping it in "failed to build response" only buries that.
+            .map_err(|err| err.to_string())?;
     let response: serde_json::Value =
         serde_json::from_str(&payload).map_err(|err| format!("invalid optimize payload: {err}"))?;
 

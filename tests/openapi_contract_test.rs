@@ -45,14 +45,14 @@ fn bundled_openapi_is_valid_yaml_with_expected_version() {
 #[test]
 fn heavy_payload_dtos_accept_documented_minimal_shapes() {
     let _sim: SimulateRequest = serde_json::from_value(serde_json::json!({
-        "ship": "Saladin",
+        "ship": "uss_saladin",
         "hostile": "2918121098",
         "crew": { "captain": "officer_id" }
     }))
     .expect("SimulateRequest");
 
     let _opt: OptimizeRequest = serde_json::from_value(serde_json::json!({
-        "ship": "Saladin",
+        "ship": "uss_saladin",
         "hostile": "2918121098",
         "sims": 1000,
         "fast_discovery": true,
@@ -65,7 +65,7 @@ fn heavy_payload_dtos_accept_documented_minimal_shapes() {
     .expect("OptimizeRequest");
 
     let _cmp: CompareCrewsRequest = serde_json::from_value(serde_json::json!({
-        "ship": "Saladin",
+        "ship": "uss_saladin",
         "hostile": "2918121098",
         "crews": [
             { "captain": "a", "bridge": [], "below_deck": [] },
@@ -75,7 +75,7 @@ fn heavy_payload_dtos_accept_documented_minimal_shapes() {
     .expect("CompareCrewsRequest");
 
     let _replay: ReplaySeedRequest = serde_json::from_value(serde_json::json!({
-        "ship": "Saladin",
+        "ship": "uss_saladin",
         "hostile": "2918121098",
         "sim_index": 0,
         "crew": { "captain": "officer_id" }
@@ -97,7 +97,7 @@ fn simulate_and_optimize_contracts_accept_support_buffs() {
     );
 
     let sim: SimulateRequest = serde_json::from_value(serde_json::json!({
-        "ship": "Saladin",
+        "ship": "uss_saladin",
         "hostile": "2918121098",
         "crew": { "captain": "officer_id", "bridge": [], "below_deck": [] },
         "support_buffs": ["cerritos_support", "defiant_reinforce"]
@@ -114,7 +114,7 @@ fn simulate_and_optimize_contracts_accept_support_buffs() {
     );
 
     let opt: OptimizeRequest = serde_json::from_value(serde_json::json!({
-        "ship": "Saladin",
+        "ship": "uss_saladin",
         "hostile": "2918121098",
         "sims": 1000,
         "max_candidates": 16,

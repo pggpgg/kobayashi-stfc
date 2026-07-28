@@ -97,7 +97,7 @@ fn optimize_command_dispatches_and_emits_deterministic_json() {
         .args([
             "optimize",
             "--ship",
-            "enterprise",
+            "uss_enterprise",
             "--hostile",
             "2918121098",
             "--sims",
@@ -112,7 +112,7 @@ fn optimize_command_dispatches_and_emits_deterministic_json() {
         .args([
             "optimize",
             "--ship",
-            "enterprise",
+            "uss_enterprise",
             "--hostile",
             "2918121098",
             "--sims",
@@ -264,4 +264,47 @@ fn validate_command_returns_non_zero_on_invalid_data() {
     assert!(stderr.contains("validation failed"));
 
     let _ = fs::remove_file(path);
+}
+
+/// `optimize` must refuse an id it cannot resolve instead of running the engine's synthetic
+/// fallback, which returns a confident 100%-win-rate answer for a fight that never existed.
+#[test]
+fn optimize_command_refuses_ids_that_do_not_resolve() {
+    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    // "saladin" is not a ship id ("uss_saladin" is) — the realistic near-miss.
+    for (label, ship, hostile) in [
+        ("ship", "saladin", "2918121098"),
+        ("hostile", "uss_saladin", "definitely_not_a_hostile"),
+    ] {
+        let output = Command::new(bin())
+            .current_dir(&crate_root)
+            .args([
+                "optimize",
+                "--ship",
+                ship,
+                "--hostile",
+                hostile,
+                "--sims",
+                "20",
+            ])
+            .output()
+            .expect("optimize should run");
+
+        assert_ne!(
+            output.status.code(),
+            Some(0),
+            "unresolvable {label} should fail, stdout: {}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let needle = if label == "ship" { ship } else { hostile };
+        assert!(
+            stderr.contains(needle),
+            "error should name the offending {label} {needle:?}: {stderr}"
+        );
+        assert!(
+            extract_cli_json_payload(&String::from_utf8_lossy(&output.stdout)).is_none(),
+            "a refused scenario must not emit recommendations"
+        );
+    }
 }

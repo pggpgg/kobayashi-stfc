@@ -330,8 +330,24 @@ fn handle_simulate(args: &[String]) -> i32 {
 }
 
 fn handle_optimize(args: &[String]) -> i32 {
-    let ship = args.get(2).map(String::as_str).unwrap_or("enterprise");
-    let hostile = args.get(3).map(String::as_str).unwrap_or("swarm");
+    // No defaults: the previous "enterprise"/"swarm" placeholders are not real ids, and an
+    // unresolvable id does not fail downstream — it runs a synthetic fight the caller wins in
+    // round 1. Require both, then check they resolve.
+    let (Some(ship), Some(hostile)) = (
+        args.get(2).map(String::as_str).filter(|s| !s.is_empty()),
+        args.get(3).map(String::as_str).filter(|s| !s.is_empty()),
+    ) else {
+        eprintln!("usage: kobayashi optimize <ship> <hostile> [sims] [--profile <id>]");
+        return 2;
+    };
+    if resolve_ship(ship).is_none() {
+        eprintln!("unknown ship '{ship}'");
+        return 1;
+    }
+    if resolve_hostile(hostile).is_none() {
+        eprintln!("unknown hostile '{hostile}'");
+        return 1;
+    }
     let sims = parse_u32_arg(args.get(4), "sim_count", 250);
     let profile_id = resolve_profile_id_for_api(parse_profile_arg(args).as_deref());
 

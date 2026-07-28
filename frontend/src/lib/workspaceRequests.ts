@@ -34,7 +34,7 @@ export function buildWorkspaceSimulateParams(args: {
   if (!args.crew.captain) return null;
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
   return {
-    ship: args.shipId || "Saladin",
+    ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
     crew: {
       captain: args.crew.captain,
@@ -244,7 +244,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
 
   return {
-    ship: args.shipId || "Saladin",
+    ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
     ...(args.enemyType ? { enemy_type: args.enemyType } : {}),
     sims: args.simsPerCrew,
