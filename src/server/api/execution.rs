@@ -1777,7 +1777,9 @@ fn gather_optimize_simulation_results(
                 cache_key_normalized.as_ref(),
                 outcome.tiered_resolved,
             ) {
-                let tiered_scout_allocator = if matches!(request.tiered_scout_uniform, Some(true)) {
+                let tiered_scout_allocator = if scenario.tiered_scout_priority_queue {
+                    2u8
+                } else if scenario.tiered_scout_uniform {
                     0u8
                 } else {
                     1u8
