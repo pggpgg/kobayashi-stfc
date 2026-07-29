@@ -109,6 +109,57 @@ Yes, the sim runs faster with these fixes. Criterion reported significant improv
 
 Tiered optimization reuses one `SharedScenarioData` build per phase (`src/optimizer/monte_carlo/scenario.rs`), uses adaptive batch counts via `monte_carlo_batch_count_for_candidates` (`src/parallel/batch.rs`), and runs the scout pass with Wilson-bound early stopping where safe (confirmation pass unchanged).
 
+## End-to-end optimizer pipeline (2026-07-29)
+
+The optimizer hot path now avoids doing scenario resolution inside the analytical sort comparator.
+Every generated crew is resolved and scored once, then `select_nth_unstable_by` retains the
+analytical top-K before sorting only that prefix. Candidate combination indices and duplicate-seat
+checks use fixed stack storage, and only accepted candidates allocate their final names.
+
+Monte Carlo now:
+
+- reuses one mutable attacker scratch value per candidate instead of cloning the combatant for every
+  trial;
+- aggregates trial results directly rather than allocating 64-seed and 64-result vectors per
+  checkpoint;
+- gives scout candidates a common scenario seed panel, reducing comparison noise;
+- uses the confidence-racing scout by default (minimal pass for all crews, Wilson-bound selection,
+  then deep simulation only for plausible finalists);
+- reports actual executed scout trials separately from the final per-crew sample totals;
+- rebuilds/clones progress top-K rows at most every 200 ms while still checking cancellation on
+  every batch; and
+- skips Rayon dispatch for a single independent candidate or sub-threshold work.
+
+Representative release run on an M-series Mac, four Rayon threads:
+
+```text
+optimizer_method_bench --case saladin_corvus --methods tiered,linear_eval \
+  --max-candidates 6000 --scout-sims 300 --top-k 16 --sims 2000
+```
+
+| Pipeline | Wall time | Scout trials executed | Confirm trials | Winner hash |
+|---|---:|---:|---:|---:|
+| `main` at `2d0c381e` | 1.52 s | 198,000 | 32,001 | 763719863688283222 |
+| Optimized | **0.48–0.61 s** | **85,200** | 32,484 | 763719863688283222 |
+
+This is about **2.5–3.2× faster** for that end-to-end workload with the same winner and 57% fewer
+executed scout trials. The analytical lane alone completes in about 22–39 ms. These are local
+measurements, not portable absolute thresholds.
+
+`tiered_scout_budget_compare` compares uniform, adaptive, and racing schedulers under identical
+candidate/scout settings. Across Saladin, Enterprise-D, and Amalgam fixtures, racing retained
+**100% of the uniform top-K and the same winner**. It used 52,000 vs 60,000, 52,800 vs 64,000, and
+35,600 vs 40,000 actual scout trials respectively. The integration test
+`optimizer_efficiency_regression` gates finalist recall (≥95%), winner preservation, and reduced
+scout work.
+
+Repeated optimizer results retain the optional UI cache key only as an opaque namespace. Reuse is
+gated by a separate **server-generated 128-bit fingerprint** covering the normalized request,
+simulator budget policy, resolved ship/hostile records, officer and combat catalogs, and
+combat-affecting profile files. Exact matching aggregate rows can therefore be reused without
+mixing results across profile or data revisions; stale entries remain bounded by the existing
+history-retention limit.
+
 ## Top-K progressive abandonment (exhaustive + genetic) — opt-in, score-aware
 
 The exhaustive full Monte Carlo and the genetic per-generation eval previously simulated **every** candidate to full depth, even crews clearly losing. The scout pass's progressive-abandonment machinery was generalized to a **top-K leaderboard** (`TopKLeader`, `src/optimizer/monte_carlo/simulation.rs`) keyed on the **ranking score**, not win rate:

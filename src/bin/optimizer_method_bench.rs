@@ -404,6 +404,7 @@ struct BenchRecord {
     tiered_scout_sims: Option<usize>,
     tiered_top_k: Option<usize>,
     tiered_scout_trials_final: Option<u64>,
+    tiered_scout_trials_executed_total: Option<u64>,
     tiered_confirm_trials_total: Option<u64>,
     genetic_generations_completed: Option<usize>,
     genetic_unique_crews_evaluated: Option<usize>,
@@ -512,7 +513,7 @@ fn scenario<'a>(
         tiered_scout_uniform: false,
         tiered_confirm_budget_cap_mult: None,
         optimize_history_confirm_cap_mult: None,
-        tiered_scout_priority_queue: false,
+        tiered_scout_priority_queue: true,
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
         tiered_pq_abandon_margin: None,
@@ -687,6 +688,7 @@ fn summarize_record(
         tiered_scout_sims: None,
         tiered_top_k: None,
         tiered_scout_trials_final: None,
+        tiered_scout_trials_executed_total: None,
         tiered_confirm_trials_total: None,
         genetic_generations_completed: None,
         genetic_unique_crews_evaluated: None,
@@ -837,9 +839,12 @@ fn run_optimizer_lane(
     }
     if let Some(b) = outcome.tiered_scout_budget {
         record.tiered_scout_trials_final = Some(b.scout_trials_final);
+        record.tiered_scout_trials_executed_total = Some(b.scout_trials_executed_total);
         record.tiered_confirm_trials_total = Some(b.confirm_trials_total);
         // Tiered counts every trial it spent, including crews that never reached the ranked rows.
-        record.realized_trials = b.scout_trials_final.saturating_add(b.confirm_trials_total);
+        record.realized_trials = b
+            .scout_trials_executed_total
+            .saturating_add(b.confirm_trials_total);
     }
     LaneRun {
         record,
