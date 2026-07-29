@@ -489,9 +489,32 @@ pub fn build_combat_setup_with_officer_stat(
 /// Run a single combat trial from a precomputed [`PreCombatSetup`] with a specific seed.
 /// All immutable setup is reused; only per-trial mutable state is freshly initialized.
 pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> SimulationResult {
-    let config = &setup.config;
     let mut attacker = setup.attacker.clone();
-    let attacker = &mut attacker;
+    simulate_combat_from_setup_with_attacker_scratch(setup, seed, &mut attacker)
+}
+
+/// Optimizer-oriented trial entry point that reuses one attacker allocation across many seeds.
+///
+/// The combat loop mutates only max hull/shield fields on the attacker (temporary conditional HP
+/// gates). Reset those scalars before every trial; immutable identity, weapons, and other resolved
+/// stats remain shared in this caller-owned scratch value. This avoids cloning the attacker's
+/// `String` and weapon `Vec` for every Monte Carlo iteration.
+pub(crate) fn simulate_combat_from_setup_reusing_attacker(
+    setup: &PreCombatSetup,
+    seed: u64,
+    attacker_scratch: &mut Combatant,
+) -> SimulationResult {
+    attacker_scratch.hull_health = setup.attacker.hull_health;
+    attacker_scratch.shield_health = setup.attacker.shield_health;
+    simulate_combat_from_setup_with_attacker_scratch(setup, seed, attacker_scratch)
+}
+
+fn simulate_combat_from_setup_with_attacker_scratch(
+    setup: &PreCombatSetup,
+    seed: u64,
+    attacker: &mut Combatant,
+) -> SimulationResult {
+    let config = &setup.config;
     let defender = &setup.defender;
     let attacker_crew = &setup.attacker_crew;
     let defender_crew = &setup.defender_crew;
@@ -1740,9 +1763,12 @@ pub fn simulate_combat_from_setup(setup: &PreCombatSetup, seed: u64) -> Simulati
 /// Batch-process M combat trials from a single precomputed setup with different seeds.
 /// Returns M results in the order of the provided seeds.
 pub fn simulate_combat_batch(setup: &PreCombatSetup, seeds: &[u64]) -> Vec<SimulationResult> {
+    let mut attacker_scratch = setup.attacker.clone();
     seeds
         .iter()
-        .map(|&seed| simulate_combat_from_setup(setup, seed))
+        .map(|&seed| {
+            simulate_combat_from_setup_reusing_attacker(setup, seed, &mut attacker_scratch)
+        })
         .collect()
 }
 
@@ -5357,4 +5383,87 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
         defender_crew,
     );
     simulate_combat_from_setup(&setup, config.seed)
+}
+
+#[cfg(test)]
+mod reusable_attacker_tests {
+    use super::*;
+    use crate::combat::abilities::{Ability, AbilityClass, CrewSeat, CrewSeatContext};
+
+    #[test]
+    fn reused_attacker_batch_matches_fresh_clone_for_every_seed() {
+        let attacker = Combatant {
+            id: "scratch-attacker".into(),
+            attack: 500.0,
+            hull_health: 5_000.0,
+            shield_health: 2_000.0,
+            shield_mitigation: 0.8,
+            crit_chance: 0.35,
+            crit_multiplier: 1.8,
+            weapons: vec![
+                WeaponStats {
+                    attack: 300.0,
+                    shots: Some(2),
+                    ..WeaponStats::default()
+                },
+                WeaponStats {
+                    attack: 225.0,
+                    shots: Some(1),
+                    ..WeaponStats::default()
+                },
+            ],
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "scratch-defender".into(),
+            attack: 175.0,
+            hull_health: 8_000.0,
+            shield_health: 1_500.0,
+            shield_mitigation: 0.5,
+            crit_chance: 0.2,
+            crit_multiplier: 1.5,
+            ..Combatant::default()
+        };
+        // Exercises the two Combatant fields intentionally reset by the scratch path.
+        let crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::BelowDeck,
+                Ability {
+                    weapon_scope: WeaponTypeScope::All,
+                    name: "Scratch HP scaling".into(),
+                    class: AbilityClass::BelowDeck,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::HullHpMultiplier(0.15),
+                    condition: None,
+                },
+                false,
+            )],
+        };
+        let config = SimulationConfig {
+            rounds: 12,
+            seed: 0,
+            trace_mode: TraceMode::Off,
+            ..SimulationConfig::default()
+        };
+        let setup = build_combat_setup(
+            &attacker,
+            &defender,
+            &config,
+            &crew,
+            OpponentFactionTag::Unknown,
+            ShipType::Battleship,
+            ShipType::Explorer,
+            true,
+            false,
+            &CrewConfiguration::default(),
+        );
+        let seeds: Vec<u64> = (0..96).map(|i| 7001 + i * 17).collect();
+        let fresh: Vec<SimulationResult> = seeds
+            .iter()
+            .map(|&seed| simulate_combat_from_setup(&setup, seed))
+            .collect();
+        let reused = simulate_combat_batch(&setup, &seeds);
+        assert_eq!(reused, fresh);
+    }
 }
