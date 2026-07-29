@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "note": "Roadmap §1.4 gate. Per-method reference top-K recall and ranking-score regret for the cross-method optimizer benchmark. The bench is bit-deterministic per seed (identical output at 2 and at all threads), so these tolerances absorb intentional optimizer changes, not measurement noise. Regenerate with `cargo xtask optimizer-bench-check --write-baseline` after an intentional change, and say why in the PR. KNOWN FINDING, not a passing grade: on this case at this budget the stratified random control reaches 0.0 score regret while tiered sits at ~0.0063, because the crews random samples are outside CrewGenerator's narrowed proposal space (see lane field `lane_best_crew_in_reference_set`). `control_margin` is set wide enough to tolerate that known gap so the gate still catches a further regression; closing the gap is tracked in docs/OPTIMIZER_AMBITIOUS_ROADMAP.md §1.4.",
+  "note": "Roadmap §1.4 gate. Per-method reference top-K recall and ranking-score regret for the cross-method optimizer benchmark. The bench is bit-deterministic per seed (identical output at 2 and at all threads), so these tolerances absorb intentional optimizer changes, not measurement noise. Regenerate with `cargo xtask optimizer-bench-check --write-baseline` after an intentional change, and say why in the PR. Rebaselined when capped candidate truncation became stratified (crew_generator round-robin over (captain, bridge pair) cells): score regret fell for both tiered lanes (tiered 0.00627 -> 0.00532, warm_start_tiered 0.00405 -> 0.00298) while recall@10 fell 0.36 -> 0.22. The recall drop is real, not a moved denominator — the reference sweep's cap does not bind on this case (638-660 crews generated against a cap of 800), so the reference set is byte-identical before and after. Tiered's confirmed crews now overlap the reference top-10 less while scoring as well or better; seed 11 is the clearest case, recall 0.8 -> 0.1 with regret unchanged at ~3e-5. KNOWN FINDING, not a passing grade: the stratified random control still reaches 0.0 score regret. Truncation was not the cause. The generator's whole proposal space for these params is those 638-660 crews and its best scores 0.9983, while random_stratified reaches 1.0 on all five seeds by sampling the full 189-captain / 242-bridge / 51-below-decks pools. Raising large_pool_captain_limit and large_pool_bridge_limit from 10/12 to 32/32 was measured and made tiered's regret worse at a fixed candidate budget, so closing the gap needs the budget and the proposal space widened together. `control_margin` stays wide enough to tolerate the known gap so the gate still catches a further regression; tracked in docs/OPTIMIZER_AMBITIOUS_ROADMAP.md §1.4.",
   "config": {
     "case": "saladin_corvus",
     "methods": [
@@ -42,12 +42,12 @@
       "score_regret_mean": 0.0
     },
     "tiered": {
-      "top_k_recall_mean": 0.36,
-      "score_regret_mean": 0.006274855136871338
+      "top_k_recall_mean": 0.22000000000000003,
+      "score_regret_mean": 0.005323719978332519
     },
     "warm_start_tiered": {
-      "top_k_recall_mean": 0.36,
-      "score_regret_mean": 0.004052412509918213
+      "top_k_recall_mean": 0.22000000000000003,
+      "score_regret_mean": 0.0029783725738525392
     }
   }
 }
