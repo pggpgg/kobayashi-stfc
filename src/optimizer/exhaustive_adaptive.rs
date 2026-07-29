@@ -143,6 +143,7 @@ where
     let scout_trials: u64 = scout_ordered.iter().map(|r| r.trials_run as u64).sum();
     budget.coarse_pass_trials = scout_trials;
     budget.scout_trials_final = scout_trials;
+    budget.scout_trials_executed_total = scout_trials;
 
     let ranked_scout: Vec<RankedCrewResult> = rank_results(scout_ordered);
     let top_ranked: Vec<RankedCrewResult> = ranked_scout.into_iter().take(k).collect();

@@ -1461,12 +1461,23 @@ fn name_conflicts_bridge_captain(name: &str, captain: &str, b1: &str, b2: &str) 
 }
 
 #[inline]
-fn below_tuple_ok(names: &[String], captain: &str, b1: &str, b2: &str) -> bool {
-    let mut seen = HashSet::with_capacity(names.len());
-    for n in names {
-        if name_conflicts_bridge_captain(n, captain, b1, b2) || !seen.insert(n.as_str()) {
+fn below_selection_ok<'a>(
+    names: impl IntoIterator<Item = &'a str>,
+    captain: &str,
+    b1: &str,
+    b2: &str,
+) -> bool {
+    // Below-decks tuples are tiny (at most seven slots). Keep seen names on the stack so candidate
+    // generation and count-only estimates perform no per-combination allocation or hashing.
+    let mut seen = [""; MAX_BELOW_DECKS_SLOTS];
+    for (seen_len, n) in names.into_iter().enumerate() {
+        if seen_len >= seen.len() {
             return false;
         }
+        if name_conflicts_bridge_captain(n, captain, b1, b2) || seen[..seen_len].contains(&n) {
+            return false;
+        }
+        seen[seen_len] = n;
     }
     true
 }
@@ -1567,17 +1578,25 @@ impl CandidateCell {
             let captain = &captains[self.captain];
             let b1 = &bridge[self.b1];
             let b2 = &bridge[self.b2];
+            if !below_selection_ok(
+                positions
+                    .iter()
+                    .map(|&p| below_decks[self.available[p]].as_str()),
+                captain,
+                b1,
+                b2,
+            ) {
+                continue;
+            }
             let bd: Vec<String> = positions
                 .iter()
                 .map(|&p| below_decks[self.available[p]].clone())
                 .collect();
-            if below_tuple_ok(&bd, captain, b1, b2) {
-                return Some(CrewCandidate {
-                    captain: captain.clone(),
-                    bridge: vec![b1.clone(), b2.clone()],
-                    below_decks: bd,
-                });
-            }
+            return Some(CrewCandidate {
+                captain: captain.clone(),
+                bridge: vec![b1.clone(), b2.clone()],
+                below_decks: bd,
+            });
         }
         None
     }
@@ -1671,28 +1690,30 @@ fn for_each_combination_indices(n: usize, k: usize, mut visit: impl FnMut(&[usiz
         visit(&[]);
         return;
     }
-    if k > n {
+    if k > n || k > MAX_BELOW_DECKS_SLOTS {
         return;
     }
-    let mut cur = Vec::with_capacity(k);
+    let mut cur = [0usize; MAX_BELOW_DECKS_SLOTS];
     fn rec(
         n: usize,
         k: usize,
         start: usize,
-        cur: &mut Vec<usize>,
+        depth: usize,
+        cur: &mut [usize; MAX_BELOW_DECKS_SLOTS],
         visit: &mut impl FnMut(&[usize]),
     ) {
-        if cur.len() == k {
-            visit(cur);
+        if depth == k {
+            visit(&cur[..k]);
             return;
         }
-        for i in start..n {
-            cur.push(i);
-            rec(n, k, i + 1, cur, visit);
-            cur.pop();
+        // Leave enough remaining values to fill the suffix.
+        let remaining = k - depth;
+        for i in start..=n - remaining {
+            cur[depth] = i;
+            rec(n, k, i + 1, depth + 1, cur, visit);
         }
     }
-    rec(n, k, 0, &mut cur, &mut visit);
+    rec(n, k, 0, 0, &mut cur, &mut visit);
 }
 
 fn can_fill_position(officer: &Officer, position: Position) -> bool {
@@ -1751,10 +1772,15 @@ fn exhaustive_candidates(
                     continue;
                 }
                 for_each_combination_indices(n_bd, below_decks_slots, |idxs| {
-                    let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
-                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                    if !below_selection_ok(
+                        idxs.iter().map(|&i| below_decks[i].as_str()),
+                        captain,
+                        b1,
+                        b2,
+                    ) {
                         return;
                     }
+                    let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
                     candidates.push(CrewCandidate {
                         captain: captain.clone(),
                         bridge: vec![b1.clone(), b2.clone()],
@@ -1799,8 +1825,12 @@ fn exhaustive_count(
                     if hit_cap {
                         return;
                     }
-                    let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
-                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                    if !below_selection_ok(
+                        idxs.iter().map(|&i| below_decks[i].as_str()),
+                        captain,
+                        b1,
+                        b2,
+                    ) {
                         return;
                     }
                     count += 1;
@@ -1976,13 +2006,19 @@ fn sampled_candidates(
                     continue;
                 }
                 for_each_combination_indices(m, below_decks_slots, |pos| {
+                    if !below_selection_ok(
+                        pos.iter()
+                            .map(|&pi| below_decks[below_indices[pi]].as_str()),
+                        captain,
+                        b1,
+                        b2,
+                    ) {
+                        return;
+                    }
                     let bd: Vec<String> = pos
                         .iter()
                         .map(|&pi| below_decks[below_indices[pi]].clone())
                         .collect();
-                    if !below_tuple_ok(&bd, captain, b1, b2) {
-                        return;
-                    }
                     candidates.push(CrewCandidate {
                         captain: captain.clone(),
                         bridge: vec![b1.clone(), b2.clone()],
@@ -2035,11 +2071,13 @@ fn sampled_count(
                     if stop {
                         return;
                     }
-                    let bd: Vec<String> = pos
-                        .iter()
-                        .map(|&pi| below_decks[below_indices[pi]].clone())
-                        .collect();
-                    if !below_tuple_ok(&bd, captain, b1, b2) {
+                    if !below_selection_ok(
+                        pos.iter()
+                            .map(|&pi| below_decks[below_indices[pi]].as_str()),
+                        captain,
+                        b1,
+                        b2,
+                    ) {
                         return;
                     }
                     count += 1;

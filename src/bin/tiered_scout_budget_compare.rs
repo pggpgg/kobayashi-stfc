@@ -1,4 +1,4 @@
-//! Print tiered scout trial totals: legacy uniform scout vs adaptive coarse→refine.
+//! Compare tiered scout schedulers on work, elapsed time, winner, and top-K recall.
 //!
 //! Run from the repo root (so `data/` and `profiles/` resolve):
 //! `cargo run --release --bin tiered_scout_budget_compare`
@@ -6,11 +6,10 @@
 //! Uses [`kobayashi::data::profile_index::DEMO_PROFILE_ID`] so `roster.imported.json` exists and
 //! officer pools are non-empty (the default API profile may have no roster file on disk).
 //!
-//! Compare `scout_trials_final` from [`kobayashi::optimizer::OptimizeRunOutcome::tiered_scout_budget`].
-//!
 //! Scenarios set `prior_reference_crews` empty; production runs may populate it from optimize history
 //! for analytical rank only (see `kobayashi::data::optimize_history::prior_reference_crews_for_matchup_priors`).
 
+use std::collections::HashSet;
 use std::time::Instant;
 
 use kobayashi::data::data_registry::DataRegistry;
@@ -18,7 +17,8 @@ use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::optimizer::crew_generator::DEFAULT_BELOW_DECKS_SLOTS;
 use kobayashi::optimizer::monte_carlo::DefenderOpponent;
 use kobayashi::optimizer::{
-    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizerStrategy,
+    optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeRunOutcome,
+    OptimizerStrategy,
 };
 use kobayashi::parallel::init_from_env;
 
@@ -66,7 +66,14 @@ const ROWS: &[BenchRow] = &[
     },
 ];
 
-fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
+#[derive(Clone, Copy)]
+enum ScoutScheduler {
+    Uniform,
+    Adaptive,
+    Racing,
+}
+
+fn scenario(row: &BenchRow, scheduler: ScoutScheduler) -> OptimizationScenario<'static> {
     OptimizationScenario {
         ship: row.ship,
         hostile: row.hostile,
@@ -81,10 +88,10 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
         profile_id: Some(DEMO_PROFILE_ID),
         tiered_scout_sims: Some(row.tiered_scout_sims),
         tiered_top_k: Some(row.tiered_top_k),
-        tiered_scout_uniform: uniform,
+        tiered_scout_uniform: matches!(scheduler, ScoutScheduler::Uniform),
         tiered_confirm_budget_cap_mult: None,
         optimize_history_confirm_cap_mult: None,
-        tiered_scout_priority_queue: false,
+        tiered_scout_priority_queue: matches!(scheduler, ScoutScheduler::Racing),
         tiered_pq_minimal_scout: None,
         tiered_pq_selection_mult: None,
         tiered_pq_abandon_margin: None,
@@ -115,6 +122,75 @@ fn scenario(row: &BenchRow, uniform: bool) -> OptimizationScenario<'static> {
     }
 }
 
+fn run(
+    registry: &DataRegistry,
+    row: &BenchRow,
+    scheduler: ScoutScheduler,
+) -> (OptimizeRunOutcome, f64) {
+    let started = Instant::now();
+    let outcome = optimize_scenario_with_progress_with_registry(
+        registry,
+        &scenario(row, scheduler),
+        |_| true,
+        || true,
+    );
+    (outcome, started.elapsed().as_secs_f64())
+}
+
+fn crew_hashes(outcome: &OptimizeRunOutcome) -> HashSet<u64> {
+    outcome
+        .ranked
+        .iter()
+        .map(|r| {
+            kobayashi::optimizer::monte_carlo::crew_candidate_stable_hash(
+                &kobayashi::optimizer::crew_generator::CrewCandidate {
+                    captain: r.captain.clone(),
+                    bridge: r.bridge.clone(),
+                    below_decks: r.below_decks.clone(),
+                },
+            )
+        })
+        .collect()
+}
+
+fn print_scheduler(
+    row: &BenchRow,
+    label: &str,
+    outcome: &OptimizeRunOutcome,
+    elapsed: f64,
+    reference_hashes: &HashSet<u64>,
+    reference_winner: Option<u64>,
+) {
+    let budget = outcome.tiered_scout_budget.unwrap_or_default();
+    let hashes = crew_hashes(outcome);
+    let overlap = hashes.intersection(reference_hashes).count();
+    let winner = outcome.ranked.first().map(|r| {
+        kobayashi::optimizer::monte_carlo::crew_candidate_stable_hash(
+            &kobayashi::optimizer::crew_generator::CrewCandidate {
+                captain: r.captain.clone(),
+                bridge: r.bridge.clone(),
+                below_decks: r.below_decks.clone(),
+            },
+        )
+    });
+    println!(
+        "{:<36} {:<8} {:>5} {:>12} {:>12} {:>8.3} {:>7}/{:<3} {:>7}",
+        row.label,
+        label,
+        outcome.tiered_resolved.map(|(n, _, _)| n).unwrap_or(0),
+        budget.scout_trials_final,
+        budget.scout_trials_executed_total,
+        elapsed,
+        overlap,
+        reference_hashes.len(),
+        if winner == reference_winner {
+            "same"
+        } else {
+            "changed"
+        },
+    );
+}
+
 fn main() {
     if let Ok(m) = std::env::var("CARGO_MANIFEST_DIR") {
         let _ = std::env::set_current_dir(m);
@@ -127,44 +203,47 @@ fn main() {
         env!("CARGO_PKG_VERSION")
     );
     println!(
-        "{:<36} {:>5} {:>14} {:>14} {:>10} {:>8}",
-        "scenario", "n", "uniform_trials", "adaptive_trials", "reduction%", "secs"
+        "{:<36} {:<8} {:>5} {:>12} {:>12} {:>8} {:>11} {:>7}",
+        "scenario", "mode", "n", "final_trials", "actual_trials", "secs", "top overlap", "winner"
     );
 
     for row in ROWS {
-        let t0 = Instant::now();
-        let uniform_out = optimize_scenario_with_progress_with_registry(
-            &registry,
-            &scenario(row, true),
-            |_| true,
-            || true,
+        let (uniform, uniform_secs) = run(&registry, row, ScoutScheduler::Uniform);
+        let reference_hashes = crew_hashes(&uniform);
+        let reference_winner = uniform.ranked.first().map(|r| {
+            kobayashi::optimizer::monte_carlo::crew_candidate_stable_hash(
+                &kobayashi::optimizer::crew_generator::CrewCandidate {
+                    captain: r.captain.clone(),
+                    bridge: r.bridge.clone(),
+                    below_decks: r.below_decks.clone(),
+                },
+            )
+        });
+        let (adaptive, adaptive_secs) = run(&registry, row, ScoutScheduler::Adaptive);
+        let (racing, racing_secs) = run(&registry, row, ScoutScheduler::Racing);
+        print_scheduler(
+            row,
+            "uniform",
+            &uniform,
+            uniform_secs,
+            &reference_hashes,
+            reference_winner,
         );
-        let t1 = Instant::now();
-        let adaptive_out = optimize_scenario_with_progress_with_registry(
-            &registry,
-            &scenario(row, false),
-            |_| true,
-            || true,
+        print_scheduler(
+            row,
+            "adaptive",
+            &adaptive,
+            adaptive_secs,
+            &reference_hashes,
+            reference_winner,
         );
-        let elapsed = t0.elapsed().as_secs_f64() + t1.elapsed().as_secs_f64();
-
-        let n = adaptive_out.tiered_resolved.map(|(n, _, _)| n).unwrap_or(0);
-        let u = uniform_out
-            .tiered_scout_budget
-            .map(|b| b.scout_trials_final)
-            .unwrap_or(0);
-        let a = adaptive_out
-            .tiered_scout_budget
-            .map(|b| b.scout_trials_final)
-            .unwrap_or(0);
-        let pct = if u > 0 {
-            100.0 * (1.0 - (a as f64 / u as f64))
-        } else {
-            0.0
-        };
-        println!(
-            "{:<36} {:>5} {:>14} {:>14} {:>9.1}% {:>8.2}",
-            row.label, n, u, a, pct, elapsed
+        print_scheduler(
+            row,
+            "racing",
+            &racing,
+            racing_secs,
+            &reference_hashes,
+            reference_winner,
         );
     }
 }

@@ -1,12 +1,14 @@
 //! Per-profile optimize result cache (`profiles/{id}/optimize_history.json`).
 //!
-//! Keys are opaque client fingerprints (`optimize_cache_key`). Entries store resolved run
-//! parameters plus Monte Carlo aggregates so a later **tiered** or **exhaustive two-phase**
-//! run can skip scout and/or confirm for matching crews when metadata still aligns.
+//! Keys are opaque client cache namespaces. Metric reuse additionally fails closed unless an
+//! entry's server-generated reuse fingerprint matches current engine, catalog, profile, and
+//! matchup state. Entries store resolved run parameters plus Monte Carlo aggregates so a later
+//! **tiered** or **exhaustive two-phase** run can skip scout and/or confirm for matching crews.
 
 use std::collections::HashMap;
 use std::fs;
 use std::io;
+use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
@@ -33,6 +35,8 @@ pub const MAX_PRIOR_REFERENCE_CREWS_FROM_HISTORY: usize = 16;
 pub const TIERED_BUDGET_POLICY_NA: u8 = 0;
 /// Current tiered Monte Carlo budget allocator (adaptive coarse fraction, ranking-aligned confirm widths, optional confirm cap).
 pub const TIERED_BUDGET_POLICY_V2: u8 = 2;
+/// Common-random-number scout panels plus the V2 adaptive/confirmation budget allocator.
+pub const TIERED_BUDGET_POLICY_V3: u8 = 3;
 
 /// [`OptimizeHistoryEntry::optimize_history_kind`] — tiered cache row.
 pub const OPTIMIZE_HISTORY_KIND_TIERED: u8 = 0;
@@ -61,8 +65,8 @@ pub struct OptimizeHistoryEntry {
     pub optimize_history_kind: u8,
     /// `0` = uniform single-pass scout; `1` = adaptive coarse→refine scout (must match current run).
     pub tiered_scout_allocator: u8,
-    /// [`TIERED_BUDGET_POLICY_V2`] for tiered entries; [`TIERED_BUDGET_POLICY_NA`] on
-    /// non-tiered (e.g. exhaustive two-phase) entries.
+    /// [`TIERED_BUDGET_POLICY_V3`] for current tiered entries; older V2 rows used
+    /// candidate-distinct scout seeds. [`TIERED_BUDGET_POLICY_NA`] on non-tiered entries.
     pub tiered_budget_policy: u8,
     /// The confirm-shrink multiplier the writing run's **request** carried
     /// (`tiered_confirm_budget_cap_mult`), and what a later run must match to reuse this entry.
@@ -432,6 +436,11 @@ pub fn upsert_entry(
     cache_key: &str,
     entry: OptimizeHistoryEntry,
 ) -> io::Result<()> {
+    static HISTORY_WRITE_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    let _guard = HISTORY_WRITE_LOCK
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     let mut file = load_history_file(profile_id);
     file.entries.insert(cache_key.to_string(), entry);
     evict_oldest_if_needed(&mut file.entries);
