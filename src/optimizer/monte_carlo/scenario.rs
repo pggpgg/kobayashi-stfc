@@ -2345,6 +2345,21 @@ pub(crate) fn stable_seed(
     acc
 }
 
+/// Candidate-independent seed base for paired scout comparisons (common random numbers).
+///
+/// All crews in one scout phase receive the same seed panel, reducing variance in differences
+/// between crews. Final confirmation continues to use [`stable_seed`] so its evidence remains an
+/// independent, candidate-distinct panel.
+pub(crate) fn stable_scenario_seed_panel(ship: &str, hostile: &str, seed: u64) -> u64 {
+    let mut acc = seed;
+    for s in [ship, hostile, "__kobayashi_common_scout_panel_v1"] {
+        for b in s.bytes() {
+            acc = acc.wrapping_mul(37).wrapping_add(u64::from(b));
+        }
+    }
+    acc
+}
+
 /// Build scenario data for `(ship, hostile)` without a [DataRegistry] — same sources as legacy
 /// [super::simulation::run_monte_carlo_parallel] (canonical officers, profile JSON, optional LCARS).
 pub(crate) fn build_shared_scenario_data_standalone(

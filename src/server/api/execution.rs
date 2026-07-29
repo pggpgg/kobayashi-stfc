@@ -1710,7 +1710,7 @@ fn gather_optimize_simulation_results(
             tiered_random_exploration_pct: request
                 .tiered_random_exploration_pct
                 .filter(|_| strategy == OptimizerStrategy::Tiered),
-            tiered_scout_priority_queue: false,
+            tiered_scout_priority_queue: !matches!(request.tiered_scout_uniform, Some(true)),
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: auto_tuned_abandon_margin,
@@ -1790,7 +1790,7 @@ fn gather_optimize_simulation_results(
                     n,
                     tiered_scout_allocator,
                     &chain_grind,
-                    optimize_history::TIERED_BUDGET_POLICY_V2,
+                    optimize_history::TIERED_BUDGET_POLICY_V3,
                     request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
                     Some(reuse_fingerprint_encoded.clone()),
                     &outcome.ranked,
@@ -2028,6 +2028,10 @@ fn gather_optimize_simulation_results(
                 .tiered_scout_budget
                 .as_ref()
                 .map(|b| b.scout_trials_final),
+            tiered_scout_trials_executed_total: meta
+                .tiered_scout_budget
+                .as_ref()
+                .map(|b| b.scout_trials_executed_total),
             tiered_confirm_trials_total: meta
                 .tiered_scout_budget
                 .as_ref()
@@ -2036,6 +2040,10 @@ fn gather_optimize_simulation_results(
                 .exhaustive_adaptive_budget
                 .as_ref()
                 .map(|b| b.scout_trials_final),
+            exhaustive_scout_trials_executed_total: meta
+                .exhaustive_adaptive_budget
+                .as_ref()
+                .map(|b| b.scout_trials_executed_total),
             exhaustive_confirm_trials_total: meta
                 .exhaustive_adaptive_budget
                 .as_ref()

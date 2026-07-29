@@ -62,6 +62,7 @@ use crate::optimizer::tiered::{
     run_tiered_with_registry_with_progress, tiered_scout_sims_for_workload,
     tiered_top_k_for_workload, TieredScoutBudgetStats, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
 };
+use crate::perf_log;
 
 /// Reference full Monte Carlo count for auto prefilter scaling (matches [`OptimizationScenario`] default).
 const ANALYTICAL_PREFILTER_REF_FULL_SIMS: usize = 5000;
@@ -338,12 +339,33 @@ fn analytical_prefilter_unless_chain(
     }
 }
 
-/// Order candidates by closed-form expected hull damage (high first) so limited `max_candidates`
-/// slices and progress batches prioritize analytically stronger crews. See [crate::optimizer::analytical].
-fn sort_candidates_by_analytical_expected_damage(
+#[derive(Debug)]
+struct AnalyticalScoredCandidate {
+    original_index: usize,
+    score: f64,
+    candidate: CrewCandidate,
+}
+
+#[inline]
+fn compare_analytical_scored_candidates(
+    a: &AnalyticalScoredCandidate,
+    b: &AnalyticalScoredCandidate,
+) -> std::cmp::Ordering {
+    b.score
+        .total_cmp(&a.score)
+        .then_with(|| a.original_index.cmp(&b.original_index))
+}
+
+/// Score candidates once, then retain them in descending analytical-score order.
+///
+/// When `keep` is smaller than the input, partition around the top-K boundary and sort only the
+/// retained prefix. This avoids both a full O(N log N) sort and, more importantly, rebuilding a
+/// full [`CombatSimulationInput`] twice for every comparator invocation.
+fn score_and_select_candidates_by_analytical_expected_damage(
     shared: &SharedScenarioData,
     candidates: Vec<CrewCandidate>,
     seed: u64,
+    keep: Option<usize>,
     warm_start: &[CrewCandidate],
     prior_reference_crews: &[CrewCandidate],
     enable_learned_pair_prior: bool,
@@ -357,17 +379,36 @@ fn sort_candidates_by_analytical_expected_damage(
         Cow::Owned(m)
     };
     let refs = rank_refs.as_ref();
-    let mut indexed: Vec<(usize, CrewCandidate)> = candidates.into_iter().enumerate().collect();
-    indexed.sort_by(|(ia, ca), (ib, cb)| {
-        let input_a = scenario_to_combat_input_from_shared(shared, ca, seed);
-        let input_b = scenario_to_combat_input_from_shared(shared, cb, seed);
-        let sa =
-            analytical_prefilter_rank_score(shared, &input_a, ca, refs, enable_learned_pair_prior);
-        let sb =
-            analytical_prefilter_rank_score(shared, &input_b, cb, refs, enable_learned_pair_prior);
-        sb.total_cmp(&sa).then_with(|| ia.cmp(ib))
-    });
-    indexed.into_iter().map(|(_, c)| c).collect()
+    let score_started = perf_log::perf_start();
+    let mut scored: Vec<AnalyticalScoredCandidate> = candidates
+        .into_iter()
+        .enumerate()
+        .map(|(original_index, candidate)| {
+            let input = scenario_to_combat_input_from_shared(shared, &candidate, seed);
+            let score = analytical_prefilter_rank_score(
+                shared,
+                &input,
+                &candidate,
+                refs,
+                enable_learned_pair_prior,
+            );
+            AnalyticalScoredCandidate {
+                original_index,
+                score,
+                candidate,
+            }
+        })
+        .collect();
+    perf_log::log_duration("analytical_prefilter.score_once", score_started);
+
+    let select_started = perf_log::perf_start();
+    if let Some(k) = keep.filter(|&k| k > 0 && k < scored.len()) {
+        scored.select_nth_unstable_by(k, compare_analytical_scored_candidates);
+        scored.truncate(k);
+    }
+    scored.sort_unstable_by(compare_analytical_scored_candidates);
+    perf_log::log_duration("analytical_prefilter.select_topk", select_started);
+    scored.into_iter().map(|row| row.candidate).collect()
 }
 
 /// After analytical ranking, optionally keep only the top `keep` crews (approximate proxy; full MC still determines win rate).
@@ -382,19 +423,20 @@ pub(crate) fn sort_and_analytical_prefilter(
     enable_learned_pair_prior: bool,
 ) -> (Vec<CrewCandidate>, Option<(usize, usize)>) {
     let generated = candidates.len();
-    let mut sorted = sort_candidates_by_analytical_expected_damage(
+    let requested_keep = keep.filter(|n| *n > 0);
+    let sorted = score_and_select_candidates_by_analytical_expected_damage(
         shared,
         candidates,
         seed,
+        requested_keep,
         warm_start,
         prior_reference_crews,
         enable_learned_pair_prior,
     );
-    let Some(k) = keep.filter(|n| *n > 0) else {
+    let Some(k) = requested_keep else {
         return (sorted, None);
     };
-    if sorted.len() > k {
-        sorted.truncate(k);
+    if generated > k {
         (sorted, Some((generated, k)))
     } else {
         (sorted, None)
@@ -670,7 +712,7 @@ impl Default for OptimizationScenario<'_> {
             tiered_scout_uniform: false,
             tiered_confirm_budget_cap_mult: None,
             optimize_history_confirm_cap_mult: None,
-            tiered_scout_priority_queue: false,
+            tiered_scout_priority_queue: true,
             tiered_pq_minimal_scout: None,
             tiered_pq_selection_mult: None,
             tiered_pq_abandon_margin: None,
@@ -735,7 +777,7 @@ fn tiered_preconfirmed_map(
                 n_tiered,
                 tiered_scout_allocator_id(scenario),
                 &scenario.chain_grind,
-                crate::data::optimize_history::TIERED_BUDGET_POLICY_V2,
+                crate::data::optimize_history::TIERED_BUDGET_POLICY_V3,
                 // The requested cap, not the effective one: the auto-tuner derives its cap from this
                 // very entry, so keying on the derived value made entries reject themselves.
                 scenario.optimize_history_confirm_cap_mult.map(|x| x as f32),
@@ -2517,6 +2559,54 @@ mod tests {
             keep_prior[0].below_decks.last().map(String::as_str),
             Some("Nyota Uhura")
         );
+    }
+
+    #[test]
+    fn analytical_partial_topk_matches_full_ranking_prefix() {
+        let registry = DataRegistry::load().expect("data registry");
+        let ship = "saladin";
+        let hostile = "2918121098";
+        let seed = 19u64;
+        let candidates = CrewGenerator::new()
+            .generate_candidates_from_registry(&registry, ship, hostile, seed, None);
+        assert!(
+            candidates.len() >= 32,
+            "fixture needs enough candidates to exercise partial selection"
+        );
+        let shared = build_shared_scenario_data_from_registry(
+            &registry,
+            ship,
+            hostile,
+            None,
+            None,
+            None,
+            crate::data::support_buffs::SupportBuffScenarioRequest::default(),
+            DefenderOpponent::Hostile,
+            None,
+            None,
+        );
+        let keep = 17;
+        let (full, full_stats) = super::sort_and_analytical_prefilter(
+            &shared,
+            candidates.clone(),
+            seed,
+            None,
+            &[],
+            &[],
+            true,
+        );
+        let (partial, partial_stats) = super::sort_and_analytical_prefilter(
+            &shared,
+            candidates,
+            seed,
+            Some(keep),
+            &[],
+            &[],
+            true,
+        );
+        assert_eq!(full_stats, None);
+        assert_eq!(partial_stats, Some((full.len(), keep)));
+        assert_eq!(partial, full[..keep]);
     }
 
     #[test]

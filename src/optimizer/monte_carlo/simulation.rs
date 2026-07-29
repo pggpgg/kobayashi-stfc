@@ -1,9 +1,9 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
+use crate::combat::engine::simulate_combat_from_setup_reusing_attacker;
 use crate::combat::{
-    build_combat_setup_with_officer_stat, simulate_combat_batch,
-    simulate_combat_with_defender_faction_and_defender_crew, CombatEvent, OpponentFactionTag,
-    SimulationConfig, TraceMode,
+    build_combat_setup_with_officer_stat, simulate_combat_with_defender_faction_and_defender_crew,
+    CombatEvent, OpponentFactionTag, SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::support_buffs;
@@ -22,8 +22,8 @@ use std::sync::{Arc, Mutex};
 use super::crew_resolution::seeded_variance;
 use super::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
-    SharedScenarioData,
+    scenario_to_combat_input_from_shared, stable_scenario_seed_panel, DefenderOpponent,
+    PlayerDefenderOfficerCrewOverride, SharedScenarioData,
 };
 
 #[derive(Debug, Clone)]
@@ -113,6 +113,26 @@ pub fn crew_candidate_stable_hash(c: &CrewCandidate) -> u64 {
         s.hash(&mut h);
     }
     h.finish()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SeedPanelPolicy {
+    /// Preserve the historical candidate-hashed seed stream.
+    CandidateDistinct,
+    /// Pair scout comparisons by giving every candidate the same scenario seed stream.
+    CommonScenario,
+}
+
+#[inline]
+fn apply_seed_panel_policy(
+    input: &mut super::scenario::CombatSimulationInput,
+    shared: &SharedScenarioData,
+    requested_seed: u64,
+    policy: SeedPanelPolicy,
+) {
+    if policy == SeedPanelPolicy::CommonScenario {
+        input.base_seed = stable_scenario_seed_panel(&shared.ship, &shared.hostile, requested_seed);
+    }
 }
 
 /// Wilson score 95% two-sided interval for a binomial proportion.
@@ -322,8 +342,10 @@ fn run_candidate_chain_monte_carlo(
     early_scout: Option<ScoutEarlyStopCfg>,
     best_so_far: Option<&std::sync::Mutex<TopKLeader>>,
     progressive_abandon: Option<ProgressiveAbandonCfg>,
+    seed_panel_policy: SeedPanelPolicy,
 ) -> SimulationResult {
-    let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
+    let mut input = scenario_to_combat_input_from_shared(shared, candidate, seed);
+    apply_seed_panel_policy(&mut input, shared, seed, seed_panel_policy);
     let mut primary_ok = 0usize;
     let mut stalls = 0usize;
     let mut losses = 0usize;
@@ -472,6 +494,7 @@ fn run_candidate_chain_monte_carlo(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_candidate_monte_carlo(
     shared: &SharedScenarioData,
     candidate: &CrewCandidate,
@@ -480,8 +503,10 @@ fn run_candidate_monte_carlo(
     early_scout: Option<ScoutEarlyStopCfg>,
     best_so_far: Option<&std::sync::Mutex<TopKLeader>>,
     progressive_abandon: Option<ProgressiveAbandonCfg>,
+    seed_panel_policy: SeedPanelPolicy,
 ) -> SimulationResult {
-    let input = scenario_to_combat_input_from_shared(shared, candidate, seed);
+    let mut input = scenario_to_combat_input_from_shared(shared, candidate, seed);
+    apply_seed_panel_policy(&mut input, shared, seed, seed_panel_policy);
     let mut wins = 0usize;
     let mut stalls = 0usize;
     let mut losses = 0usize;
@@ -540,6 +565,7 @@ fn run_candidate_monte_carlo(
         &input.defender_crew,
         input.officer_stat_round.clone(),
     );
+    let mut attacker_scratch = setup.attacker.clone();
 
     const BATCH_SIZE: usize = 64;
 
@@ -556,15 +582,15 @@ fn run_candidate_monte_carlo(
                 && trials.is_multiple_of(cfg.check_every)
         };
 
-        // Build seeds for this batch
-        let batch_seeds: Vec<u64> = (n_done..batch_end)
-            .map(|i| input.base_seed.wrapping_add(i as u64))
-            .collect();
-
-        let batch_results = simulate_combat_batch(&setup, &batch_seeds);
-
-        for (batch_idx, result) in batch_results.iter().enumerate() {
-            let iteration_seed = input.base_seed.wrapping_add((n_done + batch_idx) as u64);
+        // Aggregate directly so the optimizer hot path does not allocate seed and result vectors
+        // for every 64-trial checkpoint batch. Replay/debug callers retain the public batch API.
+        for trial_index in n_done..batch_end {
+            let iteration_seed = input.base_seed.wrapping_add(trial_index as u64);
+            let result = simulate_combat_from_setup_reusing_attacker(
+                &setup,
+                iteration_seed,
+                &mut attacker_scratch,
+            );
             let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 
             if result.winner_by_round_limit {
@@ -585,7 +611,7 @@ fn run_candidate_monte_carlo(
             } else {
                 0.0
             };
-            let i = n_done + batch_idx + 1;
+            let i = trial_index + 1;
             let delta = hull_draw - hull_mean;
             hull_mean += delta / i as f64;
             let delta2 = hull_draw - hull_mean;
@@ -996,6 +1022,7 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
             true,
             None,
             shared_leader.clone(),
+            SeedPanelPolicy::CandidateDistinct,
             chain_grind.clone(),
         );
         for (c, r) in chunk.iter().zip(part) {
@@ -1337,6 +1364,7 @@ pub(crate) fn run_monte_carlo_with_shared(
         parallel,
         None,
         None,
+        SeedPanelPolicy::CandidateDistinct,
         chain_grind,
     );
     perf_log::log_duration(
@@ -1377,6 +1405,7 @@ pub(crate) fn run_monte_carlo_confirm_topk_with_shared(
         parallel,
         None,
         Some((cfg, top_k.max(1))),
+        SeedPanelPolicy::CandidateDistinct,
         chain_grind,
     );
     perf_log::log_duration(
@@ -1425,6 +1454,7 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
         parallel,
         Some(cfg),
         Some((abandon, 1)),
+        SeedPanelPolicy::CommonScenario,
         chain_grind,
     )
 }
@@ -1436,6 +1466,13 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
 /// spent 80 %+ of samples in `__psynch_cvwait`. Production workloads at `sims=500` are far above
 /// this threshold and stay on the parallel path.
 const PARALLEL_MIN_WORK_UNITS: usize = 1024;
+
+#[inline]
+fn monte_carlo_parallel_worthwhile(candidate_count: usize, total_iterations: usize) -> bool {
+    // Parallelism is across candidates, not trials within one candidate. Avoid waking Rayon when
+    // there is only one independent task, even if that task contains many simulations.
+    candidate_count > 1 && total_iterations >= PARALLEL_MIN_WORK_UNITS
+}
 
 /// Run Monte Carlo over `candidates`, creating a fresh top-K leaderboard for this call.
 /// The scout pass uses k=1 (single best); the full-MC/confirm pass uses k=top_k so the reported
@@ -1450,6 +1487,7 @@ fn run_monte_carlo_inner(
     parallel: bool,
     early_scout: Option<ScoutEarlyStopCfg>,
     abandon: Option<(ProgressiveAbandonCfg, usize)>,
+    seed_panel_policy: SeedPanelPolicy,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
     let leader = abandon.map(|(cfg, k)| (cfg, Arc::new(Mutex::new(TopKLeader::new(k.max(1))))));
@@ -1461,6 +1499,7 @@ fn run_monte_carlo_inner(
         parallel,
         early_scout,
         leader,
+        seed_panel_policy,
         chain_grind,
     )
 }
@@ -1477,11 +1516,9 @@ fn run_monte_carlo_inner_with_leader(
     parallel: bool,
     early_scout: Option<ScoutEarlyStopCfg>,
     abandon: Option<(ProgressiveAbandonCfg, Arc<Mutex<TopKLeader>>)>,
+    seed_panel_policy: SeedPanelPolicy,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
-    // Auto-degrade to serial when total work is small enough that Rayon's overhead would dominate.
-    let work_units = candidates.len().saturating_mul(iterations.max(1));
-    let parallel = parallel && work_units >= PARALLEL_MIN_WORK_UNITS;
     // Top-K leaderboard for progressive abandonment: candidates that fall hopelessly behind the
     // current cut line can terminate early, saving sim budget.
     let (progressive_abandon, best_so_far) = match abandon {
@@ -1499,6 +1536,7 @@ fn run_monte_carlo_inner_with_leader(
                 early_scout,
                 Some(&*best_so_far),
                 progressive_abandon,
+                seed_panel_policy,
             ),
             Some(c) => run_candidate_chain_monte_carlo(
                 shared,
@@ -1509,6 +1547,7 @@ fn run_monte_carlo_inner_with_leader(
                 early_scout,
                 Some(&*best_so_far),
                 progressive_abandon,
+                seed_panel_policy,
             ),
         };
         // Update the shared leaderboard so other running candidates can compare at their next
@@ -1543,6 +1582,11 @@ fn run_monte_carlo_inner_with_leader(
             unique_indices.push(i);
         }
     }
+    let parallel = parallel
+        && monte_carlo_parallel_worthwhile(
+            unique_indices.len(),
+            unique_indices.len().saturating_mul(iterations.max(1)),
+        );
 
     if unique_indices.len() == n {
         // All candidates are unique — no dedup overhead.
@@ -1585,10 +1629,27 @@ fn run_monte_carlo_inner_variable_iterations(
     let run_at = |idx: usize, candidate: &CrewCandidate| {
         let it = iterations_per_crew.get(idx).copied().unwrap_or(1).max(1);
         match chain_grind.as_ref() {
-            None => run_candidate_monte_carlo(&shared, candidate, seed, it, None, None, None),
-            Some(c) => {
-                run_candidate_chain_monte_carlo(&shared, candidate, seed, it, c, None, None, None)
-            }
+            None => run_candidate_monte_carlo(
+                &shared,
+                candidate,
+                seed,
+                it,
+                None,
+                None,
+                None,
+                SeedPanelPolicy::CandidateDistinct,
+            ),
+            Some(c) => run_candidate_chain_monte_carlo(
+                &shared,
+                candidate,
+                seed,
+                it,
+                c,
+                None,
+                None,
+                None,
+                SeedPanelPolicy::CandidateDistinct,
+            ),
         }
     };
 
@@ -1602,6 +1663,12 @@ fn run_monte_carlo_inner_variable_iterations(
             unique_indices.push(i);
         }
     }
+    let unique_iterations = unique_indices
+        .iter()
+        .map(|&i| iterations_per_crew.get(i).copied().unwrap_or(1).max(1))
+        .fold(0usize, usize::saturating_add);
+    let parallel =
+        parallel && monte_carlo_parallel_worthwhile(unique_indices.len(), unique_iterations);
 
     if unique_indices.len() == n {
         if parallel {
@@ -1692,11 +1759,69 @@ mod tests {
     }
 
     #[test]
+    fn rayon_is_skipped_when_work_cannot_parallelize_or_is_too_small() {
+        assert!(!monte_carlo_parallel_worthwhile(1, 100_000));
+        assert!(!monte_carlo_parallel_worthwhile(16, 16));
+        assert!(monte_carlo_parallel_worthwhile(16, PARALLEL_MIN_WORK_UNITS));
+    }
+
+    #[test]
     fn wilson_interval_brackets_sample_proportion() {
         let (lo, hi) = super::wilson_95_interval(50, 100);
         assert!(lo <= 0.5 && 0.5 <= hi, "p=0.5 should lie in [{lo}, {hi}]");
         let (lo0, hi0) = super::wilson_95_interval(0, 50);
         assert!(lo0 <= 0.0 && 0.0 <= hi0);
+    }
+
+    #[test]
+    fn common_scout_panel_pairs_candidate_seeds_but_confirmation_does_not() {
+        let shared = build_shared_scenario_data_standalone(
+            "saladin",
+            "2918121098",
+            support_buffs::SupportBuffScenarioRequest::attacker_only(None),
+            DefenderOpponent::Hostile,
+            None,
+        );
+        let a = CrewCandidate {
+            captain: "James T. Kirk".into(),
+            bridge: vec!["Spock".into(), "Leonard McCoy".into()],
+            below_decks: vec![],
+        };
+        let b = CrewCandidate {
+            captain: "Gowron".into(),
+            bridge: vec!["Next Gen Riker".into(), "Mitchell".into()],
+            below_decks: vec![],
+        };
+        let seed = 771;
+        let mut distinct_a = scenario_to_combat_input_from_shared(&shared, &a, seed);
+        let mut distinct_b = scenario_to_combat_input_from_shared(&shared, &b, seed);
+        apply_seed_panel_policy(
+            &mut distinct_a,
+            &shared,
+            seed,
+            SeedPanelPolicy::CandidateDistinct,
+        );
+        apply_seed_panel_policy(
+            &mut distinct_b,
+            &shared,
+            seed,
+            SeedPanelPolicy::CandidateDistinct,
+        );
+        assert_ne!(distinct_a.base_seed, distinct_b.base_seed);
+
+        apply_seed_panel_policy(
+            &mut distinct_a,
+            &shared,
+            seed,
+            SeedPanelPolicy::CommonScenario,
+        );
+        apply_seed_panel_policy(
+            &mut distinct_b,
+            &shared,
+            seed,
+            SeedPanelPolicy::CommonScenario,
+        );
+        assert_eq!(distinct_a.base_seed, distinct_b.base_seed);
     }
 
     #[test]
@@ -1814,7 +1939,17 @@ mod tests {
             DefenderOpponent::Hostile,
             None,
         );
-        let full = run_monte_carlo_inner(&shared, &pop, 8, 42, false, None, None, None);
+        let full = run_monte_carlo_inner(
+            &shared,
+            &pop,
+            8,
+            42,
+            false,
+            None,
+            None,
+            SeedPanelPolicy::CandidateDistinct,
+            None,
+        );
         let deduped = run_monte_carlo_parallel_deduped_chunked_with_shared(
             &shared,
             &pop,

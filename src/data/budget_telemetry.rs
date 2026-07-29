@@ -68,9 +68,13 @@ pub struct BudgetTelemetryRow<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tiered_scout_trials_final: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub tiered_scout_trials_executed_total: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tiered_confirm_trials_total: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exhaustive_scout_trials_final: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exhaustive_scout_trials_executed_total: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exhaustive_confirm_trials_total: Option<u64>,
     pub optimize_history_confirm_hits: u32,
@@ -164,8 +168,10 @@ mod tests {
             confirmed_candidates: Some(3),
             phase_durations_ms: BTreeMap::from([("tiered".to_string(), 42)]),
             tiered_scout_trials_final: Some(100),
+            tiered_scout_trials_executed_total: Some(110),
             tiered_confirm_trials_total: Some(50),
             exhaustive_scout_trials_final: None,
+            exhaustive_scout_trials_executed_total: None,
             exhaustive_confirm_trials_total: None,
             optimize_history_confirm_hits: 0,
             optimize_history_wrote: false,
