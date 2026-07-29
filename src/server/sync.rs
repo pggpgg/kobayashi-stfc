@@ -14,6 +14,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
 use tracing::{error, info, warn};
@@ -22,13 +23,30 @@ use tracing::{error, info, warn};
 pub const DEFAULT_GAME_ID_MAP_PATH: &str = "data/officers/id_registry.json";
 
 /// Log file for sync ingress (append-only). Written when POST /api/sync/ingress is received.
+/// Resolved against the runtime asset root, not the process CWD; override with [`SYNC_LOG_PATH_ENV`].
 pub const SYNC_LOG_PATH: &str = "sync.log";
+
+/// Overrides the sync ingress log destination. Tests point this at a temp file so `cargo test`
+/// does not append to the checkout's `sync.log`.
+pub const SYNC_LOG_PATH_ENV: &str = "KOBAYASHI_SYNC_LOG_PATH";
+
+/// Blank or whitespace-only overrides fall back to the asset-root default.
+fn sync_log_path_from(override_value: Option<&str>) -> PathBuf {
+    match override_value.map(str::trim) {
+        Some(t) if !t.is_empty() => PathBuf::from(t),
+        _ => crate::runtime_paths::resolve(SYNC_LOG_PATH),
+    }
+}
+
+fn sync_log_path() -> PathBuf {
+    sync_log_path_from(std::env::var(SYNC_LOG_PATH_ENV).ok().as_deref())
+}
 
 fn append_sync_log(line: &str) {
     let _ = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(SYNC_LOG_PATH)
+        .open(sync_log_path())
         .and_then(|mut f| writeln!(f, "{}", line));
 }
 
@@ -912,8 +930,26 @@ mod tests {
         }
     }
 
+    /// Send the ingress log to a temp file for this test binary.
+    ///
+    /// [`ingress_payload`] appends unconditionally, so without this every `cargo test` run grows the
+    /// checkout's own `sync.log` with test traffic. The path is read from a process-global env var,
+    /// so install it once rather than per test.
+    static REDIRECT_SYNC_LOG: Once = Once::new();
+
+    fn redirect_sync_log_to_temp() {
+        REDIRECT_SYNC_LOG.call_once(|| {
+            let path = std::env::temp_dir().join(format!(
+                "kobayashi-sync-test-{}.log",
+                Uuid::new_v4().as_simple()
+            ));
+            std::env::set_var(super::SYNC_LOG_PATH_ENV, path);
+        });
+    }
+
     /// Create a unique test profile and return (sync_token, profile_id, cleanup_guard).
     fn ensure_test_profile() -> (String, String, TestProfileGuard) {
+        redirect_sync_log_to_temp();
         cleanup_orphan_sync_test_profiles();
         let mut index = load_profile_index();
         let id = format!("sync_test_{}", Uuid::new_v4().as_simple());
@@ -1263,6 +1299,56 @@ mod tests {
         assert_eq!(
             oid_to_map_key(Some(&json!("1458469333"))).unwrap(),
             "1458469333"
+        );
+    }
+
+    /// An explicit override wins; blank/whitespace falls back to the asset-root default so a stray
+    /// empty env var cannot silently drop the log in the process CWD.
+    #[test]
+    fn sync_log_path_resolves_override_then_asset_root() {
+        use super::{sync_log_path_from, SYNC_LOG_PATH};
+
+        assert_eq!(
+            sync_log_path_from(Some("/tmp/kobayashi-override.log")),
+            std::path::Path::new("/tmp/kobayashi-override.log")
+        );
+
+        let default = crate::runtime_paths::resolve(SYNC_LOG_PATH);
+        assert_eq!(sync_log_path_from(None), default);
+        assert_eq!(sync_log_path_from(Some("")), default);
+        assert_eq!(sync_log_path_from(Some("   ")), default);
+        assert!(
+            default.is_absolute(),
+            "asset-root default should not be CWD-relative: {default:?}"
+        );
+    }
+
+    /// Regression: ingress traffic from the test suite must land in the redirected temp log, leaving
+    /// the checkout's `sync.log` untouched.
+    #[test]
+    fn ingress_appends_to_redirected_log_not_the_checkout() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, _, _cleanup) = ensure_test_profile();
+
+        let redirected = std::env::var(super::SYNC_LOG_PATH_ENV).expect("redirect installed");
+        assert_eq!(super::sync_log_path(), std::path::Path::new(&redirected));
+
+        let checkout_log = crate::runtime_paths::resolve(super::SYNC_LOG_PATH);
+        let checkout_len_before = std::fs::metadata(&checkout_log).map(|m| m.len()).ok();
+        let redirected_len_before = std::fs::metadata(&redirected).map(|m| m.len()).unwrap_or(0);
+
+        let (status, _) = ingress_payload("[]", Some(&token));
+        assert_eq!(status, StatusCode::OK);
+
+        let redirected_len_after = std::fs::metadata(&redirected).map(|m| m.len()).unwrap_or(0);
+        assert!(
+            redirected_len_after > redirected_len_before,
+            "ingress should append to {redirected}"
+        );
+        assert_eq!(
+            std::fs::metadata(&checkout_log).map(|m| m.len()).ok(),
+            checkout_len_before,
+            "checkout sync.log must not be written by tests"
         );
     }
 }
