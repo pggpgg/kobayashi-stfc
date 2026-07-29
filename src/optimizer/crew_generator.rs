@@ -1471,6 +1471,200 @@ fn below_tuple_ok(names: &[String], captain: &str, b1: &str, b2: &str) -> bool {
     true
 }
 
+/// Index pairs over `0..n` in colexicographic order: (0,1), (0,2), (1,2), (0,3), (1,3), (2,3), …
+///
+/// Colex grows both indices together, so any prefix of the sequence covers a balanced prefix of
+/// the pool. Lexicographic order pins `i = 0` for the first `n - 1` pairs, which would re-create
+/// for bridge slot 1 the single-officer bias that cell round-robin exists to remove.
+fn colex_pairs(n: usize) -> impl Iterator<Item = (usize, usize)> {
+    (1..n).flat_map(|j| (0..j).map(move |i| (i, j)))
+}
+
+/// The `rank`-th k-combination of `0..m`, in lexicographic order. Inverse of the position a
+/// combination holds in [`for_each_combination_indices`]. `rank` must be below `C(m, k)`.
+fn unrank_combination(mut rank: u128, m: usize, k: usize) -> Vec<usize> {
+    let mut out = Vec::with_capacity(k);
+    let mut remaining = k;
+    let mut x = 0_usize;
+    while remaining > 0 && x < m {
+        // Combinations whose smallest unused element is exactly `x`.
+        let c = binomial(m - x - 1, remaining - 1);
+        if rank < c {
+            out.push(x);
+            remaining -= 1;
+        } else {
+            rank -= c;
+        }
+        x += 1;
+    }
+    out
+}
+
+/// Odd 64-bit constant near 2^64/φ. Multiplying a cell ordinal by it and reducing modulo the
+/// cell's combination count gives a low-discrepancy start rank — successive cells land far
+/// apart in combination space.
+const CELL_RANK_STEP: u128 = 0x9E37_79B9_7F4A_7C15;
+
+/// One (captain, bridge pair) cell of the candidate space, with a cursor over the cell's
+/// below-decks combinations.
+struct CandidateCell {
+    captain: usize,
+    b1: usize,
+    b2: usize,
+    /// Below-decks pool indices legal for this cell, in pool order.
+    available: Vec<usize>,
+    /// Number of k-combinations over `available`.
+    total: u128,
+    /// Rank of the next combination to try; wraps at `total`.
+    next_rank: u128,
+    /// Combinations this cell has already offered, legal or not.
+    tried: u128,
+}
+
+impl CandidateCell {
+    fn new(
+        captain: usize,
+        b1: usize,
+        b2: usize,
+        available: Vec<usize>,
+        k: usize,
+        ordinal: u64,
+    ) -> Self {
+        let total = binomial(available.len(), k);
+        // Stagger the starting combination per cell. Without this, a pass that takes one crew per
+        // cell hands every cell its lowest-index below-decks tuple, so a budget spread across
+        // captains would collapse below-decks variety instead.
+        let next_rank = if total == 0 {
+            0
+        } else {
+            (u128::from(ordinal).wrapping_mul(CELL_RANK_STEP)) % total
+        };
+        Self {
+            captain,
+            b1,
+            b2,
+            available,
+            total,
+            next_rank,
+            tried: 0,
+        }
+    }
+
+    /// The cell's next legal crew, or `None` once every combination has been offered.
+    fn next_crew(
+        &mut self,
+        captains: &[String],
+        bridge: &[String],
+        below_decks: &[String],
+        k: usize,
+    ) -> Option<CrewCandidate> {
+        let m = self.available.len();
+        while self.tried < self.total {
+            let positions = unrank_combination(self.next_rank, m, k);
+            self.next_rank = (self.next_rank + 1) % self.total;
+            self.tried += 1;
+
+            let captain = &captains[self.captain];
+            let b1 = &bridge[self.b1];
+            let b2 = &bridge[self.b2];
+            let bd: Vec<String> = positions
+                .iter()
+                .map(|&p| below_decks[self.available[p]].clone())
+                .collect();
+            if below_tuple_ok(&bd, captain, b1, b2) {
+                return Some(CrewCandidate {
+                    captain: captain.clone(),
+                    bridge: vec![b1.clone(), b2.clone()],
+                    below_decks: bd,
+                });
+            }
+        }
+        None
+    }
+}
+
+/// Fill a capped candidate budget by visiting (captain, bridge pair) cells round-robin.
+///
+/// Cells are ordered bridge-pair-major and captain-minor, and each pass takes at most one crew
+/// per cell, so a budget of N reaches `min(N, cells)` distinct (captain, bridge pair) cells
+/// before any cell contributes a second crew.
+///
+/// The nested captain-major walk this replaces spent the whole budget inside the first cell
+/// whenever that cell had more below-decks combinations than the budget — the normal case, since
+/// one cell over a 51-officer below-decks pool offers thousands of combinations against a default
+/// budget of 128. The optimizer therefore proposed crews for exactly one captain, which is why
+/// the stratified-random control beat tiered on the method benchmark. See
+/// `docs/CREW_OPTIMIZATION_METHODS.md`.
+///
+/// `bd_for_cell` supplies the below-decks pool indices legal for a cell, letting the exhaustive,
+/// stride-sampled, and learned-sampling callers share this ordering.
+fn round_robin_candidates(
+    captains: &[String],
+    bridge: &[String],
+    below_decks: &[String],
+    below_decks_slots: usize,
+    max_candidates: usize,
+    bd_for_cell: &mut dyn FnMut(&str, &str, &str) -> Vec<usize>,
+) -> Vec<CrewCandidate> {
+    let mut out = Vec::with_capacity(max_candidates.min(4096));
+    if max_candidates == 0 || captains.is_empty() || bridge.len() < 2 {
+        return out;
+    }
+    let k = below_decks_slots;
+
+    // Pass 1 builds each cell and takes its first crew. Only cells that produced one are kept, so
+    // live cells never outnumber the budget and barren cells are never revisited.
+    let mut live: Vec<CandidateCell> = Vec::new();
+    let mut ordinal: u64 = 0;
+    'pass1: for (i, j) in colex_pairs(bridge.len()) {
+        let (b1, b2) = (&bridge[i], &bridge[j]);
+        if b1 == b2 {
+            continue;
+        }
+        for (ci, captain) in captains.iter().enumerate() {
+            if b1 == captain || b2 == captain {
+                continue;
+            }
+            let available = bd_for_cell(captain.as_str(), b1.as_str(), b2.as_str());
+            if available.len() < k {
+                continue;
+            }
+            let mut cell = CandidateCell::new(ci, i, j, available, k, ordinal);
+            ordinal += 1;
+            if let Some(crew) = cell.next_crew(captains, bridge, below_decks, k) {
+                out.push(crew);
+                live.push(cell);
+                if out.len() >= max_candidates {
+                    break 'pass1;
+                }
+            }
+        }
+    }
+
+    // Later passes take one more crew per still-productive cell, in the same cell order.
+    while out.len() < max_candidates && !live.is_empty() {
+        let mut progressed = false;
+        live.retain_mut(|cell| {
+            if out.len() >= max_candidates {
+                return true;
+            }
+            match cell.next_crew(captains, bridge, below_decks, k) {
+                Some(crew) => {
+                    out.push(crew);
+                    progressed = true;
+                    true
+                }
+                None => false,
+            }
+        });
+        if !progressed {
+            break;
+        }
+    }
+
+    out
+}
+
 /// All k-combinations of indices in `0..n` (strictly increasing index tuples).
 fn for_each_combination_indices(n: usize, k: usize, mut visit: impl FnMut(&[usize])) {
     if k == 0 {
@@ -1521,36 +1715,42 @@ fn exhaustive_candidates(
     max_candidates: Option<usize>,
     below_decks_slots: usize,
 ) -> Vec<CrewCandidate> {
-    let reserve = max_candidates.unwrap_or(256).min(4096);
-    let mut candidates = Vec::with_capacity(reserve);
     let n_bd = below_decks.len();
     if below_decks_slots > n_bd {
-        return candidates;
+        return Vec::new();
     }
 
-    let mut stop = false;
+    // A capped budget is spread across cells rather than spent on the first captain.
+    if let Some(max) = max_candidates {
+        let mut bd_for_cell = |captain: &str, b1: &str, b2: &str| -> Vec<usize> {
+            (0..n_bd)
+                .filter(|&i| {
+                    !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
+                })
+                .collect()
+        };
+        return round_robin_candidates(
+            captains,
+            bridge,
+            below_decks,
+            below_decks_slots,
+            max,
+            &mut bd_for_cell,
+        );
+    }
+
+    // Uncapped: emit the whole space, in nested pool order.
+    let mut candidates = Vec::with_capacity(256);
     for captain in captains {
-        if stop {
-            break;
-        }
         for (i, b1) in bridge.iter().enumerate() {
-            if stop {
-                break;
-            }
             if b1 == captain {
                 continue;
             }
             for b2 in bridge.iter().skip(i + 1) {
-                if stop {
-                    break;
-                }
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
                 for_each_combination_indices(n_bd, below_decks_slots, |idxs| {
-                    if stop {
-                        return;
-                    }
                     let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
                     if !below_tuple_ok(&bd, captain, b1, b2) {
                         return;
@@ -1560,9 +1760,6 @@ fn exhaustive_candidates(
                         bridge: vec![b1.clone(), b2.clone()],
                         below_decks: bd,
                     });
-                    if max_candidates.is_some_and(|c| candidates.len() >= c) {
-                        stop = true;
-                    }
                 });
             }
         }
@@ -1594,17 +1791,25 @@ fn exhaustive_count(
                 if b2 == captain || b2 == b1 {
                     continue;
                 }
+                // The cap is enforced inside the combination walk, not after it. Checking only at
+                // the cell boundary overshot to the end of the current (captain, bridge pair) —
+                // `Some(1)` reported a whole cell — and the optimize auto-router reads this count.
+                let mut hit_cap = false;
                 for_each_combination_indices(n_bd, below_decks_slots, |idxs| {
+                    if hit_cap {
+                        return;
+                    }
                     let bd: Vec<String> = idxs.iter().map(|&i| below_decks[i].clone()).collect();
                     if !below_tuple_ok(&bd, captain, b1, b2) {
                         return;
                     }
                     count += 1;
-                });
-                if let Some(cap) = max_count {
-                    if count >= cap {
-                        return count;
+                    if max_count.is_some_and(|cap| count >= cap) {
+                        hit_cap = true;
                     }
+                });
+                if hit_cap {
+                    return count;
                 }
                 if count >= ESTIMATE_CAP {
                     return ESTIMATE_CAP;
@@ -1631,8 +1836,7 @@ fn sampled_candidates(
 
     let captain_limit = strategy.large_pool_captain_limit.max(1).min(captains.len());
     let bridge_limit = strategy.large_pool_bridge_limit.max(2).min(bridge.len());
-    let reserve = strategy.max_candidates.unwrap_or(256).min(4096);
-    let mut candidates = Vec::with_capacity(reserve);
+    let mut candidates = Vec::with_capacity(256);
 
     // RNG adapter for officer_learning::RngExt
     struct CgRng {
@@ -1660,6 +1864,54 @@ fn sampled_candidates(
     let mut rng = CgRng { state: seed };
 
     let use_learning = strategy.learned_officer_scores.is_some();
+    let stride = ((seed as usize) % 5) + 1;
+
+    // A capped budget is spread across cells rather than spent on the first captain. Both
+    // below-decks sources plug into the shared cell ordering: stride sampling offers a cell many
+    // combinations, learned sampling exactly one.
+    if let Some(max) = strategy.max_candidates {
+        let mut bd_for_cell = |captain: &str, b1: &str, b2: &str| -> Vec<usize> {
+            if !use_learning {
+                return (0..below_decks.len())
+                    .step_by(stride)
+                    .filter(|&i| {
+                        !name_conflicts_bridge_captain(below_decks[i].as_str(), captain, b1, b2)
+                    })
+                    .collect();
+            }
+            let mut available_idx: Vec<usize> = Vec::new();
+            let mut available_names: Vec<String> = Vec::new();
+            for (i, name) in below_decks.iter().enumerate() {
+                if !name_conflicts_bridge_captain(name.as_str(), captain, b1, b2) {
+                    available_idx.push(i);
+                    available_names.push(name.clone());
+                }
+            }
+            if available_idx.len() < below_decks_slots {
+                return Vec::new();
+            }
+            let mut selected: Vec<usize> = strategy
+                .learned_officer_scores
+                .as_ref()
+                .expect("scores set when use_learning is true")
+                .epsilon_greedy_sample(&available_names, below_decks_slots, hostile, ship, &mut rng)
+                .iter()
+                .map(|&si| available_idx[si])
+                .collect();
+            // `CandidateCell` walks combinations of this list in order, so it must be sorted for
+            // the single k-of-k combination to be the selected set itself.
+            selected.sort_unstable();
+            selected
+        };
+        return round_robin_candidates(
+            &captains[..captain_limit],
+            &bridge[..bridge_limit],
+            below_decks,
+            below_decks_slots,
+            max,
+            &mut bd_for_cell,
+        );
+    }
 
     for captain in captains.iter().take(captain_limit) {
         for (bi, b1) in bridge.iter().take(bridge_limit).enumerate() {
@@ -1711,7 +1963,6 @@ fn sampled_candidates(
                         .collect()
                 } else {
                     // Legacy stride-based sampling
-                    let stride = ((seed as usize) % 5) + 1;
                     (0..below_decks.len())
                         .step_by(stride)
                         .filter(|&i| {
@@ -1724,11 +1975,7 @@ fn sampled_candidates(
                 if below_decks_slots > m {
                     continue;
                 }
-                let mut stop = false;
                 for_each_combination_indices(m, below_decks_slots, |pos| {
-                    if stop {
-                        return;
-                    }
                     let bd: Vec<String> = pos
                         .iter()
                         .map(|&pi| below_decks[below_indices[pi]].clone())
@@ -1741,16 +1988,7 @@ fn sampled_candidates(
                         bridge: vec![b1.clone(), b2.clone()],
                         below_decks: bd,
                     });
-                    if strategy
-                        .max_candidates
-                        .is_some_and(|c| candidates.len() >= c)
-                    {
-                        stop = true;
-                    }
                 });
-                if stop {
-                    return candidates;
-                }
             }
         }
     }
@@ -1875,6 +2113,148 @@ mod tests {
         assert_eq!(super::binomial(3, 5), 0);
         // Symmetry C(n,k) == C(n,n-k).
         assert_eq!(super::binomial(50, 3), super::binomial(50, 47));
+    }
+
+    /// Named pools big enough that a capped budget cannot cover the space.
+    fn synthetic_pools(
+        captains: usize,
+        bridge: usize,
+        below: usize,
+    ) -> (Vec<String>, Vec<String>, Vec<String>) {
+        (
+            (0..captains).map(|i| format!("cap{i}")).collect(),
+            (0..bridge).map(|i| format!("br{i}")).collect(),
+            (0..below).map(|i| format!("bd{i}")).collect(),
+        )
+    }
+
+    #[test]
+    fn unrank_combination_walks_the_same_order_as_enumeration() {
+        for (m, k) in [(6_usize, 3_usize), (7, 2), (5, 5), (9, 1), (4, 0)] {
+            let mut enumerated: Vec<Vec<usize>> = Vec::new();
+            super::for_each_combination_indices(m, k, |idx| enumerated.push(idx.to_vec()));
+            assert_eq!(
+                enumerated.len() as u128,
+                super::binomial(m, k),
+                "C({m},{k}) should match the enumeration length"
+            );
+            for (rank, expected) in enumerated.iter().enumerate() {
+                assert_eq!(
+                    &super::unrank_combination(rank as u128, m, k),
+                    expected,
+                    "rank {rank} of C({m},{k})"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn colex_pairs_cover_every_pair_once_and_grow_both_indices() {
+        let pairs: Vec<(usize, usize)> = super::colex_pairs(6).collect();
+        assert_eq!(pairs.len(), super::binomial(6, 2) as usize);
+        let unique: std::collections::HashSet<(usize, usize)> = pairs.iter().copied().collect();
+        assert_eq!(unique.len(), pairs.len(), "no pair repeats");
+        assert!(pairs.iter().all(|&(i, j)| i < j));
+        // A prefix uses a balanced prefix of the pool: the first three pairs touch officers 0..2,
+        // where lexicographic order would have pinned i = 0 across all of them.
+        assert_eq!(&pairs[..3], &[(0, 1), (0, 2), (1, 2)]);
+    }
+
+    /// Regression for the truncation bias: a capped budget must span the captain pool rather than
+    /// exhaust the first captain's below-decks combinations. Before stratified truncation this
+    /// returned crews for exactly one captain.
+    #[test]
+    fn capped_budget_spreads_across_captains_and_bridge() {
+        let (captains, bridge, below) = synthetic_pools(8, 10, 20);
+        let max = 64;
+        let crews = super::exhaustive_candidates(&captains, &bridge, &below, Some(max), 3);
+        assert_eq!(crews.len(), max, "budget should be filled");
+
+        let seen_captains: std::collections::BTreeSet<&str> =
+            crews.iter().map(|c| c.captain.as_str()).collect();
+        assert_eq!(
+            seen_captains.len(),
+            captains.len(),
+            "a budget of {max} over {} captains should reach every captain, saw {seen_captains:?}",
+            captains.len()
+        );
+
+        let seen_bridge: std::collections::BTreeSet<&str> = crews
+            .iter()
+            .flat_map(|c| c.bridge.iter().map(|s| s.as_str()))
+            .collect();
+        assert!(
+            seen_bridge.len() >= 4,
+            "bridge slots should vary, saw {seen_bridge:?}"
+        );
+
+        // Staggered start ranks keep below-decks variety: every cell handing back its lowest-index
+        // tuple would collapse this to exactly the slot count.
+        let seen_below: std::collections::BTreeSet<&str> = crews
+            .iter()
+            .flat_map(|c| c.below_decks.iter().map(|s| s.as_str()))
+            .collect();
+        assert!(
+            seen_below.len() > 3,
+            "below-decks officers should vary beyond one tuple, saw {seen_below:?}"
+        );
+    }
+
+    #[test]
+    fn capped_candidates_are_legal_and_distinct() {
+        let (captains, bridge, below) = synthetic_pools(6, 8, 12);
+        let crews = super::exhaustive_candidates(&captains, &bridge, &below, Some(200), 3);
+        let mut seen = std::collections::HashSet::new();
+        for crew in &crews {
+            assert_eq!(crew.bridge.len(), 2);
+            assert_eq!(crew.below_decks.len(), 3);
+            let mut all: Vec<&str> = vec![crew.captain.as_str()];
+            all.extend(crew.bridge.iter().map(|s| s.as_str()));
+            all.extend(crew.below_decks.iter().map(|s| s.as_str()));
+            let unique: std::collections::HashSet<&&str> = all.iter().collect();
+            assert_eq!(unique.len(), all.len(), "no officer twice in {crew:?}");
+            // Below-decks indices are strictly increasing, so the tuple is canonical and the whole
+            // crew should appear at most once.
+            let mut key = all.clone();
+            key.sort_unstable();
+            assert!(seen.insert(key), "duplicate crew {crew:?}");
+        }
+    }
+
+    #[test]
+    fn capped_generation_is_deterministic_and_counts_match_the_cap() {
+        let (captains, bridge, below) = synthetic_pools(5, 7, 9);
+        for max in [1_usize, 17, 128] {
+            let a = super::exhaustive_candidates(&captains, &bridge, &below, Some(max), 3);
+            let b = super::exhaustive_candidates(&captains, &bridge, &below, Some(max), 3);
+            assert_eq!(a, b, "same inputs should give the same order");
+            assert_eq!(
+                a.len(),
+                super::exhaustive_count(&captains, &bridge, &below, Some(max), 3),
+                "generated count should match the counter at cap {max}"
+            );
+        }
+    }
+
+    /// A budget past the size of the space must still return the whole space, exactly once each.
+    #[test]
+    fn capped_budget_beyond_the_space_returns_every_crew() {
+        let (captains, bridge, below) = synthetic_pools(3, 4, 5);
+        let uncapped = super::exhaustive_candidates(&captains, &bridge, &below, None, 3);
+        let capped =
+            super::exhaustive_candidates(&captains, &bridge, &below, Some(uncapped.len() * 4), 3);
+        assert_eq!(capped.len(), uncapped.len());
+
+        let key = |c: &super::CrewCandidate| {
+            let mut k = vec![c.captain.clone()];
+            k.extend(c.bridge.iter().cloned());
+            k.extend(c.below_decks.iter().cloned());
+            k.sort();
+            k
+        };
+        let left: std::collections::BTreeSet<Vec<String>> = uncapped.iter().map(key).collect();
+        let right: std::collections::BTreeSet<Vec<String>> = capped.iter().map(key).collect();
+        assert_eq!(left, right, "same crews, only the order differs");
     }
 
     #[test]

@@ -60,6 +60,41 @@ Exhaustive search evaluates every valid crew. It is still useful when the post-f
 
 Use exhaustive search after strong scenario filters, owned-roster narrowing, and eligibility gates have already reduced the space. For broad PvP or catch-all PvE searches, exhaustive search should usually become a final confirmation tool rather than the first pass.
 
+### Budgeted truncation must be stratified
+
+Almost every Kobayashi search runs the generator with a `max_candidates` budget far below the legal
+space, so **which** crews the budget buys matters as much as how many. A nested captain → bridge →
+below-decks walk that simply stops at the budget is not a sample of the space; it is a prefix of
+one cell. One (captain, bridge pair) cell over a 51-officer below-decks pool offers thousands of
+combinations against a default budget of 128, so the walk never reaches a second captain. Measured
+on the demo profile against pools of 189 captains, 242 bridge officers, and 51 below-decks
+officers, the old walk returned crews for **exactly one captain** at every seed — 0.5% of the
+captain pool — and so did the benchmark's own reference sweep.
+
+[`src/optimizer/crew_generator.rs`](../src/optimizer/crew_generator.rs) instead treats a
+(captain, bridge pair) as a *cell* and fills the budget round-robin:
+
+- Cells are visited **bridge-pair-major, captain-minor**, so consecutive cells rotate captains and
+  a budget of N reaches `min(N, cells)` distinct cells before any cell yields a second crew.
+- Bridge pairs are enumerated in **colexicographic** order — (0,1), (0,2), (1,2), (0,3), … — which
+  grows both indices together. Lexicographic order would pin the first bridge slot to one officer
+  for the first `n - 1` pairs, re-creating the same bias one seat down.
+- Each cell's below-decks cursor **starts at a staggered rank** (cell ordinal times a golden-ratio
+  constant, modulo the cell's combination count). Without this a one-crew-per-cell pass hands every
+  cell its lowest-index tuple, and below-decks variety collapses even as captain variety improves.
+- Later passes take one more crew per still-productive cell, so the budget is still filled exactly,
+  and a budget past the size of the space still returns the whole space.
+
+The three callers share the ordering and differ only in the below-decks pool a cell is given: the
+whole pool (exhaustive), a stride subset (sampled), or the epsilon-greedy selection (learned
+sampling, which offers each cell exactly one combination). Uncapped generation keeps the plain
+nested walk — with no budget there is nothing to bias.
+
+What this does **not** fix is how wide the pools are to begin with. `large_pool_captain_limit` and
+`large_pool_bridge_limit` still cut the pools to 10 captains and 12 bridge officers before any of
+this runs, and that ceiling is what keeps tiered behind the random control on the method benchmark
+— see §16 and roadmap §1.4.
+
 ## 2. Exact pruning and constraint filtering
 
 Exact pruning removes candidates that cannot matter before simulation.
@@ -674,6 +709,19 @@ counts — so the tolerances absorb intentional changes rather than noise. `.git
 optimizer-method-bench.yml` runs it weekly and on dispatch, uploading the JSONL and Markdown.
 
 Refresh the baseline with `--write-baseline` and explain the change in the PR.
+
+### Reading recall against regret
+
+The two headline metrics answer different questions and can move in opposite directions. Regret
+asks "how good is the crew this lane picked?" and is measured on an independent confirmation seed.
+Recall@K asks "how many of the reference's best K crews did this lane return?" — a set-overlap
+score that a lane can lose by finding an equally good crew that simply is not one of those K.
+
+Stratified truncation is the worked example: tiered's regret improved (0.00627 → 0.00532) while its
+recall fell (0.36 → 0.22) against a reference set that did not change. On seed 11 recall fell from
+0.8 to 0.1 with regret unchanged at ~3e-5. **When the two disagree, regret is the outcome metric
+and recall is the diagnostic.** A recall move on its own is not a regression until you have checked
+whether the lane's own pick got worse.
 
 ## Suggested next implementation milestones
 
