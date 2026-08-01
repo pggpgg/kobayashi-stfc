@@ -3,11 +3,11 @@
 # Refresh: see docs/PERFORMANCE.md § Regression gate.
 # baseline_env=CI=true KOBAYASHI_RAYON_THREADS=2 cargo bench --bench simulator --bench monte_carlo_parallel -- --noplot
 # runner_hint=ubuntu-24.04 (.github/workflows/bench-refresh-baseline.yml)
-# generated unix_1785249381
-# refresh_source=workflow_dispatch_run_30368456054
-monte_carlo/parallel 239355585
-monte_carlo/sequential 445058647
-simulator/combat_100_rounds 1702
-simulator/combat_100_rounds_prev_round_hull_crew 2089
-simulator/combat_20_rounds 1701
-simulator/combat_3_rounds 1699
+# generated unix_1785558780
+# refresh_source=schedule_run_30683875501
+monte_carlo/parallel 246616866
+monte_carlo/sequential 460752504
+simulator/combat_100_rounds 1680
+simulator/combat_100_rounds_prev_round_hull_crew 2075
+simulator/combat_20_rounds 1680
+simulator/combat_3_rounds 1676
