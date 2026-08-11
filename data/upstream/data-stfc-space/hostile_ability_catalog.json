@@ -6265,6 +6265,12 @@
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 1
     },
+    "3442434952": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
+    },
     "3445799437": {
       "timing": "combat_begin",
       "effect_type": "shield_mitigation_bypass",
