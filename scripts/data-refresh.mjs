@@ -39,7 +39,7 @@ Usage:
 Flags:
   (none)           Core: CSV importers under data/import/
   --stfccommunity  PowerShell fetch + cargo run --bin normalize_stfc_data
-  --stfcspace      Ship registry → ships_extended → hostiles → hull registry → buildings → research (when cached)
+  --stfcspace      Ship registry → ships_extended → hostiles → ability catalog → hull registry → buildings → research (when cached)
   --all            All of the above
 `);
 }
@@ -131,6 +131,15 @@ function runStfcSpace() {
   const hostileDir = path.join(UPSTREAM, "hostiles");
   if (countJsonFiles(hostileDir) > 0) {
     run("Normalize hostiles → data/hostiles/", "cargo run --bin normalize_hostiles_stfc_space");
+    // Must run after every hostile fetch: tests/hostile_ability_catalog_parity.rs requires a
+    // catalog row for every upstream ability[].id, and new hostiles routinely introduce new ids
+    // (Update 92's Elite Assassins added 3442434952). Unrecognised descriptions fall back to a
+    // catalogued combat_noop with a review bucket in hostile_ability_audit_meta.json, so this
+    // keeps the refresh green while still surfacing new mechanics in the PR diff for modeling.
+    run(
+      "Hostile ability catalog (regenerate from upstream + translations)",
+      `${py} scripts/generate_full_hostile_ability_catalog.py`,
+    );
   } else {
     console.log(
       "\n── Hostiles ──\n(skip: no JSON under data/upstream/data-stfc-space/hostiles/; run your hostile fetch/cache job first)\n",
