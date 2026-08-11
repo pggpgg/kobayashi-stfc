@@ -95,7 +95,11 @@ fn run(
 
 fn defender_crew_for(hostile_id: &str) -> CrewConfiguration {
     let rec = resolve_hostile(hostile_id).expect("defense protocol carrier");
-    hostile_abilities_to_defender_crew(&rec.ability, hostile_ability_catalog_for_default_path())
+    hostile_abilities_to_defender_crew(
+        &rec.ability,
+        hostile_ability_catalog_for_default_path(),
+        rec.level,
+    )
 }
 
 #[test]

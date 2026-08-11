@@ -44,7 +44,14 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// canary fight exercises). Bump it when changing `src/combat/`, `src/lcars/`, or
 /// `src/optimizer/monte_carlo/` in a way that can move a win rate. The canary digest is the primary,
 /// automatic signal — this is belt-and-braces, not the load-bearing part.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 1;
+///
+/// * 1 → 2 (2026-08): hostile ability values are resolved from the upstream level curve rather
+///   than always `values[0]` (`level_curve_index` in
+///   [`crate::data::hostile_ability_resolve`]). This moves defender-side ability magnitudes for
+///   19 abilities across 163 hostiles. The canary fights build their combatants in code and never
+///   touch a hostile record, so the digest cannot see it — this bump is what invalidates metrics
+///   persisted before the change.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 2;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

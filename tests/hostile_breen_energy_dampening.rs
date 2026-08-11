@@ -151,7 +151,7 @@ fn breen_warship_record_resolves_shield_damage_routing_seat() {
     // Breen Warship L73 (loca 80600); the whole 8-hostile family shares ability 3780549486.
     let rec = resolve_hostile("1114493593").expect("breen warship 73");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,

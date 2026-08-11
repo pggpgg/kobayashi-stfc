@@ -74,7 +74,7 @@ fn empty_catalog_crew(abilities: &[serde_json::Value]) -> CrewConfiguration {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    hostile_abilities_to_defender_crew(abilities, Some(&noop))
+    hostile_abilities_to_defender_crew(abilities, Some(&noop), 1)
 }
 
 fn run(
@@ -103,7 +103,7 @@ fn run(
 fn plausible_deniability_resolves_round_end_max_fraction_seat_with_round_range() {
     let rec = resolve_hostile("2116861042").expect("plausible deniability hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let seat = crew
         .seats
         .iter()
@@ -132,7 +132,7 @@ fn plausible_deniability_resolves_round_end_max_fraction_seat_with_round_range()
 fn shields_refill_during_the_first_five_rounds_and_stop_at_round_six() {
     let rec = resolve_hostile("2116861042").expect("plausible deniability hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     let max_shp = 40_000.0;
     // shield_mitigation 1.0 routes all weapon damage to shields; the hull never drops, so the

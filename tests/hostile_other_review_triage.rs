@@ -68,7 +68,7 @@ fn empty_catalog_crew(abilities: &[serde_json::Value]) -> CrewConfiguration {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    hostile_abilities_to_defender_crew(abilities, Some(&noop))
+    hostile_abilities_to_defender_crew(abilities, Some(&noop), 1)
 }
 
 fn run(
@@ -99,7 +99,7 @@ fn run(
 fn shield_disruptors_reduce_player_shield_mitigation_per_hit_for_one_round() {
     let rec = resolve_hostile("1848004292").expect("shield disruptors carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let resolved = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let resolved = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let disruptor_seats: Vec<_> = resolved
         .seats
         .iter()
@@ -178,7 +178,7 @@ fn shield_disruptors_reduce_player_shield_mitigation_per_hit_for_one_round() {
 fn exploitation_resolves_ship_class_gated_attack_multiplier() {
     let rec = resolve_hostile("1362229790").expect("interceptor exploitation carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let seat = crew
         .seats
         .iter()
@@ -203,7 +203,7 @@ fn exploitation_resolves_ship_class_gated_attack_multiplier() {
 fn exploitation_boosts_counter_fire_vs_matching_class_first_five_rounds_only() {
     let rec = resolve_hostile("1362229790").expect("interceptor exploitation carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     let attacker = combatant(
         "att",
@@ -258,7 +258,7 @@ fn ravagers_lance_resolves_both_tiers_and_boosts_counter_damage() {
         [("434295500", 5.0, 1.5), ("1203412547", 15.0, 3.0)]
     {
         let rec = resolve_hostile(hostile_id).expect("ravager's lance carrier");
-        let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+        let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
         assert!(
             crew.seats.iter().any(|s| matches!(
                 s.ability.effect,
@@ -315,7 +315,7 @@ fn ravagers_lance_resolves_both_tiers_and_boosts_counter_damage() {
 fn energy_focused_beam_destroys_the_attacker_at_round_eight() {
     let rec = resolve_hostile("1892438128").expect("energy focused beam carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -386,7 +386,7 @@ fn energy_focused_beam_destroys_the_attacker_at_round_eight() {
 fn energy_focused_beam_does_not_fire_on_the_round_it_dies() {
     let rec = resolve_hostile("1892438128").expect("energy focused beam carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     let attacker = combatant(
         "att",

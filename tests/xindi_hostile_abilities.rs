@@ -101,7 +101,7 @@ fn cfg(rounds: u32, seed: u64) -> SimulationConfig {
 fn xindi_doomed_species_catalog_builds_crit_and_particle_beam_lethal_seats() {
     let rec = resolve_hostile("4012373729").expect("doomed species xindi");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
@@ -135,7 +135,7 @@ fn xindi_doomed_species_catalog_builds_crit_and_particle_beam_lethal_seats() {
 fn be_like_water_catalog_has_no_lethal_extra_seat() {
     let rec = resolve_hostile("3988400401").expect("be like water only xindi");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
@@ -189,7 +189,7 @@ fn be_like_water_catalog_has_no_lethal_extra_seat() {
 fn denticle_blade_catalog_builds_combat_begin_seat() {
     let rec = resolve_hostile("1043112405").expect("denticle xindi");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
@@ -253,7 +253,7 @@ fn counter_fired_at_weapon_index(events: &[CombatEvent], weapon_index: u32) -> b
 fn denticle_blade_gates_weapon_five_until_proc() {
     let rec = resolve_hostile("1043112405").expect("denticle xindi");
     let catalog = hostile_ability_catalog_for_default_path();
-    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let attacker = weak_attacker();
     let defender = denticle_hostile_defender(&rec);
 
@@ -300,7 +300,7 @@ fn denticle_blade_gates_weapon_five_until_proc() {
 fn denticle_blade_fires_weapon_five_when_proc_succeeds() {
     let rec = resolve_hostile("1043112405").expect("denticle xindi");
     let catalog = hostile_ability_catalog_for_default_path();
-    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let attacker = weak_attacker();
     let defender = denticle_hostile_defender(&rec);
 
@@ -356,7 +356,7 @@ fn denticle_blade_fires_weapon_five_when_proc_succeeds() {
 fn doomed_species_particle_beam_lethal_kills_at_round_one_end() {
     let rec = resolve_hostile("4012373729").expect("doomed species xindi");
     let catalog = hostile_ability_catalog_for_default_path();
-    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let attacker = weak_attacker();
     let defender = Combatant {
         id: "xindi".into(),
@@ -410,7 +410,7 @@ fn doomed_species_particle_beam_lethal_kills_at_round_one_end() {
 fn no_mercy_lethal_kills_at_round_eight() {
     let rec = resolve_hostile("2634260020").expect("xindi group armada");
     let catalog = hostile_ability_catalog_for_default_path();
-    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let attacker = weak_attacker();
     let defender = Combatant {
         id: "xindi_armada".into(),
@@ -485,7 +485,7 @@ fn no_mercy_lethal_is_not_undone_by_attacker_round_end_hull_regen() {
 
     let rec = resolve_hostile("2634260020").expect("xindi group armada");
     let catalog = hostile_ability_catalog_for_default_path();
-    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let attacker_crew = CrewConfiguration {
         seats: vec![CrewSeatContext {
             seat: CrewSeat::Ship,
@@ -647,7 +647,7 @@ fn xindi_crit_debuff_reduces_player_crit_damage_on_outbound() {
 fn ibix_strength_catalog_builds_full_shield_bypass_seat() {
     let rec = resolve_hostile("1080638426").expect("xindi interceptor");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
@@ -665,12 +665,13 @@ fn ibix_shield_bypass_routes_counter_damage_to_attacker_hull() {
 
     let rec = resolve_hostile("1080638426").expect("xindi interceptor");
     let catalog = hostile_ability_catalog_for_default_path();
-    let with_ibix = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let with_ibix = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let noop_catalog = HostileAbilityCatalog {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    let without_ibix = hostile_abilities_to_defender_crew(&rec.ability, Some(&noop_catalog));
+    let without_ibix =
+        hostile_abilities_to_defender_crew(&rec.ability, Some(&noop_catalog), rec.level);
 
     let attacker = Combatant {
         id: "att".into(),
@@ -773,7 +774,7 @@ fn ibix_shield_bypass_routes_counter_damage_to_attacker_hull() {
 fn kemocite_catalog_builds_round_end_weaponry_seat() {
     let rec = resolve_hostile("2634260020").expect("xindi group armada");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
@@ -793,12 +794,13 @@ fn kemocite_stacking_increases_counter_damage_over_rounds() {
 
     let rec = resolve_hostile("2634260020").expect("xindi group armada");
     let catalog = hostile_ability_catalog_for_default_path();
-    let with_kemocite = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let with_kemocite = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let noop_catalog = HostileAbilityCatalog {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    let without_kemocite = hostile_abilities_to_defender_crew(&rec.ability, Some(&noop_catalog));
+    let without_kemocite =
+        hostile_abilities_to_defender_crew(&rec.ability, Some(&noop_catalog), rec.level);
 
     let attacker = Combatant {
         id: "att".into(),
@@ -913,7 +915,7 @@ fn kemocite_stacking_increases_counter_damage_over_rounds() {
 fn no_mercy_catalog_builds_assimilated_gated_lethal_seat() {
     let rec = resolve_hostile("2634260020").expect("xindi group armada");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
