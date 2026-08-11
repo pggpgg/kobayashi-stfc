@@ -590,6 +590,16 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 extra_seats=extras,
                 _bucket="isolytic_combat",
             )
+        # Elite Assassin Training (loca 93901, Update 92 S31/Mo'Kai/Tal'Shiar Elite Assassins):
+        # "increases its Apex Barrier and its Isolytic Damage at the start of combat" — the text
+        # carries NO placeholders, so upstream only populates one channel: values[].value is the
+        # flat apex barrier (500 → 20000, show_percentage=false/value_type=false, matching the
+        # other flat apex rows such as loca 84504), and values[].chance is a constant 1, i.e. the
+        # default always-procs flag rather than a second placeholder as in Double Down. The
+        # isolytic-damage half is therefore unquantified upstream and is deliberately not seated —
+        # reading it from `value` would apply the apex magnitude as an isolytic multiplier.
+        if re.search(r"increases its apex barrier and its isolytic damage", p):
+            return m("combat_begin", "apex_barrier", _bucket="isolytic_combat")
         # Isolytic Dampeners bundles (ACAD wave-defense drones / Programmable Matter):
         # hardcoded "increases its Isolytic Defense by 1000%" + per-variant extras.
         damp_m = re.search(r"increases its isolytic defen[cs]e by (\d+(?:\.\d+)?)%", p)
