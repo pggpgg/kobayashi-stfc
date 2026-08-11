@@ -26,7 +26,7 @@ use kobayashi::data::loader::resolve_hostile;
 fn crew_for(hostile_id: &str) -> CrewConfiguration {
     let rec = resolve_hostile(hostile_id).expect("hostile record");
     let catalog = hostile_ability_catalog_for_default_path();
-    hostile_abilities_to_defender_crew(&rec.ability, catalog)
+    hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level)
 }
 
 fn seat_values<F: Fn(&AbilityEffect) -> Option<f64>>(
@@ -233,7 +233,14 @@ fn mutually_assured_destruction_is_negative_and_battleship_gated() {
 }
 
 /// Elite Assassin Training (3172395625 on hostile 1107147565): single `{0:#.#%}`
-/// placeholder with flag=false — fraction passthrough (1.0 = +100%), unchanged scale.
+/// placeholder with flag=false — fraction passthrough, unchanged scale (0.3 = +30%, not
+/// +3000% and not +0.3%).
+///
+/// Hostile 1107147565 is **level 34**, and this ability carries a per-level ramp (0.1 at level
+/// 30 → 0.55 at level 39; 0.25/0.3/0.35 at levels 33/34/35). The expectation here was 1.0 until
+/// 2026-08, because value resolution always read `values[0]` — a sentinel for this curve, not a
+/// level value, so every Elite Assassin was simulated at +100 % isolytic damage regardless of
+/// level. See `level_curve_index` in `src/data/hostile_ability_resolve.rs`.
 #[test]
 fn elite_assassin_single_placeholder_passthrough() {
     let crew = crew_for("1107147565");
@@ -242,7 +249,7 @@ fn elite_assassin_single_placeholder_passthrough() {
             AbilityEffect::IsolyticDamageBonus(v) => Some(*v),
             _ => None,
         }),
-        1.0,
+        0.3,
         "isolytic damage",
     );
 }

@@ -1,7 +1,7 @@
 {
   "generated_from": "scripts/generate_full_hostile_ability_catalog.py",
-  "unique_ability_ids": 982,
-  "hostiles_with_abilities_scanned": 2901,
+  "unique_ability_ids": 983,
+  "hostiles_with_abilities_scanned": 3000,
   "entries": {
     "1636824": {
       "bucket": "isolytic_combat",
@@ -2277,7 +2277,7 @@
     "1088929105": {
       "bucket": "faction_gate_lethal",
       "loca_id": 91806,
-      "hostile_count": 30,
+      "hostile_count": 63,
       "sample_hostile_id": "1229485126",
       "sample_level": 38,
       "text_snippet": "s31 elite lethal strike\nonly klingon or romulan designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
@@ -3456,9 +3456,9 @@
     "1651219904": {
       "bucket": "faction_gate_lethal",
       "loca_id": 91807,
-      "hostile_count": 30,
-      "sample_hostile_id": "1262772259",
-      "sample_level": 36,
+      "hostile_count": 63,
+      "sample_hostile_id": "1006730151",
+      "sample_level": 43,
       "text_snippet": "mo'kai elite lethal strike\nonly federation or romulan designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
       "effect_type": "hostile_lethal_unless_attacker_faction"
     },
@@ -5267,10 +5267,10 @@
     "2518573064": {
       "bucket": "faction_gate_lethal",
       "loca_id": 91808,
-      "hostile_count": 30,
-      "sample_hostile_id": "1107147565",
-      "sample_level": 34,
-      "text_snippet": "tal shiar elite lethal strike\nonly federation or klingon designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
+      "hostile_count": 63,
+      "sample_hostile_id": "1006812651",
+      "sample_level": 46,
+      "text_snippet": "tal'shiar elite lethal strike\nonly federation or klingon designed ships can engage in battle, all other ships will be lethally struck at the start of combat!",
       "effect_type": "hostile_lethal_unless_attacker_faction"
     },
     "2518795428": {
@@ -7210,6 +7210,15 @@
       "sample_level": 37,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
       "effect_type": "defender_on_hit_shield_mitigation_reduction"
+    },
+    "3442434952": {
+      "bucket": "isolytic_combat",
+      "loca_id": 93901,
+      "hostile_count": 99,
+      "sample_hostile_id": "1006730151",
+      "sample_level": 43,
+      "text_snippet": "elite assassin training\nelite assassin training increases its apex barrier and its isolytic damage at the start of combat.",
+      "effect_type": "apex_barrier"
     },
     "3445799437": {
       "bucket": "hostile_shield_bypass",

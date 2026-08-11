@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-07-27",
+  "last_updated": "2026-08-11",
   "items": [
     {
       "rid": 2999437,
@@ -4283,6 +4283,64 @@
               "value": 0.02,
               "operator": "add",
               "attacker_faction": "romulan"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 221455296,
+      "name": "Isolytic Training: K'T'inga",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
+              "operator": "add"
             }
           ]
         }
@@ -17396,6 +17454,64 @@
       ]
     },
     {
+      "rid": 797599533,
+      "name": "Isolytic Training: Hegh'ta",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 801200757,
       "name": "PvP Takeover Critical Damage",
       "data_version": "stfcspace-upstream",
@@ -19084,6 +19200,54 @@
       ]
     },
     {
+      "rid": 884146006,
+      "name": "Artifact Restoration: Guinan's Magus Weapon",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 888854331,
       "name": "TC PvE Energy Damage",
       "data_version": "stfcspace-upstream",
@@ -20756,6 +20920,64 @@
             {
               "stat": "shield_hp",
               "value": 0.035,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1024228775,
+      "name": "Isolytic Training: Korinar",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
               "operator": "add"
             }
           ]
@@ -28331,6 +28553,64 @@
       ]
     },
     {
+      "rid": 1382197975,
+      "name": "Isolytic Training: Tribune",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1392880794,
       "name": "Explorer Warfare",
       "data_version": "stfcspace-upstream",
@@ -29236,6 +29516,64 @@
             {
               "stat": "weapon_damage",
               "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1446218001,
+      "name": "Isolytic Training: Valdore",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
               "operator": "add"
             }
           ]
@@ -47394,6 +47732,64 @@
             {
               "stat": "weapon_damage",
               "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2412495497,
+      "name": "Isolytic Training: U.S.S. Kelvin",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
               "operator": "add"
             }
           ]
@@ -67123,6 +67519,64 @@
       ]
     },
     {
+      "rid": 3421785680,
+      "name": "Isolytic Training: U.S.S. Newton",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3423145880,
       "name": "<color=#fac710>Vanguard</color> PvP Weapon Damage",
       "data_version": "stfcspace-upstream",
@@ -67854,6 +68308,64 @@
             {
               "stat": "hull_hp",
               "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3459031810,
+      "name": "Isolytic Training: Enterprise-A",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
               "operator": "add"
             }
           ]
@@ -82716,6 +83228,64 @@
             {
               "stat": "armor",
               "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4207962889,
+      "name": "Isolytic Training: Pilum",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "isolytic_damage",
+              "value": 0.8,
               "operator": "add"
             }
           ]

@@ -1,5 +1,5 @@
 {
-  "data_version": "stfcspace-hostiles-2026-07-27",
+  "data_version": "stfcspace-hostiles-2026-08-11",
   "source_note": "data.stfc.space hostile detail (cached under data/upstream/data-stfc-space/hostiles)",
   "hostiles": [
     {
@@ -732,6 +732,15 @@
       "loca_id": 84507
     },
     {
+      "id": "69836137",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
+    },
+    {
       "id": "70516218",
       "hostile_name": "Quantum Adjudicator 2★",
       "level": 66,
@@ -1119,6 +1128,15 @@
       "loca_id": 13003
     },
     {
+      "id": "102429249",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
+    },
+    {
       "id": "102498875",
       "hostile_name": "U.S.S. AKIRA",
       "level": 65,
@@ -1324,6 +1342,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 14026
+    },
+    {
+      "id": "114077227",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "114233958",
@@ -1540,6 +1567,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 85504
+    },
+    {
+      "id": "135361226",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
     },
     {
       "id": "135624368",
@@ -1965,6 +2001,15 @@
       "loca_id": 80101
     },
     {
+      "id": "172338667",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
       "id": "173017788",
       "hostile_name": "Venari Ral",
       "level": 68,
@@ -2152,6 +2197,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 91501
+    },
+    {
+      "id": "190491787",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "190921653",
@@ -3603,6 +3657,15 @@
       "loca_id": 14010
     },
     {
+      "id": "318396982",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "318486907",
       "hostile_name": "Veteran Arkonian Captain",
       "level": 40,
@@ -3900,6 +3963,15 @@
       "loca_id": 509
     },
     {
+      "id": "352139098",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "352413064",
       "hostile_name": "Lost Nausicaan Outlaw",
       "level": 46,
@@ -4105,6 +4177,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 65102
+    },
+    {
+      "id": "375718615",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
     },
     {
       "id": "376218216",
@@ -4512,6 +4593,15 @@
       "loca_id": 57050
     },
     {
+      "id": "414412951",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "414542732",
       "hostile_name": "Node Solo Outpost",
       "level": 63,
@@ -4528,6 +4618,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 11903
+    },
+    {
+      "id": "417011218",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
     },
     {
       "id": "417764663",
@@ -5340,6 +5439,15 @@
       "loca_id": 65102
     },
     {
+      "id": "490637419",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
+    },
+    {
       "id": "490851936",
       "hostile_name": "Venari Ral ↿↿↿",
       "level": 68,
@@ -5509,6 +5617,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 90506
+    },
+    {
+      "id": "508587585",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
     },
     {
       "id": "509298652",
@@ -6220,6 +6337,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 11003
+    },
+    {
+      "id": "572980277",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
     },
     {
       "id": "574439542",
@@ -7455,6 +7581,15 @@
       "loca_id": 52052
     },
     {
+      "id": "692631622",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
+    },
+    {
       "id": "693947115",
       "hostile_name": "Formation Armada",
       "level": 40,
@@ -7743,6 +7878,15 @@
       "loca_id": 54055
     },
     {
+      "id": "717933261",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "718051292",
       "hostile_name": "Assimilated Galor-Class Elite",
       "level": 80,
@@ -7894,6 +8038,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 63051
+    },
+    {
+      "id": "728679911",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
     },
     {
       "id": "729251726",
@@ -8544,6 +8697,15 @@
       "loca_id": 84510
     },
     {
+      "id": "793012293",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
+    },
+    {
       "id": "794025111",
       "hostile_name": "Borg Solo Outpost",
       "level": 73,
@@ -9003,6 +9165,15 @@
       "loca_id": 45046
     },
     {
+      "id": "826339424",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "827341538",
       "hostile_name": "EXCHANGE BANK",
       "level": 35,
@@ -9136,6 +9307,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 85507
+    },
+    {
+      "id": "836462989",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
     },
     {
       "id": "837951027",
@@ -9732,6 +9912,15 @@
       "loca_id": 90500
     },
     {
+      "id": "881411157",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "881682448",
       "hostile_name": "VERIN GANG MARAUDER",
       "level": 58,
@@ -10029,6 +10218,15 @@
       "loca_id": 65102
     },
     {
+      "id": "918803819",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "918928074",
       "hostile_name": "Academy Combat Drone ⇆ ↿↿",
       "level": 78,
@@ -10189,6 +10387,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 13903
+    },
+    {
+      "id": "929903111",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "930025011",
@@ -11163,6 +11370,24 @@
       "loca_id": 91502
     },
     {
+      "id": "1006730151",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
+      "id": "1006812651",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "1006919060",
       "hostile_name": "Federation Patrol",
       "level": 46,
@@ -11170,6 +11395,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 11003
+    },
+    {
+      "id": "1007872342",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
     },
     {
       "id": "1007969491",
@@ -11548,6 +11782,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 13003
+    },
+    {
+      "id": "1041661063",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "1043112405",
@@ -13080,6 +13323,15 @@
       "loca_id": 91501
     },
     {
+      "id": "1185219127",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
       "id": "1185899334",
       "hostile_name": "SILENT ENEMY",
       "level": 46,
@@ -13339,6 +13591,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 83103
+    },
+    {
+      "id": "1209296559",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
     },
     {
       "id": "1209459541",
@@ -14070,6 +14331,15 @@
       "loca_id": 10033
     },
     {
+      "id": "1264793961",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
+    },
+    {
       "id": "1265230501",
       "hostile_name": "Species 8472 Infiltrator",
       "level": 58,
@@ -14077,6 +14347,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 61307
+    },
+    {
+      "id": "1265252102",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
     },
     {
       "id": "1266921127",
@@ -14817,6 +15096,15 @@
       "loca_id": 78052
     },
     {
+      "id": "1344078281",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "1344207616",
       "hostile_name": "Romulan Transport",
       "level": 39,
@@ -15121,6 +15409,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 78053
+    },
+    {
+      "id": "1365616028",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "1365719388",
@@ -16455,6 +16752,15 @@
       "loca_id": 704
     },
     {
+      "id": "1480656307",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
+    },
+    {
       "id": "1481322966",
       "hostile_name": "Klingon Transport",
       "level": 39,
@@ -16480,6 +16786,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 76201
+    },
+    {
+      "id": "1484465647",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "1485623389",
@@ -16930,6 +17245,15 @@
       "rarity": 2,
       "upstream_ship_type": 1,
       "loca_id": 18009
+    },
+    {
+      "id": "1523572065",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
     },
     {
       "id": "1527858129",
@@ -18003,6 +18327,15 @@
       "loca_id": 78050
     },
     {
+      "id": "1615633343",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
+    },
+    {
       "id": "1616489537",
       "hostile_name": "Assimilated Galor-Class Elite",
       "level": 60,
@@ -18154,6 +18487,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 13003
+    },
+    {
+      "id": "1624718925",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "1624943742",
@@ -18525,6 +18867,15 @@
       "loca_id": 77200
     },
     {
+      "id": "1655692963",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
+    },
+    {
       "id": "1655911837",
       "hostile_name": "Academy Combat Drone ⇆ ↿↿",
       "level": 81,
@@ -18559,6 +18910,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 60011
+    },
+    {
+      "id": "1657443733",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "1657976545",
@@ -18919,6 +19279,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 509
+    },
+    {
+      "id": "1684826642",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
     },
     {
       "id": "1685236288",
@@ -19497,6 +19866,15 @@
       "loca_id": 60054
     },
     {
+      "id": "1737218519",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "1737497337",
       "hostile_name": "Klingon Patrol",
       "level": 39,
@@ -19830,6 +20208,15 @@
       "loca_id": 702
     },
     {
+      "id": "1766809240",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
       "id": "1767236047",
       "hostile_name": "Uncommon FED Stockade",
       "level": 54,
@@ -19956,6 +20343,15 @@
       "loca_id": 60056
     },
     {
+      "id": "1779605591",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
+    },
+    {
       "id": "1779750017",
       "hostile_name": "Venari Ral ↿↿↿",
       "level": 67,
@@ -20053,6 +20449,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 57050
+    },
+    {
+      "id": "1784518278",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "1784866312",
@@ -20332,6 +20737,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 90505
+    },
+    {
+      "id": "1808014070",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
     },
     {
       "id": "1808392144",
@@ -20755,6 +21169,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 86211
+    },
+    {
+      "id": "1852423435",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
     },
     {
       "id": "1853051008",
@@ -21349,6 +21772,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 705
+    },
+    {
+      "id": "1895118181",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "1897620442",
@@ -22107,6 +22539,15 @@
       "loca_id": 77200
     },
     {
+      "id": "1957015793",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
+    },
+    {
       "id": "1957084043",
       "hostile_name": "Galor-Class Warship",
       "level": 51,
@@ -22557,6 +22998,15 @@
       "loca_id": 13003
     },
     {
+      "id": "1992718418",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
+    },
+    {
       "id": "1993303637",
       "hostile_name": "Veteran Klingon Patrol",
       "level": 38,
@@ -22672,6 +23122,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 65100
+    },
+    {
+      "id": "2000506987",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
     },
     {
       "id": "2001678737",
@@ -22872,6 +23331,15 @@
       "loca_id": 67109
     },
     {
+      "id": "2019766221",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
       "id": "2020110165",
       "hostile_name": "Uncommon Romulan Presidio",
       "level": 54,
@@ -22942,6 +23410,24 @@
       "rarity": 1,
       "upstream_ship_type": 12,
       "loca_id": 12002
+    },
+    {
+      "id": "2025525972",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
+      "id": "2026913260",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
     },
     {
       "id": "2027041797",
@@ -23383,6 +23869,15 @@
       "rarity": 2,
       "upstream_ship_type": 1,
       "loca_id": 18000
+    },
+    {
+      "id": "2071521452",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "2071993697",
@@ -24276,6 +24771,15 @@
       "loca_id": 76200
     },
     {
+      "id": "2162171954",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "2162304780",
       "hostile_name": "Boslic Slave Trader",
       "level": 19,
@@ -24346,6 +24850,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 55056
+    },
+    {
+      "id": "2169317310",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
     },
     {
       "id": "2169401122",
@@ -25086,6 +25599,15 @@
       "loca_id": 90509
     },
     {
+      "id": "2232802264",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
+    },
+    {
       "id": "2232861778",
       "hostile_name": "Aggregation Underboss",
       "level": 68,
@@ -25203,6 +25725,15 @@
       "loca_id": 11003
     },
     {
+      "id": "2246237566",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
+    },
+    {
       "id": "2249073788",
       "hostile_name": "Lost Andorian Bounty Hunter",
       "level": 56,
@@ -25248,6 +25779,15 @@
       "loca_id": 86121
     },
     {
+      "id": "2251932592",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
+    },
+    {
       "id": "2253944433",
       "hostile_name": "Charged Temporal Dreadnought",
       "level": 53,
@@ -25273,6 +25813,15 @@
       "rarity": 1,
       "upstream_ship_type": 1,
       "loca_id": 73052
+    },
+    {
+      "id": "2254690766",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
     },
     {
       "id": "2255608802",
@@ -25995,6 +26544,15 @@
       "loca_id": 80601
     },
     {
+      "id": "2307776805",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
       "id": "2308162840",
       "hostile_name": "Quantum Adjudicator 3★",
       "level": 73,
@@ -26506,6 +27064,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 85509
+    },
+    {
+      "id": "2352271663",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "2352492528",
@@ -27154,6 +27721,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 83108
+    },
+    {
+      "id": "2410050077",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "2410653979",
@@ -28414,6 +28990,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 60006
+    },
+    {
+      "id": "2525305979",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "2525857470",
@@ -30234,6 +30819,15 @@
       "loca_id": 78051
     },
     {
+      "id": "2658859800",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
+    },
+    {
       "id": "2658968910",
       "hostile_name": "Klingon Transport",
       "level": 37,
@@ -30304,6 +30898,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 61305
+    },
+    {
+      "id": "2663481501",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "2665996964",
@@ -30378,6 +30981,15 @@
       "loca_id": 47050
     },
     {
+      "id": "2674277535",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
+    },
+    {
       "id": "2675996337",
       "hostile_name": "Hirogen Militarist",
       "level": 52,
@@ -30394,6 +31006,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 76201
+    },
+    {
+      "id": "2678567337",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 46,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "2679141832",
@@ -32070,6 +32691,15 @@
       "loca_id": 87521
     },
     {
+      "id": "2824754391",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
+    },
+    {
       "id": "2826782724",
       "hostile_name": "Assimilated Ship",
       "level": 27,
@@ -32284,6 +32914,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 50150
+    },
+    {
+      "id": "2850166169",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "2850594966",
@@ -32635,6 +33274,15 @@
       "rarity": 1,
       "upstream_ship_type": 2,
       "loca_id": 67102
+    },
+    {
+      "id": "2884151122",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "2884943328",
@@ -33355,6 +34003,15 @@
       "rarity": 1,
       "upstream_ship_type": 10,
       "loca_id": 82055
+    },
+    {
+      "id": "2937708490",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
     },
     {
       "id": "2938877745",
@@ -34302,6 +34959,15 @@
       "loca_id": 706
     },
     {
+      "id": "3031380295",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
+    },
+    {
       "id": "3032382966",
       "hostile_name": "SULIBAN BOUNTY HUNTER",
       "level": 18,
@@ -34608,6 +35274,15 @@
       "loca_id": 14020
     },
     {
+      "id": "3054223871",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "3054699283",
       "hostile_name": "Quantum Adjudicator 3★",
       "level": 70,
@@ -34687,6 +35362,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 84514
+    },
+    {
+      "id": "3064001180",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
     },
     {
       "id": "3064014266",
@@ -35002,6 +35686,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 11003
+    },
+    {
+      "id": "3088327007",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
     },
     {
       "id": "3088679417",
@@ -35328,6 +36021,15 @@
       "loca_id": 10028
     },
     {
+      "id": "3115392159",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
+    },
+    {
       "id": "3115409200",
       "hostile_name": "Vaaran Marauder",
       "level": 31,
@@ -35371,6 +36073,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 13003
+    },
+    {
+      "id": "3118773504",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
     },
     {
       "id": "3118799748",
@@ -35650,6 +36361,15 @@
       "rarity": 1,
       "upstream_ship_type": 4,
       "loca_id": 14019
+    },
+    {
+      "id": "3152705957",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
     },
     {
       "id": "3153281329",
@@ -36084,6 +36804,15 @@
       "loca_id": 45031
     },
     {
+      "id": "3179077547",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 45,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
+    },
+    {
       "id": "3179160138",
       "hostile_name": "Xindi-Aquatic Cruiser",
       "level": 51,
@@ -36370,6 +37099,15 @@
       "rarity": 2,
       "upstream_ship_type": 1,
       "loca_id": 50050
+    },
+    {
+      "id": "3210755214",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91902
     },
     {
       "id": "3210823815",
@@ -39711,6 +40449,15 @@
       "loca_id": 65101
     },
     {
+      "id": "3493425191",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 50,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
+    },
+    {
       "id": "3494077051",
       "hostile_name": "V'ger Fighter",
       "level": 56,
@@ -39871,6 +40618,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 445
+    },
+    {
+      "id": "3506543542",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
     },
     {
       "id": "3507165877",
@@ -40512,6 +41268,15 @@
       "loca_id": 73054
     },
     {
+      "id": "3569611807",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
+    },
+    {
       "id": "3574232379",
       "hostile_name": "Borg Expansion Cube",
       "level": 38,
@@ -40555,6 +41320,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 63050
+    },
+    {
+      "id": "3576500307",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
     },
     {
       "id": "3576746797",
@@ -40618,6 +41392,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 85510
+    },
+    {
+      "id": "3586553153",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 42,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "3586679837",
@@ -40717,6 +41500,15 @@
       "rarity": 2,
       "upstream_ship_type": 1,
       "loca_id": 46004
+    },
+    {
+      "id": "3591041946",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 48,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91903
     },
     {
       "id": "3592022839",
@@ -42663,6 +43455,15 @@
       "loca_id": 13003
     },
     {
+      "id": "3745614036",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91903
+    },
+    {
       "id": "3746044011",
       "hostile_name": "Akronian War Fleet",
       "level": 40,
@@ -42861,6 +43662,15 @@
       "loca_id": 13902
     },
     {
+      "id": "3766714892",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
+    },
+    {
       "id": "3767374571",
       "hostile_name": "Lost Takret Militia",
       "level": 56,
@@ -42940,6 +43750,15 @@
       "rarity": 1,
       "upstream_ship_type": 8,
       "loca_id": 11003
+    },
+    {
+      "id": "3772457526",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
     },
     {
       "id": "3772611178",
@@ -44049,6 +44868,15 @@
       "loca_id": 85507
     },
     {
+      "id": "3876892112",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 40,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "3878052837",
       "hostile_name": "Doomsday Worm",
       "level": 36,
@@ -45109,6 +45937,15 @@
       "rarity": 3,
       "upstream_ship_type": 1,
       "loca_id": 18001
+    },
+    {
+      "id": "3963571345",
+      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91903
     },
     {
       "id": "3963844040",
@@ -46506,6 +47343,15 @@
       "loca_id": 84510
     },
     {
+      "id": "4086545944",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91901
+    },
+    {
       "id": "4086625609",
       "hostile_name": "Romulan Captain",
       "level": 65,
@@ -47026,6 +47872,15 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 64052
+    },
+    {
+      "id": "4134903073",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 49,
+      "ship_class": "interceptor",
+      "rarity": 1,
+      "upstream_ship_type": 5,
+      "loca_id": 91901
     },
     {
       "id": "4135534512",
@@ -47611,6 +48466,15 @@
       "rarity": 1,
       "upstream_ship_type": 7,
       "loca_id": 54052
+    },
+    {
+      "id": "4183423006",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 47,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "4184302876",
@@ -48459,6 +49323,15 @@
       "loca_id": 403
     },
     {
+      "id": "4255404386",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 41,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91902
+    },
+    {
       "id": "4255768856",
       "hostile_name": "Reman Bounty Hunter",
       "level": 62,
@@ -48612,6 +49485,15 @@
       "loca_id": 87511
     },
     {
+      "id": "4272422878",
+      "hostile_name": "Federation Elite Assassin &#128128;",
+      "level": 44,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 7,
+      "loca_id": 91901
+    },
+    {
       "id": "4272926972",
       "hostile_name": "Assimilated Prohibitor-class",
       "level": 62,
@@ -48754,6 +49636,15 @@
       "rarity": 1,
       "upstream_ship_type": 11,
       "loca_id": 12001
+    },
+    {
+      "id": "4289228087",
+      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "level": 43,
+      "ship_class": "battleship",
+      "rarity": 1,
+      "upstream_ship_type": 2,
+      "loca_id": 91902
     },
     {
       "id": "4290625673",

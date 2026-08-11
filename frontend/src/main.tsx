@@ -14,9 +14,9 @@ if (rootEl == null) {
 
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
-    <BrowserRouter
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
+    {/* The v6 `future` opt-ins (v7_startTransition, v7_relativeSplatPath) are the
+        default behaviour in react-router v7, and the prop no longer exists. */}
+    <BrowserRouter>
       <ErrorBoundary>
         <ProfileProvider>
           <WorkspaceModeProvider>

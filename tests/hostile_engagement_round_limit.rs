@@ -69,7 +69,7 @@ fn empty_catalog_crew(abilities: &[serde_json::Value]) -> CrewConfiguration {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    hostile_abilities_to_defender_crew(abilities, Some(&noop))
+    hostile_abilities_to_defender_crew(abilities, Some(&noop), 1)
 }
 
 fn run(
@@ -98,7 +98,7 @@ fn run(
 fn q_junior_twist_resolves_a_twenty_round_engagement_limit_seat() {
     let rec = resolve_hostile("1063917329").expect("q trials borg hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -115,7 +115,7 @@ fn q_junior_twist_resolves_a_twenty_round_engagement_limit_seat() {
 fn one_v_one_variant_resolves_no_engagement_limit_seat() {
     let rec = resolve_hostile("1098304183").expect("q trials borg 1v1 hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert_eq!(hostile_engagement_round_limit(&crew), None);
 }
 
@@ -125,7 +125,7 @@ fn one_v_one_variant_resolves_no_engagement_limit_seat() {
 fn win_after_the_limit_becomes_a_round_twenty_timeout_loss() {
     let rec = resolve_hostile("1063917329").expect("q trials borg hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     // 10k flat damage per round into a 300k hull: kill lands on round 30.
     let attacker = combatant(
@@ -179,7 +179,7 @@ fn win_after_the_limit_becomes_a_round_twenty_timeout_loss() {
 fn win_before_the_limit_is_unaffected() {
     let rec = resolve_hostile("1063917329").expect("q trials borg hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     // 30k per round into 300k hull: kill lands on round 10, inside the 20-round limit.
     let attacker = combatant(
@@ -224,7 +224,7 @@ fn win_before_the_limit_is_unaffected() {
 fn config_round_budget_tighter_than_the_limit_still_applies() {
     let rec = resolve_hostile("1063917329").expect("q trials borg hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     let attacker = combatant(
         "att",

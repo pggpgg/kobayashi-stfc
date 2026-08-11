@@ -131,7 +131,7 @@ fn aggregation_hostile_260810365_is_tagged_and_resolves_catalog_seats() {
         "expected aggregation faction tag"
     );
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| {
             matches!(
@@ -166,7 +166,7 @@ fn aggregation_hostile_260810365_is_tagged_and_resolves_catalog_seats() {
 fn hyperthermic_decay_melts_half_hull_at_round_start_before_weapons() {
     let rec = resolve_hostile(AGGREGATION_HOSTILE_ID).expect("aggregation hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let decay = hostile_hyperthermic_decay_fraction_from_defender_crew(&crew);
     assert!((decay - 0.5).abs() < 1e-9);
 
@@ -192,7 +192,7 @@ fn hyperthermic_decay_melts_half_hull_at_round_start_before_weapons() {
 fn mitigation_inflation_increases_effective_mitigation_scalar() {
     let rec = resolve_hostile(AGGREGATION_HOSTILE_ID).expect("aggregation hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let mit_factor = hostile_defender_mitigation_additive_factor_from_defender_crew(&crew);
     assert!(mit_factor > 0.0);
 
@@ -233,7 +233,7 @@ fn mitigation_inflation_increases_effective_mitigation_scalar() {
 fn recon_locus_stabilizer_reduces_net_hyperthermic_decay() {
     let rec = resolve_hostile(AGGREGATION_HOSTILE_ID).expect("aggregation hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let raw = hostile_hyperthermic_decay_fraction_from_defender_crew(&crew);
     assert!((raw - 0.5).abs() < 1e-9);
 
@@ -270,12 +270,13 @@ fn recon_locus_stabilizer_reduces_net_hyperthermic_decay() {
 fn offense_bundle_increases_counter_damage_vs_empty_catalog() {
     let rec = resolve_hostile(AGGREGATION_HOSTILE_ID).expect("aggregation hostile");
     let full_catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, full_catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, full_catalog, rec.level);
     let empty_catalog = HostileAbilityCatalog {
         description: Some("empty".into()),
         entries: Default::default(),
     };
-    let noop_crew = hostile_abilities_to_defender_crew(&rec.ability, Some(&empty_catalog));
+    let noop_crew =
+        hostile_abilities_to_defender_crew(&rec.ability, Some(&empty_catalog), rec.level);
 
     let attacker = weak_attacker(200_000.0);
     let mut defender = aggregation_defender(&rec);

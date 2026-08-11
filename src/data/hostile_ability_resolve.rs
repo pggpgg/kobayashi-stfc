@@ -131,7 +131,52 @@ fn json_f64(v: &Value) -> Option<f64> {
         .or_else(|| v.as_u64().map(|u| u as f64))
 }
 
-fn parse_one_upstream_ability(v: &Value) -> Option<ResolvedHostileAbility> {
+/// Pick the entry in an upstream `values` array that applies to a hostile of `level`.
+///
+/// Upstream ships a 90-entry array indexed by hostile level (`values[level - 1]`), but the
+/// encoding is not uniform across abilities, so neither "always index 0" nor "always index
+/// level - 1" is correct on its own. Measured over the catalogued corpus (982 abilities,
+/// 4 924 (ability, hostile) pairs):
+///
+/// * 357 curves are flat and 95 are all-zero — any index agrees.
+/// * 348 store a single value at index 0 and pad the tail with zeros. Ability 1407983511 is
+///   carried only by level-68 hostiles yet holds its 0.2 at index 0, so indexing by level
+///   would silently make these inert — 14 % of all pairs land on a zero that way.
+/// * 182 carry a genuine per-level ramp that index 0 under-reads. Ability 3172395625 spans
+///   levels 30–39 with a clean 0.1 → 0.55 progression at `level - 1`, while index 0 holds a
+///   sentinel 1.0 — i.e. 100 % isolytic damage at every level instead of the real 10–55 %.
+///
+/// So: prefer the level-indexed entry when it carries a value; otherwise the nearest
+/// **preceding** non-zero (this level sits below the ramp's first step, or the curve is
+/// zero-padded after a single value); otherwise the first non-zero (zeros-then-ramp curves such
+/// as 3442434952, whose carrying levels all sit at or above the onset). An all-zero curve
+/// resolves to index 0 and yields 0.0, exactly as before.
+///
+/// The `chance` channel is constant across all 90 entries for every ability in the corpus, so it
+/// is read from the same index without needing its own fallback.
+fn level_curve_index(values: &[Value], level: u32) -> usize {
+    if values.is_empty() {
+        return 0;
+    }
+    let last = values.len() - 1;
+    let i = (level.max(1) as usize - 1).min(last);
+    let value_at = |k: usize| {
+        values
+            .get(k)
+            .and_then(|v| v.get("value"))
+            .and_then(json_f64)
+            .unwrap_or(0.0)
+    };
+    if value_at(i) != 0.0 {
+        return i;
+    }
+    if let Some(k) = (0..i).rev().find(|&k| value_at(k) != 0.0) {
+        return k;
+    }
+    (i + 1..=last).find(|&k| value_at(k) != 0.0).unwrap_or(i)
+}
+
+fn parse_one_upstream_ability(v: &Value, level: u32) -> Option<ResolvedHostileAbility> {
     let obj = v.as_object()?;
     let id = obj
         .get("id")
@@ -141,9 +186,10 @@ fn parse_one_upstream_ability(v: &Value) -> Option<ResolvedHostileAbility> {
         })?
         .to_string();
     let upstream_value_is_percentage = obj.get("value_is_percentage").and_then(|b| b.as_bool());
-    let first = obj.get("values")?.as_array()?.first()?;
-    let chance = first.get("chance").and_then(json_f64).unwrap_or(100.0);
-    let value = first.get("value").and_then(json_f64).unwrap_or(0.0);
+    let values = obj.get("values")?.as_array()?;
+    let entry = values.get(level_curve_index(values, level))?;
+    let chance = entry.get("chance").and_then(json_f64).unwrap_or(100.0);
+    let value = entry.get("value").and_then(json_f64).unwrap_or(0.0);
     Some(ResolvedHostileAbility {
         id,
         chance,
@@ -555,7 +601,8 @@ pub fn collect_upstream_hostile_ability_ids(hostiles_dir: &Path) -> HashMap<Stri
             .into_iter()
             .flatten()
         {
-            if let Some(parsed) = parse_one_upstream_ability(raw) {
+            // Only the id is used here, so the level passed for value resolution is irrelevant.
+            if let Some(parsed) = parse_one_upstream_ability(raw, 1) {
                 *counts.entry(parsed.id).or_insert(0) += 1;
             }
         }
@@ -563,9 +610,11 @@ pub fn collect_upstream_hostile_ability_ids(hostiles_dir: &Path) -> HashMap<Stri
     counts
 }
 
+/// `hostile_level` selects the upstream level curve entry — see [`level_curve_index`].
 pub fn hostile_abilities_to_defender_crew(
     upstream_abilities: &[Value],
     catalog: Option<&HostileAbilityCatalog>,
+    hostile_level: u32,
 ) -> CrewConfiguration {
     let Some(catalog) = catalog else {
         return CrewConfiguration { seats: Vec::new() };
@@ -576,7 +625,7 @@ pub fn hostile_abilities_to_defender_crew(
 
     let mut seats: Vec<CrewSeatContext> = Vec::new();
     for raw in upstream_abilities {
-        let Some(parsed) = parse_one_upstream_ability(raw) else {
+        let Some(parsed) = parse_one_upstream_ability(raw, hostile_level) else {
             continue;
         };
         let Some(entry) = catalog.entries.get(parsed.id.as_str()) else {
@@ -599,6 +648,7 @@ pub fn hostile_abilities_to_defender_crew(
 pub fn hostile_abilities_to_defender_crew_via_spec(
     upstream_abilities: &[Value],
     catalog: Option<&HostileAbilityCatalog>,
+    hostile_level: u32,
 ) -> CrewConfiguration {
     let Some(catalog) = catalog else {
         return CrewConfiguration { seats: Vec::new() };
@@ -609,7 +659,7 @@ pub fn hostile_abilities_to_defender_crew_via_spec(
 
     let mut seats: Vec<CrewSeatContext> = Vec::new();
     for raw in upstream_abilities {
-        let Some(parsed) = parse_one_upstream_ability(raw) else {
+        let Some(parsed) = parse_one_upstream_ability(raw, hostile_level) else {
             continue;
         };
         let Some(entry) = catalog.entries.get(parsed.id.as_str()) else {
@@ -680,11 +730,82 @@ mod tests {
             r#"{"id":123,"value_is_percentage":true,"values":[{"chance":25,"value":10}]}"#,
         )
         .unwrap();
-        let p = parse_one_upstream_ability(&v).unwrap();
+        let p = parse_one_upstream_ability(&v, 1).unwrap();
         assert_eq!(p.id, "123");
         assert_eq!(p.chance, 25.0);
         assert_eq!(p.value, 10.0);
         assert_eq!(p.upstream_value_is_percentage, Some(true));
+    }
+
+    /// Build an upstream ability whose `values` array is the given per-level value curve.
+    fn ability_with_curve(id: u32, curve: &[f64]) -> Value {
+        let values: Vec<Value> = curve
+            .iter()
+            .map(|v| serde_json::json!({ "chance": 1, "value": v }))
+            .collect();
+        serde_json::json!({ "id": id, "value_is_percentage": false, "values": values })
+    }
+
+    #[test]
+    fn level_curve_reads_the_level_indexed_entry_of_a_ramp() {
+        // Shape of ability 3172395625: sentinel at index 0, then a per-level ramp. Reading index
+        // 0 (the pre-2026-08 behaviour) reported 1.0 at every level instead of the real step.
+        let curve = [1.0, 0.1, 0.1, 0.15, 0.2, 0.25];
+        let v = ability_with_curve(1, &curve);
+        for (level, want) in [(1u32, 1.0), (2, 0.1), (4, 0.15), (5, 0.2), (6, 0.25)] {
+            let p = parse_one_upstream_ability(&v, level).unwrap();
+            assert_eq!(p.value, want, "level {level}");
+        }
+    }
+
+    #[test]
+    fn level_curve_falls_back_to_preceding_value_when_padded_with_zeros() {
+        // Shape of ability 1407983511: a single value at index 0, tail zero-padded, yet carried
+        // only by high-level hostiles. Indexing by level alone would make these seats inert.
+        let v = ability_with_curve(2, &[0.2, 0.0, 0.0, 0.0, 0.0]);
+        for level in [1u32, 3, 5, 68] {
+            let p = parse_one_upstream_ability(&v, level).unwrap();
+            assert_eq!(p.value, 0.2, "level {level}");
+        }
+    }
+
+    #[test]
+    fn level_curve_falls_forward_for_zeros_then_ramp_curves() {
+        // Shape of ability 3442434952: leading zeros below the ability's onset level, then a
+        // ramp. A level at the onset boundary must not resolve to 0 — nor to the ramp's cap.
+        let v = ability_with_curve(3, &[0.0, 0.0, 0.0, 500.0, 1000.0, 2000.0]);
+        assert_eq!(parse_one_upstream_ability(&v, 3).unwrap().value, 500.0);
+        assert_eq!(parse_one_upstream_ability(&v, 4).unwrap().value, 500.0);
+        assert_eq!(parse_one_upstream_ability(&v, 6).unwrap().value, 2000.0);
+    }
+
+    #[test]
+    fn level_curve_clamps_out_of_range_levels_and_tolerates_all_zero() {
+        let v = ability_with_curve(4, &[1.0, 2.0, 3.0]);
+        // Beyond the curve: clamp to the last entry rather than dropping the seat.
+        assert_eq!(parse_one_upstream_ability(&v, 90).unwrap().value, 3.0);
+        // Level 0 is not a real hostile level, but must not underflow the index.
+        assert_eq!(parse_one_upstream_ability(&v, 0).unwrap().value, 1.0);
+
+        let zeros = ability_with_curve(5, &[0.0, 0.0, 0.0]);
+        assert_eq!(parse_one_upstream_ability(&zeros, 2).unwrap().value, 0.0);
+    }
+
+    #[test]
+    fn level_curve_keeps_chance_channel_alongside_the_level_indexed_value() {
+        // Multi-stat texts (Double Down) read the second placeholder from `chance`; it must come
+        // from the same resolved entry as the value.
+        let v = serde_json::json!({
+            "id": 6,
+            "value_is_percentage": false,
+            "values": [
+                { "chance": 16.25, "value": 0.0 },
+                { "chance": 16.25, "value": 36250.0 },
+            ],
+        });
+        let p = parse_one_upstream_ability(&v, 2).unwrap();
+        assert_eq!(p.value, 36250.0);
+        assert_eq!(p.chance, 16.25);
     }
 
     #[test]
@@ -703,7 +824,7 @@ mod tests {
             r#"{"id":77,"value_is_percentage":true,"values":[{"chance":1,"value":125}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         match crew.seats[0].ability.effect {
             AbilityEffect::ProcAttackMultiplier { chance, multiplier } => {
@@ -729,7 +850,7 @@ mod tests {
             r#"{"id":88,"value_is_percentage":false,"values":[{"chance":1,"value":1}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         assert!(matches!(
             crew.seats[0].ability.effect,
@@ -755,7 +876,7 @@ mod tests {
             r#"{"id":123,"value_is_percentage":true,"values":[{"chance":100,"value":10}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         assert_eq!(crew.seats[0].ability.name, "123");
     }
@@ -796,7 +917,7 @@ mod tests {
             r#"{"id":167520385,"value_is_percentage":true,"values":[{"chance":0.9,"value":1}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         match crew.seats[0].ability.effect {
             AbilityEffect::HostileLethalCombatBegin { chance } => {
@@ -861,7 +982,7 @@ mod tests {
             r#"{"id":4021963607,"value_is_percentage":true,"values":[{"chance":1,"value":1}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         match crew.seats[0].ability.effect {
             AbilityEffect::HostileSelfMorale { duration_rounds } => {
@@ -922,7 +1043,7 @@ mod tests {
             r#"{"id":755115993,"value_is_percentage":true,"values":[{"chance":1,"value":0}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         match crew.seats[0].ability.effect {
             AbilityEffect::HostileEngagementRoundLimit { rounds } => assert_eq!(rounds, 20),
@@ -979,7 +1100,7 @@ mod tests {
             r#"{"id":932011628,"value_is_percentage":true,"values":[{"chance":1,"value":0.2}]}"#,
         )
         .unwrap()];
-        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
+        let crew = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
         assert_eq!(crew.seats.len(), 1);
         let seat = &crew.seats[0];
         match seat.ability.effect {
@@ -1060,8 +1181,8 @@ mod tests {
             r#"{"id":123,"value_is_percentage":true,"values":[{"chance":100,"value":10}]}"#,
         )
         .unwrap()];
-        let direct = hostile_abilities_to_defender_crew(&raw, Some(&catalog));
-        let via_spec = hostile_abilities_to_defender_crew_via_spec(&raw, Some(&catalog));
+        let direct = hostile_abilities_to_defender_crew(&raw, Some(&catalog), 1);
+        let via_spec = hostile_abilities_to_defender_crew_via_spec(&raw, Some(&catalog), 1);
 
         // Note: ProcAttackMultiplier / ProcPierceBonus are not yet handled by
         // compile_officer_combat_spec, so via_spec may produce fewer seats.

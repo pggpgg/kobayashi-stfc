@@ -48,7 +48,7 @@ Implementation: `scripts/data-refresh.mjs`. **Canonical order** (do not reorder 
 |-------|--------|
 | **Core** (default) | `cargo run --bin import_forbidden_chaos` → `cargo run --bin import_syndicate_reputation` if `data/import/syndicate_reputation.csv` exists |
 | **STFCcommunity** (`--stfccommunity`) | `scripts/fetch_stfc_data.ps1` (PowerShell; use `pwsh` on Linux/macOS if installed) → `cargo run --bin normalize_stfc_data` |
-| **data.stfc.space** (`--stfcspace`) | Requires `summary-ship.json` + `translations-ships.json` under `data/upstream/data-stfc-space/`. Then: `python scripts/build_ship_registry.py` → `cargo run --bin normalize_data_stfc_space` → `cargo run --bin normalize_hostiles_stfc_space` (if `hostiles/*.json` present) → `node scripts/build_hull_id_registry.mjs` → `node scripts/import_stfcspace_buildings.mjs` (`--from-upstream` if `summary-building.json` exists, else live fetch) → `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` if `summary-research.json` + `research/*.json` exist |
+| **data.stfc.space** (`--stfcspace`) | Requires `summary-ship.json` + `translations-ships.json` under `data/upstream/data-stfc-space/`. Then: `python scripts/build_ship_registry.py` → `cargo run --bin normalize_data_stfc_space` → `cargo run --bin normalize_hostiles_stfc_space` (if `hostiles/*.json` present) → `python3 scripts/generate_full_hostile_ability_catalog.py` (same condition) → `node scripts/build_hull_id_registry.mjs` → `node scripts/import_stfcspace_buildings.mjs` (`--from-upstream` if `summary-building.json` exists, else live fetch) → `node scripts/import_stfcspace_research.mjs --from-upstream --limit 0` if `summary-research.json` + `research/*.json` exist |
 
 **CI:** The integration test `tests/scenario_research_integration_tests.rs` requires a populated `data/research_catalog.json` when `CI=true` (GitHub Actions). If you work without that file, other tests still run; the scenario test skips unless you set `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1` to match CI.
 
@@ -105,7 +105,7 @@ Shared helpers: [scripts/lib/stfcspace_detail_fetch.mjs](lib/stfcspace_detail_fe
 | `python3 scripts/generate_full_ship_ability_catalog.py` | `data/upstream/data-stfc-space/ship_ability_catalog.json` | [docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md](../docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md) |
 | `python3 scripts/generate_full_hostile_ability_catalog.py` | `data/upstream/data-stfc-space/hostile_ability_catalog.json` | [docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md](../docs/HOSTILE_ABILITY_COMBAT_NOOP_AUDIT.md) |
 
-Both merge optional `*_catalog_overrides.json` after heuristics. Run after refreshing upstream `ships/` or `hostiles/` detail JSON.
+Both merge optional `*_catalog_overrides.json` after heuristics. Run after refreshing upstream `ships/` or `hostiles/` detail JSON. The **hostile** generator is wired into `npm run data:refresh -- --stfcspace` (right after the hostile normalizer), because `tests/hostile_ability_catalog_parity.rs` requires a catalog row for every upstream `ability[].id` — without it, any refresh that pulls in a new ability id fails `cargo test`. The ship generator is still manual.
 
 ---
 

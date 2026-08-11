@@ -71,7 +71,7 @@ fn real_hostile_isolytic_ability_builds_defender_crew_seat() {
     let hostile_id = "3279772514";
     let rec = resolve_hostile(hostile_id).expect("elite hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         !crew.seats.is_empty(),
         "expected at least one defender crew seat from hostile abilities"
@@ -89,12 +89,13 @@ fn real_hostile_isolytic_ability_increases_counter_fire_damage() {
     let hostile_id = "3279772514";
     let rec = resolve_hostile(hostile_id).expect("elite hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let with_abilities = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let with_abilities = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let noop_catalog = HostileAbilityCatalog {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    let without_abilities = hostile_abilities_to_defender_crew(&rec.ability, Some(&noop_catalog));
+    let without_abilities =
+        hostile_abilities_to_defender_crew(&rec.ability, Some(&noop_catalog), rec.level);
 
     let attacker = weak_attacker_no_shields();
     // Fixed weak defender so counter-fire is measurable (avoid multi-million DPR from the real record).
@@ -169,7 +170,7 @@ fn real_hostile_apex_barrier_ability_builds_defender_crew_seat() {
     let hostile_id = "1061963239";
     let rec = resolve_hostile(hostile_id).expect("augment hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats
             .iter()
