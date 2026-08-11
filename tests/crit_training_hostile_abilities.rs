@@ -127,7 +127,7 @@ fn hostile_cdr_crew(reduction: f64) -> CrewConfiguration {
 fn critical_training_catalog_resolves_three_crit_seats() {
     let rec = resolve_hostile("1006581066").expect("critical training hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     assert!(
         crew.seats.iter().any(|s| {
@@ -154,7 +154,7 @@ fn diverted_power_catalog_resolves_floor_seats() {
     let catalog = hostile_ability_catalog_for_default_path();
     for hostile_id in ["1007969491", "1022287607"] {
         let rec = resolve_hostile(hostile_id).expect("diverted power hostile");
-        let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+        let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
         assert!(
             crew.seats.iter().any(|s| {
                 matches!(s.ability.effect, AbilityEffect::HostileCritDamageFloorBonus(v) if (v - 1.5).abs() < 1e-9)
@@ -169,9 +169,9 @@ fn hostile_crit_damage_floor_bonus_sums_defender_crew() {
     let catalog = hostile_ability_catalog_for_default_path();
     let rec_a = resolve_hostile("1007969491").expect("diverted power hostile");
     let rec_b = resolve_hostile("1022287607").expect("diverted power hostile");
-    let mut crew = hostile_abilities_to_defender_crew(&rec_a.ability, catalog);
+    let mut crew = hostile_abilities_to_defender_crew(&rec_a.ability, catalog, rec_a.level);
     crew.seats
-        .extend(hostile_abilities_to_defender_crew(&rec_b.ability, catalog).seats);
+        .extend(hostile_abilities_to_defender_crew(&rec_b.ability, catalog, rec_b.level).seats);
 
     approx_eq(
         hostile_crit_damage_floor_bonus_from_defender_crew(&crew),
@@ -184,12 +184,13 @@ fn hostile_crit_damage_floor_bonus_sums_defender_crew() {
 fn critical_training_increases_counter_damage_vs_empty_catalog() {
     let rec = resolve_hostile("1006581066").expect("critical training hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let empty_catalog = HostileAbilityCatalog {
         description: Some("empty".into()),
         entries: Default::default(),
     };
-    let noop_crew = hostile_abilities_to_defender_crew(&rec.ability, Some(&empty_catalog));
+    let noop_crew =
+        hostile_abilities_to_defender_crew(&rec.ability, Some(&empty_catalog), rec.level);
 
     let attacker = attacker(1_000_000.0);
     let defender = defender(100.0, 0.0, 1.0, 0.0);

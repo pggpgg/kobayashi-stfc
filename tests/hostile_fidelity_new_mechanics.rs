@@ -75,7 +75,7 @@ fn empty_catalog_crew(abilities: &[serde_json::Value]) -> CrewConfiguration {
         description: None,
         entries: std::collections::HashMap::new(),
     };
-    hostile_abilities_to_defender_crew(abilities, Some(&noop))
+    hostile_abilities_to_defender_crew(abilities, Some(&noop), 1)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -105,7 +105,7 @@ fn run(
 fn persistence_hunter_burns_the_player_for_six_rounds() {
     let rec = resolve_hostile("481341631").expect("hunter hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(
             |s| matches!(s.ability.effect, AbilityEffect::Burning { chance, duration_rounds }
@@ -164,7 +164,7 @@ fn persistence_hunter_burns_the_player_for_six_rounds() {
 fn ruthless_pursuit_crit_chance_expires_after_round_four() {
     let rec = resolve_hostile("481341631").expect("hunter hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
 
     let attacker = combatant(
         "att",
@@ -217,7 +217,7 @@ fn ruthless_pursuit_crit_chance_expires_after_round_four() {
 fn pen_of_kahless_pierce_multiplier_increases_counter_damage() {
     let rec = resolve_hostile("2024832621").expect("pen of kahless hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -270,7 +270,7 @@ fn pen_of_kahless_pierce_multiplier_increases_counter_damage() {
 fn tal_shiar_elite_faction_gate_instant_loss_and_allowed_fight() {
     let rec = resolve_hostile("1107147565").expect("tal shiar elite sample");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -335,7 +335,7 @@ fn tal_shiar_elite_faction_gate_instant_loss_and_allowed_fight() {
 fn almost_omnipotent_vengeance_exception_and_crit_floor() {
     let rec = resolve_hostile("1073900199").expect("almost omnipotent sample");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -398,7 +398,7 @@ fn almost_omnipotent_vengeance_exception_and_crit_floor() {
 fn strike_down_zeros_attacker_shield_mitigation() {
     let rec = resolve_hostile("1029134381").expect("strike down sample");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -457,7 +457,7 @@ fn strike_down_zeros_attacker_shield_mitigation() {
 fn rising_fire_with_immolator_ramps_counter_damage() {
     let rec = resolve_hostile("1150472432").expect("rising fire carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -540,7 +540,7 @@ fn rising_fire_with_immolator_ramps_counter_damage() {
 fn critical_breach_with_hole_puncher_seats_and_crit_floor() {
     let rec = resolve_hostile("1744721896").expect("critical breach carrier");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -680,7 +680,7 @@ fn on_hit_stacks_without_player_state_match_empty_catalog() {
 fn dilithium_destabilization_90_percent_instant_loss_rate_and_determinism() {
     let rec = resolve_hostile("1072466025").expect("dilithium 90% sample");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -739,7 +739,7 @@ fn dilithium_destabilization_90_percent_instant_loss_rate_and_determinism() {
 fn dilithium_destabilization_30_percent_instant_loss_rate() {
     let rec = resolve_hostile("1527858129").expect("dilithium 30% sample");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,
@@ -837,7 +837,7 @@ fn dilithium_destabilization_zero_chance_never_instant_kills() {
 fn intraluminary_self_morale_on_carrier_hostile() {
     let rec = resolve_hostile("1295067482").expect("intraluminary sample");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog);
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     assert!(
         crew.seats.iter().any(|s| matches!(
             s.ability.effect,

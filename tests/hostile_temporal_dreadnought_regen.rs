@@ -119,7 +119,7 @@ fn real_temporal_dreadnought_records_resolve_the_correct_regeneration() {
 
     // Charged L53 carries Charged Quantum Hull Repair (1004890011).
     let charged = resolve_hostile("2253944433").expect("charged temporal dreadnought");
-    let charged_crew = hostile_abilities_to_defender_crew(&charged.ability, catalog);
+    let charged_crew = hostile_abilities_to_defender_crew(&charged.ability, catalog, charged.level);
     assert!(charged_crew.seats.iter().any(|s| matches!(
         s.ability.effect,
         AbilityEffect::HostileFullRegenUnlessAttackerShip {
@@ -132,7 +132,8 @@ fn real_temporal_dreadnought_records_resolve_the_correct_regeneration() {
     // Static L63 carries Static Collider Cannon (1070977437): isolytic damage plus shield-only
     // regeneration. The existing isolytic seat must remain present after adding the extra seat.
     let static_rec = resolve_hostile("1337474913").expect("static temporal dreadnought");
-    let static_crew = hostile_abilities_to_defender_crew(&static_rec.ability, catalog);
+    let static_crew =
+        hostile_abilities_to_defender_crew(&static_rec.ability, catalog, static_rec.level);
     assert!(static_crew
         .seats
         .iter()
@@ -148,7 +149,7 @@ fn real_temporal_dreadnought_records_resolve_the_correct_regeneration() {
 
     // Neutral L53 explicitly has no phase alignment and must not resolve a regeneration seat.
     let neutral = resolve_hostile("1420655807").expect("neutral temporal dreadnought");
-    let neutral_crew = hostile_abilities_to_defender_crew(&neutral.ability, catalog);
+    let neutral_crew = hostile_abilities_to_defender_crew(&neutral.ability, catalog, neutral.level);
     assert!(neutral_crew.seats.iter().all(|s| !matches!(
         s.ability.effect,
         AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }

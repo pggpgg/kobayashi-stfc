@@ -1134,7 +1134,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared
             .hostile_rec
             .as_ref()
-            .map(|h| hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog))
+            .map(|h| {
+                hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog, h.level)
+            })
             .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() })
     };
     defender_crew
@@ -2028,8 +2030,11 @@ pub(crate) fn scenario_to_combat_input(
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let hostile_ability_catalog = hostile_ability_catalog_for_default_path();
-        let defender_crew =
-            hostile_abilities_to_defender_crew(&hostile_rec.ability, hostile_ability_catalog);
+        let defender_crew = hostile_abilities_to_defender_crew(
+            &hostile_rec.ability,
+            hostile_ability_catalog,
+            hostile_rec.level,
+        );
         let (defender_mitigation, pierce) = mitigation_and_pierce_for_player_vs_hostile(
             &ship_rec,
             &hostile_rec,
