@@ -1,8 +1,11 @@
 {
-  "schema_version": 1,
-  "note": "Roadmap §1.4 gate. Per-method reference top-K recall and ranking-score regret for the cross-method optimizer benchmark. The bench is bit-deterministic per seed (identical output at 2 and at all threads), so these tolerances absorb intentional optimizer changes, not measurement noise. Regenerate with `cargo xtask optimizer-bench-check --write-baseline` after an intentional change, and say why in the PR. Rebaselined when capped candidate truncation became stratified (crew_generator round-robin over (captain, bridge pair) cells): score regret fell for both tiered lanes (tiered 0.00627 -> 0.00532, warm_start_tiered 0.00405 -> 0.00298) while recall@10 fell 0.36 -> 0.22. The recall drop is real, not a moved denominator — the reference sweep's cap does not bind on this case (638-660 crews generated against a cap of 800), so the reference set is byte-identical before and after. Tiered's confirmed crews now overlap the reference top-10 less while scoring as well or better; seed 11 is the clearest case, recall 0.8 -> 0.1 with regret unchanged at ~3e-5. KNOWN FINDING, not a passing grade: the stratified random control still reaches 0.0 score regret. Truncation was not the cause. The generator's whole proposal space for these params is those 638-660 crews and its best scores 0.9983, while random_stratified reaches 1.0 on all five seeds by sampling the full 189-captain / 242-bridge / 51-below-decks pools. Raising large_pool_captain_limit and large_pool_bridge_limit from 10/12 to 32/32 was measured and made tiered's regret worse at a fixed candidate budget, so closing the gap needs the budget and the proposal space widened together. `control_margin` stays wide enough to tolerate the known gap so the gate still catches a further regression; tracked in docs/OPTIMIZER_AMBITIOUS_ROADMAP.md §1.4.",
+  "schema_version": 2,
+  "note": "Roadmap \u00a71.4 gate. Per-method reference top-K recall and ranking-score regret for the cross-method optimizer benchmark. The bench is bit-deterministic per seed (identical output at 2 and at all threads), so these tolerances absorb intentional optimizer changes, not measurement noise. Regenerate with `cargo xtask optimizer-bench-check --write-baseline` after an intentional change, and say why in the PR. Rebaselined when capped candidate truncation became stratified (crew_generator round-robin over (captain, bridge pair) cells): score regret fell for both tiered lanes (tiered 0.00627 -> 0.00532, warm_start_tiered 0.00405 -> 0.00298) while recall@10 fell 0.36 -> 0.22. The recall drop is real, not a moved denominator \u2014 the reference sweep's cap does not bind on this case (638-660 crews generated against a cap of 800), so the reference set is byte-identical before and after. Tiered's confirmed crews now overlap the reference top-10 less while scoring as well or better; seed 11 is the clearest case, recall 0.8 -> 0.1 with regret unchanged at ~3e-5. KNOWN FINDING, not a passing grade: the stratified random control still reaches 0.0 score regret. Truncation was not the cause. The generator's whole proposal space for these params is those 638-660 crews and its best scores 0.9983, while random_stratified reaches 1.0 on all five seeds by sampling the full 189-captain / 242-bridge / 51-below-decks pools. Raising large_pool_captain_limit and large_pool_bridge_limit from 10/12 to 32/32 was measured and made tiered's regret worse at a fixed candidate budget, so closing the gap needs the budget and the proposal space widened together. `control_margin` stays wide enough to tolerate the known gap so the gate still catches a further regression; tracked in docs/OPTIMIZER_AMBITIOUS_ROADMAP.md \u00a71.4.\n\nSCHEMA v2 (2026-08-15): the gate is multi-case. `config.cases` lists every matchup it runs and `methods` is keyed by case, because numbers from different matchups are never comparable and must never be pooled. Added `nx01_l58_interceptor` (enterprise_nx_01 vs hostile 1120713907, a level 58 interceptor) and retired `enterprise_d_numeric` (uss_enterprise_d vs 2918121098), which scored 0.0 score regret and 0.0 recall for every lane on every seed: that hostile is a level 81 battleship with 2.2e15 hull, so every crew loses identically and the case measured nothing. CASE SELECTION: a candidate must (a) let the ranking score separate lanes and (b) win on every seed for every lane. (b) is the harder filter \u2014 matchups sitting on the win/lose cliff produce best_win_rate stddev near 0.5 and regret near 0.4-1.0 driven entirely by which side of the cliff a seed landed on, which would make the gate fire on noise. Rejected on that basis: vi_dar_talios vs 1012429023 (genetic wr 0.600+-0.490), enterprise_nx_01 vs 1663855787 (tiered 0.735+-0.388), uss_voyager vs 1120713907 (tiered 0.800+-0.400), monaveen vs 1060199252 and 1362229790 (three lanes flipping). Also rejected: gorn_eviscerator vs 1665329672, where every lane scores exactly 0.0 regret \u2014 winnable, but no separation. The chosen case holds all four lanes at wr 1.000+-0.000 while separating them (tiered 0.0079, warm_start_tiered 0.0076, genetic 0.0038, control 0.0), and its tiered recall of 0.30 leaves room for the recall floor to detect a drop. It complements saladin_corvus by hostile class (interceptor vs battleship) and by ship. SALADIN DRIFT AT THE v2 REBASELINE: saladin_corvus moved since its numbers were last written \u2014 tiered recall 0.22 -> 0.24 and regret 0.005324 -> 0.005376. Five commits touching src/combat, src/optimizer, or src/data landed in between (a167441e, e0e9240c, 4a90a205 confidence-aware scout racing, 62ba8451 hostile ability values from the upstream level curve, f5c33e0a), and which one moved it was NOT pinned down; scout racing and the ability-curve fix are the plausible candidates. Both moves were inside the committed tolerances, so the gate stayed green while its baseline went stale \u2014 a behavior change, combat or optimizer, should be followed by a deliberate rebaseline. Verified the drift is not an artifact of the multi-case run: saladin_corvus alone reproduces 0.240 / 0.005375564 exactly, so cases do not perturb each other.",
   "config": {
-    "case": "saladin_corvus",
+    "cases": [
+      "nx01_l58_interceptor",
+      "saladin_corvus"
+    ],
     "methods": [
       "tiered",
       "genetic",
@@ -33,21 +36,41 @@
     "control_margin": 0.01
   },
   "methods": {
-    "genetic": {
-      "top_k_recall_mean": 0.0,
-      "score_regret_mean": 0.0005457520484924317
+    "nx01_l58_interceptor": {
+      "genetic": {
+        "top_k_recall_mean": 0.0,
+        "score_regret_mean": 0.00384596586227417
+      },
+      "random_stratified": {
+        "top_k_recall_mean": 0.0,
+        "score_regret_mean": 0.0
+      },
+      "tiered": {
+        "top_k_recall_mean": 0.29999999999999993,
+        "score_regret_mean": 0.007926440238952637
+      },
+      "warm_start_tiered": {
+        "top_k_recall_mean": 0.29999999999999993,
+        "score_regret_mean": 0.007642626762390137
+      }
     },
-    "random_stratified": {
-      "top_k_recall_mean": 0.0,
-      "score_regret_mean": 0.0
-    },
-    "tiered": {
-      "top_k_recall_mean": 0.22000000000000003,
-      "score_regret_mean": 0.005323719978332519
-    },
-    "warm_start_tiered": {
-      "top_k_recall_mean": 0.22000000000000003,
-      "score_regret_mean": 0.0029783725738525392
+    "saladin_corvus": {
+      "genetic": {
+        "top_k_recall_mean": 0.0,
+        "score_regret_mean": 0.0005457520484924317
+      },
+      "random_stratified": {
+        "top_k_recall_mean": 0.0,
+        "score_regret_mean": 0.0
+      },
+      "tiered": {
+        "top_k_recall_mean": 0.24000000000000005,
+        "score_regret_mean": 0.005375564098358154
+      },
+      "warm_start_tiered": {
+        "top_k_recall_mean": 0.24000000000000005,
+        "score_regret_mean": 0.0029783725738525392
+      }
     }
   }
 }

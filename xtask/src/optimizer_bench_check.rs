@@ -17,6 +17,12 @@
 //! Score regret rather than win-rate regret is the primary signal because PvE win rates saturate:
 //! in most matchups every legal crew wins or every legal crew loses, and only hull remaining and
 //! round-1 kills separate them.
+//!
+//! All three rules are applied **per case**, against that case's own baseline entry — numbers from
+//! different matchups are never comparable and are never pooled. A gate that quietly covers less
+//! than it claims is the failure this guards against, so a configured case that produces no
+//! `stability` rows, or that has no baseline entry to score against, is an error rather than a
+//! skip.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -25,8 +31,9 @@ use std::process::Command;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 
-/// Bumped when the baseline file's shape changes.
-const BASELINE_SCHEMA_VERSION: u8 = 1;
+/// Bumped when the baseline file's shape changes. v2 made the gate multi-case: `config.case`
+/// became `config.cases`, and `methods` gained an outer case key.
+const BASELINE_SCHEMA_VERSION: u8 = 2;
 
 /// The stratified random baseline every other lane is measured against.
 const CONTROL_METHOD: &str = "random_stratified";
@@ -35,7 +42,9 @@ const CONTROL_METHOD: &str = "random_stratified";
 /// would compare numbers that were never comparable, so this travels with the baseline.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchConfig {
-    pub case: String,
+    /// Every case the gate runs and scores independently. One matchup cannot show that an
+    /// optimizer change generalizes, so a lane must hold its ground on all of them.
+    pub cases: Vec<String>,
     pub methods: Vec<String>,
     pub budget_mode: String,
     pub trial_budget: u64,
@@ -54,7 +63,7 @@ impl BenchConfig {
             "--profile".into(),
             self.profile.clone(),
             "--case".into(),
-            self.case.clone(),
+            self.cases.join(","),
             "--methods".into(),
             self.methods.join(","),
             "--budget-mode".into(),
@@ -110,7 +119,9 @@ pub struct Baseline {
     pub note: String,
     pub config: BenchConfig,
     pub tolerances: Tolerances,
-    pub methods: BTreeMap<String, MethodBaseline>,
+    /// case label -> method -> expectations. Numbers from different cases are never comparable,
+    /// so they are never pooled: each case is gated against its own measurements.
+    pub methods: BTreeMap<String, BTreeMap<String, MethodBaseline>>,
 }
 
 /// One `stability` record from the bench output, reduced to the fields the gate reads.
@@ -126,6 +137,7 @@ struct StabilityRow {
 
 #[derive(Debug, Clone)]
 struct Failure {
+    case: String,
     method: String,
     rule: &'static str,
     detail: String,
@@ -152,26 +164,33 @@ pub fn run(args: RunArgs) -> Result<()> {
             .with_context(|| format!("write bench output {}", path.display()))?;
         eprintln!("Wrote {}", path.display());
     }
-    let observed = parse_stability(&jsonl, &baseline.config.case)?;
-    if observed.is_empty() {
-        bail!(
-            "no stability records for case {:?} in the bench output",
-            baseline.config.case
-        );
+    let observed = parse_stability(&jsonl, &baseline.config.cases)?;
+    // A case that produced no rows is a silently narrowed gate, which is the failure mode this
+    // whole change exists to close — refuse rather than score whatever did run.
+    for case in &baseline.config.cases {
+        if !observed.contains_key(case) {
+            bail!("no stability records for case {case:?} in the bench output");
+        }
     }
 
     if args.write_baseline {
         let updated = Baseline {
             methods: observed
                 .iter()
-                .map(|(method, row)| {
-                    (
-                        method.clone(),
-                        MethodBaseline {
-                            top_k_recall_mean: row.top_k_recall_mean,
-                            score_regret_mean: row.score_regret_mean,
-                        },
-                    )
+                .map(|(case, rows)| {
+                    let methods = rows
+                        .iter()
+                        .map(|(method, row)| {
+                            (
+                                method.clone(),
+                                MethodBaseline {
+                                    top_k_recall_mean: row.top_k_recall_mean,
+                                    score_regret_mean: row.score_regret_mean,
+                                },
+                            )
+                        })
+                        .collect();
+                    (case.clone(), methods)
                 })
                 .collect(),
             ..baseline
@@ -180,7 +199,7 @@ pub fn run(args: RunArgs) -> Result<()> {
         std::fs::write(&args.baseline, text)
             .with_context(|| format!("write baseline {}", args.baseline.display()))?;
         eprintln!(
-            "Wrote {} with {} method(s).",
+            "Wrote {} with {} case(s).",
             args.baseline.display(),
             updated.methods.len()
         );
@@ -245,8 +264,11 @@ fn run_bench(repo: &Path, config: &BenchConfig) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
-fn parse_stability(jsonl: &str, case: &str) -> Result<BTreeMap<String, StabilityRow>> {
-    let mut out = BTreeMap::new();
+/// Group the run's stability rows by case, keeping only the cases the baseline asked for.
+type ObservedByCase = BTreeMap<String, BTreeMap<String, StabilityRow>>;
+
+fn parse_stability(jsonl: &str, cases: &[String]) -> Result<ObservedByCase> {
+    let mut out: ObservedByCase = BTreeMap::new();
     for line in jsonl.lines() {
         let line = line.trim();
         if line.is_empty() || !line.starts_with('{') {
@@ -257,19 +279,52 @@ fn parse_stability(jsonl: &str, case: &str) -> Result<BTreeMap<String, Stability
         let Ok(row) = serde_json::from_str::<StabilityRow>(line) else {
             continue;
         };
-        if row.record_kind != "stability" || row.case != case {
+        if row.record_kind != "stability" || !cases.iter().any(|c| *c == row.case) {
             continue;
         }
-        out.insert(row.method.clone(), row);
+        out.entry(row.case.clone())
+            .or_default()
+            .insert(row.method.clone(), row);
     }
     Ok(out)
 }
 
-fn compare(baseline: &Baseline, observed: &BTreeMap<String, StabilityRow>) -> Vec<Failure> {
+fn compare(baseline: &Baseline, observed: &ObservedByCase) -> Vec<Failure> {
     let mut failures = Vec::new();
-    for (method, expected) in &baseline.methods {
+    // A case added to `config.cases` without a corresponding `methods` entry would otherwise run
+    // and be scored against nothing — a gate that looks wider than it is. Fail instead.
+    for case in &baseline.config.cases {
+        if !baseline.methods.contains_key(case) {
+            failures.push(Failure {
+                case: case.clone(),
+                method: "*".to_string(),
+                rule: "unbaselined case",
+                detail:
+                    "config.cases lists this case but the baseline has no expectations for it; \
+                         run `cargo xtask optimizer-bench-check --write-baseline`"
+                        .to_string(),
+            });
+        }
+    }
+    for (case, expected_methods) in &baseline.methods {
+        let empty = BTreeMap::new();
+        let rows = observed.get(case).unwrap_or(&empty);
+        failures.extend(compare_case(baseline, case, expected_methods, rows));
+    }
+    failures
+}
+
+fn compare_case(
+    baseline: &Baseline,
+    case: &str,
+    expected_methods: &BTreeMap<String, MethodBaseline>,
+    observed: &BTreeMap<String, StabilityRow>,
+) -> Vec<Failure> {
+    let mut failures = Vec::new();
+    for (method, expected) in expected_methods {
         let Some(row) = observed.get(method) else {
             failures.push(Failure {
+                case: case.to_string(),
                 method: method.clone(),
                 rule: "missing",
                 detail: "baseline expects this method but the run produced no stability record"
@@ -283,6 +338,7 @@ fn compare(baseline: &Baseline, observed: &BTreeMap<String, StabilityRow>) -> Ve
             let floor = expected_recall - baseline.tolerances.recall_drop;
             if actual < floor {
                 failures.push(Failure {
+                    case: case.to_string(),
                     method: method.clone(),
                     rule: "recall floor",
                     detail: format!(
@@ -297,6 +353,7 @@ fn compare(baseline: &Baseline, observed: &BTreeMap<String, StabilityRow>) -> Ve
             let ceiling = expected_regret + baseline.tolerances.score_regret_increase;
             if actual > ceiling {
                 failures.push(Failure {
+                    case: case.to_string(),
                     method: method.clone(),
                     rule: "regret ceiling",
                     detail: format!(
@@ -320,6 +377,7 @@ fn compare(baseline: &Baseline, observed: &BTreeMap<String, StabilityRow>) -> Ve
             let limit = control + baseline.tolerances.control_margin;
             if actual > limit {
                 failures.push(Failure {
+                    case: case.to_string(),
                     method: method.clone(),
                     rule: "control ordering",
                     detail: format!(
@@ -337,16 +395,11 @@ fn fmt_opt(value: Option<f64>, places: usize) -> String {
     value.map_or_else(|| "—".to_string(), |v| format!("{v:.places$}"))
 }
 
-fn markdown_report(
-    baseline: &Baseline,
-    observed: &BTreeMap<String, StabilityRow>,
-    failures: &[Failure],
-) -> String {
+fn markdown_report(baseline: &Baseline, observed: &ObservedByCase, failures: &[Failure]) -> String {
     let mut s = String::new();
     s.push_str("## Optimizer method bench\n\n");
     s.push_str(&format!(
-        "Case `{}`, {} mode, {} trials/lane, seeds {:?}, reference {} sims × ≤{} crews, recall@{}.\n\n",
-        baseline.config.case,
+        "{} mode, {} trials/lane, seeds {:?}, reference {} sims × ≤{} crews, recall@{}.\n",
         baseline.config.budget_mode,
         baseline.config.trial_budget,
         baseline.config.seed_panel,
@@ -354,21 +407,27 @@ fn markdown_report(
         baseline.config.reference_max_crews,
         baseline.config.recall_top_k,
     ));
-    s.push_str("| method | seeds | recall@K | baseline | score regret | baseline | |\n");
-    s.push_str("|---|---:|---:|---:|---:|---:|:--:|\n");
-    for (method, row) in observed {
-        let expected = baseline.methods.get(method).cloned().unwrap_or_default();
-        let ok = !failures.iter().any(|f| &f.method == method);
-        s.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} | {} |\n",
-            method,
-            row.seeds,
-            fmt_opt(row.top_k_recall_mean, 3),
-            fmt_opt(expected.top_k_recall_mean, 3),
-            fmt_opt(row.score_regret_mean, 5),
-            fmt_opt(expected.score_regret_mean, 5),
-            if ok { "✅" } else { "❌" },
-        ));
+    for (case, rows) in observed {
+        let expected_methods = baseline.methods.get(case).cloned().unwrap_or_default();
+        s.push_str(&format!("\n### Case `{case}`\n\n"));
+        s.push_str("| method | seeds | recall@K | baseline | score regret | baseline | |\n");
+        s.push_str("|---|---:|---:|---:|---:|---:|:--:|\n");
+        for (method, row) in rows {
+            let expected = expected_methods.get(method).cloned().unwrap_or_default();
+            let ok = !failures
+                .iter()
+                .any(|f| &f.method == method && &f.case == case);
+            s.push_str(&format!(
+                "| `{}` | {} | {} | {} | {} | {} | {} |\n",
+                method,
+                row.seeds,
+                fmt_opt(row.top_k_recall_mean, 3),
+                fmt_opt(expected.top_k_recall_mean, 3),
+                fmt_opt(row.score_regret_mean, 5),
+                fmt_opt(expected.score_regret_mean, 5),
+                if ok { "✅" } else { "❌" },
+            ));
+        }
     }
     s.push_str(&format!(
         "\nTolerances: recall may drop {:.3}, score regret may rise {:.5}, and every lane must stay within {:.5} of the `{}` control.\n",
@@ -382,7 +441,10 @@ fn markdown_report(
     } else {
         s.push_str("\n**Failures**\n\n");
         for f in failures {
-            s.push_str(&format!("- `{}` — {}: {}\n", f.method, f.rule, f.detail));
+            s.push_str(&format!(
+                "- `{}` / `{}` — {}: {}\n",
+                f.case, f.method, f.rule, f.detail
+            ));
         }
     }
     s.push_str("\n_Workflow: `optimizer-method-bench.yml`. Refresh with `cargo xtask optimizer-bench-check --write-baseline`._\n");
@@ -398,7 +460,7 @@ mod tests {
             schema_version: BASELINE_SCHEMA_VERSION,
             note: "test".into(),
             config: BenchConfig {
-                case: "case_a".into(),
+                cases: vec!["case_a".into()],
                 methods: vec!["tiered".into(), CONTROL_METHOD.into()],
                 budget_mode: "equal-trials".into(),
                 trial_budget: 40_000,
@@ -415,11 +477,14 @@ mod tests {
                 control_margin: 0.005,
             },
             methods: BTreeMap::from([(
-                "tiered".to_string(),
-                MethodBaseline {
-                    top_k_recall_mean: Some(0.5),
-                    score_regret_mean: Some(0.002),
-                },
+                "case_a".to_string(),
+                BTreeMap::from([(
+                    "tiered".to_string(),
+                    MethodBaseline {
+                        top_k_recall_mean: Some(0.5),
+                        score_regret_mean: Some(0.002),
+                    },
+                )]),
             )]),
         }
     }
@@ -435,23 +500,37 @@ mod tests {
         }
     }
 
+    /// Wrap a single case's rows the way `parse_stability` returns them.
+    fn observed_for(case: &str, rows: BTreeMap<String, StabilityRow>) -> ObservedByCase {
+        BTreeMap::from([(case.to_string(), rows)])
+    }
+
     #[test]
     fn matching_run_passes() {
-        let observed = BTreeMap::from([
-            ("tiered".to_string(), row("tiered", Some(0.5), Some(0.002))),
-            (
-                CONTROL_METHOD.to_string(),
-                row(CONTROL_METHOD, Some(0.1), Some(0.010)),
-            ),
-        ]);
+        let observed = observed_for(
+            "case_a",
+            BTreeMap::from([
+                ("tiered".to_string(), row("tiered", Some(0.5), Some(0.002))),
+                (
+                    CONTROL_METHOD.to_string(),
+                    row(CONTROL_METHOD, Some(0.1), Some(0.010)),
+                ),
+            ]),
+        );
         assert!(compare(&baseline(), &observed).is_empty());
     }
 
     #[test]
     fn recall_within_tolerance_passes_but_below_it_fails() {
-        let ok = BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.31), Some(0.002)))]);
+        let ok = observed_for(
+            "case_a",
+            BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.31), Some(0.002)))]),
+        );
         assert!(compare(&baseline(), &ok).is_empty());
-        let bad = BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.29), Some(0.002)))]);
+        let bad = observed_for(
+            "case_a",
+            BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.29), Some(0.002)))]),
+        );
         let failures = compare(&baseline(), &bad);
         assert_eq!(failures.len(), 1);
         assert_eq!(failures[0].rule, "recall floor");
@@ -459,20 +538,26 @@ mod tests {
 
     #[test]
     fn regret_growth_beyond_tolerance_fails() {
-        let bad = BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.5), Some(0.02)))]);
+        let bad = observed_for(
+            "case_a",
+            BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.5), Some(0.02)))]),
+        );
         let failures = compare(&baseline(), &bad);
         assert!(failures.iter().any(|f| f.rule == "regret ceiling"));
     }
 
     #[test]
     fn a_lane_worse_than_the_random_control_fails() {
-        let observed = BTreeMap::from([
-            ("tiered".to_string(), row("tiered", Some(0.5), Some(0.009))),
-            (
-                CONTROL_METHOD.to_string(),
-                row(CONTROL_METHOD, Some(0.1), Some(0.001)),
-            ),
-        ]);
+        let observed = observed_for(
+            "case_a",
+            BTreeMap::from([
+                ("tiered".to_string(), row("tiered", Some(0.5), Some(0.009))),
+                (
+                    CONTROL_METHOD.to_string(),
+                    row(CONTROL_METHOD, Some(0.1), Some(0.001)),
+                ),
+            ]),
+        );
         let failures = compare(&baseline(), &observed);
         assert!(
             failures.iter().any(|f| f.rule == "control ordering"),
@@ -481,8 +566,25 @@ mod tests {
     }
 
     #[test]
+    fn a_configured_case_with_no_baseline_entry_fails() {
+        let mut b = baseline();
+        b.config.cases.push("case_b".into());
+        let observed = observed_for(
+            "case_a",
+            BTreeMap::from([("tiered".to_string(), row("tiered", Some(0.5), Some(0.002)))]),
+        );
+        let failures = compare(&b, &observed);
+        assert!(
+            failures
+                .iter()
+                .any(|f| f.rule == "unbaselined case" && f.case == "case_b"),
+            "{failures:?}"
+        );
+    }
+
+    #[test]
     fn a_method_the_baseline_expects_but_the_run_skipped_fails() {
-        let failures = compare(&baseline(), &BTreeMap::new());
+        let failures = compare(&baseline(), &ObservedByCase::new());
         assert_eq!(failures.len(), 1);
         assert_eq!(failures[0].rule, "missing");
     }
@@ -499,8 +601,8 @@ mod tests {
             r#"{"record_kind":"stability","case":"other","method":"tiered","seeds":2,"top_k_recall_mean":0.9,"score_regret_mean":0.0}"#,
             "\n",
         );
-        let parsed = parse_stability(jsonl, "case_a").expect("parse");
+        let parsed = parse_stability(jsonl, &["case_a".to_string()]).expect("parse");
         assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed["tiered"].top_k_recall_mean, Some(0.45));
+        assert_eq!(parsed["case_a"]["tiered"].top_k_recall_mean, Some(0.45));
     }
 }
