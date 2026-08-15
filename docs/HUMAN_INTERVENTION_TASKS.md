@@ -26,18 +26,15 @@ Work the simulator or data pipeline cannot complete automatically: judgment, ups
 
 ## Research / CI environment
 
-1. **Weekly data refresh cannot open its PR** — needs a GitHub settings toggle only the account owner can flip.
-  `.github/workflows/data-refresh.yml` (Mondays 06:00 UTC) has failed at its final step on every run since 2026-06-15. Everything before it succeeds — fetch, normalize, `cargo test`, strict validation — and the branch **is** pushed; only PR creation is rejected:
+1. **Weekly data refresh** — **both historical blockers are resolved (2026-08-15); nothing to do unless it reddens again.**
+  `.github/workflows/data-refresh.yml` (Mondays 06:00 UTC) failed on most runs between 2026-06-15 and 2026-08-10, at **two different steps** in sequence. Read a failure log to the end before assuming which one you are looking at.
 
-  ```text
-  ##[error]GitHub Actions is not permitted to create or approve pull requests.
-  ```
+  - **PR creation rejected** (`GitHub Actions is not permitted to create or approve pull requests`) — the account-level *Allow GitHub Actions to create and approve pull requests* toggle at <https://github.com/settings/actions>. Fixed: run `31449118305` opened [#291](https://github.com/pggpgg/kobayashi-stfc/pull/291) end to end.
+  - **`cargo test` panicking on a new upstream ability id** — `hostile_ability_catalog_covers_all_upstream_ability_ids` had no catalog row for `3442434952`, because `generate_full_hostile_ability_catalog.py` was never wired into the refresh pipeline. Fixed in [`scripts/data-refresh.mjs`](../scripts/data-refresh.mjs) (PR #290): the generator now runs after the hostile normalizer, so a newly published ability id lands as a catalogued `combat_noop` with a review bucket instead of failing the run — and still surfaces in the PR diff for modeling.
 
-  Because `peter-evans/create-pull-request` never reaches its `delete-branch: true` cleanup, each failed run strands an `automated/data-refresh-<run_id>` branch on the remote.
+  Because `peter-evans/create-pull-request` never reached its `delete-branch: true` cleanup on a failed run, each one stranded an `automated/data-refresh-<run_id>` branch on the remote. The two survivors (`30255125685`, `31449118305`) were deleted on 2026-08-15 after confirming both were ancestors of `main`. If the workflow fails again, expect another stranded branch and check with `git ls-remote --heads origin 'refs/heads/automated/*'`.
 
-  **Fix:** enable *Allow GitHub Actions to create and approve pull requests* under **Settings → Actions → General → Workflow permissions**. The repo-level API already reports `can_approve_pull_request_reviews: true`, so the remaining block is the **account-level** setting at <https://github.com/settings/actions>. Confirm with the next Monday run, or trigger `workflow_dispatch` manually.
-
-  Until it is fixed, refresh data by hand — `cargo xtask data-refresh -- --stfcspace` — as on `claude/upstream-data-refresh-2026-07-24`.
+  To refresh data by hand: `cargo xtask data-refresh -- --stfcspace`.
 
 2. **Broad research catalog for integration tests**
   `tests/scenario_research_integration_tests.rs` expects a populated `data/research_catalog.json` (see test message / `scripts/import_stfcspace_research.mjs`). Filling or refreshing that data is an operational/data task, not a code change.
