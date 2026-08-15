@@ -1,7 +1,7 @@
 //! Data registry: versioning and source tracking for each dataset.
 //! Written by the normalizer and spreadsheet importers; read by the app to show "data as of".
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
@@ -17,7 +17,10 @@ pub struct DataSetEntry {
     pub path: String,
 }
 
-pub type Registry = HashMap<String, DataSetEntry>;
+/// `BTreeMap`, not `HashMap`: the map is serialized straight to `data/registry.json`, and
+/// `HashMap`'s randomized iteration order reshuffled every key on each importer run, so every
+/// data refresh produced a spurious whole-file diff. Sorted order keeps the file stable.
+pub type Registry = BTreeMap<String, DataSetEntry>;
 
 pub const DEFAULT_REGISTRY_PATH: &str = "data/registry.json";
 

@@ -40,7 +40,7 @@ jobs:
       STAGE_DIR: kobayashi-${{ github.ref_name }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -48,7 +48,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -73,13 +73,13 @@ jobs:
 
       - name: Upload benchmark baseline log artifact
         if: matrix.slug == 'linux-x86_64'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: benchmark-results-log
           path: benchmark_results.fresh.log
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: "npm"
@@ -121,7 +121,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           Compress-Archive -Path "stage/${env:STAGE_DIR}" -DestinationPath "kobayashi-${env:REF}-${{ matrix.slug }}.zip"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: release-asset-${{ matrix.slug }}
           path: kobayashi-${{ github.ref_name }}-${{ matrix.slug }}.${{ matrix.ext }}
@@ -131,13 +131,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: release-assets
           pattern: release-asset-*
           merge-multiple: true
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: benchmark-results-log
           path: bench-download

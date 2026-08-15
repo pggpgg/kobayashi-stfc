@@ -51,6 +51,8 @@ profiles/*
 !profiles/demo/**
 # ...but E2E runs create throwaway presets under the demo profile — keep them out of git.
 profiles/demo/presets/e2e_*.json
+# `!profiles/demo/**` also re-includes macOS junk that the global rule above had excluded.
+profiles/demo/**/.DS_Store
 
 # Playwright artifacts
 playwright-report/
