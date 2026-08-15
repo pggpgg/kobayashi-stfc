@@ -1,7 +1,7 @@
 //! Compare optimizer methods under reproducible scenario/budget settings.
 //!
 //! Usage:
-//!   cargo run --release --bin optimizer_method_bench -- --case saladin_corvus
+//!   cargo run --release --bin optimizer_method_bench -- --case saladin_corvus,nx01_l58_interceptor
 //!   cargo run --release --bin optimizer_method_bench -- --methods tiered,random_stratified
 //!   cargo run --release --bin optimizer_method_bench -- --budget-mode equal-trials --trial-budget 40000
 //!   cargo run --release --bin optimizer_method_bench -- --reference-sweep --prefilter-keep 64,128
@@ -61,9 +61,10 @@ struct Args {
     /// Profile id used for roster/profile-specific pools.
     #[arg(long, default_value = DEMO_PROFILE_ID)]
     profile: String,
-    /// Optional case label filter. Omit to run all built-in cases.
-    #[arg(long)]
-    case: Option<String>,
+    /// Optional case label filter, comma-separated. Omit to run all built-in cases.
+    /// With `--ship`/`--hostile`, the first value labels the ad-hoc case instead.
+    #[arg(long, value_delimiter = ',')]
+    case: Vec<String>,
     /// Ad-hoc case: ship id. Requires --hostile; replaces the built-in case list.
     #[arg(long)]
     ship: Option<String>,
@@ -190,7 +191,8 @@ fn cases(args: &Args) -> Vec<BenchCase> {
         (Some(ship), Some(hostile)) => vec![BenchCase {
             label: args
                 .case
-                .clone()
+                .first()
+                .cloned()
                 .unwrap_or_else(|| format!("ad_hoc_{ship}_{hostile}")),
             ship: ship.to_string(),
             hostile: hostile.to_string(),
@@ -209,16 +211,27 @@ fn cases(args: &Args) -> Vec<BenchCase> {
     }
 }
 
+/// A case earns its place only if the ranking score separates crews **and** every lane wins on
+/// every seed. Both halves matter:
+///
+/// - A matchup no crew survives scores 0.0 for every lane, so the gate's regret and recall rules
+///   have nothing to measure. `enterprise_d_numeric` (`uss_enterprise_d` vs `2918121098`, a level
+///   81 battleship with 2.2e15 hull) was exactly that, and it is why the gate ran a single case
+///   until 2026-08-15.
+/// - A matchup sitting *on* the win/lose cliff is worse than useless: lanes flip between winning
+///   and losing across seeds, regret jumps to ~0.4-1.0, and the gate fires on which side of the
+///   cliff a seed landed rather than on search quality. Several otherwise-attractive matchups were
+///   rejected for this — see the case-selection note in `optimizer_method_bench_baseline.json`.
 fn built_in_cases() -> Vec<BenchCase> {
     vec![
         built_in_case("saladin_corvus", "uss_saladin", "1140710508", None, None, 7),
         built_in_case(
-            "enterprise_d_numeric",
-            "uss_enterprise_d",
-            "2918121098",
+            "nx01_l58_interceptor",
+            "enterprise_nx_01",
+            "1120713907",
             None,
             None,
-            42,
+            13,
         ),
     ]
 }
@@ -1186,11 +1199,7 @@ fn main() {
     let mut samples: Vec<StabilitySample> = Vec::new();
 
     for case in cases(&args) {
-        if args
-            .case
-            .as_ref()
-            .is_some_and(|wanted| *wanted != case.label)
-        {
+        if !args.case.is_empty() && !args.case.contains(&case.label) {
             continue;
         }
         if let Err(err) = validate_case(&registry, &case) {

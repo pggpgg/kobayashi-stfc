@@ -708,7 +708,29 @@ stratified random control. The bench is bit-deterministic per seed — identical
 counts — so the tolerances absorb intentional changes rather than noise. `.github/workflows/
 optimizer-method-bench.yml` runs it weekly and on dispatch, uploading the JSONL and Markdown.
 
-Refresh the baseline with `--write-baseline` and explain the change in the PR.
+The gate runs **every case in `config.cases`** and scores each one against its own baseline entry
+(`methods` is keyed by case). Numbers from different matchups are never comparable, so they are
+never pooled. A gate that quietly covers less than it claims is the thing to guard against, so a
+configured case that produces no `stability` rows — or that has no baseline entry to score against
+— fails rather than being skipped. Two cases are committed: `saladin_corvus` (`uss_saladin` vs a
+level 52 battleship) and `nx01_l58_interceptor` (`enterprise_nx_01` vs a level 58 interceptor).
+
+Adding a case is mostly a matter of rejecting degenerate matchups, and there are three kinds:
+
+| Failure | What it looks like | Example |
+| --- | --- | --- |
+| Unwinnable | every lane scores 0.0 regret and 0.0 recall — no crew survives | `uss_enterprise_d` vs `2918121098` (level 81, 2.2e15 hull) |
+| Trivially winnable | every lane scores exactly 0.0 regret — no separation | `gorn_eviscerator` vs `1665329672` |
+| On the win/lose cliff | regret 0.4–1.0, but `best_win_rate` stddev near 0.5 — the number is which side of the cliff each seed landed on, not search quality | `uss_voyager` vs `1120713907` |
+
+The third is the trap, because it looks like the most discriminating case of the three. A usable
+case needs **both** halves: the ranking score separates lanes, *and* every lane wins on every seed.
+
+Refresh the baseline with `--write-baseline` and explain the change in the PR. Rebaseline
+deliberately after any **behavior** change, combat or optimizer — a fight-behavior fix moves these
+numbers just as a search change does, and if the move fits inside the tolerances the gate stays
+green while its baseline silently goes stale. That is exactly what happened to `saladin_corvus`
+between its last two rebaselines.
 
 ### Reading recall against regret
 
