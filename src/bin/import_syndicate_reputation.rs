@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut registry: kobayashi::data::registry::Registry = if registry_path.exists() {
         serde_json::from_str(&fs::read_to_string(&registry_path)?)?
     } else {
-        std::collections::HashMap::new()
+        kobayashi::data::registry::Registry::new()
     };
     registry.insert(
         "syndicate_reputation".to_string(),

@@ -146,6 +146,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         count += 1;
     }
 
+    // `read_dir` order is filesystem-dependent, so a local regeneration reordered every entry
+    // relative to the CI-generated file. Sort by id (as the hostile normalizer already does) to
+    // keep index.json byte-identical across platforms and refresh runs.
+    index_entries.sort_by(|a, b| a.id.cmp(&b.id));
+
     // Write extended index for resolver (id, ship_name, ship_class per normalized ship).
     let data_version = std::env::var("STFCSPACE_SHIPS_VERSION")
         .unwrap_or_else(|_| format!("stfcspace-ships-{}", chrono::Utc::now().format("%Y-%m-%d")));

@@ -98,6 +98,7 @@ cargo xtask check-upstream-drift
 cargo xtask regen-lcars
 cargo xtask validate
 cargo xtask verify
+cargo xtask check-generated   # regenerate ships_extended and fail if it drifts from the commit (CI gate)
 ```
 
 Requires **Node** and **Python** on `PATH` where the underlying scripts do (set `PYTHON` to pick a Python executable). Alias is defined in [`.cargo/config.toml`](.cargo/config.toml).

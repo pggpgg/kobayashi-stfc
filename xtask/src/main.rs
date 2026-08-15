@@ -71,6 +71,9 @@ enum Commands {
     NormalizeStfcData,
     /// Full local verification (`npm run verify`)
     Verify,
+    /// Regenerate `data/ships_extended/` and fail if it drifts from the committed state.
+    /// CI guard: catches an upstream/registry edit that was not followed by regeneration.
+    CheckGenerated,
     /// Compare Criterion medians under `target/criterion` to `benchmark_results.log` (10% regression)
     BenchCheck {
         /// Baseline log path (relative to repo root unless absolute)
@@ -196,6 +199,9 @@ fn main() -> Result<()> {
         }
         Commands::Verify => {
             npm(&repo, "verify", &[])?;
+        }
+        Commands::CheckGenerated => {
+            check_generated(&repo)?;
         }
         Commands::BenchCheck {
             baseline,
@@ -366,6 +372,85 @@ fn cargo_run_bin(repo: &std::path::Path, bin: &str, extra: &[String]) -> Result<
     let mut args = vec!["run".into(), "--bin".into(), bin.into(), "--".into()];
     args.extend_from_slice(extra);
     run(repo, "cargo", &args)
+}
+
+fn cargo_run_bin_with_env(repo: &std::path::Path, bin: &str, env: &[(&str, String)]) -> Result<()> {
+    let args: Vec<String> = vec!["run".into(), "--bin".into(), bin.into()];
+    print_cmd("cargo", &args);
+    let mut cmd = Command::new("cargo");
+    cmd.args(&args).current_dir(repo);
+    for (k, v) in env {
+        cmd.env(k, v);
+    }
+    let status = cmd
+        .status()
+        .with_context(|| format!("failed to spawn `cargo run --bin {bin}`"))?;
+    if !status.success() {
+        bail!(
+            "`cargo run --bin {}` exited with status {:?}",
+            bin,
+            status.code()
+        );
+    }
+    Ok(())
+}
+
+/// Regenerate `data/ships_extended/` from upstream and fail if the result differs from what is
+/// committed — i.e. a source edit landed without its generated output being refreshed.
+///
+/// `data_version` is stamped with the regeneration date, so it is pinned to the value already
+/// committed; otherwise this would report drift on every day except the one the data landed.
+/// Officer output is deliberately not checked: `officers.lcars.yaml` is gitignored, and the
+/// in-process officer model has its own parity test.
+fn check_generated(repo: &std::path::Path) -> Result<()> {
+    let index_path = repo.join("data/ships_extended/index.json");
+    let committed = std::fs::read_to_string(&index_path)
+        .with_context(|| format!("failed to read {}", index_path.display()))?;
+    let parsed: serde_json::Value = serde_json::from_str(&committed)
+        .with_context(|| format!("failed to parse {}", index_path.display()))?;
+    let data_version = parsed
+        .get("data_version")
+        .and_then(|v| v.as_str())
+        .context("data/ships_extended/index.json has no string `data_version` to pin")?
+        .to_string();
+
+    cargo_run_bin_with_env(
+        repo,
+        "normalize_data_stfc_space",
+        &[("STFCSPACE_SHIPS_VERSION", data_version)],
+    )?;
+
+    check_no_drift(repo, &["data/ships_extended"])
+}
+
+/// Fail if any of `paths` has uncommitted changes per `git status --porcelain` — i.e. a generator
+/// produced output that differs from what is committed.
+fn check_no_drift(repo: &std::path::Path, paths: &[&str]) -> Result<()> {
+    let mut args = vec![
+        "status".to_string(),
+        "--porcelain".to_string(),
+        "--".to_string(),
+    ];
+    args.extend(paths.iter().map(|p| p.to_string()));
+    print_cmd("git", &args);
+    let out = Command::new("git")
+        .args(&args)
+        .current_dir(repo)
+        .output()
+        .context("failed to spawn `git status`")?;
+    if !out.status.success() {
+        bail!("`git status` exited with status {:?}", out.status.code());
+    }
+    if !out.stdout.is_empty() {
+        eprint!("{}", String::from_utf8_lossy(&out.stdout));
+        bail!(
+            "Generated data drifted from its sources ({}).\n\
+             Regenerate and commit:\n  \
+             cargo run --bin normalize_data_stfc_space",
+            paths.join(", ")
+        );
+    }
+    Ok(())
 }
 
 fn node(repo: &std::path::Path, script: &str, args: &[String]) -> Result<()> {
