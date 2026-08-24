@@ -1,0 +1,12 @@
+{
+  "started": "2026-08-24T06:51:06.749Z",
+  "source": "https://data.stfc.space",
+  "segment": "ship",
+  "mode": "full",
+  "total": 115,
+  "fetched": 115,
+  "skipped": 0,
+  "failed": 0,
+  "failures": [],
+  "finished": "2026-08-24T06:51:41.202Z"
+}
