@@ -36,7 +36,7 @@
     },
     {
       "resource_id": 1734940706,
-      "amount": 4486
+      "amount": 2243
     }
   ],
   "repair_time": 187200,
@@ -409,7 +409,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 498
+              "amount": 249
             }
           ],
           "repair_time": 8100,
@@ -465,7 +465,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 498
+              "amount": 249
             }
           ],
           "repair_time": 8100,
@@ -520,7 +520,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 498
+              "amount": 249
             }
           ],
           "repair_time": 8100,
@@ -577,7 +577,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 498
+              "amount": 249
             }
           ],
           "repair_time": 8100,
@@ -661,7 +661,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 498
+              "amount": 249
             }
           ],
           "repair_time": 8100,
@@ -716,7 +716,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 498
+              "amount": 249
             }
           ],
           "repair_time": 8100,
@@ -805,7 +805,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 997
+              "amount": 498
             }
           ],
           "repair_time": 8400,
@@ -861,7 +861,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 997
+              "amount": 498
             }
           ],
           "repair_time": 8400,
@@ -916,7 +916,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 997
+              "amount": 498
             }
           ],
           "repair_time": 8400,
@@ -973,7 +973,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 997
+              "amount": 498
             }
           ],
           "repair_time": 8400,
@@ -1057,7 +1057,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 997
+              "amount": 498
             }
           ],
           "repair_time": 8400,
@@ -1112,7 +1112,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 997
+              "amount": 498
             }
           ],
           "repair_time": 8400,
@@ -1201,7 +1201,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 2956
+              "amount": 1478
             }
           ],
           "repair_time": 13260,
@@ -1257,7 +1257,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 2956
+              "amount": 1478
             }
           ],
           "repair_time": 13260,
@@ -1312,7 +1312,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 2956
+              "amount": 1478
             }
           ],
           "repair_time": 13260,
@@ -1369,7 +1369,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 2956
+              "amount": 1478
             }
           ],
           "repair_time": 13260,
@@ -1457,7 +1457,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 2956
+              "amount": 1478
             }
           ],
           "repair_time": 13260,
@@ -1512,7 +1512,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 2956
+              "amount": 1478
             }
           ],
           "repair_time": 13260,
@@ -1601,7 +1601,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 3547
+              "amount": 1773
             }
           ],
           "repair_time": 13740,
@@ -1657,7 +1657,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 3547
+              "amount": 1773
             }
           ],
           "repair_time": 13740,
@@ -1673,7 +1673,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 6359,
+            "dodge": 7159,
             "tag": "Impulse"
           },
           "order": 9,
@@ -1712,7 +1712,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 3547
+              "amount": 1773
             }
           ],
           "repair_time": 13740,
@@ -1727,9 +1727,9 @@
             }
           ],
           "data": {
-            "absorption": 6359,
+            "absorption": 6859,
             "mitigation": 0.8,
-            "hp": 2793290,
+            "hp": 2993290,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -1769,7 +1769,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 3547
+              "amount": 1773
             }
           ],
           "repair_time": 13740,
@@ -1784,8 +1784,8 @@
             }
           ],
           "data": {
-            "plating": 6359,
-            "hp": 3943468,
+            "plating": 7159,
+            "hp": 4343468,
             "tag": "Armor"
           },
           "order": 3,
@@ -1853,7 +1853,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 3547
+              "amount": 1773
             }
           ],
           "repair_time": 13740,
@@ -1908,7 +1908,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 3547
+              "amount": 1773
             }
           ],
           "repair_time": 13740,
@@ -1926,9 +1926,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 24481,
-            "penetration": 24481,
-            "modulation": 24481,
+            "accuracy": 27481,
+            "penetration": 27481,
+            "modulation": 27481,
             "minimum_damage": 3860,
             "maximum_damage": 4344,
             "crit_chance": 0.1,
@@ -1997,7 +1997,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 7782
+              "amount": 3891
             }
           ],
           "repair_time": 18600,
@@ -2053,7 +2053,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 7782
+              "amount": 3891
             }
           ],
           "repair_time": 18600,
@@ -2108,7 +2108,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 7782
+              "amount": 3891
             }
           ],
           "repair_time": 18600,
@@ -2165,7 +2165,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 7782
+              "amount": 3891
             }
           ],
           "repair_time": 18600,
@@ -2253,7 +2253,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 7782
+              "amount": 3891
             }
           ],
           "repair_time": 18600,
@@ -2308,7 +2308,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 7782
+              "amount": 3891
             }
           ],
           "repair_time": 18600,
@@ -2397,7 +2397,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 8894
+              "amount": 4447
             }
           ],
           "repair_time": 29220,
@@ -2453,7 +2453,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 8894
+              "amount": 4447
             }
           ],
           "repair_time": 29220,
@@ -2508,7 +2508,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 8894
+              "amount": 4447
             }
           ],
           "repair_time": 29220,
@@ -2565,7 +2565,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 8894
+              "amount": 4447
             }
           ],
           "repair_time": 29220,
@@ -2649,7 +2649,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 8894
+              "amount": 4447
             }
           ],
           "repair_time": 29220,
@@ -2704,7 +2704,7 @@
             },
             {
               "resource_id": 1734940706,
-              "amount": 8894
+              "amount": 4447
             }
           ],
           "repair_time": 29220,
@@ -2789,11 +2789,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 700
+              "amount": 350
             },
             {
               "resource_id": 1734940706,
-              "amount": 54564
+              "amount": 27282
             }
           ],
           "repair_time": 36540,
@@ -2845,11 +2845,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 700
+              "amount": 350
             },
             {
               "resource_id": 1734940706,
-              "amount": 54564
+              "amount": 27282
             }
           ],
           "repair_time": 36540,
@@ -2900,11 +2900,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 700
+              "amount": 350
             },
             {
               "resource_id": 1734940706,
-              "amount": 54564
+              "amount": 27282
             }
           ],
           "repair_time": 36540,
@@ -2957,11 +2957,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 700
+              "amount": 350
             },
             {
               "resource_id": 1734940706,
-              "amount": 54564
+              "amount": 27282
             }
           ],
           "repair_time": 36540,
@@ -2976,8 +2976,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 9579,
+            "hp": 6371969,
             "tag": "Armor"
           },
           "order": 3,
@@ -3045,11 +3045,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 700
+              "amount": 350
             },
             {
               "resource_id": 1734940706,
-              "amount": 54564
+              "amount": 27282
             }
           ],
           "repair_time": 36540,
@@ -3100,11 +3100,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 700
+              "amount": 350
             },
             {
               "resource_id": 1734940706,
-              "amount": 54564
+              "amount": 27282
             }
           ],
           "repair_time": 36540,
@@ -3189,11 +3189,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 759
+              "amount": 379
             },
             {
               "resource_id": 1734940706,
-              "amount": 60626
+              "amount": 30313
             }
           ],
           "repair_time": 46740,
@@ -3245,11 +3245,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 759
+              "amount": 379
             },
             {
               "resource_id": 1734940706,
-              "amount": 60626
+              "amount": 30313
             }
           ],
           "repair_time": 46740,
@@ -3265,7 +3265,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 11179,
             "tag": "Impulse"
           },
           "order": 9,
@@ -3300,11 +3300,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 759
+              "amount": 379
             },
             {
               "resource_id": 1734940706,
-              "amount": 60626
+              "amount": 30313
             }
           ],
           "repair_time": 46740,
@@ -3319,9 +3319,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 11179,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 5454628,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -3357,11 +3357,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 759
+              "amount": 379
             },
             {
               "resource_id": 1734940706,
-              "amount": 60626
+              "amount": 30313
             }
           ],
           "repair_time": 46740,
@@ -3376,8 +3376,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 10492,
+            "hp": 6979621,
             "tag": "Armor"
           },
           "order": 3,
@@ -3441,11 +3441,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 759
+              "amount": 379
             },
             {
               "resource_id": 1734940706,
-              "amount": 60626
+              "amount": 30313
             }
           ],
           "repair_time": 46740,
@@ -3496,11 +3496,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 759
+              "amount": 379
             },
             {
               "resource_id": 1734940706,
-              "amount": 60626
+              "amount": 30313
             }
           ],
           "repair_time": 46740,
@@ -3518,9 +3518,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 43032,
+            "penetration": 43032,
+            "modulation": 43032,
             "minimum_damage": 5432,
             "maximum_damage": 6091,
             "crit_chance": 0.1,
@@ -3585,11 +3585,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1178
+              "amount": 589
             },
             {
               "resource_id": 1734940706,
-              "amount": 91184
+              "amount": 45592
             }
           ],
           "repair_time": 52260,
@@ -3641,11 +3641,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1178
+              "amount": 589
             },
             {
               "resource_id": 1734940706,
-              "amount": 91184
+              "amount": 45592
             }
           ],
           "repair_time": 52260,
@@ -3661,7 +3661,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 12423,
             "tag": "Impulse"
           },
           "order": 9,
@@ -3696,11 +3696,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1178
+              "amount": 589
             },
             {
               "resource_id": 1734940706,
-              "amount": 91184
+              "amount": 45592
             }
           ],
           "repair_time": 52260,
@@ -3715,9 +3715,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 12423,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 6061662,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -3753,11 +3753,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1178
+              "amount": 589
             },
             {
               "resource_id": 1734940706,
-              "amount": 91184
+              "amount": 45592
             }
           ],
           "repair_time": 52260,
@@ -3772,8 +3772,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 11532,
+            "hp": 7671646,
             "tag": "Armor"
           },
           "order": 3,
@@ -3841,11 +3841,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1178
+              "amount": 589
             },
             {
               "resource_id": 1734940706,
-              "amount": 91184
+              "amount": 45592
             }
           ],
           "repair_time": 52260,
@@ -3896,11 +3896,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1178
+              "amount": 589
             },
             {
               "resource_id": 1734940706,
-              "amount": 91184
+              "amount": 45592
             }
           ],
           "repair_time": 52260,
@@ -3918,9 +3918,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 47821,
+            "penetration": 47821,
+            "modulation": 47821,
             "minimum_damage": 5966,
             "maximum_damage": 6684,
             "crit_chance": 0.1,
@@ -3985,11 +3985,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1276
+              "amount": 638
             },
             {
               "resource_id": 1734940706,
-              "amount": 101315
+              "amount": 50658
             }
           ],
           "repair_time": 82740,
@@ -4041,11 +4041,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1276
+              "amount": 638
             },
             {
               "resource_id": 1734940706,
-              "amount": 101315
+              "amount": 50658
             }
           ],
           "repair_time": 82740,
@@ -4061,7 +4061,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 13839,
             "tag": "Impulse"
           },
           "order": 9,
@@ -4096,11 +4096,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1276
+              "amount": 638
             },
             {
               "resource_id": 1734940706,
-              "amount": 101315
+              "amount": 50658
             }
           ],
           "repair_time": 82740,
@@ -4115,9 +4115,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 13839,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 6752982,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -4153,11 +4153,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1276
+              "amount": 638
             },
             {
               "resource_id": 1734940706,
-              "amount": 101315
+              "amount": 50658
             }
           ],
           "repair_time": 82740,
@@ -4172,8 +4172,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 12665,
+            "hp": 8424870,
             "tag": "Armor"
           },
           "order": 3,
@@ -4237,11 +4237,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1276
+              "amount": 638
             },
             {
               "resource_id": 1734940706,
-              "amount": 101315
+              "amount": 50658
             }
           ],
           "repair_time": 82740,
@@ -4292,11 +4292,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1276
+              "amount": 638
             },
             {
               "resource_id": 1734940706,
-              "amount": 101315
+              "amount": 50658
             }
           ],
           "repair_time": 82740,
@@ -4314,9 +4314,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 53275,
+            "penetration": 53275,
+            "modulation": 53275,
             "minimum_damage": 6548,
             "maximum_damage": 7331,
             "crit_chance": 0.1,
@@ -4381,11 +4381,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1749
+              "amount": 875
             },
             {
               "resource_id": 1734940706,
-              "amount": 127322
+              "amount": 63661
             }
           ],
           "repair_time": 103920,
@@ -4437,11 +4437,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1749
+              "amount": 875
             },
             {
               "resource_id": 1734940706,
-              "amount": 127322
+              "amount": 63661
             }
           ],
           "repair_time": 103920,
@@ -4457,7 +4457,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 15381,
             "tag": "Impulse"
           },
           "order": 9,
@@ -4492,11 +4492,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1749
+              "amount": 875
             },
             {
               "resource_id": 1734940706,
-              "amount": 127322
+              "amount": 63661
             }
           ],
           "repair_time": 103920,
@@ -4511,9 +4511,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 15381,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 7505439,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -4549,11 +4549,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1749
+              "amount": 875
             },
             {
               "resource_id": 1734940706,
-              "amount": 127322
+              "amount": 63661
             }
           ],
           "repair_time": 103920,
@@ -4568,8 +4568,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 13871,
+            "hp": 9227140,
             "tag": "Armor"
           },
           "order": 3,
@@ -4637,11 +4637,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1749
+              "amount": 875
             },
             {
               "resource_id": 1734940706,
-              "amount": 127322
+              "amount": 63661
             }
           ],
           "repair_time": 103920,
@@ -4692,11 +4692,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1749
+              "amount": 875
             },
             {
               "resource_id": 1734940706,
-              "amount": 127322
+              "amount": 63661
             }
           ],
           "repair_time": 103920,
@@ -4714,9 +4714,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 59211,
+            "penetration": 59211,
+            "modulation": 59211,
             "minimum_damage": 7182,
             "maximum_damage": 8036,
             "crit_chance": 0.1,
@@ -4781,11 +4781,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1884
+              "amount": 942
             },
             {
               "resource_id": 1734940706,
-              "amount": 140054
+              "amount": 70027
             }
           ],
           "repair_time": 120480,
@@ -4837,11 +4837,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1884
+              "amount": 942
             },
             {
               "resource_id": 1734940706,
-              "amount": 140054
+              "amount": 70027
             }
           ],
           "repair_time": 120480,
@@ -4857,7 +4857,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 17024,
             "tag": "Impulse"
           },
           "order": 9,
@@ -4892,11 +4892,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1884
+              "amount": 942
             },
             {
               "resource_id": 1734940706,
-              "amount": 140054
+              "amount": 70027
             }
           ],
           "repair_time": 120480,
@@ -4911,9 +4911,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 17024,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 8306891,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -4949,11 +4949,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1884
+              "amount": 942
             },
             {
               "resource_id": 1734940706,
-              "amount": 140054
+              "amount": 70027
             }
           ],
           "repair_time": 120480,
@@ -4968,8 +4968,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 15139,
+            "hp": 10070792,
             "tag": "Armor"
           },
           "order": 3,
@@ -5033,11 +5033,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1884
+              "amount": 942
             },
             {
               "resource_id": 1734940706,
-              "amount": 140054
+              "amount": 70027
             }
           ],
           "repair_time": 120480,
@@ -5088,11 +5088,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 1884
+              "amount": 942
             },
             {
               "resource_id": 1734940706,
-              "amount": 140054
+              "amount": 70027
             }
           ],
           "repair_time": 120480,
@@ -5110,9 +5110,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 65534,
+            "penetration": 65534,
+            "modulation": 65534,
             "minimum_damage": 7950,
             "maximum_damage": 8890,
             "crit_chance": 0.1,
@@ -5177,11 +5177,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2650
+              "amount": 1325
             },
             {
               "resource_id": 1734940706,
-              "amount": 194680
+              "amount": 97340
             }
           ],
           "repair_time": 170760,
@@ -5233,11 +5233,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2650
+              "amount": 1325
             },
             {
               "resource_id": 1734940706,
-              "amount": 194680
+              "amount": 97340
             }
           ],
           "repair_time": 170760,
@@ -5253,7 +5253,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 18751,
             "tag": "Impulse"
           },
           "order": 9,
@@ -5288,11 +5288,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2650
+              "amount": 1325
             },
             {
               "resource_id": 1734940706,
-              "amount": 194680
+              "amount": 97340
             }
           ],
           "repair_time": 170760,
@@ -5307,9 +5307,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 18751,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 9149685,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -5345,11 +5345,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2650
+              "amount": 1325
             },
             {
               "resource_id": 1734940706,
-              "amount": 194680
+              "amount": 97340
             }
           ],
           "repair_time": 170760,
@@ -5364,8 +5364,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 16461,
+            "hp": 10950490,
             "tag": "Armor"
           },
           "order": 3,
@@ -5433,11 +5433,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2650
+              "amount": 1325
             },
             {
               "resource_id": 1734940706,
-              "amount": 194680
+              "amount": 97340
             }
           ],
           "repair_time": 170760,
@@ -5488,11 +5488,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2650
+              "amount": 1325
             },
             {
               "resource_id": 1734940706,
-              "amount": 194680
+              "amount": 97340
             }
           ],
           "repair_time": 170760,
@@ -5510,9 +5510,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 72183,
+            "penetration": 72183,
+            "modulation": 72183,
             "minimum_damage": 8795,
             "maximum_damage": 9829,
             "crit_chance": 0.1,
@@ -5577,11 +5577,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2854
+              "amount": 1427
             },
             {
               "resource_id": 1734940706,
-              "amount": 214147
+              "amount": 107074
             }
           ],
           "repair_time": 196980,
@@ -5633,11 +5633,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2854
+              "amount": 1427
             },
             {
               "resource_id": 1734940706,
-              "amount": 214147
+              "amount": 107074
             }
           ],
           "repair_time": 196980,
@@ -5653,7 +5653,7 @@
           ],
           "data": {
             "impulse": 100,
-            "dodge": 10276,
+            "dodge": 20552,
             "tag": "Impulse"
           },
           "order": 9,
@@ -5688,11 +5688,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2854
+              "amount": 1427
             },
             {
               "resource_id": 1734940706,
-              "amount": 214147
+              "amount": 107074
             }
           ],
           "repair_time": 196980,
@@ -5707,9 +5707,9 @@
             }
           ],
           "data": {
-            "absorption": 10276,
+            "absorption": 20552,
             "mitigation": 0.8,
-            "hp": 5014243,
+            "hp": 10028486,
             "regen_time": 40,
             "tag": "Shield"
           },
@@ -5745,11 +5745,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2854
+              "amount": 1427
             },
             {
               "resource_id": 1734940706,
-              "amount": 214147
+              "amount": 107074
             }
           ],
           "repair_time": 196980,
@@ -5764,8 +5764,8 @@
             }
           ],
           "data": {
-            "plating": 10276,
-            "hp": 7078932,
+            "plating": 17832,
+            "hp": 11862270,
             "tag": "Armor"
           },
           "order": 3,
@@ -5829,11 +5829,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2854
+              "amount": 1427
             },
             {
               "resource_id": 1734940706,
-              "amount": 214147
+              "amount": 107074
             }
           ],
           "repair_time": 196980,
@@ -5884,11 +5884,11 @@
           "repair_cost": [
             {
               "resource_id": 733419347,
-              "amount": 2854
+              "amount": 1427
             },
             {
               "resource_id": 1734940706,
-              "amount": 214147
+              "amount": 107074
             }
           ],
           "repair_time": 196980,
@@ -5906,9 +5906,9 @@
             "shots": 1,
             "warm_up": 1,
             "cool_down": 1,
-            "accuracy": 39558,
-            "penetration": 39558,
-            "modulation": 39558,
+            "accuracy": 79116,
+            "penetration": 79116,
+            "modulation": 79116,
             "minimum_damage": 9725,
             "maximum_damage": 10862,
             "crit_chance": 0.1,
@@ -6765,151 +6765,23 @@
       "value_is_percentage": false,
       "values": [
         {
-          "value": 0.0000020000000000000003,
+          "value": 0.0001,
           "chance": 1
         },
         {
-          "value": 0.000004000000000000001,
+          "value": 0.0001,
           "chance": 1
         },
         {
-          "value": 0.000005999999999999999,
+          "value": 0.0001,
           "chance": 1
         },
         {
-          "value": 0.000008000000000000001,
+          "value": 0.0001,
           "chance": 1
         },
         {
-          "value": 0.00001,
-          "chance": 1
-        },
-        {
-          "value": 0.0000109,
-          "chance": 1
-        },
-        {
-          "value": 0.0000118,
-          "chance": 1
-        },
-        {
-          "value": 0.0000127,
-          "chance": 1
-        },
-        {
-          "value": 0.000013600000000000002,
-          "chance": 1
-        },
-        {
-          "value": 0.0000145,
-          "chance": 1
-        },
-        {
-          "value": 0.0000149,
-          "chance": 1
-        },
-        {
-          "value": 0.0000153,
-          "chance": 1
-        },
-        {
-          "value": 0.0000157,
-          "chance": 1
-        },
-        {
-          "value": 0.000016100000000000002,
-          "chance": 1
-        },
-        {
-          "value": 0.0000165,
-          "chance": 1
-        },
-        {
-          "value": 0.0000167,
-          "chance": 1
-        },
-        {
-          "value": 0.0000169,
-          "chance": 1
-        },
-        {
-          "value": 0.0000171,
-          "chance": 1
-        },
-        {
-          "value": 0.0000173,
-          "chance": 1
-        },
-        {
-          "value": 0.000017500000000000002,
-          "chance": 1
-        },
-        {
-          "value": 0.0000176,
-          "chance": 1
-        },
-        {
-          "value": 0.0000177,
-          "chance": 1
-        },
-        {
-          "value": 0.0000178,
-          "chance": 1
-        },
-        {
-          "value": 0.000017899999999999998,
-          "chance": 1
-        },
-        {
-          "value": 0.000018,
-          "chance": 1
-        },
-        {
-          "value": 0.0000184,
-          "chance": 1
-        },
-        {
-          "value": 0.0000188,
-          "chance": 1
-        },
-        {
-          "value": 0.000019200000000000003,
-          "chance": 1
-        },
-        {
-          "value": 0.0000196,
-          "chance": 1
-        },
-        {
-          "value": 0.00002,
-          "chance": 1
-        },
-        {
-          "value": 0.000021,
-          "chance": 1
-        },
-        {
-          "value": 0.000022000000000000003,
-          "chance": 1
-        },
-        {
-          "value": 0.000023,
-          "chance": 1
-        },
-        {
-          "value": 0.000023999999999999997,
-          "chance": 1
-        },
-        {
-          "value": 0.000025,
-          "chance": 1
-        },
-        {
-          "value": 0.00007000000000000001,
-          "chance": 1
-        },
-        {
-          "value": 0.000115,
+          "value": 0.0001,
           "chance": 1
         },
         {
@@ -6917,23 +6789,39 @@
           "chance": 1
         },
         {
-          "value": 0.00020500000000000002,
+          "value": 0.00016,
           "chance": 1
         },
         {
-          "value": 0.00025,
+          "value": 0.00016,
           "chance": 1
         },
         {
-          "value": 0.00026,
+          "value": 0.00016,
           "chance": 1
         },
         {
-          "value": 0.00027,
+          "value": 0.00016,
           "chance": 1
         },
         {
-          "value": 0.00028000000000000003,
+          "value": 0.00023,
+          "chance": 1
+        },
+        {
+          "value": 0.00023,
+          "chance": 1
+        },
+        {
+          "value": 0.00023,
+          "chance": 1
+        },
+        {
+          "value": 0.00023,
+          "chance": 1
+        },
+        {
+          "value": 0.00023,
           "chance": 1
         },
         {
@@ -6941,15 +6829,19 @@
           "chance": 1
         },
         {
-          "value": 0.0003,
+          "value": 0.00029,
           "chance": 1
         },
         {
-          "value": 0.00032,
+          "value": 0.00029,
           "chance": 1
         },
         {
-          "value": 0.00034,
+          "value": 0.00029,
+          "chance": 1
+        },
+        {
+          "value": 0.00029,
           "chance": 1
         },
         {
@@ -6957,11 +6849,19 @@
           "chance": 1
         },
         {
-          "value": 0.00038,
+          "value": 0.00035999999999999997,
           "chance": 1
         },
         {
-          "value": 0.0004,
+          "value": 0.00035999999999999997,
+          "chance": 1
+        },
+        {
+          "value": 0.00035999999999999997,
+          "chance": 1
+        },
+        {
+          "value": 0.00035999999999999997,
           "chance": 1
         },
         {
@@ -6969,159 +6869,259 @@
           "chance": 1
         },
         {
-          "value": 0.00043999999999999996,
+          "value": 0.00042,
           "chance": 1
         },
         {
-          "value": 0.00046,
+          "value": 0.00042,
           "chance": 1
         },
         {
-          "value": 0.00048,
+          "value": 0.00042,
           "chance": 1
         },
         {
-          "value": 0.0005,
+          "value": 0.00042,
           "chance": 1
         },
         {
-          "value": 0.00052,
+          "value": 0.00049,
           "chance": 1
         },
         {
-          "value": 0.00054,
+          "value": 0.00049,
           "chance": 1
         },
         {
-          "value": 0.0005600000000000001,
+          "value": 0.00049,
           "chance": 1
         },
         {
-          "value": 0.00058,
+          "value": 0.00049,
           "chance": 1
         },
         {
-          "value": 0.0006,
+          "value": 0.00049,
           "chance": 1
         },
         {
-          "value": 0.000606,
+          "value": 0.00055,
           "chance": 1
         },
         {
-          "value": 0.000612,
+          "value": 0.00055,
           "chance": 1
         },
         {
-          "value": 0.0006180000000000001,
+          "value": 0.00055,
           "chance": 1
         },
         {
-          "value": 0.000624,
+          "value": 0.00055,
           "chance": 1
         },
         {
-          "value": 0.00063,
+          "value": 0.00055,
           "chance": 1
         },
         {
-          "value": 0.0006360000000000001,
+          "value": 0.00061,
           "chance": 1
         },
         {
-          "value": 0.000642,
+          "value": 0.00061,
           "chance": 1
         },
         {
-          "value": 0.000648,
+          "value": 0.00061,
           "chance": 1
         },
         {
-          "value": 0.000654,
+          "value": 0.00061,
           "chance": 1
         },
         {
-          "value": 0.00066,
+          "value": 0.00061,
           "chance": 1
         },
         {
-          "value": 0.000668,
+          "value": 0.00068,
           "chance": 1
         },
         {
-          "value": 0.000676,
+          "value": 0.00068,
           "chance": 1
         },
         {
-          "value": 0.000684,
+          "value": 0.00068,
           "chance": 1
         },
         {
-          "value": 0.000692,
+          "value": 0.00068,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00068,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00074,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00074,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00074,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00074,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00074,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.0008100000000000001,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.0008100000000000001,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.0008100000000000001,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.0008100000000000001,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.0008100000000000001,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00087,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00087,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00087,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00087,
           "chance": 1
         },
         {
-          "value": 0.0007000000000000001,
+          "value": 0.00087,
+          "chance": 1
+        },
+        {
+          "value": 0.00094,
+          "chance": 1
+        },
+        {
+          "value": 0.00094,
+          "chance": 1
+        },
+        {
+          "value": 0.00094,
+          "chance": 1
+        },
+        {
+          "value": 0.00094,
+          "chance": 1
+        },
+        {
+          "value": 0.00094,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
+          "chance": 1
+        },
+        {
+          "value": 0.001,
           "chance": 1
         }
       ],
