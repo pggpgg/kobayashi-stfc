@@ -1,8 +1,8 @@
 {
   "hostiles": {
     "source": "data-stfc-space",
-    "data_version": "stfcspace-hostiles-2026-08-11",
-    "last_updated": "2026-08-11",
+    "data_version": "stfcspace-hostiles-2026-08-31",
+    "last_updated": "2026-08-31",
     "path": "hostiles/index.json"
   },
   "officer_eligibility": {
@@ -13,13 +13,13 @@
   },
   "ships": {
     "source": "data-stfc-space",
-    "data_version": "stfcspace-ships-2026-08-11",
-    "last_updated": "2026-08-14",
+    "data_version": "stfcspace-ships-2026-08-31",
+    "last_updated": "2026-08-31",
     "path": "ships_extended/index.json"
   },
   "syndicate_reputation": {
     "source": "community_spreadsheet",
-    "last_updated": "2026-08-11",
+    "last_updated": "2026-08-31",
     "path": "syndicate_reputation.json"
   }
 }
