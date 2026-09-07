@@ -6,6 +6,8 @@ Prefer **`cargo xtask --help`** from the repo root for a single discoverable ent
 
 A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the same high-level sequence as a local refresh: snapshot summaries → catalog fetch → ship/hostile/research detail fetches (scheduled: ships `--full`, hostiles/research missing-only) → `npm run data:refresh -- --stfcspace` → `cargo test` + `validate_data`, and opens a PR when files change (body includes summary drift report).
 
+**One open refresh at a time:** each run opens its own `automated/data-refresh-<run_id>` branch, so a run that produces a PR also comments on and closes any older still-open refresh PR (and deletes its branch). An older refresh is strictly superseded — same pipeline, older upstream snapshot — and leaving it open is misleading: its `Upstream summary drift` check compares *that* branch against live upstream, so it stays red purely for being stale, which reads as the refresh failing. A run that changes nothing closes nothing, since the existing PR is then still the valid pending refresh.
+
 **CI drift gate:** every CI run includes job `upstream_drift` ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), which fails when live data.stfc.space ship/hostile/research summaries diverge from committed caches. Remediation: merge the weekly bot PR or refresh locally.
 
 **Local check:**
