@@ -41,7 +41,7 @@ KOBAYASHI simulates thousands of fights using Monte Carlo methods, testing crew 
 - **Local server + Web UI**: Rust backend using **Tokio + Axum** (`src/server/`). CPU-heavy handlers offload work with `tokio::task::spawn_blocking` and share a process-wide **semaphore** (`KOBAYASHI_MAX_CONCURRENT_CPU_JOBS`) so many concurrent requests do not oversubscribe the machine; optional bounded queue wait returns HTTP 503 when saturated (`KOBAYASHI_CPU_JOB_QUEUE_WAIT_MS`). The frontend is built separately (Node/npm) and served from disk (`frontend/dist`) via `tower-http` static serving and SPA fallback. Runtime assets are discovered from `KOBAYASHI_HOME`, the working directory, or beside the executable, allowing release archives to run independently after extraction. No Docker.
 - **Community-driven data**: Officers defined in LCARS (YAML), hostiles and ships in JSON. Community contributes definitions via pull requests. Schema validation catches errors automatically.
 - **Graceful degradation**: Unknown ability types are logged and skipped, not crashed on. Accuracy improves incrementally as more mechanics are supported.
-- **Performance-first**: The combat engine is the hot loop. Zero allocations, no dynamic dispatch, pre-computed buffs. Target: 2–5M simulations/sec/core.
+- **Performance-first**: The combat engine is the hot loop, with pre-computed static buffs. Some effect-processing and optional SIMD paths allocate during combat (see §4.1). Target: 2–5M simulations/sec/core; this is a target, not a measured throughput claim.
 
 ---
 
@@ -525,7 +525,7 @@ The implemented entry points are functions such as `simulate_combat_with_defende
 
 Key design constraints:
 
-- **Zero allocations in the hot path**: pre-allocated round buffer, all data on the stack
+- **Allocation depends on the combat path**: `filter_effects_by_condition` in `src/combat/abilities.rs` collects matching effects into a vector. In `src/combat/engine.rs`, weapon-scoped round-start processing collects cloned effects into `round_start_weapon_scoped` and, when needed, `bench_round_level`. The optional SIMD outbound weapon path creates four capacity-4 vectors when there are shots to process. Empty `Vec::new()` branches do not themselves allocate, but this does not establish an allocation-free fight. Measure allocations for representative crews and modes, then run release-mode benchmarks before proposing allocation optimizations; these code paths alone do not establish their performance cost.
 - **No trait objects or dynamic dispatch in the inner loop**: abilities are resolved to a flat `BuffSet` before combat starts
 - **Only abilities with per-round variance** (Nero's double shot, decay/accumulate effects) are evaluated inside the loop; static buffs are pre-computed
 - **SplitMix64 PRNG**: ~0.8ns per call, passes BigCrush, deterministic per seed

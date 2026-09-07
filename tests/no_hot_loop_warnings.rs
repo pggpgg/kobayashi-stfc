@@ -1,7 +1,7 @@
 //! Architectural invariant: the combat hot loop (`src/combat/`) must not touch the LCARS drop
 //! report or emit drop-equivalent warnings. All drop recording happens upstream, at YAML→IR
 //! resolve time. This test greps the combat module for forbidden patterns and fails if any
-//! show up — guarding the zero-allocation hot-loop guarantee documented in CLAUDE.md.
+//! show up — guarding against logging overhead in the combat hot loop. This source check does not measure allocations.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -63,7 +63,7 @@ fn combat_module_has_no_drop_logging() {
 
     assert!(
         violations.is_empty(),
-        "src/combat/ must not contain drop-logging or warn macros (hot loop must stay allocation-free); \
+        "src/combat/ must not contain drop-logging or warn macros (avoid logging overhead in the hot loop); \
          violations: {violations:#?}"
     );
 }
