@@ -115,18 +115,23 @@ fn cpu_busy_response(retry_after_ms: u64) -> Response {
     (StatusCode::SERVICE_UNAVAILABLE, headers, body_str).into_response()
 }
 
-async fn acquire_cpu_or_response(state: &AppState) -> Result<OwnedSemaphorePermit, Response> {
+/// The `Err` payload is a ready-to-return `Response`, which is large enough to bloat the
+/// (far more common) `Ok` path; box it so callers only move a pointer. Callers deref with
+/// `return *resp`.
+async fn acquire_cpu_or_response(state: &AppState) -> Result<OwnedSemaphorePermit, Box<Response>> {
     match cpu_admission::acquire_cpu_permit(Arc::clone(&state.cpu_jobs), state.cpu_job_queue_wait)
         .await
     {
         Ok(p) => Ok(p),
-        Err(cpu_admission::AcquireCpuPermitError::SemaphoreClosed) => Err(error_json(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "CPU job semaphore closed",
-        )
-        .into_response()),
+        Err(cpu_admission::AcquireCpuPermitError::SemaphoreClosed) => Err(Box::new(
+            error_json(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "CPU job semaphore closed",
+            )
+            .into_response(),
+        )),
         Err(cpu_admission::AcquireCpuPermitError::QueueTimeout { retry_after_ms }) => {
-            Err(cpu_busy_response(retry_after_ms))
+            Err(Box::new(cpu_busy_response(retry_after_ms)))
         }
     }
 }
@@ -885,7 +890,7 @@ async fn handle_simulate(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -921,7 +926,7 @@ async fn handle_compare_crews(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -958,7 +963,7 @@ async fn handle_sensitivity(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -1003,7 +1008,7 @@ async fn handle_sensitivity_morris(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -1048,7 +1053,7 @@ async fn handle_sensitivity_sobol(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -1092,7 +1097,7 @@ async fn handle_optimize(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -1126,7 +1131,7 @@ async fn handle_optimize_replay_seed(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     let registry = state.registry.clone();
@@ -1184,7 +1189,7 @@ async fn handle_optimize_start(
 ) -> impl IntoResponse {
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let profile_id = profile_id_from_request(&headers, &params);
     match api::optimize_start_payload(permit, state.registry.clone(), &body, profile_id.as_deref())
@@ -1312,7 +1317,7 @@ where
     };
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
-        Err(resp) => return resp,
+        Err(resp) => return *resp,
     };
     let response = sensitivity_jobs::start_sensitivity_job(
         state.registry.clone(),
