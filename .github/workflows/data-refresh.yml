@@ -145,6 +145,7 @@ jobs:
           } > /tmp/pr_body.md
 
       - name: Create Pull Request
+        id: cpr
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
         uses: peter-evans/create-pull-request@v6
         with:
@@ -153,3 +154,50 @@ jobs:
           body-path: /tmp/pr_body.md
           branch: automated/data-refresh-${{ github.run_id }}
           delete-branch: true
+
+      # Each run opens its own automated/data-refresh-<run_id> branch, so an older unmerged
+      # refresh PR is strictly superseded: same pipeline, older upstream snapshot. Left open
+      # they stack up (three deep by 2026-09-06) and actively mislead -- the oldest still
+      # shows a red "Upstream summary drift" check, which reads as the refresh failing when
+      # it only means that snapshot predates the current catalog. Only runs when this run
+      # actually produced a PR: if nothing changed upstream, the existing PR is still the
+      # valid pending refresh and must be left alone.
+      - name: Close superseded refresh PRs
+        if: ${{ steps.cpr.outputs.pull-request-number != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_PR: ${{ steps.cpr.outputs.pull-request-number }}
+          NEW_PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
+        run: |
+          set -euo pipefail
+
+          superseded=$(gh pr list --state open --limit 100 --json number,headRefName \
+            | jq -r --argjson new "${NEW_PR}" '
+                .[]
+                | select(.headRefName | startswith("automated/data-refresh-"))
+                | select(.number != $new)
+                | .number')
+
+          if [ -z "${superseded}" ]; then
+            echo "No superseded refresh PRs open."
+            exit 0
+          fi
+
+          # Heredoc at the script's base indentation so the rendered comment has no leading
+          # whitespace -- indented markdown would turn the body into a code block.
+          cat > /tmp/superseded.md <<EOF
+          Superseded by #${NEW_PR} (${NEW_PR_URL}), opened by a later run of the same **Data refresh (stfc.space)** workflow.
+
+          Every run fetches the current upstream catalog onto a fresh \`automated/data-refresh-<run_id>\` branch, so this PR holds an older snapshot of the same pipeline. Its \`Upstream summary drift\` check will stay red for that reason alone: it compares *this* branch against live upstream, not against the newer PR.
+
+          Closing automatically so only one reviewable refresh stays open. Reopen if you need this specific snapshot.
+          EOF
+
+          echo "Superseding in favour of #${NEW_PR}:"
+          for n in ${superseded}; do
+            echo "  closing #${n}"
+            gh pr comment "${n}" --body-file /tmp/superseded.md \
+              || echo "  warning: could not comment on #${n}"
+            gh pr close "${n}" --delete-branch \
+              || echo "  warning: could not close #${n}"
+          done
