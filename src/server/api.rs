@@ -1704,13 +1704,16 @@ fn resolve_profile_id(profile_id: Option<&str>) -> String {
 pub fn profile_get_payload(profile_id: Option<&str>) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
-    let profile: PlayerProfile = if path.exists() {
-        let raw = fs::read_to_string(&path).unwrap_or_else(|_| "{}".to_string());
-        serde_json::from_str(&raw).unwrap_or_default()
-    } else {
-        PlayerProfile::default()
-    };
+    let profile = load_profile_from_path(&path)?;
     serde_json::to_string(&profile)
+}
+
+fn load_profile_from_path(path: &std::path::Path) -> Result<PlayerProfile, serde_json::Error> {
+    match fs::read_to_string(path) {
+        Ok(raw) => serde_json::from_str(&raw),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(PlayerProfile::default()),
+        Err(error) => Err(serde_json::Error::io(error)),
+    }
 }
 
 pub fn profile_put_payload(
@@ -2551,6 +2554,90 @@ pub fn optimize_estimate_payload(
         payload["chain_fights_per_trial_upper_bound"] = serde_json::json!(chain_fights_per_trial);
     }
     serde_json::to_string(&payload).map_err(OptimizePayloadError::Parse)
+}
+
+#[cfg(test)]
+mod profile_loading_tests {
+    use super::{fs, load_profile_from_path, PlayerProfile};
+
+    struct TestDirectory(std::path::PathBuf);
+
+    impl TestDirectory {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "kobayashi_profile_loading_{}",
+                uuid::Uuid::new_v4()
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn valid_profile_preserves_values_and_file_contents() {
+        let dir = TestDirectory::new();
+        let path = dir.0.join("profile.json");
+        let contents = r#"{"bonuses":{"attack":0.25},"ops_level":42}"#;
+        fs::write(&path, contents).unwrap();
+
+        let profile = load_profile_from_path(&path).unwrap();
+
+        assert_eq!(profile.ops_level, Some(42));
+        assert_eq!(profile.bonuses.get("attack"), Some(&0.25));
+        assert_eq!(fs::read_to_string(&path).unwrap(), contents);
+    }
+
+    #[test]
+    fn missing_profile_returns_defaults_without_creating_file() {
+        let dir = TestDirectory::new();
+        let path = dir.0.join("profile.json");
+
+        let profile = load_profile_from_path(&path).unwrap();
+
+        assert_eq!(
+            serde_json::to_value(profile).unwrap(),
+            serde_json::to_value(PlayerProfile::default()).unwrap()
+        );
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn malformed_profile_returns_error_without_changing_file() {
+        let dir = TestDirectory::new();
+        let path = dir.0.join("profile.json");
+        let contents = r#"{"ops_level": }"#;
+        fs::write(&path, contents).unwrap();
+
+        assert!(load_profile_from_path(&path).unwrap_err().is_syntax());
+        assert_eq!(fs::read_to_string(&path).unwrap(), contents);
+    }
+
+    #[test]
+    fn empty_profile_returns_error_without_changing_file() {
+        let dir = TestDirectory::new();
+        let path = dir.0.join("profile.json");
+        fs::write(&path, "").unwrap();
+
+        assert!(load_profile_from_path(&path).unwrap_err().is_eof());
+        assert_eq!(fs::read(&path).unwrap(), b"");
+    }
+
+    #[test]
+    fn unreadable_profile_returns_io_error_without_changing_directory() {
+        let dir = TestDirectory::new();
+        let marker = dir.0.join("keep.txt");
+        fs::write(&marker, "preserve me").unwrap();
+
+        assert!(load_profile_from_path(&dir.0).unwrap_err().is_io());
+        assert!(dir.0.is_dir());
+        assert_eq!(fs::read_to_string(marker).unwrap(), "preserve me");
+    }
 }
 
 #[cfg(test)]
