@@ -718,7 +718,7 @@ pub struct FightResult {
 
 const MAX_ROUNDS: u8 = 20;
 
-/// Core combat simulation. Pure function, zero allocations.
+/// Core combat simulation scaffold. Measure allocations in the implemented engine.
 /// This is the hot path — every nanosecond matters.
 #[inline]
 pub fn simulate(
