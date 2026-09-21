@@ -225,7 +225,15 @@
           "data": {
             "speed": 6.7,
             "distance": 900,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -426,7 +434,15 @@
           "data": {
             "speed": 6.8,
             "distance": 1000,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -822,7 +838,15 @@
           "data": {
             "speed": 6.9,
             "distance": 1100,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -1218,7 +1242,15 @@
           "data": {
             "speed": 7,
             "distance": 1200,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -1618,7 +1650,15 @@
           "data": {
             "speed": 7.1,
             "distance": 1300,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -2014,7 +2054,15 @@
           "data": {
             "speed": 7.2,
             "distance": 1400,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -2414,7 +2462,15 @@
           "data": {
             "speed": 7.3,
             "distance": 1500,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -2810,7 +2866,15 @@
           "data": {
             "speed": 7.4,
             "distance": 1600,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -3210,7 +3274,15 @@
           "data": {
             "speed": 7.5,
             "distance": 1700,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -3606,7 +3678,15 @@
           "data": {
             "speed": 7.6,
             "distance": 1800,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -4006,7 +4086,15 @@
           "data": {
             "speed": 7.7,
             "distance": 1900,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -4402,7 +4490,15 @@
           "data": {
             "speed": 7.8,
             "distance": 2000,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -4802,7 +4898,15 @@
           "data": {
             "speed": 7.9,
             "distance": 2100,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -5198,7 +5302,15 @@
           "data": {
             "speed": 8,
             "distance": 2200,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,
@@ -5598,7 +5710,15 @@
           "data": {
             "speed": 8.1,
             "distance": 2300,
-            "abilities": [],
+            "abilities": [
+              {
+                "InstantWarp": {
+                  "base_cost": 500,
+                  "cost_resource_id": 514734139,
+                  "cost_multiplier": 0
+                }
+              }
+            ],
             "tag": "Warp"
           },
           "order": 7,

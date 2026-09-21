@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-09-07",
+  "last_updated": "2026-09-21",
   "items": [
     {
       "rid": 2999437,
@@ -57930,6 +57930,164 @@
             {
               "stat": "crit_chance",
               "value": 2,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2891362222,
+      "name": "6⇵ FKR PvE Damage",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.01,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.02,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.03,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.07,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "weapon_damage",
+              "value": 0.3,
               "operator": "add"
             }
           ]
