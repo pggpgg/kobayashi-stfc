@@ -1,5 +1,5 @@
 {
-  "data_version": "stfcspace-ships-2026-09-07",
+  "data_version": "stfcspace-ships-2026-09-28",
   "source_note": "From normalize_data_stfc_space",
   "ships": [
     {
@@ -461,6 +461,11 @@
       "id": "uss_intrepid",
       "ship_name": "U.S.S. INTREPID",
       "ship_class": "battleship"
+    },
+    {
+      "id": "uss_kelcie_mae",
+      "ship_name": "U.S.S. KELCIE MAE",
+      "ship_class": "survey"
     },
     {
       "id": "uss_kelvin",

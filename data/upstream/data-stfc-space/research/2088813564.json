@@ -1,0 +1,1016 @@
+{
+  "id": 2088813564,
+  "loca_id": 95304,
+  "art_id": 2093,
+  "view_level": 1,
+  "research_tree": {
+    "id": 1454228576,
+    "loca_id": 7,
+    "type": 0
+  },
+  "buffs": [
+    {
+      "id": 1947885060,
+      "index": null,
+      "value_is_percentage": true,
+      "values": [
+        {
+          "value": 300000,
+          "chance": 1
+        },
+        {
+          "value": 400000,
+          "chance": 1
+        },
+        {
+          "value": 500000,
+          "chance": 1
+        },
+        {
+          "value": 600000,
+          "chance": 1
+        },
+        {
+          "value": 700000,
+          "chance": 1
+        },
+        {
+          "value": 900000,
+          "chance": 1
+        },
+        {
+          "value": 1200000,
+          "chance": 1
+        },
+        {
+          "value": 1600000,
+          "chance": 1
+        },
+        {
+          "value": 2600000,
+          "chance": 1
+        },
+        {
+          "value": 3600000,
+          "chance": 1
+        },
+        {
+          "value": 4600000,
+          "chance": 1
+        },
+        {
+          "value": 9600000,
+          "chance": 1
+        },
+        {
+          "value": 14600000,
+          "chance": 1
+        },
+        {
+          "value": 19600000,
+          "chance": 1
+        },
+        {
+          "value": 28600000,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        },
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "art_id": 2093,
+      "loca_id": 95304,
+      "show_percentage": true,
+      "value_type": 0,
+      "ranked_is_value_chance": 0
+    }
+  ],
+  "levels": [
+    {
+      "id": 1,
+      "strength": 9000,
+      "strength_increase": 9000,
+      "research_time_in_seconds": 13284000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 6800
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 1000
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 25
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "ResearchLevel",
+          "requirement_id": 4006909787,
+          "requirement_level": 1
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 61
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 1
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 2,
+      "strength": 12000,
+      "strength_increase": 12000,
+      "research_time_in_seconds": 17706000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 9600
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 1100
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 35
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 61
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 2
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 3,
+      "strength": 15000,
+      "strength_increase": 15000,
+      "research_time_in_seconds": 22134000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 13700
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 1200
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 50
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 61
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 3
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 4,
+      "strength": 16000,
+      "strength_increase": 16000,
+      "research_time_in_seconds": 27852000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 26400
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 1400
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 65
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 10
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 63
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 4
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 5,
+      "strength": 20000,
+      "strength_increase": 20000,
+      "research_time_in_seconds": 32496000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 40600
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 1600
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 100
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "ResearchLevel",
+          "requirement_id": 4006909787,
+          "requirement_level": 5
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 10
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 63
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 5
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 6,
+      "strength": 24000,
+      "strength_increase": 24000,
+      "research_time_in_seconds": 41778000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 52800
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 1800
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 130
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 10
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 63
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 6
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 7,
+      "strength": 28000,
+      "strength_increase": 28000,
+      "research_time_in_seconds": 54822000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 106300
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 2200
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 165
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 15
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 66
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 7
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 8,
+      "strength": 33000,
+      "strength_increase": 33000,
+      "research_time_in_seconds": 64788000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 128900
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 2500
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 200
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 15
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 66
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 8
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 9,
+      "strength": 39000,
+      "strength_increase": 39000,
+      "research_time_in_seconds": 74754000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 148200
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 3000
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 230
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 15
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 66
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 9
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 10,
+      "strength": 40000,
+      "strength_increase": 40000,
+      "research_time_in_seconds": 94344000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 317800
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 3500
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 265
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "ResearchLevel",
+          "requirement_id": 4006909787,
+          "requirement_level": 10
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 20
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 70
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 10
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 11,
+      "strength": 48000,
+      "strength_increase": 48000,
+      "research_time_in_seconds": 105438000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 395800
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 4000
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 330
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 20
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 70
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 11
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 12,
+      "strength": 51000,
+      "strength_increase": 51000,
+      "research_time_in_seconds": 129504000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 932400
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 5000
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 400
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 30
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 71
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 12
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 13,
+      "strength": 60000,
+      "strength_increase": 60000,
+      "research_time_in_seconds": 147162000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 1247000
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 6000
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 535
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 30
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 71
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 13
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 14,
+      "strength": 68000,
+      "strength_increase": 68000,
+      "research_time_in_seconds": 164820000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 1561700
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 7200
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 670
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 30
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 71
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 14
+        }
+      ],
+      "rewards": []
+    },
+    {
+      "id": 15,
+      "strength": 70000,
+      "strength_increase": 70000,
+      "research_time_in_seconds": 187032000,
+      "costs": [
+        {
+          "resource_id": 733419347,
+          "amount": 2552000
+        },
+        {
+          "resource_id": 1181591505,
+          "amount": 8500
+        },
+        {
+          "resource_id": 3167133140,
+          "amount": 800
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [
+        {
+          "requirement_type": "ResearchLevel",
+          "requirement_id": 4006909787,
+          "requirement_level": 15
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 89,
+          "requirement_level": 40
+        },
+        {
+          "requirement_type": "BuildingLevel",
+          "requirement_id": 25,
+          "requirement_level": 73
+        },
+        {
+          "requirement_type": "ShipTier",
+          "requirement_id": 2291615234,
+          "requirement_level": 15
+        }
+      ],
+      "rewards": []
+    }
+  ],
+  "row": 2,
+  "column": 41,
+  "generation": 1
+}
