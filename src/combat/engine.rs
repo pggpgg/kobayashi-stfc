@@ -38,9 +38,8 @@ use crate::combat::conqueror_borg_beams::{
 };
 use crate::combat::crit::resolve_vehicle_weapon_crit;
 use crate::combat::damage::{
-    apply_shield_hull_split, apply_shield_hull_split_with_overflow,
-    combine_outbound_damage_before_apex, compute_apex_damage_factor, compute_damage_through_factor,
-    compute_isolytic_taken,
+    apply_shield_hull_split, combine_outbound_damage_before_apex, compute_apex_damage_factor,
+    compute_damage_through_factor, compute_isolytic_taken,
 };
 use crate::combat::effect_accumulator::{
     record_ability_activations, scale_effect, sum_on_kill_hull_regen, EffectAccumulator,
@@ -1969,19 +1968,11 @@ fn apply_combat_end_phase(
         } else {
             defender.shield_mitigation
         };
-        let (dmg_to_shield, dmg_to_hull) = if shield_routing_active {
-            apply_shield_hull_split_with_overflow(
-                ce_defender_damage,
-                ce_shield_mitigation,
-                *defender_shield_remaining,
-            )
-        } else {
-            apply_shield_hull_split(
-                ce_defender_damage,
-                ce_shield_mitigation,
-                *defender_shield_remaining,
-            )
-        };
+        let (dmg_to_shield, dmg_to_hull) = apply_shield_hull_split(
+            ce_defender_damage,
+            ce_shield_mitigation,
+            *defender_shield_remaining,
+        );
         *defender_shield_remaining = (*defender_shield_remaining - dmg_to_shield).max(0.0);
         *total_shield_damage += dmg_to_shield;
         *total_hull_damage += dmg_to_hull;
@@ -2142,11 +2133,8 @@ fn apply_round_end_phase(
     // mechanic and does not apply to these non-weapon terms).
     let round_end_defender_damage = (bonus_damage + burning_damage) * round_end_apex_factor;
     if shield_routing_active {
-        let (re_to_shield, re_to_hull) = apply_shield_hull_split_with_overflow(
-            round_end_defender_damage,
-            1.0,
-            *defender_shield_remaining,
-        );
+        let (re_to_shield, re_to_hull) =
+            apply_shield_hull_split(round_end_defender_damage, 1.0, *defender_shield_remaining);
         *defender_shield_remaining = (*defender_shield_remaining - re_to_shield).max(0.0);
         *total_shield_damage += re_to_shield;
         *total_hull_damage += re_to_hull;
@@ -3460,19 +3448,11 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                             0.0
                         };
                         let (actual_shield_damage, hull_damage_this_round) =
-                            if shield_routing_mitigation_override.is_some() {
-                                apply_shield_hull_split_with_overflow(
-                                    simd_damage_after_apex_batch[lane],
-                                    lane_shield_mitigation,
-                                    st.defender_shield_remaining,
-                                )
-                            } else {
-                                apply_shield_hull_split(
-                                    simd_damage_after_apex_batch[lane],
-                                    lane_shield_mitigation,
-                                    st.defender_shield_remaining,
-                                )
-                            };
+                            apply_shield_hull_split(
+                                simd_damage_after_apex_batch[lane],
+                                lane_shield_mitigation,
+                                st.defender_shield_remaining,
+                            );
                         st.defender_shield_remaining =
                             (st.defender_shield_remaining - actual_shield_damage).max(0.0);
                         st.total_hull_damage += hull_damage_this_round;
@@ -3487,20 +3467,11 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
 
             st.total_isolytic_damage += isolytic_taken.max(0.0) * apex_damage_factor;
 
-            let (actual_shield_damage, hull_damage_this_round) =
-                if shield_routing_mitigation_override.is_some() {
-                    apply_shield_hull_split_with_overflow(
-                        damage_after_apex,
-                        shield_mitigation,
-                        st.defender_shield_remaining,
-                    )
-                } else {
-                    apply_shield_hull_split(
-                        damage_after_apex,
-                        shield_mitigation,
-                        st.defender_shield_remaining,
-                    )
-                };
+            let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
+                damage_after_apex,
+                shield_mitigation,
+                st.defender_shield_remaining,
+            );
 
             st.defender_shield_remaining =
                 (st.defender_shield_remaining - actual_shield_damage).max(0.0);

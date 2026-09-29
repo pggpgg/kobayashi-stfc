@@ -418,6 +418,13 @@ fn gorn_evisc_log_vs_sim_calibration() {
             .collect::<Vec<_>>()
     );
 
+    assert!(
+        (sim.total_isolytic_damage - sim.total_damage).abs() / sim.total_damage.max(1.0) < 0.01,
+        "vulnerability: total_isolytic_damage should match total_damage (iso={} total={})",
+        sim.total_isolytic_damage,
+        sim.total_damage
+    );
+
     let ratios = &f.log_sim_ratio_bands;
     assert_ratio_band(
         "total_damage_vs_log_kill_summary",

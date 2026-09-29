@@ -71,8 +71,8 @@ pub fn combine_outbound_damage_before_apex(
 }
 
 /// Shield/hull split: returns (actual_shield_damage, hull_damage_this_round).
-/// The shield absorbs only its remaining HP; excess damage assigned to the shield does not
-/// become hull damage on the same hit. Subsequent hits go entirely to hull once shields are gone.
+/// Damage assigned to shields beyond their remaining HP spills into hull on the same hit.
+/// When shields are already gone, the entire hit damages hull.
 #[inline]
 pub fn apply_shield_hull_split(
     damage_after_apex: f64,
@@ -85,33 +85,10 @@ pub fn apply_shield_hull_split(
         0.0
     };
     let shield_portion = damage_after_apex * effective_mitigation;
+    let direct_hull_damage = damage_after_apex * (1.0 - effective_mitigation);
     let actual_shield_damage = shield_portion.min(defender_shield_remaining.max(0.0));
-    let hull_damage = damage_after_apex * (1.0 - effective_mitigation);
-    (actual_shield_damage, hull_damage)
-}
-
-/// Breen Energy-Dampening Field currently uses the older overflow interpretation: all damage
-/// routed to a depleted shield pool passes to hull. Keep this separate from ordinary shield
-/// mitigation until a recorded Breen fight establishes its exact depletion rule.
-#[inline]
-pub(crate) fn apply_shield_hull_split_with_overflow(
-    damage_after_apex: f64,
-    shield_mitigation: f64,
-    defender_shield_remaining: f64,
-) -> (f64, f64) {
-    let (actual_shield_damage, hull_damage) = apply_shield_hull_split(
-        damage_after_apex,
-        shield_mitigation,
-        defender_shield_remaining,
-    );
-    if defender_shield_remaining <= 0.0 {
-        return (actual_shield_damage, hull_damage);
-    }
-    let shield_portion = damage_after_apex * shield_mitigation;
-    (
-        actual_shield_damage,
-        hull_damage + shield_portion - actual_shield_damage,
-    )
+    let shield_overflow = shield_portion - actual_shield_damage;
+    (actual_shield_damage, direct_hull_damage + shield_overflow)
 }
 
 #[cfg(test)]
@@ -277,27 +254,9 @@ mod tests {
     }
 
     #[test]
-    fn shield_split_partial_depletion_discards_shield_excess() {
+    fn shield_split_partial_depletion_spills_excess_to_hull() {
         // shields have 300 remaining, shield_portion would be 500
         let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.5, 300.0);
-        assert!((shield_dmg - 300.0).abs() < 1e-12);
-        assert!((hull_dmg - 500.0).abs() < 1e-12);
-    }
-
-    #[test]
-    fn realta_log_shield_break_does_not_transfer_excess_to_hull() {
-        // The Takret Militia had 360 SHP and 470 HHP. The first Realta hit reported 1,387
-        // shield damage and 369 hull damage; the hostile survived to take a second hit.
-        // Source: fight samples/realta vs takret militia 10.csv, round 1 event 2.
-        let (shield_dmg, hull_dmg) = apply_shield_hull_split(1756.0, 1387.0 / 1756.0, 360.0);
-        assert!((shield_dmg - 360.0).abs() < 1e-9);
-        assert!((hull_dmg - 369.0).abs() < 1e-9);
-        assert!(hull_dmg < 470.0);
-    }
-
-    #[test]
-    fn breen_routing_keeps_explicit_overflow_behavior() {
-        let (shield_dmg, hull_dmg) = apply_shield_hull_split_with_overflow(1000.0, 1.0, 300.0);
         assert!((shield_dmg - 300.0).abs() < 1e-12);
         assert!((hull_dmg - 700.0).abs() < 1e-12);
     }

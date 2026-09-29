@@ -1216,7 +1216,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
 }
 
 #[test]
-fn shield_excess_does_not_reach_hull_on_depleting_hit() {
+fn shield_excess_reaches_hull_on_depleting_hit() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 1000.0,
@@ -1242,8 +1242,8 @@ fn shield_excess_does_not_reach_hull_on_depleting_hit() {
         weapons: vec![],
         hostile_mitigation_params: None,
     };
-    // Defender has only 100 SHP. This hit assigns 800 damage to shields, of which 100 is
-    // absorbed, and 200 directly to hull. The remaining shield-assigned damage is lost.
+    // Defender has only 100 SHP. Of 800 shield-assigned damage, 100 depletes the shield
+    // and the excess 700 joins the 200 direct hull damage on this hit.
     let defender = Combatant {
         id: "defender".to_string(),
         attack: 0.0,
@@ -1288,9 +1288,9 @@ fn shield_excess_does_not_reach_hull_on_depleting_hit() {
         emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
-    approx_eq(result.total_damage, 300.0, 1e-12);
+    approx_eq(result.total_damage, 1000.0, 1e-12);
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
-    approx_eq(result.defender_hull_remaining, 1800.0, 1e-12);
+    approx_eq(result.defender_hull_remaining, 1100.0, 1e-12);
 }
 
 #[test]
@@ -1336,7 +1336,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 500.0,
-        shield_health: 50.0, // Round 1: 50 shield HP absorbs part of the 80 assigned to shields; 20 reaches hull.
+        shield_health: 50.0, // Round 1: 50 shield HP absorbs part of the 80 assigned to shields; 30 overflows to hull, joining 20 direct hull damage.
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
@@ -1365,8 +1365,8 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
-    // Round 1: 20 hull damage. Rounds 2 and 3: 100 each after shields are gone.
-    approx_eq(result.defender_hull_remaining, 280.0, 1e-12);
+    // Round 1: 50 hull damage. Rounds 2 and 3: 100 each after shields are gone.
+    approx_eq(result.defender_hull_remaining, 250.0, 1e-12);
 }
 
 #[test]

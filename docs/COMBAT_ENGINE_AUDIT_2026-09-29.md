@@ -8,7 +8,7 @@ damage and survival comparisons remain calibration targets rather than exact reg
 
 | Mechanic | Evidence | Engine change |
 | --- | --- | --- |
-| Normal shield depletion | In `realta vs takret militia 10.csv`, round 1 event 2 reports 1,387 shield damage and 369 hull damage against 360 remaining shield HP and 470 hull HP. The hostile survives to event 5. Sending the excess 1,027 shield damage to hull would have killed it at event 2. | A shield-breaking hit applies only its direct hull portion; shield-assigned excess is discarded. Later hits land fully on hull. The Breen Energy-Dampening Field's special routing retains its separate overflow behavior pending a Breen fight export. |
+| Normal shield depletion | The player confirmed that damage assigned beyond remaining shield HP spills into hull on the same hit. The Realta export's displayed shield and hull damage columns cannot be treated as direct post-hit HP deltas: interpreting its event 2 figures that way conflicts with the hostile surviving to event 5. | A shield-breaking hit sends its shield-assigned excess into hull. Later hits land fully on hull. Breen Energy-Dampening Field uses the same overflow helper with its special shield-routing rule. |
 | PvE volley order | Every supplied export containing attack rows starts with a hostile volley. The Realta export alternates hostile, player, hostile, player. The Enterprise-D and V'ger exports likewise group shots by weapon volley. | The defender volley fires before the player volley for each weapon index. A shield-break reaction from the player volley can affect later defender volleys in the round. |
 | Fire after destruction | The recorded fights end their attack sequence when a ship is destroyed. | Weapon and shot loops stop once the target's hull is exhausted, including the SIMD batch application path. A lethal hostile volley prevents the following player volley. |
 
@@ -18,16 +18,16 @@ expectations were updated to follow the observed order.
 
 ## Remaining fidelity gaps
 
-- The Gorn Eviscerator export is a round-one critical win, but the bundled demo-profile
-  Monte Carlo produced zero round-one kills in 2,000 trials after these corrections. The
-  historical profile is unavailable, and the recorded hit's critical spike is not reproduced.
-  The fixture keeps its damage and win-rate checks and records the round-one gap explicitly.
+- The Gorn Eviscerator export is a round-one critical win. With the bundled demo profile,
+  Monte Carlo produced one round-one kill in 2,000 trials. The historical profile is
+  unavailable, so that frequency cannot be compared directly to the recorded fight.
+  The fixture keeps damage, win-rate, and a minimal nonzero round-one check.
 - The supplied exports are PvE. Defender-first ordering in player-versus-player combat has not
   been checked against an in-game PvP export.
-- `total_isolytic_damage` measures the isolytic leg before shield HP caps it, whereas
-  `total_damage` sums applied hull and shield HP damage. Isolytic damage can therefore exceed
-  applied total damage on a shield-breaking hit. The client log also reports attempted shield
-  damage above remaining shield HP.
+- The Realta export reports shield damage above the hostile's stated maximum shield HP while
+  the hostile survives. This discrepancy needs event-level remaining-HP data before its display
+  columns can be used to infer the engine's damage split. The overflow rule follows the player's
+  correction rather than that ambiguous export interpretation.
 - Buffs triggered by an incoming shield break enter the round accumulator for later weapon
   sub-rounds. Their effect on the player's immediately following volley still needs a
   corresponding event-level log comparison.

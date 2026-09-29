@@ -110,11 +110,8 @@ fn scalar_kernel_at(
     let shield_portion = damage_after_apex * inputs.shield_mitigation[idx];
     let hull_portion = damage_after_apex * (1.0 - inputs.shield_mitigation[idx]);
     let actual_shield_damage = shield_portion.min(inputs.defender_shield_remaining[idx]);
-    let hull_damage = if inputs.defender_shield_remaining[idx] > 0.0 {
-        hull_portion
-    } else {
-        damage_after_apex
-    };
+    let shield_overflow = shield_portion - actual_shield_damage;
+    let hull_damage = hull_portion + shield_overflow;
 
     outputs.damage_after_apex[idx] = damage_after_apex;
     outputs.shield_damage[idx] = actual_shield_damage;
@@ -432,8 +429,8 @@ unsafe fn compute_damage_kernel_batch_avx2_impl(
         let shield_portion = _mm256_mul_pd(damage_after_apex, shield_mitigation);
         let hull_portion = _mm256_mul_pd(damage_after_apex, _mm256_sub_pd(ones, shield_mitigation));
         let actual_shield_damage = _mm256_min_pd(shield_portion, defender_shield_remaining);
-        let shields_depleted = _mm256_cmp_pd(defender_shield_remaining, zeros, _CMP_LE_OQ);
-        let hull_damage = _mm256_blendv_pd(hull_portion, damage_after_apex, shields_depleted);
+        let shield_overflow = _mm256_sub_pd(shield_portion, actual_shield_damage);
+        let hull_damage = _mm256_add_pd(hull_portion, shield_overflow);
 
         _mm256_storeu_pd(
             outputs.damage_after_apex.as_mut_ptr().add(idx),
@@ -513,7 +510,8 @@ mod tests {
             (damage_after_attack_phase + isolytic_taken) * apex_damage_factor;
         let expected_shield_damage =
             (expected_damage_after_apex * shield_mitigation).min(defender_shield_remaining);
-        let expected_hull_damage = expected_damage_after_apex * (1.0 - shield_mitigation);
+        let expected_hull_damage = expected_damage_after_apex * (1.0 - shield_mitigation)
+            + (expected_damage_after_apex * shield_mitigation - expected_shield_damage);
 
         let (damage_after_apex, shield_damage, hull_damage, _) =
             resolve_damage_application_single_hit(

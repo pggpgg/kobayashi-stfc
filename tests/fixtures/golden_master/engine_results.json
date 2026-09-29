@@ -158,11 +158,11 @@
       "attacker_shield_remaining": 23551.872,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 32385.6,
+      "defender_hull_remaining": 31032.0,
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 6,
-      "total_damage": 30614.4,
+      "total_damage": 31968.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
@@ -175,11 +175,11 @@
       "attacker_shield_remaining": 23637.12,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 37396.8,
+      "defender_hull_remaining": 37080.0,
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 6,
-      "total_damage": 25603.2,
+      "total_damage": 25920.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
@@ -192,11 +192,11 @@
       "attacker_shield_remaining": 23548.416,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 34113.6,
+      "defender_hull_remaining": 32760.0,
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 6,
-      "total_damage": 28886.4,
+      "total_damage": 30240.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
@@ -893,7 +893,7 @@
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 1,
-      "total_damage": 1458000.0,
+      "total_damage": 7200000.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": false
     },
@@ -910,7 +910,7 @@
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 1,
-      "total_damage": 1746000.0,
+      "total_damage": 8640000.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": false
     },
@@ -927,7 +927,7 @@
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 1,
-      "total_damage": 1458000.0,
+      "total_damage": 7200000.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": false
     },
@@ -944,7 +944,7 @@
       "defender_shield_remaining": 0.0,
       "events": [],
       "rounds_simulated": 1,
-      "total_damage": 1458000.0,
+      "total_damage": 7200000.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": false
     },
@@ -957,7 +957,7 @@
       "attacker_shield_remaining": 23763.84,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 38671.2,
+      "defender_hull_remaining": 38380.0,
       "defender_shield_remaining": 0.0,
       "events": [
         {
@@ -1245,10 +1245,10 @@
             "damage_after_apex": 432.0,
             "defender_shield_remaining": 0.0,
             "hit_index": 1,
-            "hull_damage": 86.4,
+            "hull_damage": 377.6,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 172.8,
+            "running_hull_damage": 464.0,
             "shield_broke": true,
             "shield_damage": 54.4,
             "shield_mitigation": 0.8
@@ -1370,7 +1370,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 820.8,
+            "running_hull_damage": 1112.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -1388,7 +1388,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 820.8
+            "running_hull_damage": 1112.0
           }
         },
         {
@@ -1557,7 +1557,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1252.8,
+            "running_hull_damage": 1544.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -1679,7 +1679,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1684.8,
+            "running_hull_damage": 1976.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -1801,7 +1801,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2332.8,
+            "running_hull_damage": 2624.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -1819,7 +1819,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 2332.8
+            "running_hull_damage": 2624.0
           }
         },
         {
@@ -1988,7 +1988,7 @@
             "hull_damage": 518.4,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2851.2,
+            "running_hull_damage": 3142.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -2110,7 +2110,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 3283.2,
+            "running_hull_damage": 3574.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -2232,7 +2232,7 @@
             "hull_damage": 972.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4255.2,
+            "running_hull_damage": 4546.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -2250,7 +2250,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 4255.2
+            "running_hull_damage": 4546.4
           }
         },
         {
@@ -2419,7 +2419,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4903.2,
+            "running_hull_damage": 5194.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -2541,7 +2541,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 5551.2,
+            "running_hull_damage": 5842.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -2663,7 +2663,7 @@
             "hull_damage": 777.6,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 6328.8,
+            "running_hull_damage": 6620.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -2681,7 +2681,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 6328.8
+            "running_hull_damage": 6620.0
           }
         },
         {
@@ -2699,7 +2699,7 @@
         }
       ],
       "rounds_simulated": 4,
-      "total_damage": 6728.8,
+      "total_damage": 7020.0,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
@@ -2712,7 +2712,7 @@
       "attacker_shield_remaining": 23769.6,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 38632.32,
+      "defender_hull_remaining": 38617.6,
       "defender_shield_remaining": 0.0,
       "events": [
         {
@@ -2878,10 +2878,10 @@
             "damage_after_apex": 518.4,
             "defender_shield_remaining": 0.0,
             "hit_index": 0,
-            "hull_damage": 103.68,
+            "hull_damage": 118.4,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 103.68,
+            "running_hull_damage": 118.4,
             "shield_broke": true,
             "shield_damage": 400.0,
             "shield_mitigation": 0.8
@@ -3003,7 +3003,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 535.68,
+            "running_hull_damage": 550.4,
             "shield_broke": true,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3125,7 +3125,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1183.68,
+            "running_hull_damage": 1198.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3143,7 +3143,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 1183.68
+            "running_hull_damage": 1198.4
           }
         },
         {
@@ -3312,7 +3312,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1615.68,
+            "running_hull_damage": 1630.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3434,7 +3434,7 @@
             "hull_damage": 518.4,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2134.08,
+            "running_hull_damage": 2148.8,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3556,7 +3556,7 @@
             "hull_damage": 777.6,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2911.68,
+            "running_hull_damage": 2926.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3574,7 +3574,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 2911.68
+            "running_hull_damage": 2926.4
           }
         },
         {
@@ -3743,7 +3743,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 3343.68,
+            "running_hull_damage": 3358.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3865,7 +3865,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 3775.68,
+            "running_hull_damage": 3790.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -3987,7 +3987,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4423.68,
+            "running_hull_damage": 4438.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -4005,7 +4005,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 4423.68
+            "running_hull_damage": 4438.4
           }
         },
         {
@@ -4174,7 +4174,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 5071.68,
+            "running_hull_damage": 5086.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -4296,7 +4296,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 5719.68,
+            "running_hull_damage": 5734.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -4418,7 +4418,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 6367.68,
+            "running_hull_damage": 6382.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -4436,7 +4436,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 6367.68
+            "running_hull_damage": 6382.4
           }
         },
         {
@@ -4454,7 +4454,7 @@
         }
       ],
       "rounds_simulated": 4,
-      "total_damage": 6767.68,
+      "total_damage": 6782.4,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
@@ -4467,7 +4467,7 @@
       "attacker_shield_remaining": 23746.56,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 39193.92,
+      "defender_hull_remaining": 38833.6,
       "defender_shield_remaining": 0.0,
       "events": [
         {
@@ -4755,10 +4755,10 @@
             "damage_after_apex": 518.4,
             "defender_shield_remaining": 0.0,
             "hit_index": 1,
-            "hull_damage": 103.68,
+            "hull_damage": 464.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 190.08,
+            "running_hull_damage": 550.4,
             "shield_broke": true,
             "shield_damage": 54.4,
             "shield_mitigation": 0.8
@@ -4880,7 +4880,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 838.08,
+            "running_hull_damage": 1198.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -4898,7 +4898,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 838.08
+            "running_hull_damage": 1198.4
           }
         },
         {
@@ -5067,7 +5067,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1486.08,
+            "running_hull_damage": 1846.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -5189,7 +5189,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1918.08,
+            "running_hull_damage": 2278.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -5311,7 +5311,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2566.08,
+            "running_hull_damage": 2926.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -5329,7 +5329,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 2566.08
+            "running_hull_damage": 2926.4
           }
         },
         {
@@ -5498,7 +5498,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2998.08,
+            "running_hull_damage": 3358.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -5620,7 +5620,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 3646.08,
+            "running_hull_damage": 4006.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -5742,7 +5742,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4294.08,
+            "running_hull_damage": 4654.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -5760,7 +5760,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 4294.08
+            "running_hull_damage": 4654.4
           }
         },
         {
@@ -5929,7 +5929,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4726.08,
+            "running_hull_damage": 5086.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -6051,7 +6051,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 5158.08,
+            "running_hull_damage": 5518.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -6173,7 +6173,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 5806.08,
+            "running_hull_damage": 6166.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -6191,7 +6191,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 5806.08
+            "running_hull_damage": 6166.4
           }
         },
         {
@@ -6209,7 +6209,7 @@
         }
       ],
       "rounds_simulated": 4,
-      "total_damage": 6206.08,
+      "total_damage": 6566.4,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
@@ -6222,7 +6222,7 @@
       "attacker_shield_remaining": 23723.52,
       "attacker_won": false,
       "conqueror_borg_beam_suppression": false,
-      "defender_hull_remaining": 38887.2,
+      "defender_hull_remaining": 38423.2,
       "defender_shield_remaining": 0.0,
       "events": [
         {
@@ -6510,10 +6510,10 @@
             "damage_after_apex": 648.0,
             "defender_shield_remaining": 0.0,
             "hit_index": 1,
-            "hull_damage": 129.6,
+            "hull_damage": 593.6,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 216.0,
+            "running_hull_damage": 680.0,
             "shield_broke": true,
             "shield_damage": 54.4,
             "shield_mitigation": 0.8
@@ -6635,7 +6635,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 864.0,
+            "running_hull_damage": 1328.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -6653,7 +6653,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 864.0
+            "running_hull_damage": 1328.0
           }
         },
         {
@@ -6822,7 +6822,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1296.0,
+            "running_hull_damage": 1760.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -6944,7 +6944,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 1728.0,
+            "running_hull_damage": 2192.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7066,7 +7066,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2376.0,
+            "running_hull_damage": 2840.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7084,7 +7084,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 2376.0
+            "running_hull_damage": 2840.0
           }
         },
         {
@@ -7253,7 +7253,7 @@
             "hull_damage": 432.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 2808.0,
+            "running_hull_damage": 3272.0,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7375,7 +7375,7 @@
             "hull_damage": 518.4,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 3326.4,
+            "running_hull_damage": 3790.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7497,7 +7497,7 @@
             "hull_damage": 972.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4298.4,
+            "running_hull_damage": 4762.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7515,7 +7515,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 4298.4
+            "running_hull_damage": 4762.4
           }
         },
         {
@@ -7684,7 +7684,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 4946.4,
+            "running_hull_damage": 5410.4,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7806,7 +7806,7 @@
             "hull_damage": 518.4,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 5464.8,
+            "running_hull_damage": 5928.8,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7928,7 +7928,7 @@
             "hull_damage": 648.0,
             "isolytic_component": 0.0,
             "isolytic_vulnerability": false,
-            "running_hull_damage": 6112.8,
+            "running_hull_damage": 6576.8,
             "shield_broke": false,
             "shield_damage": 0.0,
             "shield_mitigation": 0.0
@@ -7946,7 +7946,7 @@
             "attacker_burning_damage": 0.0,
             "bonus_damage": 0.0,
             "burning_damage": 0.0,
-            "running_hull_damage": 6112.8
+            "running_hull_damage": 6576.8
           }
         },
         {
@@ -7964,7 +7964,7 @@
         }
       ],
       "rounds_simulated": 4,
-      "total_damage": 6512.8,
+      "total_damage": 6976.8,
       "total_isolytic_damage": 0.0,
       "winner_by_round_limit": true
     },
