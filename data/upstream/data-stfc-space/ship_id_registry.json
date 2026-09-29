@@ -669,6 +669,12 @@
       "ship_class": "survey"
     },
     {
+      "numeric_id": 2291615234,
+      "id": "uss_kelcie_mae",
+      "ship_name": "U.S.S. KELCIE MAE",
+      "ship_class": "survey"
+    },
+    {
       "numeric_id": 1577508895,
       "id": "uss_newgrange",
       "ship_name": "U.S.S. NEWGRANGE",
