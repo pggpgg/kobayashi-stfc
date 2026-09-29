@@ -254,7 +254,9 @@ fn denticle_blade_gates_weapon_five_until_proc() {
     let rec = resolve_hostile("1043112405").expect("denticle xindi");
     let catalog = hostile_ability_catalog_for_default_path();
     let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
-    let attacker = weak_attacker();
+    let mut attacker = weak_attacker();
+    // Keep the test ship alive through the earlier hostile volleys so weapon five is reachable.
+    attacker.hull_health = 1.0e18;
     let defender = denticle_hostile_defender(&rec);
 
     let mut fail_seed = None;
@@ -301,7 +303,8 @@ fn denticle_blade_fires_weapon_five_when_proc_succeeds() {
     let rec = resolve_hostile("1043112405").expect("denticle xindi");
     let catalog = hostile_ability_catalog_for_default_path();
     let defender_crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
-    let attacker = weak_attacker();
+    let mut attacker = weak_attacker();
+    attacker.hull_health = 1.0e18;
     let defender = denticle_hostile_defender(&rec);
 
     let mut success_seed = None;

@@ -71,19 +71,47 @@ pub fn combine_outbound_damage_before_apex(
 }
 
 /// Shield/hull split: returns (actual_shield_damage, hull_damage_this_round).
-/// When shield_remaining is 0, shield_mitigation is treated as 0 (all damage to hull).
+/// The shield absorbs only its remaining HP; excess damage assigned to the shield does not
+/// become hull damage on the same hit. Subsequent hits go entirely to hull once shields are gone.
 #[inline]
 pub fn apply_shield_hull_split(
     damage_after_apex: f64,
     shield_mitigation: f64,
     defender_shield_remaining: f64,
 ) -> (f64, f64) {
+    let effective_mitigation = if defender_shield_remaining > 0.0 {
+        shield_mitigation
+    } else {
+        0.0
+    };
+    let shield_portion = damage_after_apex * effective_mitigation;
+    let actual_shield_damage = shield_portion.min(defender_shield_remaining.max(0.0));
+    let hull_damage = damage_after_apex * (1.0 - effective_mitigation);
+    (actual_shield_damage, hull_damage)
+}
+
+/// Breen Energy-Dampening Field currently uses the older overflow interpretation: all damage
+/// routed to a depleted shield pool passes to hull. Keep this separate from ordinary shield
+/// mitigation until a recorded Breen fight establishes its exact depletion rule.
+#[inline]
+pub(crate) fn apply_shield_hull_split_with_overflow(
+    damage_after_apex: f64,
+    shield_mitigation: f64,
+    defender_shield_remaining: f64,
+) -> (f64, f64) {
+    let (actual_shield_damage, hull_damage) = apply_shield_hull_split(
+        damage_after_apex,
+        shield_mitigation,
+        defender_shield_remaining,
+    );
+    if defender_shield_remaining <= 0.0 {
+        return (actual_shield_damage, hull_damage);
+    }
     let shield_portion = damage_after_apex * shield_mitigation;
-    let hull_portion = damage_after_apex * (1.0 - shield_mitigation);
-    let actual_shield_damage = shield_portion.min(defender_shield_remaining);
-    let shield_overflow = shield_portion - actual_shield_damage;
-    let hull_damage_this_round = hull_portion + shield_overflow;
-    (actual_shield_damage, hull_damage_this_round)
+    (
+        actual_shield_damage,
+        hull_damage + shield_portion - actual_shield_damage,
+    )
 }
 
 #[cfg(test)]
@@ -243,22 +271,33 @@ mod tests {
     #[test]
     fn shield_split_no_shields_all_to_hull() {
         let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.8, 0.0);
-        // shield_portion = 1000 * 0.8 = 800
-        // actual_shield = min(800, 0) = 0
-        // overflow = 800 - 0 = 800
-        // hull = 1000 * 0.2 + 800 = 200 + 800 = 1000
+        // Once shields are gone, the next hit goes entirely to hull.
         assert!((shield_dmg - 0.0).abs() < 1e-12);
         assert!((hull_dmg - 1000.0).abs() < 1e-12);
     }
 
     #[test]
-    fn shield_split_partial_depletion_overflow_to_hull() {
+    fn shield_split_partial_depletion_discards_shield_excess() {
         // shields have 300 remaining, shield_portion would be 500
         let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.5, 300.0);
-        // shield_portion = 1000 * 0.5 = 500
-        // actual_shield = min(500, 300) = 300
-        // overflow = 500 - 300 = 200
-        // hull = 1000 * 0.5 + 200 = 500 + 200 = 700
+        assert!((shield_dmg - 300.0).abs() < 1e-12);
+        assert!((hull_dmg - 500.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn realta_log_shield_break_does_not_transfer_excess_to_hull() {
+        // The Takret Militia had 360 SHP and 470 HHP. The first Realta hit reported 1,387
+        // shield damage and 369 hull damage; the hostile survived to take a second hit.
+        // Source: fight samples/realta vs takret militia 10.csv, round 1 event 2.
+        let (shield_dmg, hull_dmg) = apply_shield_hull_split(1756.0, 1387.0 / 1756.0, 360.0);
+        assert!((shield_dmg - 360.0).abs() < 1e-9);
+        assert!((hull_dmg - 369.0).abs() < 1e-9);
+        assert!(hull_dmg < 470.0);
+    }
+
+    #[test]
+    fn breen_routing_keeps_explicit_overflow_behavior() {
+        let (shield_dmg, hull_dmg) = apply_shield_hull_split_with_overflow(1000.0, 1.0, 300.0);
         assert!((shield_dmg - 300.0).abs() < 1e-12);
         assert!((hull_dmg - 700.0).abs() < 1e-12);
     }

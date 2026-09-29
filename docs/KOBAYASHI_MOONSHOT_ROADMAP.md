@@ -110,7 +110,7 @@ Instead of a single hard-coded truth, uncertain areas become named hypotheses:
 
 ```text
 mitigation_ordering = hypothesis_a | hypothesis_b | learned_formula_v3
-shield_overflow_rule = current | alternate_client_log_interpretation
+shield_overflow_rule = observed_normal_no_overflow | breen_special_overflow | future_log_hypothesis
 hostile_special_ability = noop | inferred_proc | explicit_script
 ```
 

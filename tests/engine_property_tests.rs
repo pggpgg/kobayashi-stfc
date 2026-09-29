@@ -107,8 +107,10 @@ fn assert_result_invariants(
             defender.shield_health,
         ),
     ] {
+        // SimulationResult rounds HP to six decimal places, so a rounded value can sit up to
+        // half a micro-point above an unrounded fixture maximum.
         prop_assert!(
-            remaining.is_finite() && remaining >= 0.0 && remaining <= max + 1e-9,
+            remaining.is_finite() && remaining >= 0.0 && remaining <= max + 1e-6,
             "{label} remaining = {remaining}, max = {max}"
         );
     }
