@@ -218,6 +218,10 @@ jobs:
           node-version: "24"
 
       - name: Check live summary catalogs vs committed
+        # An unrelated feature PR cannot resolve live catalog drift while a dedicated
+        # data-refresh PR is pending. Keep the diagnostic, and enforce it on main
+        # and on data-refresh PRs where the upstream snapshot is the change under review.
+        continue-on-error: ${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'automated/data-refresh-') }}
         run: node scripts/check_stfcspace_summary_drift.mjs --check
 
   frontend:
