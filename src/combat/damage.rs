@@ -79,13 +79,14 @@ pub fn apply_shield_hull_split(
     shield_mitigation: f64,
     defender_shield_remaining: f64,
 ) -> (f64, f64) {
-    let effective_mitigation = if defender_shield_remaining > 0.0 {
-        shield_mitigation
-    } else {
-        0.0
-    };
-    let shield_portion = damage_after_apex * effective_mitigation;
-    let direct_hull_damage = damage_after_apex * (1.0 - effective_mitigation);
+    // Most combatants have already depleted their shields by the time later volleys
+    // resolve. Avoid the shield split and overflow arithmetic for those hits.
+    if defender_shield_remaining <= 0.0 || shield_mitigation <= 0.0 {
+        return (0.0, damage_after_apex);
+    }
+
+    let shield_portion = damage_after_apex * shield_mitigation;
+    let direct_hull_damage = damage_after_apex * (1.0 - shield_mitigation);
     let actual_shield_damage = shield_portion.min(defender_shield_remaining.max(0.0));
     let shield_overflow = shield_portion - actual_shield_damage;
     (actual_shield_damage, direct_hull_damage + shield_overflow)
