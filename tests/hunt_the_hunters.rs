@@ -3,6 +3,7 @@
 use kobayashi::combat::HOSTILE_TAG_MASK_GORN_HUNTER;
 use kobayashi::data::data_registry::DataRegistry;
 use kobayashi::data::loader::{resolve_hostile, resolve_ship_with_tier_level};
+use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 use kobayashi::optimizer::crew_generator::CrewCandidate;
 use kobayashi::optimizer::monte_carlo::{
@@ -68,7 +69,7 @@ fn hunt_the_hunters_isolytic_applies_only_vs_gorn_hunter_hostiles() {
         &candidate,
         0,
         0,
-        None,
+        Some(DEMO_PROFILE_ID),
         500_000,
         None,
         DefenderOpponent::Hostile,
@@ -93,7 +94,7 @@ fn hunt_the_hunters_isolytic_applies_only_vs_gorn_hunter_hostiles() {
         &candidate,
         0,
         0,
-        None,
+        Some(DEMO_PROFILE_ID),
         500_000,
         None,
         DefenderOpponent::Hostile,

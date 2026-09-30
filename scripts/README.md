@@ -8,7 +8,7 @@ A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/wo
 
 **One open refresh at a time:** each run opens its own `automated/data-refresh-<run_id>` branch, so a run that produces a PR also comments on and closes any older still-open refresh PR (and deletes its branch). An older refresh is strictly superseded — same pipeline, older upstream snapshot — and leaving it open is misleading: its `Upstream summary drift` check compares *that* branch against live upstream, so it stays red purely for being stale, which reads as the refresh failing. A run that changes nothing closes nothing, since the existing PR is then still the valid pending refresh.
 
-**CI drift gate:** every CI run includes job `upstream_drift` ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), which fails when live data.stfc.space ship/hostile/research summaries diverge from committed caches. Remediation: merge the weekly bot PR or refresh locally.
+**CI drift gate:** every CI run includes job `upstream_drift` ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), which reports when live data.stfc.space ship/hostile/research summaries diverge from committed caches. Drift blocks main and `automated/data-refresh-*` PRs; it is diagnostic on unrelated feature PRs while a dedicated refresh can be reviewed. Remediation: merge the weekly bot PR or refresh locally.
 
 **Local check:**
 

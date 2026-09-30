@@ -129,6 +129,147 @@ fn defender_counter_respects_weapon_base_shots() {
     approx_eq(d3, 3.0 * d1, d1 * 1e-9 + 1e-6);
 }
 
+#[test]
+fn hostile_volleys_precede_player_volleys_and_stop_after_destruction() {
+    fn ship(id: &str, hull_health: f64, attacks: &[(f64, u32)]) -> Combatant {
+        Combatant {
+            id: id.into(),
+            attack: 0.0,
+            mitigation: 0.0,
+            armor: 0.0,
+            shield_deflection: 0.0,
+            dodge: 0.0,
+            damage_reduction: 0.0,
+            pierce: 0.0,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            crit_damage_floor: 0.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            end_of_round_damage: 0.0,
+            hull_health,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            apex_barrier: 0.0,
+            apex_shred: 0.0,
+            isolytic_damage: 0.0,
+            isolytic_defense: 0.0,
+            weapons: attacks
+                .iter()
+                .map(|&(attack, shots)| WeaponStats {
+                    attack,
+                    shots: Some(shots),
+                    ..Default::default()
+                })
+                .collect(),
+            hostile_mitigation_params: None,
+        }
+    }
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Events,
+        initial_attacker_hull_damage: 0.0,
+        weapon_damage_profile_additive_pool: None,
+        profile_weapon_damage_fraction: 0.0,
+        defender_hull_faction_id: 0,
+        defender_hostile_tag_mask: 0,
+        attacker_owner_faction: OpponentFactionTag::Unknown,
+        engagement_enemy_types: Default::default(),
+        defender_level: None,
+        attacker_roster_officer_ids: Default::default(),
+        incoming_shield_mitigation_bonus: 0.0,
+        incoming_shield_mitigation_bonus_rounds: 0,
+        attacker_hyperthermic_decay_fraction: 0.0,
+        emit_state_snapshots: false,
+    };
+    let crew = CrewConfiguration::default();
+
+    // The recorded fight exports show hostile weapon 0, player weapon 0, hostile weapon 1,
+    // player weapon 1. Shots within a weapon form one volley.
+    let result = simulate_combat(
+        &ship("player", 1000.0, &[(10.0, 1), (10.0, 1)]),
+        &ship("hostile", 1000.0, &[(5.0, 2), (5.0, 1)]),
+        &config,
+        &crew,
+    );
+    let order: Vec<String> = result
+        .events
+        .iter()
+        .filter_map(
+            |event| match (event.event_type.as_str(), event.phase.as_str()) {
+                ("mitigation_calc", "counter") => Some(format!("E{}", event.weapon_index.unwrap())),
+                ("attack_roll", "attack") => Some(format!("P{}", event.weapon_index.unwrap())),
+                _ => None,
+            },
+        )
+        .collect();
+    assert_eq!(order, ["E0", "E0", "P0", "E1", "P1"]);
+
+    let player_destroyed = simulate_combat(
+        &ship("player", 50.0, &[(100.0, 3)]),
+        &ship("hostile", 1000.0, &[(100.0, 3)]),
+        &config,
+        &crew,
+    );
+    assert_eq!(player_destroyed.attacker_hull_remaining, 0.0);
+    assert_eq!(player_destroyed.defender_hull_remaining, 1000.0);
+    assert_eq!(
+        player_destroyed
+            .events
+            .iter()
+            .filter(|event| event.event_type == "mitigation_calc" && event.phase == "counter")
+            .count(),
+        1
+    );
+    assert!(!player_destroyed
+        .events
+        .iter()
+        .any(|event| event.event_type == "attack_roll"));
+    let mut untraced = config.clone();
+    untraced.trace_mode = TraceMode::Off;
+    let player_destroyed_untraced = simulate_combat(
+        &ship("player", 50.0, &[(100.0, 3)]),
+        &ship("hostile", 1000.0, &[(100.0, 3)]),
+        &untraced,
+        &crew,
+    );
+    assert_eq!(
+        player_destroyed.total_damage,
+        player_destroyed_untraced.total_damage
+    );
+    assert_eq!(
+        player_destroyed.attacker_hull_remaining,
+        player_destroyed_untraced.attacker_hull_remaining
+    );
+
+    let hostile_destroyed = simulate_combat(
+        &ship("player", 1000.0, &[(100.0, 3), (100.0, 1)]),
+        &ship("hostile", 50.0, &[(0.0, 1), (0.0, 1)]),
+        &config,
+        &crew,
+    );
+    assert_eq!(hostile_destroyed.defender_hull_remaining, 0.0);
+    assert_eq!(
+        hostile_destroyed
+            .events
+            .iter()
+            .filter(|event| event.event_type == "attack_roll")
+            .count(),
+        1
+    );
+    let hostile_destroyed_untraced = simulate_combat(
+        &ship("player", 1000.0, &[(100.0, 3), (100.0, 1)]),
+        &ship("hostile", 50.0, &[(0.0, 1), (0.0, 1)]),
+        &untraced,
+        &crew,
+    );
+    assert_eq!(
+        hostile_destroyed.total_damage,
+        hostile_destroyed_untraced.total_damage
+    );
+}
+
 /// Traces include `hit_index` per outbound hit within a weapon sub-round for stable hit accounting.
 #[test]
 fn attack_trace_includes_hit_index_per_weapon_shot() {
@@ -514,7 +655,7 @@ fn defender_crew_can_modify_counter_fire_damage() {
 #[test]
 fn defender_crew_shield_break_effects_apply_to_counter_fire() {
     // When the defender's shields are depleted, `TimingWindow::ShieldBreak` effects on the
-    // defender crew (e.g. hostile ship abilities) must apply to that sub-round's counter-attack.
+    // defender crew (e.g. hostile ship abilities) apply to the next hostile volley.
     let attacker = Combatant {
         id: "att".to_string(),
         attack: 0.0,
@@ -537,11 +678,18 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats {
-            attack: 500.0,
-            shots: Some(1),
-            ..Default::default()
-        }],
+        weapons: vec![
+            WeaponStats {
+                attack: 500.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 500.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+        ],
         hostile_mitigation_params: None,
     };
     let defender = Combatant {
@@ -566,11 +714,18 @@ fn defender_crew_shield_break_effects_apply_to_counter_fire() {
         apex_shred: 0.0,
         isolytic_damage: 0.0,
         isolytic_defense: 0.0,
-        weapons: vec![WeaponStats {
-            attack: 100.0,
-            shots: Some(1),
-            ..Default::default()
-        }],
+        weapons: vec![
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+            WeaponStats {
+                attack: 100.0,
+                shots: Some(1),
+                ..Default::default()
+            },
+        ],
         hostile_mitigation_params: None,
     };
     let attacker_crew = CrewConfiguration { seats: vec![] };
@@ -1061,7 +1216,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
 }
 
 #[test]
-fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
+fn shield_excess_reaches_hull_on_depleting_hit() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 1000.0,
@@ -1087,7 +1242,8 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
         weapons: vec![],
         hostile_mitigation_params: None,
     };
-    // Defender has only 100 SHP; 80% of 1000 = 800 to shield â†’ 100 absorbed, 700 overflow to hull. 20% = 200 to hull. Total hull = 900.
+    // Defender has only 100 SHP. Of 800 shield-assigned damage, 100 depletes the shield
+    // and the excess 700 joins the 200 direct hull damage on this hit.
     let defender = Combatant {
         id: "defender".to_string(),
         attack: 0.0,
@@ -1134,7 +1290,7 @@ fn shield_overflow_goes_to_hull_when_shields_depleted_mid_round() {
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.total_damage, 1000.0, 1e-12);
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
-    approx_eq(result.defender_hull_remaining, 2000.0 - 900.0, 1e-12); // 900 hull damage (200 + 700 overflow)
+    approx_eq(result.defender_hull_remaining, 1100.0, 1e-12);
 }
 
 #[test]
@@ -1180,7 +1336,7 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
         hull_health: 500.0,
-        shield_health: 50.0, // Round 1: 80% of 100 = 80 to shield â†’ 50 absorbed, 30 overflow; 20% = 20 to hull. Shield gone. Hull takes 20+30 = 50.
+        shield_health: 50.0, // Round 1: 50 shield HP absorbs part of the 80 assigned to shields; 30 overflows to hull, joining 20 direct hull damage.
         shield_mitigation: 0.8,
         apex_barrier: 0.0,
         apex_shred: 0.0,
@@ -1209,9 +1365,8 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
-    // Round 1: 50 hull damage. Round 2 and 3: 100% to hull = 100 each. Total hull damage = 50 + 100 + 100 = 250.
-    assert!(result.defender_hull_remaining <= (500.0 - 250.0) + 1.0);
-    assert!(result.defender_hull_remaining >= (500.0 - 250.0) - 1.0);
+    // Round 1: 50 hull damage. Rounds 2 and 3: 100 each after shields are gone.
+    approx_eq(result.defender_hull_remaining, 250.0, 1e-12);
 }
 
 #[test]
@@ -3853,7 +4008,7 @@ fn hull_breach_boosts_critical_damage_after_crit_multiplier() {
     let crit_event = result
         .events
         .iter()
-        .find(|event| event.event_type == "crit_resolution")
+        .find(|event| event.event_type == "crit_resolution" && event.phase == "attack")
         .expect("crit event should be present");
     assert_eq!(crit_event.values["hull_breach_active"], Value::Bool(true));
     approx_eq(
@@ -3963,7 +4118,7 @@ fn typed_crit_chance_bonus_applies_at_crit_roll() {
     let crit_event = result
         .events
         .iter()
-        .find(|e| e.event_type == "crit_resolution")
+        .find(|e| e.event_type == "crit_resolution" && e.phase == "attack")
         .expect("crit resolution");
     assert_eq!(crit_event.values["is_crit"], Value::Bool(true));
     approx_eq(
@@ -4266,6 +4421,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
     assert_eq!(first.events.len(), 23);
     let expected_event_types = [
         "round_start",
+        "mitigation_calc",
+        "crit_resolution",
         "attack_roll",
         "mitigation_calc",
         "pierce_calc",
@@ -4273,8 +4430,6 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         "proc_triggers",
         "stack_resolution",
         "damage_application",
-        "mitigation_calc",
-        "crit_resolution",
         "end_of_round_effects",
     ];
     for (index, expected) in expected_event_types.iter().enumerate() {
@@ -4282,12 +4437,12 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         assert_eq!(first.events[index + 11].event_type, *expected);
     }
     assert_eq!(first.events[22].event_type, "combat_end_effects");
-    assert_eq!(first.events[4].phase, "attack");
-    assert_eq!(first.events[8].phase, "counter");
+    assert_eq!(first.events[1].phase, "counter");
+    assert_eq!(first.events[6].phase, "attack");
 
     // Seed 7 (SplitMix64) produces deterministic rolls; exact values depend on RNG implementation.
-    let round_one_crit = &first.events[4];
-    let round_one_proc = &first.events[5];
+    let round_one_crit = &first.events[6];
+    let round_one_proc = &first.events[7];
     let round_one_crit_roll = round_one_crit.values["roll"]
         .as_f64()
         .expect("crit roll as f64");
@@ -4305,8 +4460,8 @@ fn simulate_combat_uses_seed_and_emits_canonical_events() {
         Value::Bool(round_one_proc_roll < 0.4)
     );
 
-    let round_two_crit = &first.events[15];
-    let round_two_proc = &first.events[16];
+    let round_two_crit = &first.events[17];
+    let round_two_proc = &first.events[18];
     let round_two_crit_roll = round_two_crit.values["roll"]
         .as_f64()
         .expect("crit roll as f64");

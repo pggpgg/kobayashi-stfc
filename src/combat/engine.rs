@@ -1216,8 +1216,14 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         let has_on_hit_crit_stack_rows = attack_phase_filtered
             .iter()
             .any(|e| matches!(e.effect, AbilityEffect::OnHitCritDamageStack { .. }));
+        // A shield-break reaction can affect later hostile volleys in the same round.
+        let mut defender_shield_break_carry: Vec<ActiveAbilityEffect> = Vec::new();
         for weapon_index in 0..num_sub_rounds {
-            let mut defender_shield_break_carry: Vec<ActiveAbilityEffect> = Vec::new();
+            if st.total_hull_damage >= defender.hull_health
+                || st.total_attacker_hull_damage >= attacker.hull_health
+            {
+                break;
+            }
             phase_effects.clear();
             phase_effects.set_trace_contributions(trace.is_enabled());
             phase_effects.merge_from(&weapon_round_base);
@@ -1302,6 +1308,66 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                         Some(("on_hit_crit_stacks", None)),
                     );
                 }
+            }
+
+            // Recorded PvE logs alternate volleys with the hostile firing first in each
+            // weapon sub-round. Delayed or inactive hostile weapons still suppress the
+            // after-subround window, but they must not suppress the player volley.
+            let defender_weapon = defender.weapon_attack(weapon_index);
+            let skip_defender_weapon = defender_weapon.is_some()
+                && (skip_defender_counter_attack
+                    || (hostile_denticle_blade_gates_weapon(defender_crew, weapon_index)
+                        && !st.defender_denticle_blade_active));
+            if !skip_defender_weapon {
+                if let Some(defender_weapon_attack) = defender_weapon {
+                    fire_defender_counter(FireDefenderCounter {
+                        st: &mut st,
+                        phase_effects_round: &mut phase_effects_round,
+                        trace: &mut trace,
+                        rng: &mut rng,
+                        combat_ctx: &combat_ctx,
+                        config,
+                        attacker,
+                        defender,
+                        attacker_crew,
+                        defender_crew,
+                        round_index,
+                        weapon_index,
+                        defender_weapon_attack,
+                        def_b_shots,
+                        weapon_base,
+                        attack_phase_assimilated,
+                        use_experimental_simd_damage_after_apex_base,
+                        attacker_ship_type,
+                        attacker_dodge_bonus,
+                        attacker_mitigation_additive,
+                        defender_faction,
+                        defender_ship_type,
+                        defender_is_npc_hostile,
+                        defender_is_player_ship,
+                        attacker_ship_id_arc,
+                        engagement_enemy_types_arc,
+                        weapon_round_base: &weapon_round_base,
+                        phase_effects: &phase_effects,
+                        defender_shield_break_carry: &defender_shield_break_carry,
+                        defender_combat_begin_effects,
+                        defender_round_start_effects,
+                        defender_attack_phase_effects,
+                        defender_defense_phase_effects,
+                        receive_damage_effects,
+                        self_shield_break_effects,
+                        hull_breach_effects,
+                        osr_defense_armor_add: osr_round_delta.defense_armor_add,
+                        osr_defense_shield_deflection_add: osr_round_delta
+                            .defense_shield_deflection_add,
+                        osr_defense_dodge_add: osr_round_delta.defense_dodge_add,
+                        attacker_shield_mitigation_forced_zero: setup
+                            .attacker_shield_mitigation_forced_zero,
+                    });
+                }
+            }
+            if st.total_attacker_hull_damage >= attacker.hull_health {
+                break;
             }
 
             let weapon_index_u = weapon_index as u32;
@@ -1426,61 +1492,8 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 );
             }
 
-            let defender_weapon = defender.weapon_attack(weapon_index);
-            if defender_weapon.is_some() && skip_defender_counter_attack {
+            if skip_defender_weapon {
                 continue;
-            }
-            if defender_weapon.is_some()
-                && hostile_denticle_blade_gates_weapon(defender_crew, weapon_index)
-                && !st.defender_denticle_blade_active
-            {
-                continue;
-            }
-            if let Some(defender_weapon_attack) = defender_weapon {
-                fire_defender_counter(FireDefenderCounter {
-                    st: &mut st,
-                    phase_effects_round: &mut phase_effects_round,
-                    trace: &mut trace,
-                    rng: &mut rng,
-                    combat_ctx: &combat_ctx,
-                    config,
-                    attacker,
-                    defender,
-                    attacker_crew,
-                    defender_crew,
-                    round_index,
-                    weapon_index,
-                    defender_weapon_attack,
-                    def_b_shots,
-                    weapon_base,
-                    attack_phase_assimilated,
-                    use_experimental_simd_damage_after_apex_base,
-                    attacker_ship_type,
-                    attacker_dodge_bonus,
-                    attacker_mitigation_additive,
-                    defender_faction,
-                    defender_ship_type,
-                    defender_is_npc_hostile,
-                    defender_is_player_ship,
-                    attacker_ship_id_arc,
-                    engagement_enemy_types_arc,
-                    weapon_round_base: &weapon_round_base,
-                    phase_effects: &phase_effects,
-                    defender_shield_break_carry: &defender_shield_break_carry,
-                    defender_combat_begin_effects,
-                    defender_round_start_effects,
-                    defender_attack_phase_effects,
-                    defender_defense_phase_effects,
-                    receive_damage_effects,
-                    self_shield_break_effects,
-                    hull_breach_effects,
-                    osr_defense_armor_add: osr_round_delta.defense_armor_add,
-                    osr_defense_shield_deflection_add: osr_round_delta
-                        .defense_shield_deflection_add,
-                    osr_defense_dodge_add: osr_round_delta.defense_dodge_add,
-                    attacker_shield_mitigation_forced_zero: setup
-                        .attacker_shield_mitigation_forced_zero,
-                });
             }
 
             let ctx_after_subround = CombatContext {
@@ -2861,6 +2874,9 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         };
 
     for hit_index in 0..effective_shots {
+        if st.total_hull_damage >= defender.hull_health {
+            break;
+        }
         if let Some(attacker_weapon_attack) = attacker.weapon_attack(weapon_index) {
             let pre_mult = phase_effects.pre_attack_multiplier();
             let g_galaxy = phase_effects.galaxy_additive_weapon_frac();
@@ -3421,6 +3437,9 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                         &mut simd_damage_after_apex_batch,
                     );
                     for lane in 0..simd_damage_after_apex_batch.len() {
+                        if st.total_hull_damage >= defender.hull_health {
+                            break;
+                        }
                         st.total_isolytic_damage +=
                             simd_isolytic_batch[lane].max(0.0) * apex_damage_factor;
                         let lane_shield_mitigation = if st.defender_shield_remaining > 0.0 {
@@ -3834,6 +3853,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         };
 
     for hit_index in 0..def_effective_shots {
+        if st.total_attacker_hull_damage >= attacker.hull_health {
+            break;
+        }
         trace.record_if(|| {
             let (c_armor, c_shield, c_dodge) = attacker_ship_type.coefficients();
             let dodge_mitigation = attacker_dodge_bonus * c_dodge;
@@ -4101,6 +4123,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                     &mut counter_simd_after_apex_batch,
                 );
                 for lane in 0..counter_simd_after_apex_batch.len() {
+                    if st.total_attacker_hull_damage >= attacker.hull_health {
+                        break;
+                    }
                     let att_shield_before_counter = st.attacker_shield_remaining;
                     let lane_mit = if st.attacker_shield_remaining > 0.0 {
                         counter_simd_shield_mit_batch[lane]

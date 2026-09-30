@@ -71,19 +71,25 @@ pub fn combine_outbound_damage_before_apex(
 }
 
 /// Shield/hull split: returns (actual_shield_damage, hull_damage_this_round).
-/// When shield_remaining is 0, shield_mitigation is treated as 0 (all damage to hull).
+/// Damage assigned to shields beyond their remaining HP spills into hull on the same hit.
+/// When shields are already gone, the entire hit damages hull.
 #[inline]
 pub fn apply_shield_hull_split(
     damage_after_apex: f64,
     shield_mitigation: f64,
     defender_shield_remaining: f64,
 ) -> (f64, f64) {
+    // Most combatants have already depleted their shields by the time later volleys
+    // resolve. Avoid the shield split and overflow arithmetic for those hits.
+    if defender_shield_remaining <= 0.0 || shield_mitigation <= 0.0 {
+        return (0.0, damage_after_apex);
+    }
+
     let shield_portion = damage_after_apex * shield_mitigation;
-    let hull_portion = damage_after_apex * (1.0 - shield_mitigation);
-    let actual_shield_damage = shield_portion.min(defender_shield_remaining);
+    let direct_hull_damage = damage_after_apex * (1.0 - shield_mitigation);
+    let actual_shield_damage = shield_portion.min(defender_shield_remaining.max(0.0));
     let shield_overflow = shield_portion - actual_shield_damage;
-    let hull_damage_this_round = hull_portion + shield_overflow;
-    (actual_shield_damage, hull_damage_this_round)
+    (actual_shield_damage, direct_hull_damage + shield_overflow)
 }
 
 #[cfg(test)]
@@ -243,22 +249,15 @@ mod tests {
     #[test]
     fn shield_split_no_shields_all_to_hull() {
         let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.8, 0.0);
-        // shield_portion = 1000 * 0.8 = 800
-        // actual_shield = min(800, 0) = 0
-        // overflow = 800 - 0 = 800
-        // hull = 1000 * 0.2 + 800 = 200 + 800 = 1000
+        // Once shields are gone, the next hit goes entirely to hull.
         assert!((shield_dmg - 0.0).abs() < 1e-12);
         assert!((hull_dmg - 1000.0).abs() < 1e-12);
     }
 
     #[test]
-    fn shield_split_partial_depletion_overflow_to_hull() {
+    fn shield_split_partial_depletion_spills_excess_to_hull() {
         // shields have 300 remaining, shield_portion would be 500
         let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.5, 300.0);
-        // shield_portion = 1000 * 0.5 = 500
-        // actual_shield = min(500, 300) = 300
-        // overflow = 500 - 300 = 200
-        // hull = 1000 * 0.5 + 200 = 500 + 200 = 700
         assert!((shield_dmg - 300.0).abs() < 1e-12);
         assert!((hull_dmg - 700.0).abs() < 1e-12);
     }

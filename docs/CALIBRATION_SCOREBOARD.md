@@ -33,7 +33,7 @@ See [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) and [CALIBRAT
 | Recorded iteration passed | 0 |
 | Recorded iteration failed | 0 |
 | Metrics scored | 70 |
-| Mean σ (composite) | 0.2902 |
+| Mean σ (composite) | 0.2906 |
 | Max σ | 1.0000 |
 | Worst metric | `drift_survey_soak` `attacker_hull_remaining` σ=1.0000 |
 
@@ -176,7 +176,7 @@ Two-weapon attacker vs single-hull defender; exercises sub-round ordering.
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |
-| total_damage | 875.6000 | [300.0000, 4000.0000] | 0.689 | ok |
+| total_damage | 827.2000 | [300.0000, 4000.0000] | 0.715 | ok |
 | rounds_simulated | 5.0000 | [1.0000, 15.0000] | 0.429 | ok |
 | defender_hull_remaining | 0.0000 | [0.0000, 650.0000] | 1.000 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 150.0000] | 1.000 | ok |
