@@ -123,7 +123,7 @@ pub fn import_profiles_zip(zip_bytes: &[u8]) -> Result<(), String> {
     let result = (|| -> Result<(), String> {
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
-            let name = file.name().map_err(|e| e.to_string())?.to_owned();
+            let name = file.name().map_err(|e| e.to_string())?.into_owned();
             let Some(rel) = normalize_zip_entry_name(&name) else {
                 continue;
             };
