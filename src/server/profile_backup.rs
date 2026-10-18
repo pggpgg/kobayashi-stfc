@@ -5,7 +5,7 @@ use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
-use zip::write::FileOptions;
+use zip::write::SimpleFileOptions;
 use zip::CompressionMethod;
 use zip::ZipWriter;
 
@@ -73,7 +73,7 @@ pub fn export_profiles_zip() -> Result<Vec<u8>, String> {
 
     let cursor = Cursor::new(Vec::new());
     let mut zip = ZipWriter::new(cursor);
-    let opts = FileOptions::default().compression_method(CompressionMethod::Deflated);
+    let opts = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
 
     for (name, data) in entries {
         zip.start_file(&name, opts).map_err(|e| e.to_string())?;
@@ -123,7 +123,7 @@ pub fn import_profiles_zip(zip_bytes: &[u8]) -> Result<(), String> {
     let result = (|| -> Result<(), String> {
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
-            let name = file.name().to_owned();
+            let name = file.name().map_err(|e| e.to_string())?.into_owned();
             let Some(rel) = normalize_zip_entry_name(&name) else {
                 continue;
             };
