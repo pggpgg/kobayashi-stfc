@@ -44,10 +44,25 @@ archive. Check the archive before you extract it, for example:
   archives that you did not download.
 - macOS: `shasum -a 256 -c SHA256SUMS`
 
-Treat a third-party binary as you treat any other executable that you download. Download
-only from the **Releases** page of the project. Check the hashes. When you compare an
-archive with the source, prefer a signed tag or an annotated tag. For a signed tag, use
-`git tag -v vX.Y.Z`.
+Checksums detect damaged or changed downloads; a checksum uploaded beside an archive does
+not authenticate its producer. Releases produced by the updated release workflow also
+have GitHub artifact attestations. Verify each downloaded archive before extracting it:
+
+```bash
+gh attestation verify kobayashi-vX.Y.Z-windows-x86_64.zip \
+  --repo pggpgg/kobayashi-stfc \
+  --signer-workflow pggpgg/kobayashi-stfc/.github/workflows/release.yml \
+  --deny-self-hosted-runners
+```
+
+Check the reported source commit and tag as well. The workflow requires the tagged commit
+to belong to `main`, audits the locked Rust dependencies, pins the compiler and action
+revisions, and attests the uploaded archives and checksum manifest. It does not require
+maintainers to possess a GPG signing key. `git tag -v vX.Y.Z` is useful only for an actually
+signed tag; an annotated tag alone is not a signature. The historical `v0.1.0` tag is
+unsigned and its release predates this attestation workflow, so these commands cannot
+retroactively authenticate that release. See GitHub's
+[attestation action](https://github.com/actions/attest-build-provenance) for the verification model.
 
 ## The risks of each deployment
 

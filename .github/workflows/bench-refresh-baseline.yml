@@ -20,24 +20,29 @@ on:
     - cron: "17 3 1 * *"
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   refresh:
     name: Generate fresh benchmark_results.log
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
     runs-on: ubuntu-24.04
     env:
       CI: "true"
       KOBAYASHI_RAYON_THREADS: "2"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: "1.93.1"
 
       - name: Cache cargo
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~/.cargo/registry
@@ -88,7 +93,7 @@ jobs:
           } > benchmark_results.log
 
       - name: Upload fresh benchmark_results.log
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: benchmark-results-log
           path: benchmark_results.log
@@ -128,30 +133,48 @@ jobs:
             } > /tmp/pr_body.md
           fi
 
-      - name: Open PR with refreshed baseline
+      - name: Prepare baseline publishing inputs
         if: steps.diff.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTPUT: ${{ runner.temp }}/baseline-output
         run: |
           set -euo pipefail
-          BRANCH="bot/bench-baseline-refresh-$(date -u +%Y-%m-%d)-${{ github.run_id }}"
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git checkout -b "$BRANCH"
-          git add benchmark_results.log
-          git commit -m "Scheduled benchmark baseline refresh (run ${{ github.run_id }})
+          mkdir -p "$OUTPUT"
+          cp benchmark_results.log /tmp/pr_body.md "$OUTPUT/"
 
-          Monthly auto-refresh from .github/workflows/bench-refresh-baseline.yml.
-          Numbers measured on the same ubuntu-24.04 / KOBAYASHI_RAYON_THREADS=2
-          environment the regression gate uses, so the gate now has fresh headroom
-          for the next month's PRs.
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          name: baseline-refresh-output
+          path: ${{ runner.temp }}/baseline-output/
+          retention-days: 7
 
-          If you'd rather hold a particular baseline (e.g. before a known
-          optimization lands), close this PR — the next monthly run will
-          re-evaluate."
-          git push origin "$BRANCH"
-          gh pr create \
-            --title "Scheduled benchmark baseline refresh ($(date -u +%Y-%m-%d))" \
-            --body-file /tmp/pr_body.md \
-            --base main \
-            --head "$BRANCH"
+  publish_refresh:
+    name: Open baseline refresh PR
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: baseline-refresh-output
+          path: ${{ runner.temp }}/baseline-output
+      - name: Copy validated baseline
+        env:
+          BASELINE: ${{ runner.temp }}/baseline-output/benchmark_results.log
+        run: cp "$BASELINE" benchmark_results.log
+      - uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6
+        with:
+          commit-message: "chore(bench): refresh benchmark baseline"
+          title: "Scheduled benchmark baseline refresh"
+          body-path: ${{ runner.temp }}/baseline-output/pr_body.md
+          branch: automated/bench-baseline-refresh-${{ github.run_id }}
+          delete-branch: true
+          add-paths: benchmark_results.log
