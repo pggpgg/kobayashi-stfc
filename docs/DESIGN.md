@@ -111,7 +111,7 @@ flowchart LR
 
 LCARS is a YAML-based DSL for describing officer abilities declaratively. Each officer has up to three ability sets (captain, bridge, below_decks), each containing one or more effects. Effects are composed from a vocabulary of primitives.
 
-**File naming:** Use extension `.lcars.yaml` (or `.lcars.yml`). When loading a directory (e.g. `data/officers`), only files whose names match `*.lcars.yaml` or `*.lcars.yml` are loaded; other YAML files in the same directory are ignored so that config or other data is not parsed as officers.
+**Optional file naming:** For file-based LCARS workflows, use extension `.lcars.yaml` (or `.lcars.yml`). When the YAML parser loads a directory (e.g. `data/officers`), it reads only files whose names match `*.lcars.yaml` or `*.lcars.yml`; other YAML files in the same directory are ignored. The default runtime instead builds the LCARS model in-process from `officers.canonical.json` and upstream officer data.
 
 ### 3.2 Primitives
 
@@ -534,14 +534,17 @@ Key design constraints:
 
 ### 4.2 Pre-combat Resolution
 
-Before the fight loop begins, LCARS definitions are collapsed into a `BuffSet`:
+Before the fight loop begins, the runtime builds the LCARS officer model in-process from `officers.canonical.json` and upstream officer data, then resolves the selected crew into a `BuffSet`:
 
 ```
-LCARS YAML → parsed Officer → ResolvedAbilities → BuffSet
-                                                      ├── static_buffs (applied once)
-                                                      ├── per_round_effects (evaluated each round)
-                                                      └── triggered_effects (evaluated on trigger)
+canonical officer data + upstream stats and ability names
+    → in-process LCARS officer model → ResolvedAbilities → BuffSet
+                                                        ├── static_buffs (applied once)
+                                                        ├── per_round_effects (evaluated each round)
+                                                        └── triggered_effects (evaluated on trigger)
 ```
+
+The `generate_lcars` command can export that model as YAML for inspection or explicit file-based workflows. The default runtime does not require or load this generated export.
 
 **Temporal Dreadnought phase alignment (2026-07-19):** Charged Quantum Hull Repair restores defender shields and hull to full at round start; Static Collider Cannon keeps its isolytic-damage seat and restores shields only. `HostileFullRegenUnlessAttackerShip` is resolved once at setup into full-pool round-start flags and is disabled when the attacker identifies as the Relativity (canonical slug `uss_relativity`, upstream id `442815157`, or normalized display name; its anti-shift hull abilities are always active but remain catalog `combat_noop`). A hostile killed during the attack phase does not reach another regeneration tick. Coverage: `tests/hostile_temporal_dreadnought_regen.rs`.
 
@@ -969,19 +972,19 @@ Accepted source formats can include exported data from community tools such as S
 
 ### 9.3 Maintainer Data-Maintenance Process
 
-Global officer catalog updates are maintained manually in version-controlled LCARS YAML files:
+Global officer catalog updates are maintained in `data/officers/officers.canonical.json`. The runtime builds its LCARS officer model from that catalog and upstream officer data. The generated YAML export is optional and intended for inspection or explicit file-based workflows.
 
 ```
-1. Edit LCARS under `data/officers/` (`officers.lcars.yaml`, or any `*.lcars.yaml` / `*.lcars.yml` if using a multi-file layout). Regenerate the monolith from canonical with `generate_lcars`.
-2. Validate with `kobayashi validate data/officers` (and regenerate `officers.canonical.json` when that is part of your workflow).
-3. Run simulation/regression checks to confirm no unintended balance drift.
-4. Commit reviewed changes in small, auditable batches.
-5. Publish curated catalog updates when new officers are released.
+1. Edit the officer and ability data in `data/officers/officers.canonical.json`. After refreshing upstream officer data, run `python3 scripts/normalize_officer_id_strings.py` when required by that pipeline.
+2. Validate with `kobayashi validate data/officers`.
+3. Run simulation and regression checks to confirm no unintended behavior changes.
+4. Optionally export the in-process model for inspection with `cargo xtask regen-lcars`.
+5. Review and commit the canonical data changes and any intentional export changes.
 ```
 
 ### 9.4 Community Contribution
 
-Since officers are YAML files following the LCARS spec, a GitHub repository can accept pull requests for new or corrected officer definitions. Schema validation in CI catches errors automatically. This is how tu_optimize's card data was maintained.
+Contributors can propose new or corrected officer definitions by changing the canonical catalog. The runtime converts that catalog to the LCARS model; schema and data validation check the supported structure and mechanics.
 
 ---
 
@@ -1042,9 +1045,9 @@ kobayashi/
 ├── Cargo.toml
 ├── README.md
 ├── data/
-│   ├── officers/                    # LCARS: all *.lcars.yaml / *.lcars.yml in dir
-│   │   ├── officers.lcars.yaml
-│   │   ├── officers.canonical.json  # canonical catalog (regenerate when workflow requires)
+│   ├── officers/                    # canonical catalog plus optional LCARS YAML export
+│   │   ├── officers.canonical.json  # maintained officer ability catalog
+│   │   ├── officers.lcars.yaml      # optional generated export for inspection/file workflows
 │   │   ├── id_registry.json
 │   │   └── name_aliases.json
 │   ├── ships_extended/              # index.json + per-ship JSON (extended tiers/levels)

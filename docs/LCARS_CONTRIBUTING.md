@@ -5,13 +5,18 @@ The officers use the LCARS format.
 
 ## Overview
 
-LCARS (Language for Combat Ability Resolution and Simulation) is the declarative YAML format
-for the officer abilities. One file holds all the officer definitions:
-`data/officers/officers.lcars.yaml`.
+LCARS (Language for Combat Ability Resolution and Simulation) is the declarative
+model for officer abilities. Edit `data/officers/officers.canonical.json` for
+routine ability changes. The runtime builds the LCARS model from this catalog
+in-process. It does not require a generated YAML file.
 
-The ability names of the game, for example “Chirurgical Precision”, are not in the LCARS
-file. They are in the upstream file `translations-officer_buffs.json`, and the key is the
-`loca_id` from `summary-officer.json`. For the join model and for Ahvix as an example, refer
+Use `cargo xtask regen-lcars` to export `data/officers/officers.lcars.yaml` for
+inspection or explicit file-based workflows. Do not edit that generated file for
+routine fixes. Shared authoring rules are in [AGENTS.md](../AGENTS.md#data-and-officer-definitions).
+
+The ability display names come from `translations-officer_buffs.json`. The key is
+the `loca_id` from `summary-officer.json`. The model builder puts those names in
+the LCARS abilities. For the join model and for Ahvix as an example, refer
 to [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md).
 
 Run `cargo run --bin generate_lcars` or `kobayashi generate-lcars`. By default the tool
@@ -21,15 +26,18 @@ older placeholder names in the form `{Officer} (Captain)`. The options `--summar
 
 ## The organization of the files
 
-- **The name of the file.** When the application reads a directory of officers, it loads
+- **The name of an exported file.** When the LCARS parser reads an explicit directory, it loads
   only the files that match `*.lcars.yaml` or `*.lcars.yml`. It ignores the other YAML files
   in the same folder, for example a configuration file. Use this name format for each LCARS
   officer file.
-- `officers.lcars.yaml` holds all the officers of all the factions. Each officer has an
+- The exported `officers.lcars.yaml` holds all the officers of all the factions. Each officer has an
   `id`, a `name`, and up to three ability blocks: captain, bridge, and below decks. An
   officer can also have a `faction`, a `rarity`, and a `group`.
 
 ## The structure of an officer
+
+This example shows the exported LCARS model. Make routine changes in the canonical
+JSON catalog, then generate the export to inspect the result.
 
 ```yaml
 officers:
@@ -132,14 +140,12 @@ cargo run --bin generate_lcars -- data/officers/officers.canonical.json --output
 
 ## How to use LCARS in a simulation
 
-Set this environment variable to make LCARS the source of the officer data:
+The simulator builds LCARS from the canonical catalog by default. No source-selection
+environment variable or generated YAML file is needed.
 
 ```bash
-KOBAYASHI_OFFICER_SOURCE=lcars kobayashi optimize --ship uss_saladin --hostile 2918121098 --sims 5000
+kobayashi optimize --ship uss_saladin --hostile 2918121098 --sims 5000
 ```
-
-When the variable has no value, the simulator uses the canonical JSON format. This is the
-default.
 
 ## The full schema
 

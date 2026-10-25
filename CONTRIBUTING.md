@@ -17,7 +17,11 @@ cargo build --release
   `data/` from there.
 - For the quick start for players, refer to [README.md](README.md#quick-start).
 
-## Full local parity with CI
+## Local verification
+
+Use a disposable checkout or a runtime with synthetic profiles for tests that write
+files. Do not run those tests beside real player data. Follow the isolation steps
+in [AGENTS.md](AGENTS.md#filesystem-test-isolation).
 
 Run these commands from the root of the repository:
 
@@ -26,9 +30,9 @@ chmod +x scripts/local-ci.sh   # first time only
 ./scripts/local-ci.sh
 ```
 
-This script runs the same checks as the Rust job and the Frontend job in CI. It does not
-run the Python combat engine tests, and it does not run the Playwright end-to-end tests.
-Run those tests separately when you need them:
+This script runs the main Rust and frontend checks. It does not run every CI job
+or every data gate. It skips the Rust audit if `cargo-audit` is absent. Report that
+check as skipped. Run Python and Playwright tests separately when needed:
 
 ```bash
 pip install -r tools/combat_engine/requirements-test.txt
@@ -48,8 +52,9 @@ the workflow is **CI**. It contains these jobs:
 
 | Job                        | What it runs                                                                                                                    |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Rust**                   | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo build --release`, `cargo audit`             |
-| **Frontend**               | `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` (in `frontend/`)    |
+| **Rust**                   | Formatting, Clippy, nextest, doctests, research and script tests, calibration, generated-data checks, and the data report. |
+| **Rust release build + audit** | `cargo build --release` and `cargo audit`. |
+| **Frontend**               | `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run build` (in `frontend/`). |
 | **Combat engine (Python)** | `pytest` under `tools/combat_engine/tests/`                                                                                     |
 | **E2E smoke (Playwright)** | The release build, the frontend build, and `npm run test:e2e` (health plus the workspace simulate, optimize, preset, and results flows). A failed run uploads the `playwright-report` and `test-results` artifacts. |
 
@@ -60,14 +65,17 @@ To stop a merge when CI fails, a maintainer must turn on branch protection for `
 the names in the GitHub picker "Require status checks to pass":
 
 - `CI / Rust`
+- `CI / Rust release build + audit`
 - `CI / Frontend`
 - `CI / Combat engine (Python)`
 - `CI / E2E smoke (Playwright)`
 
-> CI also runs **`CI / Rust coverage`** and **`CI / Upstream summary drift`**. In most
-> conditions these two checks stay optional. The coverage check is for information only.
-> The drift check can fail because of a change in the upstream data.stfc.space catalogs
-> that has no relation to the pull request. Refer to *Upstream summary drift* below.
+> CI also has **`CI / Rust coverage`** and **`CI / Upstream summary drift`** jobs.
+> Coverage runs on selected events and has no threshold gate. Upstream drift has
+> event-specific enforcement. Refer to *Upstream summary drift* below.
+
+The workflow file defines the current job behavior. Separate benchmark workflows
+check performance and optimizer quality.
 
 Make a pull request mandatory before a merge if this agrees with the project policy.
 
@@ -94,7 +102,7 @@ pre-commit run --all-files
 Run `cargo xtask --help` from the root of the repository. The output lists the wrappers for
 the ship refresh, the hostile refresh, the research refresh, `validate_data`,
 `generate_lcars`, `npm run data:refresh`, and `npm run verify`. For the commands below
-these wrappers, refer to [CLAUDE.md](CLAUDE.md) § Maintenance (`cargo xtask`) and to
+these wrappers, refer to [AGENTS.md](AGENTS.md#verification-and-maintenance) and to
 [scripts/README.md](scripts/README.md).
 
 ## Scheduled data pull requests
@@ -106,11 +114,11 @@ you are satisfied.
 
 **Upstream summary drift.** The CI job `upstream_drift` compares the live data.stfc.space
 catalogs for ships, hostiles, and research with the committed files in
-`data/upstream/data-stfc-space/summary-*.json`. The job fails when they are different.
-When this job fails, merge the
-open automated data refresh pull request. As an alternative, run
-`cargo xtask check-upstream-drift` locally and refresh the data before you merge feature
-work. This prevents a merge conflict in `data/`.
+`data/upstream/data-stfc-space/summary-*.json`. Drift is enforced on `main` and on
+automated data-refresh pull requests. Other feature pull requests retain the
+diagnostic without failing for unrelated catalog changes. Review the workflow
+before interpreting the result. Use `cargo xtask check-upstream-drift` to inspect
+drift locally. Review data refreshes before merging them.
 
 ## Convenience npm script (frontend only)
 

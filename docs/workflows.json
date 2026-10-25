@@ -38,7 +38,7 @@
     { "id": "mod-jobs",        "group": "backend", "label": "OPTIMIZE_JOBS",     "subtitle": "in-mem Mutex<HashMap> (execution.rs:1460)" },
 
     { "id": "data-canonical",  "group": "data", "label": "officers.canonical.json", "subtitle": "data/officers/" },
-    { "id": "data-lcars",      "group": "data", "label": "officers.lcars.yaml",     "subtitle": "data/officers/ (generated)" },
+    { "id": "data-lcars",      "group": "data", "label": "LCARS YAML export",       "subtitle": "optional generated inspection/file-workflow artifact" },
     { "id": "data-id-reg",     "group": "data", "label": "id_registry.json",        "subtitle": "data/officers/" },
     { "id": "data-ships",      "group": "data", "label": "ships_extended/",         "subtitle": "data/ + index.json" },
     { "id": "data-hostiles",   "group": "data", "label": "hostiles/",               "subtitle": "data/ + index.json" },
@@ -70,7 +70,7 @@
         { "from": "api-optimize",  "to": "mod-server-api",     "label": "handle_optimize → spawn_blocking", "detail": "CPU-bound work moved off the Tokio runtime; admission semaphore (KOBAYASHI_MAX_CONCURRENT_CPU_JOBS) gates entry → 503 cpu_busy if no slot." },
         { "from": "mod-server-api","to": "mod-data",           "label": "loader::load_*()",                  "detail": "Resolves ship, hostile, support buffs, heuristic seeds from in-memory catalogs." },
         { "from": "mod-server-api","to": "mod-optimizer",      "label": "optimize_scenario_…()",             "detail": "Auto-routes tiered vs exhaustive from effective candidate count; or honours explicit strategy (tiered|genetic|exhaustive)." },
-        { "from": "mod-optimizer", "to": "mod-lcars",          "label": "BuffSet lookup",                    "detail": "Officer abilities pre-resolved from officers.lcars.yaml at server start." },
+        { "from": "mod-optimizer", "to": "mod-lcars",          "label": "BuffSet lookup",                    "detail": "Officer abilities come from the in-process LCARS model built from canonical officer data and upstream inputs." },
         { "from": "mod-optimizer", "to": "mod-combat",         "label": "engine::run_fight() × N sims",      "detail": "Rayon-parallel Monte Carlo; one SplitMix64 PRNG per thread; ranking by win_rate, hull_remaining, r1_kill_rate." },
         { "from": "mod-optimizer", "to": "mod-server-api",     "label": "OptimizeOutcome",                   "detail": "Top crews + effective_strategy + strategy_auto + stats." },
         { "from": "mod-server-api","to": "api-optimize",       "label": "200 JSON response",                 "detail": "" },
@@ -188,16 +188,16 @@
     {
       "id": "regen-lcars",
       "title": "Regenerate LCARS officer definitions",
-      "description": "Officer abilities are authored in officers.canonical.json (or scripts after an upstream refresh) and compiled to officers.lcars.yaml, which the engine loads.",
+      "description": "Officer abilities are maintained in officers.canonical.json. The runtime builds the LCARS model in-process from that catalog and upstream officer inputs; generate_lcars can export YAML for inspection or explicit file-based workflows.",
       "steps": [
         { "from": "user",          "to": "data-canonical", "label": "Edit officers.canonical.json",          "detail": "Maintainer-curated catalog. After upstream officer cache refresh: python3 scripts/normalize_officer_id_strings.py first." },
+        { "from": "data-canonical", "to": "mod-lcars",     "label": "build LCARS model in-process",           "detail": "At runtime, build_officer_model_default converts the canonical abilities." },
+        { "from": "data-upstream",  "to": "mod-lcars",     "label": "join upstream officer inputs",           "detail": "Uses officer stats plus summary ability IDs and loca_id values joined to translation names." },
+        { "from": "mod-lcars",      "to": "mod-optimizer", "label": "resolve selected crew to BuffSet",       "detail": "Static buffs, per-round effects and triggered effects are resolved before the fight loop." },
         { "from": "user",          "to": "bin-gen-lcars",  "label": "cargo run --bin generate_lcars",          "detail": "Or: cargo xtask regen-lcars." },
-        { "from": "bin-gen-lcars", "to": "data-canonical", "label": "read canonical",                          "detail": "" },
-        { "from": "bin-gen-lcars", "to": "data-lcars",     "label": "write officers.lcars.yaml",               "detail": "Monolithic YAML — only *.lcars.yaml files in the dir are loaded." },
-        { "from": "user",          "to": "cli-serve",      "label": "restart ./target/release/kobayashi serve","detail": "From project root so data/ and frontend/dist resolve." },
-        { "from": "cli-serve",     "to": "mod-lcars",      "label": "lcars::load_lcars_dir('data/officers')",  "detail": "src/cli.rs:481." },
-        { "from": "mod-lcars",     "to": "data-lcars",     "label": "parse YAML",                              "detail": "" },
-        { "from": "mod-lcars",     "to": "mod-optimizer",  "label": "BuffSet available",                       "detail": "Static buffs + per-round effects + triggered effects, pre-resolved before any fight loop." }
+        { "from": "data-canonical", "to": "bin-gen-lcars", "label": "read canonical catalog",                 "detail": "Uses the same in-process builder as the runtime." },
+        { "from": "data-upstream",  "to": "bin-gen-lcars", "label": "read upstream officer inputs",           "detail": "Includes stats plus the summary-to-translation ability-name join." },
+        { "from": "bin-gen-lcars", "to": "data-lcars",     "label": "optional YAML export",                    "detail": "Writes officers.lcars.yaml for inspection or explicit file-based workflows." }
       ]
     },
 
@@ -213,8 +213,8 @@
         { "from": "mod-data",    "to": "data-canonical",  "label": "officers.canonical.json",               "detail": "Maintainer catalog." },
         { "from": "mod-data",    "to": "data-heur",       "label": "heuristics/*.txt",                      "detail": "Community-known crew seeds." },
         { "from": "mod-data",    "to": "data-profiles",   "label": "profiles/*.json",                       "detail": "Active profile + roster + research." },
-        { "from": "cli-serve",   "to": "mod-lcars",       "label": "lcars::load_lcars_dir(data/officers)",  "detail": "Only *.lcars.yaml is loaded; unknown effect types are skipped with a warning." },
-        { "from": "mod-lcars",   "to": "data-lcars",      "label": "parse officers.lcars.yaml",             "detail": "" },
+        { "from": "data-canonical", "to": "mod-lcars",   "label": "build LCARS model in-process",          "detail": "Reads canonical abilities at startup." },
+        { "from": "data-upstream", "to": "mod-lcars",   "label": "join upstream officer inputs",           "detail": "Reads officer stats and joins summary ability IDs and loca_id values to translation names." },
         { "from": "cli-serve",   "to": "mod-server-api",  "label": "build Axum Router + spawn runtime",     "detail": "src/server/mod.rs creates the multi-thread Tokio runtime and routes::build_router()." }
       ]
     }
