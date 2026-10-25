@@ -72,7 +72,7 @@ x86_64.
 
 1. Download the archive for your operating system from
    [Releases](https://github.com/pggpgg/kobayashi-stfc/releases).
-2. Check the archive against `SHA256SUMS`. Refer to the
+2. Check the archive against `SHA256SUMS` and verify its artifact attestation when available. Refer to the
    [deployment notes](docs/DEPLOYMENT_SECURITY.md).
 3. Extract the archive. The archive contains all the necessary files. You do not need a
    repository checkout or a build toolchain.

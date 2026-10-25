@@ -18,8 +18,7 @@ on:
         default: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: data-refresh
@@ -27,21 +26,24 @@ concurrency:
 
 jobs:
   refresh:
-    name: Refresh upstream data and open PR
+    name: Refresh and validate upstream data
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
       CARGO_TERM_COLOR: always
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: "1.93.1"
 
       - name: Cache cargo
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~/.cargo/registry
@@ -52,14 +54,14 @@ jobs:
             data-refresh-cargo-${{ runner.os }}-
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: package-lock.json
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
@@ -144,16 +146,58 @@ jobs:
             echo "Please review large \`data/\` diffs before merge."
           } > /tmp/pr_body.md
 
+      - name: Prepare data-only patch for the publishing job
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+        run: |
+          set -euo pipefail
+          git add --intent-to-add -- data/
+          git diff --binary -- data/ > /tmp/data-refresh.patch
+
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+        with:
+          name: data-refresh-output
+          path: |
+            /tmp/data-refresh.patch
+            /tmp/pr_body.md
+          retention-days: 7
+
+  publish_refresh:
+    name: Open data refresh PR
+    needs: refresh
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: data-refresh-output
+          path: ${{ runner.temp }}/refresh-output
+      - name: Apply validated data changes
+        env:
+          PATCH: ${{ runner.temp }}/refresh-output/data-refresh.patch
+        run: |
+          set -euo pipefail
+          if [ -s "$PATCH" ]; then
+            git apply --include='data/**' --whitespace=nowarn "$PATCH"
+          fi
       - name: Create Pull Request
         id: cpr
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6
         with:
           commit-message: "chore(data): automated stfc.space refresh"
           title: "chore(data): automated stfc.space refresh"
-          body-path: /tmp/pr_body.md
+          body-path: ${{ runner.temp }}/refresh-output/pr_body.md
           branch: automated/data-refresh-${{ github.run_id }}
           delete-branch: true
+          add-paths: data/
 
       # Each run opens its own automated/data-refresh-<run_id> branch, so an older unmerged
       # refresh PR is strictly superseded: same pipeline, older upstream snapshot. Left open
