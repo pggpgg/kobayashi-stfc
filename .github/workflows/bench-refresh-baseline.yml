@@ -93,7 +93,7 @@ jobs:
           } > benchmark_results.log
 
       - name: Upload fresh benchmark_results.log
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: benchmark-results-log
           path: benchmark_results.log
@@ -142,7 +142,7 @@ jobs:
           mkdir -p "$OUTPUT"
           cp benchmark_results.log /tmp/pr_body.md "$OUTPUT/"
 
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.diff.outputs.changed == 'true'
         with:
           name: baseline-refresh-output
