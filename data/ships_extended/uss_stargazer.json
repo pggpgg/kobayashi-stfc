@@ -2,6 +2,7 @@
   "id": "uss_stargazer",
   "ship_name": "U.S.S. STARGAZER",
   "ship_class": "battleship",
+  "crit_damage_is_bonus": true,
   "grade": 7,
   "faction": "federation",
   "tiers": [

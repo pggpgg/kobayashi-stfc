@@ -2,6 +2,7 @@
   "id": "uss_cerritos",
   "ship_name": "U.S.S. CERRITOS",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 4,
   "tiers": [
     {

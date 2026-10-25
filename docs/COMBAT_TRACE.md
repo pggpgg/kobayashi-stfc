@@ -44,6 +44,34 @@ For each weapon sub-round, the engine records:
 
 Net hull/shield damage also applies apex barrier/shred and shield split; see events around damage application in the same trace.
 
+### Weapon HP removal versus overkill
+
+Outbound `damage_application` events distinguish damage assigned by the model
+from HP actually removed on that hit:
+
+| Field | Meaning |
+| --- | --- |
+| `damage_after_apex` | Resolved weapon pool before shield routing and HP caps. |
+| `hull_damage` | Assigned hull share, including overkill. |
+| `shield_damage` | Shield HP removed, capped by shields remaining before the hit. |
+| `applied_weapon_damage` | Shield HP removed plus hull share capped by hull remaining before the hit. |
+| `applied_isolytic_damage` | Proportional isolytic share of applied weapon HP damage; equals all applied weapon damage under Isolytic Vulnerability. |
+| `hull_overkill_damage` | Assigned hull damage beyond available hull HP. |
+| `discarded_shield_damage` | Shield assignment beyond available shield HP, discarded on that hit. |
+
+For each hit, `applied_weapon_damage + hull_overkill_damage +
+discarded_shield_damage = damage_after_apex`, up to floating-point rounding.
+Applied damage is measured before any subsequent repair or regeneration. These
+are weapon-only gauges: burning and other non-weapon damage are separate events.
+Summing them requires a complete trace; a replay with `trace_truncated=true`
+cannot provide a complete fight total. Event tracing uses the scalar combat path.
+
+The legacy result fields `total_damage` and `total_isolytic_damage` retain their
+existing overkill accounting. They are not target HP-pool gauges, and the latter
+is not interchangeable with the game's raw isolytic export column. Mixed standard
+and isolytic attribution is a proportional accounting convention after their
+shared routing, not an independently verified server rule.
+
 ## Stack resolution (crew buffs)
 
 Static and timed effects are composed in [`src/combat/stacking.rs`](../src/combat/stacking.rs) (base → modifier → flat → multiply → cap). Per-round, [`EffectAccumulator`](../src/combat/effect_accumulator.rs) maps LCARS stats into keys such as:

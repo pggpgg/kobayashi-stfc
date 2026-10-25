@@ -2,6 +2,7 @@
   "id": "uss_kelvin",
   "ship_name": "U.S.S. KELVIN",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 4,
   "faction": "federation",
   "tiers": [

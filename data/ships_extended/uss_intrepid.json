@@ -2,6 +2,7 @@
   "id": "uss_intrepid",
   "ship_name": "U.S.S. INTREPID",
   "ship_class": "battleship",
+  "crit_damage_is_bonus": true,
   "grade": 3,
   "faction": "federation",
   "tiers": [

@@ -2,6 +2,7 @@
   "id": "uss_enterprise_m414",
   "ship_name": "U.S.S. ENTERPRISE M414",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 7,
   "faction": "federation",
   "tiers": [

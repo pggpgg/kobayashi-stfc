@@ -2,6 +2,7 @@
   "id": "phindra",
   "ship_name": "PHINDRA",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 2,
   "tiers": [
     {

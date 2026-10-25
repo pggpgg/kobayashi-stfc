@@ -2,6 +2,7 @@
   "id": "uss_enterprise_d",
   "ship_name": "U.S.S. ENTERPRISE-D",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 5,
   "faction": "federation",
   "tiers": [

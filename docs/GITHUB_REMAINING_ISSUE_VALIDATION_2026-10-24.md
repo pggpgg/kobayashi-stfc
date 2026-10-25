@@ -1,5 +1,9 @@
 # Remaining GitHub issue validation — 2026-10-24
 
+Follow-up: [Gorn accounting investigation, 2026-10-25](GORN_CALIBRATION_INVESTIGATION_2026-10-25.md)
+corrects the calibration measurement without changing its numerical bounds. The
+historical failure counts below describe the initial publication checks.
+
 This report continues [the first validation batch](GITHUB_ISSUE_VALIDATION_2026-10-24.md).
 The combined scope is issues #300–303 and #315–375: 65 reports. Human-assisted
 fights are paused. No new combat observations were requested or fitted.

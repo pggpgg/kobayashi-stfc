@@ -2,6 +2,7 @@
   "id": "uss_socrates",
   "ship_name": "U.S.S. SOCRATES",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 7,
   "faction": "federation",
   "tiers": [

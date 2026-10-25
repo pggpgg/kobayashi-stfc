@@ -2,6 +2,7 @@
   "id": "uss_mayflower",
   "ship_name": "U.S.S. MAYFLOWER",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 3,
   "faction": "federation",
   "tiers": [

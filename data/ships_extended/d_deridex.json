@@ -2,6 +2,7 @@
   "id": "d_deridex",
   "ship_name": "D'DERIDEX",
   "ship_class": "battleship",
+  "crit_damage_is_bonus": true,
   "grade": 5,
   "faction": "romulan",
   "tiers": [

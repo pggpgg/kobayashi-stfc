@@ -2,6 +2,7 @@
   "id": "krencha",
   "ship_name": "KRENCHA",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 6,
   "faction": "klingon",
   "tiers": [

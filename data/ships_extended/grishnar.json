@@ -2,6 +2,7 @@
   "id": "grishnar",
   "ship_name": "GRISHNAR",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
   "grade": 6,
   "faction": "klingon",
   "tiers": [

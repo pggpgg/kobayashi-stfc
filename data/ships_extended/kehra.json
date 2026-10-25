@@ -2,6 +2,7 @@
   "id": "kehra",
   "ship_name": "KEHRA",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 3,
   "tiers": [
     {

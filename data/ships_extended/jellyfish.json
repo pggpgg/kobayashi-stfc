@@ -2,6 +2,7 @@
   "id": "jellyfish",
   "ship_name": "JELLYFISH",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 2,
   "faction": "federation",
   "tiers": [

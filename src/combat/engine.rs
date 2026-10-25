@@ -3615,6 +3615,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 shield_mitigation,
                 st.defender_shield_remaining,
             );
+            let hull_damage_before_hit = st.total_hull_damage;
 
             st.defender_shield_remaining =
                 (st.defender_shield_remaining - actual_shield_damage).max(0.0);
@@ -3648,61 +3649,98 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 );
             }
 
-            trace.record_if(|| CombatEvent {
-                event_type: "damage_application".to_string(),
-                round_index,
-                phase: "damage".to_string(),
-                source: EventSource {
-                    officer_id: Some(attacker.id.clone()),
-                    hostile_ability_id: Some(format!("{}_hull", defender.id)),
-                    ..EventSource::default()
-                },
-                weapon_index: Some(weapon_index_u),
-                values: Map::from_iter([
-                    (
-                        "damage_after_apex".to_string(),
-                        Value::from(round_f64(damage_after_apex)),
-                    ),
-                    (
-                        "isolytic_component".to_string(),
-                        Value::from(round_f64(isolytic_taken)),
-                    ),
-                    (
-                        "isolytic_vulnerability".to_string(),
-                        Value::Bool(defender_isolytic_vulnerability),
-                    ),
-                    (
-                        "shield_mitigation".to_string(),
-                        Value::from(round_f64(shield_mitigation)),
-                    ),
-                    (
-                        "shield_damage".to_string(),
-                        Value::from(round_f64(actual_shield_damage)),
-                    ),
-                    (
-                        "hull_damage".to_string(),
-                        Value::from(round_f64(hull_damage_this_round)),
-                    ),
-                    (
-                        "running_hull_damage".to_string(),
-                        Value::from(round_f64(st.total_hull_damage)),
-                    ),
-                    (
-                        "defender_shield_remaining".to_string(),
-                        Value::from(round_f64(st.defender_shield_remaining)),
-                    ),
-                    (
-                        "shield_broke".to_string(),
-                        Value::Bool(
-                            shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0,
+            trace.record_if(|| {
+                // Legacy result counters retain overkill. These separate gauges
+                // measure actual weapon HP removal before any later regeneration.
+                let applied_hull_damage = hull_damage_this_round
+                    .max(0.0)
+                    .min((defender.hull_health - hull_damage_before_hit).max(0.0));
+                let applied_weapon_damage = actual_shield_damage + applied_hull_damage;
+                // Standard and isolytic share the same post-apex routing pool.
+                // Attribution is proportional; vulnerability makes this fraction 1.
+                let isolytic_fraction = if damage_after_apex > 0.0 {
+                    (isolytic_taken.max(0.0) * apex_damage_factor / damage_after_apex)
+                        .clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                CombatEvent {
+                    event_type: "damage_application".to_string(),
+                    round_index,
+                    phase: "damage".to_string(),
+                    source: EventSource {
+                        officer_id: Some(attacker.id.clone()),
+                        hostile_ability_id: Some(format!("{}_hull", defender.id)),
+                        ..EventSource::default()
+                    },
+                    weapon_index: Some(weapon_index_u),
+                    values: Map::from_iter([
+                        (
+                            "damage_after_apex".to_string(),
+                            Value::from(round_f64(damage_after_apex)),
                         ),
-                    ),
-                    (
-                        "assimilated_active".to_string(),
-                        Value::Bool(st.assimilated_rounds_remaining > 0),
-                    ),
-                    ("hit_index".to_string(), Value::from(hit_index)),
-                ]),
+                        (
+                            "isolytic_component".to_string(),
+                            Value::from(round_f64(isolytic_taken)),
+                        ),
+                        (
+                            "isolytic_vulnerability".to_string(),
+                            Value::Bool(defender_isolytic_vulnerability),
+                        ),
+                        (
+                            "shield_mitigation".to_string(),
+                            Value::from(round_f64(shield_mitigation)),
+                        ),
+                        (
+                            "shield_damage".to_string(),
+                            Value::from(round_f64(actual_shield_damage)),
+                        ),
+                        (
+                            "hull_damage".to_string(),
+                            Value::from(round_f64(hull_damage_this_round)),
+                        ),
+                        (
+                            "applied_weapon_damage".to_string(),
+                            Value::from(round_f64(applied_weapon_damage)),
+                        ),
+                        (
+                            "applied_isolytic_damage".to_string(),
+                            Value::from(round_f64(applied_weapon_damage * isolytic_fraction)),
+                        ),
+                        (
+                            "hull_overkill_damage".to_string(),
+                            Value::from(round_f64(
+                                (hull_damage_this_round - applied_hull_damage).max(0.0),
+                            )),
+                        ),
+                        (
+                            "discarded_shield_damage".to_string(),
+                            Value::from(round_f64(
+                                (damage_after_apex - actual_shield_damage - hull_damage_this_round)
+                                    .max(0.0),
+                            )),
+                        ),
+                        (
+                            "running_hull_damage".to_string(),
+                            Value::from(round_f64(st.total_hull_damage)),
+                        ),
+                        (
+                            "defender_shield_remaining".to_string(),
+                            Value::from(round_f64(st.defender_shield_remaining)),
+                        ),
+                        (
+                            "shield_broke".to_string(),
+                            Value::Bool(
+                                shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0,
+                            ),
+                        ),
+                        (
+                            "assimilated_active".to_string(),
+                            Value::Bool(st.assimilated_rounds_remaining > 0),
+                        ),
+                        ("hit_index".to_string(), Value::from(hit_index)),
+                    ]),
+                }
             });
             if emit_snapshots {
                 let snap = build_combat_state_snapshot(

@@ -2,6 +2,7 @@
   "id": "i_k_s_ak_voh",
   "ship_name": "I.K.S. AK'VOH",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 7,
   "faction": "klingon",
   "tiers": [

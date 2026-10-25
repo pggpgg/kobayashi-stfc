@@ -2,6 +2,7 @@
   "id": "ra_ul_reaver",
   "ship_name": "RA'UL REAVER",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
   "grade": 6,
   "tiers": [
     {

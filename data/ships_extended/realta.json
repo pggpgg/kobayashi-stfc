@@ -2,30 +2,31 @@
   "id": "realta",
   "ship_name": "REALTA",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 1,
   "tiers": [
     {
       "tier": 1,
-      "armor_piercing": 2,
-      "shield_piercing": 2,
-      "accuracy": 30,
-      "armor": 3,
-      "shield_deflection": 8,
-      "dodge": 1,
-      "attack": 32,
+      "armor_piercing": 2.0,
+      "shield_piercing": 2.0,
+      "accuracy": 30.0,
+      "armor": 3.0,
+      "shield_deflection": 8.0,
+      "dodge": 1.0,
+      "attack": 32.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
-      "hull_health": 50,
-      "shield_health": 50,
+      "hull_health": 50.0,
+      "shield_health": 50.0,
       "shield_mitigation": 0.8,
       "weapons": [
         {
-          "attack": 16,
+          "attack": 16.0,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 1,
-          "shield_piercing": 1,
-          "accuracy": 15,
+          "armor_piercing": 1.0,
+          "shield_piercing": 1.0,
+          "accuracy": 15.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -33,12 +34,12 @@
           "weapon_type": "energy"
         },
         {
-          "attack": 16,
+          "attack": 16.0,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 1,
-          "shield_piercing": 1,
-          "accuracy": 15,
+          "armor_piercing": 1.0,
+          "shield_piercing": 1.0,
+          "accuracy": 15.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -49,26 +50,26 @@
     },
     {
       "tier": 2,
-      "armor_piercing": 4,
-      "shield_piercing": 4,
-      "accuracy": 72,
-      "armor": 3,
-      "shield_deflection": 11,
-      "dodge": 1,
-      "attack": 45,
+      "armor_piercing": 4.0,
+      "shield_piercing": 4.0,
+      "accuracy": 72.0,
+      "armor": 3.0,
+      "shield_deflection": 11.0,
+      "dodge": 1.0,
+      "attack": 45.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
-      "hull_health": 50,
-      "shield_health": 70,
+      "hull_health": 50.0,
+      "shield_health": 70.0,
       "shield_mitigation": 0.8,
       "weapons": [
         {
           "attack": 22.5,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 1,
-          "shield_piercing": 1,
-          "accuracy": 21,
+          "armor_piercing": 1.0,
+          "shield_piercing": 1.0,
+          "accuracy": 21.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -79,9 +80,9 @@
           "attack": 22.5,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 1,
-          "shield_piercing": 1,
-          "accuracy": 21,
+          "armor_piercing": 1.0,
+          "shield_piercing": 1.0,
+          "accuracy": 21.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -92,26 +93,26 @@
     },
     {
       "tier": 3,
-      "armor_piercing": 8,
-      "shield_piercing": 8,
-      "accuracy": 130,
-      "armor": 3,
-      "shield_deflection": 16,
-      "dodge": 1,
-      "attack": 62,
+      "armor_piercing": 8.0,
+      "shield_piercing": 8.0,
+      "accuracy": 130.0,
+      "armor": 3.0,
+      "shield_deflection": 16.0,
+      "dodge": 1.0,
+      "attack": 62.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
-      "hull_health": 50,
-      "shield_health": 100,
+      "hull_health": 50.0,
+      "shield_health": 100.0,
       "shield_mitigation": 0.8,
       "weapons": [
         {
-          "attack": 31,
+          "attack": 31.0,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 2,
-          "shield_piercing": 2,
-          "accuracy": 29,
+          "armor_piercing": 2.0,
+          "shield_piercing": 2.0,
+          "accuracy": 29.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -119,12 +120,12 @@
           "weapon_type": "energy"
         },
         {
-          "attack": 31,
+          "attack": 31.0,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 2,
-          "shield_piercing": 2,
-          "accuracy": 29,
+          "armor_piercing": 2.0,
+          "shield_piercing": 2.0,
+          "accuracy": 29.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -135,26 +136,26 @@
     },
     {
       "tier": 4,
-      "armor_piercing": 14,
-      "shield_piercing": 14,
-      "accuracy": 212,
-      "armor": 3,
-      "shield_deflection": 22,
-      "dodge": 1,
-      "attack": 88,
+      "armor_piercing": 14.0,
+      "shield_piercing": 14.0,
+      "accuracy": 212.0,
+      "armor": 3.0,
+      "shield_deflection": 22.0,
+      "dodge": 1.0,
+      "attack": 88.0,
       "crit_chance": 0.1,
       "crit_damage": 1.5,
-      "hull_health": 50,
-      "shield_health": 140,
+      "hull_health": 50.0,
+      "shield_health": 140.0,
       "shield_mitigation": 0.8,
       "weapons": [
         {
-          "attack": 44,
+          "attack": 44.0,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 3,
-          "shield_piercing": 3,
-          "accuracy": 41,
+          "armor_piercing": 3.0,
+          "shield_piercing": 3.0,
+          "accuracy": 41.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -162,12 +163,12 @@
           "weapon_type": "energy"
         },
         {
-          "attack": 44,
+          "attack": 44.0,
           "shots": 1,
           "pierce": null,
-          "armor_piercing": 3,
-          "shield_piercing": 3,
-          "accuracy": 41,
+          "armor_piercing": 3.0,
+          "shield_piercing": 3.0,
+          "accuracy": 41.0,
           "crit_chance": 0.1,
           "crit_multiplier": 1.5,
           "proc_chance": null,
@@ -250,8 +251,8 @@
     },
     {
       "level": 15,
-      "shield": 47,
-      "health": 84
+      "shield": 47.0,
+      "health": 84.0
     },
     {
       "level": 16,
@@ -294,7 +295,7 @@
       "id": "987222969",
       "timing": "combat_begin",
       "effect_type": "shield_hp_flat",
-      "value": 10,
+      "value": 10.0,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
@@ -304,154 +305,154 @@
       "condition_opponent_hostile_tags": null,
       "round_cap": null,
       "level_scaled_values": [
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        85,
-        90,
-        95,
-        100,
-        105,
-        110
+        10.0,
+        15.0,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        50.0,
+        55.0,
+        60.0,
+        65.0,
+        70.0,
+        75.0,
+        85.0,
+        90.0,
+        95.0,
+        100.0,
+        105.0,
+        110.0
       ]
     }
   ],
   "officer_bonus": {
     "attack": [
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.1
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.2
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.3
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.4
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.5
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.6
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.7
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.8
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.9
       },
       {
-        "value": 0,
-        "bonus": 1
+        "value": 0.0,
+        "bonus": 1.0
       }
     ],
     "defense": [
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.1
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.2
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.3
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.4
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.5
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.6
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.7
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.8
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.9
       },
       {
-        "value": 0,
-        "bonus": 1
+        "value": 0.0,
+        "bonus": 1.0
       }
     ],
     "health": [
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.1
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.2
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.3
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.4
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.5
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.6
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.7
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.8
       },
       {
-        "value": 0,
+        "value": 0.0,
         "bonus": 0.9
       },
       {
-        "value": 0,
-        "bonus": 1
+        "value": 0.0,
+        "bonus": 1.0
       }
     ]
   }

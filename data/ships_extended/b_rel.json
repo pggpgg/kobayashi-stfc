@@ -2,6 +2,7 @@
   "id": "b_rel",
   "ship_name": "B'REL",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 3,
   "faction": "klingon",
   "tiers": [

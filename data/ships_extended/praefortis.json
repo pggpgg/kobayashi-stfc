@@ -2,6 +2,7 @@
   "id": "praefortis",
   "ship_name": "PRAEFORTIS",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 7,
   "faction": "romulan",
   "tiers": [

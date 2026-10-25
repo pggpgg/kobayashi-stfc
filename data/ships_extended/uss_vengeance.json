@@ -2,6 +2,7 @@
   "id": "uss_vengeance",
   "ship_name": "U.S.S. VENGEANCE",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 6,
   "tiers": [
     {

@@ -4,7 +4,7 @@
 //! Source export: `fight samples/gorn-evisc_vs_447012258_60_easywin_trivial.csv`.
 //!
 //! Gauges:
-//! - **Sim bands** (deterministic seed): rounds, kill damage, isolytic applied, defender HP at end.
+//! - **Sim bands** (deterministic seed): rounds, weapon HP removed, isolytic HP removed, defender HP at end.
 //! - **Log ratio bands**: sim metrics vs parsed CSV / summary anchors (different column semantics).
 //! - **Trace invariants**: Hunt the Hunters isolytic bonus, Isolytic Vulnerability on damage rows.
 //! - **Monte Carlo**: trivial win distribution for the log crew.
@@ -179,10 +179,34 @@ fn csv_attack_totals(csv: &str) -> CsvAttackTotals {
     }
 }
 
-fn replay_to_simulation_result(replay: &MonteCarloSeedReplay) -> SimulationResult {
+fn applied_weapon_projection_for_health_bands(replay: &MonteCarloSeedReplay) -> SimulationResult {
+    // These fixture bands are anchored to the target HP pool / kill summary.
+    // Legacy replay totals include overkill and discarded shield allocation;
+    // neither is HP actually removed. Keep the legacy counters unchanged and
+    // use explicit per-hit trace accounting for this calibration projection.
+    assert!(
+        !replay.trace_truncated,
+        "applied totals require a complete trace"
+    );
+    let mut applied_weapon = 0.0;
+    let mut applied_isolytic = 0.0;
+    let mut hits = 0;
+    for event in &replay.trace_events {
+        if event.event_type != "damage_application" {
+            continue;
+        }
+        hits += 1;
+        applied_weapon += event.values["applied_weapon_damage"]
+            .as_f64()
+            .expect("outbound trace must report applied weapon HP damage");
+        applied_isolytic += event.values["applied_isolytic_damage"]
+            .as_f64()
+            .expect("outbound trace must report applied isolytic HP damage");
+    }
+    assert!(hits > 0, "expected outbound weapon damage");
     SimulationResult {
-        total_damage: replay.total_damage,
-        total_isolytic_damage: replay.total_isolytic_damage,
+        total_damage: applied_weapon,
+        total_isolytic_damage: applied_isolytic,
         attacker_won: replay.attacker_won,
         winner_by_round_limit: replay.winner_by_round_limit,
         rounds_simulated: replay.rounds_simulated,
@@ -265,6 +289,7 @@ fn assert_trace_expectations(replay: &MonteCarloSeedReplay, trace: &TraceExpecta
 fn print_calibration_report(
     f: &GornLogFixture,
     replay: &MonteCarloSeedReplay,
+    applied: &SimulationResult,
     csv: &CsvAttackTotals,
     band_report: &kobayashi::calibration::DriftRunReport,
 ) {
@@ -273,12 +298,16 @@ fn print_calibration_report(
         f.scenario_seed
     );
     eprintln!(
-        "sim: rounds={} total_damage={:.0} total_isolytic={:.0} won={} hull_rem={:.0}",
+        "sim legacy counters (include overkill/discard): rounds={} total_damage={:.0} total_isolytic={:.0} won={} hull_rem={:.0}",
         replay.rounds_simulated,
         replay.total_damage,
         replay.total_isolytic_damage,
         replay.attacker_won,
         replay.attacker_hull_remaining,
+    );
+    eprintln!(
+        "sim applied weapon HP: total={:.0} isolytic={:.0}",
+        applied.total_damage, applied.total_isolytic_damage,
     );
     eprintln!(
         "log: rounds={} kill_summary={:.0} attack_total_col={:.0} attack_isolytic_col={:.0} incoming={:.0} attacker_hull_rem={:.0}/{:.0}",
@@ -298,9 +327,9 @@ fn print_calibration_report(
     }
     eprintln!(
         "  ratios: sim/kill={:.3} sim_iso/log_iso={:.4} sim/log_attack_col={:.3}",
-        replay.total_damage / f.defender_kill_damage_from_summary,
-        replay.total_isolytic_damage / f.total_outgoing_isolytic_damage,
-        replay.total_damage / f.total_outgoing_damage,
+        applied.total_damage / f.defender_kill_damage_from_summary,
+        applied.total_isolytic_damage / f.total_outgoing_isolytic_damage,
+        applied.total_damage / f.total_outgoing_damage,
     );
 }
 
@@ -397,7 +426,7 @@ fn gorn_evisc_log_vs_sim_calibration() {
         "ship/hostile must resolve (got placeholders)"
     );
 
-    let sim = replay_to_simulation_result(&replay);
+    let sim = applied_weapon_projection_for_health_bands(&replay);
     let band_report = simulation_band_report(
         "gorn_evisc_vs_447012258",
         Some("Gorn Eviscerator T10 L50 vs Acrocanth 447012258"),
@@ -406,7 +435,7 @@ fn gorn_evisc_log_vs_sim_calibration() {
         Some(f.attacker_won),
         &sim,
     );
-    print_calibration_report(&f, &replay, &csv, &band_report);
+    print_calibration_report(&f, &replay, &sim, &csv, &band_report);
 
     assert!(
         band_report.all_ok,
@@ -467,7 +496,7 @@ fn gorn_evisc_log_vs_sim_calibration() {
     assert!(!placeholder);
     let r = &results[0];
     eprintln!(
-        "mc(n={}): win_rate={:.4} r1_kill={:.4} avg_hull={:.4} (log: round-1 crit win)",
+        "mc(n={}): win_rate={:.4} r1_kill={:.4} legacy_hull_score={:.4} (log: round-1 crit win; score is not a measured HP fraction)",
         mc.iterations, r.win_rate, r.r1_kill_rate, r.avg_hull_remaining
     );
     assert!(
@@ -484,7 +513,7 @@ fn gorn_evisc_log_vs_sim_calibration() {
     }
     assert!(
         r.avg_hull_remaining >= mc.min_avg_hull_remaining,
-        "hull remaining on wins (got {})",
+        "legacy optimizer hull score on wins (got {})",
         r.avg_hull_remaining
     );
 }

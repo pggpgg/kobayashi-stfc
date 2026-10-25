@@ -358,6 +358,8 @@ pub fn enemy_type_from_engagement_slug(s: &str) -> Option<EnemyType> {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationResult {
+    /// Legacy hull-plus-shield counter, including hull overkill; some optimizer
+    /// callers depend on that behavior. Not a target HP-pool/kill-summary gauge.
     pub total_damage: f64,
     pub attacker_won: bool,
     /// True when the fight ended because both ships survived to the configured round cap
@@ -378,8 +380,9 @@ pub struct SimulationResult {
     /// When true, attacker combat-begin effects included [`AbilityEffect::ConquerorBorgBeamSuppression`] vs a tagged Conqueror Borg defender. Instant-kill beam resolution reads this when implemented.
     #[serde(default)]
     pub conqueror_borg_beam_suppression: bool,
-    /// Sum of isolytic damage applied to the defender (isolytic leg × apex factor, per outbound hit).
-    /// Comparable to game log **Total Isolytic Damage** columns for calibration.
+    /// Legacy isolytic leg × final apex factor, summed before shield routing and
+    /// HP caps. Includes discarded shield allocation and hull overkill. Outbound
+    /// `damage_application` traces separately expose actual weapon HP removal.
     #[serde(default)]
     pub total_isolytic_damage: f64,
 }

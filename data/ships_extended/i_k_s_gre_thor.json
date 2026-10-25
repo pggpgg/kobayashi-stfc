@@ -2,6 +2,7 @@
   "id": "i_k_s_gre_thor",
   "ship_name": "I.K.S. GRE'THOR",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
   "grade": 7,
   "faction": "klingon",
   "tiers": [

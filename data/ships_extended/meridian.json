@@ -2,6 +2,7 @@
   "id": "meridian",
   "ship_name": "MERIDIAN",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
   "grade": 3,
   "tiers": [
     {

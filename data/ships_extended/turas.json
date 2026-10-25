@@ -2,6 +2,7 @@
   "id": "turas",
   "ship_name": "TURAS",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 2,
   "tiers": [
     {

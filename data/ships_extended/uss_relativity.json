@@ -2,6 +2,7 @@
   "id": "uss_relativity",
   "ship_name": "U.S.S. RELATIVITY",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 4,
   "tiers": [
     {

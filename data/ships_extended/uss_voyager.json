@@ -2,6 +2,7 @@
   "id": "uss_voyager",
   "ship_name": "U.S.S. VOYAGER",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
   "grade": 4,
   "tiers": [
     {

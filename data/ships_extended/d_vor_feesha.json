@@ -2,6 +2,7 @@
   "id": "d_vor_feesha",
   "ship_name": "D'VOR FEESHA",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
   "grade": 4,
   "tiers": [
     {

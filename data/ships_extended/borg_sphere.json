@@ -2,6 +2,7 @@
   "id": "borg_sphere",
   "ship_name": "BORG SPHERE",
   "ship_class": "battleship",
+  "crit_damage_is_bonus": true,
   "grade": 5,
   "tiers": [
     {
