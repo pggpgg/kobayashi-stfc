@@ -1,6 +1,6 @@
 # Officer ability text: upstream translations vs LCARS
 
-This document explains how **in-game ability names and descriptions** in the `data-stfc-space` translation dumps relate to **Kobayashi**’s `officers.lcars.yaml` and `officers.canonical.json`, and why names are not auto-hydrated today.
+This document explains how in-game ability names and descriptions from the `data-stfc-space` translation dumps are joined to Kobayashi's maintained officer catalog. The runtime builds its LCARS officer model in-process from `officers.canonical.json` and the upstream officer summary, translation and officer data files. `officers.lcars.yaml` is an optional generated export for inspection and file-based workflows.
 
 ## Example: Ahvix
 
@@ -52,15 +52,15 @@ flowchart LR
 - `**translations-officer_names.json`** — **Officer display names** (`officer_name`), not ability names.
 - `**translations-officer_flavor_text.json`** — **Biography / flavor** by officer `id`, not abilities.
 
-## `generate_lcars` and ability names
+## Runtime name mapping and `generate_lcars`
 
-`cargo run --bin generate_lcars` **does** hydrate ability block names when the upstream files exist:
+The runtime builder and `cargo run --bin generate_lcars` use the same mapping to hydrate ability block names when the upstream files exist:
 
 - Defaults: `data/upstream/data-stfc-space/summary-officer.json` and `translations-officer_buffs.json` (override with `--summary` / `--translations`).
 - Join: canonical `**source_officer_id`** → summary officer `**id**`; each ability’s `**ability_id**` → summary `**captain_ability.id` / `ability.id` / `below_decks_ability.id**` → `**loca_id**` → translation row `**id**` with `**key`: `officer_ability_name**`.
 - `**--no-ability-names**` skips loading and keeps placeholders `{Officer Name} (Captain|Bridge|Below Decks)`.
 
-Hand-edited `**officers.lcars.yaml**` remains the project’s combat source of truth; regeneration overwrites those files when you run `generate_lcars` into that directory.
+The maintained source is `**officers.canonical.json**`. The default runtime builds LCARS in-process from that catalog and the upstream files; it does not load the generated monolith. Running `generate_lcars` exports the built model to `**officers.lcars.yaml**` for inspection or explicit file-based workflows, and overwrites that export in the selected output directory.
 
 ## Caveats
 

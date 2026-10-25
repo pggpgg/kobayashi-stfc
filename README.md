@@ -42,9 +42,9 @@ manually.
 
 KOBAYASHI solves this problem with a large number of simulations. It simulates thousands
 of fights for each crew and ranks the results. You select the metric: round-1 kill rate, win rate, hull
-remaining, or the number of fights before a repair. One fight takes less than one
-microsecond. The fights run in parallel on all cores. The same seed always gives the same
-result.
+remaining, or the number of fights before a repair. The fights run in parallel.
+Performance depends on the crew and the scenario. The same complete inputs and seed
+give the same result.
 
 **Highlights**
 
@@ -53,8 +53,8 @@ result.
 - Three optimizer strategies: an exhaustive sweep, a tiered scout pass with a confirmation
   pass, and a genetic algorithm. The server selects the strategy from the size of the
   search space.
-- **LCARS** (Language for Combat Ability Resolution and Simulation). Officer abilities are
-  declarative YAML. You can add a new officer without a change to the code.
+- **LCARS** (Language for Combat Ability Resolution and Simulation). The runtime converts
+  canonical officer data into this declarative model. Supported abilities need no engine code changes.
 - Player profile bonuses for the research, the buildings, the reputation, the artifacts,
   the exocomps, and the forbidden tech.
 - Local-first operation. A release archive contains the server, the web interface, the
@@ -104,12 +104,12 @@ cargo build --release
 ./target/release/kobayashi serve          # http://localhost:3000
 
 cargo test                                # backend tests
-./scripts/local-ci.sh                     # full CI parity, locally
+./scripts/local-ci.sh                     # main local Rust and frontend checks
 ```
 
 - **Pre-commit hooks, CI parity, and branch protection** — [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Officer LCARS definitions** — [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md)
-- **The full CLI, the environment variables, and the operations controls** — [CLAUDE.md](CLAUDE.md)
+- **Shared agent instructions, commands, and runtime controls** — [AGENTS.md](AGENTS.md)
 - **The documentation index** — [docs/README.md](docs/README.md)
 - **The documentation style guide** — [docs/STYLE_STE100.md](docs/STYLE_STE100.md)
 
@@ -117,12 +117,12 @@ cargo test                                # backend tests
 
 ## How it works
 
-**The combat engine.** The fight loop is deterministic, and it makes no allocation. It is
-written in Rust. One simulation takes much less than one microsecond. The engine models
-decay buffs, accumulate buffs, on-kill triggers, extra-attack procs, and the overflow from
-the shield to the hull when the shield breaks. It also models the apex mechanics, the
-isolytic mechanics, and the player profile bonuses. The same seed always gives the same
-result. A small Python reference in [tools/combat_engine](tools/combat_engine/) does the
+**The combat engine.** The fight loop is deterministic and is written in Rust. Some
+effect-filter and batch paths can allocate memory. Use release benchmarks to measure
+performance. The engine models decay buffs, accumulate buffs, on-kill triggers,
+extra-attack procs, and per-hit shield and hull damage. It also models the apex mechanics, the
+isolytic mechanics, and the player profile bonuses. The same complete inputs and seed
+give the same result. A small Python reference in [tools/combat_engine](tools/combat_engine/) does the
 same core calculations, and CI runs it.
 
 **The optimizer.** You give the optimizer a ship and a hostile, and it searches the crew
@@ -134,13 +134,13 @@ the candidates, then a confirmation pass over the best K candidates. The optimiz
 simulates the crews with synergy tags first. Thus you keep the best results that it found
 if you stop the run early.
 
-**The LCARS officers.** The officers are in
-[`data/officers/officers.lcars.yaml`](data/officers/). A maintainer keeps a canonical JSON
-file, and the tool generates the YAML from it. At load time the resolver collapses the
-YAML into a `BuffSet`. The hot loop then evaluates only the dynamic effects: decay,
-accumulate, and proc. The engine writes a log message for an unknown effect type and skips
-it. Therefore you can add an officer before the engine models every mechanic. For the full
-grammar, refer to [docs/DESIGN.md § LCARS](docs/DESIGN.md#3-lcars-language-specification).
+**The LCARS officers.** A maintainer edits
+[`data/officers/officers.canonical.json`](data/officers/officers.canonical.json).
+The runtime builds the LCARS model in-process and resolves the selected crew into a
+`BuffSet`. Generated YAML is an optional export for inspection. The fight loop evaluates
+dynamic effects, including decay, accumulation, and procs. Unsupported effects remain
+modeling gaps. For the full grammar, refer to
+[docs/DESIGN.md § LCARS](docs/DESIGN.md#3-lcars-language-specification).
 To contribute an officer, refer to [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md).
 
 **The player profile.** The bonuses that do not come from officers merge into one profile.
@@ -183,7 +183,7 @@ process controls how many of these handlers run together
 sends it from `frontend/dist`. At start the binary finds the runtime assets in
 `KOBAYASHI_HOME`, in the working directory, or in the directory of the executable.
 Therefore an extracted release archive runs without a checkout. For more data, refer to
-[CLAUDE.md § Architecture](CLAUDE.md) and [docs/DESIGN.md](docs/DESIGN.md).
+[AGENTS.md](AGENTS.md#project-map) and [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 
@@ -191,12 +191,10 @@ Therefore an extracted release archive runs without a checkout. For more data, r
 
 You can send a pull request. There are three good ways to help:
 
-- **Code.** For the build steps, the tests, and the CI parity, refer to
-  [CONTRIBUTING.md](CONTRIBUTING.md). Each pull request runs `cargo fmt`,
-  `cargo clippy -D warnings`, `cargo test`, `cargo audit`, and the frontend pipeline. The
-  frontend pipeline runs Biome, `tsc`, Vitest, and the build.
-- **Officer definitions.** Each officer is YAML. For the schema, the mapping tables, and
-  the `generate_lcars` operation, refer to
+- **Code.** For the build steps, the tests, and the current CI jobs, refer to
+  [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Officer definitions.** Edit the canonical JSON catalog. For the LCARS model and
+  the optional YAML export, refer to
   [docs/LCARS_CONTRIBUTING.md](docs/LCARS_CONTRIBUTING.md).
 - **Data from real fights.** The combat engine calibrates against the recorded fights in
   `tests/fixtures/recorded_fights/`. You can record the damage per round, the number of

@@ -45,15 +45,15 @@ main [README](../README.md) is the front page. The documents here give more deta
 
 - [LCARS_CONTRIBUTING.md](LCARS_CONTRIBUTING.md) — The guide to contribute an officer
   definition: the schema, the examples, and the `generate_lcars` operation.
-- [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md) — The mapping between
-  a buff id and a statistic. The generator uses it to make the LCARS data.
+- [OFFICER_TRANSLATIONS_MAPPING.md](OFFICER_TRANSLATIONS_MAPPING.md) — How ability ids and
+  localization ids connect officer abilities to their display names and descriptions.
 - [OFFICER_MODELING_SCORECARD.md](OFFICER_MODELING_SCORECARD.md) — The fidelity audit for
   each officer. To make it again, run `cargo run --bin generate_officer_scorecard`.
 - [CANONICAL_CONDITIONS.md](CANONICAL_CONDITIONS.md) — The canonical condition strings that
   the generator writes into the LCARS data.
-- **The LCARS coverage report** — The LCARS effects that the YAML-to-IR adapter drops at
-  load time. To make it locally, run `cargo run --bin validate_data -- --coverage`. The
-  command writes `docs/lcars_coverage_report.md` and `docs/lcars_coverage_report.json`.
+- **The LCARS coverage report** — The effects that the combat adapter drops from the
+  model built from canonical data. To make it locally, run `cargo run --bin validate_data -- --coverage`.
+  The command writes `docs/lcars_coverage_report.md` and `docs/lcars_coverage_report.json`.
   Git ignores both files.
 
 ## Data pipeline
@@ -96,8 +96,7 @@ main [README](../README.md) is the front page. The documents here give more deta
 
 Refer also to these documents:
 
-- [CLAUDE.md](../CLAUDE.md) — The commands, the environment variables, and the operations
-  controls.
+- [AGENTS.md](../AGENTS.md) — Shared agent instructions, commands, and runtime controls.
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — CI, the pre-commit hooks, and the branch
   protection.
 - [data/README.md](../data/README.md) — The layout of the ship data, the hostile data, the

@@ -1,39 +1,29 @@
-# Cursor project configuration
+# Cursor project instructions
 
-This folder holds **persistent AI guidance** for Kobayashi. It is separate from [CLAUDE.md](../CLAUDE.md), which documents commands, architecture, and data layout for humans and agents alike.
+[AGENTS.md](../AGENTS.md) is the shared instruction source for this repository.
+Cursor reads the root file; `rules/00-global-kobayashi.mdc` is a compatibility
+entry point that directs the agent to it. Claude uses the same source through
+the import in [CLAUDE.md](../CLAUDE.md).
 
-## Layout
+The former scoped Cursor rules have been consolidated into `AGENTS.md`:
 
-| Path | Purpose |
-|------|---------|
-| `rules/*.mdc` | Numbered Cursor rules (YAML frontmatter + markdown body). |
-| `plans/` | Ephemeral Cursor Plan artifacts. **Not maintained** after the work ships — delete or ignore stale plans here. |
+| Former topic | Shared section |
+| --- | --- |
+| Global goals and checklist maintenance | Instruction maintenance; Protect player state and existing work |
+| Rust architecture | Project map |
+| Frontend | Frontend and API contracts |
+| Game data, LCARS and importers | Data and officer definitions |
+| Combat mechanics, benchmarks and fixtures | Combat correctness and evidence |
+| Cargo invocation and terminal discipline | Rust commands and test discipline |
 
-There is no project `AGENTS.md`; agent expectations live in `rules/` and `CLAUDE.md`.
+## Maintenance
 
-## Rule numbering
+- Change shared policy in `AGENTS.md`, not in parallel Claude or Cursor copies.
+- Add a scoped rule only for a requirement that cannot be expressed adequately in the shared instructions. Keep it short and check its globs against real paths.
+- Cursor rules must use `.mdc` frontmatter. References point the agent to a file; they do not inline its contents.
+- `plans/` contains temporary planning artifacts. Move durable conclusions into maintained project documentation when work completes.
+- Keep local permissions, machine paths, secrets and session status out of shared rules. Tool settings do not create authorization for unrelated actions.
 
-| Prefix | Scope |
-|--------|--------|
-| `00–09` | Always-on project principles |
-| `10–19` | Rust simulator / optimizer (`src/`) |
-| `20–29` | Game data and LCARS |
-| `30–39` | Tests, fixtures, evaluation discipline (`31-benchmark-fixtures.mdc` → `tests/fixtures/`; `32-cargo-test-invocation.mdc` → always-on terminal `cargo test` targets) |
-| `40–49` | Importers, scripts, normalization |
-| `50–59` | Combat mechanics (narrow) |
-| `60–69` | Frontend SPA |
-
-When adding a rule: one concern per file, under ~50 lines, actionable examples where helpful. Prefer `globs` over `alwaysApply: true` unless the guidance applies to every task.
-
-## Maintenance checklist
-
-- **After a Plan completes:** remove or archive the plan file; fold durable facts into `docs/`, `data/*/README.md`, or a rule if agents keep repeating the same mistake.
-- **When CLAUDE.md changes** (new commands, modules, env vars): check whether any rule duplicates or contradicts it; rules should encode *behavior*, not duplicate the full command reference.
-- **Dead globs:** if a rule's `globs` pattern matches no files, update or delete the rule (e.g. fixture paths under `tests/fixtures/`).
-- **Do not commit** secrets, local profile paths, or machine-specific settings under `.cursor/`.
-
-## Related docs
-
-- [CLAUDE.md](../CLAUDE.md) — build, test, architecture
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — CI and hooks
-- [docs/LCARS_CONTRIBUTING.md](../docs/LCARS_CONTRIBUTING.md) — officer ability authoring
+Adapter formats follow the official [Cursor rules](https://cursor.com/docs/rules)
+and [Claude memory/import](https://code.claude.com/docs/en/memory#share-one-file-with-other-coding-tools)
+documentation. The project policy remains in `AGENTS.md`.
