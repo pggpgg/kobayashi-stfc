@@ -2,6 +2,8 @@
   "id": "uss_athena",
   "ship_name": "U.S.S. ATHENA",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 6,
   "tiers": [
     {
       "tier": 1,

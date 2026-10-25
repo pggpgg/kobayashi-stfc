@@ -46,6 +46,8 @@ export function usePvpWorkspace() {
   const [belowDeckUnlockLevels, setBelowDeckUnlockLevels] = useState<number[]>(
     () => [...DEFAULT_BELOW_DECK_UNLOCK_LEVELS],
   );
+  const [defenderBelowDeckUnlockLevels, setDefenderBelowDeckUnlockLevels] =
+    useState<number[]>(() => [...DEFAULT_BELOW_DECK_UNLOCK_LEVELS]);
 
   const [attackerCrew, setAttackerCrew] = useState<CrewState>(() =>
     createEmptyCrew(50, DEFAULT_BELOW_DECK_UNLOCK_LEVELS),
@@ -59,6 +61,45 @@ export function usePvpWorkspace() {
   const [defenderPins, setDefenderPins] = useState<PinsState>(() =>
     createEmptyPins(50, DEFAULT_BELOW_DECK_UNLOCK_LEVELS),
   );
+
+  useEffect(() => {
+    const count = belowDeckSlotCount(attackerShipLevel, belowDeckUnlockLevels);
+    setAttackerCrew((current) => ({
+      ...current,
+      belowDeck: Array.from(
+        { length: count },
+        (_, i) => current.belowDeck[i] ?? null,
+      ),
+    }));
+    setAttackerPins((current) => ({
+      ...current,
+      belowDeck: Array.from(
+        { length: count },
+        (_, i) => current.belowDeck[i] ?? false,
+      ),
+    }));
+  }, [attackerShipLevel, belowDeckUnlockLevels]);
+
+  useEffect(() => {
+    const count = belowDeckSlotCount(
+      defenderShipLevel,
+      defenderBelowDeckUnlockLevels,
+    );
+    setDefenderCrew((current) => ({
+      ...current,
+      belowDeck: Array.from(
+        { length: count },
+        (_, i) => current.belowDeck[i] ?? null,
+      ),
+    }));
+    setDefenderPins((current) => ({
+      ...current,
+      belowDeck: Array.from(
+        { length: count },
+        (_, i) => current.belowDeck[i] ?? false,
+      ),
+    }));
+  }, [defenderShipLevel, defenderBelowDeckUnlockLevels]);
 
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
   const [simResult, setSimResult] = useState<SimulateStats | null>(null);
@@ -299,6 +340,8 @@ export function usePvpWorkspace() {
     setDefenderPins,
     belowDeckUnlockLevels,
     setBelowDeckUnlockLevels,
+    defenderBelowDeckUnlockLevels,
+    setDefenderBelowDeckUnlockLevels,
     simsPerCrew,
     setSimsPerCrew,
     simResult,

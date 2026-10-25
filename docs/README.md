@@ -58,6 +58,11 @@ main [README](../README.md) is the front page. The documents here give more deta
 
 ## Data pipeline
 
+- [RESEARCH_COMBAT_VALIDATION.md](RESEARCH_COMBAT_VALIDATION.md) — research correction,
+  recorded combat observations, and limits of the available historical snapshots.
+- [STFC_CLIENT_REVERSE_ENGINEERING.md](STFC_CLIENT_REVERSE_ENGINEERING.md) — REA
+  inspection of the installed client, artifact identities, cached combat
+  configuration, and the evidence needed to improve simulation fidelity.
 - [STFC_SPACE_DATA_STRATEGY.md](STFC_SPACE_DATA_STRATEGY.md) — Where the upstream data
   comes from on data.stfc.space, and how the project refreshes it.
 - [UPSTREAM_HOSTILE_SHIP_TYPES.md](UPSTREAM_HOSTILE_SHIP_TYPES.md) — The taxonomy of the

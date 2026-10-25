@@ -64,6 +64,52 @@ use kobayashi::data::ship::{
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
 const DEFAULT_SHIPS_SOURCE_NOTE: &str = "From normalize_data_stfc_space";
 
+fn load_ability_catalog(
+    path: &Path,
+) -> Option<std::collections::HashMap<String, AbilityCatalogEntry>> {
+    let contents = match fs::read_to_string(path) {
+        Ok(contents) => contents,
+        Err(error) => {
+            eprintln!(
+                "warning: cannot read ship ability catalog {}: {error}",
+                path.display()
+            );
+            return None;
+        }
+    };
+    let root: Value = match serde_json::from_str(&contents) {
+        Ok(root) => root,
+        Err(error) => {
+            eprintln!(
+                "warning: cannot parse ship ability catalog {}: {error}",
+                path.display()
+            );
+            return None;
+        }
+    };
+    let Some(entries) = root.get("entries").and_then(Value::as_object) else {
+        eprintln!(
+            "warning: ship ability catalog {} has no object-valued entries field",
+            path.display()
+        );
+        return None;
+    };
+
+    let mut catalog = std::collections::HashMap::new();
+    for (id, value) in entries {
+        match serde_json::from_value(value.clone()) {
+            Ok(entry) => {
+                catalog.insert(id.clone(), entry);
+            }
+            Err(error) => eprintln!(
+                "warning: skipping malformed ship ability catalog entry {id} in {}: {error}",
+                path.display()
+            ),
+        }
+    }
+    Some(catalog)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo_root = Path::new(".");
     let upstream_ships = repo_root.join("data/upstream/data-stfc-space/ships");
@@ -85,17 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::from_str(&data).map_err(|e| format!("parse ship_id_registry: {}", e))?
     };
 
-    let ability_catalog: Option<std::collections::HashMap<String, AbilityCatalogEntry>> =
-        fs::read_to_string(&catalog_path).ok().and_then(|s| {
-            let root: Value = serde_json::from_str(&s).ok()?;
-            let entries = root.get("entries")?.as_object()?;
-            let mut map = std::collections::HashMap::new();
-            for (k, v) in entries {
-                let entry: AbilityCatalogEntry = serde_json::from_value(v.clone()).ok()?;
-                map.insert(k.clone(), entry);
-            }
-            Some(map)
-        });
+    let ability_catalog = load_ability_catalog(&catalog_path);
 
     let id_by_numeric: std::collections::HashMap<u64, &ShipIdRegistryEntry> =
         registry.ships.iter().map(|e| (e.numeric_id, e)).collect();
@@ -189,6 +225,11 @@ fn raw_to_extended(
     ship_class: &str,
     ability_catalog: Option<&std::collections::HashMap<String, AbilityCatalogEntry>>,
 ) -> Result<ExtendedShipRecord, Box<dyn std::error::Error>> {
+    let grade = raw
+        .get("grade")
+        .and_then(Value::as_u64)
+        .and_then(|grade| u32::try_from(grade).ok())
+        .filter(|grade| *grade > 0);
     let faction = raw
         .get("faction")
         .and_then(|v| v.get("loca_id"))
@@ -421,6 +462,8 @@ fn raw_to_extended(
         id: canonical_id.to_string(),
         ship_name: ship_name.to_string(),
         ship_class: ship_class.to_string(),
+        crit_damage_is_bonus: Some(true),
+        grade,
         faction,
         tiers,
         levels,
@@ -594,7 +637,7 @@ fn extract_tier_combat(
             .get("crit_modifier")
             .or_else(|| data.get("crit_damage"))
             .and_then(Value::as_f64)
-            .filter(|c| c.is_finite() && *c > 0.0);
+            .filter(|c| c.is_finite() && *c >= 0.0);
         let w_proc_chance = data.get("proc_chance").and_then(Value::as_f64);
         let w_proc_mult = data
             .get("proc_multiplier")
@@ -667,4 +710,70 @@ fn extract_tier_combat(
         dodge_stat,
         weapons,
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn raw_ship_fixture() -> Value {
+        serde_json::json!({
+            "tiers": [
+                {"tier": 1, "components": []},
+                {"tier": 2, "components": []}
+            ],
+            "levels": [
+                {"level": 1, "shield": 0.0, "health": 0.0},
+                {"level": 10, "shield": 100.0, "health": 200.0}
+            ]
+        })
+    }
+
+    #[test]
+    fn ship_grade_survives_normalization_serialization_and_resolution() {
+        for grade in [3, 4, 5] {
+            let mut raw = raw_ship_fixture();
+            raw["grade"] = serde_json::json!(grade);
+            let normalized = raw_to_extended(&raw, "fixture", "Fixture", "explorer", None).unwrap();
+            let serialized = serde_json::to_value(&normalized).unwrap();
+            assert_eq!(serialized["grade"], grade);
+            let restored: ExtendedShipRecord = serde_json::from_value(serialized).unwrap();
+            for (tier, level) in [(1, 1), (2, 10)] {
+                let resolved = restored.to_ship_record(Some(tier), Some(level)).unwrap();
+                assert_eq!(resolved.grade, Some(grade));
+                let restored: kobayashi::data::ship::ShipRecord =
+                    serde_json::from_value(serde_json::to_value(resolved).unwrap()).unwrap();
+                assert_eq!(restored.grade, Some(grade));
+            }
+        }
+    }
+
+    #[test]
+    fn absent_or_invalid_upstream_ship_grade_stays_unknown() {
+        for grade in [
+            None,
+            Some(serde_json::json!(null)),
+            Some(serde_json::json!(0)),
+            Some(serde_json::json!(-1)),
+            Some(serde_json::json!(4.5)),
+            Some(serde_json::json!("4")),
+            Some(serde_json::json!(u64::from(u32::MAX) + 1)),
+        ] {
+            let mut raw = raw_ship_fixture();
+            if let Some(grade) = grade {
+                raw["grade"] = grade;
+            }
+            let normalized = raw_to_extended(&raw, "fixture", "Fixture", "explorer", None).unwrap();
+            let serialized = serde_json::to_value(&normalized).unwrap();
+            assert!(serialized.get("grade").is_none());
+            let legacy: ExtendedShipRecord = serde_json::from_value(serialized).unwrap();
+            let resolved = legacy.to_ship_record(Some(2), Some(10)).unwrap();
+            assert_eq!(resolved.grade, None);
+            let serialized = serde_json::to_value(resolved).unwrap();
+            assert!(serialized.get("grade").is_none());
+            let legacy: kobayashi::data::ship::ShipRecord =
+                serde_json::from_value(serialized).unwrap();
+            assert_eq!(legacy.grade, None);
+        }
+    }
 }

@@ -1,3 +1,4 @@
+pub(crate) mod atomic_file;
 pub mod below_decks_priority;
 pub mod budget_telemetry;
 pub mod building;
@@ -16,6 +17,11 @@ pub mod hostile_loca;
 pub mod import;
 pub mod loader;
 pub mod mapping_gap_report;
+pub mod native_building_buffs;
+pub mod native_consumable_buffs;
+pub(crate) mod native_critical_damage;
+pub mod native_officer_core_stats;
+pub mod native_research_buffs;
 pub mod officer;
 pub mod officer_ban;
 pub mod officer_eligibility;

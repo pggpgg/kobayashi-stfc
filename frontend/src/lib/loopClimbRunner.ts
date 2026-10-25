@@ -139,6 +139,8 @@ export function clearLoopClimbPlan(profileId: string | null): void {
 }
 
 export interface LoopClimbCallbacks {
+  /** An unmounted/replaced UI owner must not overwrite another climb's bookkeeping. */
+  shouldPersist?: () => boolean;
   /** Called whenever the plan changes so the UI can re-render. */
   onPlan: (plan: LoopClimbPlan) => void;
   /** Live per-rung progress from the job status stream. */
@@ -223,7 +225,7 @@ export async function runLoopClimb(
   let plan = initial;
 
   const publish = () => {
-    saveLoopClimbPlan(plan);
+    if (callbacks.shouldPersist?.() !== false) saveLoopClimbPlan(plan);
     callbacks.onPlan(plan);
   };
 

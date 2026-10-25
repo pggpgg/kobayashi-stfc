@@ -1,15 +1,11 @@
 //! Gorn Eviscerator Hunt the Hunters: level-scaled isolytic vs gorn_hunter-tagged hostiles only.
 
-use kobayashi::combat::HOSTILE_TAG_MASK_GORN_HUNTER;
-use kobayashi::data::data_registry::DataRegistry;
-use kobayashi::data::loader::{resolve_hostile, resolve_ship_with_tier_level};
-use kobayashi::data::profile_index::DEMO_PROFILE_ID;
-use kobayashi::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
-use kobayashi::optimizer::crew_generator::CrewCandidate;
-use kobayashi::optimizer::monte_carlo::{
-    replay_optimize_iteration_with_registry, DefenderOpponent,
+use kobayashi::combat::{
+    simulate_combat, Combatant, CrewConfiguration, SimulationConfig, TraceMode,
+    HOSTILE_TAG_MASK_GORN_HUNTER,
 };
-use std::sync::Arc;
+use kobayashi::data::loader::{resolve_hostile, resolve_ship_with_tier_level};
+use kobayashi::data::ship_ability_resolve::ship_abilities_to_crew_seat_contexts;
 
 #[test]
 fn acrocanth_carries_gorn_hunter_tag() {
@@ -47,65 +43,74 @@ fn gorn_eviscerator_hunt_the_hunters_scales_with_ship_level() {
 fn hunt_the_hunters_isolytic_applies_only_vs_gorn_hunter_hostiles() {
     let ship_rec =
         resolve_ship_with_tier_level("gorn_eviscerator", Some(10), Some(50)).expect("ship record");
-    let seats = ship_abilities_to_crew_seat_contexts(ship_rec.abilities.as_deref().unwrap_or(&[]));
-    assert!(
-        seats.iter().any(|s| s.ability.name == "1273528452"),
-        "Hunt the Hunters should compile to a crew seat"
-    );
-
-    let registry = Arc::new(DataRegistry::load().expect("registry"));
-    let candidate = CrewCandidate {
-        captain: String::new(),
-        bridge: vec![],
-        below_decks: vec![],
+    let hunt = ship_rec
+        .abilities
+        .as_ref()
+        .and_then(|abilities| abilities.iter().find(|ability| ability.id == "1273528452"))
+        .expect("Hunt the Hunters ability");
+    let crew = CrewConfiguration {
+        seats: ship_abilities_to_crew_seat_contexts(std::slice::from_ref(hunt)),
     };
+    assert_eq!(crew.seats.len(), 1, "Hunt the Hunters must compile");
 
-    let vs_acro = replay_optimize_iteration_with_registry(
-        registry.as_ref(),
-        "gorn_eviscerator",
-        "447012258",
-        Some(10),
-        Some(50),
-        &candidate,
-        0,
-        0,
-        Some(DEMO_PROFILE_ID),
-        500_000,
-        None,
-        DefenderOpponent::Hostile,
-    );
-    assert!(
-        !vs_acro.using_placeholder_combatants,
-        "gorn vs acrocanth should resolve"
-    );
-    assert!(
-        vs_acro.total_isolytic_damage > 0.0,
-        "isolytic damage expected vs gorn hunter (got {})",
-        vs_acro.total_isolytic_damage
+    // A fixed, noncritical single shot isolates the compiled ability's gate.
+    // Different real enemies also change survival, defense, and shot counts, so
+    // their full-fight isolytic totals cannot establish whether this gate works.
+    let attacker = Combatant {
+        id: "controlled_attacker".into(),
+        attack: 1_000.0,
+        hull_health: 1_000_000.0,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        id: "controlled_defender".into(),
+        hull_health: 1_000_000.0,
+        ..Default::default()
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 0,
+        trace_mode: TraceMode::Events,
+        ..Default::default()
+    };
+    let untagged = simulate_combat(&attacker, &defender, &config, &crew);
+    let tagged = simulate_combat(
+        &attacker,
+        &defender,
+        &SimulationConfig {
+            defender_hostile_tag_mask: HOSTILE_TAG_MASK_GORN_HUNTER,
+            ..config
+        },
+        &crew,
     );
 
-    // Non-gorn-hunter hostile — Hunt the Hunters should not apply.
-    let vs_other = replay_optimize_iteration_with_registry(
-        registry.as_ref(),
-        "gorn_eviscerator",
-        "35645340",
-        Some(10),
-        Some(50),
-        &candidate,
-        0,
-        0,
-        Some(DEMO_PROFILE_ID),
-        500_000,
-        None,
-        DefenderOpponent::Hostile,
-    );
-    if vs_other.using_placeholder_combatants {
-        return;
+    for (result, expected_activation, expected_isolytic) in
+        [(&untagged, false, 0.0), (&tagged, true, 60_000.0)]
+    {
+        let activated = result.events.iter().any(|event| {
+            event.event_type == "ability_activation"
+                && event.source.ship_ability_id.as_deref() == Some("1273528452")
+        });
+        assert_eq!(activated, expected_activation);
+        let shots: Vec<_> = result
+            .events
+            .iter()
+            .filter(|event| {
+                event.event_type == "damage_application"
+                    && event.source.officer_id.as_deref() == Some("controlled_attacker")
+            })
+            .collect();
+        assert_eq!(shots.len(), 1, "both controls must fire exactly one shot");
+        assert_eq!(
+            shots[0].values["isolytic_component"].as_f64(),
+            Some(expected_isolytic),
+            "L50 Hunt the Hunters adds 60 times the fixed 1,000-damage shot only when tagged"
+        );
+        assert_eq!(result.total_isolytic_damage, expected_isolytic);
+        assert_eq!(result.total_damage, 1_000.0 + expected_isolytic);
+        assert_eq!(
+            result.defender_hull_remaining,
+            defender.hull_health - result.total_damage
+        );
     }
-    assert!(
-        vs_acro.total_isolytic_damage > vs_other.total_isolytic_damage,
-        "Hunt the Hunters should boost isolytic only vs gorn hunters (acro iso={} other iso={})",
-        vs_acro.total_isolytic_damage,
-        vs_other.total_isolytic_damage
-    );
 }

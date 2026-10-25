@@ -2,6 +2,8 @@
   "id": "ecs_fortunate",
   "ship_name": "ECS FORTUNATE",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 1,
   "tiers": [
     {
       "tier": 1,

@@ -115,7 +115,10 @@ pub struct GeneticTrialPlan {
     pub population: usize,
     pub generations: usize,
     pub sims_per_eval: usize,
-    /// Upper bound on trials: dedupe across generations usually spends less.
+    pub final_confirm_crews: usize,
+    pub final_confirm_sims: usize,
+    /// Upper bound on evolution plus final confirmation trials. Dedupe across
+    /// generations usually spends less.
     pub projected_trials: u64,
 }
 
@@ -128,23 +131,54 @@ pub fn plan_genetic_equal_trials(
     trial_budget: u64,
     generations: usize,
     sims_per_eval: usize,
-) -> GeneticTrialPlan {
+    final_confirm_sims: usize,
+    final_confirm_limit: usize,
+) -> Result<GeneticTrialPlan, String> {
     let sims_per_eval = sims_per_eval.max(1);
-    let mut generations = generations.max(1);
-    let min_gen_cost = MIN_GENETIC_POPULATION as u64 * sims_per_eval as u64;
-    while generations > 1 && generations as u64 * min_gen_cost > trial_budget {
-        generations -= 1;
+    let final_confirm_sims = final_confirm_sims.max(1);
+    let final_confirm_limit = final_confirm_limit.max(1);
+    let min_population = MIN_GENETIC_POPULATION as u128;
+    let min_final_crews = MIN_GENETIC_POPULATION.min(final_confirm_limit) as u128;
+    let min_final_cost = min_final_crews * final_confirm_sims as u128;
+    let min_total = min_population * sims_per_eval as u128 + min_final_cost;
+    if (trial_budget as u128) < min_total {
+        return Err(format!(
+            "GA trial budget {trial_budget} is below the minimum {min_total} for one generation of {MIN_GENETIC_POPULATION} crews plus final confirmation"
+        ));
     }
-    let per_generation = generations as u64 * sims_per_eval as u64;
-    let population = usize::try_from(trial_budget / per_generation.max(1))
-        .unwrap_or(usize::MAX)
-        .max(MIN_GENETIC_POPULATION);
-    GeneticTrialPlan {
+    let generations = generations.max(1).min(
+        usize::try_from(
+            ((trial_budget as u128 - min_final_cost) / (min_population * sims_per_eval as u128))
+                .max(1),
+        )
+        .unwrap_or(usize::MAX),
+    );
+    let cost = |population: usize| -> u128 {
+        population as u128 * generations as u128 * sims_per_eval as u128
+            + population.min(final_confirm_limit) as u128 * final_confirm_sims as u128
+    };
+    let upper =
+        usize::try_from(trial_budget as u128 / (generations as u128 * sims_per_eval as u128))
+            .unwrap_or(usize::MAX);
+    let (mut low, mut high) = (MIN_GENETIC_POPULATION, upper);
+    while low < high {
+        let mid = low + (high - low).div_ceil(2);
+        if cost(mid) <= trial_budget as u128 {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+    let population = low;
+    let final_confirm_crews = final_confirm_limit.min(population);
+    Ok(GeneticTrialPlan {
         population,
         generations,
         sims_per_eval,
-        projected_trials: population as u64 * generations as u64 * sims_per_eval as u64,
-    }
+        final_confirm_crews,
+        final_confirm_sims,
+        projected_trials: cost(population) as u64,
+    })
 }
 
 /// Candidate count for a flat lane (one fixed-depth Monte Carlo pass per crew) under a budget.
@@ -928,7 +962,7 @@ mod tests {
 
     #[test]
     fn genetic_plan_keeps_a_viable_population() {
-        let plan = plan_genetic_equal_trials(1_000, 20, 120);
+        let plan = plan_genetic_equal_trials(5_760, 20, 120, 600, 10).expect("minimum plan");
         assert!(plan.population >= MIN_GENETIC_POPULATION);
         assert!(
             plan.generations < 20,
@@ -938,10 +972,33 @@ mod tests {
 
     #[test]
     fn genetic_plan_spends_a_large_budget_on_population() {
-        let plan = plan_genetic_equal_trials(192_000, 20, 120);
+        let plan = plan_genetic_equal_trials(192_000, 20, 120, 600, 10).expect("budgeted plan");
         assert_eq!(plan.generations, 20);
-        assert_eq!(plan.population, 80);
-        assert_eq!(plan.projected_trials, 192_000);
+        assert_eq!(plan.population, 77);
+        assert_eq!(plan.projected_trials, 190_800);
+    }
+
+    #[test]
+    fn genetic_equal_trials_includes_its_final_confirmation_pass() {
+        let budget = 200_000;
+        let final_sims = 5_000;
+        let plan = plan_genetic_equal_trials(budget, 20, 100, final_sims, 10)
+            .expect("feasible budgeted plan");
+        // The ranked GA always confirms at least ten finalists after evolution.
+        assert!(
+            plan.projected_trials <= budget,
+            "{plan:?} overspends after final confirmation"
+        );
+        assert_eq!(plan.final_confirm_crews, 10);
+        assert_eq!(plan.population, 75);
+    }
+
+    #[test]
+    fn genetic_equal_trials_rejects_infeasible_budget_instead_of_overspending() {
+        let budget = 5_759;
+        let error = plan_genetic_equal_trials(budget, 20, 120, 600, 10)
+            .expect_err("infeasible budget must fail explicitly");
+        assert!(error.contains("minimum 5760"), "{error}");
     }
 
     #[test]
@@ -1013,6 +1070,17 @@ mod tests {
         assert_eq!(score.reference_top_k, 3);
         assert!((score.top_k_recall.unwrap() - 2.0 / 3.0).abs() < 1e-9);
         assert_eq!(score.best_crew_in_reference_top_k, Some(true));
+    }
+
+    #[test]
+    fn reference_recall_matches_genetic_seat_order_for_same_crew() {
+        let reference = reference(&["a"]);
+        let mut genetic_row = ranked_row("a", 0.95);
+        genetic_row.bridge.reverse();
+        let score = score_against_reference(&[genetic_row], &reference, 1);
+        assert_eq!(score.top_k_recall, Some(1.0));
+        assert_eq!(score.best_crew_in_reference_top_k, Some(true));
+        assert!(score.lane_best_crew_in_reference_set);
     }
 
     #[test]

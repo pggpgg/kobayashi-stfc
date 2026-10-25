@@ -158,6 +158,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 row.operator.trim().to_string()
             },
+            ..Default::default()
         };
         let record = by_name.entry(name.clone()).or_insert_with(|| {
             kobayashi::data::forbidden_chaos::ForbiddenChaosRecord {
@@ -238,7 +239,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let items: Vec<_> = by_name.into_values().collect();
+    let mut items: Vec<_> = by_name.into_values().collect();
+    // Spreadsheet summaries cannot replace client-verified per-level snapshots.
+    if let Some(previous) = output_path
+        .to_str()
+        .and_then(kobayashi::data::forbidden_chaos::load_forbidden_chaos)
+    {
+        for item in &mut items {
+            let Some(old) = previous
+                .items
+                .iter()
+                .find(|old| old.fid.is_some() && old.fid == item.fid)
+            else {
+                continue;
+            };
+            for bonus in &mut item.bonuses {
+                if let Some(verified) = old
+                    .bonuses
+                    .iter()
+                    .find(|old| old.stat == bonus.stat && old.rank_curve.is_some())
+                {
+                    bonus.rank_curve = verified.rank_curve.clone();
+                    bonus.operator = verified.operator.clone();
+                }
+            }
+        }
+    }
     let list = kobayashi::data::forbidden_chaos::ForbiddenChaosList {
         source: Some("community_spreadsheet".to_string()),
         last_updated: Some(chrono::Utc::now().format("%Y-%m-%d").to_string()),

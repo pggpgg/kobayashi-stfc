@@ -199,6 +199,22 @@ async fn profile_buildings_summary_returns_json() {
         serde_json::from_str(&response.body).expect("buildings-summary json");
     assert!(payload["profile_id"].as_str().is_some());
     assert!(payload["synced_building_count"].is_number());
+    assert!(payload["source_limitations"].is_array());
+    assert!(payload["setup_bonus_source"].is_string());
+    let selected = route_request("GET", "/api/profile/buildings-summary?ship_id=realta", "").await;
+    assert_eq!(selected.status_code, 200);
+    let selected: serde_json::Value = serde_json::from_str(&selected.body).unwrap();
+    assert_eq!(selected["ship_id"], "realta");
+    assert_eq!(selected["ship_class"], "explorer");
+    let unknown = route_request(
+        "GET",
+        "/api/profile/buildings-summary?ship_id=unknown_hull",
+        "",
+    )
+    .await;
+    assert_eq!(unknown.status_code, 200);
+    let unknown: serde_json::Value = serde_json::from_str(&unknown.body).unwrap();
+    assert!(unknown["ship_class"].is_null());
 }
 
 #[serial_test::serial]
@@ -888,12 +904,10 @@ async fn optimize_tiered_random_exploration_slice_reports_funnel() {
 #[serial_test::serial]
 #[tokio::test]
 async fn optimize_tiered_local_refinement_labels_refined_rows() {
-    // Hostile 1127817100 (level 31) on purpose: refinement can only accept a neighbour that
-    // measurably improves on a finalist, and this test profile carries no research or building
-    // buffs, so most matchups collapse to every crew winning at score 1.0 or every crew losing at
-    // 0.0 — neither leaves anything to improve. At level 31 this ship wins with real spread
-    // (~60 distinct scores across the legal crews), which is what gives the pass headroom.
-    let body = r#"{"ship":"uss_saladin","hostile":"1127817100","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
+    // Start the scout lane from one explicit legal bridge crew. Zero below-deck
+    // slots keep the API's automatic curated warm start out of this fixture, so
+    // the local pass can improve a deliberately modest baseline.
+    let body = r#"{"ship":"uss_saladin","hostile":"1127817100","sims":150,"seed":11,"max_candidates":1,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":1,"below_decks_slots":0,"local_refinement":true,"warm_start_crews":[{"captain":"kirk-1323b6","bridge":["uhura-ea117c","kira-nerys-a5253a"],"below_decks":[]}]}"#;
     let response = route_request_optimize(body).await;
 
     assert_eq!(response.status_code, 200);
@@ -1051,12 +1065,9 @@ fn sorted_names(value: &serde_json::Value) -> Vec<String> {
 async fn optimize_tiered_local_refinement_exposes_provenance_detail() {
     // Same scenario as `optimize_tiered_local_refinement_labels_refined_rows`, which pins that this
     // seed produces at least one refined row; this asserts what that row now reports about itself.
-    // Hostile 1127817100 (level 31) on purpose: refinement can only accept a neighbour that
-    // measurably improves on a finalist, and this test profile carries no research or building
-    // buffs, so most matchups collapse to every crew winning at score 1.0 or every crew losing at
-    // 0.0 — neither leaves anything to improve. At level 31 this ship wins with real spread
-    // (~60 distinct scores across the legal crews), which is what gives the pass headroom.
-    let body = r#"{"ship":"uss_saladin","hostile":"1127817100","sims":150,"seed":11,"max_candidates":24,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":3,"local_refinement":true}"#;
+    // An explicit bridge-only scout crew gives refinement a deliberate opportunity
+    // to improve; no automatic curated below-decks seed competes with it.
+    let body = r#"{"ship":"uss_saladin","hostile":"1127817100","sims":150,"seed":11,"max_candidates":1,"strategy":"tiered","tiered_scout_sims":30,"tiered_top_k":1,"below_decks_slots":0,"local_refinement":true,"warm_start_crews":[{"captain":"kirk-1323b6","bridge":["uhura-ea117c","kira-nerys-a5253a"],"below_decks":[]}]}"#;
     let response = route_request_optimize(body).await;
     assert_eq!(response.status_code, 200);
 
@@ -1152,9 +1163,11 @@ async fn optimize_recommendations_report_trials_run() {
 async fn optimize_estimate_scales_with_chain_kills_target() {
     // Sized so both estimates land inside the 0.1s–1h display clamp: below the floor every
     // scenario reports 0.1s and the scaling would be invisible.
+    // Use the same full-catalog fixture as optimize tests, independent of the active roster.
     let base_path =
         "/api/optimize/estimate?ship=saladin&hostile=2918121098&sims=100000&max_candidates=20000";
-    let single = route_request("GET", base_path, "").await;
+    let single =
+        route_request_ex("GET", base_path, "", None, SERVER_API_TEST_PROFILE_HEADERS).await;
     assert_eq!(single.status_code, 200);
     let single: serde_json::Value = serde_json::from_str(&single.body).expect("json");
     assert!(
@@ -1162,7 +1175,14 @@ async fn optimize_estimate_scales_with_chain_kills_target() {
         "single-fight estimates stay silent about chain: {single}"
     );
 
-    let chained = route_request("GET", &format!("{base_path}&chain_kills_target=5"), "").await;
+    let chained = route_request_ex(
+        "GET",
+        &format!("{base_path}&chain_kills_target=5"),
+        "",
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
     assert_eq!(chained.status_code, 200);
     let chained: serde_json::Value = serde_json::from_str(&chained.body).expect("json");
     assert_eq!(chained["chain_kills_target"], 5);
@@ -1939,5 +1959,23 @@ async fn simulate_partial_crew_with_demo_profile() {
         response.body
     );
     let payload: serde_json::Value = serde_json::from_str(&response.body).expect("json");
+    assert_eq!(payload["status"], "ok");
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn replay_one_below_decks_officer_leaves_the_other_slot_empty() {
+    let body = r#"{"ship":"realta","hostile":"898210950","ship_tier":4,"ship_level":20,"seed":0,"sim_index":0,"crew":{"captain":"ent-e-picard-556227","bridge":["ent-e-data-871245","ent-e-riker-516b8d"],"below_deck":["pike-1e7d0d"]}}"#;
+    let response = route_request_ex(
+        "POST",
+        "/api/optimize/replay-seed",
+        body,
+        None,
+        SERVER_API_TEST_PROFILE_HEADERS,
+    )
+    .await;
+    assert_eq!(response.status_code, 200, "{}", response.body);
+    let payload: serde_json::Value = serde_json::from_str(&response.body).unwrap();
+    // A duplicate Pike used to be synthesized, failing crew legality before replay.
     assert_eq!(payload["status"], "ok");
 }

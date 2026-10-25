@@ -2,6 +2,8 @@
   "id": "enterprise_nx_01",
   "ship_name": "ENTERPRISE NX-01",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

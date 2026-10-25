@@ -1,0 +1,719 @@
+{
+  "schema_version": 1,
+  "kind": "Redacted observed defense controls; source accounting and partial mechanic validation, not complete simulator accuracy",
+  "limitations": [
+    "Automatic stream decoded with the retained build-272 parser grammar on observed build 273; no manual CSV is available for these controls.",
+    "Raw damage is reconstructed from rounded damage components; nearest-integer values are hypotheses supported by the native stat boundary, not direct journal fields.",
+    "Tom source and operator placement remain unresolved.",
+    "The Jadzia/Tom control records 31 damage events separately from three charge events; charge markers have no damage payload."
+  ],
+  "controls": [
+    {
+      "label": "pike_only_bandit_26",
+      "source_json_sha256": "4ef2b72feb2e1016520b902f7417de5f104f8c0fdce7689618b6aaf71fdf8967",
+      "observed_client_build": 273,
+      "parser_reference_client_build": 272,
+      "incoming": [
+        {
+          "round": 1,
+          "weapon_id": 198378527,
+          "is_critical": 0,
+          "hull_damage": 249,
+          "shield_damage": 1172,
+          "mitigated_damage": 876.269782228722,
+          "isolytic_damage": 0,
+          "mitigated_apex_barrier": 113.68
+        }
+      ],
+      "hull_repairs": []
+    },
+    {
+      "label": "tom_only_romulan_patrol_31",
+      "source_json_sha256": "d8500592065e965a469171a5ab00be85639d8b55f957731910ccc847d00f7fa0",
+      "observed_client_build": 273,
+      "parser_reference_client_build": 272,
+      "incoming": [
+        {
+          "round": 1,
+          "weapon_id": 3070381921,
+          "is_critical": 0,
+          "hull_damage": 490,
+          "shield_damage": 2308,
+          "mitigated_damage": 7471.728,
+          "isolytic_damage": 0,
+          "mitigated_apex_barrier": 223.87
+        },
+        {
+          "round": 1,
+          "weapon_id": 3070381921,
+          "is_critical": 0,
+          "hull_damage": 438,
+          "shield_damage": 2065,
+          "mitigated_damage": 6682.12,
+          "isolytic_damage": 0,
+          "mitigated_apex_barrier": 200.21
+        },
+        {
+          "round": 1,
+          "weapon_id": 3784560438,
+          "is_critical": 0,
+          "hull_damage": 1170,
+          "shield_damage": 5517,
+          "mitigated_damage": 17853.399999999998,
+          "isolytic_damage": 0,
+          "mitigated_apex_barrier": 534.93
+        },
+        {
+          "round": 2,
+          "weapon_id": 3070381921,
+          "is_critical": 0,
+          "hull_damage": 442,
+          "shield_damage": 2085,
+          "mitigated_damage": 6746.2,
+          "isolytic_damage": 0,
+          "mitigated_apex_barrier": 202.13
+        },
+        {
+          "round": 2,
+          "weapon_id": 3070381921,
+          "is_critical": 0,
+          "hull_damage": 487,
+          "shield_damage": 2295,
+          "mitigated_damage": 7428.295999999999,
+          "isolytic_damage": 0,
+          "mitigated_apex_barrier": 222.57
+        }
+      ],
+      "hull_repairs": [
+        {
+          "round": 2,
+          "amount": 167.84
+        }
+      ]
+    },
+    {
+      "label": "jadzia_captain_tom_below_romulan_patrol_31",
+      "source_json_sha256": "866dc6840cee99e059324808b26fd7abb2c80d05568e6a4242f4cd4913172090",
+      "source_projection_sha256": "668cb00ed08391fdec618bc0218f7cdd1584182095e0ee457fd89943e901d82e",
+      "observed_client_build": 273,
+      "parser_reference_client_build": 272,
+      "rounds": 7,
+      "damage_events": [
+        {
+          "round": 1,
+          "subround": 1,
+          "source_index": 13,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 1,
+          "subround": 1,
+          "source_index": 32,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 1,
+          "subround": 2,
+          "source_index": 57,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 1,
+          "subround": 2,
+          "source_index": 76,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 1,
+          "subround": 3,
+          "source_index": 101,
+          "attacker": "hostile",
+          "weapon_id": 3784560438
+        },
+        {
+          "round": 2,
+          "subround": 1,
+          "source_index": 132,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 2,
+          "subround": 1,
+          "source_index": 151,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 2,
+          "subround": 2,
+          "source_index": 176,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 2,
+          "subround": 2,
+          "source_index": 195,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 3,
+          "subround": 1,
+          "source_index": 238,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 3,
+          "subround": 1,
+          "source_index": 257,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 3,
+          "subround": 2,
+          "source_index": 282,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 3,
+          "subround": 2,
+          "source_index": 301,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 3,
+          "subround": 3,
+          "source_index": 326,
+          "attacker": "hostile",
+          "weapon_id": 3784560438
+        },
+        {
+          "round": 4,
+          "subround": 1,
+          "source_index": 357,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 4,
+          "subround": 1,
+          "source_index": 376,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 4,
+          "subround": 2,
+          "source_index": 401,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 4,
+          "subround": 2,
+          "source_index": 420,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 5,
+          "subround": 1,
+          "source_index": 463,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 5,
+          "subround": 1,
+          "source_index": 482,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 5,
+          "subround": 2,
+          "source_index": 507,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 5,
+          "subround": 2,
+          "source_index": 526,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 5,
+          "subround": 3,
+          "source_index": 551,
+          "attacker": "hostile",
+          "weapon_id": 3784560438
+        },
+        {
+          "round": 6,
+          "subround": 1,
+          "source_index": 582,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 6,
+          "subround": 1,
+          "source_index": 601,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 6,
+          "subround": 2,
+          "source_index": 626,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 6,
+          "subround": 2,
+          "source_index": 645,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 7,
+          "subround": 1,
+          "source_index": 688,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 7,
+          "subround": 1,
+          "source_index": 707,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        },
+        {
+          "round": 7,
+          "subround": 2,
+          "source_index": 732,
+          "attacker": "hostile",
+          "weapon_id": 3070381921
+        },
+        {
+          "round": 7,
+          "subround": 2,
+          "source_index": 751,
+          "attacker": "player",
+          "weapon_id": 1211946817
+        }
+      ],
+      "incoming": [
+        {
+          "round": 1,
+          "subround": 1,
+          "source_index": 13,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 444,
+          "remaining_hull": 651715,
+          "shield_damage": 2091,
+          "remaining_shield": 746416,
+          "mitigated_damage": 6767.5599999999995,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 202.77,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 1,
+          "subround": 2,
+          "source_index": 57,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 509,
+          "remaining_hull": 651206,
+          "shield_damage": 2397,
+          "remaining_shield": 744019,
+          "mitigated_damage": 7759.375999999999,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 232.49,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 1,
+          "subround": 3,
+          "source_index": 101,
+          "weapon_id": 3784560438,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 1156,
+          "remaining_hull": 650050,
+          "shield_damage": 5450,
+          "remaining_shield": 738569,
+          "mitigated_damage": 17636.951999999997,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 528.45,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 2,
+          "subround": 1,
+          "source_index": 132,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 523,
+          "remaining_hull": 649695.72,
+          "shield_damage": 2468,
+          "remaining_shield": 736101,
+          "mitigated_damage": 7985.792,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 239.27,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 2,
+          "subround": 2,
+          "source_index": 176,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 508,
+          "remaining_hull": 649187.72,
+          "shield_damage": 2397,
+          "remaining_shield": 733704,
+          "mitigated_damage": 7757.24,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 232.43,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 3,
+          "subround": 1,
+          "source_index": 238,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 531,
+          "remaining_hull": 648739.2,
+          "shield_damage": 2126,
+          "remaining_shield": 731578,
+          "mitigated_damage": 7093.656,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 212.54,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 3,
+          "subround": 2,
+          "source_index": 282,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 504,
+          "remaining_hull": 648235.2,
+          "shield_damage": 2016,
+          "remaining_shield": 729562,
+          "mitigated_damage": 6728.4,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 201.6,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 3,
+          "subround": 3,
+          "source_index": 326,
+          "weapon_id": 3784560438,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 1213,
+          "remaining_hull": 647022.2,
+          "shield_damage": 4853,
+          "remaining_shield": 724709,
+          "mitigated_damage": 16197.288,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 485.31,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 4,
+          "subround": 1,
+          "source_index": 357,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 579,
+          "remaining_hull": 646623.04,
+          "shield_damage": 2315,
+          "remaining_shield": 722394,
+          "mitigated_damage": 7728.048,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 231.55,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 4,
+          "subround": 2,
+          "source_index": 401,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 591,
+          "remaining_hull": 646032.04,
+          "shield_damage": 2366,
+          "remaining_shield": 720028,
+          "mitigated_damage": 7895.368,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 236.57,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 5,
+          "subround": 1,
+          "source_index": 463,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 581,
+          "remaining_hull": 645544.64,
+          "shield_damage": 2326,
+          "remaining_shield": 717702,
+          "mitigated_damage": 7762.223999999999,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 232.58,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 5,
+          "subround": 2,
+          "source_index": 507,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 591,
+          "remaining_hull": 644953.64,
+          "shield_damage": 2366,
+          "remaining_shield": 715336,
+          "mitigated_damage": 7896.08,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 236.59,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 5,
+          "subround": 3,
+          "source_index": 551,
+          "weapon_id": 3784560438,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 1337,
+          "remaining_hull": 643616.64,
+          "shield_damage": 5350,
+          "remaining_shield": 709986,
+          "mitigated_damage": 17854.824,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 534.98,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 6,
+          "subround": 1,
+          "source_index": 582,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 533,
+          "remaining_hull": 643284.36,
+          "shield_damage": 2133,
+          "remaining_shield": 707853,
+          "mitigated_damage": 7118.576,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 213.29,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 6,
+          "subround": 2,
+          "source_index": 626,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 509,
+          "remaining_hull": 642775.36,
+          "shield_damage": 2036,
+          "remaining_shield": 705817,
+          "mitigated_damage": 6794.616,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 203.58,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 7,
+          "subround": 1,
+          "source_index": 688,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 581,
+          "remaining_hull": 642277.72,
+          "shield_damage": 2326,
+          "remaining_shield": 703491,
+          "mitigated_damage": 7761.512,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 232.55,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        },
+        {
+          "round": 7,
+          "subround": 2,
+          "source_index": 732,
+          "weapon_id": 3070381921,
+          "accuracy": 1,
+          "dodge": 0,
+          "shot_hit": 1,
+          "is_critical": 0,
+          "hull_damage": 583,
+          "remaining_hull": 641694.72,
+          "shield_damage": 2332,
+          "remaining_shield": 701159,
+          "mitigated_damage": 7782.16,
+          "isolytic_damage": 0,
+          "mitigated_isolytic_damage": 0,
+          "mitigated_apex_barrier": 233.17,
+          "mitigated_critical_damage": 0,
+          "mitigated_isolytic_critical_damage": 0
+        }
+      ],
+      "hull_repairs": [
+        {
+          "round": 2,
+          "source_index": 122,
+          "amount": 168.72
+        },
+        {
+          "round": 3,
+          "source_index": 228,
+          "amount": 82.48
+        },
+        {
+          "round": 4,
+          "source_index": 347,
+          "amount": 179.84
+        },
+        {
+          "round": 5,
+          "source_index": 453,
+          "amount": 93.6
+        },
+        {
+          "round": 6,
+          "source_index": 572,
+          "amount": 200.72
+        },
+        {
+          "round": 7,
+          "source_index": 678,
+          "amount": 83.36
+        }
+      ],
+      "charge_events": [
+        {
+          "round": 2,
+          "subround": 3,
+          "source_index": 220,
+          "weapon_id": 3784560438,
+          "charge_percentage": 1
+        },
+        {
+          "round": 4,
+          "subround": 3,
+          "source_index": 445,
+          "weapon_id": 3784560438,
+          "charge_percentage": 1
+        },
+        {
+          "round": 6,
+          "subround": 3,
+          "source_index": 670,
+          "weapon_id": 3784560438,
+          "charge_percentage": 1
+        }
+      ]
+    }
+  ]
+}

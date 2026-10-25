@@ -2,6 +2,8 @@
   "id": "d4_class",
   "ship_name": "D4 CLASS",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
+  "grade": 3,
   "faction": "klingon",
   "tiers": [
     {

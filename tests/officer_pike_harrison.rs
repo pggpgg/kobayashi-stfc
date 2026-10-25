@@ -194,6 +194,7 @@ fn pike_boost_inactive_when_hostile_level_above_seventy() {
 #[test]
 fn sum_bridge_effectiveness_from_combat_begin_rows() {
     let effects = vec![ActiveAbilityEffect {
+        ability_class: AbilityClass::CaptainManeuver,
         weapon_scope: Default::default(),
         ability_name: "Teaching Moments".into(),
         officer_id: Some("pike-1e7d0d".into()),

@@ -2,6 +2,64 @@
 
 Prefer **`cargo xtask --help`** from the repo root for a single discoverable entry point; each subcommand runs the same steps documented below. Under the hood this crate invokes the `node` / `python` / `cargo` commands in this file.
 
+## Optimizer API contracts
+
+Optimizer transport types are aliases of the bundled OpenAPI schemas. When Rust optimizer
+DTOs change, export their schema graph, update the optimizer components, and regenerate
+the frontend declarations (frontend dependencies must be installed):
+
+```powershell
+cargo run --bin export_optimizer_schemas > target/optimizer-schemas.json
+node scripts/refresh_optimizer_openapi.mjs target/optimizer-schemas.json
+npm run gen:api --prefix frontend
+```
+
+The updater preserves reviewed descriptions and validation bounds. It also reflects
+response fields omitted by Serde separately from nullable request inputs. Review the
+resulting OpenAPI diff and run `openapi_optimizer_wire_contract`, the existing OpenAPI
+contract/parity tests, and frontend type checking. Client-only callbacks stay outside
+the generated transport types.
+
+## Source-verified research stat mapping
+
+`extract_stfc_research_buff_semantics.mjs <cache.bin> <new-output.json>` extracts
+selected static HP, weapon and critical BuffSpecs without player state. The
+research importer requires the reviewed tracked manifest, preserves native raw
+units and class gates, and quarantines unsupported native scope before any
+historical map or text inference. A full `--from-upstream --limit 0` import also
+regenerates the public project-name coverage/exclusion report. See
+[RESEARCH_CLIENT_STAT_MAPPING.md](../docs/RESEARCH_CLIENT_STAT_MAPPING.md) for the
+native proof, supported definitions, limitations and regeneration commands.
+
+## Native officer base CoreStats
+
+`extract_native_officer_core_stats.mjs --static-cache <cache.bin>` extracts the
+reviewed OfficerSpecs and OfficerCoreStatSpecs groups into
+`data/native_officer_core_stats.json`. It reads no player state. The optional
+`--upstream-officers` directory supplies exact source-file bindings; `--check`
+compares the deterministic generated catalog without writing it. Unknown cache
+digests and malformed schema/UTF-8/ID data are rejected. Run
+`node --test scripts/test/native_officer_core_stats.test.mjs` for extractor
+regressions. The [data contract](../data/README.md#native-officer-base-corestats)
+describes native rounding and conservative fallback after upstream changes.
+
+## Inspect local STFC combat configuration
+
+Read an explicitly selected `ServerRequestCache` protobuf response and extract
+only static `BattleConfig`, `MitigationCapsSpecs`, and
+`GlobalDamageReductionConfig` groups:
+
+```powershell
+node scripts/inspect_stfc_combat_config.mjs 'C:\path\to\cache.bin' --output target/combat-config.json
+npm run test:scripts
+```
+
+The report includes source hashes and byte offsets. It omits other payloads,
+never evaluates equation strings, and refuses to overwrite an existing output.
+Cached values do not establish current server behavior. See
+[the REA investigation](../docs/STFC_CLIENT_REVERSE_ENGINEERING.md) for schema
+provenance, client analysis, and unresolved combat questions.
+
 ## Automated refresh (CI)
 
 A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the same high-level sequence as a local refresh: snapshot summaries → catalog fetch → ship/hostile/research detail fetches (scheduled: ships `--full`, hostiles/research missing-only) → `npm run data:refresh -- --stfcspace` → `cargo test` + `validate_data`, and opens a PR when files change (body includes summary drift report).
@@ -60,6 +118,14 @@ Related docs: [data/README.md](../data/README.md), [docs/STFC_SPACE_DATA_STRATEG
 
 ## data.stfc.space: catalog vs per-id detail
 
+Research import defaults to all nodes. `--limit N` (N > 0), `--rid ...`, and
+`--dump-unmapped` inspect results without replacing the full catalog. Use
+`--output PATH` to explicitly save a subset. Building imports reject empty
+summaries and summaries missing current building IDs before changing outputs;
+`--allow-removals` permits reviewed, intentional removals from a nonempty summary.
+The opaque-buff allowlist seeder preserves existing entries and reasons and
+refuses to overwrite an unreadable or malformed allowlist.
+
 **Catalog (summaries + translations)** — refresh when you want the latest index and strings (run often):
 
 ```bash
@@ -68,6 +134,8 @@ python3 scripts/fetch_stfcspace_page_upstream.py
 ```
 
 **Per-id JSON** — large; default is **missing-only** (skip if `data/upstream/data-stfc-space/.../{id}.json` exists). Use **`--full`** (or **`--force`**) to overwrite all cached ids from the summary.
+
+If a full fetch fails for an ID whose cached JSON still parses and names that same ID, the fetch log records a stale-cache fallback and the refresh continues. A failed ID without a usable cache still stops the pipeline before normalization or publication.
 
 | Script | Cache directory | Normalizer / next step |
 |--------|-----------------|-------------------------|
@@ -145,7 +213,7 @@ The `--stfccommunity` flag runs this sequence for you. Manual equivalent:
 
 2. **Normalize:**  
    `cargo run --bin normalize_stfc_data`  
-   Reads upstream JSON, writes KOBAYASHI-format `data/hostiles/` (and optionally buildings/factions). Ship output was removed; use `data/ships_extended/` from `normalize_data_stfc_space` + `build_ship_registry.py` instead.
+   Reads upstream JSON and adds absent legacy hostiles to `data/hostiles/index.json` while preserving modern numeric entries and unrelated `data/registry.json` rows. It also writes optional buildings/factions. Ship output was removed; use `data/ships_extended/` from `normalize_data_stfc_space` + `build_ship_registry.py` instead.
 
 3. **Optional:** Set `STFC_DATA_VERSION` (e.g. a git commit) when running the normalizer to record the source.
 

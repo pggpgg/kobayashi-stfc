@@ -2,6 +2,8 @@
   "id": "velox",
   "ship_name": "VELOX",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
+  "grade": 6,
   "faction": "romulan",
   "tiers": [
     {

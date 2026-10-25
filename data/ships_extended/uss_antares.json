@@ -2,6 +2,8 @@
   "id": "uss_antares",
   "ship_name": "U.S.S. ANTARES",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 3,
   "faction": "federation",
   "tiers": [
     {

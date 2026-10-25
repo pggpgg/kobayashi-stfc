@@ -2,6 +2,8 @@
   "id": "quv_sompek",
   "ship_name": "QUV'SOMPEK",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 5,
   "faction": "klingon",
   "tiers": [
     {

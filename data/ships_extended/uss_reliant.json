@@ -2,6 +2,8 @@
   "id": "uss_reliant",
   "ship_name": "U.S.S. RELIANT",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

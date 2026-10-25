@@ -265,10 +265,10 @@ export default memo(function WorkspaceHeader({
         if (!c) {
           setShips(list);
           setShipsLoadState("done");
-          if (list.length && !latestShipId.current) {
+          if (!list.some((ship) => ship.id === latestShipId.current)) {
             const first = list[0];
+            onShipIdChange(first?.id ?? "");
             if (first) {
-              onShipIdChange(first.id);
               if (ownedOnly && first.tier != null && first.level != null) {
                 onShipTierChange(first.tier);
                 onShipLevelChange(first.level);

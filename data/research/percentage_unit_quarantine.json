@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "policy": "Percentage display flags do not establish the raw numeric unit. A mapped percentage-flagged BuffSpec without an explicit fraction, absolute, or percentage_points unit is omitted until that unit is reviewed.",
+  "summary": {
+    "unique_buff_count": 24,
+    "project_buff_instances": 24
+  },
+  "rows": [
+    {
+      "buff_id": 279360922,
+      "count": 1,
+      "example_rids": [
+        1522194850
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 82001,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 304385043,
+      "count": 1,
+      "example_rids": [
+        977982349
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 43069,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 326641820,
+      "count": 1,
+      "example_rids": [
+        4247533312
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 229,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 383294211,
+      "count": 1,
+      "example_rids": [
+        662995847
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 204,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 724497225,
+      "count": 1,
+      "example_rids": [
+        1353584641
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 35011,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 822290679,
+      "count": 1,
+      "example_rids": [
+        2580915158
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 366,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 835932841,
+      "count": 1,
+      "example_rids": [
+        1645361232
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 175,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 1133710746,
+      "count": 1,
+      "example_rids": [
+        2571430259
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 43068,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 1209705281,
+      "count": 1,
+      "example_rids": [
+        235176140
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 186,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 1272422825,
+      "count": 1,
+      "example_rids": [
+        1844625587
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 3026,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 1423959000,
+      "count": 1,
+      "example_rids": [
+        2846928111
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 63300,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 1800723718,
+      "count": 1,
+      "example_rids": [
+        407841760
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 232,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 1943134841,
+      "count": 1,
+      "example_rids": [
+        2086597452
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 142,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 2050332806,
+      "count": 1,
+      "example_rids": [
+        4021387234
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 185,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 2092139728,
+      "count": 1,
+      "example_rids": [
+        2579790977
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 43020,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 2147256134,
+      "count": 1,
+      "example_rids": [
+        2701354891
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 43071,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 2589371721,
+      "count": 1,
+      "example_rids": [
+        1816718001
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 3030,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3351370953,
+      "count": 1,
+      "example_rids": [
+        637153598
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 70503,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3394401511,
+      "count": 1,
+      "example_rids": [
+        1259392840
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 3053,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3559263849,
+      "count": 1,
+      "example_rids": [
+        769955454
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 3028,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3613430973,
+      "count": 1,
+      "example_rids": [
+        1369190592
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 36016,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3760507179,
+      "count": 1,
+      "example_rids": [
+        964022887
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 43022,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3836587902,
+      "count": 1,
+      "example_rids": [
+        2479330890
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 88303,
+      "exclusion_reason": "percentage_unit_unverified"
+    },
+    {
+      "buff_id": 3981671475,
+      "count": 1,
+      "example_rids": [
+        1700067357
+      ],
+      "value_is_percentage": true,
+      "show_percentage": true,
+      "loca_id": 43024,
+      "exclusion_reason": "percentage_unit_unverified"
+    }
+  ]
+}

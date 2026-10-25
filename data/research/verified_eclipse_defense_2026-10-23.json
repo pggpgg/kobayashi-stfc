@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "source": {
+    "client_build": 272,
+    "static_entity_group": 66,
+    "static_cache_sha256": "b7fcb7a021fa982144702a682e81eb6b7a31406522b0154cc77553a2c0776418",
+    "native_metadata_sha256": "ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04",
+    "game_assembly_sha256": "a5df6314bd78f15892a232a44e77cdcf2e3d20e9a6192f99120c0f3e52632274"
+  },
+  "selected_buff": {
+    "id": 1238121830,
+    "sha256": "4f04a8d92ca23d5966f461f6e9339ec8a403d14c8a755e617765750f8bce1013",
+    "modifier_code": 73,
+    "operation_code": 3,
+    "target_code": 1,
+    "trigger_code": 25,
+    "condition_codes": [
+      17
+    ],
+    "attribute_fields": [
+      8
+    ],
+    "faction_id": 1750120904,
+    "num_rounds": 0,
+    "ranked_value_type": 0,
+    "ranked_value_count": 99,
+    "ranked_values": [
+      0.5,
+      1,
+      1.6,
+      2.1,
+      2.8,
+      3.6,
+      4.4,
+      5.2,
+      6,
+      7,
+      0
+    ],
+    "ranked_chances": [
+      1
+    ],
+    "ranked_chance_count": 99
+  },
+  "project": {
+    "research_project_id": 3260398513,
+    "research_loca_id": 317,
+    "buff_id": 1238121830,
+    "buff_loca_id": 317,
+    "project_name": "Eclipse Defenses",
+    "description": "Bonus base mitigation stats vs Eclipse enemies.",
+    "source": "data/upstream/data-stfc-space/research/3260398513.json and data/upstream/data-stfc-space/translations-research.json"
+  },
+  "runtime_mapping": {
+    "timing": "CombatStart",
+    "effect": "base_mitigation_stats_bonus",
+    "active_source": "global active buff membership; imported level is one-based",
+    "condition": {
+      "defender_hull_faction_id": 1750120904
+    },
+    "rank_10_value": 7
+  },
+  "controlled_validation": {
+    "capture_fixture": "tests/fixtures/recorded_fights/realta_exchange_baseline_20261023_observed.json",
+    "raw_journal_sha256": "408d7a02e2defd36a7b8e2c98aed497c18e79e61f0b6896161e8eb21927222d9",
+    "clean_noncritical_non_depleted_hits": 26,
+    "nearest_raw_mitigation_fraction": 0.1619379182638594,
+    "conservative_interval": [
+      0.16193309728365343,
+      0.16194246568951853
+    ],
+    "interpretation": "Supports the scoped Eclipse +7 source against this controlled baseline; it is not generic proof of the server predicate for condition 17."
+  },
+  "exclusion": {
+    "rule": "No general condition-17 or attribute-8 mapping is inferred.",
+    "rejected_buff_id": 2117532952,
+    "reason": "different native hash, faction, and rank curve despite overlapping broad shape"
+  }
+}

@@ -260,9 +260,15 @@ paths:
     get:
       tags: [profile]
       summary: Synced building levels and combat bonuses
+      description: Reviewed setup totals use active building buffs when available. Optional ship_id supplies class and grade context; unknown hull gates are excluded.
       parameters:
         - $ref: "#/components/parameters/QueryProfile"
         - $ref: "#/components/parameters/HeaderProfileId"
+        - name: ship_id
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           content:
@@ -470,6 +476,7 @@ paths:
     get:
       tags: [optimize]
       summary: Estimate candidate count and wall time
+      description: Counts candidates without materializing crews; shares CPU admission with simulation and optimization.
       parameters:
         - name: ship
           in: query
@@ -534,6 +541,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationErrorResponse"
+        "503":
+          description: CPU saturated when a bounded CPU queue wait is configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
 
   /api/optimize/status/{job_id}:
     get:
@@ -1622,300 +1635,84 @@ components:
           type: string
 
     OptimizeStatusResponse:
-      type: object
-      required: [status]
       properties:
-        status:
+        cancellation_point:
           type: string
-        progress:
-          type: integer
         crews_done:
+          format: uint32
+          minimum: 0
           type: integer
-        total_crews:
+        error:
+          type: string
+        eta_seconds:
+          format: uint64
+          minimum: 0
           type: integer
         phase:
           type: string
-        cancellation_point:
-          type: string
-        throughput_crews_per_sec:
-          type: number
-        eta_seconds:
+        progress:
+          format: uint8
+          minimum: 0
           type: integer
         progress_preview:
-          type: array
           items:
-            type: object
-            additionalProperties: true
+            $ref: "#/components/schemas/CrewRecommendation"
+          type: array
         result:
           description: Present when status is done; same shape as synchronous /api/optimize response
-          type: object
-          additionalProperties: true
-        error:
-          type: string
-
-    OptimizeResponse:
-      type: object
-      required: [status, engine, scenario, recommendations, notes]
-      properties:
+          $ref: "#/components/schemas/OptimizeResponse"
         status:
           type: string
+        throughput_crews_per_sec:
+          description: >-
+            Best-effort crews/sec for phases where `crews_done` / `total_crews` are crew counts (not
+            generations).
+          format: double
+          type: number
+        total_crews:
+          format: uint32
+          minimum: 0
+          type: integer
+      required:
+        - status
+      type: object
+
+    OptimizeResponse:
+      properties:
+        approximate_notes:
+          description: Extra human-readable notes (e.g. approximate pre-filter semantics).
+          items:
+            type: string
+          type: array
+        duration_ms:
+          format: uint64
+          minimum: 0
+          type: integer
         engine:
           type: string
-        scenario:
-          type: object
-          additionalProperties: true
-          properties:
-            optimize_history_reuse_refused:
-              type: boolean
-              description: >
-                True when persisted confirmation stats existed for this `optimize_cache_key` but were
-                refused because the run's reuse fingerprint no longer matches. Every crew was
-                re-simulated, so the reported numbers are fresh. Absent when nothing was stored or the
-                stored entry was usable.
-            optimize_history_reuse_refused_component:
-              type: string
-              enum: [engine, data, profile, scenario, schema, unfingerprinted]
-              description: >
-                Which fingerprint segment changed: the combat engine, the game-data catalogs, the
-                player profile's contents, the resolved ship/hostile matchup, the fingerprint encoding
-                itself, or `unfingerprinted` for entries written before fingerprinting existed.
-            optimize_reuse_fingerprint:
-              type: string
-              description: >
-                Reuse fingerprint this run computed, as `schema:engine:data:profile:scenario` (hashes
-                only — no profile contents are exposed).
-            optimizer_funnel:
-              type: object
-              required: [heuristic_candidates, warm_start_candidates, final_result_count]
-              additionalProperties: false
-              description: >
-                Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm,
-                and final merged result width.
-              properties:
-                raw_role_pool:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    captains:
-                      type: integer
-                    bridge:
-                      type: integer
-                    below_decks:
-                      type: integer
-                  description: Full-catalog raw role pools before ban/eligibility filters.
-                banned_role_pool:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    captains:
-                      type: integer
-                    bridge:
-                      type: integer
-                    below_decks:
-                      type: integer
-                  description: Full-catalog role pools after the curation ban list.
-                eligible_role_pool:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    captains:
-                      type: integer
-                    bridge:
-                      type: integer
-                    below_decks:
-                      type: integer
-                  description: Full-catalog role pools after ban/eligibility filters.
-                roster_role_pool:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    captains:
-                      type: integer
-                    bridge:
-                      type: integer
-                    below_decks:
-                      type: integer
-                  description: Production role pools after roster/profile narrowing, before explicit constraints.
-                final_role_pool:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    captains:
-                      type: integer
-                    bridge:
-                      type: integer
-                    below_decks:
-                      type: integer
-                  description: Production role pools after roster/profile narrowing and explicit constraints.
-                heuristic_candidates:
-                  type: integer
-                warm_start_candidates:
-                  type: integer
-                generated_candidates:
-                  type: integer
-                after_warm_start_dedupe:
-                  type: integer
-                after_constraints:
-                  type: integer
-                analytical_prefilter_from:
-                  type: integer
-                analytical_prefilter_kept:
-                  type: integer
-                scout_candidates:
-                  type: integer
-                confirmed_candidates:
-                  type: integer
-                random_exploration_candidates:
-                  type: integer
-                  description: >
-                    Stratified-random crews in the scout set (`random_stratified` strategy or the
-                    tiered `tiered_random_exploration_pct` slice). Absent when the lane did not run.
-                final_result_count:
-                  type: integer
-                phase_durations_ms:
-                  type: object
-                  additionalProperties:
-                    type: integer
-                  description: Coarse wall-clock time spent in each optimize phase, milliseconds.
-                cancellation_point:
-                  type: string
-                  description: Phase observed when a background optimize job was cancelled.
-        recommendations:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-            description: >
-              Ranked crew row. Monte Carlo strategies populate win/stall/loss rates and CIs.
-              `linear_eval` sets `expected_hull_damage` and leaves win-rate fields at zero.
-            properties:
-              method_provenance:
-                type: string
-                description: >
-                  Optimizer source/method label for this row, such as `exhaustive_mc`,
-                  `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`,
-                  or `linear_eval`. When the `local_refinement` pass produced a row, the
-                  label instead identifies the refinement neighborhood that found it:
-                  `local_swap` (one bridge/below-decks seat changed), `local_captain_swap`
-                  (captain changed), or `large_neighborhood_repair` (two or more seats changed
-                  via destroy-repair).
-              trials_run:
-                type: integer
-                description: >
-                  Monte Carlo trials actually run for this row. Lower than the requested `sims` for
-                  rows a scout phase ranked but never promoted to confirmation, so this is the depth
-                  of evidence behind the row's rates and intervals. 0 when unknown (synthetic or
-                  closed-form rows).
-              expected_hull_damage:
-                type: number
-                description: >
-                  Closed-form expected total hull damage over the fight (linear_eval only).
-              refinement:
-                type: object
-                description: >
-                  Present only on rows the `local_refinement` pass produced. Records which finalist
-                  the row was refined from, which seats changed, and the measured score gain that
-                  got the change accepted.
-                required:
-                  [
-                    kind,
-                    source_captain,
-                    source_bridge,
-                    source_below_decks,
-                    changed_slots,
-                    baseline_score,
-                    refined_score,
-                    gain,
-                  ]
-                properties:
-                  kind:
-                    type: string
-                    enum: [local_swap, local_captain_swap, large_neighborhood_repair]
-                    description: Refinement neighborhood; same value as `method_provenance`.
-                  source_captain:
-                    type: string
-                  source_bridge:
-                    type: array
-                    items:
-                      type: string
-                  source_below_decks:
-                    type: array
-                    items:
-                      type: string
-                  changed_slots:
-                    type: array
-                    description: Every seat that differs from the source finalist.
-                    items:
-                      type: object
-                      required: [slot, from, to]
-                      properties:
-                        slot:
-                          type: string
-                          enum: [captain, bridge, below_decks]
-                        index:
-                          type: integer
-                          description: >
-                            Seat index within `bridge` / `below_decks` in the canonicalized crew.
-                            Absent for the captain, which is a group of one.
-                        from:
-                          type: string
-                          description: Officer who held the seat in the source finalist.
-                        to:
-                          type: string
-                          description: Officer who holds it in this row.
-                  baseline_score:
-                    type: number
-                    description: Confirmed ranking score of the source finalist.
-                  refined_score:
-                    type: number
-                    description: Confirmed ranking score of this row.
-                  gain:
-                    type: number
-                    description: >
-                      `refined_score - baseline_score`. Always positive: refinement only keeps
-                      improvements that survive confirmation depth.
-              pareto_tags:
-                type: array
-                description: >
-                  Why this row is worth a look beyond its rank. `pareto_optimal` means no other
-                  considered row is at least as good on every metric (win rate, hull left, round-1
-                  kills, damage dealt, and risk — or chain success and its secondary in chain runs).
-                  The named views tag at most one row each: `safest` (lowest loss rate),
-                  `fastest_farming` (highest round-1 kill rate), `best_chain` (highest chain success,
-                  chain runs only), and `most_different` (competitive crew sharing the fewest
-                  officers with the top row). Tags never change ordering; the scalar score still
-                  sorts the table. Absent on untagged rows, on `linear_eval` runs (no simulated
-                  rates to trade off), and past the first 200 rows.
-                items:
-                  type: string
-                  enum:
-                    [
-                      pareto_optimal,
-                      safest,
-                      fastest_farming,
-                      best_chain,
-                      most_different,
-                    ]
-              recommendation_reason:
-                type: string
-                description: >
-                  Plain-language reading of `pareto_tags` for this row, plus a confirmation-depth
-                  caveat when the row was simulated less deeply than the deepest row in the table.
-                  Present exactly when `pareto_tags` is non-empty.
-        duration_ms:
-          type: integer
         notes:
-          type: array
           items:
             type: string
-        approximate_notes:
           type: array
+        recommendations:
           items:
-            type: string
+            $ref: "#/components/schemas/CrewRecommendation"
+          type: array
+        scenario:
+          $ref: "#/components/schemas/ScenarioSummary"
+        status:
+          type: string
         warnings:
-          type: array
           items:
             type: string
+          type: array
+      required:
+        - engine
+        - notes
+        - recommendations
+        - scenario
+        - status
+      type: object
 
     NullableString:
       type: ["string", "null"]
@@ -2595,56 +2392,71 @@ components:
             type: string
 
     OfficerGroupConstraintDto:
-      type: object
-      required: [officers, min_count]
       properties:
+        min_count:
+          format: uint32
+          minimum: 0
+          type: integer
         officers:
-          type: array
           items:
             type: string
-        min_count:
-          type: integer
+          type: array
+      required:
+        - min_count
+        - officers
+      type: object
 
     OptimizeConstraintsDto:
-      type: object
+      description: JSON body for `OptimizeRequest.constraints`.
       properties:
-        must_include:
-          type: array
+        below_decks_must_include:
+          default: []
           items:
             type: string
+          type: array
+        bridge_must_include:
+          default: []
+          items:
+            type: string
+          type: array
+        captain_must_be:
+          type:
+            - string
+            - "null"
         exclude:
-          type: array
+          default: []
           items:
             type: string
-        groups:
           type: array
+        groups:
+          default: []
           items:
             $ref: "#/components/schemas/OfficerGroupConstraintDto"
-        captain_must_be:
-          type: string
-        bridge_must_include:
           type: array
+        must_include:
+          default: []
           items:
             type: string
-        below_decks_must_include:
           type: array
-          items:
-            type: string
+      type: object
 
     WarmStartCrewDto:
-      type: object
-      required: [captain, bridge, below_decks]
       properties:
+        below_decks:
+          items:
+            type: string
+          type: array
+        bridge:
+          items:
+            type: string
+          type: array
         captain:
           type: string
-        bridge:
-          type: array
-          items:
-            type: string
-        below_decks:
-          type: array
-          items:
-            type: string
+      required:
+        - below_decks
+        - bridge
+        - captain
+      type: object
 
     ChainGrindRequestDto:
       type: object
@@ -2659,193 +2471,260 @@ components:
           type: string
 
     OptimizeRequest:
-      type: object
-      required: [ship, hostile]
       properties:
-        ship:
-          type: string
-        hostile:
-          type: string
-        ship_tier:
-          type: integer
-        ship_level:
-          type: integer
-        sims:
-          type: integer
-          minimum: 1
-          maximum: 100000
-        seed:
-          type: integer
-          format: int64
-        max_candidates:
-          type: integer
-        strategy:
-          type: string
-          description: >
-            Optimizer strategy: `exhaustive` (full Monte Carlo on candidates),
-            `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC),
-            `linear_eval` (closed-form expected hull damage only; no Monte Carlo),
-            or `random_stratified` (benchmark-control lane: legal crews sampled at
-            random, stratified by captain faction/rarity and below-decks family,
-            then scout → confirm; ignores warm-start and skips the analytical prefilter).
-            When omitted, server auto-picks tiered vs exhaustive from candidate count.
+        analytical_prefilter_keep:
+          description: >-
+            Keep only this many crews after approximate analytical ranking (closed-form expected hull
+            damage) before Monte Carlo. Omitted = evaluate all generated candidates unless auto-cap
+            applies. Ignored for genetic strategy.
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
         below_decks_pool_mode:
-          type: string
-          enum: [strict, scored, relaxed]
+          default: null
           description: >
             Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers.
-            `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only)
-            with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power.
-            Unknown values fall back to strict.
-        heuristics_seeds:
-          type: array
-          items:
-            type: string
-        heuristics_only:
-          type: boolean
-        fast_discovery:
-          type: boolean
-        below_decks_strategy:
-          type: string
-        analytical_prefilter_keep:
-          type: integer
-        enable_learned_pair_prior:
-          type: boolean
-          description: >
-            Analytical prefilter only. When false, disables learned pair co-occurrence prior from
-            warm-start/history refs. Omitted defaults to enabled (backward compatible).
-        tiered_scout_sims:
-          type: integer
-        tiered_top_k:
-          type: integer
-        tiered_scout_uniform:
-          type: boolean
-        tiered_confirm_budget_cap_mult:
-          type: number
-          description: >
-            Tiered: when set, scales down per-top-K confirmation iterations so their sum does not
-            exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the
-            width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no
-            global cap (default). Typical values 1.5–3; must be in (0, 20].
-        tiered_random_exploration_pct:
-          type: number
-          minimum: 0
-          maximum: 0.5
-          description: >
-            Tiered strategy only. Fraction of the scout candidate list — after warm-start,
-            constraints, and analytical prefilter — replaced with stratified-random crews that
-            bypass the analytical proxy (budget-neutral exploration slice). Injected crews are
-            labeled `random_stratified` in `method_provenance` when they reach the results.
-            Typical values 0.05–0.2. Omitted or 0 = off.
-        local_refinement:
-          type: boolean
-          description: >
-            Tiered and genetic strategies. Opt-in local-refinement hill-climb around the top
-            finalists after the main search finishes: single-slot bridge/below-decks swaps,
-            captain swaps, and destroy-repair neighborhoods, scored through the same ranking as
-            the main search. Runs after the main search as a small marginal cost, not a second
-            full search. Rows it produces carry a refinement `method_provenance` label and a
-            `refinement` detail object. Omitted or false = off (default). Ignored for every other
-            strategy: exhaustive already evaluated the space a neighborhood would re-propose,
-            `linear_eval` runs no Monte Carlo to confirm an improvement against, and
-            `random_stratified` is a benchmark control that must stay unassisted.
-        local_refinement_seeds:
-          type: integer
-          minimum: 1
-          maximum: 16
-          description: >
-            Local refinement only: how many top finalists to hill-climb from. Omitted uses
-            the refinement module's default (3).
-        local_refinement_rounds:
-          type: integer
-          minimum: 1
-          maximum: 8
-          description: >
-            Local refinement only: maximum accepted improving moves per seed crew. Omitted uses
-            the refinement module's default (3).
-        exhaustive_scout_sims:
-          type: integer
-          minimum: 1
-          maximum: 100000
-          description: >
-            Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep.
-            Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then
-            full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking.
-        exhaustive_scout_top_keep:
-          type: integer
-          minimum: 1
-          maximum: 500
-          description: >
-            Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked
-            crews receive the full per-crew simulation_count (others keep scout statistics).
-        warm_start_crews:
-          type: array
-          items:
-            $ref: "#/components/schemas/WarmStartCrewDto"
+            `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous →
+            economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by
+            power. Unknown values fall back to strict.
+          type:
+            - string
+            - "null"
+          enum:
+            - strict
+            - scored
+            - relaxed
+            - null
         below_decks_slots:
-          type: integer
-        constraints:
-          $ref: "#/components/schemas/OptimizeConstraintsDto"
-        support_buffs:
-          type: array
-          items:
-            type: string
-        defender_support_buffs:
-          type: array
-          items:
-            type: string
-          description: >
-            PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present,
-            `support_buffs` is treated as attacker-only for static routing.
-        defender_alliance_debuffs:
-          type: array
-          items:
-            type: string
-          description: >
-            PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled).
+          description: >-
+            Below-decks slot count (0–7). Omitted = resolved from ship level + `crew_slots` when
+            present, else tier heuristic.
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+          maximum: 7
+        below_decks_strategy:
+          type:
+            - string
+            - "null"
         chain:
-          $ref: "#/components/schemas/ChainGrindRequestDto"
-        defender_opponent:
-          type: string
+          anyOf:
+            - $ref: "#/components/schemas/ChainGrindRequest"
+            - type: "null"
+          default: null
+        constraints:
+          anyOf:
+            - $ref: "#/components/schemas/OptimizeConstraintsDto"
+            - type: "null"
+          default: null
+          description: Optional crew search constraints (must-include, exclude, groups, seating).
+        defender_alliance_debuffs:
+          default: null
+          description: |
+            PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled).
+          items:
+            type: string
+          type:
+            - array
+            - "null"
         defender_crew:
-          $ref: "#/components/schemas/SimulateCrew"
+          anyOf:
+            - $ref: "#/components/schemas/DefenderOfficerCrewDto"
+            - type: "null"
+          default: null
           description: >
-            Optional LCARS crew for the defending combatant (merged with hostile ship abilities).
-            Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation).
+            Optional LCARS crew for the defending combatant (merged with hostile ship abilities). Same
+            shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails
+            validation).
+        defender_opponent:
+          allOf:
+            - $ref: "#/components/schemas/DefenderOpponent"
+          default: hostile
+        defender_profile_id:
+          default: null
+          type:
+            - string
+            - "null"
         defender_ship:
-          type: string
+          default: null
           description: >
             Fixed opponent player ship for PvP (mutually exclusive with `hostile`). Optimize searches
             attacker crews only. Requires `defender_profile_id`.
-        defender_ship_tier:
-          type: integer
+          type:
+            - string
+            - "null"
         defender_ship_level:
-          type: integer
-        defender_profile_id:
-          type: string
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        defender_ship_tier:
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        defender_support_buffs:
+          default: null
+          description: >
+            PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present,
+            `support_buffs` is treated as attacker-only for static routing.
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        enable_learned_pair_prior:
+          default: null
+          description: >
+            Analytical prefilter only. When false, disables learned pair co-occurrence prior from
+            warm-start/history refs. Omitted defaults to enabled (backward compatible).
+          type:
+            - boolean
+            - "null"
         enemy_type:
-          type: string
+          default: null
           description: >-
-            Combat scenario for officer eligibility filtering (snake_case EnemyType). Inferred
-            from the target when unset.
-        novelty_lambda:
-          type: number
-        novelty_diverse_top:
-          type: integer
-        novelty_pool:
-          type: integer
-        novelty_history_anchors:
-          type: boolean
+            Combat scenario for officer eligibility filtering (snake_case EnemyType). Inferred from the
+            target when unset.
+          type:
+            - string
+            - "null"
+        exhaustive_scout_sims:
+          default: null
           description: >
-            When true with novelty_lambda, crews from optimize_history for this profile + optimize_cache_key
-            (matching chain fingerprint) are treated as redundancy anchors for MMR; they are not added as recommendations.
-        optimize_cache_key:
+            Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep. Scout-phase
+            Monte Carlo trials per remaining candidate after analytical prefilter; then full `sims` run
+            only on the top exhaustive_scout_top_keep crews by scout ranking.
+          format: uint32
+          minimum: 1
+          type:
+            - integer
+            - "null"
+          maximum: 100000
+        exhaustive_scout_top_keep:
+          default: null
+          description: >
+            Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked crews
+            receive the full per-crew simulation_count (others keep scout statistics).
+          format: uint32
+          minimum: 1
+          type:
+            - integer
+            - "null"
+          maximum: 500
+        fast_discovery:
+          default: null
+          description: >-
+            When true with non-empty `heuristics_seeds`, expanded heuristic crews are merged into the
+            optimizer warm-start list so they flow through analytical prefilter and tiered (or
+            exhaustive) Monte Carlo instead of a separate full-sim pass on every seed crew first.
+          type:
+            - boolean
+            - "null"
+        heuristics_only:
+          type:
+            - boolean
+            - "null"
+        heuristics_seeds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+          description: Safe seed-file stems; duplicate names are loaded once, ignoring ASCII case.
+          maxItems: 32
+        hostile:
           type: string
+        local_refinement:
+          default: null
           description: >
-            Opaque client fingerprint (e.g. workspace warm-start key). When set and the request
-            runs with an active profile, the server may load matching `optimize_history.json` rows
-            for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors
-            (reference crews from history only; same chain fingerprint as this request’s `chain`).
+            Tiered and genetic strategies. Opt-in local-refinement hill-climb around the top finalists
+            after the main search finishes: single-slot bridge/below-decks swaps, captain swaps, and
+            destroy-repair neighborhoods, scored through the same ranking as the main search. Runs after
+            the main search as a small marginal cost, not a second full search. Rows it produces carry a
+            refinement `method_provenance` label and a `refinement` detail object. Omitted or false =
+            off (default). Ignored for every other strategy: exhaustive already evaluated the space a
+            neighborhood would re-propose, `linear_eval` runs no Monte Carlo to confirm an improvement
+            against, and `random_stratified` is a benchmark control that must stay unassisted.
+          type:
+            - boolean
+            - "null"
+        local_refinement_rounds:
+          default: null
+          description: >
+            Local refinement only: maximum accepted improving moves per seed crew. Omitted uses the
+            refinement module's default (3).
+          format: uint32
+          minimum: 1
+          type:
+            - integer
+            - "null"
+          maximum: 8
+        local_refinement_seeds:
+          default: null
+          description: >
+            Local refinement only: how many top finalists to hill-climb from. Omitted uses the
+            refinement module's default (3).
+          format: uint32
+          minimum: 1
+          type:
+            - integer
+            - "null"
+          maximum: 16
+        max_candidates:
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        novelty_diverse_top:
+          description: >-
+            How many leading recommendations use MMR (optional; server defaults when `novelty_lambda` is
+            set).
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        novelty_history_anchors:
+          default: null
+          description: >
+            When true with novelty_lambda, crews from optimize_history for this profile +
+            optimize_cache_key (matching chain fingerprint) are treated as redundancy anchors for MMR;
+            they are not added as recommendations.
+          type:
+            - boolean
+            - "null"
+        novelty_lambda:
+          description: >-
+            Maximal marginal relevance blend (0, 1]; when set, reorders the recommendation head for
+            materially diverse officer sets.
+          format: float
+          type:
+            - number
+            - "null"
+        novelty_pool:
+          description: >-
+            Strength-sorted pool size considered for MMR (optional; must be ≥ `novelty_diverse_top` when
+            both are set).
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        optimize_cache_key:
+          default: null
+          description: >
+            Opaque client fingerprint (e.g. workspace warm-start key). When set and the request runs
+            with an active profile, the server may load matching `optimize_history.json` rows for Monte
+            Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors (reference
+            crews from history only; same chain fingerprint as this request’s `chain`).
 
             This key is client-supplied and not a trust boundary: reusing stored **metrics** also
             requires the server-computed reuse fingerprint to match (engine, data catalogs, profile
@@ -2853,6 +2732,127 @@ components:
             `scenario.optimize_history_reuse_refused`. Reuse of crew **identities** for matchup priors
             and novelty anchors is not fingerprint-gated — a good crew composition survives an engine
             fix — and those crews are re-validated against the live catalog and roster.
+          type:
+            - string
+            - "null"
+        seed:
+          format: uint64
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        ship:
+          type: string
+        ship_level:
+          description: Ship level (1-based). When set with tier, applies level bonuses from extended data.
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        ship_tier:
+          description: Ship tier (1-based). When set, uses data/ships_extended for accurate stats.
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        sims:
+          format: uint32
+          minimum: 1
+          type:
+            - integer
+            - "null"
+          maximum: 100000
+        strategy:
+          type:
+            - string
+            - "null"
+          description: >
+            Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge
+            spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull
+            damage only; no Monte Carlo), or `random_stratified` (benchmark-control lane: legal crews
+            sampled at random, stratified by captain faction/rarity and below-decks family, then scout →
+            confirm; ignores warm-start and skips the analytical prefilter). When omitted, server
+            auto-picks tiered vs exhaustive from candidate count.
+          enum:
+            - exhaustive
+            - genetic
+            - tiered
+            - linear_eval
+            - random_stratified
+            - null
+        support_buffs:
+          default: null
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        tiered_confirm_budget_cap_mult:
+          default: null
+          description: >
+            Tiered: when set, scales down per-top-K confirmation iterations so their sum does not exceed
+            floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the width-based
+            confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no global cap
+            (default). Typical values 1.5–3; must be in (0, 20].
+          format: double
+          type:
+            - number
+            - "null"
+        tiered_random_exploration_pct:
+          default: null
+          description: >
+            Tiered strategy only. Fraction of the scout candidate list — after warm-start, constraints,
+            and analytical prefilter — replaced with stratified-random crews that bypass the analytical
+            proxy (budget-neutral exploration slice). Injected crews are labeled `random_stratified` in
+            `method_provenance` when they reach the results. Typical values 0.05–0.2. Omitted or 0 =
+            off.
+          format: double
+          type:
+            - number
+            - "null"
+          minimum: 0
+          maximum: 0.5
+        tiered_scout_sims:
+          description: >-
+            Tiered strategy: scouting-phase sims per crew (1..=MAX_TIERED_SCOUT_SIMS). Omitted = scaled
+            from candidate count.
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        tiered_scout_uniform:
+          default: null
+          description: >-
+            When true, tiered scouting uses one uniform pass at the scout cap (legacy). Omitted or false
+            = adaptive coarse→refine scout.
+          type:
+            - boolean
+            - "null"
+        tiered_top_k:
+          description: >-
+            Tiered strategy: how many top scout crews receive full confirmation sims
+            (1..=MAX_TIERED_TOP_K). Omitted = scaled from candidate count.
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        warm_start_crews:
+          description: >-
+            Optional crews prepended before generated candidates (deduped); e.g. UI warm-start
+            persistence.
+          items:
+            $ref: "#/components/schemas/WarmStartCrewDto"
+          type:
+            - array
+            - "null"
+      required:
+        - hostile
+        - ship
+      type: object
 
     ReplaySeedCrew:
       type: object
@@ -2924,3 +2924,684 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ValidationIssue"
+
+    ChainGrindRequest:
+      description: "Chain grinding: N sequential fights, HHP carry-over, full SHP each link (optimizer / simulate)."
+      properties:
+        enabled:
+          default: false
+          type: boolean
+        kills_target:
+          format: uint32
+          minimum: 0
+          type:
+            - integer
+            - "null"
+        secondary:
+          description: "`min_hull_damage` (default) or `max_loot_per_hull_proxy` (placeholder economy)."
+          type:
+            - string
+            - "null"
+      type: object
+
+    ChainSecondaryObjective:
+      description: How to break ties among crews with similar chain-primary success (conditional on primary hit).
+      oneOf:
+        - description: >-
+            Maximize mean attacker hull fraction after the Nth kill (minimize hull damage over the
+            chain).
+          enum:
+            - min_hull_damage
+          type: string
+        - description: "Placeholder: `kills / (1 - hull_frac + eps)` until real loot is modeled in combat."
+          enum:
+            - max_loot_per_hull_proxy
+          type: string
+
+    ChainSimulationSummary:
+      description: >-
+        Aggregated chain-grind Monte Carlo (attached to optimizer
+        [`super::monte_carlo::SimulationResult`] when enabled).
+      properties:
+        kills_target:
+          format: uint32
+          minimum: 0
+          type: integer
+        n_primary_successes:
+          format: uint
+          minimum: 0
+          type: integer
+        primary_ci_high:
+          format: double
+          type: number
+        primary_ci_low:
+          format: double
+          type: number
+        primary_success_rate:
+          format: double
+          type: number
+        secondary_ci_high:
+          format: double
+          type: number
+        secondary_ci_low:
+          format: double
+          type: number
+        secondary_mean_given_primary:
+          format: double
+          type: number
+        secondary_objective:
+          $ref: "#/components/schemas/ChainSecondaryObjective"
+      required:
+        - kills_target
+        - n_primary_successes
+        - primary_ci_high
+        - primary_ci_low
+        - primary_success_rate
+        - secondary_ci_high
+        - secondary_ci_low
+        - secondary_mean_given_primary
+        - secondary_objective
+      type: object
+
+    CrewRecommendation:
+      properties:
+        avg_defender_hull_remaining:
+          format: double
+          type: number
+        avg_defender_hull_remaining_ci_high:
+          format: double
+          type: number
+        avg_defender_hull_remaining_ci_low:
+          format: double
+          type: number
+        avg_hull_remaining:
+          format: double
+          type: number
+        avg_hull_remaining_ci_high:
+          format: double
+          type: number
+        avg_hull_remaining_ci_low:
+          format: double
+          type: number
+        below_decks:
+          items:
+            type: string
+          type: array
+        bridge:
+          items:
+            type: string
+          type: array
+        captain:
+          type: string
+        chain:
+          $ref: "#/components/schemas/ChainSimulationSummary"
+        expected_hull_damage:
+          description: |
+            Closed-form expected total hull damage over the fight (linear_eval only).
+          format: double
+          type: number
+        loss_rate:
+          format: double
+          type: number
+        loss_rate_ci_high:
+          format: double
+          type: number
+        loss_rate_ci_low:
+          format: double
+          type: number
+        method_provenance:
+          description: >
+            Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`,
+            `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. When the
+            `local_refinement` pass produced a row, the label instead identifies the refinement
+            neighborhood that found it: `local_swap` (one bridge/below-decks seat changed),
+            `local_captain_swap` (captain changed), or `large_neighborhood_repair` (two or more seats
+            changed via destroy-repair).
+          type: string
+        pareto_tags:
+          description: >
+            Why this row is worth a look beyond its rank. `pareto_optimal` means no other considered row
+            is at least as good on every metric (win rate, hull left, round-1 kills, damage dealt, and
+            risk — or chain success and its secondary in chain runs). The named views tag at most one
+            row each: `safest` (lowest loss rate), `fastest_farming` (highest round-1 kill rate),
+            `best_chain` (highest chain success, chain runs only), and `most_different` (competitive
+            crew sharing the fewest officers with the top row). Tags never change ordering; the scalar
+            score still sorts the table. Absent on untagged rows, on `linear_eval` runs (no simulated
+            rates to trade off), and past the first 200 rows.
+          items:
+            type: string
+            enum:
+              - pareto_optimal
+              - safest
+              - fastest_farming
+              - best_chain
+              - most_different
+          type: array
+        r1_kill_rate:
+          format: double
+          type: number
+        r1_kill_rate_ci_high:
+          format: double
+          type: number
+        r1_kill_rate_ci_low:
+          format: double
+          type: number
+        recommendation_reason:
+          description: >
+            Plain-language reading of `pareto_tags` for this row, plus a confirmation-depth caveat when
+            the row was simulated less deeply than the deepest row in the table. Present exactly when
+            `pareto_tags` is non-empty.
+          type: string
+        refinement:
+          description: >
+            Present only on rows the `local_refinement` pass produced. Records which finalist the row
+            was refined from, which seats changed, and the measured score gain that got the change
+            accepted.
+          $ref: "#/components/schemas/RefinementDetail"
+        stall_rate:
+          format: double
+          type: number
+        stall_rate_ci_high:
+          format: double
+          type: number
+        stall_rate_ci_low:
+          format: double
+          type: number
+        trials_run:
+          description: >
+            Monte Carlo trials actually run for this row. Lower than the requested `sims` for rows a
+            scout phase ranked but never promoted to confirmation, so this is the depth of evidence
+            behind the row's rates and intervals. 0 when unknown (synthetic or closed-form rows).
+          format: uint
+          minimum: 0
+          type: integer
+        win_rate:
+          format: double
+          type: number
+        win_rate_ci_high:
+          format: double
+          type: number
+        win_rate_ci_low:
+          format: double
+          type: number
+      required:
+        - avg_defender_hull_remaining
+        - avg_defender_hull_remaining_ci_high
+        - avg_defender_hull_remaining_ci_low
+        - avg_hull_remaining
+        - avg_hull_remaining_ci_high
+        - avg_hull_remaining_ci_low
+        - below_decks
+        - bridge
+        - captain
+        - loss_rate
+        - loss_rate_ci_high
+        - loss_rate_ci_low
+        - method_provenance
+        - r1_kill_rate
+        - r1_kill_rate_ci_high
+        - r1_kill_rate_ci_low
+        - stall_rate
+        - stall_rate_ci_high
+        - stall_rate_ci_low
+        - trials_run
+        - win_rate
+        - win_rate_ci_high
+        - win_rate_ci_low
+      type: object
+      description: >
+        Ranked crew row. Monte Carlo strategies populate win/stall/loss rates and CIs. `linear_eval`
+        sets `expected_hull_damage` and leaves win-rate fields at zero.
+
+    DefenderOfficerCrewDto:
+      description: Optional LCARS crew for the defending side (same shape as simulate `defender_crew`).
+      properties:
+        below_deck:
+          items:
+            type:
+              - string
+              - "null"
+          type:
+            - array
+            - "null"
+        bridge:
+          items:
+            type:
+              - string
+              - "null"
+          type:
+            - array
+            - "null"
+        captain:
+          type:
+            - string
+            - "null"
+      type: object
+
+    DefenderOpponent:
+      description: >-
+        Who the defending combatant represents for canonical opponent-category conditions
+        (`EnemyHostile` / `EnemyPlayer`).
+      oneOf:
+        - description: NPC hostile (default ship-vs-hostile optimizer); `EnemyHostile` gates pass.
+          enum:
+            - hostile
+          type: string
+        - description: >-
+            Player ship (“PvP-shaped” toggle); `EnemyPlayer` gates pass. Stats may still come from a
+            hostile id until real PvP symmetry exists.
+          enum:
+            - player
+          type: string
+
+    OptimizeConstraintsSummary:
+      description: Counts-only echo of active optimize constraints (for clients / debugging).
+      properties:
+        below_decks_must_include:
+          format: uint
+          minimum: 0
+          type: integer
+        bridge_must_include:
+          format: uint
+          minimum: 0
+          type: integer
+        captain_must_be:
+          type: boolean
+        exclude:
+          format: uint
+          minimum: 0
+          type: integer
+        groups:
+          format: uint
+          minimum: 0
+          type: integer
+        must_include:
+          format: uint
+          minimum: 0
+          type: integer
+      required:
+        - below_decks_must_include
+        - bridge_must_include
+        - captain_must_be
+        - exclude
+        - groups
+        - must_include
+      type: object
+
+    OptimizerFunnelTelemetry:
+      properties:
+        after_constraints:
+          description: Candidate count after explicit optimize constraints.
+          format: uint32
+          minimum: 0
+          type: integer
+        after_warm_start_dedupe:
+          description: Candidate count after warm-start prepend and stable-hash dedupe.
+          format: uint32
+          minimum: 0
+          type: integer
+        analytical_prefilter_from:
+          description: Analytical prefilter input count when truncation ran.
+          format: uint32
+          minimum: 0
+          type: integer
+        analytical_prefilter_kept:
+          description: Analytical prefilter kept count when truncation ran.
+          format: uint32
+          minimum: 0
+          type: integer
+        banned_role_pool:
+          description: Full-catalog role pools after the curation ban list.
+          $ref: "#/components/schemas/OptimizerRolePoolTelemetry"
+        cancellation_point:
+          description: Phase observed when a background optimize job was cancelled.
+          type: string
+        confirmed_candidates:
+          description: Candidate count entering confirmation or final ranking output.
+          format: uint32
+          minimum: 0
+          type: integer
+        eligible_role_pool:
+          description: Full-catalog role pools after ban/eligibility filters.
+          $ref: "#/components/schemas/OptimizerRolePoolTelemetry"
+        final_result_count:
+          description: Rows returned after standalone heuristic and/or main optimizer results are merged.
+          format: uint32
+          minimum: 0
+          type: integer
+        final_role_pool:
+          description: Production role pools after roster/profile narrowing and explicit constraints.
+          $ref: "#/components/schemas/OptimizerRolePoolTelemetry"
+        generated_candidates:
+          description: Raw generated candidates before warm-start merge.
+          format: uint32
+          minimum: 0
+          type: integer
+        heuristic_candidates:
+          description: Heuristic-expanded candidates after roster/seat legality and explicit constraints.
+          format: uint32
+          minimum: 0
+          type: integer
+        phase_durations_ms:
+          additionalProperties:
+            format: uint64
+            minimum: 0
+            type: integer
+          description: Coarse wall-clock time spent in each optimize phase, milliseconds.
+          type: object
+        random_exploration_candidates:
+          description: >
+            Stratified-random crews in the scout set (`random_stratified` strategy or the tiered
+            `tiered_random_exploration_pct` slice). Absent when the lane did not run.
+          format: uint32
+          minimum: 0
+          type: integer
+        raw_role_pool:
+          description: Full-catalog raw role pools before ban/eligibility filters.
+          $ref: "#/components/schemas/OptimizerRolePoolTelemetry"
+        roster_role_pool:
+          description: Production role pools after roster/profile narrowing, before explicit constraints.
+          $ref: "#/components/schemas/OptimizerRolePoolTelemetry"
+        scout_candidates:
+          description: Candidate count entering scout / cheap-evaluation phase.
+          format: uint32
+          minimum: 0
+          type: integer
+        warm_start_candidates:
+          description: >-
+            Warm-start candidates sent into the main optimizer scenario (including fast-discovery
+            merges).
+          format: uint32
+          minimum: 0
+          type: integer
+      required:
+        - final_result_count
+        - heuristic_candidates
+        - phase_durations_ms
+        - warm_start_candidates
+      type: object
+      description: >
+        Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final
+        merged result width.
+
+    OptimizerRolePoolTelemetry:
+      properties:
+        below_decks:
+          format: uint32
+          minimum: 0
+          type: integer
+        bridge:
+          format: uint32
+          minimum: 0
+          type: integer
+        captains:
+          format: uint32
+          minimum: 0
+          type: integer
+      required:
+        - below_decks
+        - bridge
+        - captains
+      type: object
+
+    RefinementDetail:
+      description: >
+        Present only on rows the `local_refinement` pass produced. Records which finalist the row was
+        refined from, which seats changed, and the measured score gain that got the change accepted.
+      properties:
+        baseline_score:
+          description: Confirmed ranking score of the source finalist.
+          format: double
+          type: number
+        changed_slots:
+          description: Every seat that differs from the source finalist.
+          items:
+            $ref: "#/components/schemas/RefinementSlotChange"
+          type: array
+        gain:
+          description: >
+            `refined_score - baseline_score`. Always positive: refinement only keeps improvements that
+            survive confirmation depth.
+          format: double
+          type: number
+        kind:
+          description: Refinement neighborhood; same value as `method_provenance`.
+          type: string
+          enum:
+            - local_swap
+            - local_captain_swap
+            - large_neighborhood_repair
+        refined_score:
+          description: Confirmed ranking score of this row.
+          format: double
+          type: number
+        source_below_decks:
+          items:
+            type: string
+          type: array
+        source_bridge:
+          items:
+            type: string
+          type: array
+        source_captain:
+          type: string
+      required:
+        - baseline_score
+        - changed_slots
+        - gain
+        - kind
+        - refined_score
+        - source_below_decks
+        - source_bridge
+        - source_captain
+      type: object
+
+    RefinementSlotChange:
+      description: One seat local refinement changed, relative to the finalist it refined.
+      properties:
+        from:
+          description: Officer who held the seat in the source finalist.
+          type: string
+        index:
+          description: >
+            Seat index within `bridge` / `below_decks` in the canonicalized crew. Absent for the
+            captain, which is a group of one.
+          format: uint32
+          minimum: 0
+          type: integer
+        slot:
+          description: "Seat group: `captain`, `bridge`, or `below_decks`."
+          type: string
+          enum:
+            - captain
+            - bridge
+            - below_decks
+        to:
+          description: Officer who holds it in this row.
+          type: string
+      required:
+        - from
+        - slot
+        - to
+      type: object
+
+    ScenarioSummary:
+      properties:
+        analytical_prefilter_from:
+          description: Crew count before analytical truncation (only when truncation ran).
+          format: uint32
+          minimum: 0
+          type: integer
+        analytical_prefilter_keep:
+          description: Requested cap on crews after analytical ranking (if any).
+          format: uint32
+          minimum: 0
+          type: integer
+        analytical_prefilter_kept:
+          description: Crew count after analytical truncation (only when truncation ran).
+          format: uint32
+          minimum: 0
+          type: integer
+        below_decks_slots:
+          description: Resolved below-decks slot count used for candidate generation.
+          format: uint32
+          minimum: 0
+          type: integer
+        chain:
+          $ref: "#/components/schemas/ChainGrindRequest"
+        effective_strategy:
+          description: Strategy actually run (`exhaustive`, `tiered`, or `genetic`).
+          type: string
+        exhaustive_adaptive_budget:
+          description: >-
+            Exhaustive two-phase runs: scout-then-full-MC trial accounting (same struct shape as tiered
+            budget stats).
+          $ref: "#/components/schemas/TieredScoutBudgetStats"
+        fast_discovery:
+          description: When true, heuristic seed crews were merged into warm-start for the main optimize path.
+          type: boolean
+        hostile:
+          type: string
+        novelty_diverse_top:
+          format: uint32
+          minimum: 0
+          type: integer
+        novelty_history_anchors:
+          description: >-
+            When true, history-backed redundancy anchors were requested for novelty MMR (see
+            `approximate_notes`).
+          type: boolean
+        novelty_lambda:
+          format: float
+          type: number
+        novelty_pool:
+          format: uint32
+          minimum: 0
+          type: integer
+        optimize_constraints:
+          $ref: "#/components/schemas/OptimizeConstraintsSummary"
+        optimize_history_confirm_hits:
+          description: "Tiered runs: crews that reused persisted confirmation stats from `optimize_history.json`."
+          format: uint32
+          minimum: 0
+          type: integer
+        optimize_history_reuse_refused:
+          description: >
+            True when persisted confirmation stats existed for this `optimize_cache_key` but were
+            refused because the run's reuse fingerprint no longer matches. Every crew was re-simulated,
+            so the reported numbers are fresh. Absent when nothing was stored or the stored entry was
+            usable.
+          type: boolean
+        optimize_history_reuse_refused_component:
+          description: >
+            Which fingerprint segment changed: the combat engine, the game-data catalogs, the player
+            profile's contents, the resolved ship/hostile matchup, the fingerprint encoding itself, or
+            `unfingerprinted` for entries written before fingerprinting existed.
+          type: string
+          enum:
+            - engine
+            - data
+            - profile
+            - scenario
+            - schema
+            - unfingerprinted
+            - null
+        optimize_history_wrote:
+          description: True when this run updated `optimize_history.json` for `optimize_cache_key`.
+          type: boolean
+        optimize_reuse_fingerprint:
+          description: >
+            Reuse fingerprint this run computed, as `schema:engine:data:profile:scenario` (hashes only —
+            no profile contents are exposed).
+          type: string
+        optimizer_funnel:
+          allOf:
+            - $ref: "#/components/schemas/OptimizerFunnelTelemetry"
+          description: >
+            Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final
+            merged result width.
+        requested_strategy:
+          description: Echo of the client `strategy` field when present.
+          type: string
+        seed:
+          format: uint64
+          minimum: 0
+          type: integer
+        ship:
+          type: string
+        sims:
+          format: uint32
+          minimum: 0
+          type: integer
+        strategy_auto:
+          description: >-
+            True when `strategy` was omitted and the server chose tiered vs exhaustive from candidate
+            count.
+          type: boolean
+        tiered_scout_budget:
+          description: "Tiered runs: scout/confirm trial accounting (see `TieredScoutBudgetStats`)."
+          $ref: "#/components/schemas/TieredScoutBudgetStats"
+      required:
+        - below_decks_slots
+        - effective_strategy
+        - hostile
+        - optimizer_funnel
+        - seed
+        - ship
+        - sims
+        - strategy_auto
+      type: object
+
+    TieredScoutBudgetStats:
+      description: Trial accounting for tiered scouting (coarse pass, optional refine pass, final per-crew totals).
+      properties:
+        coarse_pass_trials:
+          description: Sum of `trials_run` after the coarse scout pass (one row per crew).
+          format: uint64
+          minimum: 0
+          type: integer
+        confirm_sims_alloc_max:
+          format: uint
+          minimum: 0
+          type: integer
+        confirm_sims_alloc_min:
+          description: >-
+            Min / max confirmation iterations allocated per top-K crew (after optional global cap
+            shrink).
+          format: uint
+          minimum: 0
+          type: integer
+        confirm_trials_total:
+          description: >-
+            Sum of `trials_run` across the top-K confirmation phase (includes optimize-history cache
+            hits). For exhaustive two-phase (`exhaustive_adaptive`), only the top-`keep` full-MC rows
+            are summed (not scout-only crews).
+          format: uint64
+          minimum: 0
+          type: integer
+        refine_pass_trials:
+          description: Sum of `trials_run` from refine-only Monte Carlo runs (second pass on contenders).
+          format: uint64
+          minimum: 0
+          type: integer
+        scout_trials_executed_total:
+          description: >-
+            Actual trials executed across every scout pass. Unlike `scout_trials_final`, this includes
+            superseded coarse/minimal trials for crews that were rerun at a deeper racing bracket.
+          format: uint64
+          minimum: 0
+          type: integer
+        scout_trials_final:
+          description: Sum of final per-crew `trials_run` after coarse + refine (used for total scout cost).
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+        - coarse_pass_trials
+        - confirm_sims_alloc_max
+        - confirm_sims_alloc_min
+        - confirm_trials_total
+        - refine_pass_trials
+        - scout_trials_executed_total
+        - scout_trials_final
+      type: object

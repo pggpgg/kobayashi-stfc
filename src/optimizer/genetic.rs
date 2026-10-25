@@ -25,8 +25,9 @@ use crate::optimizer::monte_carlo::scenario::{
     DefenderOpponent, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_parallel,
-    run_monte_carlo_parallel_deduped_chunked_with_shared, zeroed_loss_result, SimulationResult,
+    crew_candidate_ordered_hash, crew_candidate_stable_hash,
+    run_monte_carlo_parallel_deduped_chunked_with_shared, run_monte_carlo_with_shared,
+    zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use std::collections::{HashMap, HashSet};
@@ -393,7 +394,7 @@ fn init_population_seeded(
         {
             let mut canonical = candidate.clone();
             // Canonical ordering — see comment in `crossover`. Keeps
-            // crew_candidate_stable_hash stable across runs even when seeds were
+            // crew_candidate_ordered_hash stable across runs even when seeds were
             // authored with arbitrary bridge / below ordering.
             canonical.bridge.sort();
             canonical.below_decks.sort();
@@ -481,13 +482,11 @@ fn crossover(
         used.insert(s.clone());
     }
 
-    let mut below_seen: Vec<String> = Vec::with_capacity(6);
     let mut below_vec: Vec<String> = Vec::with_capacity(below_decks_slots);
     for s in a.below_decks.iter().chain(b.below_decks.iter()) {
-        if used.contains(s) || below_seen.iter().any(|x| x == s) {
+        if !used.insert(s.clone()) {
             continue;
         }
-        below_seen.push(s.clone());
         below_vec.push(s.clone());
     }
     while below_vec.len() < below_decks_slots {
@@ -529,12 +528,11 @@ fn repair_crew(
 ) {
     let mut used: HashSet<String> = HashSet::new();
     used.insert(crew.captain.clone());
-    for s in crew.bridge.iter() {
-        used.insert(s.clone());
-    }
-    for s in crew.below_decks.iter() {
-        used.insert(s.clone());
-    }
+
+    // Remove duplicate inherited officers before filling gaps. A duplicate crossover
+    // child must not survive repair and then be evaluated with an empty seat.
+    crew.bridge.truncate(BRIDGE_SLOTS);
+    crew.bridge.retain(|s| used.insert(s.clone()));
 
     while crew.bridge.len() < BRIDGE_SLOTS {
         let name = match pick_from_pool(pools.bridge.iter().filter(|s| !used.contains(*s)), rng) {
@@ -544,7 +542,9 @@ fn repair_crew(
         crew.bridge.push(name.clone());
         used.insert(name);
     }
-    crew.bridge.truncate(BRIDGE_SLOTS);
+
+    crew.below_decks.truncate(below_decks_slots);
+    crew.below_decks.retain(|s| used.insert(s.clone()));
 
     while crew.below_decks.len() < below_decks_slots {
         let name =
@@ -555,7 +555,6 @@ fn repair_crew(
         crew.below_decks.push(name.clone());
         used.insert(name);
     }
-    crew.below_decks.truncate(below_decks_slots);
     // Canonical ordering — see comment in `crossover`.
     crew.bridge.sort();
     crew.below_decks.sort();
@@ -640,7 +639,7 @@ fn mutate(
 /// the call). Pass `None` to make the GA load its own registry (CLI / standalone).
 ///
 /// Progress callback: (generation, max_generations, best_fitness); returns false to abort.
-pub fn run_genetic_optimizer(
+fn run_genetic_optimizer_with_shared_result(
     ship: &str,
     hostile: &str,
     config: &GeneticConfig,
@@ -648,7 +647,12 @@ pub fn run_genetic_optimizer(
     registry: Option<&DataRegistry>,
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
     mut eval_should_continue: impl FnMut() -> bool,
-) -> (Vec<CrewCandidate>, bool, GeneticRunStats) {
+) -> (
+    Vec<CrewCandidate>,
+    bool,
+    GeneticRunStats,
+    Option<SharedScenarioData>,
+) {
     let mut stats = GeneticRunStats::default();
     let bd_slots = config.below_decks_slots;
     let pools = match registry {
@@ -669,7 +673,7 @@ pub fn run_genetic_optimizer(
     };
     let pools = match pools {
         Some(p) => p,
-        None => return (Vec::new(), false, stats),
+        None => return (Vec::new(), false, stats, None),
     };
 
     let mut population = init_population_seeded(
@@ -681,7 +685,7 @@ pub fn run_genetic_optimizer(
         config.constraints.as_ref(),
     );
     if population.is_empty() {
-        return (Vec::new(), false, stats);
+        return (Vec::new(), false, stats, None);
     }
 
     // Build scenario data once and reuse across every generation and chunk. Without this hoist
@@ -746,7 +750,7 @@ pub fn run_genetic_optimizer(
                 HashMap::with_capacity(population.len());
 
             for (i, c) in population.iter().enumerate() {
-                let h = crew_candidate_stable_hash(c);
+                let h = crew_candidate_ordered_hash(c);
                 if let Some(cached) = elite_cache.get(&h) {
                     slot_by_hash.insert(h, cached.clone());
                 } else {
@@ -778,7 +782,7 @@ pub fn run_genetic_optimizer(
                         Some(rows) => rows,
                         None => {
                             stats.unique_crews_evaluated = seen_crews.len();
-                            return (last_stable_best, true, stats);
+                            return (last_stable_best, true, stats, Some(shared));
                         }
                     };
 
@@ -814,7 +818,7 @@ pub fn run_genetic_optimizer(
                         } else {
                             // Keep scout results — not promoted
                             slot_by_hash.insert(
-                                crew_candidate_stable_hash(&uncached_crews[idx]),
+                                crew_candidate_ordered_hash(&uncached_crews[idx]),
                                 row.clone(),
                             );
                         }
@@ -836,11 +840,11 @@ pub fn run_genetic_optimizer(
                                 Some(rows) => rows,
                                 None => {
                                     stats.unique_crews_evaluated = seen_crews.len();
-                                    return (last_stable_best, true, stats);
+                                    return (last_stable_best, true, stats, Some(shared));
                                 }
                             };
                         for (crew, row) in full_crews.iter().zip(full_results) {
-                            slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
+                            slot_by_hash.insert(crew_candidate_ordered_hash(crew), row);
                         }
                     }
                 } else {
@@ -858,11 +862,11 @@ pub fn run_genetic_optimizer(
                         Some(rows) => rows,
                         None => {
                             stats.unique_crews_evaluated = seen_crews.len();
-                            return (last_stable_best, true, stats);
+                            return (last_stable_best, true, stats, Some(shared));
                         }
                     };
                     for (crew, row) in uncached_crews.iter().zip(fresh) {
-                        slot_by_hash.insert(crew_candidate_stable_hash(crew), row);
+                        slot_by_hash.insert(crew_candidate_ordered_hash(crew), row);
                     }
                 }
             }
@@ -890,7 +894,7 @@ pub fn run_genetic_optimizer(
                 Some(rows) => rows,
                 None => {
                     stats.unique_crews_evaluated = seen_crews.len();
-                    return (last_stable_best, true, stats);
+                    return (last_stable_best, true, stats, Some(shared));
                 }
             }
         };
@@ -917,7 +921,7 @@ pub fn run_genetic_optimizer(
             for &(idx, _) in indexed.iter().take(config.elitism_count) {
                 if idx < sim_results.len() {
                     elite_cache.insert(
-                        crew_candidate_stable_hash(&population[idx]),
+                        crew_candidate_ordered_hash(&population[idx]),
                         sim_results[idx].clone(),
                     );
                 }
@@ -932,14 +936,14 @@ pub fn run_genetic_optimizer(
         if !on_progress(generation + 1, config.generations, best_fitness) {
             stats.unique_crews_evaluated = seen_crews.len();
             stats.generations_completed = generation + 1;
-            return (best_individuals, true, stats);
+            return (best_individuals, true, stats, Some(shared));
         }
 
         if let Some(limit) = config.stagnation_limit {
             if stagnation >= limit {
                 stats.unique_crews_evaluated = seen_crews.len();
                 stats.generations_completed = generation + 1;
-                return (best_individuals, false, stats);
+                return (best_individuals, false, stats, Some(shared));
             }
         }
 
@@ -980,7 +984,31 @@ pub fn run_genetic_optimizer(
     }
 
     stats.unique_crews_evaluated = seen_crews.len();
-    (best_individuals, false, stats)
+    (best_individuals, false, stats, Some(shared))
+}
+
+/// Run genetic optimization without a final ranking pass. Callers that need ranked
+/// results use [`run_genetic_optimizer_ranked_with_stats`], which retains the same
+/// resolved scenario for its final Monte Carlo pass.
+pub fn run_genetic_optimizer(
+    ship: &str,
+    hostile: &str,
+    config: &GeneticConfig,
+    seed: u64,
+    registry: Option<&DataRegistry>,
+    on_progress: impl FnMut(usize, usize, f32) -> bool,
+    eval_should_continue: impl FnMut() -> bool,
+) -> (Vec<CrewCandidate>, bool, GeneticRunStats) {
+    let (top, aborted, stats, _) = run_genetic_optimizer_with_shared_result(
+        ship,
+        hostile,
+        config,
+        seed,
+        registry,
+        on_progress,
+        eval_should_continue,
+    );
+    (top, aborted, stats)
 }
 
 /// Reassemble one [`SimulationResult`] per population member, in population order.
@@ -1003,7 +1031,7 @@ fn reassemble_sim_results_in_population_order(
     population
         .iter()
         .map(|c| {
-            let hash = crew_candidate_stable_hash(c);
+            let hash = crew_candidate_ordered_hash(c);
             slot_by_hash.get(&hash).cloned().unwrap_or_else(|| {
                 debug_assert!(false, "GA population member has no sim row (hash {hash})");
                 zeroed_loss_result(c.clone())
@@ -1055,7 +1083,7 @@ pub fn run_genetic_optimizer_ranked_with_stats(
     mut on_progress: impl FnMut(usize, usize, f32) -> bool,
     mut eval_should_continue: impl FnMut() -> bool,
 ) -> (Vec<RankedCrewResult>, GeneticRunStats) {
-    let (top, aborted, mut stats) = run_genetic_optimizer(
+    let (top, aborted, mut stats, shared) = run_genetic_optimizer_with_shared_result(
         ship,
         hostile,
         config,
@@ -1067,18 +1095,17 @@ pub fn run_genetic_optimizer_ranked_with_stats(
     if top.is_empty() || aborted {
         return (Vec::new(), stats);
     }
+    let Some(shared) = shared else {
+        return (Vec::new(), stats);
+    };
     stats.ran_final_full_mc = true;
-    let support_slice =
-        (!config.support_buffs.is_empty()).then_some(config.support_buffs.as_slice());
-    let final_results = run_monte_carlo_parallel(
-        ship,
-        hostile,
+    let final_results = run_monte_carlo_with_shared(
+        shared,
         &top,
         final_sims.max(1),
         seed,
-        support_slice,
+        true,
         config.chain_grind.clone(),
-        config.defender_opponent,
     );
     (rank_results(final_results), stats)
 }
@@ -1086,9 +1113,9 @@ pub fn run_genetic_optimizer_ranked_with_stats(
 #[cfg(test)]
 mod tests {
     use super::{
-        crew_candidate_stable_hash, crossover, init_population_seeded, mutate, random_crew,
-        reassemble_sim_results_in_population_order, repair_crew, zeroed_loss_result, GeneticConfig,
-        SimulationResult,
+        crew_candidate_ordered_hash, crew_candidate_stable_hash, crossover, init_population_seeded,
+        mutate, random_crew, reassemble_sim_results_in_population_order, repair_crew,
+        zeroed_loss_result, GeneticConfig, SimulationResult,
     };
     use crate::combat::rng::Rng;
     use crate::optimizer::crew_generator::{
@@ -1169,8 +1196,8 @@ mod tests {
         );
 
         let mut slot_by_hash: HashMap<u64, SimulationResult> = HashMap::new();
-        slot_by_hash.insert(crew_candidate_stable_hash(&a), sim_row(&a, 0.7));
-        slot_by_hash.insert(crew_candidate_stable_hash(&b), sim_row(&b, 0.4));
+        slot_by_hash.insert(crew_candidate_ordered_hash(&a), sim_row(&a, 0.7));
+        slot_by_hash.insert(crew_candidate_ordered_hash(&b), sim_row(&b, 0.4));
 
         let out = reassemble_sim_results_in_population_order(&population, &slot_by_hash);
 
@@ -1203,10 +1230,10 @@ mod tests {
         );
 
         assert_eq!(population.len(), 2);
-        let shared_hash = crew_candidate_stable_hash(&population[0]);
+        let shared_hash = crew_candidate_ordered_hash(&population[0]);
         assert_eq!(
             shared_hash,
-            crew_candidate_stable_hash(&population[1]),
+            crew_candidate_ordered_hash(&population[1]),
             "permuted seeds must canonicalize to one hash"
         );
 
@@ -1241,6 +1268,38 @@ mod tests {
             let child = crossover(&a, &b, &pools, &mut rng, DEFAULT_BELOW_DECKS_SLOTS);
             assert!(valid_crew(&child), "child should be valid: {:?}", child);
         }
+    }
+
+    #[test]
+    fn crossover_refill_never_reuses_an_inherited_below_decks_officer() {
+        // Both parents are legal, but a mixed captain/bridge displaces Q and X from
+        // below decks. The only fresh refill is D4; D2 and D3 are already inherited.
+        let pools = OfficerPools {
+            captains: vec!["P".into(), "Q".into()],
+            bridge: vec!["X".into(), "Y".into(), "Z".into(), "W".into()],
+            below_decks: vec![
+                "Q".into(),
+                "X".into(),
+                "D2".into(),
+                "D3".into(),
+                "D4".into(),
+            ],
+        };
+        let a = make_crew("P", &["X", "Y"], &["Q", "D2", "D3"]);
+        let b = make_crew("Q", &["Z", "W"], &["D2", "D3", "X"]);
+        assert!(valid_crew(&a) && valid_crew(&b));
+        for seed in 0..128 {
+            let child = crossover(&a, &b, &pools, &mut Rng::new(seed), 3);
+            assert!(valid_crew(&child), "seed {seed}: illegal child {child:?}");
+        }
+    }
+
+    #[test]
+    fn repair_removes_duplicate_below_decks_before_refilling() {
+        let pools = small_pools();
+        let mut child = make_crew("CapA", &["B1", "B2"], &["D1", "D1", "D2"]);
+        repair_crew(&mut child, &pools, &mut Rng::new(7), 3);
+        assert!(valid_crew(&child), "repair left an illegal crew: {child:?}");
     }
 
     #[test]
@@ -1426,6 +1485,71 @@ mod tests {
 #[cfg(test)]
 mod integration_tests {
     use super::{run_genetic_optimizer_ranked, GeneticConfig};
+
+    #[test]
+    fn final_ranking_uses_the_same_tier_profile_scenario_as_evolution() {
+        use crate::data::data_registry::DataRegistry;
+        use crate::data::profile_index::DEMO_PROFILE_ID;
+        use crate::data::support_buffs::SupportBuffScenarioRequest;
+        use crate::optimizer::crew_generator::CrewCandidate;
+        use crate::optimizer::monte_carlo::{
+            run_monte_carlo_parallel_with_registry, DefenderOpponent,
+        };
+
+        let registry = DataRegistry::load().expect("bundled data registry");
+        let config = GeneticConfig {
+            population_size: 4,
+            generations: 1,
+            sims_per_eval: 4,
+            below_decks_slots: 0,
+            ship_tier: Some(10),
+            ship_level: Some(50),
+            roster_profile_id: Some(DEMO_PROFILE_ID.into()),
+            ..GeneticConfig::default()
+        };
+        let seed = 41;
+        let final_sims = 24;
+        let (ranked, stats) = super::run_genetic_optimizer_ranked_with_stats(
+            "gorn_eviscerator",
+            "447012258",
+            &config,
+            seed,
+            final_sims,
+            Some(registry.as_ref()),
+            |_, _, _| true,
+            || true,
+        );
+        assert!(stats.ran_final_full_mc && !ranked.is_empty());
+        let first = &ranked[0];
+        let candidate = CrewCandidate {
+            captain: first.captain.clone(),
+            bridge: first.bridge.clone(),
+            below_decks: first.below_decks.clone(),
+        };
+        let (expected, placeholder) = run_monte_carlo_parallel_with_registry(
+            registry.as_ref(),
+            "gorn_eviscerator",
+            "447012258",
+            config.ship_tier,
+            config.ship_level,
+            std::slice::from_ref(&candidate),
+            final_sims,
+            seed,
+            config.roster_profile_id.as_deref(),
+            SupportBuffScenarioRequest::default(),
+            config.chain_grind.clone(),
+            DefenderOpponent::Hostile,
+            None,
+            None,
+        );
+        assert!(
+            !placeholder,
+            "the regression needs a real tiered ship and hostile"
+        );
+        assert_eq!(first.win_rate, expected[0].win_rate);
+        assert_eq!(first.avg_hull_remaining, expected[0].avg_hull_remaining);
+        assert_eq!(first.r1_kill_rate, expected[0].r1_kill_rate);
+    }
 
     /// Runs genetic optimizer with minimal config; checks result shape.
     /// Requires officer/ship/hostile data (e.g. from data/). Skips if pools are empty.

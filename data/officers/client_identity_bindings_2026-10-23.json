@@ -1,0 +1,37 @@
+{
+  "source_static_cache_sha256": "b7fcb7a021fa982144702a682e81eb6b7a31406522b0154cc77553a2c0776418",
+  "source_english_cache_sha256": "e1bc354122ba6ba5b7a6f4028b8859559e9378fd8a912ada9103e5eedf36b3e4",
+  "static_client_build": 272,
+  "english_cache_client_build": 273,
+  "name_lookup": {
+    "category": "officer_names",
+    "format": "officer_name_{0}",
+    "format_argument": "OfficerSpec.IdRefs.LocaId",
+    "hash": "MurmurHash3 x86 32-bit over UTF-8, seed 1701, sign-extended to int64",
+    "native_get_name": "0x181576ea0",
+    "native_name_context_initializer": "0x181577180",
+    "native_hash_string": "0x181fd2bd0",
+    "native_hash_stream": "0x181fd27b0"
+  },
+  "officers": [
+    {
+      "canonical_id": "harry-kim-a79fdf",
+      "source_officer_id": "497650232",
+      "loca_id": "55003",
+      "name_key_hash_signed": "638718170",
+      "client_english_name": "Harry Kim",
+      "below_decks_ability_id": "1091333371",
+      "below_decks_state": "burning"
+    },
+    {
+      "canonical_id": "neelix-c8a380",
+      "source_officer_id": "1458469333",
+      "loca_id": "57002",
+      "name_key_hash_signed": "-111529161",
+      "client_english_name": "Neelix",
+      "below_decks_ability_id": "568169426",
+      "below_decks_state": "morale"
+    }
+  ],
+  "note": "The old catalog associated these two stable canonical IDs with the opposite source officer. The abilities and per-level stat source must move together with the source identity; cached imported canonical labels may need re-resolution from raw source IDs. Static and live localization evidence are separately versioned and hashed."
+}

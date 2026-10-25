@@ -9,6 +9,41 @@ use kobayashi::optimizer::monte_carlo::{
 };
 use kobayashi::server::api::{validate_scenario_target, ScenarioTarget, ScenarioTargetFields};
 
+#[test]
+fn simulate_validates_defender_seats_using_the_defender_ship_schedule() {
+    use kobayashi::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
+    use kobayashi::server::api::simulate_payload;
+    let registry = DataRegistry::load().unwrap();
+    let request = serde_json::json!({
+        "ship":"realta", "ship_tier":4, "ship_level":20, "hostile":"",
+        "below_decks_slots":0,
+        "crew":{"captain":"718-0-2509d7","bridge":["kirk-1323b6","spock-c04738"]},
+        "defender_ship":"stella", "defender_ship_tier":4,"defender_ship_level":25,
+        "defender_profile_id":"demo",
+        "defender_crew":{"captain":"718-0-2509d7","bridge":["kirk-1323b6","spock-c04738"],
+            "below_deck":["scotty-a83cb5","uhura-ea117c","unresolved-defender-officer"]},
+        "num_sims":1,"seed":42
+    });
+    let mut control = request.clone();
+    control["defender_crew"]["below_deck"][2] = serde_json::json!("kira-nerys-a5253a");
+    simulate_payload(
+        &registry,
+        &control.to_string(),
+        Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+    )
+    .expect("otherwise-valid PvP request must reach simulation");
+    let error = simulate_payload(
+        &registry,
+        &request.to_string(),
+        Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+    )
+    .expect_err("third defender seat must be validated even when the attacker has zero BD slots");
+    assert!(
+        error.to_string().contains("defender_crew"),
+        "wrong validation failure: {error}"
+    );
+}
+
 fn second_profile_id() -> Option<String> {
     let index = load_profile_index();
     index

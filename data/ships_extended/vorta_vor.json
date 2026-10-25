@@ -2,6 +2,8 @@
   "id": "vorta_vor",
   "ship_name": "VORTA VOR",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 4,
   "faction": "romulan",
   "tiers": [
     {

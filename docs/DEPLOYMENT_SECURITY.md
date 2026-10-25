@@ -72,10 +72,24 @@ retroactively authenticate that release. See GitHub's
 | **LAN** (`0.0.0.0` or a machine IP) | Medium. Any client on the network can call the API. | Use a firewall. Bind to an interface that you trust. Use a reverse proxy with TLS. Set the optional `KOBAYASHI_API_KEY`. |
 | **Internet**                        | High. Scanners find the server, and a client can abuse the routes that use much CPU time. | Do not make raw HTTP available. Use a reverse proxy with TLS, strong secrets, rate limits, and network access control lists. |
 
-## The optional shared secret for the mutating API routes
+## Browser requests and the optional API key
+
+The server checks `Host` for both the SPA and API. Loopback addresses and the configured
+bind address are accepted. With a wildcard bind, literal interface IP addresses are
+accepted; additional proxy hostnames require `KOBAYASHI_ALLOWED_HOSTS` (comma-separated,
+optionally with ports). A browser's `Origin` must match its request host or an explicit
+`KOBAYASHI_ALLOWED_ORIGINS` entry. For a frontend using Vite's development proxy, for example, set
+`KOBAYASHI_ALLOWED_ORIGINS=http://localhost:5173`. List complete origins, including the
+scheme and port. This permits the proxy's forwarded Origin; it does not enable direct
+cross-origin CORS access. These checks also apply to trusted loopback peers.
+
+Native clients such as STFC Mod do not need an Origin header. Normal JSON write routes
+require `Content-Type: application/json`; CSV/ZIP imports, cancellation and native sync
+ingress retain their existing formats.
 
 Set `KOBAYASHI_API_KEY` to a value that is not empty. The server then needs this secret on
-each mutating HTTP API call. A mutating call is a `POST`, a `PUT`, a `DELETE`, or a `PATCH`
+each mutating HTTP API call, and for `GET`/`HEAD /api/profiles` and
+`/api/profiles/export`, which contain sync tokens or profile backups. A mutating call is a `POST`, a `PUT`, a `DELETE`, or a `PATCH`
 under `/api/`. There is one exception: `POST /api/sync/ingress` continues to use
 `stfc-sync-token`.
 
@@ -101,7 +115,11 @@ not put a long-life secret in `frontend/dist`. Use one of these methods:
 - **The same computer, with trust for the loopback address.** Keep the default value of
   `KOBAYASHI_API_KEY_TRUST_LOOPBACK`. You do not change the browser.
 - **A reverse proxy in front of the API.** The proxy ends the TLS connection. It then adds
-  `Authorization` or `X-Api-Key` to each request that it sends to the server.
+  `Authorization` or `X-Api-Key` to each request that it sends to the server. Set
+  `KOBAYASHI_API_KEY_TRUST_LOOPBACK=0` when that proxy connects through loopback;
+  otherwise its remote clients inherit the local peer's key exemption. The proxy must
+  authenticate its clients before adding the key. Adding a shared key to every request
+  at a publicly accessible proxy does not authenticate users.
 - **A LAN client that must send the key.** Configure the client or the proxy to add the
   header. Never commit the key to the repository.
 
@@ -110,8 +128,10 @@ not put a long-life secret in `frontend/dist`. Use one of these methods:
 | Variable                           | Purpose                                                                |
 | ---------------------------------- | ---------------------------------------------------------------------- |
 | `KOBAYASHI_BIND`                   | The address to listen on. The default is `127.0.0.1:3000`.             |
-| `KOBAYASHI_API_KEY`                | The optional shared secret for the mutating `/api/` routes. It does not apply to sync ingress. |
+| `KOBAYASHI_API_KEY`                | Optional shared secret for API writes and secret-bearing profile reads. It does not apply to sync ingress. |
 | `KOBAYASHI_API_KEY_TRUST_LOOPBACK` | When the value is `1` (the default), a loopback client does not send the key. |
+| `KOBAYASHI_ALLOWED_HOSTS`          | Additional permitted proxy hostnames, comma-separated. |
+| `KOBAYASHI_ALLOWED_ORIGINS`        | Additional permitted browser origins, comma-separated. |
 | `KOBAYASHI_LOG`                    | The alias for the log level or the log filter of Kobayashi (`info`, `debug`, or a full filter). |
 | `RUST_LOG`                         | The full tracing filter. It has precedence over `KOBAYASHI_LOG`.       |
 

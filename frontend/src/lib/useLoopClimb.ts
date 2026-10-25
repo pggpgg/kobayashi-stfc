@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cancelOptimizeJob } from "./api";
 import {
   clearLoopClimbPlan,
   createLoopClimbPlan,
@@ -55,14 +56,37 @@ export function useLoopClimb(profileId: string | null) {
   const [progress, setProgress] = useState<LoopClimbProgress | null>(null);
   const cancelRef = useRef(false);
   const runningRef = useRef(false);
+  const activeJobRef = useRef<string | null>(null);
+  const mountedRef = useRef(false);
+  const currentProfileRef = useRef(profileId);
+  currentProfileRef.current = profileId;
+
+  const cancelActiveJob = useCallback(() => {
+    cancelRef.current = true;
+    if (activeJobRef.current)
+      void cancelOptimizeJob(activeJobRef.current).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      cancelActiveJob();
+      clearLoopClimbPlan(profileId);
+    };
+  }, [profileId, cancelActiveJob]);
 
   // Surface an interrupted climb after a refresh. The plan is only bookkeeping —
   // every completed rung is already saved durably — so the honest move is to show
   // what was in flight and let the player restart, rather than silently resuming a
   // job whose server-side fate we no longer know.
   useEffect(() => {
+    setPlan(null);
+    setProgress(null);
     const persisted = loadLoopClimbPlan(profileId);
     if (persisted && persisted.status === "running" && !runningRef.current) {
+      if (persisted.activeJobId)
+        void cancelOptimizeJob(persisted.activeJobId).catch(() => {});
       setPlan({ ...persisted, status: "cancelled", activeJobId: null });
       clearLoopClimbPlan(profileId);
     }
@@ -103,22 +127,31 @@ export function useLoopClimb(profileId: string | null) {
         await runLoopClimb(
           fresh,
           {
-            onPlan: setPlan,
-            onProgress: setProgress,
+            shouldPersist: () =>
+              mountedRef.current && currentProfileRef.current === profileId,
+            onPlan: (next) => {
+              activeJobRef.current = next.activeJobId;
+              if (mountedRef.current && currentProfileRef.current === profileId)
+                setPlan(next);
+            },
+            onProgress: (next) => {
+              if (mountedRef.current && currentProfileRef.current === profileId)
+                setProgress(next);
+            },
           },
           () => cancelRef.current,
         );
       } finally {
         runningRef.current = false;
-        clearLoopClimbPlan(profileId);
+        activeJobRef.current = null;
+        if (mountedRef.current && currentProfileRef.current === profileId)
+          clearLoopClimbPlan(profileId);
       }
     },
     [profileId],
   );
 
-  const cancel = useCallback(() => {
-    cancelRef.current = true;
-  }, []);
+  const cancel = cancelActiveJob;
 
   return {
     plan,

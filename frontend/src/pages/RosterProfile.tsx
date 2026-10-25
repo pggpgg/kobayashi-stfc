@@ -13,6 +13,7 @@ import type {
   ForbiddenTechImportedResponse,
   ImportReport,
   PlayerProfile,
+  ProfileEntry,
   ResearchCombatSummary,
 } from "../lib/api";
 import {
@@ -32,6 +33,22 @@ type Tab = "profile" | "roster" | "bonuses";
 
 export default function RosterProfile() {
   const { activeProfileId, profiles } = useProfile();
+  return (
+    <RosterProfileEditor
+      key={activeProfileId ?? "default"}
+      activeProfileId={activeProfileId}
+      profiles={profiles}
+    />
+  );
+}
+
+function RosterProfileEditor({
+  activeProfileId,
+  profiles,
+}: {
+  activeProfileId: string | null;
+  profiles: ProfileEntry[];
+}) {
   const [tab, setTab] = useState<Tab>("profile");
   const [paste, setPaste] = useState("");
   const [importResult, setImportResult] = useState<ImportReport | null>(null);
@@ -39,6 +56,9 @@ export default function RosterProfile() {
   const [profile, setProfile] = useState<PlayerProfile>({ bonuses: {} });
   const [profileDirty, setProfileDirty] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
   const [forbiddenTechCatalog, setForbiddenTechCatalog] = useState<
     ForbiddenTechCatalogItem[]
   >([]);
@@ -66,9 +86,18 @@ export default function RosterProfile() {
     let c = false;
     fetchProfile(activeProfileId)
       .then((p) => {
-        if (!c) setProfile(p);
+        if (!c) {
+          setProfile(p);
+          setProfileLoaded(true);
+          setProfileDirty(false);
+        }
       })
-      .catch(() => {});
+      .catch((error) => {
+        if (!c) setProfileLoadError(formatApiError(error));
+      })
+      .finally(() => {
+        if (!c) setProfileLoading(false);
+      });
     return () => {
       c = true;
     };
@@ -103,7 +132,7 @@ export default function RosterProfile() {
   useEffect(() => {
     let c = false;
     setBuildingSummaryError(null);
-    fetchBuildingCombatSummary(activeProfileId)
+    fetchBuildingCombatSummary(activeProfileId, researchScenarioShipId)
       .then((s) => {
         if (!c) setBuildingSummary(s);
       })
@@ -116,7 +145,7 @@ export default function RosterProfile() {
     return () => {
       c = true;
     };
-  }, [activeProfileId]);
+  }, [activeProfileId, researchScenarioShipId]);
 
   useEffect(() => {
     let c = false;
@@ -176,6 +205,7 @@ export default function RosterProfile() {
   };
 
   const handleSaveProfile = async () => {
+    if (!profileLoaded) return;
     setProfileError(null);
     try {
       await updateProfile(
@@ -198,6 +228,7 @@ export default function RosterProfile() {
   };
 
   const setBonus = (key: string, value: number) => {
+    if (!profileLoaded) return;
     setProfile((p) => ({
       ...p,
       bonuses: { ...p.bonuses, [key]: value },
@@ -296,8 +327,16 @@ export default function RosterProfile() {
         </button>
       </div>
 
+      {profileLoading && <p role="status">Loading profile…</p>}
+      {profileLoadError && (
+        <p role="alert" style={styles.errorNote}>
+          Could not load profile: {profileLoadError}. Editing and saving are
+          disabled.
+        </p>
+      )}
       {tab === "profile" && activeProfile && (
-        <section
+        <fieldset
+          disabled={!profileLoaded}
           style={{
             padding: "1rem",
             background: "var(--surface)",
@@ -378,7 +417,7 @@ export default function RosterProfile() {
             Save profile
           </button>
           {profileError && <div style={styles.errorNote}>{profileError}</div>}
-        </section>
+        </fieldset>
       )}
 
       {tab === "roster" && (
@@ -392,13 +431,18 @@ export default function RosterProfile() {
       )}
 
       {tab === "bonuses" && (
-        <RosterProfileBonusesTab
-          bonuses={profile.bonuses}
-          onBonusChange={setBonus}
-          onSave={handleSaveProfile}
-          profileDirty={profileDirty}
-          profileError={profileError}
-        />
+        <fieldset
+          disabled={!profileLoaded}
+          style={{ border: 0, padding: 0, margin: 0 }}
+        >
+          <RosterProfileBonusesTab
+            bonuses={profile.bonuses}
+            onBonusChange={setBonus}
+            onSave={handleSaveProfile}
+            profileDirty={profileDirty}
+            profileError={profileError}
+          />
+        </fieldset>
       )}
     </div>
   );

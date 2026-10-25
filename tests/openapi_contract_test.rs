@@ -18,9 +18,12 @@ fn assert_support_buffs_array_property(schema: &Value, schema_name: &str) {
         .get("properties")
         .and_then(|v| v.get("support_buffs"))
         .unwrap_or_else(|| panic!("{schema_name} must document support_buffs"));
-    assert_eq!(
-        support_buffs.get("type").and_then(|v| v.as_str()),
-        Some("array"),
+    let types = support_buffs.get("type").expect("support_buffs type");
+    assert!(
+        types.as_str() == Some("array")
+            || types
+                .as_sequence()
+                .is_some_and(|types| types.iter().any(|t| t.as_str() == Some("array"))),
         "{schema_name}.support_buffs must be an array"
     );
     assert_eq!(
@@ -31,6 +34,22 @@ fn assert_support_buffs_array_property(schema: &Value, schema_name: &str) {
         Some("string"),
         "{schema_name}.support_buffs items must be strings"
     );
+}
+
+#[test]
+fn optimizer_optional_defaults_and_nullable_inputs_are_accepted() {
+    for support_buffs in [
+        serde_json::Value::Null,
+        serde_json::json!(["titan_a_fortification"]),
+    ] {
+        let request: OptimizeRequest = serde_json::from_value(serde_json::json!({
+            "ship":"realta", "hostile":"2918121098", "support_buffs": support_buffs,
+            "strategy":null, "constraints": {"must_include":["Tom Paris"]}
+        }))
+        .expect("optional defaults and nullable Option fields follow the Rust request contract");
+        assert!(request.strategy.is_none());
+        assert_eq!(request.constraints.unwrap().must_include, ["Tom Paris"]);
+    }
 }
 
 #[test]

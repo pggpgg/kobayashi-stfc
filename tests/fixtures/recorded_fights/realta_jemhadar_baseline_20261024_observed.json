@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "kind": "Redacted observed Realta versus Jem'Hadar Battleship level 53 baseline; one weapon's three incoming hits, not a full fight calibration",
+  "source_json_sha256": "5ea33b6061ae83e072c5e7e4bde33d9042f4ce7d7c1c8dd5ced34e766a04cc50",
+  "source_projection_sha256": "fd8df1fa39c67d0027cbb17292dfcb4d21499b2e2a4b1f61cd999dec5ea4ced2",
+  "source_setup_validation_sha256": "acb46db7baec32e0488bf8ca09f1cc054e67deda04ee93d06b9083bdcbdb336b",
+  "source_hypothesis_comparison_sha256": "d4c8b23cadd8012a1e0a768f7054b5e1bae913ef67b7cda9e27671f4b7c48706",
+  "battle_time": "2026-10-24T02:54:29",
+  "observed_client_build": 273,
+  "parser_reference_client_build": 272,
+  "setup_check_summary": {
+    "all_checks_pass": true,
+    "tom_paris_absent": true,
+    "checked_flags": {
+      "frozen_provenance_control_matches": true,
+      "frozen_provenance_exact_integer_ids": true,
+      "frozen_source_hashes_match_provenance": true,
+      "exact_jadzia_and_optional_tom_roles": true,
+      "raw_officer_56_57_58_59_match_source_rounded_totals": true,
+      "same_realta_tier_level_components_as_reference": true,
+      "realta_full_max_hull_652159": true,
+      "realta_full_max_shield_748507": true,
+      "ablative_inventory_tier4_level20_unchanged": true,
+      "exact_target_catalog_level_faction": true,
+      "exact_target_positive_components_in_order_with_duplicates": true,
+      "target_started_full_hull_and_shield": true,
+      "target_max_hull_and_shield_match_catalog": true,
+      "target_has_no_deployed_buffs": true,
+      "selected_global_0_1_11_12_13_57_59_73_707_808_unchanged": true,
+      "selected_deployed_0_1_11_12_13_57_59_73_707_808_unchanged": true,
+      "deployed_forbidden_tech_native_buffs_unchanged": true
+    }
+  },
+  "source_derived_defense": {
+    "base": [3, 22, 1],
+    "launch_unrounded": [86.37, 677.38, 29.19],
+    "combat_start_all_defenses_fraction": 13,
+    "combat_unrounded": [125.37, 963.38, 42.19],
+    "combat_native_rounded": [125, 963, 42]
+  },
+  "observation": {
+    "rounds": 1,
+    "subrounds": 4,
+    "incoming_hits": [
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 7,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 93861,
+        "shield_damage": 442488,
+        "mitigated_damage": 111736.99218660354,
+        "mitigated_apex_barrier": 42907.88,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 558298,
+        "remaining_shield": 306019
+      },
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 26,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 105691,
+        "shield_damage": 498258,
+        "mitigated_damage": 125820.01806891728,
+        "mitigated_apex_barrier": 48315.88,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 452607,
+        "remaining_shield": 0
+      },
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 45,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 551788,
+        "shield_damage": 0,
+        "mitigated_damage": 114953.2990931636,
+        "mitigated_apex_barrier": 44142.97,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 0,
+        "remaining_shield": 0
+      }
+    ],
+    "primary_clean_source_index": 7,
+    "diagnostic_denominator_error_budget": 2.01,
+    "primary_clean_mitigation_interval": [0.16170428083163155, 0.16170522158252099],
+    "piercing_hypotheses": [
+      {
+        "name": "observed_weapon_component",
+        "armor_piercing": 803768,
+        "shield_piercing": 1298802,
+        "accuracy": 765496,
+        "native_defense_plusminus_one_band": [0.16170455503905268, 0.1617048958913676]
+      },
+      {
+        "name": "normalized_unweighted_component_average",
+        "armor_piercing": 656410.5,
+        "shield_piercing": 1060688.5,
+        "accuracy": 625155,
+        "native_defense_plusminus_one_band": [0.1617235217739874, 0.16172393917265693]
+      }
+    ],
+    "hp_ledger_exceptions": [
+      "The second assigned shield-damage field exceeds the prior remaining shield by 192239; remaining shield clamps to zero.",
+      "The terminal assigned hull-damage field exceeds the prior remaining hull by 99181; remaining hull clamps to zero."
+    ]
+  },
+  "limitations": [
+    "Only the stronger component weapon 2806302352 fired in the observed hits. The weaker component was not observed.",
+    "The ±2.01 reconstructed-denominator budget is a conservative diagnostic, not a server numeric specification.",
+    "The depleted and terminal hits preserve assigned damage fields; their HP deltas are not interchangeable with assigned damage.",
+    "The build 273 combat stream was projected with retained build 272 native parser evidence; independent build 273 parser drift proof remains open.",
+    "No Tom Paris effect or full-fight accuracy is inferred from this baseline."
+  ]
+}

@@ -32,7 +32,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::{AttackerStats, Combatant, CrewSeatContext};
+use crate::combat::{AttackerStats, Combatant, CrewSeatContext, ShipType};
 use crate::data::building::{self, BuildingBonusContext, BuildingIndex};
 use crate::data::forbidden_chaos::{ForbiddenChaosList, ForbiddenChaosRecord};
 use crate::data::import::{BuildingEntry, ForbiddenTechEntry, ResearchEntry};
@@ -73,6 +73,9 @@ pub struct PlayerProfile {
     /// instead of inferring from synced buildings (ops_center level). Lets you simulate without sync.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ops_level: Option<u32>,
+    /// Manually confirmed Syndicate level when the mod snapshot omits loyalty state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub syndicate_level: Option<u32>,
     /// Legacy list overrides (ignored for combat resolution; use equipped slots). Kept for
     /// backward-compatible JSON round-trips.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -303,6 +306,7 @@ pub fn validate_player_profile_payload(
         research_owner_faction_bonuses: canonical_owner,
         support_buffs,
         ops_level: profile.ops_level,
+        syndicate_level: profile.syndicate_level,
         forbidden_tech_override: profile.forbidden_tech_override,
         chaos_tech_override: profile.chaos_tech_override,
         equipped_forbidden_fid: profile.equipped_forbidden_fid,
@@ -396,6 +400,11 @@ pub fn merge_tech_fids_into_profile(
             continue;
         };
         for bonus in &record.bonuses {
+            if bonus.rank_curve.is_some() {
+                // A ranked buff requires an owned level and tier; never substitute
+                // the catalog's legacy summary value when that context is absent.
+                continue;
+            }
             if forbidden_tech_special::skip_forbidden_tech_profile_bonus_for_fid(fid, &bonus.stat) {
                 continue;
             }
@@ -467,8 +476,9 @@ pub(crate) fn scale_forbidden_tech_bonus_value_linear_by_level_tier(
 
 /// Merge the selected forbidden/chaos tech catalog records into `profile.bonuses`.
 ///
-/// Compared to [`merge_tech_fids_into_profile`], this variant can optionally scale bonuses
-/// by the player's synced `tier` and `level`.
+/// Compared to [`merge_tech_fids_into_profile`], this variant resolves verified rank curves
+/// against the player's synced `tier` and `level`. The optional scaling flag controls
+/// only legacy catalog rows without a verified curve.
 pub fn merge_tech_fids_into_profile_with_level_tier(
     profile: &mut PlayerProfile,
     fids: &[i64],
@@ -537,9 +547,9 @@ pub fn merge_tech_fids_into_profile_with_level_tier(
 /// | Key | Flat merge into `profile.bonuses` | Applied via |
 /// |-----|-----------------------------------|---------------|
 /// | `weapon_damage`, `hull_hp`, `shield_hp`, `crit_chance`, `crit_damage`, `crit_damage_floor`, `pierce`, `shield_mitigation`, `armor`, `shield_deflection`, `dodge`, `damage_reduction`, `isolytic_damage`, `isolytic_defense`, `isolytic_cascade_damage` (alias `isolytic_cascade`), `apex_shred`, `apex_barrier` | yes (unless conditional `weapon_damage` / crit row; see below) | [`apply_profile_to_attacker`] on [`Combatant`] for most keys; `armor` / `shield_deflection` / `dodge` add into [`Combatant::mitigation`]; `crit_damage_floor` populates [`Combatant::crit_damage_floor`] (clamped at the per-shot crit resolution site after any attacker-outbound crit-damage reduction); `isolytic_cascade_damage` is merged into `profile.bonuses` but applied in Monte Carlo scenario build as an attack-phase `IsolyticCascadeDamageBonus` seat (with LCARS static buff keys of the same name), not as a [`Combatant`] field |
-/// | `officer_attack`, `officer_health` | yes | Multiplicative with `weapon_damage` / `hull_hp`: attack × `(1+weapon_damage)×(1+officer_attack)`, hull × `(1+hull_hp)×(1+officer_health)` |
-/// | `officer_defense` | yes | Additive with `shield_mitigation` into [`Combatant::shield_mitigation`] (same cap `[0,1]`) |
-/// | `accuracy` | yes | [`apply_profile_accuracy_to_attacker_stats`] on [`AttackerStats`] (not `Combatant`) |
+/// | `officer_attack`, `officer_defense`, `officer_health` | yes | Pre-aggregation officer-rating bonuses in [`compute_officer_stat_runtime_bonus`], then ship breakpoint lookup |
+/// | `officer_defense_below_decks` | yes | Adds only to below-decks officer Defense before the same rating/breakpoint lookup |
+/// | `accuracy`, `armor_piercing`, `shield_piercing` | yes, after any ship-grade gate | [`apply_profile_piercing_to_attacker_stats`] on [`AttackerStats`] (not damage-through `Combatant::pierce`) |
 /// | `isolytic_damage` (conditional, e.g. `requires_morale`) | no | [`research_derived_attack_phase_seats`] → compiled seats (not `profile.bonuses` flat merge) |
 /// | Conditional `weapon_damage`, `crit_chance` / `crit_damage` with [`crate::data::research::ResearchBonusConditionKey`] set | no (skipped from flat merge) | [`research_derived_attack_phase_seats`] → attack-phase seats |
 ///
@@ -550,10 +560,13 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         // kept distinct from ship-level keys so [`apply_profile_to_attacker`] can compound them.
         "officer_attack" => Some("officer_attack"),
         "officer_defense" => Some("officer_defense"),
+        "officer_defense_below_decks" => Some("officer_defense_below_decks"),
         "officer_health" => Some("officer_health"),
         "weapon_damage" => Some("weapon_damage"),
         "hull_hp" => Some("hull_hp"),
         "shield_hp" => Some("shield_hp"),
+        "hull_hp_flat" => Some("hull_hp_flat"),
+        "shield_hp_flat" => Some("shield_hp_flat"),
         // Morale-gated isolytic catalog rows use `stat: isolytic_damage` + `requires_morale` (compiled to seats).
         "isolytic_damage" => Some("isolytic_damage"),
         "isolytic_defense" => Some("isolytic_defense"),
@@ -578,12 +591,18 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         }
         "crit_chance" => Some("crit_chance"),
         "crit_damage" => Some("crit_damage"),
+        "crit_damage_flat" => Some("crit_damage_flat"),
         // Defensive clamp: ensures the attacker's effective crit multiplier never drops
         // below this floor after opponent-side crit-damage reductions are applied.
         // Populated by the 4 "Critical Damage Floor" research nodes (596446780,
         // 1336793796, 1727094437, 2601710565), additive across owned nodes.
         "crit_damage_floor" => Some("crit_damage_floor"),
         "pierce" | "armor_pierce" | "shield_pierce" => Some("pierce"),
+        "armor_piercing" => Some("armor_piercing"),
+        "shield_piercing" => Some("shield_piercing"),
+        // Research round-start effects; compiled as seats, never final mitigation percentages.
+        "base_mitigation_stats_bonus" => Some("base_mitigation_stats_bonus"),
+        "officer_shield_regen_max_fraction" => Some("officer_shield_regen_max_fraction"),
         "shield_mitigation" => Some("shield_mitigation"),
         "armor" => Some("armor"),
         // Raw shield deflection (defender leg; same units as ship `DefenderStats::shield_deflection`).
@@ -606,9 +625,31 @@ pub fn merge_building_bonuses_into_profile(
     profile: &mut PlayerProfile,
     imported_buildings: &[BuildingEntry],
     bid_to_id: &HashMap<i64, String>,
+    building_index: &BuildingIndex,
+    data_dir: &Path,
+    context: &BuildingBonusContext,
+) {
+    merge_building_bonuses_with_native_snapshot(
+        profile,
+        imported_buildings,
+        bid_to_id,
+        building_index,
+        data_dir,
+        context,
+        None,
+    );
+}
+
+/// Native selected families supersede legacy building inference only when an active
+/// building buff snapshot is available. Other stats and manual profile pools are preserved.
+pub fn merge_building_bonuses_with_native_snapshot(
+    profile: &mut PlayerProfile,
+    imported_buildings: &[BuildingEntry],
+    bid_to_id: &HashMap<i64, String>,
     _building_index: &BuildingIndex,
     data_dir: &Path,
     context: &BuildingBonusContext,
+    native_bonuses: Option<&HashMap<String, f64>>,
 ) {
     if imported_buildings.is_empty() || bid_to_id.is_empty() {
         return;
@@ -640,8 +681,32 @@ pub fn merge_building_bonuses_into_profile(
         return;
     }
 
-    let bonuses =
+    let mut bonuses =
         building::cumulative_building_bonuses_with_context(&records, &levels_by_id, context);
+
+    if let Some(native) = native_bonuses {
+        bonuses.retain(|stat, _| {
+            !matches!(
+                stat.as_str(),
+                "hull_hp"
+                    | "shield_hp"
+                    | "hull_hp_flat"
+                    | "shield_hp_flat"
+                    | "weapon_damage"
+                    | "crit_chance"
+                    | "crit_damage"
+                    | "crit_damage_flat"
+                    | "isolytic_damage"
+                    | "isolytic_defense"
+                    | "armor"
+                    | "shield_deflection"
+                    | "dodge"
+            )
+        });
+        for (stat, value) in native {
+            bonuses.insert(stat.clone(), *value);
+        }
+    }
 
     for (stat, value) in bonuses {
         let Some(key) = normalize_profile_combat_stat(&stat) else {
@@ -1030,6 +1095,188 @@ pub fn combat_research_conditional_bonuses_from_import(
     )
 }
 
+/// Base piercing-stat fractions gated only on the selected ship's minimum grade.
+///
+/// Unknown grade does not satisfy the gate. More complex conditions stay out of
+/// this static merge so a runtime or opponent restriction cannot be silently lost.
+pub fn combat_research_ship_grade_bonuses_from_import(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+    ship_grade: Option<u32>,
+) -> HashMap<String, f64> {
+    combat_research_ship_setup_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+        ship_grade,
+        None,
+    )
+}
+
+/// Class and minimum-grade predicates evaluated against the selected hull. Compound
+/// runtime/owner/opponent conditions remain unapplied until their full route is supported.
+pub(crate) fn research_ship_setup_condition_matches(
+    key: &crate::data::research::ResearchBonusConditionKey,
+    stat: &str,
+    ship_grade: Option<u32>,
+    ship_type: Option<ShipType>,
+) -> bool {
+    let setup_only = crate::data::research::ResearchBonusConditionKey {
+        attacker_min_grade: key.attacker_min_grade,
+        attacker_ship_class: key.attacker_ship_class.clone(),
+        ..Default::default()
+    };
+    if *key != setup_only || (key.attacker_min_grade.is_none() && key.attacker_ship_class.is_none())
+    {
+        return false;
+    }
+    if key
+        .attacker_min_grade
+        .is_some_and(|minimum| ship_grade.is_none_or(|grade| grade < minimum))
+    {
+        return false;
+    }
+    if let Some(ref slug) = key.attacker_ship_class {
+        let Some(expected) = ShipType::from_data_slug(slug) else {
+            return false;
+        };
+        if ship_type != Some(expected) {
+            return false;
+        }
+    } else if !matches!(stat, "accuracy" | "armor_piercing" | "shield_piercing") {
+        // Existing grade-only route is verified for Direct Hit's three piercing stats.
+        return false;
+    }
+    normalize_profile_combat_stat(stat).is_some()
+}
+
+pub fn combat_research_ship_setup_bonuses_from_import(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+    ship_grade: Option<u32>,
+    ship_type: Option<ShipType>,
+) -> HashMap<String, f64> {
+    let mut out = HashMap::new();
+    for (key, stat, value) in combat_research_conditional_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+    ) {
+        if !research_ship_setup_condition_matches(&key, &stat, ship_grade, ship_type)
+            || !value.is_finite()
+        {
+            continue;
+        }
+        *out.entry(stat).or_insert(0.0) += value;
+    }
+    out
+}
+
+pub fn merge_ship_setup_research_bonuses_into_profile(
+    profile: &mut PlayerProfile,
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+    ship_grade: Option<u32>,
+    ship_type: Option<ShipType>,
+) {
+    for (stat, value) in combat_research_ship_setup_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+        ship_grade,
+        ship_type,
+    ) {
+        *profile.bonuses.entry(stat).or_insert(0.0) += value;
+    }
+}
+
+/// Replace only research contributions in reviewed native setup families. Other
+/// profile sources and research timing/status effects keep their existing paths.
+/// Call after both unconditional and selected-hull research have been merged.
+pub fn replace_research_setup_bonuses_with_native_snapshot(
+    profile: &mut PlayerProfile,
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+    ship_grade: Option<u32>,
+    ship_type: Option<ShipType>,
+    native: &HashMap<String, f64>,
+) {
+    fn selected(stat: &str) -> bool {
+        matches!(
+            stat,
+            "hull_hp"
+                | "shield_hp"
+                | "hull_hp_flat"
+                | "shield_hp_flat"
+                | "weapon_damage"
+                | "crit_chance"
+                | "crit_damage"
+                | "crit_damage_flat"
+                | "isolytic_damage"
+                | "isolytic_defense"
+                | "armor"
+                | "shield_deflection"
+                | "dodge"
+        )
+    }
+    let mut prior =
+        combat_research_bonuses_from_import(imported_research, catalog, exclude_catalog_rids);
+    for (stat, value) in combat_research_ship_setup_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+        ship_grade,
+        ship_type,
+    ) {
+        *prior.entry(stat).or_default() += value;
+    }
+    for (stat, value) in prior {
+        if selected(&stat) {
+            *profile.bonuses.entry(stat).or_default() -= value;
+        }
+    }
+    for (faction, prior) in combat_research_owner_faction_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+    ) {
+        if let Some(dest) = profile.research_owner_faction_bonuses.get_mut(&faction) {
+            for (stat, value) in prior {
+                if selected(&stat) {
+                    *dest.entry(stat).or_default() -= value;
+                }
+            }
+        }
+    }
+    for (stat, value) in native {
+        if selected(stat) && value.is_finite() {
+            *profile.bonuses.entry(stat.clone()).or_default() += value;
+        }
+    }
+}
+
+/// Apply grade-gated research once, after resolving the scenario's ship.
+pub fn merge_ship_grade_research_bonuses_into_profile(
+    profile: &mut PlayerProfile,
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+    ship_grade: Option<u32>,
+) {
+    for (stat, value) in combat_research_ship_grade_bonuses_from_import(
+        imported_research,
+        catalog,
+        exclude_catalog_rids,
+        ship_grade,
+    ) {
+        *profile.bonuses.entry(stat).or_insert(0.0) += value;
+    }
+}
+
 /// Per-`rid` research level from sync import: duplicate rows use **max** level for that `rid`.
 pub(crate) fn research_levels_by_rid_from_import(
     imported_research: &[ResearchEntry],
@@ -1102,8 +1349,9 @@ pub fn combat_research_owner_faction_bonuses_from_import(
 }
 
 /// Merges combat stat bonuses from player's synced research into `profile.bonuses`.
-/// For each imported research entry (rid, level), looks up the catalog by rid and sums
-/// cumulative bonuses for levels 1..=level. Only combat stats are applied (same keys as buildings).
+/// For each imported research entry (rid, level), resolves the catalog's declared
+/// level-value mode: one ranked snapshot or cumulative authored increments.
+/// Only unconditional combat stats are applied (same keys as buildings).
 /// Duplicate `rid` rows use the **maximum** synced level for that `rid`.
 ///
 /// Never merges support-buff–gated `rid`s (see [`crate::data::support_buffs::augment_static_buffs_with_support_gated_research`]).
@@ -1197,11 +1445,16 @@ pub fn get_bonus_with_owner_faction_research(
 /// [crate::lcars::resolve_crew_to_buff_set]. Keys applied: isolytic_damage, isolytic_defense,
 /// apex_shred, apex_barrier,
 /// shield_mitigation (additive; shield_mitigation clamped to [0, 1]), weapon_damage (mult to attack),
-/// hull_hp, shield_hp (mult), shield_pierce/armor_pierce (add to pierce), crit_chance (add), crit_damage (mult).
+/// hull_hp, shield_hp (mult), hull_hp_flat/shield_hp_flat (base additions before multipliers),
+/// shield_pierce/armor_pierce (add to pierce), crit_chance (add), crit_damage (mult),
+/// crit_damage_flat (addition before the crit multiplier pool), and crit_damage_floor (add).
+/// Defense fractions are retained in their matching component fields for raw-stat mitigation;
+/// `damage_reduction` remains a separate flat fraction. The aggregate mitigation fallback
+/// is also populated, but the engine uses only one mitigation path per shot.
 /// `accuracy` is **not** applied here: it is folded into [`AttackerStats`] when computing hostile
 /// mitigation and pierce-through ([`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
 pub fn apply_static_buffs_to_combatant(
-    combatant: Combatant,
+    mut combatant: Combatant,
     static_buffs: &HashMap<String, f64>,
 ) -> Combatant {
     if static_buffs.is_empty() {
@@ -1218,10 +1471,17 @@ pub fn apply_static_buffs_to_combatant(
     let weapon_mult = static_buffs.get("weapon_damage").copied().unwrap_or(1.0);
     let hull_mult = static_buffs.get("hull_hp").copied().unwrap_or(1.0);
     let shield_mult = static_buffs.get("shield_hp").copied().unwrap_or(1.0);
+    let hull_flat = static_buffs.get("hull_hp_flat").copied().unwrap_or(0.0);
+    let shield_flat = static_buffs.get("shield_hp_flat").copied().unwrap_or(0.0);
     let pierce_add = static_buffs.get("shield_pierce").copied().unwrap_or(0.0)
         + static_buffs.get("armor_pierce").copied().unwrap_or(0.0);
     let crit_chance_add = static_buffs.get("crit_chance").copied().unwrap_or(0.0);
     let crit_damage_mult = static_buffs.get("crit_damage").copied().unwrap_or(1.0);
+    let crit_damage_flat = static_buffs.get("crit_damage_flat").copied().unwrap_or(0.0);
+    let crit_damage_floor_add = static_buffs
+        .get("crit_damage_floor")
+        .copied()
+        .unwrap_or(0.0);
     let armor_add = static_buffs.get("armor").copied().unwrap_or(0.0);
     let damage_reduction_add = static_buffs.get("damage_reduction").copied().unwrap_or(0.0);
     let dodge_add = static_buffs.get("dodge").copied().unwrap_or(0.0);
@@ -1230,19 +1490,32 @@ pub fn apply_static_buffs_to_combatant(
         .copied()
         .unwrap_or(0.0);
 
+    apply_bonuses_to_weapon_rows(
+        &mut combatant.weapons,
+        weapon_mult,
+        crit_chance_add,
+        crit_damage_mult,
+        crit_damage_flat,
+    );
+
     Combatant {
         attack: combatant.attack * weapon_mult,
-        hull_health: combatant.hull_health * hull_mult,
-        shield_health: combatant.shield_health * shield_mult,
+        hull_health: (combatant.hull_health + hull_flat) * hull_mult,
+        shield_health: (combatant.shield_health + shield_flat) * shield_mult,
         pierce: (combatant.pierce + pierce_add).max(0.0),
         crit_chance: (combatant.crit_chance + crit_chance_add).clamp(0.0, 1.0),
-        crit_multiplier: (combatant.crit_multiplier * crit_damage_mult).max(0.0),
-        crit_damage_floor: 0.0,
+        crit_multiplier: ((combatant.crit_multiplier + crit_damage_flat) * crit_damage_mult)
+            .max(0.0),
+        crit_damage_floor: (combatant.crit_damage_floor + crit_damage_floor_add).max(0.0),
         isolytic_damage: (combatant.isolytic_damage + isolytic_damage_add).max(0.0),
         isolytic_defense: (combatant.isolytic_defense + isolytic_defense_add).max(0.0),
         apex_shred: (combatant.apex_shred + apex_shred_add).max(0.0),
         apex_barrier: (combatant.apex_barrier + apex_barrier_add).max(0.0),
         shield_mitigation: (combatant.shield_mitigation + shield_mitigation_add).clamp(0.0, 1.0),
+        armor: (combatant.armor + armor_add).max(0.0),
+        shield_deflection: (combatant.shield_deflection + shield_deflection_add).max(0.0),
+        dodge: (combatant.dodge + dodge_add).max(0.0),
+        damage_reduction: (combatant.damage_reduction + damage_reduction_add).max(0.0),
         mitigation: (combatant.mitigation
             + armor_add
             + damage_reduction_add
@@ -1250,6 +1523,26 @@ pub fn apply_static_buffs_to_combatant(
             + dodge_add)
             .clamp(0.0, 1.0),
         ..combatant
+    }
+}
+
+/// Explicit weapon rows override the aggregate combatant fields during firing.
+/// Preserve per-weapon bases and optional inheritance while applying each pool once.
+fn apply_bonuses_to_weapon_rows(
+    weapons: &mut [crate::combat::WeaponStats],
+    damage_multiplier: f64,
+    crit_chance_add: f64,
+    crit_damage_multiplier: f64,
+    crit_damage_flat: f64,
+) {
+    for weapon in weapons {
+        weapon.attack *= damage_multiplier;
+        weapon.crit_chance = weapon
+            .crit_chance
+            .map(|chance| (chance + crit_chance_add).clamp(0.0, 1.0));
+        weapon.crit_multiplier = weapon
+            .crit_multiplier
+            .map(|multiplier| ((multiplier + crit_damage_flat) * crit_damage_multiplier).max(0.0));
     }
 }
 
@@ -1263,6 +1556,25 @@ pub fn apply_profile_accuracy_to_attacker_stats(
     let b = profile.bonuses.get("accuracy").copied().unwrap_or(0.0);
     if b != 0.0 {
         stats.accuracy *= 1.0 + b.max(-0.999);
+    }
+}
+
+/// Scale each base piercing component independently before mitigation is computed.
+/// These fractional stat bonuses never add directly to damage-through `pierce`.
+pub fn apply_profile_piercing_to_attacker_stats(
+    stats: &mut AttackerStats,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+) {
+    for (stat, base) in [
+        ("accuracy", &mut stats.accuracy),
+        ("armor_piercing", &mut stats.armor_piercing),
+        ("shield_piercing", &mut stats.shield_piercing),
+    ] {
+        let bonus = get_bonus_with_owner_faction_research(profile, stat, owner_faction_slug);
+        if bonus.is_finite() && bonus != 0.0 {
+            *base *= 1.0 + bonus.max(-0.999);
+        }
     }
 }
 
@@ -1577,9 +1889,10 @@ fn axis_rating_from_parts(
     profile_mult: f64,
     crew_mult: f64,
     bridge_only_mult: f64,
+    below_only_mult: f64,
 ) -> f64 {
     bridge_raw * (1.0 + profile_mult + crew_mult + bridge_only_mult)
-        + below_raw * (1.0 + profile_mult + crew_mult)
+        + below_raw * (1.0 + profile_mult + crew_mult + below_only_mult)
 }
 
 /// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /
@@ -1683,6 +1996,7 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
         gb("officer_attack"),
         mults.crew_wide_attack,
         mults.bridge_only_attack,
+        0.0,
     );
     let defense_rating = axis_rating_from_parts(
         bridge_totals.defense,
@@ -1690,6 +2004,7 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
         gb("officer_defense"),
         mults.crew_wide_defense,
         mults.bridge_only_defense,
+        gb("officer_defense_below_decks"),
     );
     let health_rating = axis_rating_from_parts(
         bridge_totals.health,
@@ -1697,6 +2012,7 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
         gb("officer_health"),
         mults.crew_wide_health,
         mults.bridge_only_health,
+        0.0,
     );
 
     let attack_bonus = ship.officer_bonus.attack_bonus(attack_rating);
@@ -1740,7 +2056,7 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
 /// (e.g. `"federation"`); merges [`PlayerProfile::research_owner_faction_bonuses`] for matching
 /// keys into the same stats as `profile.bonuses`.
 pub fn apply_profile_to_attacker(
-    attacker: Combatant,
+    mut attacker: Combatant,
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
     officer_stat_runtime: OfficerStatRuntimeBonus,
@@ -1755,14 +2071,19 @@ pub fn apply_profile_to_attacker(
     }
     let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
     let weapon = 1.0 + gb("weapon_damage");
-    let hull_hp = 1.0 + gb("hull_hp");
-    let shield_hp = 1.0 + gb("shield_hp");
+    // Officer Health contributes to the same native MULT pool as HP research,
+    // buildings and technology, rather than multiplying the completed pool again.
+    let hull_hp = 1.0 + gb("hull_hp") + osr.health_bonus;
+    let shield_hp = 1.0 + gb("shield_hp") + osr.health_bonus;
+    let hull_hp_flat = gb("hull_hp_flat");
+    let shield_hp_flat = gb("shield_hp_flat");
     let isolytic_damage_add = gb("isolytic_damage");
     let isolytic_defense_add = gb("isolytic_defense");
     let apex_shred_add = gb("apex_shred");
     let apex_barrier_add = gb("apex_barrier");
     let crit_chance_add = gb("crit_chance");
     let crit_damage_mult = 1.0 + gb("crit_damage");
+    let crit_damage_flat = gb("crit_damage_flat");
     // Defensive clamp populated by the 4 "Critical Damage Floor" research nodes.
     // Additive across nodes per the upstream catalog operator. Consumed at the per-shot
     // crit-resolution site in `crit.rs` to enforce `effective ≥ floor` AFTER any
@@ -1778,23 +2099,60 @@ pub fn apply_profile_to_attacker(
     // `damage_reduction` is a flat post-mitigation reduction not subject to ship-type weighting.
     // The aggregated `mitigation` scalar is preserved as a back-compat fallback for consumers
     // that read a single value (external serialized state, debug traces).
-    let armor_add = gb("armor") + osr.defense_armor_add;
-    let shield_deflection_add = gb("shield_deflection") + osr.defense_shield_deflection_add;
-    let dodge_add = gb("dodge") + osr.defense_dodge_add;
+    // Officer runtime defense values are absolute raw stat additions (§2c).
+    // With raw defense context, Combatant components instead carry fractions.
+    // Divide by each matching base once so base * (1 + fraction) restores the
+    // original officer addition without multiplying it by the base a second time.
+    let raw_defense = attacker
+        .hostile_mitigation_params
+        .as_ref()
+        .map(|params| params.defender_stats)
+        .filter(|stats| stats.armor > 0.0 || stats.shield_deflection > 0.0 || stats.dodge > 0.0);
+    let officer_component = |addition: f64, base: f64| {
+        if base.is_finite() && base > 0.0 {
+            addition / base
+        } else {
+            // A zero raw base contributes no multiplicative defense stat.
+            0.0
+        }
+    };
+    let (osr_armor, osr_shield_deflection, osr_dodge) = match raw_defense {
+        Some(stats) => (
+            officer_component(osr.defense_armor_add, stats.armor),
+            officer_component(osr.defense_shield_deflection_add, stats.shield_deflection),
+            officer_component(osr.defense_dodge_add, stats.dodge),
+        ),
+        None => (
+            osr.defense_armor_add,
+            osr.defense_shield_deflection_add,
+            osr.defense_dodge_add,
+        ),
+    };
+    let armor_add = gb("armor") + osr_armor;
+    let shield_deflection_add = gb("shield_deflection") + osr_shield_deflection;
+    let dodge_add = gb("dodge") + osr_dodge;
     let damage_reduction_add = gb("damage_reduction");
     let mitigation_add = armor_add + shield_deflection_add + dodge_add + damage_reduction_add;
 
-    // §2b/§2d: officer attack_bonus multiplies weapon damage; officer health_bonus multiplies
-    // BOTH hull and shield HP (the §4-migrated semantics — was hull-only before).
+    // Weapon officer scaling is retained separately pending native combat proof.
+    // Health's shared pool is verified by the historical Realta journal.
     let attack_mult = 1.0 + osr.attack_bonus;
-    let health_mult = 1.0 + osr.health_bonus;
+
+    apply_bonuses_to_weapon_rows(
+        &mut attacker.weapons,
+        weapon * attack_mult,
+        crit_chance_add,
+        crit_damage_mult,
+        crit_damage_flat,
+    );
 
     Combatant {
         attack: attacker.attack * weapon * attack_mult,
-        hull_health: attacker.hull_health * hull_hp * health_mult,
-        shield_health: attacker.shield_health * shield_hp * health_mult,
+        hull_health: (attacker.hull_health + hull_hp_flat) * hull_hp,
+        shield_health: (attacker.shield_health + shield_hp_flat) * shield_hp,
         crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
-        crit_multiplier: (attacker.crit_multiplier * crit_damage_mult).max(0.0),
+        crit_multiplier: ((attacker.crit_multiplier + crit_damage_flat) * crit_damage_mult)
+            .max(0.0),
         crit_damage_floor: (attacker.crit_damage_floor + crit_damage_floor_add).max(0.0),
         pierce: (attacker.pierce + pierce_add).max(0.0),
         mitigation: (attacker.mitigation + mitigation_add).clamp(0.0, 1.0),
@@ -1981,6 +2339,7 @@ mod tests {
                 attacker_faction: crate::data::building::BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: None,
+                ..Default::default()
             },
         );
 
@@ -2002,6 +2361,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid: 1,
                 name: Some("Combat I".to_string()),
                 data_version: None,
@@ -2042,6 +2402,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid: 42,
                 name: Some("Apex lab".to_string()),
                 data_version: None,
@@ -2085,6 +2446,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid: 4133019450,
                 name: Some("NS Morale Isolytic Damage".to_string()),
                 data_version: None,
@@ -2122,6 +2484,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid: 7,
                 name: None,
                 data_version: None,
@@ -2223,6 +2586,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid: 1,
                 name: None,
                 data_version: None,
@@ -2244,6 +2608,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid,
                 name: Some("Titan's Fist".into()),
                 data_version: None,
@@ -2287,6 +2652,7 @@ mod tests {
             source: None,
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid,
                 name: Some("Fed gate".into()),
                 data_version: None,
@@ -2415,6 +2781,336 @@ mod tests {
     }
 
     #[test]
+    fn native_research_replaces_only_merged_research_setup_contributions() {
+        let catalog: ResearchCatalog = serde_json::from_value(serde_json::json!({
+            "items": [{"rid": 123, "level_value_mode": "snapshot", "levels": [
+                {"level": 1, "bonuses": [
+                    {"stat": "hull_hp", "value": 0.4},
+                    {"stat": "isolytic_damage", "value": 2.0},
+                    {"stat": "isolytic_defense", "value": 1.9},
+                    {"stat": "armor", "value": 2.0},
+                    {"stat": "shield_deflection", "value": 2.0},
+                    {"stat": "dodge", "value": 2.0},
+                    {"stat": "weapon_damage", "value": 3.0, "attacker_ship_class": "explorer"},
+                    {"stat": "accuracy", "value": 0.2},
+                    {"stat": "crit_chance", "value": 0.7, "requires_morale": true}
+                ]}
+            ]}]
+        }))
+        .unwrap();
+        let imported = [ResearchEntry { rid: 123, level: 1 }];
+        let mut profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("hull_hp".into(), 49.15),
+                ("weapon_damage".into(), 2.6),
+                ("isolytic_damage".into(), 0.875),
+                ("isolytic_defense".into(), 0.73),
+                ("armor".into(), 9.24),
+                ("shield_deflection".into(), 9.24),
+                ("dodge".into(), 9.24),
+            ]),
+            ..Default::default()
+        };
+        merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+        merge_ship_setup_research_bonuses_into_profile(
+            &mut profile,
+            &imported,
+            &catalog,
+            None,
+            Some(1),
+            Some(ShipType::Explorer),
+        );
+        replace_research_setup_bonuses_with_native_snapshot(
+            &mut profile,
+            &imported,
+            &catalog,
+            None,
+            Some(1),
+            Some(ShipType::Explorer),
+            &HashMap::from([
+                ("weapon_damage".into(), 18.05),
+                ("isolytic_damage".into(), 0.305),
+                ("isolytic_defense".into(), 1.43),
+                ("armor".into(), 12.05),
+                ("shield_deflection".into(), 13.05),
+                ("dodge".into(), 12.45),
+            ]),
+        );
+        assert!(
+            (profile.bonuses["hull_hp"] - 49.15).abs() < 1e-9,
+            "inactive owned research must not replace other sources"
+        );
+        assert!((profile.bonuses["weapon_damage"] - 20.65).abs() < 1e-9);
+        assert!(
+            (profile.bonuses["isolytic_damage"] - 1.18).abs() < 1e-9,
+            "native research replaces its own leaked scope while retaining building sources"
+        );
+        assert!(
+            (profile.bonuses["isolytic_defense"] - 2.16).abs() < 1e-9,
+            "native defense replaces the legacy research value while retaining the building source"
+        );
+        assert!((profile.bonuses["armor"] - 21.29).abs() < 1e-9);
+        assert!((profile.bonuses["shield_deflection"] - 22.29).abs() < 1e-9);
+        assert!((profile.bonuses["dodge"] - 21.69).abs() < 1e-9);
+        assert_eq!(profile.bonuses["accuracy"], 0.2);
+        assert!(
+            !profile.bonuses.contains_key("crit_chance"),
+            "morale stays conditional"
+        );
+    }
+
+    #[test]
+    fn native_building_launch_defense_replaces_legacy_armory_defense() {
+        let index = building::load_building_index(building::DEFAULT_BUILDINGS_INDEX_PATH)
+            .expect("checked building fixture index");
+        let mut profile = PlayerProfile {
+            bonuses: HashMap::from([("armor".into(), 0.5)]),
+            ..Default::default()
+        };
+        let imported = [BuildingEntry { bid: 27, level: 1 }];
+        let map = HashMap::from([(27, "building_27".to_string())]);
+        let context = BuildingBonusContext {
+            ops_level: Some(25),
+            mode: building::BuildingMode::ShipCombat,
+            ..Default::default()
+        };
+        let native = HashMap::from([
+            ("armor".to_string(), 9.24),
+            ("shield_deflection".to_string(), 9.24),
+            ("dodge".to_string(), 9.24),
+        ]);
+        merge_building_bonuses_with_native_snapshot(
+            &mut profile,
+            &imported,
+            &map,
+            &index,
+            Path::new("data/buildings"),
+            &context,
+            Some(&native),
+        );
+        assert!((profile.bonuses["armor"] - 9.74).abs() < 1e-12);
+        assert_eq!(profile.bonuses.get("shield_deflection"), Some(&9.24));
+        assert_eq!(profile.bonuses.get("dodge"), Some(&9.24));
+    }
+
+    #[test]
+    fn research_ship_class_setup_preserves_filters_and_flat_crit_units() {
+        let catalog: ResearchCatalog = serde_json::from_value(serde_json::json!({
+            "items": [{"rid": 123, "level_value_mode": "snapshot", "levels": [
+                {"level": 1, "bonuses": [
+                    {"stat": "hull_hp_flat", "value": 100.0, "attacker_ship_class": "explorer"},
+                    {"stat": "crit_damage_flat", "value": 0.5, "attacker_ship_class": "explorer"},
+                    {"stat": "weapon_damage", "value": 9.0, "attacker_ship_class": "survey"},
+                    {"stat": "weapon_damage", "value": 7.0, "attacker_ship_class": "explorer", "requires_morale": true}
+                ]}
+            ]}]
+        })).unwrap();
+        let imported = [ResearchEntry { rid: 123, level: 1 }];
+        assert!(combat_research_bonuses_from_import(&imported, &catalog, None).is_empty());
+        let mut profile = PlayerProfile::default();
+        merge_ship_setup_research_bonuses_into_profile(
+            &mut profile,
+            &imported,
+            &catalog,
+            None,
+            Some(1),
+            Some(ShipType::Explorer),
+        );
+        assert_eq!(
+            profile.bonuses.len(),
+            2,
+            "do not erase other class or morale conditions"
+        );
+        let attacker = Combatant {
+            hull_health: 50.0,
+            crit_multiplier: 1.5,
+            weapons: vec![crate::combat::WeaponStats {
+                attack: 10.0,
+                crit_multiplier: Some(2.0),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let compiled = apply_profile_to_attacker(attacker, &profile, None, Default::default());
+        assert_eq!(compiled.hull_health, 150.0);
+        assert_eq!(compiled.crit_multiplier, 2.0);
+        assert_eq!(compiled.weapon_crit_multiplier(0), 2.5);
+        assert_eq!(compiled.weapon_attack(0), Some(10.0));
+        assert!(combat_research_ship_setup_bonuses_from_import(
+            &imported,
+            &catalog,
+            None,
+            Some(1),
+            None,
+        )
+        .is_empty());
+    }
+
+    #[test]
+    fn flat_health_research_is_added_before_percentage_pools() {
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("hull_hp_flat".into(), 3400.0),
+                ("shield_hp_flat".into(), 4000.0),
+                ("hull_hp".into(), 2.0),
+                ("shield_hp".into(), 3.0),
+            ]),
+            ..Default::default()
+        };
+        let base = Combatant {
+            hull_health: 179.36,
+            shield_health: 212.38,
+            ..Default::default()
+        };
+        let compiled = apply_profile_to_attacker(
+            base.clone(),
+            &profile,
+            None,
+            OfficerStatRuntimeBonus {
+                health_bonus: 1.0,
+                ..Default::default()
+            },
+        );
+        assert!((compiled.hull_health - 14317.44).abs() < 1e-9);
+        assert!((compiled.shield_health - 21061.90).abs() < 1e-9);
+        let mut static_bonuses = profile.bonuses.clone();
+        *static_bonuses.get_mut("hull_hp").unwrap() += 1.0;
+        *static_bonuses.get_mut("shield_hp").unwrap() += 1.0;
+        let static_style = profile_combat_bonuses_to_static_style(&static_bonuses);
+        let compiled_static = apply_static_buffs_to_combatant(base, &static_style);
+        assert!((compiled_static.hull_health - compiled.hull_health).abs() < 1e-9);
+        assert!((compiled_static.shield_health - compiled.shield_health).abs() < 1e-9);
+    }
+
+    #[test]
+    fn ablative_armor_uses_verified_rank_snapshot_and_tier_unlocks() {
+        let catalog = crate::data::forbidden_chaos::load_forbidden_chaos(
+            crate::data::forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH,
+        )
+        .unwrap();
+        let fid = 482782456;
+        for (tier, level, hull, shield) in [
+            (1, 1, 0.05, 0.0),
+            (1, 5, 0.17, 0.0),
+            (2, 10, 0.23, 0.20),
+            (4, 20, 1.0, 1.0),
+            (0, 20, 0.0, 0.0),
+            (4, 0, 0.0, 0.0),
+            (4, 1000, 0.0, 0.0),
+        ] {
+            let imported = [ForbiddenTechEntry {
+                fid,
+                tier,
+                level,
+                shard_count: 0,
+            }];
+            for legacy_scaling in [false, true] {
+                let mut profile = PlayerProfile::default();
+                merge_tech_fids_into_profile_with_level_tier(
+                    &mut profile,
+                    &[fid],
+                    &imported,
+                    &catalog,
+                    legacy_scaling,
+                );
+                assert_eq!(
+                    get_bonus(&profile, "hull_hp"),
+                    hull,
+                    "tier {tier} level {level}"
+                );
+                assert_eq!(
+                    get_bonus(&profile, "shield_hp"),
+                    shield,
+                    "tier {tier} level {level}"
+                );
+            }
+            let mut unequipped = PlayerProfile::default();
+            merge_tech_fids_into_profile_with_level_tier(
+                &mut unequipped,
+                &[],
+                &imported,
+                &catalog,
+                false,
+            );
+            assert!(unequipped.bonuses.is_empty());
+        }
+    }
+
+    #[test]
+    fn compiled_weapon_rows_preserve_bases_and_inheritance() {
+        use crate::combat::{WeaponStats, WeaponType};
+        let attacker = Combatant {
+            attack: 70.0,
+            crit_chance: 0.1,
+            crit_multiplier: 1.5,
+            crit_damage_floor: 1.1,
+            weapons: vec![
+                WeaponStats {
+                    attack: 20.0,
+                    crit_chance: Some(0.2),
+                    crit_multiplier: Some(2.0),
+                    shots: Some(3),
+                    pierce: Some(0.07),
+                    weapon_type: WeaponType::Energy,
+                    ..Default::default()
+                },
+                WeaponStats {
+                    attack: 50.0,
+                    weapon_type: WeaponType::Kinetic,
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("weapon_damage".to_string(), 0.5),
+                ("crit_chance".to_string(), 0.15),
+                ("crit_damage".to_string(), 1.0),
+                ("crit_damage_flat".to_string(), 0.25),
+                ("crit_damage_floor".to_string(), 0.2),
+            ]),
+            ..Default::default()
+        };
+        let compiled = apply_profile_to_attacker(
+            attacker,
+            &profile,
+            None,
+            OfficerStatRuntimeBonus {
+                attack_bonus: 1.0,
+                ..Default::default()
+            },
+        );
+        let compiled = apply_static_buffs_to_combatant(
+            compiled,
+            &HashMap::from([
+                ("weapon_damage".to_string(), 1.25),
+                ("crit_chance".to_string(), 0.1),
+                ("crit_damage".to_string(), 1.5),
+                ("crit_damage_floor".to_string(), 0.3),
+            ]),
+        );
+        for (actual, expected) in [
+            (compiled.attack, 262.5),
+            (compiled.weapon_attack(0).unwrap(), 75.0),
+            (compiled.weapon_attack(1).unwrap(), 187.5),
+            (compiled.weapon_crit_chance(0), 0.45),
+            (compiled.weapon_crit_chance(1), 0.35),
+            (compiled.weapon_crit_multiplier(0), 6.75),
+            (compiled.weapon_crit_multiplier(1), 5.25),
+            (compiled.crit_damage_floor, 1.6),
+        ] {
+            assert!((actual - expected).abs() < 1e-12, "{actual} != {expected}");
+        }
+        assert_eq!(compiled.weapons[1].crit_chance, None);
+        assert_eq!(compiled.weapons[1].crit_multiplier, None);
+        assert_eq!(compiled.weapon_base_shots(0), 3);
+        assert_eq!(compiled.weapon_pierce(0), 0.07);
+        assert_eq!(compiled.weapon_type(0), WeaponType::Energy);
+        assert_eq!(compiled.weapon_type(1), WeaponType::Kinetic);
+    }
+
+    #[test]
     fn apply_static_buffs_to_combatant_applies_and_clamps() {
         let c = combatant_with(0.0, 0.0, 0.5);
         let mut buffs = HashMap::new();
@@ -2434,6 +3130,176 @@ mod tests {
             out2.shield_mitigation, 1.0,
             "shield_mitigation should clamp to 1.0"
         );
+    }
+
+    #[test]
+    fn static_defense_buffs_populate_components_and_preserve_aggregate_fallback() {
+        let attacker = Combatant {
+            mitigation: 0.10,
+            armor: 0.01,
+            shield_deflection: 0.02,
+            dodge: 0.03,
+            damage_reduction: 0.04,
+            ..Combatant::default()
+        };
+        let buffs = HashMap::from([
+            ("armor".to_string(), 0.05),
+            ("shield_deflection".to_string(), 0.06),
+            ("dodge".to_string(), 0.07),
+            ("damage_reduction".to_string(), 0.08),
+        ]);
+        let out = apply_static_buffs_to_combatant(attacker, &buffs);
+        for (actual, expected) in [
+            (out.armor, 0.06),
+            (out.shield_deflection, 0.08),
+            (out.dodge, 0.10),
+            (out.damage_reduction, 0.12),
+            (out.mitigation, 0.36),
+        ] {
+            assert!((actual - expected).abs() < 1e-12);
+        }
+    }
+
+    fn raw_defense_context(
+        stats: crate::combat::DefenderStats,
+    ) -> crate::combat::HostileMitigationParams {
+        crate::combat::HostileMitigationParams {
+            round_native_defense_stats: false,
+            defender_stats: stats,
+            base_attacker_stats: AttackerStats {
+                armor_piercing: 300.0,
+                shield_piercing: 2000.0,
+                accuracy: 8000.0,
+            },
+            base_attacker_weapon_stats: vec![],
+            ship_type: ShipType::Survey,
+            mystery_mitigation_factor: 0.0,
+            floor: 0.0,
+            ceiling: 1.0,
+        }
+    }
+
+    #[test]
+    fn raw_defense_preserves_officer_profile_passive_and_research_units_once() {
+        use crate::combat::mitigation::apply_base_mitigation_stat_bonuses;
+        use crate::combat::{CrewOfficerStatTotals, DefenderStats};
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+
+        let base = DefenderStats {
+            armor: 100.0,
+            shield_deflection: 1000.0,
+            dodge: 5000.0,
+        };
+        let ship = ShipRecord {
+            ship_class: "survey".to_string(),
+            armor: base.armor,
+            shield_deflection: base.shield_deflection,
+            dodge: base.dodge,
+            officer_bonus: OfficerBonusTable {
+                defense: vec![OfficerBonusBreakpoint {
+                    value: 1000.0,
+                    bonus: 1.5,
+                }],
+                ..OfficerBonusTable::default()
+            },
+            ..ShipRecord::default()
+        };
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("armor".to_string(), 0.2),
+                ("shield_deflection".to_string(), 0.3),
+                ("dodge".to_string(), 0.4),
+                ("damage_reduction".to_string(), 0.02),
+            ]),
+            ..Default::default()
+        };
+        let passive = HashMap::from([
+            ("armor".to_string(), 0.05),
+            ("shield_deflection".to_string(), 0.06),
+            ("dodge".to_string(), 0.07),
+            ("damage_reduction".to_string(), 0.03),
+        ]);
+        let totals = CrewOfficerStatTotals {
+            attack: 0.0,
+            defense: 1200.0,
+            health: 0.0,
+        };
+        let osr = compute_officer_stat_runtime_bonus(
+            totals,
+            totals,
+            &ship,
+            &profile,
+            None,
+            &passive,
+            &[],
+            &OfficerStatConditionContext::default(),
+            &[],
+        );
+        // Survey divides the 150% breakpoint bonus across three unequal bases.
+        assert_eq!(osr.defense_armor_add, 50.0);
+        assert_eq!(osr.defense_shield_deflection_add, 500.0);
+        assert_eq!(osr.defense_dodge_add, 2500.0);
+        let attacker = Combatant {
+            hostile_mitigation_params: Some(raw_defense_context(base)),
+            ..Combatant::default()
+        };
+        let out = apply_static_buffs_to_combatant(
+            apply_profile_to_attacker(attacker, &profile, None, osr),
+            &passive,
+        );
+        let effective = apply_base_mitigation_stat_bonuses(
+            base,
+            DefenderStats {
+                armor: out.armor,
+                shield_deflection: out.shield_deflection,
+                dodge: out.dodge,
+            },
+            0.5, // Rank-one client-verified conditional research.
+        );
+        // Each result is base*(1 + profile + passive + research) + raw officer add.
+        for (actual, expected) in [
+            (effective.armor, 225.0),
+            (effective.shield_deflection, 2360.0),
+            (effective.dodge, 12350.0),
+            (out.damage_reduction, 0.05),
+        ] {
+            assert!(
+                (actual - expected).abs() < 1e-9,
+                "{actual} != {expected}; each source must contribute exactly once"
+            );
+        }
+        assert_eq!(out.shield_mitigation, 0.8);
+        assert_eq!(out.hostile_mitigation_params.unwrap().defender_stats, base);
+    }
+
+    #[test]
+    fn officer_defense_without_raw_context_retains_legacy_component_values() {
+        use crate::combat::DefenderStats;
+
+        for context in [
+            None,
+            Some(raw_defense_context(DefenderStats {
+                armor: 0.0,
+                shield_deflection: 0.0,
+                dodge: 0.0,
+            })),
+        ] {
+            let attacker = Combatant {
+                hostile_mitigation_params: context,
+                ..Combatant::default()
+            };
+            let osr = OfficerStatRuntimeBonus {
+                defense_armor_add: 0.05,
+                defense_shield_deflection_add: 0.04,
+                defense_dodge_add: 0.03,
+                ..OfficerStatRuntimeBonus::default()
+            };
+            let out = apply_profile_to_attacker(attacker, &PlayerProfile::default(), None, osr);
+            assert_eq!(out.armor, 0.05);
+            assert_eq!(out.shield_deflection, 0.04);
+            assert_eq!(out.dodge, 0.03);
+            assert!((out.mitigation - 0.12).abs() < 1e-12);
+        }
     }
 
     #[test]
@@ -2793,13 +3659,13 @@ mod tests {
         };
         let out = apply_profile_to_attacker(attacker, &profile, None, osr);
         // attack: 100 × (1 + 0.10) × (1 + 0.50)                 = 165
-        // hull:   1000 × (1 + 0.20) × (1 + 1.00)                = 2400
+        // hull:   1000 × (1 + 0.20 + 1.00)                     = 2200
         // shield_hp (new — health_mult on shield too): 500 × (1 + 0) × (1 + 1.00) = 1000
         // mitigation: 0.10 + 0 (armor + add) + 0.40 (shield_defl add) + 0 (dodge add) = 0.50
         // shield_mitigation: 0.20 + 0.05 = 0.25 (officer_defense add removed)
         assert!((out.attack - 165.0).abs() < 1e-9, "attack = {}", out.attack);
         assert!(
-            (out.hull_health - 2400.0).abs() < 1e-9,
+            (out.hull_health - 2200.0).abs() < 1e-9,
             "hull_health = {}",
             out.hull_health
         );
@@ -3908,6 +4774,7 @@ mod tests {
                     stat: "weapon_damage".to_string(),
                     value: 0.1,
                     operator: "add".to_string(),
+                    ..Default::default()
                 }],
             }],
         };
@@ -3940,6 +4807,7 @@ mod tests {
                     stat: "weapon_damage".to_string(),
                     value: 0.1,
                     operator: "add".to_string(),
+                    ..Default::default()
                 }],
             }],
         };
@@ -3978,6 +4846,7 @@ mod tests {
                     stat: "weapon_damage".to_string(),
                     value: 0.1,
                     operator: "add".to_string(),
+                    ..Default::default()
                 }],
             }],
         };
@@ -4200,6 +5069,7 @@ mod tests {
         };
 
         let record = ResearchRecord {
+            level_value_mode: Default::default(),
             rid: 5001,
             name: None,
             data_version: None,

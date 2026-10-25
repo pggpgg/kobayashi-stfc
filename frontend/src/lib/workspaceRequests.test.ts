@@ -7,6 +7,25 @@ import {
   noveltyFieldsForOptimizeBody,
 } from "./workspaceRequests";
 
+describe("#302 invalid officer-group submission", () => {
+  it.each([
+    "{damaged",
+    '[ {"officers":[],"min_count":1} ]',
+    '[{"officers":["Picard"],"min_count":2}]',
+  ])("rejects invalid saved settings rather than silently removing a constraint: %s", (groupsJson) => {
+    expect(() =>
+      buildOptimizeConstraintsFromForm({
+        mustIncludeComma: "",
+        excludeComma: "",
+        captainMust: "",
+        bridgeMustComma: "",
+        belowMustComma: "",
+        groupsJson,
+      }),
+    ).toThrow(/group/i);
+  });
+});
+
 describe("buildWorkspaceSimulateParams", () => {
   it("returns null without captain", () => {
     const crew = createEmptyCrew(50);
@@ -277,6 +296,34 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       optimizeCacheKey: " 3|k|v1 ",
     });
     expect(body.optimize_cache_key).toBe("3|k|v1");
+  });
+
+  it.each([
+    "x".repeat(513),
+    "é".repeat(257),
+    "a\u001fb",
+    "a\u0085b",
+  ])("omits an invalid optional server cache namespace: %j", (optimizeCacheKey) => {
+    const body = buildWorkspaceOptimizeStartBody({
+      shipId: "S",
+      scenarioId: "H",
+      simsPerCrew: 1000,
+      maxCandidates: 12,
+      optimizerStrategy: "tiered",
+      belowDecksPoolMode: "strict",
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 9,
+      shipLevel: 45,
+      optimizeCacheKey,
+      warmStartCrews: [{ captain: "C", bridge: ["B1", "B2"], below_decks: [] }],
+    });
+    expect(body).not.toHaveProperty("optimize_cache_key");
+    expect(body).toMatchObject({ ship: "S", hostile: "H", sims: 1000 });
+    expect(body.warm_start_crews).toEqual([
+      { captain: "C", bridge: ["B1", "B2"], below_decks: [] },
+    ]);
   });
 
   it("includes enable_learned_pair_prior when disabled", () => {

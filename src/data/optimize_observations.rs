@@ -10,7 +10,9 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::profile_index::{profile_path, OPTIMIZE_OBSERVATIONS_JSONL};
+use crate::data::profile_index::{
+    profile_data_dir, profile_path, profile_store_transaction, OPTIMIZE_OBSERVATIONS_JSONL,
+};
 
 /// Current row shape. `1` predates the reuse fingerprint, where `profile_hash` was a hash of the
 /// profile **id** and `simulator_version` was a constant crate version.
@@ -136,6 +138,15 @@ pub fn maybe_append_rows<'a>(profile_id: Option<&str>, rows: &[OptimizeObservati
     let Some(path) = resolve_log_path(profile_id) else {
         return;
     };
+    let Ok(_transaction) = profile_store_transaction() else {
+        return;
+    };
+    if let Some(pid) = profile_id.map(str::trim) {
+        if path == profile_path(pid, OPTIMIZE_OBSERVATIONS_JSONL) && !profile_data_dir(pid).is_dir()
+        {
+            return;
+        }
+    }
     if let Some(parent) = path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }

@@ -8,7 +8,7 @@ use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::SharedScenarioData;
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_scout_phase_with_shared,
+    crew_candidate_ordered_hash, run_monte_carlo_scout_phase_with_shared,
     run_monte_carlo_with_shared_variable_iterations, zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
@@ -88,7 +88,7 @@ where
         let batch = &candidates[start..end];
         let mut batch_scout: Vec<CrewCandidate> = Vec::new();
         for c in batch {
-            let h = crew_candidate_stable_hash(c);
+            let h = crew_candidate_ordered_hash(c);
             if let Some(pre) = preconfirmed.and_then(|m| m.get(&h)) {
                 scout_by_hash.insert(h, pre.clone());
                 continue;
@@ -105,14 +105,14 @@ where
                 chain_grind.clone(),
             );
             for (c, r) in batch_scout.iter().zip(fresh) {
-                scout_by_hash.insert(crew_candidate_stable_hash(c), r);
+                scout_by_hash.insert(crew_candidate_ordered_hash(c), r);
             }
         }
         let ordered: Vec<SimulationResult> = candidates[..end]
             .iter()
             .map(|c| {
                 scout_by_hash
-                    .get(&crew_candidate_stable_hash(c))
+                    .get(&crew_candidate_ordered_hash(c))
                     .expect("scout row for processed prefix")
                     .clone()
             })
@@ -135,7 +135,7 @@ where
         .iter()
         .map(|c| {
             scout_by_hash
-                .get(&crew_candidate_stable_hash(c))
+                .get(&crew_candidate_ordered_hash(c))
                 .expect("scout row for every candidate")
                 .clone()
         })
@@ -155,7 +155,7 @@ where
             below_decks: r.below_decks.clone(),
         })
         .collect();
-    let top_hashes: HashSet<u64> = top_crews.iter().map(crew_candidate_stable_hash).collect();
+    let top_hashes: HashSet<u64> = top_crews.iter().map(crew_candidate_ordered_hash).collect();
 
     let full = full_sims.max(1);
     let uncertainty_widths: Vec<f64> = top_ranked
@@ -172,7 +172,7 @@ where
     let mut pending_crews: Vec<CrewCandidate> = Vec::new();
     let mut pending_sims: Vec<usize> = Vec::new();
     for (i, crew) in top_crews.iter().enumerate() {
-        let h = crew_candidate_stable_hash(crew);
+        let h = crew_candidate_ordered_hash(crew);
         if let Some(pre) = preconfirmed.and_then(|m| m.get(&h)) {
             confirmation_slots[i] = Some(pre.clone());
         } else {
@@ -210,7 +210,7 @@ where
                 chain_grind.clone(),
             );
             for r in part {
-                fresh_by_hash.insert(crew_candidate_stable_hash(&r.candidate), r);
+                fresh_by_hash.insert(crew_candidate_ordered_hash(&r.candidate), r);
             }
         }
         // Fill the unconfirmed slots from this phase's fresh rows, in `pending_crews` order.
@@ -229,7 +229,7 @@ where
                     debug_assert!(false, "more unconfirmed slots than pending confirm crews");
                     break;
                 };
-                let hash = crew_candidate_stable_hash(crew);
+                let hash = crew_candidate_ordered_hash(crew);
                 *slot = Some(fresh_by_hash.get(&hash).cloned().unwrap_or_else(|| {
                     debug_assert!(false, "no fresh exhaustive confirm row (hash {hash})");
                     zeroed_loss_result(crew.clone())
@@ -248,7 +248,7 @@ where
     // shorter of the pair, so a slot vector out of step with `top_crews` degrades instead of
     // panicking (release aborts on panic, which would kill the server, not just this job).
     for (crew, slot) in top_crews.iter().zip(confirmation_slots.iter_mut()) {
-        let h = crew_candidate_stable_hash(crew);
+        let h = crew_candidate_ordered_hash(crew);
         let row = slot.take().unwrap_or_else(|| {
             debug_assert!(false, "exhaustive confirm slot not filled (hash {h})");
             zeroed_loss_result(crew.clone())
@@ -263,7 +263,7 @@ where
 
     let mut merged: Vec<SimulationResult> = Vec::with_capacity(total);
     for c in candidates {
-        let h = crew_candidate_stable_hash(c);
+        let h = crew_candidate_ordered_hash(c);
         if top_hashes.contains(&h) {
             merged.push(
                 confirmed_by_hash
@@ -287,7 +287,7 @@ where
         .iter()
         .map(|c| {
             confirmed_by_hash
-                .get(&crew_candidate_stable_hash(c))
+                .get(&crew_candidate_ordered_hash(c))
                 .expect("confirmed row for top crew")
                 .trials_run
         })

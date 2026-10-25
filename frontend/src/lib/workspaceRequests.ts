@@ -4,6 +4,7 @@ import type {
   OptimizerStrategyType,
   WarmStartCrewBody,
 } from "./api";
+import { validatedOfficerGroups } from "./optimizerGroups";
 import { normalizeSupportBuffSelection } from "./supportBuffs";
 import type { CrewState } from "./types";
 
@@ -33,6 +34,7 @@ export function buildWorkspaceSimulateParams(args: {
 } | null {
   if (!args.crew.captain) return null;
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
+
   return {
     ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
@@ -65,35 +67,6 @@ export function joinOfficerList(names: string[]): string {
     .join(", ");
 }
 
-function parseGroupsJson(
-  raw: string | undefined,
-): OptimizeCrewConstraintsBody["groups"] {
-  const t = raw?.trim();
-  if (!t) return undefined;
-  try {
-    const v = JSON.parse(t) as unknown;
-    if (!Array.isArray(v)) return undefined;
-    const out: { officers: string[]; min_count: number }[] = [];
-    for (const item of v) {
-      if (!item || typeof item !== "object") continue;
-      const o = item as Record<string, unknown>;
-      if (!Array.isArray(o.officers) || typeof o.min_count !== "number")
-        continue;
-      const officers = o.officers
-        .filter((x): x is string => typeof x === "string")
-        .map((x) => x.trim())
-        .filter(Boolean);
-      const min_count = Math.floor(o.min_count);
-      if (officers.length > 0 && min_count >= 1) {
-        out.push({ officers, min_count });
-      }
-    }
-    return out.length ? out : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /** Build API `constraints` object from Workspace form strings (omit when empty). */
 export function buildOptimizeConstraintsFromForm(args: {
   mustIncludeComma: string;
@@ -110,7 +83,7 @@ export function buildOptimizeConstraintsFromForm(args: {
   const captainList = splitOfficerList(args.captainMust);
   const captain_must_be =
     captainList.length > 0 ? joinOfficerList(captainList) : undefined;
-  const groups = parseGroupsJson(args.groupsJson);
+  const groups = validatedOfficerGroups(args.groupsJson);
   if (
     !must_include.length &&
     !exclude.length &&
@@ -243,6 +216,16 @@ export function buildWorkspaceOptimizeStartBody(args: {
 
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
 
+  // Long constraint namespaces remain usable in localStorage. Server history is
+  // optional and has a stricter 512-byte, control-free key contract.
+  const cacheKey = args.optimizeCacheKey?.trim();
+  const serverCacheKey =
+    cacheKey &&
+    new TextEncoder().encode(cacheKey).byteLength <= 512 &&
+    !/\p{Cc}/u.test(cacheKey)
+      ? cacheKey
+      : undefined;
+
   return {
     ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
@@ -313,9 +296,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
       noveltyPoolText: args.noveltyPoolText ?? "",
       noveltyHistoryAnchors: args.noveltyHistoryAnchors,
     }),
-    ...(args.optimizeCacheKey != null && args.optimizeCacheKey.trim() !== ""
-      ? { optimize_cache_key: args.optimizeCacheKey.trim() }
-      : {}),
+    ...(serverCacheKey ? { optimize_cache_key: serverCacheKey } : {}),
     ...(args.enableLearnedPairPrior === false
       ? { enable_learned_pair_prior: false }
       : {}),

@@ -2,6 +2,8 @@
   "id": "snakehead",
   "ship_name": "SNAKEHEAD",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
+  "grade": 7,
   "faction": "romulan",
   "tiers": [
     {

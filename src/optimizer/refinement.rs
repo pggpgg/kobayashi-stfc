@@ -181,9 +181,8 @@ pub struct LocalRefinementOutcome {
 /// Sort bridge and below-decks into a canonical order.
 ///
 /// Both are unordered seat groups, so the same crew can arrive with different Vec orders depending
-/// on which search path produced it. `crew_candidate_stable_hash` hashes in Vec order, so without
-/// this two spellings of one crew dedup as distinct and get simulated twice. Matches the
-/// canonicalization `genetic::repair_crew` already applies for the same reason.
+/// on which search path produced it. Sorting keeps refinement's emitted crews deterministic;
+/// `crew_candidate_stable_hash` independently treats permutations as one identity.
 pub fn canonicalize_crew(crew: &mut CrewCandidate) {
     crew.bridge.sort();
     crew.below_decks.sort();
@@ -196,7 +195,7 @@ fn canonical(crew: &CrewCandidate) -> CrewCandidate {
 }
 
 fn canonical_hash(crew: &CrewCandidate) -> u64 {
-    crew_candidate_stable_hash(&canonical(crew))
+    crew_candidate_stable_hash(crew)
 }
 
 /// Normalized names currently occupying the crew, used to keep an officer off two seats at once.

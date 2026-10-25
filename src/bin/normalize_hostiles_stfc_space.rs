@@ -258,6 +258,7 @@ fn raw_to_record(
         shield_piercing: stats.shield_piercing,
         crit_chance: stats.critical_chance,
         crit_damage: stats.critical_damage,
+        crit_damage_is_bonus: Some(true),
         hostile_tags,
         engagement_enemy_types: None,
         components: raw.components,

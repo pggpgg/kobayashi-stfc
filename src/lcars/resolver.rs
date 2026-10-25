@@ -95,8 +95,10 @@ pub struct PendingOfficerStatContribution {
     /// Engine stat key the bonus targets: `officer_attack`, `officer_defense`, `officer_health`,
     /// or the synthetic `officer_stat_all` (boosts all three axes).
     pub stat_key: String,
-    /// Bonus value (e.g. `0.20` for +20%). Added into the matching per-axis multiplier on top
-    /// of the profile bonus and any unconditional static_buffs entries.
+    /// Signed value for attacker-side bonuses; for opponent-target rows this is a positive
+    /// reduction magnitude (e.g. `0.20` for a 20% penalty). Opponent-target positive bonuses
+    /// are not represented by this contract. Added into the matching per-axis multiplier on
+    /// top of the profile bonus and any unconditional static_buffs entries.
     pub value: f64,
     /// `true` for attacker-side buffs (the default `target: self`); `false` for defender-side
     /// debuffs (`target: enemy`). Phase 4b/4a filter these out of the owning crew's self compute;
@@ -215,9 +217,21 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
         return false;
     }
     if effect.effect_type == "stat_modify" {
+        if effect.condition.is_some()
+            && effective_stat_for_effect(effect).is_some_and(|stat| !is_officer_stat_key(stat))
+        {
+            // Conditional non-officer stats must retain their condition in the combat-effect
+            // path; the pending officer-stat accumulator cannot consume hull/armor/etc.
+            return false;
+        }
         return true;
     }
     if effect.effect_type == "tag" {
+        if effect.condition.is_some()
+            && effective_stat_for_effect(effect).is_some_and(|stat| !is_officer_stat_key(stat))
+        {
+            return false;
+        }
         return crate::lcars::effect_spec_adapter::combat_tag_to_stat_for_effect(effect).is_some();
     }
     false
@@ -812,6 +826,12 @@ pub fn resolve_crew_to_buff_set(
                 }
                 _ => OfficerStatOpponentScope::AllCrewed,
             };
+            // Pending enemy-target rows have a typed contract: `value` is the positive
+            // reduction magnitude consumed by PvP defender-side profile computation.
+            // Canonical MultiplySub coefficients already have a negative sign after LCARS
+            // conversion, so normalize only opponent-target values here. Self contributions
+            // retain their signed additive value.
+            let pending_value = if target_attacker { v } else { v.abs() };
 
             // Phase 4b: `on_combat_start` officer-stat rows with fight-setup gates go to pending
             // (Dezoc armada+faction, Kras PvP, TOS McCoy ship class, …). `on_round_start` rows
@@ -831,9 +851,15 @@ pub fn resolve_crew_to_buff_set(
                 if spec.conditions.iter().any(condition_is_dynamic) {
                     continue;
                 }
+                if !officer_stat_key {
+                    // Let resolve_officer_ability compile this as an ordinary conditioned
+                    // combat effect. The pending contribution consumer only handles officer
+                    // rating axes and would silently discard this stat.
+                    continue;
+                }
                 pending_officer_stat_contributions.push(PendingOfficerStatContribution {
                     stat_key: stat.to_string(),
-                    value: v,
+                    value: pending_value,
                     target_attacker,
                     conditions: spec.conditions.clone(),
                     opponent_scope,
@@ -845,7 +871,7 @@ pub fn resolve_crew_to_buff_set(
                 // discard. Attacker-side compute will silently ignore non-attacker entries.
                 pending_officer_stat_contributions.push(PendingOfficerStatContribution {
                     stat_key: stat.to_string(),
-                    value: v,
+                    value: pending_value,
                     target_attacker,
                     conditions: Vec::new(),
                     opponent_scope,
@@ -904,14 +930,14 @@ pub fn resolve_crew_to_buff_set(
 
     if let Some(o) = officers.get(captain_id) {
         seen_slots.insert(captain_id.to_string());
+        // Both ability classes belong to one occupied captain slot. Separate
+        // batches make the engine's duplicate-officer policy discard the latter.
+        let b = next_batch;
+        next_batch = next_batch.saturating_add(1);
         if let Some(ref a) = o.captain_ability {
-            let b = next_batch;
-            next_batch = next_batch.saturating_add(1);
             add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver, b);
         }
         if let Some(ref a) = o.bridge_ability {
-            let b = next_batch;
-            next_batch = next_batch.saturating_add(1);
             add_ability(o, a, CrewSeat::Captain, AbilityClass::BridgeAbility, b);
         }
     }
@@ -1302,6 +1328,112 @@ mod tests {
         assert_eq!(
             buff.static_buffs.get("officer_stat_all").copied(),
             Some(0.08)
+        );
+    }
+
+    #[test]
+    fn passive_multiply_add_officer_stat_contributions_add_across_officers() {
+        let effect = |value| LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("officer_stat_all".to_string()),
+            target: Some("self".to_string()),
+            operator: Some("multiply".to_string()),
+            value: Some(value),
+            trigger: Some("passive".to_string()),
+            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let officer = |id: &str, value| LcarsOfficer {
+            id: id.to_string(),
+            name: id.to_string(),
+            faction: None,
+            rarity: None,
+            group: None,
+            captain_ability: Some(LcarsAbility {
+                name: "test".to_string(),
+                effects: vec![effect(value)],
+            }),
+            bridge_ability: None,
+            below_decks_ability: None,
+            stats: vec![level_stats(1, 100.0, 100.0, 100.0)],
+            max_level_by_rank: vec![1],
+        };
+        let mut officers = HashMap::new();
+        officers.insert("captain".to_string(), officer("captain", 0.08));
+        let mut bridge = officer("bridge", 0.5);
+        bridge.bridge_ability = bridge.captain_ability.take();
+        officers.insert("bridge".to_string(), bridge);
+        let buffs = resolve_crew_to_buff_set(
+            "captain",
+            &["bridge".to_string()],
+            &[],
+            &officers,
+            &ResolveOptions::default(),
+        );
+        assert_eq!(buffs.static_buffs.get("officer_stat_all"), Some(&0.58));
+    }
+
+    #[test]
+    fn conditional_passive_non_officer_stat_is_not_queued_as_officer_stat() {
+        let mut officer = officer_with_officerstat_captain(
+            "conditional-hull",
+            "unmapped",
+            0.2,
+            "passive",
+            "self",
+            None,
+        );
+        officer.captain_ability.as_mut().unwrap().effects[0] = LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("hull_hp".to_string()),
+            target: Some("self".to_string()),
+            operator: Some("add".to_string()),
+            value: Some(0.2),
+            trigger: Some("passive".to_string()),
+            duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+            scaling: None,
+            condition: Some(crate::lcars::LcarsCondition {
+                weapon_scope: Default::default(),
+                condition_type: "attacker_ship_type_is".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: None,
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: Some("battleship".to_string()),
+                faction_id: None,
+                ship_id: None,
+                enemy_type: None,
+                battle_types: None,
+                conditions: None,
+            }),
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let officers = HashMap::from([("conditional-hull".to_string(), officer)]);
+        let buffs = resolve_crew_to_buff_set(
+            "conditional-hull",
+            &[],
+            &[],
+            &officers,
+            &ResolveOptions::default(),
+        );
+        assert!(buffs.pending_officer_stat_contributions.is_empty());
+        assert!(
+            !buffs.crew.seats.is_empty(),
+            "conditional passive hull bonus must remain represented as a conditional combat effect"
         );
     }
 
@@ -1896,20 +2028,27 @@ mod tests {
         let Ok(file) = super::super::build_officer_model_file_default() else {
             return; // skip if source data not present (e.g. in minimal checkouts)
         };
+        let drops = crate::lcars::collect_lcars_drops(&file.officers);
         let officers = index_lcars_officers_by_id(file.officers);
         let options = ResolveOptions {
             tier: Some(5),
             officer_tiers: None,
             officer_levels: None,
         };
-        // Khan (Independent): bridge passive crit_chance uses `scaling.values` at officer tier.
+        // Khan's bridge CritChance is sourced from HullDamageTaken. That trigger has no
+        // matching engine event window yet, so it must not become a passive static buff.
         let khan = resolve_crew_to_buff_set("khan-3f1d1e", &[], &[], &officers, &options);
-        let cc = khan
-            .static_buffs
-            .get("crit_chance")
-            .copied()
-            .expect("expected khan-3f1d1e passive crit_chance from bundled LCARS");
-        assert!((cc - 0.05).abs() < 1e-12);
+        assert!(
+            !khan.static_buffs.contains_key("crit_chance"),
+            "Khan's HullDamageTaken ability must not be treated as a passive crit bonus"
+        );
+        assert!(
+            drops.drops.iter().any(|drop| {
+                drop.officer_id == "khan-3f1d1e"
+                    && drop.reason == "unknown_trigger:unsupported_HullDamageTaken"
+            }),
+            "Khan's unsupported HullDamageTaken trigger must remain visible in drop diagnostics"
+        );
 
         // Scotty: passive bridge hull_hp multiplier rank 5 from discrete table.
         let scotty = resolve_crew_to_buff_set("scotty-a83cb5", &[], &[], &officers, &options);

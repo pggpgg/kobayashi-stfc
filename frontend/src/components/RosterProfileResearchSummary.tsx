@@ -100,11 +100,10 @@ export default function RosterProfileResearchSummary({
           color: "var(--text-muted)",
         }}
       >
-        Sync stores every <code>rid</code> + level in{" "}
-        <code>research.imported.json</code> (full savepoint). The maintainer
-        catalog (<code>research_catalog.json</code>) only decides which rows add
-        ship combat stats in simulate/optimize; unmapped rows stay on disk for
-        later mapping.
+        Owned projects and their catalog effects are shown below. Owning a
+        project alone does not establish that its buff is active. Scenario
+        totals use synced active buffs for the reviewed setup stats when
+        available, with runtime conditions shown separately.
       </p>
       {researchSummaryError && (
         <p
@@ -147,7 +146,7 @@ export default function RosterProfileResearchSummary({
             }}
           >
             <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>
-              Scenario lens (optional)
+              Scenario lens (also selects the ship for building totals)
             </div>
             <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
               <span style={styles.muted}>ship_id</span>
@@ -187,6 +186,18 @@ export default function RosterProfileResearchSummary({
               </p>
             )}
           </div>
+          {researchSummary.source_limitations?.map((message) => (
+            <p
+              key={message}
+              style={{
+                margin: "0 0 0.5rem",
+                color: "var(--text-muted)",
+                fontSize: "0.8rem",
+              }}
+            >
+              {message}
+            </p>
+          ))}
           {researchSummary.unmapped_research &&
             researchSummary.unmapped_research.length > 0 && (
               <div style={styles.blockGap}>
@@ -213,7 +224,7 @@ export default function RosterProfileResearchSummary({
               0 && (
               <div style={styles.blockGap}>
                 <div style={styles.fieldLabel}>
-                  Flat combat bonuses (global)
+                  Catalog bonuses from owned projects (global)
                 </div>
                 <ul style={styles.bulletList}>
                   {Object.entries(researchSummary.combat_bonuses_from_research)

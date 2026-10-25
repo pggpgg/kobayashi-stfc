@@ -2,6 +2,8 @@
   "id": "uss_newgrange",
   "ship_name": "U.S.S. NEWGRANGE",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 6,
   "faction": "federation",
   "tiers": [
     {

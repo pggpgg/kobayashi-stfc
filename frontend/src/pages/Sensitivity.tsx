@@ -50,6 +50,25 @@ const styles = {
 
 type AnalysisMethod = "oat" | "morris" | "sobol";
 
+interface OwnedSensitivityRun {
+  cancelled: boolean;
+  jobId: string | null;
+  cancellationRequested: boolean;
+  eventSource: EventSource | null;
+}
+
+async function cancelOwnedSensitivityRun(run: OwnedSensitivityRun) {
+  run.cancelled = true;
+  run.eventSource?.close();
+  run.eventSource = null;
+  if (run.jobId && !run.cancellationRequested) {
+    run.cancellationRequested = true;
+    await cancelSensitivityJob(run.jobId).catch((error) =>
+      console.warn("cancel sensitivity job failed", error),
+    );
+  }
+}
+
 const METRICS: { value: OutcomeMetric; label: string; hint: string }[] = [
   {
     value: "hull_remaining",
@@ -123,6 +142,7 @@ export default function Sensitivity() {
   const [jobEtaSeconds, setJobEtaSeconds] = useState<number | null>(null);
   const [cpuBusyInfo, setCpuBusyInfo] = useState<CpuBusyWaitInfo | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const activeRunRef = useRef<OwnedSensitivityRun | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -217,6 +237,13 @@ export default function Sensitivity() {
 
   async function handleRun() {
     if (!canRun) return;
+    const run: OwnedSensitivityRun = {
+      cancelled: false,
+      jobId: null,
+      cancellationRequested: false,
+      eventSource: null,
+    };
+    activeRunRef.current = run;
     setRunning(true);
     setError(null);
     setResponse(null);
@@ -266,9 +293,18 @@ export default function Sensitivity() {
         requestBody,
         activeProfileId,
         {
-          onCpuBusyWait: (info) => setCpuBusyInfo(info),
+          onCpuBusyWait: (info) => {
+            if (!run.cancelled) setCpuBusyInfo(info);
+          },
         },
       );
+      run.jobId = startResp.job_id;
+      // The server may accept a queued start after the page has gone away.
+      // Keep its response long enough to cancel that exact job, without a new SSE.
+      if (run.cancelled) {
+        await cancelOwnedSensitivityRun(run);
+        return;
+      }
       setCpuBusyInfo(null);
       setJobId(startResp.job_id);
 
@@ -279,8 +315,10 @@ export default function Sensitivity() {
       // tradeoff from optimize, where the page is much longer-running).
       const url = getSensitivityStreamUrl(startResp.job_id);
       const es = new EventSource(url);
+      run.eventSource = es;
       eventSourceRef.current = es;
       es.onmessage = (event) => {
+        if (run.cancelled || activeRunRef.current !== run) return;
         try {
           const status = JSON.parse(event.data) as SensitivityStatusResponse;
           applyStatus(status);
@@ -294,11 +332,15 @@ export default function Sensitivity() {
             }
             es.close();
             eventSourceRef.current = null;
+            run.eventSource = null;
+            activeRunRef.current = null;
             setRunning(false);
           } else if (status.status === "error") {
             setError(status.error ?? "Job failed");
             es.close();
             eventSourceRef.current = null;
+            run.eventSource = null;
+            activeRunRef.current = null;
             setRunning(false);
           }
         } catch (parseErr) {
@@ -307,12 +349,15 @@ export default function Sensitivity() {
         }
       };
       es.onerror = () => {
+        if (run.cancelled || activeRunRef.current !== run) return;
         // EventSource auto-retries on transient errors; if the connection is
         // permanently broken the next status snapshot won't arrive and the user
         // can cancel. Surface a soft hint in the phase label.
         setJobPhase("(reconnecting…)");
       };
     } catch (e: unknown) {
+      if (run.cancelled || activeRunRef.current !== run) return;
+      activeRunRef.current = null;
       if (e instanceof ApiError) {
         setError(`${e.code}: ${e.message}`);
       } else if (e instanceof Error) {
@@ -325,12 +370,11 @@ export default function Sensitivity() {
   }
 
   async function handleCancel() {
-    if (!jobId) return;
-    try {
-      await cancelSensitivityJob(jobId);
-    } catch (e) {
-      console.warn("cancel sensitivity job failed", e);
-    }
+    const run = activeRunRef.current;
+    if (!run) return;
+    await cancelOwnedSensitivityRun(run);
+    if (activeRunRef.current !== run) return;
+    activeRunRef.current = null;
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
@@ -339,13 +383,13 @@ export default function Sensitivity() {
     setError("Cancelled");
   }
 
-  // Cleanup: close any open SSE on unmount.
+  // A disconnected stream does not cancel backend CPU work.
   useEffect(() => {
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
+      const run = activeRunRef.current;
+      activeRunRef.current = null;
+      if (run) void cancelOwnedSensitivityRun(run);
+      eventSourceRef.current = null;
     };
   }, []);
 

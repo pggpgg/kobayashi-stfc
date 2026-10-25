@@ -8,15 +8,19 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io;
+use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::profile_index::{profile_path, OFFICER_LEARNING_JSON, OPTIMIZE_HISTORY_JSON};
+use crate::data::profile_index::{
+    profile_data_dir, profile_path, profile_store_transaction, OFFICER_LEARNING_JSON,
+    OPTIMIZE_HISTORY_JSON,
+};
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::crew_generator::CrewCandidate;
-use crate::optimizer::monte_carlo::{crew_candidate_stable_hash, SimulationResult};
+use crate::optimizer::monte_carlo::{crew_candidate_ordered_hash, SimulationResult};
 use crate::optimizer::officer_learning::OfficerPerformanceScores;
 use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
 
@@ -221,23 +225,29 @@ fn now_ms() -> u128 {
 
 pub fn load_history_file(profile_id: &str) -> OptimizeHistoryFile {
     let path = profile_path(profile_id, OPTIMIZE_HISTORY_JSON);
-    if !path.exists() {
-        return OptimizeHistoryFile {
-            schema: OPTIMIZE_HISTORY_SCHEMA,
-            entries: HashMap::new(),
-        };
+    load_history_file_checked_at(&path).unwrap_or_else(|_| empty_history_file())
+}
+
+fn empty_history_file() -> OptimizeHistoryFile {
+    OptimizeHistoryFile {
+        schema: OPTIMIZE_HISTORY_SCHEMA,
+        entries: HashMap::new(),
     }
-    let raw = fs::read_to_string(&path).unwrap_or_default();
-    let mut file: OptimizeHistoryFile =
-        serde_json::from_str(&raw).unwrap_or_else(|_| OptimizeHistoryFile {
-            schema: OPTIMIZE_HISTORY_SCHEMA,
-            entries: HashMap::new(),
-        });
+}
+
+fn load_history_file_checked_at(path: &Path) -> io::Result<OptimizeHistoryFile> {
+    let raw = match fs::read(path) {
+        Ok(raw) => raw,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(empty_history_file()),
+        Err(error) => return Err(error),
+    };
+    let mut file: OptimizeHistoryFile = serde_json::from_slice(&raw)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
     if file.schema != OPTIMIZE_HISTORY_SCHEMA {
         file.entries.clear();
         file.schema = OPTIMIZE_HISTORY_SCHEMA;
     }
-    file
+    Ok(file)
 }
 
 fn evict_oldest_if_needed(entries: &mut HashMap<String, OptimizeHistoryEntry>) {
@@ -256,15 +266,26 @@ fn evict_oldest_if_needed(entries: &mut HashMap<String, OptimizeHistoryEntry>) {
 
 /// Persist merged history (best-effort; errors ignored by callers).
 pub fn save_history_file(profile_id: &str, file: &OptimizeHistoryFile) -> io::Result<()> {
+    let _transaction = profile_store_transaction()?;
+    require_existing_profile_dir(profile_id)?;
     let path = profile_path(profile_id, OPTIMIZE_HISTORY_JSON);
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
+    save_history_file_unlocked_at(&path, file)
+}
+
+fn require_existing_profile_dir(profile_id: &str) -> io::Result<()> {
+    if profile_data_dir(profile_id).is_dir() {
+        Ok(())
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("profile directory disappeared before optimizer persistence: {profile_id}"),
+        ))
     }
-    let tmp = path.with_extension("json.tmp");
-    let json = serde_json::to_string_pretty(file)?;
-    fs::write(&tmp, json)?;
-    fs::rename(&tmp, &path)?;
-    Ok(())
+}
+
+fn save_history_file_unlocked_at(path: &Path, file: &OptimizeHistoryFile) -> io::Result<()> {
+    let json = serde_json::to_vec_pretty(file)?;
+    crate::data::atomic_file::write_atomic(path, &json)
 }
 
 /// Load per-profile learned officer scores from `profiles/{id}/officer_learning.json`.
@@ -277,31 +298,63 @@ pub fn load_officer_scores(
     expected_data_fingerprint: Option<&str>,
 ) -> OfficerPerformanceScores {
     let path = profile_path(profile_id, OFFICER_LEARNING_JSON);
-    if !path.exists() {
-        return OfficerPerformanceScores::new();
-    }
-    let raw = fs::read_to_string(&path).unwrap_or_default();
-    let scores: OfficerPerformanceScores =
-        serde_json::from_str(&raw).unwrap_or_else(|_| OfficerPerformanceScores::new());
+    load_officer_scores_checked_at(&path, expected_data_fingerprint)
+        .unwrap_or_else(|_| OfficerPerformanceScores::new())
+}
+
+fn load_officer_scores_checked_at(
+    path: &Path,
+    expected_data_fingerprint: Option<&str>,
+) -> io::Result<OfficerPerformanceScores> {
+    let raw = match fs::read(path) {
+        Ok(raw) => raw,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return Ok(OfficerPerformanceScores::new())
+        }
+        Err(error) => return Err(error),
+    };
+    let scores: OfficerPerformanceScores = serde_json::from_slice(&raw)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
     if scores.is_compatible_with_data_fingerprint(expected_data_fingerprint) {
-        scores
+        Ok(scores)
     } else {
-        OfficerPerformanceScores::new()
+        Ok(OfficerPerformanceScores::new())
     }
 }
 
 /// Persist learned officer scores to `profiles/{id}/officer_learning.json`.
 /// Atomic write via temp file.
 pub fn save_officer_scores(profile_id: &str, scores: &OfficerPerformanceScores) -> io::Result<()> {
+    let _transaction = profile_store_transaction()?;
+    require_existing_profile_dir(profile_id)?;
     let path = profile_path(profile_id, OFFICER_LEARNING_JSON);
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let tmp = path.with_extension("json.tmp");
-    let json = serde_json::to_string_pretty(scores)?;
-    fs::write(&tmp, json)?;
-    fs::rename(&tmp, &path)?;
-    Ok(())
+    save_officer_scores_unlocked_at(&path, scores)
+}
+
+fn save_officer_scores_unlocked_at(
+    path: &Path,
+    scores: &OfficerPerformanceScores,
+) -> io::Result<()> {
+    let json = serde_json::to_vec_pretty(scores)?;
+    crate::data::atomic_file::write_atomic(path, &json)
+}
+
+/// Merge one completed optimization into officer learning under the store gate. The earlier
+/// read used for candidate generation is intentionally separate from this fresh persistence read.
+pub fn update_officer_scores_from_results(
+    profile_id: &str,
+    expected_data_fingerprint: &str,
+    ranked: &[RankedCrewResult],
+    hostile: &str,
+    ship: &str,
+) -> io::Result<()> {
+    let _transaction = profile_store_transaction()?;
+    require_existing_profile_dir(profile_id)?;
+    let path = profile_path(profile_id, OFFICER_LEARNING_JSON);
+    let mut scores = load_officer_scores_checked_at(&path, Some(expected_data_fingerprint))?;
+    scores.update_from_results(ranked, hostile, ship);
+    scores.set_data_fingerprint(expected_data_fingerprint);
+    save_officer_scores_unlocked_at(&path, &scores)
 }
 
 /// Build [`CrewCandidate`] rows from a history entry for [`crate::optimizer::matchup_priors`]
@@ -436,15 +489,29 @@ pub fn upsert_entry(
     cache_key: &str,
     entry: OptimizeHistoryEntry,
 ) -> io::Result<()> {
+    let path = profile_path(profile_id, OPTIMIZE_HISTORY_JSON);
+    upsert_entry_at(&path, Some(profile_id), cache_key, entry)
+}
+
+fn upsert_entry_at(
+    path: &Path,
+    profile_id: Option<&str>,
+    cache_key: &str,
+    entry: OptimizeHistoryEntry,
+) -> io::Result<()> {
+    let _transaction = profile_store_transaction()?;
+    if let Some(profile_id) = profile_id {
+        require_existing_profile_dir(profile_id)?;
+    }
     static HISTORY_WRITE_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
     let _guard = HISTORY_WRITE_LOCK
         .get_or_init(|| Mutex::new(()))
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let mut file = load_history_file(profile_id);
+    let mut file = load_history_file_checked_at(path)?;
     file.entries.insert(cache_key.to_string(), entry);
     evict_oldest_if_needed(&mut file.entries);
-    save_history_file(profile_id, &file)
+    save_history_file_unlocked_at(path, &file)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -558,11 +625,11 @@ fn preconfirmed_map_from_entry(
     let mut map: HashMap<u64, SimulationResult> = HashMap::new();
     for row in &entry.crews {
         let sim = row.to_simulation_result();
-        map.insert(crew_candidate_stable_hash(&sim.candidate), sim);
+        map.insert(crew_candidate_ordered_hash(&sim.candidate), sim);
     }
     let mut hits: u32 = 0;
     for c in candidates {
-        if map.contains_key(&crew_candidate_stable_hash(c)) {
+        if map.contains_key(&crew_candidate_ordered_hash(c)) {
             hits += 1;
         }
     }
@@ -1191,6 +1258,24 @@ mod tests {
     }
 
     #[test]
+    fn preconfirmed_metrics_do_not_cross_stochastic_bridge_order() {
+        let mut entry = fingerprinted_entry(Some("1:a:b:c:d"));
+        entry.crews[0].bridge = vec!["Georgiou".into(), "Airiam".into()];
+        let reversed = CrewCandidate {
+            captain: "Cap".into(),
+            bridge: vec!["Airiam".into(), "Georgiou".into()],
+            below_decks: vec![],
+        };
+        let (map, hits) = preconfirmed_map_from_entry(&entry, std::slice::from_ref(&reversed));
+        assert_eq!(hits, 0);
+        assert!(
+            !map.contains_key(&crate::optimizer::monte_carlo::crew_candidate_ordered_hash(
+                &reversed
+            ))
+        );
+    }
+
+    #[test]
     fn officer_scores_reset_when_the_catalog_fingerprint_moves() {
         let mut scores = OfficerPerformanceScores::new();
         scores.set_data_fingerprint("catalog-a");
@@ -1198,5 +1283,55 @@ mod tests {
         assert!(!scores.is_compatible_with_data_fingerprint(Some("catalog-b")));
         // No recorded fingerprint: adopt rather than discard — sampling bias, never a reported number.
         assert!(OfficerPerformanceScores::new().is_compatible_with_data_fingerprint(Some("any")));
+    }
+
+    #[test]
+    fn isolated_history_update_refuses_to_replace_a_corrupt_prior_file() {
+        let root = std::env::temp_dir().join(format!(
+            "kobayashi-isolated-history-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join("optimize_history.json");
+        let original = b"{\"schema\":2,\"entries\":";
+        std::fs::write(&path, original).unwrap();
+        let result = upsert_entry_at(&path, None, "run", fingerprinted_entry(None));
+        assert!(result.is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), original);
+        assert!(root.is_absolute() && root.starts_with(std::env::temp_dir()));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn isolated_officer_scores_update_refuses_to_replace_a_corrupt_prior_file() {
+        let root = std::env::temp_dir().join(format!(
+            "kobayashi-isolated-learning-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join("officer_learning.json");
+        let original = b"{\"schema_version\":";
+        std::fs::write(&path, original).unwrap();
+        assert!(load_officer_scores_checked_at(&path, Some("current")).is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), original);
+        assert!(root.is_absolute() && root.starts_with(std::env::temp_dir()));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn disappeared_profile_cannot_be_recreated_by_a_late_history_write() {
+        let absent_id = format!("missing_{}", uuid::Uuid::new_v4().as_simple());
+        let root = std::env::temp_dir().join(format!(
+            "kobayashi-isolated-history-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join("optimize_history.json");
+        let result = upsert_entry_at(&path, Some(&absent_id), "run", fingerprinted_entry(None));
+        assert_eq!(result.unwrap_err().kind(), io::ErrorKind::NotFound);
+        assert!(!path.exists());
+        assert!(!profile_data_dir(&absent_id).exists());
+        assert!(root.is_absolute() && root.starts_with(std::env::temp_dir()));
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

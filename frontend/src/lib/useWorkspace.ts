@@ -54,6 +54,7 @@ import {
   DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
   type PinsState,
 } from "./types";
+import { useOptimizerSettings } from "./useOptimizerSettings";
 import {
   buildWorkspaceOptimizeStartBody,
   buildWorkspaceSimulateParams,
@@ -161,32 +162,65 @@ export function useWorkspace() {
 
   // Optimization parameters
   const [simsPerCrew, setSimsPerCrew] = useState(5000);
-  const [maxCandidates, setMaxCandidates] = useState<number | null>(100);
-  const [belowDecksPoolMode, setBelowDecksPoolMode] =
-    useState<import("./optimizeWarmStart").BelowDecksPoolMode>("strict");
-
-  // Optimizer strategy
-  const [optimizerStrategy, setOptimizerStrategy] =
-    useState<import("./api").OptimizerStrategyType>("tiered");
-  /** Tiered: scout sims per crew; null = omit (server default 500). */
-  const [tieredScoutSims, setTieredScoutSims] = useState<number | null>(null);
-  /** Tiered: top K for confirmation; null = omit (server default 20). */
-  const [tieredTopK, setTieredTopK] = useState<number | null>(null);
-  /** Tiered: random exploration slice fraction (0, 0.5]; null = omit (off). */
-  const [tieredRandomExplorationPct, setTieredRandomExplorationPct] = useState<
-    number | null
-  >(null);
-  /** Analytical prefilter: learned pair co-occurrence prior (default on). */
-  const [enableLearnedPairPrior, setEnableLearnedPairPrior] = useState(true);
-  /** Tiered/genetic: post-search hill-climb around the top finalists (default off). */
-  const [localRefinement, setLocalRefinement] = useState(false);
-
-  /** Novelty (MMR): optional text fields; blank lambda = omit (pure strength order). */
-  const [noveltyLambdaText, setNoveltyLambdaText] = useState("");
-  const [noveltyDiverseTopText, setNoveltyDiverseTopText] = useState("");
-  const [noveltyPoolText, setNoveltyPoolText] = useState("");
-  /** MMR: penalize overlap with optimize_history top crews (profile + warm-start cache key). */
-  const [noveltyHistoryAnchors, setNoveltyHistoryAnchors] = useState(false);
+  const {
+    settings: optimizerSettings,
+    update: updateOptimizerSettings,
+    setters: optimizerSetters,
+  } = useOptimizerSettings();
+  const {
+    maxCandidates,
+    belowDecksPoolMode,
+    optimizerStrategy,
+    tieredScoutSims,
+    tieredTopK,
+    tieredRandomExplorationPct,
+    enableLearnedPairPrior,
+    localRefinement,
+    noveltyLambdaText,
+    noveltyDiverseTopText,
+    noveltyPoolText,
+    noveltyHistoryAnchors,
+    selectedSeeds,
+    heuristicsOnly,
+    fastDiscovery,
+    belowDecksStrategy,
+    chainGrindEnabled,
+    chainKillsTarget,
+    chainSecondary,
+    optimizeMustInclude,
+    optimizeExclude,
+    optimizeCaptainMust,
+    optimizeBridgeMust,
+    optimizeBelowMust,
+    optimizeGroupsJson,
+  } = optimizerSettings;
+  const {
+    maxCandidates: setMaxCandidates,
+    belowDecksPoolMode: setBelowDecksPoolMode,
+    optimizerStrategy: setOptimizerStrategy,
+    tieredScoutSims: setTieredScoutSims,
+    tieredTopK: setTieredTopK,
+    tieredRandomExplorationPct: setTieredRandomExplorationPct,
+    enableLearnedPairPrior: setEnableLearnedPairPrior,
+    localRefinement: setLocalRefinement,
+    noveltyLambdaText: setNoveltyLambdaText,
+    noveltyDiverseTopText: setNoveltyDiverseTopText,
+    noveltyPoolText: setNoveltyPoolText,
+    noveltyHistoryAnchors: setNoveltyHistoryAnchors,
+    selectedSeeds: setSelectedSeeds,
+    heuristicsOnly: setHeuristicsOnly,
+    fastDiscovery: setFastDiscovery,
+    belowDecksStrategy: setBelowDecksStrategy,
+    chainGrindEnabled: setChainGrindEnabled,
+    chainKillsTarget: setChainKillsTarget,
+    chainSecondary: setChainSecondary,
+    optimizeMustInclude: setOptimizeMustInclude,
+    optimizeExclude: setOptimizeExclude,
+    optimizeCaptainMust: setOptimizeCaptainMust,
+    optimizeBridgeMust: setOptimizeBridgeMust,
+    optimizeBelowMust: setOptimizeBelowMust,
+    optimizeGroupsJson: setOptimizeGroupsJson,
+  } = optimizerSetters;
 
   // Alliance / ship support buffs (UI + request payload; combat application TBD)
   const [selectedSupportBuffs, setSelectedSupportBuffs] = useState<
@@ -198,33 +232,11 @@ export function useWorkspace() {
 
   // Heuristics state
   const [availableSeeds, setAvailableSeeds] = useState<string[]>([]);
-  const [selectedSeeds, setSelectedSeeds] = useState<string[]>([]);
-  const [heuristicsOnly, setHeuristicsOnly] = useState(false);
-  /** Merge selected heuristic seeds into main optimize warm-start (API `fast_discovery`). */
-  const [fastDiscovery, setFastDiscovery] = useState(false);
-  const [belowDecksStrategy, setBelowDecksStrategy] = useState<
-    "ordered" | "exploration"
-  >("ordered");
-
-  /** Chain grind: N sequential wins, hull carries, shields full each link. */
-  const [chainGrindEnabled, setChainGrindEnabled] = useState(false);
-  const [chainKillsTarget, setChainKillsTarget] = useState(3);
-  const [chainSecondary, setChainSecondary] = useState<
-    "min_hull_damage" | "max_loot_per_hull_proxy"
-  >("min_hull_damage");
   const [loopRunContext, setLoopRunContext] = useState<LoopRunContext | null>(
     null,
   );
   const loopRunContextRef = useRef<LoopRunContext | null>(null);
   loopRunContextRef.current = loopRunContext;
-
-  // Optimize constraints (comma-separated lists; groups JSON optional)
-  const [optimizeMustInclude, setOptimizeMustInclude] = useState("");
-  const [optimizeExclude, setOptimizeExclude] = useState("");
-  const [optimizeCaptainMust, setOptimizeCaptainMust] = useState("");
-  const [optimizeBridgeMust, setOptimizeBridgeMust] = useState("");
-  const [optimizeBelowMust, setOptimizeBelowMust] = useState("");
-  const [optimizeGroupsJson, setOptimizeGroupsJson] = useState("");
 
   const optimizeWarmStartCacheKey = () =>
     buildOptimizeWarmStartKey({
@@ -1146,6 +1158,8 @@ export function useWorkspace() {
     cachedWarmStartBadge,
     staleCacheRefusedReason,
     // Optimization parameters
+    optimizerSettings,
+    updateOptimizerSettings,
     simsPerCrew,
     setSimsPerCrew,
     maxCandidates,

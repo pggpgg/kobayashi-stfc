@@ -1,5 +1,6 @@
 pub mod api;
 pub mod api_key;
+mod browser_boundary;
 pub(crate) mod cpu_admission;
 pub mod job_registry;
 pub mod openapi;

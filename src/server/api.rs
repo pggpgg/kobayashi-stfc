@@ -19,7 +19,7 @@ pub use requests::{
     MAX_SIMS,
 };
 
-use crate::data::building_summary::building_combat_summary_for_profile;
+use crate::data::building_summary::building_combat_summary_for_profile_with_ship;
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{list_heuristics_seeds, DEFAULT_HEURISTICS_DIR};
 use crate::data::hostile_loca::resolve_hostile_display_name;
@@ -680,11 +680,7 @@ fn crew_candidate_from_officer_fields(
 }
 
 fn pad_to_len(mut v: Vec<String>, len: usize) -> Vec<String> {
-    let first = v.first().cloned().unwrap_or_default();
-    while v.len() < len {
-        v.push(first.clone());
-    }
-    v.truncate(len);
+    v.resize(len, String::new());
     v
 }
 
@@ -912,10 +908,21 @@ pub fn simulate_payload(
             "crew is not roster/seat legal for this scenario".to_string(),
         ));
     }
+    let defender_below_decks_slots = pvp
+        .as_ref()
+        .map(|defender| {
+            resolve_below_decks_slots_for_ship(
+                &defender.defender_ship,
+                req.defender_ship_tier,
+                req.defender_ship_level,
+                None,
+            )
+        })
+        .unwrap_or(below_decks_slots);
     let player_defender_officer_crew = resolve_player_defender_officer_crew_for_simulate(
         registry,
         profile_id,
-        below_decks_slots,
+        defender_below_decks_slots,
         req.defender_crew.as_ref(),
     )
     .map_err(SimulateError::Validation)?;
@@ -1328,6 +1335,14 @@ pub fn sensitivity_payload(
             "hostile must not be empty".into(),
         ));
     }
+    crate::server::sensitivity_jobs::validate_sensitivity_scenario_ids(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &req.hostile,
+    )
+    .map_err(SensitivityError::Validation)?;
     // Header / query profile id wins when the body did not supply one (matches /api/simulate).
     if req.profile_id.is_none() {
         if let Some(pid) = profile_id {
@@ -1394,6 +1409,14 @@ pub fn sensitivity_morris_payload(
             "hostile must not be empty".into(),
         ));
     }
+    crate::server::sensitivity_jobs::validate_sensitivity_scenario_ids(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &req.hostile,
+    )
+    .map_err(SensitivityError::Validation)?;
     if req.profile_id.is_none() {
         if let Some(pid) = profile_id {
             if !pid.is_empty() {
@@ -1470,6 +1493,14 @@ pub fn sensitivity_sobol_payload(
             "hostile must not be empty".into(),
         ));
     }
+    crate::server::sensitivity_jobs::validate_sensitivity_scenario_ids(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &req.hostile,
+    )
+    .map_err(SensitivityError::Validation)?;
     if req.profile_id.is_none() {
         if let Some(pid) = profile_id {
             if !pid.is_empty() {
@@ -1721,6 +1752,8 @@ pub fn profile_put_payload(
     profile_id: Option<&str>,
     registry: &DataRegistry,
 ) -> Result<String, serde_json::Error> {
+    let _transaction =
+        crate::data::profile_index::profile_store_transaction().map_err(serde_json::Error::io)?;
     let profile: PlayerProfile = serde_json::from_str(body)?;
     let profile = validate_player_profile_payload(profile, registry.forbidden_chaos_catalog())
         .map_err(|issues| {
@@ -1756,8 +1789,15 @@ pub fn profile_forbidden_tech_imported_payload(
 pub fn profile_buildings_summary_payload(
     profile_id: Option<&str>,
 ) -> Result<String, serde_json::Error> {
+    profile_buildings_summary_payload_with_ship(profile_id, None)
+}
+
+pub fn profile_buildings_summary_payload_with_ship(
+    profile_id: Option<&str>,
+    ship_id: Option<&str>,
+) -> Result<String, serde_json::Error> {
     let id = resolve_profile_id(profile_id);
-    let summary = building_combat_summary_for_profile(&id);
+    let summary = building_combat_summary_for_profile_with_ship(&id, ship_id);
     serde_json::to_string(&summary)
 }
 
@@ -1823,6 +1863,8 @@ impl fmt::Display for ProfileApiError {
 impl std::error::Error for ProfileApiError {}
 
 pub fn profiles_create_payload(body: &str) -> Result<String, ProfileApiError> {
+    let _transaction = crate::data::profile_index::profile_store_transaction()
+        .map_err(|error| ProfileApiError::Create(error.to_string()))?;
     #[derive(Deserialize)]
     struct In {
         id: Option<String>,
@@ -1836,23 +1878,63 @@ pub fn profiles_create_payload(body: &str) -> Result<String, ProfileApiError> {
 }
 
 pub fn profiles_delete_payload(id: &str) -> Result<(), String> {
+    let _transaction = crate::data::profile_index::profile_store_transaction()
+        .map_err(|error| error.to_string())?;
     let mut index = load_profile_index();
     delete_profile(&mut index, id)
 }
 
-fn write_temp_import_file(body: &[u8], ext: &str) -> Result<std::path::PathBuf, std::io::Error> {
+#[derive(Debug, PartialEq, Eq)]
+struct TempImportFile(std::path::PathBuf);
+
+impl AsRef<std::path::Path> for TempImportFile {
+    fn as_ref(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
+impl Drop for TempImportFile {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.0);
+    }
+}
+
+fn write_temp_import_file(body: &[u8], ext: &str) -> Result<TempImportFile, std::io::Error> {
     let dir = std::env::temp_dir();
-    let path = dir.join(format!("kobayashi_import_{}_{}", std::process::id(), ext));
-    let mut f = fs::File::create(&path)?;
-    f.write_all(body)?;
-    f.sync_all()?;
-    Ok(path)
+    for _ in 0..8 {
+        let path = dir.join(format!(
+            "kobayashi_import_{}_{}_{}",
+            std::process::id(),
+            uuid::Uuid::new_v4(),
+            ext
+        ));
+        let file = match fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(file) => file,
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        };
+        let temp_file = TempImportFile(path);
+        let mut file = file;
+        file.write_all(body)?;
+        file.sync_all()?;
+        return Ok(temp_file);
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::AlreadyExists,
+        "could not allocate a unique temporary import file",
+    ))
 }
 
 pub fn officers_import_payload(
     body: &str,
     profile_id: Option<&str>,
 ) -> Result<String, ImportError> {
+    let _transaction =
+        crate::data::profile_index::profile_store_transaction().map_err(ImportError::Io)?;
     let body = body.trim();
     let id = resolve_profile_id(profile_id);
     let output_path = profile_path(&id, ROSTER_IMPORTED)
@@ -1860,14 +1942,10 @@ pub fn officers_import_payload(
         .to_string();
     let report = if body.starts_with('{') || body.starts_with('[') {
         let p = write_temp_import_file(body.as_bytes(), "json").map_err(ImportError::Io)?;
-        let out = import_spocks_export_to(p.to_str().unwrap(), &output_path)?;
-        let _ = fs::remove_file(&p);
-        out
+        import_spocks_export_to(p.0.to_str().unwrap(), &output_path)?
     } else {
         let p = write_temp_import_file(body.as_bytes(), "txt").map_err(ImportError::Io)?;
-        let out = import_roster_csv_to(p.to_str().unwrap(), &output_path)?;
-        let _ = fs::remove_file(&p);
-        out
+        import_roster_csv_to(p.0.to_str().unwrap(), &output_path)?
     };
     serde_json::to_string(&report).map_err(ImportError::Serialize)
 }
@@ -2273,6 +2351,8 @@ pub fn preset_post_payload(
     profile_id: Option<&str>,
     registry: &DataRegistry,
 ) -> Result<String, PresetError> {
+    let _transaction =
+        crate::data::profile_index::profile_store_transaction().map_err(PresetError::Io)?;
     #[derive(Debug, Deserialize)]
     struct In {
         name: Option<String>,
@@ -2501,37 +2581,25 @@ pub fn optimize_estimate_payload(
     }
     let below_decks_slots =
         resolve_below_decks_slots_for_ship(ship.trim(), ship_tier, ship_level, bd_explicit);
-    let estimated_candidates = match max_candidates {
-        Some(cap) if cap <= MAX_CANDIDATES => {
-            let generator = CrewGenerator::with_strategy(CandidateStrategy {
-                max_candidates: Some(cap as usize),
-                below_decks_pool_mode,
-                below_decks_slots,
-                ..CandidateStrategy::default()
-            });
-            generator
-                .generate_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)
-                .len()
-        }
-        Some(_) => {
-            return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
-                status: "error",
-                message: "Validation failed",
-                errors: vec![ValidationIssue {
-                    field: "max_candidates",
-                    messages: vec![format!("must be at most {MAX_CANDIDATES}")],
-                }],
-            }));
-        }
-        None => {
-            let generator = CrewGenerator::with_strategy(CandidateStrategy {
-                below_decks_pool_mode,
-                below_decks_slots,
-                ..CandidateStrategy::default()
-            });
-            generator.count_candidates_from_registry(registry, &ship, &hostile, 0, profile_id)
-        }
-    };
+    if max_candidates.is_some_and(|cap| cap > MAX_CANDIDATES) {
+        return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
+            status: "error",
+            message: "Validation failed",
+            errors: vec![ValidationIssue {
+                field: "max_candidates",
+                messages: vec![format!("must be at most {MAX_CANDIDATES}")],
+            }],
+        }));
+    }
+    let generator = CrewGenerator::with_strategy(CandidateStrategy {
+        max_candidates: max_candidates.map(|cap| cap as usize),
+        below_decks_pool_mode,
+        below_decks_slots,
+        ..CandidateStrategy::default()
+    });
+    // Estimates must count the bounded run without allocating every CrewCandidate.
+    let estimated_candidates = generator
+        .effective_run_candidate_count_from_registry(registry, &ship, &hostile, 0, profile_id);
     // A chain-grind trial simulates consecutive fights against the same target until one is lost,
     // so it costs up to `kills_target` fights where the default estimate assumes one. Scaling by
     // the target is the upper bound rather than the mean — chains that fail early are cheaper — but
@@ -2637,6 +2705,73 @@ mod profile_loading_tests {
         assert!(load_profile_from_path(&dir.0).unwrap_err().is_io());
         assert!(dir.0.is_dir());
         assert_eq!(fs::read_to_string(marker).unwrap(), "preserve me");
+    }
+}
+
+#[cfg(test)]
+mod import_and_sensitivity_boundary_tests {
+    use super::{
+        sensitivity_morris_payload, sensitivity_payload, sensitivity_sobol_payload,
+        write_temp_import_file,
+    };
+    use crate::data::data_registry::DataRegistry;
+
+    #[test]
+    fn concurrent_import_temp_files_with_same_extension_are_distinct() {
+        let first = write_temp_import_file(b"first payload", "json").unwrap();
+        let second = write_temp_import_file(b"second payload", "json").unwrap();
+
+        assert_ne!(
+            first, second,
+            "independent uploads need separate temp files"
+        );
+        assert_eq!(std::fs::read(&first).unwrap(), b"first payload");
+        assert_eq!(std::fs::read(&second).unwrap(), b"second payload");
+        std::fs::remove_file(first).unwrap();
+        std::fs::remove_file(second).unwrap();
+    }
+
+    #[test]
+    fn temporary_import_file_is_removed_when_guard_drops() {
+        let path = {
+            let temp_file = write_temp_import_file(b"invalid payload", "json").unwrap();
+            assert!(temp_file.as_ref().exists());
+            temp_file.0.clone()
+        };
+        assert!(
+            !path.exists(),
+            "temporary upload must be cleaned up on return"
+        );
+    }
+
+    #[test]
+    fn sensitivity_endpoints_reject_unresolved_ship_and_hostile_ids() {
+        let registry = DataRegistry::load().expect("load data registry");
+        let body = r#"{
+            "ship":"missing-ship-for-sensitivity-test",
+            "hostile":"missing-hostile-for-sensitivity-test",
+            "bridge":[],
+            "num_sims":2,
+            "r_trajectories":2,
+            "n_samples":8,
+            "rounds":1,
+            "deltas":{"weapon_damage":0.0}
+        }"#;
+
+        let outcomes = [
+            sensitivity_payload(&registry, body, None).map(|_| ()),
+            sensitivity_morris_payload(&registry, body, None).map(|_| ()),
+            sensitivity_sobol_payload(&registry, body, None).map(|_| ()),
+        ];
+        for outcome in outcomes {
+            let message = outcome
+                .expect_err("unknown scenario IDs must be rejected")
+                .to_string();
+            assert!(
+                message.contains("did not resolve") || message.contains("unknown"),
+                "unexpected validation message: {message}"
+            );
+        }
     }
 }
 

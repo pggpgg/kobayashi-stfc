@@ -130,6 +130,7 @@ type AbilityModifier =
   | "armor" // Rust IR: `MitigationAdditive` (serde wire name)
   | "shield_deflection" // Rust IR: `ShieldDeflection`; same compile path as `armor`
   | "dodge"
+  | "base_mitigation_stats_bonus" // Raw fractional bonus to armor, deflection, and dodge stats
   | "damage_reduction"
   | "accuracy"
   | "isolytic_damage"
@@ -148,6 +149,7 @@ type AbilityModifier =
   | "proc_pierce_bonus"
   | "hostile_crit_damage_reduction"
   | "cumulative_opponent_shield_mitigation_debuff"
+  | "officer_shield_regen_max_fraction"
   // non-combat passthrough
   | "tag_only";
 
@@ -161,6 +163,20 @@ type AbilityOperation =
   | "state_apply"
   | "state_extend";
 ```
+
+`base_mitigation_stats_bonus` compiles only for self-targeted `round_start`
+effects with operation `add`. Its finite value is a fraction added to each
+base defense stat's multiplier: `0.5` means a 50% bonus and `5` means a 500%
+bonus. Values above one are not divided by 100. The engine samples its
+conditions at round start and recomputes incoming mitigation from raw defense
+and opposing weapon stats; when those raw defense stats are absent or all
+zero, it retains the legacy mitigation fallback.
+
+`officer_shield_regen_max_fraction` uses the existing effective-maximum-shield
+repair channel. For the client-verified research using this token, the raw
+fraction, Morale condition, and round-start trigger are recovered evidence;
+the authoritative server's repair denominator and ordering remain unverified.
+See [research routing](research_conditional_routing.md#client-verified-corrections).
 
 ### Value / chance / duration
 

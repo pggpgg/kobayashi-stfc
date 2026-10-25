@@ -394,7 +394,11 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
 
     // Gzip/Brotli for compressible responses (audit task 13). Default predicate skips
     // SSE (`text/event-stream`), images, and tiny bodies.
-    app.layer(CompressionLayer::new()).layer(trace_layer)
+    app.layer(middleware::from_fn(
+        crate::server::browser_boundary::middleware,
+    ))
+    .layer(CompressionLayer::new())
+    .layer(trace_layer)
 }
 
 fn locate_dist_dir() -> Option<std::path::PathBuf> {
@@ -428,7 +432,7 @@ async fn serve_spa_static_fallback_with_dir(
     let path = PathBuf::from(rel);
     if path
         .components()
-        .any(|c| matches!(c, std::path::Component::ParentDir))
+        .any(|c| !matches!(c, std::path::Component::Normal(_)))
     {
         return error_json(StatusCode::BAD_REQUEST, "Invalid path").into_response();
     }
@@ -714,7 +718,10 @@ async fn handle_profile_buildings_summary(
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let profile_id = profile_id_from_request(&headers, &params);
-    match api::profile_buildings_summary_payload(profile_id.as_deref()) {
+    match api::profile_buildings_summary_payload_with_ship(
+        profile_id.as_deref(),
+        params.get("ship_id").map(String::as_str),
+    ) {
         Ok(body) => ok_json(body).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
     }
@@ -1164,6 +1171,10 @@ async fn handle_optimize_estimate(
     headers: HeaderMap,
     Query(raw): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
+    let permit = match acquire_cpu_or_response(&state).await {
+        Ok(p) => p,
+        Err(resp) => return *resp,
+    };
     let profile_id = profile_id_from_request(&headers, &raw);
     let query: String = raw
         .iter()
@@ -1171,12 +1182,23 @@ async fn handle_optimize_estimate(
         .collect::<Vec<_>>()
         .join("&");
     let path = format!("/api/optimize/estimate?{}", query);
-    match api::optimize_estimate_payload(state.registry.as_ref(), &path, profile_id.as_deref()) {
-        Ok(payload) => ok_json(payload).into_response(),
-        Err(api::OptimizePayloadError::Parse(e)) => {
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        api::optimize_estimate_payload(registry.as_ref(), &path, profile_id.as_deref())
+    })
+    .await;
+    match result {
+        Ok(Ok(payload)) => ok_json(payload).into_response(),
+        Ok(Err(api::OptimizePayloadError::Parse(e))) => {
             error_json(StatusCode::BAD_REQUEST, &format!("Invalid request: {e}")).into_response()
         }
-        Err(api::OptimizePayloadError::Validation(v)) => validation_json(v).into_response(),
+        Ok(Err(api::OptimizePayloadError::Validation(v))) => validation_json(v).into_response(),
+        Err(e) => error_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!("Task panicked: {e}"),
+        )
+        .into_response(),
     }
 }
 
@@ -1315,16 +1337,18 @@ where
             .into_response();
         }
     };
+    let request = request_factory(req);
+    if let Err(message) =
+        sensitivity_jobs::validate_sensitivity_job_request_ids(state.registry.as_ref(), &request)
+    {
+        return error_json(StatusCode::BAD_REQUEST, &message).into_response();
+    }
     let permit = match acquire_cpu_or_response(&state).await {
         Ok(p) => p,
         Err(resp) => return *resp,
     };
-    let response = sensitivity_jobs::start_sensitivity_job(
-        state.registry.clone(),
-        kind,
-        request_factory(req),
-        permit,
-    );
+    let response =
+        sensitivity_jobs::start_sensitivity_job(state.registry.clone(), kind, request, permit);
     match serde_json::to_string(&response) {
         Ok(s) => ok_json(s).into_response(),
         Err(e) => error_json(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()).into_response(),
@@ -1600,9 +1624,116 @@ fn legacy_console_html() -> String {
 }
 
 #[cfg(test)]
+mod optimize_estimate_admission_tests {
+    use super::*;
+    use crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
+
+    fn state_with_capacity(permits: usize) -> AppState {
+        AppState {
+            registry: DataRegistry::load().expect("bundled registry"),
+            cpu_jobs: Arc::new(Semaphore::new(permits)),
+            cpu_job_queue_wait: Some(Duration::from_millis(1)),
+            cpu_job_queue_wait_env_present: false,
+            started_at_utc: chrono::Utc::now(),
+            hull_id_registry: Arc::new(HashMap::new()),
+        }
+    }
+
+    fn estimate_query() -> Query<HashMap<String, String>> {
+        Query(HashMap::from([
+            ("ship".into(), "realta".into()),
+            ("hostile".into(), "2918121098".into()),
+            ("max_candidates".into(), "1".into()),
+            ("below_decks_slots".into(), "0".into()),
+        ]))
+    }
+
+    fn test_profile_headers() -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-profile-id",
+            HeaderValue::from_static(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+        );
+        headers
+    }
+
+    #[tokio::test]
+    async fn estimate_respects_saturated_cpu_admission() {
+        let response = handle_optimize_estimate(
+            State(state_with_capacity(0)),
+            test_profile_headers(),
+            estimate_query(),
+        )
+        .await
+        .into_response();
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(response.headers()[header::RETRY_AFTER], "1");
+        let bytes = axum::body::to_bytes(response.into_body(), 4096)
+            .await
+            .unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["code"], "cpu_busy");
+    }
+
+    #[tokio::test]
+    async fn estimate_releases_cpu_permit_after_success_or_validation_error() {
+        let state = state_with_capacity(1);
+        let response = handle_optimize_estimate(
+            State(state.clone()),
+            test_profile_headers(),
+            estimate_query(),
+        )
+        .await
+        .into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(state.cpu_jobs.available_permits(), 1);
+
+        let response = handle_optimize_estimate(
+            State(state.clone()),
+            test_profile_headers(),
+            Query(HashMap::new()),
+        )
+        .await
+        .into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(state.cpu_jobs.available_permits(), 1);
+    }
+}
+
+#[cfg(test)]
 mod spa_cache_control_tests {
     use super::{spa_asset_cache_control, spa_fallback_for_missing};
     use axum::http::StatusCode;
+
+    #[cfg(windows)]
+    #[tokio::test]
+    async fn drive_relative_spa_path_cannot_read_outside_dist() {
+        use axum::extract::OriginalUri;
+        let name = format!("kobayashi_spa_sentinel_{}.txt", uuid::Uuid::new_v4());
+        let root = std::env::current_dir().unwrap();
+        let sentinel = root.join(&name);
+        std::fs::write(&sentinel, "outside-dist-sentinel").unwrap();
+        struct RemoveFile(std::path::PathBuf);
+        impl Drop for RemoveFile {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_file(&self.0);
+            }
+        }
+        let _cleanup = RemoveFile(sentinel);
+        let drive = root.to_string_lossy().chars().next().unwrap();
+        let uri = format!("/{drive}:{name}").parse().unwrap();
+        let response =
+            super::serve_spa_static_fallback_with_dir(OriginalUri(uri), root.join("frontend/dist"))
+                .await;
+        let status = response.status();
+        if status == StatusCode::OK {
+            let bytes = axum::body::to_bytes(response.into_body(), 1024)
+                .await
+                .unwrap();
+            assert_eq!(&bytes[..], b"outside-dist-sentinel");
+        }
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+    }
 
     #[tokio::test]
     async fn missing_vite_asset_returns_404_not_index_html() {

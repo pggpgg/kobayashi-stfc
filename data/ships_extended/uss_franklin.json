@@ -2,6 +2,8 @@
   "id": "uss_franklin",
   "ship_name": "U.S.S. FRANKLIN",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

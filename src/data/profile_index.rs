@@ -5,7 +5,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Mutex, MutexGuard, OnceLock};
 
 use serde::{Deserialize, Serialize};
 use tracing::info;
@@ -43,7 +43,11 @@ pub fn profile_data_dir(id: &str) -> PathBuf {
 
 /// Returns the path for a file within a profile's directory.
 pub fn profile_path(profile_id: &str, filename: &str) -> PathBuf {
-    profile_data_dir(profile_id).join(filename)
+    profile_path_at(Path::new(PROFILES_DIR), profile_id, filename)
+}
+
+pub(crate) fn profile_path_at(root: &Path, profile_id: &str, filename: &str) -> PathBuf {
+    root.join(sanitize_profile_id(profile_id)).join(filename)
 }
 
 /// Profile-specific filenames (relative to profile dir).
@@ -91,45 +95,103 @@ fn sanitize_profile_id(id: &str) -> String {
         .collect()
 }
 
-/// Process-wide cache to avoid re-reading profiles/index.json on every request.
+/// Last valid index plus the mutex for complete index/restore transactions.
 static PROFILE_INDEX_CACHE: OnceLock<Mutex<ProfileIndex>> = OnceLock::new();
 
-fn get_profile_index_cache() -> &'static Mutex<ProfileIndex> {
-    PROFILE_INDEX_CACHE.get_or_init(|| Mutex::new(load_profile_index_from_disk()))
+static PROFILE_STORE_TRANSACTION: Mutex<()> = Mutex::new(());
+
+/// Serialize complete profile-store transactions with tree restore/export.
+/// Acquire this BEFORE the index mutex or any per-file/history mutex. Index-only
+/// operations never acquire it while holding their index guard.
+pub(crate) fn profile_store_transaction() -> std::io::Result<MutexGuard<'static, ()>> {
+    PROFILE_STORE_TRANSACTION
+        .lock()
+        .map_err(|error| std::io::Error::other(format!("profile store lock poisoned: {error}")))
 }
 
-/// Load the profile index from disk. Returns default (empty) if missing or invalid.
-fn load_profile_index_from_disk() -> ProfileIndex {
-    let path = Path::new(PROFILE_INDEX_PATH);
-    if !path.exists() {
-        return ProfileIndex::default();
-    }
-    let raw = match fs::read_to_string(path) {
-        Ok(s) => s,
-        _ => return ProfileIndex::default(),
+fn get_profile_index_cache<'a>(
+    root: &Path,
+    cache: &'a OnceLock<Mutex<ProfileIndex>>,
+) -> &'a Mutex<ProfileIndex> {
+    cache.get_or_init(|| Mutex::new(load_profile_index_from_disk_at(root)))
+}
+
+fn load_profile_index_from_disk_at(root: &Path) -> ProfileIndex {
+    load_profile_index_checked_at(root).unwrap_or_default()
+}
+
+fn load_profile_index_checked_at(root: &Path) -> std::io::Result<ProfileIndex> {
+    let path = root.join("index.json");
+    let raw = match fs::read(&path) {
+        Ok(raw) => raw,
+        Err(error)
+            if error.kind() == std::io::ErrorKind::NotFound
+                && fs::symlink_metadata(&path).is_err() =>
+        {
+            return Ok(ProfileIndex::default())
+        }
+        Err(error) => return Err(error),
     };
-    serde_json::from_str(&raw).unwrap_or_default()
+    serde_json::from_slice(&raw).map_err(|error| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("invalid {}: {error}", path.display()),
+        )
+    })
 }
 
-/// Load the profile index, using the process-wide cache.
+/// Read the current disk index. Retain a last valid read on an I/O/parse error;
+/// mutating operations use the checked loader and refuse to overwrite that error.
 pub fn load_profile_index() -> ProfileIndex {
-    get_profile_index_cache().lock().unwrap().clone()
+    load_profile_index_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE)
+}
+
+fn load_profile_index_at(root: &Path, cache: &OnceLock<Mutex<ProfileIndex>>) -> ProfileIndex {
+    let mut current = get_profile_index_cache(root, cache)
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    match load_profile_index_checked_at(root) {
+        Ok(index) => *current = index,
+        Err(error) => {
+            tracing::error!(path=%root.display(),%error,"profile index could not be refreshed; writes remain disabled")
+        }
+    }
+    current.clone()
+}
+
+pub(crate) fn profile_index_restore_guard() -> std::io::Result<MutexGuard<'static, ProfileIndex>> {
+    lock_profile_index_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE)
+}
+
+fn lock_profile_index_at<'a>(
+    root: &Path,
+    cache: &'a OnceLock<Mutex<ProfileIndex>>,
+) -> std::io::Result<MutexGuard<'a, ProfileIndex>> {
+    get_profile_index_cache(root, cache)
+        .lock()
+        .map_err(|error| std::io::Error::other(format!("profile index lock poisoned: {error}")))
 }
 
 /// Save the profile index to disk and update the in-memory cache.
 pub fn save_profile_index(index: &ProfileIndex) -> std::io::Result<()> {
-    if let Some(parent) = Path::new(PROFILE_INDEX_PATH).parent() {
-        fs::create_dir_all(parent)?;
-    }
-    fs::write(
-        PROFILE_INDEX_PATH,
-        serde_json::to_string_pretty(index).unwrap(),
-    )?;
-    // Update the process-wide cache so subsequent reads don't hit disk.
-    if let Some(cache) = PROFILE_INDEX_CACHE.get() {
-        *cache.lock().unwrap() = index.clone();
-    }
+    save_profile_index_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE, index)
+}
+
+fn save_profile_index_at(
+    root: &Path,
+    cache: &OnceLock<Mutex<ProfileIndex>>,
+    index: &ProfileIndex,
+) -> std::io::Result<()> {
+    let mut state = lock_profile_index_at(root, cache)?;
+    load_profile_index_checked_at(root)?;
+    write_profile_index_at(root, index)?;
+    *state = index.clone();
     Ok(())
+}
+
+fn write_profile_index_at(root: &Path, index: &ProfileIndex) -> std::io::Result<()> {
+    let bytes = serde_json::to_vec_pretty(index).map_err(std::io::Error::other)?;
+    crate::data::atomic_file::write_atomic(&root.join("index.json"), &bytes)
 }
 
 /// Get the effective profile id to use (from index default or fallback).
@@ -180,7 +242,32 @@ pub fn ensure_profile(
     id: &str,
     name: Option<&str>,
 ) -> std::io::Result<()> {
+    ensure_profile_at(
+        Path::new(PROFILES_DIR),
+        &PROFILE_INDEX_CACHE,
+        index,
+        id,
+        name,
+    )
+}
+
+fn ensure_profile_at(
+    root: &Path,
+    cache: &OnceLock<Mutex<ProfileIndex>>,
+    index: &mut ProfileIndex,
+    id: &str,
+    name: Option<&str>,
+) -> std::io::Result<()> {
+    if id.is_empty() || sanitize_profile_id(id) != id {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Invalid profile id",
+        ));
+    }
+    let mut state = lock_profile_index_at(root, cache)?;
+    *index = load_profile_index_checked_at(root)?;
     if index.profiles.iter().any(|p| p.id == id) {
+        *state = index.clone();
         return Ok(());
     }
     let name = name.unwrap_or(id);
@@ -198,17 +285,17 @@ pub fn ensure_profile(
         index.default_id = Some(id.to_string());
     }
 
-    save_profile_index(index)?;
-
     // Create profile directory and empty files if needed
-    let dir = profile_data_dir(id);
+    let dir = root.join(sanitize_profile_id(id));
     fs::create_dir_all(&dir)?;
     let profile_json = dir.join(PROFILE_JSON);
     if !profile_json.exists() {
-        fs::write(profile_json, "{\"bonuses\":{}}")?;
+        crate::data::atomic_file::write_atomic(&profile_json, b"{\"bonuses\":{}}")?;
     }
     let presets_dir = dir.join(PRESETS_SUBDIR);
     fs::create_dir_all(presets_dir)?;
+    write_profile_index_at(root, index)?;
+    *state = index.clone();
 
     Ok(())
 }
@@ -219,6 +306,24 @@ pub fn create_profile(
     id: Option<&str>,
     name: &str,
 ) -> Result<ProfileEntry, String> {
+    create_profile_at(
+        Path::new(PROFILES_DIR),
+        &PROFILE_INDEX_CACHE,
+        index,
+        id,
+        name,
+    )
+}
+
+fn create_profile_at(
+    root: &Path,
+    cache: &OnceLock<Mutex<ProfileIndex>>,
+    index: &mut ProfileIndex,
+    id: Option<&str>,
+    name: &str,
+) -> Result<ProfileEntry, String> {
+    let mut state = lock_profile_index_at(root, cache).map_err(|error| error.to_string())?;
+    *index = load_profile_index_checked_at(root).map_err(|error| error.to_string())?;
     let id = id.map(|s| s.to_string()).unwrap_or_else(|| {
         let slug = name
             .chars()
@@ -249,6 +354,11 @@ pub fn create_profile(
     if index.profiles.iter().any(|p| p.id == id) {
         return Err(format!("Profile '{}' already exists", id));
     }
+    if root.join(&id).exists() {
+        return Err(format!(
+            "Profile directory '{id}' already exists; existing data was preserved"
+        ));
+    }
 
     let sync_token = Uuid::new_v4().to_string();
     let entry = ProfileEntry {
@@ -263,75 +373,28 @@ pub fn create_profile(
         index.default_id = Some(id.clone());
     }
 
-    save_profile_index(index).map_err(|e| e.to_string())?;
-
-    let dir = profile_data_dir(&id);
+    let dir = root.join(sanitize_profile_id(&id));
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let profile_json = dir.join(PROFILE_JSON);
-    fs::write(profile_json, "{\"bonuses\":{}}").map_err(|e| e.to_string())?;
+    crate::data::atomic_file::write_atomic(&profile_json, b"{\"bonuses\":{}}")
+        .map_err(|e| e.to_string())?;
     fs::create_dir_all(dir.join(PRESETS_SUBDIR)).map_err(|e| e.to_string())?;
+    write_profile_index_at(root, index).map_err(|e| e.to_string())?;
+    *state = index.clone();
 
     Ok(entry)
 }
 
-/// Ephemeral profile ids used by research scenario tests under `profiles/`.
-///
-/// - `tests/scenario_research_integration_tests.rs` creates `scenario_research` (slug from "Scenario Research Test").
-/// - `src/optimizer/monte_carlo/scenario.rs` uses `scenario_research_{uuid}`.
-///
-/// These are not end-user profiles; cleanup may miss them if a test run aborts.
-fn is_ephemeral_scenario_test_profile_id(id: &str) -> bool {
-    id == "scenario_research" || id.starts_with("scenario_research_")
+/// Retained startup hook. A profile name/prefix cannot prove test ownership;
+/// test fixtures must clean their own isolated roots instead of deleting user data.
+pub fn prune_ephemeral_scenario_test_profiles() -> std::io::Result<()> {
+    prune_ephemeral_scenario_test_profiles_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE)
 }
 
-/// Removes ephemeral scenario-test profiles from `profiles/index.json` and deletes matching
-/// directories under `profiles/`, including orphans not listed in the index.
-pub fn prune_ephemeral_scenario_test_profiles() -> std::io::Result<()> {
-    let profiles_root = Path::new(PROFILES_DIR);
-    let mut index = load_profile_index();
-    let removed_from_index: Vec<String> = index
-        .profiles
-        .iter()
-        .filter(|p| is_ephemeral_scenario_test_profile_id(&p.id))
-        .map(|p| p.id.clone())
-        .collect();
-
-    if !removed_from_index.is_empty() {
-        index
-            .profiles
-            .retain(|p| !is_ephemeral_scenario_test_profile_id(&p.id));
-        if index
-            .default_id
-            .as_deref()
-            .is_some_and(|d| removed_from_index.iter().any(|r| r == d))
-        {
-            index.default_id = index.profiles.first().map(|p| p.id.clone());
-        }
-        save_profile_index(&index)?;
-        info!(
-            ?removed_from_index,
-            "removed ephemeral scenario research test profile(s) from profiles/index.json"
-        );
-    }
-
-    if profiles_root.is_dir() {
-        for entry in fs::read_dir(profiles_root)? {
-            let entry = entry?;
-            if !entry.file_type()?.is_dir() {
-                continue;
-            }
-            let id = entry.file_name().to_string_lossy().into_owned();
-            if is_ephemeral_scenario_test_profile_id(&id) {
-                let path = entry.path();
-                if let Err(e) = fs::remove_dir_all(&path) {
-                    tracing::warn!(path = %path.display(), error = %e, "failed to remove ephemeral scenario test profile directory");
-                } else {
-                    info!(%id, "removed ephemeral scenario research test profile directory");
-                }
-            }
-        }
-    }
-
+fn prune_ephemeral_scenario_test_profiles_at(
+    _profiles_root: &Path,
+    _cache: &OnceLock<Mutex<ProfileIndex>>,
+) -> std::io::Result<()> {
     Ok(())
 }
 
@@ -362,11 +425,18 @@ fn pretty_profile_name_from_id(id: &str) -> String {
 /// on disk. Each newly listed profile gets a **new** sync token; point the STFC Community Mod at
 /// that token if you use sync for that profile.
 pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
-    let profiles_root = Path::new(PROFILES_DIR);
+    sync_profile_index_with_disk_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE)
+}
+
+fn sync_profile_index_with_disk_at(
+    profiles_root: &Path,
+    cache: &OnceLock<Mutex<ProfileIndex>>,
+) -> std::io::Result<()> {
+    let mut state = lock_profile_index_at(profiles_root, cache)?;
+    let mut index = load_profile_index_checked_at(profiles_root)?;
     if !profiles_root.is_dir() {
         return Ok(());
     }
-    let mut index = load_profile_index();
     let indexed: HashSet<String> = index.profiles.iter().map(|p| p.id.clone()).collect();
     let mut added: Vec<String> = Vec::new();
 
@@ -386,9 +456,6 @@ pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
         if indexed.contains(&id) {
             continue;
         }
-        if is_ephemeral_scenario_test_profile_id(&id) {
-            continue;
-        }
         let profile_json = entry.path().join(PROFILE_JSON);
         if !profile_json.is_file() {
             continue;
@@ -405,12 +472,13 @@ pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
     }
 
     if !added.is_empty() {
-        save_profile_index(&index)?;
+        write_profile_index_at(profiles_root, &index)?;
         info!(
             profiles = ?added,
             "registered profile director(ies) that were on disk but missing from profiles/index.json"
         );
     }
+    *state = index;
     Ok(())
 }
 
@@ -422,10 +490,20 @@ pub fn sync_profile_index_with_disk() -> std::io::Result<()> {
 /// (so repo contents are not treated as a shared secret).
 /// Otherwise creates a single [`DEFAULT_PROFILE_ID`] profile via [`ensure_profile`].
 pub fn ensure_profile_index_bootstrap() -> std::io::Result<()> {
-    if Path::new(PROFILE_INDEX_PATH).exists() {
+    ensure_profile_index_bootstrap_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE)
+}
+
+fn ensure_profile_index_bootstrap_at(
+    root: &Path,
+    cache: &OnceLock<Mutex<ProfileIndex>>,
+) -> std::io::Result<()> {
+    let mut state = lock_profile_index_at(root, cache)?;
+    let current = load_profile_index_checked_at(root)?;
+    if root.join("index.json").exists() {
+        *state = current;
         return Ok(());
     }
-    let demo_dir = profile_data_dir(DEMO_PROFILE_ID);
+    let demo_dir = root.join(DEMO_PROFILE_ID);
     let demo_profile_json = demo_dir.join(PROFILE_JSON);
     if demo_dir.is_dir() && demo_profile_json.is_file() {
         let mut index = ProfileIndex::default();
@@ -437,35 +515,213 @@ pub fn ensure_profile_index_bootstrap() -> std::io::Result<()> {
             is_default: None,
         });
         index.default_id = Some(DEMO_PROFILE_ID.to_string());
-        save_profile_index(&index)?;
         fs::create_dir_all(demo_dir.join(PRESETS_SUBDIR))?;
+        write_profile_index_at(root, &index)?;
+        *state = index;
         return Ok(());
     }
+    drop(state);
     let mut index = ProfileIndex::default();
-    ensure_profile(&mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
+    ensure_profile_at(root, cache, &mut index, DEFAULT_PROFILE_ID, Some("Default"))?;
     Ok(())
 }
 
 /// Delete a profile and its data directory.
 pub fn delete_profile(index: &mut ProfileIndex, id: &str) -> Result<(), String> {
+    delete_profile_at(Path::new(PROFILES_DIR), &PROFILE_INDEX_CACHE, index, id)
+}
+
+fn delete_profile_at(
+    root: &Path,
+    cache: &OnceLock<Mutex<ProfileIndex>>,
+    index: &mut ProfileIndex,
+    id: &str,
+) -> Result<(), String> {
+    if id.is_empty() || sanitize_profile_id(id) != id {
+        return Err("Invalid profile id".to_string());
+    }
+    let mut state = lock_profile_index_at(root, cache).map_err(|error| error.to_string())?;
+    *index = load_profile_index_checked_at(root).map_err(|error| error.to_string())?;
     let pos = index
         .profiles
         .iter()
         .position(|p| p.id == id)
         .ok_or_else(|| format!("Profile '{}' not found", id))?;
 
+    let dir = root.join(sanitize_profile_id(id));
+    if dir.exists() {
+        let resolved_root = root.canonicalize().map_err(|e| e.to_string())?;
+        let resolved_dir = dir.canonicalize().map_err(|e| e.to_string())?;
+        if resolved_dir == resolved_root || !resolved_dir.starts_with(&resolved_root) {
+            return Err("Profile directory resolves outside the profiles root".to_string());
+        }
+    }
     index.profiles.remove(pos);
     if index.default_id.as_deref() == Some(id) {
         index.default_id = index.profiles.first().map(|p| p.id.clone());
     }
-    save_profile_index(index).map_err(|e| e.to_string())?;
+    write_profile_index_at(root, index).map_err(|error| error.to_string())?;
+    *state = index.clone();
 
-    let dir = profile_data_dir(id);
     if dir.exists() {
         fs::remove_dir_all(&dir).map_err(|e| e.to_string())?;
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod isolated_persistence_tests {
+    use super::*;
+    struct TempIndex {
+        root: PathBuf,
+        cache: OnceLock<Mutex<ProfileIndex>>,
+    }
+    impl TempIndex {
+        fn new() -> Self {
+            let root =
+                std::env::temp_dir().join(format!("kobayashi-isolated-index-{}", Uuid::new_v4()));
+            fs::create_dir_all(&root).unwrap();
+            Self {
+                root,
+                cache: OnceLock::new(),
+            }
+        }
+    }
+    impl Drop for TempIndex {
+        fn drop(&mut self) {
+            assert!(self.root.is_absolute() && self.root.starts_with(std::env::temp_dir()));
+            assert!(self
+                .root
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("kobayashi-isolated-index-"));
+            let _ = fs::remove_dir_all(&self.root);
+        }
+    }
+    #[test]
+    fn isolated_persistence_index_observes_a_restored_index_without_restart() {
+        let t = TempIndex::new();
+        let mut original = ProfileIndex::default();
+        create_profile_at(&t.root, &t.cache, &mut original, Some("old"), "Original").unwrap();
+        assert_eq!(
+            load_profile_index_at(&t.root, &t.cache).profiles[0].id,
+            "old"
+        );
+        let restored = ProfileIndex {
+            profiles: vec![ProfileEntry {
+                id: "restored".into(),
+                name: "Restored".into(),
+                sync_token: "retained-token".into(),
+                is_default: None,
+            }],
+            default_id: Some("restored".into()),
+        };
+        fs::write(
+            t.root.join("index.json"),
+            serde_json::to_vec(&restored).unwrap(),
+        )
+        .unwrap();
+        let current = load_profile_index_at(&t.root, &t.cache);
+        assert_eq!(
+            profile_id_by_sync_token(&current, "retained-token").as_deref(),
+            Some("restored")
+        );
+    }
+    #[test]
+    fn isolated_persistence_index_creates_do_not_overwrite_a_stale_snapshot() {
+        let t = TempIndex::new();
+        let mut first = load_profile_index_at(&t.root, &t.cache);
+        let mut second = first.clone();
+        create_profile_at(&t.root, &t.cache, &mut first, Some("first"), "First").unwrap();
+        create_profile_at(&t.root, &t.cache, &mut second, Some("second"), "Second").unwrap();
+        let disk = load_profile_index_from_disk_at(&t.root);
+        assert_eq!(disk.profiles.len(), 2);
+    }
+    #[test]
+    fn isolated_persistence_index_delete_preserves_newer_entries() {
+        let t = TempIndex::new();
+        let mut first = ProfileIndex::default();
+        create_profile_at(&t.root, &t.cache, &mut first, Some("first"), "First").unwrap();
+        let mut stale = first.clone();
+        create_profile_at(&t.root, &t.cache, &mut first, Some("second"), "Second").unwrap();
+        delete_profile_at(&t.root, &t.cache, &mut stale, "first").unwrap();
+        assert_eq!(
+            load_profile_index_from_disk_at(&t.root)
+                .profiles
+                .first()
+                .map(|p| p.id.as_str()),
+            Some("second")
+        );
+    }
+    #[test]
+    fn isolated_persistence_index_corruption_is_not_replaced_by_create() {
+        let t = TempIndex::new();
+        let original = b"{broken";
+        fs::write(t.root.join("index.json"), original).unwrap();
+        let result = create_profile_at(
+            &t.root,
+            &t.cache,
+            &mut ProfileIndex::default(),
+            Some("new"),
+            "New",
+        );
+        assert!(result.is_err());
+        assert_eq!(fs::read(t.root.join("index.json")).unwrap(), original);
+    }
+    #[test]
+    fn isolated_persistence_index_corruption_is_not_replaced_by_directory_discovery() {
+        let t = TempIndex::new();
+        let original = b"{broken";
+        fs::write(t.root.join("index.json"), original).unwrap();
+        fs::create_dir(t.root.join("copied")).unwrap();
+        fs::write(t.root.join("copied/profile.json"), b"{}").unwrap();
+        assert!(sync_profile_index_with_disk_at(&t.root, &t.cache).is_err());
+        assert_eq!(fs::read(t.root.join("index.json")).unwrap(), original);
+    }
+    #[test]
+    fn isolated_persistence_startup_never_deletes_a_user_named_scenario_research() {
+        let t = TempIndex::new();
+        let mut index = ProfileIndex::default();
+        let entry = create_profile_at(
+            &t.root,
+            &t.cache,
+            &mut index,
+            None,
+            "Scenario Research Notes",
+        )
+        .unwrap();
+        assert_eq!(entry.id, "scenario_research");
+        let sentinel = t.root.join(&entry.id).join("research.imported.json");
+        fs::write(&sentinel, b"precious user research").unwrap();
+        prune_ephemeral_scenario_test_profiles_at(&t.root, &t.cache).unwrap();
+        assert_eq!(fs::read(&sentinel).unwrap(), b"precious user research");
+        assert_eq!(load_profile_index_from_disk_at(&t.root).profiles.len(), 1);
+    }
+    #[test]
+    fn isolated_persistence_parallel_creates_retain_every_entry() {
+        let t = TempIndex::new();
+        let barrier = std::sync::Barrier::new(8);
+        std::thread::scope(|scope| {
+            for i in 0..8 {
+                let t = &t;
+                let barrier = &barrier;
+                scope.spawn(move || {
+                    barrier.wait();
+                    create_profile_at(
+                        &t.root,
+                        &t.cache,
+                        &mut ProfileIndex::default(),
+                        Some(&format!("p{i}")),
+                        "Same name",
+                    )
+                    .unwrap();
+                });
+            }
+        });
+        assert_eq!(load_profile_index_from_disk_at(&t.root).profiles.len(), 8);
+    }
 }
 
 #[cfg(test)]

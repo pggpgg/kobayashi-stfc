@@ -56,6 +56,10 @@ pub struct BuildingBonusContext {
     pub attacker_tal_assigned_captain_or_bridge: bool,
     /// Resolved player hull class for the simulated attacker ship (Foundry/Science Lab shield_hp, etc.).
     pub attacker_ship_type: Option<ShipType>,
+    /// Native grade-gated bonuses are excluded when the hull grade is unknown.
+    pub attacker_ship_grade: Option<u32>,
+    /// Distinguishes ordinary hostiles from armadas for combat-start building buffs.
+    pub defender_ship_type: Option<ShipType>,
 }
 
 impl Default for BuildingBonusContext {
@@ -67,6 +71,8 @@ impl Default for BuildingBonusContext {
             attacker_faction: BuildingAttackerFaction::Unknown,
             attacker_tal_assigned_captain_or_bridge: false,
             attacker_ship_type: None,
+            attacker_ship_grade: None,
+            defender_ship_type: None,
         }
     }
 }
@@ -340,7 +346,23 @@ fn condition_matches_attacker_ship_type(condition: &str, ship_type: Option<ShipT
 
 fn bonus_matches_context(bonus: &BonusEntry, context: &BuildingBonusContext) -> bool {
     bonus.conditions.iter().all(|condition| {
-        condition_matches_mode(condition, context.mode)
+        let source_gate = match normalize_condition(condition).as_str() {
+            "attacker_ship_grade_at_least_5" => {
+                context.attacker_ship_grade.is_some_and(|grade| grade >= 5)
+            }
+            "defender_is_non_armada_hostile" => {
+                context.defender_opponent == BuildingDefenderOpponent::NpcHostile
+                    && context
+                        .defender_ship_type
+                        .is_some_and(|kind| kind != ShipType::Armada)
+            }
+            // Preserve the verified source row, but do not turn an unresolved
+            // native scope into an unconditional bonus or a guessed hostile gate.
+            "native_condition_57_unverified" => false,
+            _ => true,
+        };
+        source_gate
+            && condition_matches_mode(condition, context.mode)
             && condition_matches_defender(condition, context.defender_opponent)
             && condition_matches_attacker_tal(
                 condition,
@@ -349,6 +371,81 @@ fn bonus_matches_context(bonus: &BonusEntry, context: &BuildingBonusContext) -> 
             && condition_matches_attacker_faction(condition, context.attacker_faction)
             && condition_matches_attacker_ship_type(condition, context.attacker_ship_type)
     })
+}
+
+#[cfg(test)]
+mod client_critical_semantics_tests {
+    use super::*;
+
+    #[test]
+    fn court_of_q_preserves_native_flat_units_and_quarantines_unknown_scope() {
+        let court = load_building_record(Path::new("data/buildings"), "building_75").unwrap();
+        let context = BuildingBonusContext {
+            ops_level: Some(61),
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::NpcHostile,
+            attacker_ship_type: Some(ShipType::Explorer),
+            attacker_ship_grade: Some(1),
+            defender_ship_type: Some(ShipType::Explorer),
+            ..Default::default()
+        };
+        let hostile = cumulative_building_level_bonuses_with_context(&court, 60, &context);
+        assert!(!hostile.contains_key("crit_damage"));
+        assert!(!hostile.contains_key("crit_damage_flat"));
+        let player = cumulative_building_level_bonuses_with_context(
+            &court,
+            60,
+            &BuildingBonusContext {
+                defender_opponent: BuildingDefenderOpponent::PlayerShip,
+                ..context
+            },
+        );
+        assert_eq!(player.get("crit_damage_flat"), Some(&2.5));
+        assert!(!player.contains_key("crit_damage"));
+    }
+
+    #[test]
+    fn signal_observatory_requires_g5_fkr_and_non_armada_hostile() {
+        let signal = load_building_record(Path::new("data/buildings"), "building_86").unwrap();
+        let context = BuildingBonusContext {
+            ops_level: Some(61),
+            mode: BuildingMode::ShipCombat,
+            defender_opponent: BuildingDefenderOpponent::NpcHostile,
+            attacker_faction: BuildingAttackerFaction::Federation,
+            attacker_ship_type: Some(ShipType::Explorer),
+            attacker_ship_grade: Some(5),
+            defender_ship_type: Some(ShipType::Explorer),
+            ..Default::default()
+        };
+        let eligible = cumulative_building_level_bonuses_with_context(&signal, 36, &context);
+        assert_eq!(eligible.get("crit_damage_flat"), Some(&0.43));
+        assert!(!eligible.contains_key("crit_damage"));
+        for excluded in [
+            BuildingBonusContext {
+                attacker_ship_grade: Some(1),
+                ..context
+            },
+            BuildingBonusContext {
+                attacker_ship_grade: None,
+                ..context
+            },
+            BuildingBonusContext {
+                attacker_faction: BuildingAttackerFaction::Unknown,
+                ..context
+            },
+            BuildingBonusContext {
+                defender_ship_type: Some(ShipType::Armada),
+                ..context
+            },
+            BuildingBonusContext {
+                defender_ship_type: None,
+                ..context
+            },
+        ] {
+            let bonuses = cumulative_building_level_bonuses_with_context(&signal, 36, &excluded);
+            assert!(!bonuses.contains_key("crit_damage_flat"), "{excluded:?}");
+        }
+    }
 }
 
 /// Maximum level defined in this building record (highest level in `levels`).
@@ -560,6 +657,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: None,
+                ..Default::default()
             },
         );
         assert_eq!(out.get("weapon_damage"), Some(&0.05));
@@ -579,6 +677,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: None,
+                ..Default::default()
             },
         );
         assert_eq!(out.get("shield_hp"), Some(&0.10));
@@ -606,6 +705,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: None,
+                ..Default::default()
             },
         );
         let hull = out.get("hull_hp").copied().unwrap_or_default();
@@ -654,6 +754,7 @@ mod tests {
             attacker_faction: BuildingAttackerFaction::Unknown,
             attacker_tal_assigned_captain_or_bridge: false,
             attacker_ship_type: None,
+            ..Default::default()
         };
         let player_with_tal_ctx = BuildingBonusContext {
             ops_level: Some(1),
@@ -662,6 +763,7 @@ mod tests {
             attacker_faction: BuildingAttackerFaction::Unknown,
             attacker_tal_assigned_captain_or_bridge: true,
             attacker_ship_type: None,
+            ..Default::default()
         };
         let player_without_tal_ctx = BuildingBonusContext {
             ops_level: Some(1),
@@ -670,6 +772,7 @@ mod tests {
             attacker_faction: BuildingAttackerFaction::Unknown,
             attacker_tal_assigned_captain_or_bridge: false,
             attacker_ship_type: None,
+            ..Default::default()
         };
         let hostile_out = cumulative_building_level_bonuses_with_context(&record, 1, &hostile_ctx);
         assert_eq!(hostile_out.get("crit_damage"), Some(&0.1));
@@ -732,6 +835,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: Some(ShipType::Battleship),
+                ..Default::default()
             },
         );
         assert_eq!(bb.get("shield_hp"), Some(&1.8));
@@ -746,6 +850,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: Some(ShipType::Explorer),
+                ..Default::default()
             },
         );
         assert_eq!(ex.get("shield_hp"), Some(&1.8));
@@ -767,6 +872,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: Some(ShipType::Interceptor),
+                ..Default::default()
             },
         );
         assert_eq!(interceptor.get("shield_hp"), Some(&1.8));
@@ -808,6 +914,7 @@ mod tests {
                     attacker_faction: faction,
                     attacker_tal_assigned_captain_or_bridge: false,
                     attacker_ship_type: None,
+                    ..Default::default()
                 },
             );
             assert_eq!(out.get("hull_hp"), Some(&0.12));
@@ -823,6 +930,7 @@ mod tests {
                 attacker_faction: BuildingAttackerFaction::Unknown,
                 attacker_tal_assigned_captain_or_bridge: false,
                 attacker_ship_type: None,
+                ..Default::default()
             },
         );
         assert!(!out_unknown.contains_key("hull_hp"));

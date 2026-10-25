@@ -28,13 +28,14 @@ use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
-    apply_profile_accuracy_to_attacker_stats, apply_profile_to_attacker,
+    apply_profile_piercing_to_attacker_stats, apply_profile_to_attacker,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
     forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
-    merge_building_bonuses_into_profile, merge_research_bonuses_into_profile,
-    merge_tech_fids_into_profile_with_level_tier,
-    quantum_slipstream_forbidden_tech_round_start_seats, research_derived_attack_phase_seats,
+    merge_building_bonuses_with_native_snapshot, merge_research_bonuses_into_profile,
+    merge_ship_setup_research_bonuses_into_profile, merge_tech_fids_into_profile_with_level_tier,
+    quantum_slipstream_forbidden_tech_round_start_seats,
+    replace_research_setup_bonuses_with_native_snapshot, research_derived_attack_phase_seats,
     research_levels_by_rid_from_import, resolve_effective_tech_fids,
     ship_class_gated_torpedo_family_derived_seats,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
@@ -43,7 +44,7 @@ use crate::data::profile::{
     SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
-    self, profile_path, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
+    self, profile_path, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
     RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research::{
@@ -340,7 +341,7 @@ fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
 }
 
 /// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
-/// accuracy multiplier, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
+/// piercing-stat multipliers, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
 /// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
 pub(crate) fn effective_attacker_stats_for_mitigation(
     ship_rec: &ShipRecord,
@@ -349,12 +350,13 @@ pub(crate) fn effective_attacker_stats_for_mitigation(
     defender_ship_type: ShipType,
 ) -> AttackerStats {
     let mut s = ship_rec.to_attacker_stats();
-    apply_profile_accuracy_to_attacker_stats(&mut s, profile);
+    apply_profile_piercing_to_attacker_stats(&mut s, profile, ship_rec.faction.as_deref());
+    s.accuracy *= 1.0
+        + crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
+            ship_rec.abilities.as_deref().unwrap_or(&[]),
+            defender_ship_type,
+        );
     s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
-    s.accuracy += crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
-        ship_rec.abilities.as_deref().unwrap_or(&[]),
-        defender_ship_type,
-    );
     let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
     if cbm.is_finite() && cbm > 0.0 {
         s.accuracy *= cbm;
@@ -363,7 +365,7 @@ pub(crate) fn effective_attacker_stats_for_mitigation(
 }
 
 /// Merge optional per-weapon piercing/accuracy from [`crate::data::ship::WeaponRecord`] with tier
-/// aggregates, then apply the same accuracy bonuses as [`effective_attacker_stats_for_mitigation`].
+/// aggregates, then apply the same piercing bonuses as [`effective_attacker_stats_for_mitigation`].
 fn effective_attacker_stats_for_ship_weapon_row(
     ship_rec: &ShipRecord,
     row: Option<&crate::data::ship::WeaponRecord>,
@@ -381,12 +383,13 @@ fn effective_attacker_stats_for_ship_weapon_row(
     } else {
         base
     };
-    apply_profile_accuracy_to_attacker_stats(&mut s, profile);
+    apply_profile_piercing_to_attacker_stats(&mut s, profile, ship_rec.faction.as_deref());
+    s.accuracy *= 1.0
+        + crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
+            ship_rec.abilities.as_deref().unwrap_or(&[]),
+            defender_ship_type,
+        );
     s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
-    s.accuracy += crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
-        ship_rec.abilities.as_deref().unwrap_or(&[]),
-        defender_ship_type,
-    );
     let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
     if cbm.is_finite() && cbm > 0.0 {
         s.accuracy *= cbm;
@@ -506,6 +509,64 @@ pub(crate) fn mitigation_and_pierce_for_player_vs_hostile(
     (defender_mitigation, pierce)
 }
 
+fn player_inbound_mitigation_params(
+    ship_rec: &ShipRecord,
+    hostile_rec: &HostileRecord,
+) -> HostileMitigationParams {
+    HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: ship_rec.to_defender_stats(),
+        base_attacker_stats: hostile_rec.to_attacker_stats(),
+        base_attacker_weapon_stats: hostile_rec.counter_weapon_attacker_stats(),
+        ship_type: ship_rec.ship_type(),
+        mystery_mitigation_factor: 0.0,
+        floor: MITIGATION_FLOOR,
+        ceiling: MITIGATION_CEILING,
+    }
+}
+
+fn player_inbound_mitigation_params_from_shared(
+    ship_rec: &ShipRecord,
+    shared: &SharedScenarioData,
+) -> Option<HostileMitigationParams> {
+    if let Some(hostile_rec) = shared.hostile_rec.as_ref() {
+        return Some(player_inbound_mitigation_params(ship_rec, hostile_rec));
+    }
+    let opponent = shared.defender_ship_rec.as_ref()?;
+    let profile = shared.defender_profile.as_ref()?;
+    let stats = effective_attacker_stats_for_mitigation(
+        opponent,
+        profile,
+        &shared.player_defender_static_buffs,
+        ship_rec.ship_type(),
+    );
+    let weapons = opponent
+        .weapons
+        .as_deref()
+        .unwrap_or(&[])
+        .iter()
+        .map(|row| {
+            effective_attacker_stats_for_ship_weapon_row(
+                opponent,
+                Some(row),
+                profile,
+                &shared.player_defender_static_buffs,
+                ship_rec.ship_type(),
+            )
+        })
+        .collect();
+    Some(HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: ship_rec.to_defender_stats(),
+        base_attacker_stats: stats,
+        base_attacker_weapon_stats: weapons,
+        ship_type: ship_rec.ship_type(),
+        mystery_mitigation_factor: 0.0,
+        floor: MITIGATION_FLOOR,
+        ceiling: MITIGATION_CEILING,
+    })
+}
+
 /// Outbound mitigation and pierce for player attacker vs player defender ship (no hostile mystery factor).
 pub fn mitigation_and_pierce_for_player_vs_player(
     attacker_ship: &ShipRecord,
@@ -619,13 +680,13 @@ fn defender_combatant_from_ship_record(
         damage_reduction: 0.0,
         pierce,
         crit_chance: defender_ship.crit_chance,
-        crit_multiplier: defender_ship.crit_damage,
+        crit_multiplier: defender_ship.combat_crit_multiplier(),
         crit_damage_floor: 0.0,
         proc_chance: 0.0,
         proc_multiplier: 1.0,
         end_of_round_damage: 0.0,
-        hull_health: defender_ship.hull_health,
-        shield_health: defender_ship.shield_health,
+        hull_health: defender_ship.health_with_launch_bonuses().0,
+        shield_health: defender_ship.health_with_launch_bonuses().1,
         shield_mitigation: defender_ship.shield_mitigation.unwrap_or(0.8),
         apex_barrier: 0.0,
         apex_shred: defender_ship.apex_shred,
@@ -691,8 +752,9 @@ fn defender_combatant_from_hostile_record(
     };
     let pierce = hostile_rec.counter_pierce_damage_through_bonus(player_ship_type, player_defender);
     let crit_chance = hostile_rec.crit_chance.clamp(0.0, 1.0);
-    let crit_multiplier = if hostile_rec.crit_damage.is_finite() && hostile_rec.crit_damage > 0.0 {
-        hostile_rec.crit_damage
+    let native_crit_multiplier = hostile_rec.combat_crit_multiplier();
+    let crit_multiplier = if native_crit_multiplier.is_finite() && native_crit_multiplier > 0.0 {
+        native_crit_multiplier
     } else {
         1.0
     };
@@ -845,6 +907,11 @@ pub(crate) struct SharedScenarioData {
     pub applied_defender_alliance_debuffs: Vec<AppliedSupportBuffTrace>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
+    /// Native CombatStart defense buffs, distinct from launch-time profile pools.
+    pub native_defense_derived_seats: Vec<CrewSeatContext>,
+    /// Selects native integer defense rounding only when active native source
+    /// rows contribute to the launch or CombatStart defense pools.
+    pub native_defense_rounding: bool,
     /// Borg Alcove attack-phase crit seats, Quantum Slipstream round-start debuff, ship-class torpedo family
     /// (S31 / Control Seeker / Dual Photon) combat-begin / attack-phase seats; hull extras via
     /// [`Self::borg_alcove_hull_hp_bonus`] and [`Self::class_gated_torpedo_family_hull_hp_bonus`].
@@ -1227,13 +1294,13 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 damage_reduction: 0.0,
                 pierce,
                 crit_chance: ship_rec.crit_chance,
-                crit_multiplier: ship_rec.crit_damage,
+                crit_multiplier: ship_rec.combat_crit_multiplier(),
                 crit_damage_floor: 0.0,
                 proc_chance,
                 proc_multiplier,
                 end_of_round_damage: 0.0,
-                hull_health: ship_rec.hull_health,
-                shield_health: ship_rec.shield_health,
+                hull_health: ship_rec.health_with_launch_bonuses().0,
+                shield_health: ship_rec.health_with_launch_bonuses().1,
                 shield_mitigation: ship_rec.shield_mitigation.unwrap_or(0.8),
                 apex_barrier: 0.0,
                 apex_shred: ship_rec.apex_shred,
@@ -1266,7 +1333,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                         })
                         .unwrap_or_else(|| ship_rec.to_weapons())
                 },
-                hostile_mitigation_params: None,
+                hostile_mitigation_params: player_inbound_mitigation_params_from_shared(
+                    ship_rec, shared,
+                ),
             },
             &shared.profile,
             ship_rec.faction.as_deref(),
@@ -1286,6 +1355,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 },
             ),
         );
+        if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
+            params.round_native_defense_stats = shared.native_defense_rounding;
+        }
         if shared.ship == USS_VOYAGER_SHIP_ID {
             if let Some(h) = shared.borg_alcove_hull_hp_bonus {
                 if h.is_finite() && h != 0.0 {
@@ -1322,6 +1394,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             &mut seats,
             &shared.research_derived_seats,
         );
+        seats.extend_from_slice(&shared.native_defense_derived_seats);
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
             &shared.forbidden_tech_derived_seats,
@@ -1438,6 +1511,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
         crate::data::profile::OfficerStatRuntimeBonus::default(),
     );
+    if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
+        params.round_native_defense_stats = shared.native_defense_rounding;
+    }
     if shared.ship == USS_VOYAGER_SHIP_ID {
         if let Some(h) = shared.borg_alcove_hull_hp_bonus {
             if h.is_finite() && h != 0.0 {
@@ -1475,6 +1551,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         &mut seats,
         &shared.research_derived_seats,
     );
+    seats.extend_from_slice(&shared.native_defense_derived_seats);
     extend_crew_with_research_derived_attack_phase_seats(
         &mut seats,
         &shared.forbidden_tech_derived_seats,
@@ -1701,8 +1778,10 @@ fn enrich_hostile_defender_for_scenario(
     );
     defender.mitigation = defender_mitigation;
     defender.hostile_mitigation_params = Some(HostileMitigationParams {
+        round_native_defense_stats: false,
         defender_stats: scaled_stats,
         base_attacker_stats,
+        base_attacker_weapon_stats: Vec::new(),
         ship_type: hostile_rec.ship_type_for_combat(),
         mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
         floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
@@ -2054,13 +2133,13 @@ pub(crate) fn scenario_to_combat_input(
                 damage_reduction: 0.0,
                 pierce,
                 crit_chance: ship_rec.crit_chance,
-                crit_multiplier: ship_rec.crit_damage,
+                crit_multiplier: ship_rec.combat_crit_multiplier(),
                 crit_damage_floor: 0.0,
                 proc_chance,
                 proc_multiplier,
                 end_of_round_damage: 0.0,
-                hull_health: ship_rec.hull_health,
-                shield_health: ship_rec.shield_health,
+                hull_health: ship_rec.health_with_launch_bonuses().0,
+                shield_health: ship_rec.health_with_launch_bonuses().1,
                 shield_mitigation: ship_rec.shield_mitigation.unwrap_or(0.8),
                 apex_barrier: 0.0,
                 apex_shred: ship_rec.apex_shred,
@@ -2072,7 +2151,10 @@ pub(crate) fn scenario_to_combat_input(
                     profile,
                     &static_buffs,
                 ),
-                hostile_mitigation_params: None,
+                hostile_mitigation_params: Some(player_inbound_mitigation_params(
+                    &ship_rec,
+                    &hostile_rec,
+                )),
             },
             profile,
             ship_rec.faction.as_deref(),
@@ -2548,7 +2630,28 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     let ship_rec = resolve_ship(ship);
     let hostile_rec = resolve_hostile(hostile);
+    if let Some(ref cat) = shared_research_catalog {
+        merge_ship_setup_research_bonuses_into_profile(
+            &mut profile,
+            &imported_research,
+            cat,
+            Some(&exclude_canonical_rids),
+            ship_rec.as_ref().and_then(|s| s.grade),
+            ship_rec
+                .as_ref()
+                .and_then(|s| ShipType::from_data_slug(&s.ship_class)),
+        );
+    }
 
+    merge_native_research_bonuses(
+        &mut profile,
+        &pid,
+        ship_rec.as_ref(),
+        &imported_research,
+        shared_research_catalog.as_ref(),
+        Some(&exclude_canonical_rids),
+    );
+    merge_native_consumable_bonuses(&mut profile, &pid, ship_rec.as_ref());
     let class_gated_tp_hull = forbidden_catalog.as_ref().and_then(|cat| {
         if effective_fids.is_empty() {
             return None;
@@ -2600,7 +2703,11 @@ pub(crate) fn build_shared_scenario_data_standalone(
         cached_defender_mitigation,
     ) = if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
         let mut attacker_stats = ship_r.to_attacker_stats();
-        apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, &profile);
+        apply_profile_piercing_to_attacker_stats(
+            &mut attacker_stats,
+            &profile,
+            ship_r.faction.as_deref(),
+        );
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
@@ -2666,6 +2773,9 @@ pub(crate) fn build_shared_scenario_data_standalone(
         &resolve_options,
     );
 
+    let (native_defense_derived_seats, native_defense_rounding) =
+        native_defense_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -2694,6 +2804,8 @@ pub(crate) fn build_shared_scenario_data_standalone(
         applied_defender_support_buffs: vec![],
         applied_defender_alliance_debuffs: vec![],
         research_derived_seats,
+        native_defense_derived_seats,
+        native_defense_rounding,
         forbidden_tech_derived_seats,
         borg_alcove_hull_hp_bonus,
         class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
@@ -2719,11 +2831,134 @@ pub(crate) fn build_shared_scenario_data_standalone(
     }
 }
 
+fn merge_native_research_bonuses(
+    profile: &mut PlayerProfile,
+    pid: &str,
+    ship: Option<&ShipRecord>,
+    research: &[import::ResearchEntry],
+    catalog: Option<&crate::data::research::ResearchCatalog>,
+    excluded: Option<&HashSet<i64>>,
+) {
+    let Some(catalog) = catalog else {
+        return;
+    };
+    let imported =
+        import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
+            .unwrap_or_default();
+    if let Some(native) = crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+        &imported,
+        ship.map(|ship| ship.ship_class.as_str()),
+        chrono::Utc::now().timestamp(),
+    ) {
+        replace_research_setup_bonuses_with_native_snapshot(
+            profile,
+            research,
+            catalog,
+            excluded,
+            ship.and_then(|s| s.grade),
+            ship.and_then(|s| ShipType::from_data_slug(&s.ship_class)),
+            &native,
+        );
+    }
+}
+
+/// Add reviewed native consumable setup buffs once for the selected hull.
+fn merge_native_consumable_bonuses(
+    profile: &mut PlayerProfile,
+    pid: &str,
+    ship: Option<&ShipRecord>,
+) {
+    let imported =
+        import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
+            .unwrap_or_default();
+    for (stat, value) in crate::data::native_consumable_buffs::bonuses_for_imported_buffs(
+        &imported,
+        ship.map(|ship| ship.ship_class.as_str()),
+        chrono::Utc::now().timestamp(),
+    ) {
+        *profile.bonuses.entry(stat).or_insert(0.0) += value;
+    }
+}
+
+fn native_building_bonuses_for_profile(
+    pid: &str,
+    ship_id: &str,
+    syndicate_level: Option<u32>,
+) -> Option<HashMap<String, f64>> {
+    let imported =
+        import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
+            .unwrap_or_default();
+    let ship = resolve_ship(ship_id);
+    crate::data::native_building_buffs::building_bonuses_for_imported_buffs(
+        &imported,
+        ship.as_ref().map(|ship| ship.ship_class.as_str()),
+        syndicate_level,
+        chrono::Utc::now().timestamp(),
+    )
+}
+
+/// Resolve source membership and ranks once per scenario, outside crew search.
+/// Opponent and combat-start gates remain typed conditions on the resulting seats.
+fn native_defense_seats_for_profile(
+    pid: &str,
+    ship: Option<&ShipRecord>,
+    syndicate_level: Option<u32>,
+) -> (Vec<CrewSeatContext>, bool) {
+    let imported =
+        import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
+            .unwrap_or_default();
+    let ship_class = ship.map(|ship| ship.ship_class.as_str());
+    let now = chrono::Utc::now().timestamp();
+    let mut seats =
+        crate::data::native_research_buffs::combat_start_defense_seats_for_imported_buffs(
+            &imported, ship_class, now,
+        );
+    seats.extend(
+        crate::data::native_building_buffs::combat_start_defense_seats_for_imported_buffs(
+            &imported, ship_class, now,
+        ),
+    );
+    seats.extend(
+        crate::data::native_consumable_buffs::combat_start_defense_seats_for_imported_buffs(
+            &imported, ship_class, now,
+        ),
+    );
+    let has_defense_pool = |bonuses: &HashMap<String, f64>| {
+        ["armor", "shield_deflection", "dodge"].iter().any(|stat| {
+            bonuses
+                .get(*stat)
+                .is_some_and(|value| value.is_finite() && *value != 0.0)
+        })
+    };
+    let launch_source_present =
+        crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+            &imported, ship_class, now,
+        )
+        .as_ref()
+        .is_some_and(has_defense_pool)
+            || crate::data::native_building_buffs::building_bonuses_for_imported_buffs(
+                &imported,
+                ship_class,
+                syndicate_level,
+                now,
+            )
+            .as_ref()
+            .is_some_and(has_defense_pool)
+            || has_defense_pool(
+                &crate::data::native_consumable_buffs::bonuses_for_imported_buffs(
+                    &imported, ship_class, now,
+                ),
+            );
+    let rounding = launch_source_present || !seats.is_empty();
+    (seats, rounding)
+}
+
 /// Merge buildings, research, and forbidden tech into a profile for PvP defender-side stats.
 fn load_defender_profile_for_pvp(
     registry: &crate::data::data_registry::DataRegistry,
     defender_profile_id: &str,
     defender_ship_id: &str,
+    defender_ship_grade: Option<u32>,
 ) -> (PlayerProfile, f64, u32) {
     let pid = profile_index::resolve_profile_id_for_api(Some(defender_profile_id));
     let profile_path_str = profile_path(&pid, PROFILE_JSON)
@@ -2777,17 +3012,25 @@ fn load_defender_profile_for_pvp(
                         attacker_tal_assigned_captain_or_bridge: false,
                         attacker_ship_type: resolve_ship(defender_ship_id)
                             .map(|s| ship_class_to_type(&s.ship_class)),
+                        attacker_ship_grade: resolve_ship(defender_ship_id).and_then(|s| s.grade),
+                        defender_ship_type: None,
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
                         .unwrap_or_else(|| Path::new("data/buildings"));
-                    merge_building_bonuses_into_profile(
+                    let native = native_building_bonuses_for_profile(
+                        &pid,
+                        defender_ship_id,
+                        profile.syndicate_level,
+                    );
+                    merge_building_bonuses_with_native_snapshot(
                         &mut profile,
                         &imported_buildings,
                         &bid_to_id,
                         &building_index,
                         data_dir,
                         &building_context,
+                        native.as_ref(),
                     );
                 }
             }
@@ -2808,7 +3051,30 @@ fn load_defender_profile_for_pvp(
             catalog,
             Some(&exclude_canonical_rids),
         );
+        merge_ship_setup_research_bonuses_into_profile(
+            &mut profile,
+            &imported_research,
+            catalog,
+            Some(&exclude_canonical_rids),
+            defender_ship_grade,
+            registry
+                .resolve_ship(defender_ship_id)
+                .and_then(|s| ShipType::from_data_slug(&s.ship_class)),
+        );
     }
+    merge_native_research_bonuses(
+        &mut profile,
+        &pid,
+        registry.resolve_ship(defender_ship_id).as_ref(),
+        &imported_research,
+        registry.research_catalog(),
+        Some(&exclude_canonical_rids),
+    );
+    merge_native_consumable_bonuses(
+        &mut profile,
+        &pid,
+        registry.resolve_ship(defender_ship_id).as_ref(),
+    );
     (
         profile,
         incoming_shield_mitigation_bonus,
@@ -2938,17 +3204,28 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                         attacker_tal_assigned_captain_or_bridge: false,
                         attacker_ship_type: resolve_ship(ship)
                             .map(|s| ship_class_to_type(&s.ship_class)),
+                        attacker_ship_grade: resolve_ship(ship).and_then(|s| s.grade),
+                        defender_ship_type: if defender_opponent == DefenderOpponent::Hostile {
+                            registry
+                                .resolve_hostile(hostile)
+                                .map(|h| h.ship_type_for_combat())
+                        } else {
+                            None
+                        },
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
                         .unwrap_or_else(|| Path::new("data/buildings"));
-                    merge_building_bonuses_into_profile(
+                    let native =
+                        native_building_bonuses_for_profile(&pid, ship, profile.syndicate_level);
+                    merge_building_bonuses_with_native_snapshot(
                         &mut profile,
                         &imported_buildings,
                         &bid_to_id,
                         &building_index,
                         data_dir,
                         &building_context,
+                        native.as_ref(),
                     );
                 }
             }
@@ -3060,6 +3337,27 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         ship_level,
         &imported_ships,
     );
+    if let Some(cat) = registry.research_catalog() {
+        merge_ship_setup_research_bonuses_into_profile(
+            &mut profile,
+            &imported_research,
+            cat,
+            Some(&exclude_canonical_rids),
+            ship_rec.as_ref().and_then(|s| s.grade),
+            ship_rec
+                .as_ref()
+                .and_then(|s| ShipType::from_data_slug(&s.ship_class)),
+        );
+    }
+    merge_native_research_bonuses(
+        &mut profile,
+        &pid,
+        ship_rec.as_ref(),
+        &imported_research,
+        registry.research_catalog(),
+        Some(&exclude_canonical_rids),
+    );
+    merge_native_consumable_bonuses(&mut profile, &pid, ship_rec.as_ref());
     let hostile_rec = if pvp.is_some() {
         None
     } else {
@@ -3086,6 +3384,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             registry,
             &pvp_cfg.defender_profile_id,
             &pvp_cfg.defender_ship,
+            def_rec.as_ref().and_then(|s| s.grade),
         );
         (def_rec, Some(def_prof), ism, ismr)
     } else {
@@ -3211,7 +3510,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         )
     } else if let (Some(ref ship_r), Some(ref hostile_r)) = (&ship_rec, &hostile_rec) {
         let mut attacker_stats = ship_r.to_attacker_stats();
-        apply_profile_accuracy_to_attacker_stats(&mut attacker_stats, &profile);
+        apply_profile_piercing_to_attacker_stats(
+            &mut attacker_stats,
+            &profile,
+            ship_r.faction.as_deref(),
+        );
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
@@ -3291,6 +3594,9 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .map(|p| p.defender_ship.clone())
         .unwrap_or_else(|| hostile.to_string());
 
+    let (native_defense_derived_seats, native_defense_rounding) =
+        native_defense_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: scenario_hostile_key,
@@ -3319,6 +3625,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         applied_defender_support_buffs: pvp_sidecar.applied_defender_support,
         applied_defender_alliance_debuffs: pvp_sidecar.applied_alliance_debuffs,
         research_derived_seats,
+        native_defense_derived_seats,
+        native_defense_rounding,
         forbidden_tech_derived_seats,
         borg_alcove_hull_hp_bonus,
         class_gated_torpedo_family_hull_hp_bonus: class_gated_tp_hull,
@@ -3374,7 +3682,10 @@ mod tests {
     use crate::data::forbidden_chaos::{ForbiddenChaosList, ForbiddenChaosRecord};
     use crate::data::hostile::load_hostile_record;
     use crate::data::import::BuildingEntry;
-    use crate::data::profile::merge_tech_fids_into_profile_with_level_tier;
+    use crate::data::profile::{
+        merge_ship_grade_research_bonuses_into_profile,
+        merge_tech_fids_into_profile_with_level_tier,
+    };
     use crate::data::profile_index::{
         create_profile, delete_profile, load_profile_index, profile_path, PROFILE_JSON,
         RESEARCH_IMPORTED,
@@ -3499,6 +3810,7 @@ mod tests {
                     stat: "weapon_damage".into(),
                     value: 0.10,
                     operator: "mult".into(),
+                    ..Default::default()
                 }],
             }],
         };
@@ -3538,6 +3850,253 @@ mod tests {
     }
 
     #[test]
+    fn direct_hit_research_is_applied_by_registry_scenario_and_pvp_defender() {
+        // An isolated on-disk sync payload exercises the same path as the API.
+        // It needs no profile-index entry and never edits an existing player.
+        struct TestProfile(std::path::PathBuf, std::path::PathBuf);
+        impl Drop for TestProfile {
+            fn drop(&mut self) {
+                let target = self.0.canonicalize().expect("test profile directory");
+                assert!(target.starts_with(&self.1));
+                assert!(target
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .starts_with("test-grade-"));
+                fs::remove_dir_all(target).expect("remove isolated test profile");
+            }
+        }
+        let pid = format!("test-grade-{}", uuid::Uuid::new_v4());
+        let dir = profile_index::profile_data_dir(&pid);
+        fs::create_dir_all(&dir).unwrap();
+        let _cleanup = TestProfile(dir.clone(), dir.parent().unwrap().canonicalize().unwrap());
+        fs::write(
+            dir.join(RESEARCH_IMPORTED),
+            r#"{"research":[{"rid":2999437,"level":2},
+                {"rid":2047743532,"level":2},{"rid":535909811,"level":2},
+                {"rid":1233598019,"level":2},{"rid":3288570685,"level":2},
+                {"rid":851540444,"level":1}]}"#,
+        )
+        .unwrap();
+        let registry = DataRegistry::load().unwrap();
+        let hostile = "2918121098";
+        for (ship_id, expected) in [("uss_enterprise", 0.0), ("uss_enterprise_a", 0.24)] {
+            let registered = build_shared_scenario_data_from_registry(
+                registry.as_ref(),
+                ship_id,
+                hostile,
+                Some(1),
+                Some(1),
+                Some(&pid),
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            );
+            let def_grade = registered.ship_rec.as_ref().unwrap().grade;
+            let (def_profile, _, _) =
+                load_defender_profile_for_pvp(registry.as_ref(), &pid, ship_id, def_grade);
+            for profile in [&registered.profile, &def_profile] {
+                for stat in ["armor_piercing", "shield_piercing", "accuracy"] {
+                    assert!(
+                        (profile.bonuses.get(stat).copied().unwrap_or(0.0) - expected).abs() < 1e-9,
+                        "{ship_id}: {stat} must apply once at the selected rank"
+                    );
+                }
+                assert!(!profile.bonuses.contains_key("pierce"));
+                for runtime_only in [
+                    "base_mitigation_stats_bonus",
+                    "officer_shield_regen_max_fraction",
+                ] {
+                    assert!(!profile.bonuses.contains_key(runtime_only));
+                }
+            }
+            let input = scenario_to_combat_input_from_shared(
+                &registered,
+                &CrewCandidate {
+                    captain: String::new(),
+                    bridge: vec![],
+                    below_decks: vec![],
+                },
+                7,
+            );
+            let raw = input.attacker.hostile_mitigation_params.as_ref().unwrap();
+            let ship_stats = registered.ship_rec.as_ref().unwrap().to_defender_stats();
+            assert_eq!(raw.defender_stats.armor, ship_stats.armor);
+            assert_eq!(
+                raw.defender_stats.shield_deflection,
+                ship_stats.shield_deflection
+            );
+            assert_eq!(raw.defender_stats.dodge, ship_stats.dodge);
+            assert_eq!(
+                raw.base_attacker_weapon_stats.len(),
+                input.defender.weapons.len()
+            );
+            let research = &registered.research_derived_seats;
+            assert_eq!(
+                research.len(),
+                4,
+                "cargo exclusion must not create a combat seat"
+            );
+            let defense: Vec<_> = research
+                .iter()
+                .filter(|seat| {
+                    matches!(
+                        seat.ability.effect,
+                        AbilityEffect::BaseMitigationStatsBonus(v) if v == 0.75
+                    )
+                })
+                .collect();
+            assert_eq!(defense.len(), 3);
+            for gate in [
+                AbilityCondition::DefenderBurning,
+                AbilityCondition::MoraleActive,
+                AbilityCondition::DefenderHullBreach,
+            ] {
+                assert!(defense
+                    .iter()
+                    .any(|seat| seat.ability.condition == Some(gate.clone())));
+            }
+            assert!(research
+                .iter()
+                .all(|seat| { seat.ability.timing == crate::combat::TimingWindow::RoundStart }));
+            assert!(research.iter().any(|seat| matches!(
+                seat.ability.effect,
+                AbilityEffect::ShieldRegenMaxFraction(v) if v == 0.015
+            )));
+            assert_eq!(
+                input
+                    .crew
+                    .seats
+                    .iter()
+                    .filter(|seat| matches!(
+                        seat.ability.effect,
+                        AbilityEffect::BaseMitigationStatsBonus(_)
+                            | AbilityEffect::ShieldRegenMaxFraction(_)
+                    ))
+                    .count(),
+                4,
+                "the registry-to-combat path must preserve each research effect exactly once"
+            );
+        }
+    }
+
+    #[test]
+    fn direct_hit_research_selects_rank_and_gates_all_three_stats_by_ship_grade() {
+        let catalog =
+            load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH).expect("bundled research catalog");
+        for (rank, bonus) in [(0, 0.0), (1, 0.21), (2, 0.24), (10, 0.80), (99, 0.80)] {
+            let imported = [import::ResearchEntry {
+                rid: 2_999_437,
+                level: rank,
+            }];
+            for grade in [None, Some(3), Some(4), Some(5)] {
+                let mut profile = PlayerProfile::default();
+                merge_research_bonuses_into_profile(&mut profile, &imported, &catalog, None);
+                assert!(
+                    profile.bonuses.is_empty(),
+                    "grade restrictions must not enter flat merge"
+                );
+                merge_ship_grade_research_bonuses_into_profile(
+                    &mut profile,
+                    &imported,
+                    &catalog,
+                    None,
+                    grade,
+                );
+                let eligible = grade.is_some_and(|g| g >= 4);
+                let multiplier = 1.0 + if eligible { bonus } else { 0.0 };
+                let ship = ShipRecord {
+                    grade,
+                    armor_piercing: 100.0,
+                    shield_piercing: 250.0,
+                    accuracy: 400.0,
+                    ..Default::default()
+                };
+                let stats = effective_attacker_stats_for_mitigation(
+                    &ship,
+                    &profile,
+                    &HashMap::new(),
+                    ShipType::Battleship,
+                );
+                assert!((stats.armor_piercing - 100.0 * multiplier).abs() < 1e-9);
+                assert!((stats.shield_piercing - 250.0 * multiplier).abs() < 1e-9);
+                assert!((stats.accuracy - 400.0 * multiplier).abs() < 1e-9);
+                assert!(
+                    !profile.bonuses.contains_key("pierce"),
+                    "base stats are not damage-through"
+                );
+                let seats = research_derived_attack_phase_seats(
+                    &imported,
+                    &catalog,
+                    &SupportBuffResearchGateState::default(),
+                    &HashMap::new(),
+                );
+                assert!(
+                    seats.is_empty(),
+                    "grade-gated stats must not also become combat seats"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn research_piercing_uses_each_weapon_base_and_keeps_existing_bonus_pools() {
+        let catalog =
+            load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH).expect("bundled research catalog");
+        let imported = [import::ResearchEntry {
+            rid: 2_999_437,
+            level: 2,
+        }];
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.extend([
+            ("armor_piercing".into(), 0.10),
+            ("shield_piercing".into(), 0.20),
+            ("accuracy".into(), 0.30),
+        ]);
+        merge_ship_grade_research_bonuses_into_profile(
+            &mut profile,
+            &imported,
+            &catalog,
+            None,
+            Some(4),
+        );
+        let ship = ShipRecord {
+            grade: Some(4),
+            armor_piercing: 100.0,
+            shield_piercing: 250.0,
+            accuracy: 400.0,
+            ..Default::default()
+        };
+        let row = crate::data::ship::WeaponRecord {
+            armor_piercing: Some(700.0),
+            shield_piercing: None,
+            accuracy: Some(900.0),
+            ..Default::default()
+        };
+        let statics = HashMap::from([("accuracy".into(), 7.0)]);
+        let stats = effective_attacker_stats_for_ship_weapon_row(
+            &ship,
+            Some(&row),
+            &profile,
+            &statics,
+            ShipType::Battleship,
+        );
+        assert!((stats.armor_piercing - 938.0).abs() < 1e-9); // 700 * (1 + .10 + .24)
+        assert!((stats.shield_piercing - 360.0).abs() < 1e-9); // fallback 250 * 1.44
+        assert!((stats.accuracy - 1393.0).abs() < 1e-9); // 900 * 1.54 + flat 7
+        let aggregate = effective_attacker_stats_for_mitigation(
+            &ship,
+            &profile,
+            &statics,
+            ShipType::Battleship,
+        );
+        assert!((aggregate.armor_piercing - 134.0).abs() < 1e-9);
+        assert!((aggregate.shield_piercing - 360.0).abs() < 1e-9);
+        assert!((aggregate.accuracy - 623.0).abs() < 1e-9);
+    }
+
+    #[test]
     fn research_merged_accuracy_multiplies_ship_base_in_effective_attacker_stats() {
         use crate::data::import::ResearchEntry;
         use crate::data::profile::merge_research_bonuses_into_profile;
@@ -3549,6 +4108,7 @@ mod tests {
             source: Some("test".into()),
             last_updated: None,
             items: vec![ResearchRecord {
+                level_value_mode: Default::default(),
                 rid: 42_001,
                 name: None,
                 data_version: None,
@@ -3603,6 +4163,42 @@ mod tests {
         assert!(
             (stats.accuracy - 420.0).abs() < 1e-6,
             "expected 400 * (1 + 0.05) research accuracy bonus, got {}",
+            stats.accuracy
+        );
+    }
+
+    #[test]
+    fn combat_begin_ship_accuracy_percent_scales_the_ship_base_rating() {
+        let ship = ShipRecord {
+            accuracy: 3_876_216.0,
+            abilities: Some(vec![ShipAbility {
+                id: "1800726742".into(),
+                timing: "combat_begin".into(),
+                effect_type: "accuracy".into(),
+                value: 0.10,
+                duration_rounds: None,
+                condition_morale: false,
+                condition_defender_burning: false,
+                condition_defender_hull_breach: false,
+                condition_opponent_faction: None,
+                condition_opponent_ship_class: None,
+                condition_opponent_ship_class_not: None,
+                condition_defender_is_npc_hostile: false,
+                condition_opponent_hostile_tags: None,
+                round_cap: None,
+                level_scaled_values: None,
+            }]),
+            ..Default::default()
+        };
+        let stats = effective_attacker_stats_for_mitigation(
+            &ship,
+            &PlayerProfile::default(),
+            &HashMap::new(),
+            ShipType::Battleship,
+        );
+        assert!(
+            (stats.accuracy - 4_263_837.6).abs() < 1e-6,
+            "10% hull accuracy ability should scale the 3,876,216 base rating; got {}",
             stats.accuracy
         );
     }
@@ -3685,7 +4281,7 @@ mod tests {
                 id: "cb".into(),
                 timing: "combat_begin".into(),
                 effect_type: "accuracy".into(),
-                value: 20.0,
+                value: 0.20,
                 duration_rounds: None,
                 condition_morale: false,
                 condition_defender_burning: false,
@@ -3710,9 +4306,10 @@ mod tests {
             &static_buffs,
             ShipType::Battleship,
         );
-        // 100 * 1.25 = 125; +10 officer static = 135; +20 hull combat_begin = 155; *1.2 = 186
+        // Native hull accuracy is a fraction: 100 * 1.25 * 1.20 = 150;
+        // +10 flat officer static = 160; combat-begin multiplier 1.2 = 192.
         assert!(
-            (stats.accuracy - 186.0).abs() < 1e-6,
+            (stats.accuracy - 192.0).abs() < 1e-6,
             "got {}",
             stats.accuracy
         );
@@ -3750,7 +4347,7 @@ mod tests {
             ShipType::Interceptor,
         );
         assert!(
-            (stats_match.accuracy - stats_mismatch.accuracy - 99.0 * 1.2).abs() < 1e-6,
+            (stats_match.accuracy - stats_mismatch.accuracy - 125.0 * 99.0 * 1.2).abs() < 1e-6,
             "hull accuracy with interceptor gate should apply only vs interceptors"
         );
 
@@ -3916,6 +4513,8 @@ mod tests {
             applied_defender_support_buffs: vec![],
             applied_defender_alliance_debuffs: vec![],
             research_derived_seats: vec![],
+            native_defense_derived_seats: vec![],
+            native_defense_rounding: false,
             forbidden_tech_derived_seats: vec![],
             borg_alcove_hull_hp_bonus: None,
             class_gated_torpedo_family_hull_hp_bonus: None,
@@ -4086,7 +4685,7 @@ mod tests {
         fs::write(profile_path(&entry.id, PROFILE_JSON), "{}").expect("profile.json");
         fs::write(
             profile_path(&entry.id, RESEARCH_IMPORTED),
-            r#"{"research":[{"rid":2232304457,"level":2}]}"#,
+            r#"{"research":[{"rid":4055439002,"level":2}]}"#,
         )
         .expect("research.imported.json");
 
@@ -4104,16 +4703,17 @@ mod tests {
             None,
         );
 
-        // Catalog rid 2232304457: weapon_damage +0.05 at L1, +0.07 at L2 → cumulative 0.12
-        let wd = shared
+        // Client-verified Hull Health snapshots: 30 at L1, 50 at L2.
+        // The owned rank contributes 50 flat HP, without summing earlier ranks.
+        let hull_flat = shared
             .profile
             .bonuses
-            .get("weapon_damage")
+            .get("hull_hp_flat")
             .copied()
-            .expect("weapon_damage from research merge");
+            .expect("flat hull health from research merge");
         assert!(
-            (wd - 0.12).abs() < 1e-9,
-            "expected weapon_damage ≈ 0.12, got {wd} (bonuses={:?})",
+            (hull_flat - 50.0).abs() < 1e-9,
+            "expected hull_hp_flat = 50 at rank 2, got {hull_flat} (bonuses={:?})",
             shared.profile.bonuses
         );
     }

@@ -1,5 +1,8 @@
 /target
 
+# Local STFC client evidence and proprietary analysis inputs (survive cargo clean).
+/local-analysis/stfc-client/
+
 # Node dependencies (run npm install in frontend/ after clone)
 node_modules/
 
@@ -62,3 +65,6 @@ test-results/
 coverage/
 frontend/coverage/
 rust-lcov.info
+
+# Private game snapshots, combat journals and reverse-engineering scratch artifacts.
+local-analysis/

@@ -2,6 +2,8 @@
   "id": "serene_squall",
   "ship_name": "SERENE SQUALL",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

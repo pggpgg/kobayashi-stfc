@@ -33,7 +33,7 @@ See [RECORDED_FIGHT_SUITE_GUIDE.md](RECORDED_FIGHT_SUITE_GUIDE.md) and [CALIBRAT
 | Recorded iteration passed | 0 |
 | Recorded iteration failed | 0 |
 | Metrics scored | 70 |
-| Mean σ (composite) | 0.2906 |
+| Mean σ (composite) | 0.2960 |
 | Max σ | 1.0000 |
 | Worst metric | `drift_survey_soak` `attacker_hull_remaining` σ=1.0000 |
 
@@ -176,7 +176,7 @@ Two-weapon attacker vs single-hull defender; exercises sub-round ordering.
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |
-| total_damage | 827.2000 | [300.0000, 4000.0000] | 0.715 | ok |
+| total_damage | 834.8160 | [300.0000, 4000.0000] | 0.711 | ok |
 | rounds_simulated | 5.0000 | [1.0000, 15.0000] | 0.429 | ok |
 | defender_hull_remaining | 0.0000 | [0.0000, 650.0000] | 1.000 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 150.0000] | 1.000 | ok |
@@ -282,7 +282,7 @@ Mathematical invariant: defender with 1000 shield (80% absorption). Attacker wit
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |
-| total_damage | 3000.0000 | [2900.0000, 3100.0000] | 0.000 | ok |
+| total_damage | 2960.0000 | [2900.0000, 3100.0000] | 0.400 | ok |
 | rounds_simulated | 30.0000 | [28.0000, 30.0000] | 1.000 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 0.0000] | 0.000 | ok |
 
@@ -308,9 +308,9 @@ Low pierce survey-style attacker vs high-mitigation defender with shields; long 
 
 | metric | actual | band | σ | status |
 | --- | ---: | --- | ---: | --- |
-| total_damage | 1140.0000 | [400.0000, 3200.0000] | 0.471 | ok |
+| total_damage | 1129.6000 | [400.0000, 3200.0000] | 0.479 | ok |
 | rounds_simulated | 20.0000 | [1.0000, 20.0000] | 1.000 | ok |
-| defender_hull_remaining | 60.0000 | [0.0000, 800.0000] | 0.850 | ok |
+| defender_hull_remaining | 70.4000 | [0.0000, 800.0000] | 0.824 | ok |
 | defender_shield_remaining | 0.0000 | [0.0000, 400.0000] | 1.000 | ok |
 | attacker_hull_remaining | 3000.0000 | [2500.0000, 3000.0000] | 1.000 | ok |
 

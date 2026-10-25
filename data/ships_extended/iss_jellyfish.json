@@ -2,6 +2,8 @@
   "id": "iss_jellyfish",
   "ship_name": "I.S.S. JELLYFISH",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

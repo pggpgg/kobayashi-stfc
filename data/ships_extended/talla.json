@@ -2,6 +2,8 @@
   "id": "talla",
   "ship_name": "TALLA",
   "ship_class": "battleship",
+  "crit_damage_is_bonus": true,
+  "grade": 2,
   "tiers": [
     {
       "tier": 1,

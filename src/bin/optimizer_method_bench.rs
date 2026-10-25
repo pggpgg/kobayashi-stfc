@@ -1070,8 +1070,18 @@ fn equal_trial_budget(args: &Args, lane: Lane, trial_budget: u64) -> (LaneBudget
             plan.projected_trials = Some(t.projected_trials);
         }
         Lane::Genetic => {
-            let g =
-                plan_genetic_equal_trials(trial_budget, args.ga_generations, args.ga_sims_per_eval);
+            let final_confirm_limit = GeneticConfig::default().elitism_count.max(10);
+            let g = plan_genetic_equal_trials(
+                trial_budget,
+                args.ga_generations,
+                args.ga_sims_per_eval,
+                budget.confirm_sims,
+                final_confirm_limit,
+            )
+            .unwrap_or_else(|error| {
+                eprintln!("equal-trials genetic lane: {error}");
+                std::process::exit(2);
+            });
             budget.ga_population = g.population;
             budget.ga_generations = g.generations;
             budget.ga_sims_per_eval = g.sims_per_eval;

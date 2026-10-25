@@ -12,8 +12,8 @@ use tracing::{info, info_span, warn};
 use crate::data::budget_telemetry::{maybe_append_row, BudgetTelemetryRow};
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::{
-    expand_crews, filter_heuristic_seed_crews, load_seed_file, BelowDecksStrategy,
-    ParsedHeuristicsCrew, DEFAULT_HEURISTICS_DIR,
+    dedupe_heuristic_seed_names, expand_crews, filter_heuristic_seed_crews, load_seed_file,
+    BelowDecksStrategy, ParsedHeuristicsCrew, DEFAULT_HEURISTICS_DIR,
 };
 use crate::data::import::{load_imported_roster, roster_import_fallback_warning_message};
 use crate::data::officer::normalize_officer_lookup_key;
@@ -24,6 +24,7 @@ use crate::data::optimize_observations::{
 };
 use crate::data::support_buffs;
 use crate::lcars::LcarsOfficer;
+use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
     build_officer_pools_from_registry, resolve_below_decks_slots_for_ship,
@@ -31,9 +32,13 @@ use crate::optimizer::crew_generator::{
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_with_shared,
-    scenario::{build_shared_scenario_data_from_registry, DefenderOpponent},
+    scenario::{
+        build_shared_scenario_data_from_registry, DefenderOpponent,
+        PlayerDefenderOfficerCrewOverride, PvpScenarioParams, SharedScenarioData,
+    },
     SimulationResult,
 };
+use crate::optimizer::officer_learning::OfficerPerformanceScores;
 use crate::optimizer::pareto::highlight_rows;
 use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, RankedCrewResult};
 use crate::optimizer::refinement::{LocalRefinementParams, RefinementProvenance};
@@ -41,7 +46,7 @@ use crate::optimizer::tiered::TieredScoutBudgetStats;
 use crate::optimizer::{
     count_effective_optimize_candidates, enforce_candidate_optimization_eligibility_with_registry,
     optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeCandidateFunnel,
-    OptimizeProgressTick, OptimizerStrategy,
+    OptimizeProgressTick, OptimizeRunOutcome, OptimizerStrategy,
 };
 use crate::parallel::{batch_ranges, monte_carlo_batch_count_for_candidates};
 
@@ -73,6 +78,25 @@ fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
         OptimizerStrategy::LinearEval => "linear_eval",
         OptimizerStrategy::RandomStratified => "random_stratified",
     }
+}
+
+fn defender_below_decks_slots_for_request(
+    request: &OptimizeRequest,
+    attacker_below_decks_slots: usize,
+) -> usize {
+    request
+        .defender_ship
+        .as_deref()
+        .filter(|ship| !ship.trim().is_empty())
+        .map(|ship| {
+            resolve_below_decks_slots_for_ship(
+                ship,
+                request.defender_ship_tier,
+                request.defender_ship_level,
+                None,
+            )
+        })
+        .unwrap_or(attacker_below_decks_slots)
 }
 
 fn warm_start_crews_from_request_dtos(request: &OptimizeRequest) -> Vec<CrewCandidate> {
@@ -202,6 +226,7 @@ fn resolve_effective_optimize_strategy(
     profile_id: Option<&str>,
     crew_constraints: Option<&CrewSearchConstraints>,
     warm_start_for_count: &[CrewCandidate],
+    learned_officer_scores: Option<&OfficerPerformanceScores>,
 ) -> (OptimizerStrategy, bool) {
     if let Some(ref raw) = request.strategy {
         let strategy = parse_strategy(Some(raw));
@@ -235,6 +260,7 @@ fn resolve_effective_optimize_strategy(
         below_decks_slots,
         constraints: crew_constraints.cloned(),
         roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
+        learned_officer_scores: learned_officer_scores.cloned(),
         ..CandidateStrategy::default()
     };
     // Must match crews after generation, warm-start prepend, and constraint filter.
@@ -824,8 +850,10 @@ pub struct OptimizeResponse {
     pub notes: Vec<&'static str>,
     /// Extra human-readable notes (e.g. approximate pre-filter semantics).
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[schemars(default)]
     pub approximate_notes: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[schemars(default)]
     pub warnings: Vec<String>,
 }
 
@@ -885,6 +913,12 @@ fn sort_heuristic_parsed_crews_below_decks_by_officer_power(
 }
 
 /// Load heuristics seeds and expand them into CrewCandidates.
+pub struct HeuristicCandidateContext<'a> {
+    pub pool_mode: crate::data::heuristics::BelowDecksPoolMode,
+    pub enemy_type: crate::combat::EnemyType,
+    pub constraints: Option<&'a CrewSearchConstraints>,
+}
+
 pub fn load_heuristics_candidates(
     registry: &DataRegistry,
     seed_names: &[String],
@@ -892,9 +926,20 @@ pub fn load_heuristics_candidates(
     below_decks_slots: usize,
     relax_below_decks: bool,
     profile_id: Option<&str>,
+    context: HeuristicCandidateContext<'_>,
 ) -> Vec<CrewCandidate> {
     let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
-    seed_names
+    let filler_pool = build_officer_pools_from_registry(
+        registry,
+        context.pool_mode,
+        Some(context.enemy_type),
+        profile_id,
+        below_decks_slots,
+        context.constraints,
+    )
+    .map(|pools| pools.below_decks)
+    .unwrap_or_default();
+    dedupe_heuristic_seed_names(seed_names)
         .iter()
         .flat_map(|name| {
             let parsed = load_seed_file(name, DEFAULT_HEURISTICS_DIR, Some(&canonical_names));
@@ -909,10 +954,26 @@ pub fn load_heuristics_candidates(
                 );
             }
             let candidates = expand_crews(parsed, below_decks_slots, bd_strategy);
-            candidates.into_iter().map(|c| CrewCandidate {
-                captain: c.captain,
-                bridge: c.bridge,
-                below_decks: c.below_decks,
+            candidates.into_iter().map(|c| {
+                let mut candidate = CrewCandidate {
+                    captain: c.captain,
+                    bridge: c.bridge,
+                    below_decks: c.below_decks,
+                };
+                let mut used: HashSet<String> = std::iter::once(&candidate.captain)
+                    .chain(candidate.bridge.iter())
+                    .chain(candidate.below_decks.iter())
+                    .map(|name| crate::optimizer::constraints::normalize_officer_name(name))
+                    .collect();
+                for name in &filler_pool {
+                    if candidate.below_decks.len() >= below_decks_slots {
+                        break;
+                    }
+                    if used.insert(crate::optimizer::constraints::normalize_officer_name(name)) {
+                        candidate.below_decks.push(name.clone());
+                    }
+                }
+                candidate
             })
         })
         .collect()
@@ -1169,38 +1230,146 @@ fn cancelled_error(
     OptimizeGatherError::Cancelled { phase }
 }
 
-/// Shared Monte Carlo + optimizer scenario execution. Sync and background jobs use the same logic.
-fn gather_optimize_simulation_results(
+/// Inputs that determine which optimizer results are safe to persist for a later run.
+/// Keep this boundary after cancellation: cancelled work must not write history or scores.
+struct OptimizePersistenceContext<'a> {
+    request: &'a OptimizeRequest,
+    strategy: OptimizerStrategy,
+    profile_id: Option<&'a str>,
+    cache_key: Option<&'a str>,
+    sims: u32,
+    seed: u64,
+    chain_grind: &'a Option<ChainGrindParams>,
+    reuse_fingerprint: &'a str,
+    reuse_data_segment: &'a str,
+    tiered_scout_allocator: u8,
+}
+
+fn persist_optimizer_outcome(
+    context: OptimizePersistenceContext<'_>,
+    outcome: &OptimizeRunOutcome,
+) -> bool {
+    let mut wrote = false;
+    if context.strategy == OptimizerStrategy::Tiered {
+        if let (Some(pid), Some(key), Some((n, scout, tk))) = (
+            context.profile_id,
+            context.cache_key,
+            outcome.tiered_resolved,
+        ) {
+            let entry = optimize_history::build_entry_from_ranked(
+                context.sims,
+                context.seed,
+                scout,
+                tk,
+                n,
+                context.tiered_scout_allocator,
+                context.chain_grind,
+                optimize_history::TIERED_BUDGET_POLICY_V3,
+                context
+                    .request
+                    .tiered_confirm_budget_cap_mult
+                    .map(|x| x as f32),
+                Some(context.reuse_fingerprint.to_string()),
+                &outcome.ranked,
+            );
+            wrote = optimize_history::upsert_entry(pid, key, entry).is_ok();
+        }
+    }
+    if context.strategy == OptimizerStrategy::Exhaustive {
+        if let (Some(pid), Some(key)) = (context.profile_id, context.cache_key) {
+            if outcome.exhaustive_adaptive_budget.is_some() && !outcome.ranked.is_empty() {
+                if let (Some(scout_u32), Some(keep_u32)) = (
+                    context.request.exhaustive_scout_sims,
+                    context.request.exhaustive_scout_top_keep,
+                ) {
+                    let entry = optimize_history::build_entry_from_ranked_exhaustive_two_phase(
+                        context.sims,
+                        context.seed,
+                        outcome.ranked.len(),
+                        scout_u32 as usize,
+                        keep_u32 as usize,
+                        optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
+                        context.chain_grind,
+                        context
+                            .request
+                            .tiered_confirm_budget_cap_mult
+                            .map(|x| x as f32),
+                        Some(context.reuse_fingerprint.to_string()),
+                        &outcome.ranked,
+                    );
+                    wrote |= optimize_history::upsert_entry(pid, key, entry).is_ok();
+                }
+            }
+        }
+    }
+    if context.strategy != OptimizerStrategy::LinearEval {
+        if let Some(pid) = context.profile_id {
+            if !outcome.ranked.is_empty() {
+                let _ = optimize_history::update_officer_scores_from_results(
+                    pid,
+                    context.reuse_data_segment,
+                    &outcome.ranked,
+                    &context.request.hostile,
+                    &context.request.ship,
+                );
+            }
+        }
+    }
+    wrote
+}
+
+/// Values resolved before any heuristic or optimizer Monte Carlo work begins.
+/// Owns the preparation outputs so the gather path can execute, persist, and assemble results
+/// without repeating candidate, profile, or fingerprint resolution.
+struct PreparedOptimizeRun {
+    below_decks_slots: usize,
+    crew_constraints: Option<CrewSearchConstraints>,
+    enemy_type: crate::combat::EnemyType,
+    cache_key_normalized: Option<String>,
+    reuse_fingerprint_encoded: String,
+    reuse_data_segment: String,
+    optimize_history_reuse_refused: Option<&'static str>,
+    defender_static_support_inactive_labels: Vec<String>,
+    h_candidates: Vec<CrewCandidate>,
+    heuristic_hashes: HashSet<u64>,
+    scenario_warm_start: Vec<CrewCandidate>,
+    warm_start_hashes: HashSet<u64>,
+    curated_warm_start_hashes: HashSet<u64>,
+    optimizer_funnel: OptimizerFunnelTelemetry,
+    prior_reference_crews: Vec<CrewCandidate>,
+    dropped_illegal_prior_refs: usize,
+    dropped_illegal_warm_start: usize,
+    dropped_illegal_heuristics: usize,
+    learned_officer_scores: Option<OfficerPerformanceScores>,
+    auto_tuned_confirm_cap: Option<f64>,
+    auto_tuned_abandon_margin: Option<f64>,
+    strategy: OptimizerStrategy,
+    strategy_auto: bool,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    is_seeded_genetic: bool,
+    fast_discovery_no_resolved_crews: bool,
+    fast_discovery: bool,
+    fast_discovery_heuristic_cap_hit: bool,
+    pvp: Option<PvpScenarioParams>,
+    scenario_hostile: String,
+    shared_scenario: SharedScenarioData,
+    using_placeholder_combatants: bool,
+}
+
+/// Resolve candidates, strategy, profile reuse, and the shared combat setup before any Monte Carlo.
+#[allow(clippy::too_many_arguments)]
+fn prepare_optimize_run(
     registry: &DataRegistry,
     request: &OptimizeRequest,
     profile_id: Option<&str>,
+    seed: u64,
+    chain_grind: &Option<ChainGrindParams>,
+    heuristics_only: bool,
+    bd_strategy: BelowDecksStrategy,
+    heuristics_seeds: &[String],
+    heuristics_seeds_nonempty: bool,
     sink: &mut OptimizeProgressSink,
-) -> Result<(Vec<SimulationResult>, OptimizeGatherMeta), OptimizeGatherError> {
-    let sims = request.sims.unwrap_or(DEFAULT_SIMS);
-    let seed = request.seed.unwrap_or(0);
-    let chain_grind = request
-        .chain
-        .as_ref()
-        .and_then(|c| chain_grind_params_from_request(c).ok().flatten());
-    let heuristics_only = request.heuristics_only.unwrap_or(false);
-    let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
-    let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
-    let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
-    let gather_span = info_span!(
-        "optimize_gather",
-        ship = %request.ship,
-        hostile = %request.hostile,
-        seed,
-        sims,
-        requested_strategy = request.strategy.as_deref().unwrap_or("auto"),
-        heuristics_only,
-        heuristics_seed_count = heuristics_seeds.len() as u64,
-        profile_id_present = profile_id.is_some()
-    );
-    let _gather_span = gather_span.enter();
-    let gather_started = Instant::now();
-    let prepare_started = Instant::now();
-    let mut phase_durations_ms = BTreeMap::new();
+) -> Result<PreparedOptimizeRun, OptimizeGatherError> {
     let below_decks_slots = resolve_below_decks_slots_for_ship(
         &request.ship,
         request.ship_tier,
@@ -1313,12 +1482,6 @@ fn gather_optimize_simulation_results(
         },
         _ => None,
     };
-    let mut optimize_history_confirm_hits = 0u32;
-    let mut optimize_history_wrote = false;
-    let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
-    let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
-    let mut random_exploration_hashes: HashSet<u64> = HashSet::new();
-    let mut refinement_provenance: HashMap<u64, RefinementProvenance> = HashMap::new();
 
     let defender_static_support_inactive_labels = match (
         registry.support_buffs_catalog(),
@@ -1341,6 +1504,11 @@ fn gather_optimize_simulation_results(
             below_decks_slots,
             relax_bd,
             profile_id,
+            HeuristicCandidateContext {
+                pool_mode,
+                enemy_type,
+                constraints: crew_constraints.as_ref(),
+            },
         )
     } else {
         Vec::new()
@@ -1415,7 +1583,7 @@ fn gather_optimize_simulation_results(
 
     let prior_reference_crews_raw = match (profile_id, cache_key_normalized.as_deref()) {
         (Some(pid), Some(key)) => {
-            optimize_history::prior_reference_crews_for_matchup_priors(pid, key, &chain_grind)
+            optimize_history::prior_reference_crews_for_matchup_priors(pid, key, chain_grind)
         }
         _ => Vec::new(),
     };
@@ -1525,13 +1693,14 @@ fn gather_optimize_simulation_results(
         profile_id,
         crew_constraints.as_ref(),
         &scenario_warm_start,
+        learned_officer_scores.as_ref(),
     );
 
     let player_defender_officer_crew =
         match super::resolve_player_defender_officer_crew_for_optimize(
             registry,
             profile_id,
-            below_decks_slots,
+            defender_below_decks_slots_for_request(request, below_decks_slots),
             request.defender_crew.as_ref(),
         ) {
             Ok(v) => v,
@@ -1611,6 +1780,130 @@ fn gather_optimize_simulation_results(
         pvp.clone(),
     );
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
+    let dropped_illegal_warm_start = warm_legality.dropped_wrong_shape
+        + warm_legality.dropped_duplicates
+        + warm_legality.dropped_seat_incompatible;
+    let dropped_illegal_heuristics = h_legality.dropped_wrong_shape
+        + h_legality.dropped_duplicates
+        + h_legality.dropped_seat_incompatible;
+    Ok(PreparedOptimizeRun {
+        below_decks_slots,
+        crew_constraints,
+        enemy_type,
+        cache_key_normalized,
+        reuse_fingerprint_encoded,
+        reuse_data_segment,
+        optimize_history_reuse_refused,
+        defender_static_support_inactive_labels,
+        h_candidates,
+        heuristic_hashes,
+        scenario_warm_start,
+        warm_start_hashes,
+        curated_warm_start_hashes,
+        optimizer_funnel,
+        prior_reference_crews,
+        dropped_illegal_prior_refs,
+        dropped_illegal_warm_start,
+        dropped_illegal_heuristics,
+        learned_officer_scores,
+        auto_tuned_confirm_cap,
+        auto_tuned_abandon_margin,
+        strategy,
+        strategy_auto,
+        player_defender_officer_crew,
+        is_seeded_genetic,
+        fast_discovery_no_resolved_crews,
+        fast_discovery,
+        fast_discovery_heuristic_cap_hit,
+        pvp,
+        scenario_hostile,
+        shared_scenario,
+        using_placeholder_combatants,
+    })
+}
+/// Shared Monte Carlo + optimizer scenario execution. Sync and background jobs use the same logic.
+fn gather_optimize_simulation_results(
+    registry: &DataRegistry,
+    request: &OptimizeRequest,
+    profile_id: Option<&str>,
+    sink: &mut OptimizeProgressSink,
+) -> Result<(Vec<SimulationResult>, OptimizeGatherMeta), OptimizeGatherError> {
+    let sims = request.sims.unwrap_or(DEFAULT_SIMS);
+    let seed = request.seed.unwrap_or(0);
+    let chain_grind = request
+        .chain
+        .as_ref()
+        .and_then(|c| chain_grind_params_from_request(c).ok().flatten());
+    let heuristics_only = request.heuristics_only.unwrap_or(false);
+    let bd_strategy = parse_below_decks_strategy(request.below_decks_strategy.as_ref());
+    let heuristics_seeds = request.heuristics_seeds.as_deref().unwrap_or(&[]);
+    let heuristics_seeds_nonempty = !heuristics_seeds.is_empty();
+    let gather_span = info_span!(
+        "optimize_gather",
+        ship = %request.ship,
+        hostile = %request.hostile,
+        seed,
+        sims,
+        requested_strategy = request.strategy.as_deref().unwrap_or("auto"),
+        heuristics_only,
+        heuristics_seed_count = heuristics_seeds.len() as u64,
+        profile_id_present = profile_id.is_some()
+    );
+    let _gather_span = gather_span.enter();
+    let gather_started = Instant::now();
+    let prepare_started = Instant::now();
+    let mut phase_durations_ms = BTreeMap::new();
+    let PreparedOptimizeRun {
+        below_decks_slots,
+        crew_constraints,
+        enemy_type,
+        cache_key_normalized,
+        reuse_fingerprint_encoded,
+        reuse_data_segment,
+        optimize_history_reuse_refused,
+        defender_static_support_inactive_labels,
+        h_candidates,
+        heuristic_hashes,
+        scenario_warm_start,
+        warm_start_hashes,
+        curated_warm_start_hashes,
+        mut optimizer_funnel,
+        prior_reference_crews,
+        dropped_illegal_prior_refs,
+        dropped_illegal_warm_start,
+        dropped_illegal_heuristics,
+        learned_officer_scores,
+        auto_tuned_confirm_cap,
+        auto_tuned_abandon_margin,
+        strategy,
+        strategy_auto,
+        player_defender_officer_crew,
+        is_seeded_genetic,
+        fast_discovery_no_resolved_crews,
+        fast_discovery,
+        fast_discovery_heuristic_cap_hit,
+        pvp,
+        scenario_hostile,
+        shared_scenario,
+        using_placeholder_combatants,
+    } = prepare_optimize_run(
+        registry,
+        request,
+        profile_id,
+        seed,
+        &chain_grind,
+        heuristics_only,
+        bd_strategy,
+        heuristics_seeds,
+        heuristics_seeds_nonempty,
+        sink,
+    )?;
+    let mut optimize_history_confirm_hits = 0u32;
+    let mut optimize_history_wrote = false;
+    let mut tiered_scout_budget_for_response: Option<TieredScoutBudgetStats> = None;
+    let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
+    let mut random_exploration_hashes: HashSet<u64> = HashSet::new();
+    let mut refinement_provenance: HashMap<u64, RefinementProvenance> = HashMap::new();
     record_phase_duration(&mut phase_durations_ms, "prepare", prepare_started);
 
     let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty
@@ -1771,77 +2064,29 @@ fn gather_optimize_simulation_results(
         exhaustive_adaptive_budget_for_response = outcome.exhaustive_adaptive_budget;
         random_exploration_hashes = outcome.random_exploration_hashes.clone();
         refinement_provenance = outcome.refinement_provenance.clone();
-        if strategy == OptimizerStrategy::Tiered {
-            if let (Some(pid), Some(key), Some((n, scout, tk))) = (
-                profile_id,
-                cache_key_normalized.as_ref(),
-                outcome.tiered_resolved,
-            ) {
-                let tiered_scout_allocator = if scenario.tiered_scout_priority_queue {
-                    2u8
-                } else if scenario.tiered_scout_uniform {
-                    0u8
-                } else {
-                    1u8
-                };
-                let entry = optimize_history::build_entry_from_ranked(
-                    sims,
-                    seed,
-                    scout,
-                    tk,
-                    n,
-                    tiered_scout_allocator,
-                    &chain_grind,
-                    optimize_history::TIERED_BUDGET_POLICY_V3,
-                    request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
-                    Some(reuse_fingerprint_encoded.clone()),
-                    &outcome.ranked,
-                );
-                optimize_history_wrote =
-                    optimize_history::upsert_entry(pid, key.as_str(), entry).is_ok();
-            }
-        }
-        if strategy == OptimizerStrategy::Exhaustive {
-            if let (Some(pid), Some(key)) = (profile_id, cache_key_normalized.as_ref()) {
-                if outcome.exhaustive_adaptive_budget.is_some() && !outcome.ranked.is_empty() {
-                    if let (Some(scout_u32), Some(keep_u32)) = (
-                        request.exhaustive_scout_sims,
-                        request.exhaustive_scout_top_keep,
-                    ) {
-                        let n = outcome.ranked.len();
-                        let entry = optimize_history::build_entry_from_ranked_exhaustive_two_phase(
-                            sims,
-                            seed,
-                            n,
-                            scout_u32 as usize,
-                            keep_u32 as usize,
-                            optimize_history::EXHAUSTIVE_CONFIRM_POLICY_WIDTH_V1,
-                            &chain_grind,
-                            request.tiered_confirm_budget_cap_mult.map(|x| x as f32),
-                            Some(reuse_fingerprint_encoded.clone()),
-                            &outcome.ranked,
-                        );
-                        optimize_history_wrote |=
-                            optimize_history::upsert_entry(pid, key.as_str(), entry).is_ok();
-                    }
-                }
-            }
-        }
         let pf = outcome.analytical_prefilter;
-        // Update and persist learned officer scores from the just-completed ranked results.
-        if strategy != OptimizerStrategy::LinearEval {
-            if let Some(pid) = profile_id {
-                if !outcome.ranked.is_empty() {
-                    let mut scores = optimize_history::load_officer_scores(
-                        pid,
-                        Some(reuse_data_segment.as_str()),
-                    );
-                    scores.update_from_results(&outcome.ranked, &request.hostile, &request.ship);
-                    scores.set_data_fingerprint(reuse_data_segment.as_str());
-                    let _ = optimize_history::save_officer_scores(pid, &scores);
-                }
-            }
-        }
+        let tiered_scout_allocator = if scenario.tiered_scout_priority_queue {
+            2u8
+        } else if scenario.tiered_scout_uniform {
+            0u8
+        } else {
+            1u8
+        };
+        optimize_history_wrote = persist_optimizer_outcome(
+            OptimizePersistenceContext {
+                request,
+                strategy,
+                profile_id,
+                cache_key: cache_key_normalized.as_deref(),
+                sims,
+                seed,
+                chain_grind: &chain_grind,
+                reuse_fingerprint: &reuse_fingerprint_encoded,
+                reuse_data_segment: &reuse_data_segment,
+                tiered_scout_allocator,
+            },
+            &outcome,
+        );
         all_results.extend(
             outcome
                 .ranked
@@ -1889,12 +2134,8 @@ fn gather_optimize_simulation_results(
         reuse_fingerprint: reuse_fingerprint_encoded,
         tiered_scout_budget: tiered_scout_budget_for_response,
         exhaustive_adaptive_budget: exhaustive_adaptive_budget_for_response,
-        dropped_illegal_warm_start: warm_legality.dropped_wrong_shape
-            + warm_legality.dropped_duplicates
-            + warm_legality.dropped_seat_incompatible,
-        dropped_illegal_heuristics: h_legality.dropped_wrong_shape
-            + h_legality.dropped_duplicates
-            + h_legality.dropped_seat_incompatible,
+        dropped_illegal_warm_start,
+        dropped_illegal_heuristics,
         dropped_illegal_prior_refs,
         roster_filter_warning: roster_import_fallback_warning_message(profile_id),
         defender_static_support_inactive_labels,
@@ -2739,5 +2980,149 @@ mod curated_warm_start_tests {
             None,
         )
         .is_none());
+    }
+}
+
+#[cfg(test)]
+mod heuristic_seed_request_tests {
+    use super::{load_heuristics_candidates, HeuristicCandidateContext};
+    use crate::data::data_registry::DataRegistry;
+    use crate::data::heuristics::BelowDecksStrategy;
+
+    #[test]
+    fn partial_heuristic_seed_can_fill_seven_unlocked_below_decks_slots() {
+        let registry = DataRegistry::load().expect("registry");
+        let profile = crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
+        let candidates = load_heuristics_candidates(
+            &registry,
+            &["heuristics-seed".into()],
+            BelowDecksStrategy::Ordered,
+            7,
+            true,
+            Some(profile),
+            HeuristicCandidateContext {
+                pool_mode: crate::data::heuristics::BelowDecksPoolMode::Relaxed,
+                enemy_type: crate::combat::EnemyType::RedMovingSpace,
+                constraints: None,
+            },
+        );
+        assert!(
+            !candidates.is_empty(),
+            "bundled heuristic seed must resolve"
+        );
+        let (legal, _) = crate::optimizer::enforce_candidate_optimization_eligibility_with_registry(
+            &registry,
+            Some(profile),
+            7,
+            crate::combat::EnemyType::RedMovingSpace,
+            candidates,
+        );
+        assert!(
+            !legal.is_empty(),
+            "partial seeds should fill legal unlocked slots"
+        );
+    }
+
+    #[test]
+    fn duplicate_seed_names_do_not_repeat_candidate_generation() {
+        let registry = DataRegistry::load().expect("registry");
+        let single = load_heuristics_candidates(
+            &registry,
+            &["heuristics-seed".into()],
+            BelowDecksStrategy::Ordered,
+            0,
+            true,
+            None,
+            HeuristicCandidateContext {
+                pool_mode: crate::data::heuristics::BelowDecksPoolMode::Relaxed,
+                enemy_type: crate::combat::EnemyType::RedMovingSpace,
+                constraints: None,
+            },
+        );
+        let duplicates = load_heuristics_candidates(
+            &registry,
+            &["heuristics-seed".into(), "HEURISTICS-SEED".into()],
+            BelowDecksStrategy::Ordered,
+            0,
+            true,
+            None,
+            HeuristicCandidateContext {
+                pool_mode: crate::data::heuristics::BelowDecksPoolMode::Relaxed,
+                enemy_type: crate::combat::EnemyType::RedMovingSpace,
+                constraints: None,
+            },
+        );
+
+        assert!(
+            !single.is_empty(),
+            "fixture seed should resolve against the catalog"
+        );
+        assert_eq!(duplicates, single);
+    }
+}
+
+#[cfg(test)]
+mod pvp_defender_slots_tests {
+    use super::defender_below_decks_slots_for_request;
+    use crate::data::data_registry::DataRegistry;
+    use crate::optimizer::crew_generator::resolve_below_decks_slots_for_ship;
+    use crate::server::api::requests::{DefenderOfficerCrewDto, OptimizeRequest};
+
+    #[test]
+    fn defender_crew_uses_its_own_ship_unlock_schedule() {
+        let request: OptimizeRequest = serde_json::from_value(serde_json::json!({
+            "ship": "realta",
+            "ship_tier": 4,
+            "ship_level": 20,
+            "hostile": "stella",
+            "defender_ship": "stella",
+            "defender_ship_tier": 6,
+            "defender_ship_level": 25
+        }))
+        .expect("optimize request");
+        let attacker_slots = resolve_below_decks_slots_for_ship("realta", Some(4), Some(20), None);
+        assert_eq!(attacker_slots, 2);
+        assert_eq!(
+            defender_below_decks_slots_for_request(&request, attacker_slots),
+            5
+        );
+    }
+
+    #[test]
+    fn defender_validation_checks_seats_beyond_attacker_unlock_count() {
+        let registry = DataRegistry::load().expect("registry");
+        let request: OptimizeRequest = serde_json::from_value(serde_json::json!({
+            "ship": "realta",
+            "ship_tier": 4,
+            "ship_level": 20,
+            "hostile": "stella",
+            "defender_ship": "stella",
+            "defender_ship_tier": 6,
+            "defender_ship_level": 25
+        }))
+        .expect("optimize request");
+        let attacker_slots = resolve_below_decks_slots_for_ship("realta", Some(4), Some(20), None);
+        let defender_slots = defender_below_decks_slots_for_request(&request, attacker_slots);
+        let defender = DefenderOfficerCrewDto {
+            captain: Some("Cadet Kirk".into()),
+            bridge: Some(vec![Some("Cadet McCoy".into()), Some("Cadet Uhura".into())]),
+            below_deck: Some(vec![
+                Some("Cadet Scotty".into()),
+                Some("Spock".into()),
+                Some("not-a-real-officer".into()),
+                Some("Jadzia Dax".into()),
+                Some("Tom Paris".into()),
+            ]),
+        };
+        let result = crate::server::api::resolve_player_defender_officer_crew_for_optimize(
+            &registry,
+            Some(crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            defender_slots,
+            Some(&defender),
+        );
+        assert!(
+            result.is_err(),
+            "unresolved third defender seat must not be truncated"
+        );
     }
 }

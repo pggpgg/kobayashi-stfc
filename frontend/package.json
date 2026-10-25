@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "gen:api": "openapi-typescript ../docs/openapi/kobayashi-openapi.yaml -o src/lib/api/generated.d.ts"
+    "gen:api": "openapi-typescript ../docs/openapi/kobayashi-openapi.yaml --default-non-nullable false -o src/lib/api/generated.d.ts"
   },
   "dependencies": {
     "react": "^18.2.0",

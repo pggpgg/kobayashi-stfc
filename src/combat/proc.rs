@@ -140,6 +140,7 @@ mod tests {
     fn accumulate_proc_attack_multipliers_multiply_in_stable_order_when_all_guaranteed() {
         let rows = [
             ActiveAbilityEffect {
+                ability_class: crate::combat::AbilityClass::BridgeAbility,
                 weapon_scope: Default::default(),
                 ability_name: "a".into(),
                 officer_id: None,
@@ -151,6 +152,7 @@ mod tests {
                 condition: None,
             },
             ActiveAbilityEffect {
+                ability_class: crate::combat::AbilityClass::BridgeAbility,
                 weapon_scope: Default::default(),
                 ability_name: "b".into(),
                 officer_id: None,

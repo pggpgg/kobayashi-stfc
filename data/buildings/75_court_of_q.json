@@ -17,23 +17,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -60,23 +61,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -103,23 +105,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -146,23 +149,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -189,23 +193,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -232,23 +237,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -275,23 +281,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -318,23 +325,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -361,23 +369,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -404,23 +413,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -447,23 +457,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -490,23 +501,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -533,23 +545,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -576,23 +589,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -619,23 +633,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.15,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.15,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -662,23 +677,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.18,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.17,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -705,23 +721,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.21,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.19,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -748,23 +765,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.24,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.21,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -791,23 +809,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.27,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.23,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -834,23 +853,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.25,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -877,23 +897,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.33,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.27,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -920,23 +941,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.36,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.29,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -963,23 +985,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.39,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.31,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1006,23 +1029,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.42,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.33,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1049,23 +1073,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.8,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1092,23 +1117,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.83,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.52,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1135,23 +1161,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.86,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.54,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1178,23 +1205,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.89,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.56,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1221,23 +1249,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.92,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.58,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1264,23 +1293,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.95,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.6,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1307,23 +1337,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.98,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.62,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1350,23 +1381,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.01,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.64,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1393,23 +1425,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.04,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.66,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1436,23 +1469,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.07,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.68,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1479,23 +1513,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.1,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.7,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1522,23 +1557,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.13,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.72,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1565,23 +1601,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.16,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.74,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1608,23 +1645,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.19,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.76,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1651,23 +1689,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.22,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 0.78,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1694,23 +1733,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.5,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1737,23 +1777,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.53,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.02,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1780,23 +1821,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.56,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.04,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1823,23 +1865,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.59,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.06,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1866,23 +1909,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.62,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.08,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1909,23 +1953,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.65,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.1,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1952,23 +1997,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.68,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.12,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -1995,23 +2041,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.71,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.14,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2038,23 +2085,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.74,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.16,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2081,23 +2129,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.77,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.18,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2124,23 +2173,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.81,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.21,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2167,23 +2217,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.85,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.24,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2210,23 +2261,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.89,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.27,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2253,23 +2305,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.93,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.3,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2296,23 +2349,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.97,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.34,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2339,23 +2393,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.01,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.38,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2382,23 +2437,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.05,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.42,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2425,23 +2481,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.09,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.46,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2468,23 +2525,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.13,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2511,23 +2569,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.17,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.55,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2554,23 +2613,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.8,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2597,23 +2657,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.55,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.85,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2640,23 +2701,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.6,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.9,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2683,23 +2745,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.65,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 1.95,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2726,23 +2789,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.7,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2769,23 +2833,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.75,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.05,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2812,23 +2877,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.8,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.1,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2855,23 +2921,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.85,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.15,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2898,23 +2965,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.9,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.2,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2941,23 +3009,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.95,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.25,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -2984,23 +3053,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3027,23 +3097,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3070,23 +3141,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3113,23 +3185,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3156,23 +3229,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3199,23 +3273,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3242,23 +3317,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3285,23 +3361,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3328,23 +3405,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3371,23 +3449,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",
@@ -3414,23 +3493,24 @@
           "notes": "auto-imported from data.stfc.space; loca_id=56101"
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 3,
           "operator": "add",
           "conditions": [
             "ship_combat_only",
             "defender_is_player_ship"
           ],
-          "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
+          "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
         },
         {
-          "stat": "crit_damage",
+          "stat": "crit_damage_flat",
           "value": 2.5,
           "operator": "add",
           "conditions": [
-            "defender_is_npc_hostile"
+            "native_condition_57_unverified",
+            "defender_is_non_armada_hostile"
           ],
-          "notes": "Court of Q: Critical hit damage increased against hostiles."
+          "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
         },
         {
           "stat": "player_crit_damage_reduction",

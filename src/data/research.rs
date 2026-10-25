@@ -1,10 +1,10 @@
 //! Research catalog: rid + level → combat stat bonuses (KOBAYASHI schema).
-//! Sync sends (rid, level); we look up record by rid and sum bonuses for levels 1..=level.
+//! Sync sends (rid, level); each record declares whether ranks are additive increments or snapshots.
 //! Same engine stat keys and add/multiply semantics as buildings and forbidden tech.
 //!
-//! **Across different research projects** (`rid`), per-project cumulative totals are combined
+//! **Across different research projects** (`rid`), resolved per-project totals are combined
 //! additively in [`cumulative_research_bonuses`] (then added into `profile.bonuses`). Multiply
-//! operators apply only within a single project's level chain, in ascending level order.
+//! operators compose rows within a project; cumulative records walk ranks in ascending order.
 //!
 //! Bonuses with [`ResearchBonusConditionKey`] fields set (ship class, faction, morale, burning, etc.)
 //! are **excluded** from flat profile merge for attack-scoped stats: conditional `crit_chance` /
@@ -25,7 +25,18 @@ use crate::data::combat_effect_spec::{
     EffectCategory, EffectConfidence, SourceRef,
 };
 
-/// One research project (game rid). Bonuses are cumulative over levels.
+/// How a project's level rows represent its bonus values.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ResearchLevelValueMode {
+    /// Authored increments compose from level 1 through the owned level.
+    #[default]
+    Cumulative,
+    /// Upstream ranked values describe the complete bonus at the owned level.
+    Snapshot,
+}
+
+/// One research project (game rid). Legacy authored rows default to cumulative increments.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchRecord {
     /// Game research id from sync payload.
@@ -37,6 +48,8 @@ pub struct ResearchRecord {
     pub data_version: Option<String>,
     #[serde(default)]
     pub source_note: Option<String>,
+    #[serde(default)]
+    pub level_value_mode: ResearchLevelValueMode,
     pub levels: Vec<ResearchLevel>,
 }
 
@@ -47,19 +60,24 @@ pub struct ResearchLevel {
 }
 
 /// Optional **defender** / engagement gates (`defender_*`, morale, burning, hull breach) and
-/// optional **player hull owner** gates (`attacker_faction` / `attacker_factions` from [`crate::data::ship::ShipRecord::faction`]).
+/// optional **player hull owner** gates (`attacker_faction` / `attacker_factions` from [`crate::data::ship::ShipRecord::faction`])
+/// and minimum ship grade (`attacker_min_grade`).
 /// Defender-gated `crit_*` / `weapon_damage` rows are attack-phase seats, not flat `profile.bonuses`.
 /// Owner-only rows merge into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`]
 /// and apply in [`crate::data::profile::apply_profile_to_attacker`] when the resolved ship matches
 /// (unless a row is also defender-gated and routed elsewhere; see [`skip_owner_faction_merge_for_defender_gated_hull_shield`]).
 ///
 /// **Conjunctive semantics:** every set field on one bonus row is an **AND** at evaluation time (same as
-/// [`crate::combat::condition::ability_condition_from_research_bonus_key`]). For example, both
+/// the supported runtime predicates in [`crate::combat::condition::ability_condition_from_research_bonus_key`]).
+/// Grade gates are handled separately at scenario build; unsupported compound grade gates remain unapplied.
+/// For example, both
 /// `defender_faction` and `attacker_faction` require matching opponent tag **and** matching attacker
 /// owner faction. [`cumulative_conditional_research_bonuses`] keys rows by the full struct so dual gates
 /// do not collapse with single-gate rows.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub struct ResearchBonusConditionKey {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attacker_ship_class: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub defender_ship_class: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -71,6 +89,9 @@ pub struct ResearchBonusConditionKey {
     /// Merged into [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`] under each key.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub attacker_factions: Vec<String>,
+    /// Minimum literal ship grade (e.g. 4 for Grade 4 and above); unknown grades do not match.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attacker_min_grade: Option<u32>,
     #[serde(default)]
     pub requires_morale: bool,
     #[serde(default)]
@@ -102,10 +123,12 @@ impl Default for ResearchBonusEntry {
 
 /// True when this row carries any research condition (hull class, faction, morale, etc.).
 pub fn research_bonus_is_conditional(bonus: &ResearchBonusEntry) -> bool {
-    bonus.condition.defender_ship_class.is_some()
+    bonus.condition.attacker_ship_class.is_some()
+        || bonus.condition.defender_ship_class.is_some()
         || bonus.condition.defender_faction.is_some()
         || bonus.condition.attacker_faction.is_some()
         || !bonus.condition.attacker_factions.is_empty()
+        || bonus.condition.attacker_min_grade.is_some()
         || bonus.condition.requires_morale
         || bonus.condition.requires_defender_burning
         || bonus.condition.requires_defender_hull_breach
@@ -139,15 +162,43 @@ fn is_conditional_attack_seat_research_stat(stat: &str) -> bool {
     is_crit_seat_research_stat(stat) || stat == "weapon_damage"
 }
 
+/// Owner-faction attack-seat rows already have a dedicated faction pool. Keep them out of the
+/// general conditional seat pool unless another independent gate (such as defender faction)
+/// also needs runtime evaluation.
+fn research_bonus_has_non_owner_gate(bonus: &ResearchBonusEntry) -> bool {
+    let condition = &bonus.condition;
+    condition.defender_ship_class.is_some()
+        || condition.defender_faction.is_some()
+        || condition.attacker_min_grade.is_some()
+        || condition.attacker_ship_class.is_some()
+        || condition.requires_morale
+        || condition.requires_defender_burning
+        || condition.requires_defender_hull_breach
+}
+
 /// Stats that compile to round-start seats when gated on morale only (excluding `isolytic_damage`,
 /// which uses the broader conditional-isolytic rule below).
 fn research_morale_gated_seat_stat(stat: &str) -> bool {
     matches!(stat, "apex_barrier" | "hull_hp" | "shield_hp")
 }
 
-/// Conditional rows that compile to timed/conditional seats (`research_derived_attack_phase_seats_from_spec`)
-/// must not duplicate-merge into unconditional `profile.bonuses`.
+/// These raw fractional effects act at round start and have no flat-profile representation.
+fn research_round_start_only_stat(stat: &str) -> bool {
+    matches!(
+        stat,
+        "base_mitigation_stats_bonus" | "officer_shield_regen_max_fraction"
+    )
+}
+
+/// Conditional rows handled by seats or the scenario's ship-grade merge must not
+/// duplicate-merge into unconditional `profile.bonuses`.
 pub fn research_bonus_skipped_from_flat_profile_merge(bonus: &ResearchBonusEntry) -> bool {
+    if bonus.condition.attacker_min_grade.is_some()
+        || bonus.condition.attacker_ship_class.is_some()
+        || research_round_start_only_stat(&bonus.stat)
+    {
+        return true;
+    }
     if !research_bonus_is_conditional(bonus) {
         return false;
     }
@@ -352,8 +403,9 @@ pub(crate) fn skip_owner_faction_merge_for_defender_gated_hull_shield(
 }
 
 /// Dual gate applies at scenario build only when the defender gate is **faction-only**. Rows that
-/// also need morale, hull class, or burning still need attack-phase seats; see
-/// `docs/research_conditional_routing.md`.
+/// also need morale, hull class, or burning still need attack-phase seats. Minimum-grade
+/// gates are excluded because this evaluator has no ship-grade context; see
+/// `docs/research_conditional_routing.md` for supported grade-only rows.
 fn dual_gate_hull_shield_scenario_apply_condition(key: &ResearchBonusConditionKey) -> bool {
     key.defender_faction
         .as_ref()
@@ -362,6 +414,8 @@ fn dual_gate_hull_shield_scenario_apply_condition(key: &ResearchBonusConditionKe
         && !key.requires_defender_burning
         && !key.requires_defender_hull_breach
         && key.defender_ship_class.is_none()
+        && key.attacker_ship_class.is_none()
+        && key.attacker_min_grade.is_none()
 }
 
 fn owner_faction_keys_match_bonus(bonus: &ResearchBonusEntry, owner_lc: &str) -> bool {
@@ -407,17 +461,9 @@ pub fn cumulative_dual_gate_hull_shield_research_fractions(
         if level == 0 {
             continue;
         }
-        let cap = level.min(max_level(rec));
-        let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = rec
-            .levels
-            .iter()
-            .enumerate()
-            .filter(|(_, l)| l.level <= cap)
-            .map(|(i, l)| (l.level, i, l))
-            .collect();
-        level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+        let level_refs = research_levels_to_apply(rec, level);
 
-        for (_, _, lvl) in level_refs {
+        for lvl in level_refs {
             for bonus in &lvl.bonuses {
                 if !skip_owner_faction_merge_for_defender_gated_hull_shield(bonus) {
                     continue;
@@ -465,7 +511,32 @@ pub fn max_level(record: &ResearchRecord) -> u32 {
     record.levels.iter().map(|l| l.level).max().unwrap_or(0)
 }
 
-/// Returns cumulative bonuses for a single research project up to and including the given level.
+/// Select catalog rows according to their declared value semantics.
+/// An unowned project contributes nothing; an above-maximum level uses the final defined rank.
+/// Snapshot ranks must exist explicitly: a missing/empty rank never inherits a prior rank's bonus.
+/// Canonical overrides have their own `snapshot_by_level` contract and do not use this helper.
+pub(crate) fn research_levels_to_apply(record: &ResearchRecord, level: u32) -> Vec<&ResearchLevel> {
+    if level == 0 {
+        return Vec::new();
+    }
+    let cap = level.min(max_level(record));
+    let mut levels: Vec<_> = record
+        .levels
+        .iter()
+        .filter(|row| {
+            row.level > 0
+                && match record.level_value_mode {
+                    ResearchLevelValueMode::Cumulative => row.level <= cap,
+                    ResearchLevelValueMode::Snapshot => row.level == cap,
+                }
+        })
+        .collect();
+    // Stable sorting preserves authored operation order for duplicate level rows.
+    levels.sort_by_key(|row| row.level);
+    levels
+}
+
+/// Returns bonuses for a single research project using its declared level value mode.
 /// Level 0 => no bonuses. Level above max => capped at max_level(record).
 pub fn cumulative_research_level_bonuses(
     record: &ResearchRecord,
@@ -474,18 +545,10 @@ pub fn cumulative_research_level_bonuses(
     if level == 0 {
         return HashMap::new();
     }
-    let cap = level.min(max_level(record));
-    let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = record
-        .levels
-        .iter()
-        .enumerate()
-        .filter(|(_, l)| l.level <= cap)
-        .map(|(i, l)| (l.level, i, l))
-        .collect();
-    level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+    let level_refs = research_levels_to_apply(record, level);
 
     let mut out: HashMap<String, f64> = HashMap::new();
-    for (_, _, lvl) in level_refs {
+    for lvl in level_refs {
         for bonus in &lvl.bonuses {
             if research_bonus_skipped_from_flat_profile_merge(bonus) {
                 continue;
@@ -512,19 +575,18 @@ pub fn cumulative_research_level_owner_faction_bonuses(
     if level == 0 {
         return HashMap::new();
     }
-    let cap = level.min(max_level(record));
-    let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = record
-        .levels
-        .iter()
-        .enumerate()
-        .filter(|(_, l)| l.level <= cap)
-        .map(|(i, l)| (l.level, i, l))
-        .collect();
-    level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+    let level_refs = research_levels_to_apply(record, level);
 
     let mut out: HashMap<String, HashMap<String, f64>> = HashMap::new();
-    for (_, _, lvl) in level_refs {
+    for lvl in level_refs {
         for bonus in &lvl.bonuses {
+            // A faction-only map cannot retain a ship-grade gate.
+            if bonus.condition.attacker_min_grade.is_some()
+                || bonus.condition.attacker_ship_class.is_some()
+                || research_round_start_only_stat(&bonus.stat)
+            {
+                continue;
+            }
             if research_bonus_skipped_from_flat_profile_merge(bonus) {
                 if !research_bonus_is_owner_faction_gated(bonus) {
                     continue;
@@ -597,23 +659,25 @@ pub fn cumulative_research_level_conditional_bonuses(
     if level == 0 {
         return HashMap::new();
     }
-    let cap = level.min(max_level(record));
-    let mut level_refs: Vec<(u32, usize, &ResearchLevel)> = record
-        .levels
-        .iter()
-        .enumerate()
-        .filter(|(_, l)| l.level <= cap)
-        .map(|(i, l)| (l.level, i, l))
-        .collect();
-    level_refs.sort_by_key(|(lev, idx, _)| (*lev, *idx));
+    let level_refs = research_levels_to_apply(record, level);
 
     let mut out: HashMap<(ResearchBonusConditionKey, String), f64> = HashMap::new();
-    for (_, _, lvl) in level_refs {
+    for lvl in level_refs {
         for bonus in &lvl.bonuses {
-            if !research_bonus_is_conditional(bonus) {
+            if is_conditional_attack_seat_research_stat(&bonus.stat)
+                && research_bonus_is_owner_faction_gated(bonus)
+                && !research_bonus_has_non_owner_gate(bonus)
+            {
                 continue;
             }
-            if !(is_conditional_attack_seat_research_stat(&bonus.stat)
+            if !research_bonus_is_conditional(bonus) && !research_round_start_only_stat(&bonus.stat)
+            {
+                continue;
+            }
+            if !(bonus.condition.attacker_min_grade.is_some()
+                || bonus.condition.attacker_ship_class.is_some()
+                || research_round_start_only_stat(&bonus.stat)
+                || is_conditional_attack_seat_research_stat(&bonus.stat)
                 || bonus.stat == "isolytic_damage"
                 || (bonus.condition.requires_morale
                     && research_morale_gated_seat_stat(&bonus.stat))
@@ -711,12 +775,174 @@ pub fn cumulative_research_bonuses(
 mod tests {
     use super::*;
 
+    fn snapshot_record(condition: ResearchBonusConditionKey) -> ResearchRecord {
+        ResearchRecord {
+            rid: 2999437,
+            name: None,
+            data_version: None,
+            source_note: None,
+            level_value_mode: ResearchLevelValueMode::Snapshot,
+            levels: [0.21, 0.24, 0.8]
+                .into_iter()
+                .enumerate()
+                .map(|(index, value)| ResearchLevel {
+                    level: index as u32 + 1,
+                    bonuses: vec![ResearchBonusEntry {
+                        stat: "accuracy".into(),
+                        value,
+                        operator: "add".into(),
+                        condition: condition.clone(),
+                    }],
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn snapshot_levels_select_owned_rank_and_cap_without_summing() {
+        let record = snapshot_record(Default::default());
+        for (level, expected) in [
+            (0, None),
+            (1, Some(0.21)),
+            (2, Some(0.24)),
+            (3, Some(0.8)),
+            (99, Some(0.8)),
+        ] {
+            assert_eq!(
+                cumulative_research_level_bonuses(&record, level)
+                    .get("accuracy")
+                    .copied(),
+                expected,
+                "owned level {level}"
+            );
+        }
+    }
+
+    #[test]
+    fn snapshot_empty_or_absent_rank_never_reuses_previous_bonus() {
+        let mut record = snapshot_record(Default::default());
+        record.levels[1].bonuses.clear();
+        assert!(cumulative_research_level_bonuses(&record, 2).is_empty());
+        record.levels.remove(1);
+        assert!(cumulative_research_level_bonuses(&record, 2).is_empty());
+        record.levels[1].bonuses.clear();
+        assert!(cumulative_research_level_bonuses(&record, 99).is_empty());
+    }
+
+    #[test]
+    fn authored_records_without_mode_keep_cumulative_semantics() {
+        let record: ResearchRecord = serde_json::from_str(
+            r#"{"rid":1,"levels":[{"level":1,"bonuses":[{"stat":"accuracy","value":0.21}]},{"level":2,"bonuses":[{"stat":"accuracy","value":0.24}]}]}"#,
+        ).unwrap();
+        assert_eq!(record.level_value_mode, ResearchLevelValueMode::Cumulative);
+        assert!((cumulative_research_level_bonuses(&record, 2)["accuracy"] - 0.45).abs() < 1e-12);
+    }
+
+    #[test]
+    fn snapshot_faction_and_grade_rows_keep_their_gates() {
+        let owner = ResearchBonusConditionKey {
+            attacker_faction: Some("federation".into()),
+            ..Default::default()
+        };
+        let mut record = snapshot_record(owner.clone());
+        assert!(cumulative_research_level_bonuses(&record, 2).is_empty());
+        assert_eq!(
+            cumulative_research_level_owner_faction_bonuses(&record, 2)["federation"]["accuracy"],
+            0.24
+        );
+        let grade = ResearchBonusConditionKey {
+            attacker_min_grade: Some(4),
+            ..owner
+        };
+        for row in &mut record.levels {
+            row.bonuses[0].condition = grade.clone();
+        }
+        assert!(cumulative_research_level_bonuses(&record, 2).is_empty());
+        assert!(cumulative_research_level_owner_faction_bonuses(&record, 2).is_empty());
+        assert_eq!(
+            cumulative_research_level_conditional_bonuses(&record, 2)[&(grade, "accuracy".into())],
+            0.24
+        );
+    }
+
+    #[test]
+    fn owner_only_attack_seat_is_not_duplicated_into_conditional_seat() {
+        let owner = ResearchBonusConditionKey {
+            attacker_faction: Some("federation".into()),
+            ..Default::default()
+        };
+        let mut record = snapshot_record(owner.clone());
+        for row in &mut record.levels {
+            row.bonuses[0].stat = "weapon_damage".into();
+        }
+        assert_eq!(
+            cumulative_research_level_owner_faction_bonuses(&record, 2)["federation"]
+                ["weapon_damage"],
+            0.24
+        );
+        assert!(
+            cumulative_research_level_conditional_bonuses(&record, 2).is_empty(),
+            "owner-faction attack bonus must enter the owner-faction pool only"
+        );
+    }
+
+    #[test]
+    fn snapshot_conditional_and_dual_faction_rows_select_one_rank() {
+        let key = ResearchBonusConditionKey {
+            attacker_faction: Some("federation".into()),
+            defender_faction: Some("klingon".into()),
+            ..Default::default()
+        };
+        let mut record = snapshot_record(key.clone());
+        assert_eq!(
+            cumulative_research_level_conditional_bonuses(&record, 2)
+                [&(key.clone(), "accuracy".into())],
+            0.24
+        );
+        for row in &mut record.levels {
+            row.bonuses[0].stat = "hull_hp".into();
+        }
+        let levels = HashMap::from([(record.rid, 2)]);
+        assert_eq!(
+            cumulative_dual_gate_hull_shield_research_fractions(
+                &[&record],
+                &levels,
+                Some("federation"),
+                OpponentFactionTag::Klingon
+            ),
+            (0.24, 0.0)
+        );
+        assert_eq!(
+            cumulative_dual_gate_hull_shield_research_fractions(
+                &[&record],
+                &levels,
+                Some("romulan"),
+                OpponentFactionTag::Klingon
+            ),
+            (0.0, 0.0)
+        );
+        for row in &mut record.levels {
+            row.bonuses[0].condition.attacker_min_grade = Some(4);
+        }
+        assert_eq!(
+            cumulative_dual_gate_hull_shield_research_fractions(
+                &[&record],
+                &levels,
+                Some("federation"),
+                OpponentFactionTag::Klingon
+            ),
+            (0.0, 0.0),
+            "the faction-only evaluator must not discard a grade gate"
+        );
+    }
+
     fn test_record() -> ResearchRecord {
         ResearchRecord {
             rid: 100,
             name: Some("Combat I".to_string()),
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![
                 ResearchLevel {
                     level: 1,
@@ -801,6 +1027,7 @@ mod tests {
             name: Some("Shields I".to_string()),
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![ResearchBonusEntry {
@@ -838,6 +1065,7 @@ mod tests {
             name: None,
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![
                 ResearchLevel {
                     level: 2,
@@ -878,6 +1106,7 @@ mod tests {
             name: None,
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![ResearchBonusEntry {
@@ -914,6 +1143,7 @@ mod tests {
             name: None,
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![
@@ -955,6 +1185,7 @@ mod tests {
             name: Some("Fed vs Klingon hull".into()),
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![ResearchBonusEntry {
@@ -999,6 +1230,7 @@ mod tests {
             name: None,
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![ResearchBonusEntry {
@@ -1036,6 +1268,7 @@ mod tests {
             name: Some("Sarek's Vulcan Necklace".into()),
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![ResearchBonusEntry {
@@ -1072,6 +1305,7 @@ mod tests {
             name: None,
             data_version: None,
             source_note: None,
+            level_value_mode: Default::default(),
             levels: vec![ResearchLevel {
                 level: 1,
                 bonuses: vec![ResearchBonusEntry {

@@ -2,6 +2,27 @@
 
 use crate::combat::types::{self, AttackerStats, DefenderStats, ShipType, EPSILON};
 
+// GlobalDamageReductionConfig encodes this as float32; promote its actual value,
+// rather than replacing it with the nearby f64 decimal. The client PE and two
+// independent recorded controls corroborate this offset (see
+// docs/STFC_CLIENT_REVERSE_ENGINEERING.md, "Mitigation curve").
+const NATIVE_DAMAGE_REDUCTION_OFFSET: f64 = 1.1_f32 as f64;
+
+/// Compose additive base-stat fractions before the nonlinear defense/piercing curve.
+/// `all_stats_bonus = 5` means +500%, not five mitigation percentage points.
+pub fn apply_base_mitigation_stat_bonuses(
+    base: DefenderStats,
+    stat_bonuses: DefenderStats,
+    all_stats_bonus: f64,
+) -> DefenderStats {
+    DefenderStats {
+        armor: base.armor.max(0.0) * (1.0 + stat_bonuses.armor + all_stats_bonus).max(0.0),
+        shield_deflection: base.shield_deflection.max(0.0)
+            * (1.0 + stat_bonuses.shield_deflection + all_stats_bonus).max(0.0),
+        dodge: base.dodge.max(0.0) * (1.0 + stat_bonuses.dodge + all_stats_bonus).max(0.0),
+    }
+}
+
 /// Detailed mitigation decomposition for one attacker/defender/ship-type tuple.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MitigationBreakdown {
@@ -29,10 +50,10 @@ fn component_ratio(defense: f64, piercing: f64) -> f64 {
     safe_defense / safe_piercing
 }
 
-/// Compute component mitigation f(x) = 1 / (1 + 4^(1.1 - x)).
+/// Compute component mitigation f(x) = 1 / (1 + 4^(offset - x)), with native float32 offset.
 pub fn component_mitigation(defense: f64, piercing: f64) -> f64 {
     let x = component_ratio(defense, piercing);
-    1.0 / (1.0 + 4.0_f64.powf(1.1 - x))
+    1.0 / (1.0 + 4.0_f64.powf(NATIVE_DAMAGE_REDUCTION_OFFSET - x))
 }
 
 /// Maximum pierce damage-through bonus (additive to (1 - mitigation)).
@@ -72,9 +93,9 @@ pub fn mitigation_breakdown(
     let armor_ratio = component_ratio(defender.armor, attacker.armor_piercing);
     let shield_ratio = component_ratio(defender.shield_deflection, attacker.shield_piercing);
     let dodge_ratio = component_ratio(defender.dodge, attacker.accuracy);
-    let f_armor = 1.0 / (1.0 + 4.0_f64.powf(1.1 - armor_ratio));
-    let f_shield = 1.0 / (1.0 + 4.0_f64.powf(1.1 - shield_ratio));
-    let f_dodge = 1.0 / (1.0 + 4.0_f64.powf(1.1 - dodge_ratio));
+    let f_armor = 1.0 / (1.0 + 4.0_f64.powf(NATIVE_DAMAGE_REDUCTION_OFFSET - armor_ratio));
+    let f_shield = 1.0 / (1.0 + 4.0_f64.powf(NATIVE_DAMAGE_REDUCTION_OFFSET - shield_ratio));
+    let f_dodge = 1.0 / (1.0 + 4.0_f64.powf(NATIVE_DAMAGE_REDUCTION_OFFSET - dodge_ratio));
     let weighted_armor = c_armor * f_armor;
     let weighted_shield = c_shield * f_shield;
     let weighted_dodge = c_dodge * f_dodge;
@@ -201,10 +222,43 @@ mod tests {
     // ── component_mitigation curve ──
 
     #[test]
-    fn component_mitigation_is_half_at_ratio_one_point_one() {
-        // f(x) = 1 / (1 + 4^(1.1 - x)) hits exactly 0.5 when x = 1.1.
-        let f = component_mitigation(110.0, 100.0);
+    fn component_mitigation_is_half_at_native_offset() {
+        let f = component_mitigation(NATIVE_DAMAGE_REDUCTION_OFFSET, 1.0);
         assert!((f - 0.5).abs() < 1e-12, "got {f}");
+        assert!(component_mitigation(110.0, 100.0) < 0.5);
+    }
+
+    #[test]
+    fn native_offset_reproduces_recorded_jemhadar_and_exchange_mitigation() {
+        // These references are independently retained noncritical nearest-raw
+        // diagnostics, not direct server raw fields. The offset itself comes
+        // from the native config/PE, rather than fitting either observation.
+        for (defense, piercing, observed) in [
+            (
+                [125.0, 963.0, 42.0],
+                [803768.0, 1298802.0, 765496.0],
+                0.16170472129512495,
+            ),
+            ([144.0, 1100.0, 48.0], [382000.0; 3], 0.1619379182638594),
+        ] {
+            let actual = mitigation(
+                DefenderStats {
+                    armor: defense[0],
+                    shield_deflection: defense[1],
+                    dodge: defense[2],
+                },
+                AttackerStats {
+                    armor_piercing: piercing[0],
+                    shield_piercing: piercing[1],
+                    accuracy: piercing[2],
+                },
+                ShipType::Explorer,
+            );
+            assert!(
+                (actual - observed).abs() < 1e-15,
+                "got {actual}, expected {observed}"
+            );
+        }
     }
 
     #[test]

@@ -16,6 +16,16 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+async function cachedDetailUsable(cachePath, id) {
+  try {
+    const detail = JSON.parse(await fs.readFile(cachePath, "utf8"));
+    if (detail === null || typeof detail !== "object" || Array.isArray(detail)) return false;
+    return detail.id === id || (typeof detail.id === "string" && detail.id === String(id));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * @param {string[]} argv process.argv.slice(2)
  * @returns {{ help: boolean, full: boolean, limit: number | null, ids: number[] | null }}
@@ -90,6 +100,8 @@ export async function runDetailFetch(opts) {
     fetched: 0,
     skipped: 0,
     failed: 0,
+    stale_cache_used: 0,
+    uncovered_failures: 0,
     failures: [],
   };
 
@@ -104,8 +116,7 @@ export async function runDetailFetch(opts) {
     const cachePath = path.join(cacheDir, `${id}.json`);
 
     if (!full) {
-      try {
-        await fs.access(cachePath);
+      if (await cachedDetailUsable(cachePath, id)) {
         log.skipped++;
         if (progressEvery === 1) {
           process.stdout.write(`[${i + 1}/${ids.length}] ${id} — cached (skip)\n`);
@@ -113,8 +124,6 @@ export async function runDetailFetch(opts) {
           process.stdout.write(`[${i + 1}/${ids.length}] … skipped so far ${log.skipped}\n`);
         }
         continue;
-      } catch {
-        /* fetch */
       }
     }
 
@@ -126,9 +135,15 @@ export async function runDetailFetch(opts) {
       process.stdout.write(` ok\n`);
       log.fetched++;
     } catch (err) {
-      process.stdout.write(` FAIL (${err.message})\n`);
+      const fallback = await cachedDetailUsable(cachePath, id);
+      process.stdout.write(` FAIL (${err.message})${fallback ? " — using validated stale cache" : ""}\n`);
       log.failed++;
-      log.failures.push({ id, error: err.message });
+      if (fallback) {
+        log.stale_cache_used++;
+      } else {
+        log.uncovered_failures++;
+      }
+      log.failures.push({ id, error: err.message, stale_cache_used: fallback });
     }
 
     if (i < ids.length - 1) await sleep(REQUEST_DELAY_MS);
@@ -139,14 +154,15 @@ export async function runDetailFetch(opts) {
   const logPath = path.join(logDir, `fetch-stfcspace-${logStem}-${dateStr}.json`);
   await fs.writeFile(logPath, `${JSON.stringify(log, null, JSON_INDENT)}\n`, "utf8");
 
-  console.log(`\nDone. fetched=${log.fetched} skipped=${log.skipped} failed=${log.failed}`);
+  console.log(`\nDone. fetched=${log.fetched} skipped=${log.skipped} failed=${log.failed} stale_cache_used=${log.stale_cache_used} uncovered_failures=${log.uncovered_failures}`);
   console.log(`Log: ${path.relative(repoRoot, logPath)}`);
 
   if (log.failed > 0) {
     console.warn(`\nFailed IDs:`);
-    log.failures.forEach((f) => console.warn(`  ${f.id}: ${f.error}`));
-    process.exit(1);
+    log.failures.forEach((f) => console.warn(`  ${f.id}: ${f.error}${f.stale_cache_used ? " (validated stale cache)" : " (no usable cache)"}`));
+    if (log.uncovered_failures > 0) process.exit(1);
   }
+  return log;
 }
 
 /**

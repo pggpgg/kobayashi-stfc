@@ -2,6 +2,8 @@
   "id": "separatist_d3_class",
   "ship_name": "SEPARATIST D3 CLASS",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
+  "grade": 3,
   "faction": "klingon",
   "tiers": [
     {

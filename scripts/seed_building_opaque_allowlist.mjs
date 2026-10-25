@@ -77,12 +77,17 @@ async function loadBuildingNames() {
 async function loadAllowlist() {
   try {
     const raw = JSON.parse(await fs.readFile(ALLOWLIST_PATH, "utf8"));
+    if (!raw || typeof raw !== "object" || Array.isArray(raw) ||
+        !raw.entries || typeof raw.entries !== "object" || Array.isArray(raw.entries)) {
+      throw new Error("Expected an allowlist object with an entries object");
+    }
     return {
       version: raw.version ?? 1,
       entries: raw.entries && typeof raw.entries === "object" ? { ...raw.entries } : {},
     };
-  } catch {
-    return { version: 1, entries: {} };
+  } catch (error) {
+    if (error.code === "ENOENT") return { version: 1, entries: {} };
+    throw new Error(`Cannot read existing allowlist; file preserved: ${error.message}`);
   }
 }
 

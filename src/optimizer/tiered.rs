@@ -12,6 +12,8 @@
 //!    of Wilson intervals for coarse ranks `K−1` through `K−1 + SCOUT_REFINE_BAND_BUFFER` (0-based
 //!    ranks on the strength-sorted coarse list). If more than [`max_scout_refine_contenders`]
 //!    crews overlap, the widest Wilson bands are kept (most uncertainty near the cut).
+//!    The fresh reruns share a global executed-trial cap equal to one uniform `N × S` scout;
+//!    eligible contenders may retain their coarse rows when the remaining cap is too small.
 //!
 //! When `scout_adaptive` is false, behavior matches legacy tiered: a single scout pass at `S` for
 //! every non-cached crew.
@@ -31,7 +33,7 @@ use crate::optimizer::monte_carlo::scenario::{
     SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    crew_candidate_stable_hash, run_monte_carlo_scout_phase_with_shared,
+    crew_candidate_ordered_hash, run_monte_carlo_scout_phase_with_shared,
     run_monte_carlo_with_shared_variable_iterations, zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
@@ -253,7 +255,7 @@ pub(crate) fn scout_refine_candidate_hashes(
     for r in ranked {
         let overlaps = r.win_rate_ci_low <= band_hi && r.win_rate_ci_high >= band_lo;
         if overlaps {
-            let h = crew_candidate_stable_hash(&CrewCandidate {
+            let h = crew_candidate_ordered_hash(&CrewCandidate {
                 captain: r.captain.clone(),
                 bridge: r.bridge.clone(),
                 below_decks: r.below_decks.clone(),
@@ -278,8 +280,9 @@ pub struct TieredScoutBudgetStats {
     pub refine_pass_trials: u64,
     /// Sum of final per-crew `trials_run` after coarse + refine (used for total scout cost).
     pub scout_trials_final: u64,
-    /// Actual trials executed across every scout pass. Unlike `scout_trials_final`, this includes
-    /// superseded coarse/minimal trials for crews that were rerun at a deeper racing bracket.
+    /// Actual trials executed in this run across every scout pass. Unlike `scout_trials_final`,
+    /// this excludes preconfirmed cache hits and includes superseded coarse/minimal trials for
+    /// crews rerun at a deeper racing bracket.
     pub scout_trials_executed_total: u64,
     /// Sum of `trials_run` across the top-K confirmation phase (includes optimize-history cache hits).
     /// For exhaustive two-phase (`exhaustive_adaptive`), only the top-`keep` full-MC rows are summed (not scout-only crews).
@@ -291,6 +294,19 @@ pub struct TieredScoutBudgetStats {
 
 fn simulation_trials_sum(rows: &[SimulationResult]) -> u64 {
     rows.iter().map(|r| r.trials_run as u64).sum()
+}
+
+fn full_refine_chunk_len(remaining: u64, per_crew_cap: usize, contenders_left: usize) -> usize {
+    let affordable = remaining / per_crew_cap.max(1) as u64;
+    contenders_left.min(usize::try_from(affordable).unwrap_or(usize::MAX))
+}
+
+fn charge_refine_trials(remaining: &mut u64, actual: u64) {
+    assert!(
+        actual <= *remaining,
+        "refine pass exceeded its global scout budget"
+    );
+    *remaining -= actual;
 }
 
 /// Unwrap the confirmation slots into one row per crew, in `crews` order.
@@ -334,6 +350,7 @@ fn run_tiered_scout_batches<F>(
     preconfirmed: Option<&HashMap<u64, SimulationResult>>,
     only_hashes: Option<&HashSet<u64>>,
     refine_pass_accum: Option<&RefCell<u64>>,
+    refine_budget_remaining: Option<&RefCell<u64>>,
     phase_label: &'static str,
     total_work: u32,
     total_batches: usize,
@@ -360,7 +377,7 @@ where
         );
         let mut batch_scout: Vec<CrewCandidate> = Vec::new();
         for c in &candidates[start..end] {
-            let h = crew_candidate_stable_hash(c);
+            let h = crew_candidate_ordered_hash(c);
             if let Some(pre) = preconfirmed.and_then(|m| m.get(&h)) {
                 scout_by_hash.insert(h, pre.clone());
                 continue;
@@ -372,22 +389,45 @@ where
             }
             batch_scout.push(c.clone());
         }
-        if !batch_scout.is_empty() {
+        let mut next = 0;
+        while next < batch_scout.len() {
+            // A full-cap rerun costs at most `scout_iterations` per contender. Bound each
+            // chunk before it starts, then return unused trials from early-stopped crews to
+            // the shared budget for later contenders. Never replace a coarse result with a
+            // shallower, partial-budget result.
+            let chunk_len = if let Some(remaining) = refine_budget_remaining {
+                full_refine_chunk_len(
+                    *remaining.borrow(),
+                    scout_iterations,
+                    batch_scout.len() - next,
+                )
+            } else {
+                batch_scout.len() - next
+            };
+            if chunk_len == 0 {
+                break;
+            }
+            let chunk = &batch_scout[next..next + chunk_len];
             let fresh = run_monte_carlo_scout_phase_with_shared(
                 shared.clone(),
-                &batch_scout,
+                chunk,
                 scout_iterations,
                 seed,
                 true,
                 chain_grind.clone(),
             );
+            let actual = fresh.iter().map(|r| r.trials_run as u64).sum::<u64>();
             if let Some(acc) = refine_pass_accum {
-                let add = fresh.iter().map(|r| r.trials_run as u64).sum::<u64>();
-                *acc.borrow_mut() += add;
+                *acc.borrow_mut() += actual;
             }
-            for (c, sim) in batch_scout.iter().zip(fresh) {
-                scout_by_hash.insert(crew_candidate_stable_hash(c), sim);
+            if let Some(remaining) = refine_budget_remaining {
+                let mut budget = remaining.borrow_mut();
+                charge_refine_trials(&mut budget, actual);
             }
+            for (c, sim) in chunk.iter().zip(fresh) {
+                scout_by_hash.insert(crew_candidate_ordered_hash(c), sim);
+            }
+            next += chunk_len;
         }
         info!(
             phase = phase_label,
@@ -411,7 +451,7 @@ where
                 .iter()
                 .map(|c| {
                     scout_by_hash
-                        .get(&crew_candidate_stable_hash(c))
+                        .get(&crew_candidate_ordered_hash(c))
                         .expect("scout row for every candidate in processed prefix")
                         .clone()
                 })
@@ -547,7 +587,10 @@ where
         );
 
         for (i, c) in candidates.iter().enumerate() {
-            scout_by_hash.insert(crew_candidate_stable_hash(c), pq_outcome.results[i].clone());
+            scout_by_hash.insert(
+                crew_candidate_ordered_hash(c),
+                pq_outcome.results[i].clone(),
+            );
         }
         budget.coarse_pass_trials = pq_outcome.minimal_trials;
         budget.refine_pass_trials = pq_outcome.deep_trials;
@@ -588,6 +631,7 @@ where
             preconfirmed,
             None,
             None,
+            None,
             "tiered_scout",
             total_work as u32,
             total_batches,
@@ -602,7 +646,7 @@ where
             .iter()
             .map(|c| {
                 scout_by_hash
-                    .get(&crew_candidate_stable_hash(c))
+                    .get(&crew_candidate_ordered_hash(c))
                     .expect("scout row for every candidate")
                     .clone()
             })
@@ -627,6 +671,27 @@ where
                     return (Vec::new(), budget);
                 }
                 let refine_pass_accum = RefCell::new(0u64);
+                // A full uniform scout would request at most N*S trials. Refinements are
+                // fresh reruns, so charge the observed coarse work first and share only the
+                // remaining nominal uniform budget across all Wilson-band contenders.
+                let uncached = candidates
+                    .iter()
+                    .filter(|c| {
+                        preconfirmed
+                            .is_none_or(|pre| !pre.contains_key(&crew_candidate_ordered_hash(c)))
+                    })
+                    .count();
+                let cached_trials = candidates
+                    .iter()
+                    .filter_map(|c| {
+                        preconfirmed.and_then(|pre| pre.get(&crew_candidate_ordered_hash(c)))
+                    })
+                    .map(|row| row.trials_run as u64)
+                    .sum::<u64>();
+                let coarse_executed = budget.coarse_pass_trials.saturating_sub(cached_trials);
+                let uniform_requested_cap = (uncached as u64).saturating_mul(scout_cap as u64);
+                let refine_budget_remaining =
+                    RefCell::new(uniform_requested_cap.saturating_sub(coarse_executed));
                 if !run_tiered_scout_batches(
                     &candidates,
                     &ranges,
@@ -638,6 +703,7 @@ where
                     preconfirmed,
                     Some(&refine_hashes),
                     Some(&refine_pass_accum),
+                    Some(&refine_budget_remaining),
                     "tiered_scout_refine",
                     total_work as u32,
                     total_batches,
@@ -656,14 +722,20 @@ where
         .iter()
         .map(|c| {
             scout_by_hash
-                .get(&crew_candidate_stable_hash(c))
+                .get(&crew_candidate_ordered_hash(c))
                 .expect("scout row for every candidate")
                 .clone()
         })
         .collect();
     budget.scout_trials_final = simulation_trials_sum(&scout_ordered);
+    let cached_trials = candidates
+        .iter()
+        .filter_map(|c| preconfirmed.and_then(|pre| pre.get(&crew_candidate_ordered_hash(c))))
+        .map(|row| row.trials_run as u64)
+        .sum::<u64>();
     budget.scout_trials_executed_total = budget
         .coarse_pass_trials
+        .saturating_sub(cached_trials)
         .saturating_add(budget.refine_pass_trials);
 
     info!(
@@ -708,7 +780,7 @@ where
     let mut pending_crews: Vec<CrewCandidate> = Vec::new();
     let mut pending_sims: Vec<usize> = Vec::new();
     for (i, crew) in top_crews.iter().enumerate() {
-        let h = crew_candidate_stable_hash(crew);
+        let h = crew_candidate_ordered_hash(crew);
         if let Some(pre) = preconfirmed.and_then(|m| m.get(&h)) {
             confirmation_slots[i] = Some(pre.clone());
         } else {
@@ -916,7 +988,9 @@ pub(crate) fn run_priority_queue_scout_with_shared(
         shared,
         &survivor_candidates,
         scout_cap.max(1),
-        seed.wrapping_add(0xDEAD_BEEF),
+        // Reuse the minimal/uniform scout seed panel. A deeper run then extends the same
+        // deterministic trials, so priority scheduling alone determines any rank difference.
+        seed,
         true,
         chain_grind,
     );
@@ -942,14 +1016,29 @@ pub(crate) fn run_priority_queue_scout_with_shared(
 #[cfg(test)]
 mod workload_tests {
     use super::{
-        apply_confirm_sims_budget_cap, confirm_ranking_uncertainty_width,
-        confirm_sims_from_uncertainty_widths, max_scout_refine_contenders,
+        apply_confirm_sims_budget_cap, charge_refine_trials, confirm_ranking_uncertainty_width,
+        confirm_sims_from_uncertainty_widths, full_refine_chunk_len, max_scout_refine_contenders,
         scout_coarse_sims_from_cap, scout_refine_candidate_hashes, tiered_scout_sims_for_workload,
         tiered_top_k_for_workload, DEFAULT_SCOUT_SIMS, DEFAULT_TOP_K,
     };
     use crate::optimizer::crew_generator::CrewCandidate;
-    use crate::optimizer::monte_carlo::crew_candidate_stable_hash;
+    use crate::optimizer::monte_carlo::crew_candidate_ordered_hash;
     use crate::optimizer::ranking::{RankedCrewResult, RankingScore};
+
+    #[test]
+    fn refine_budget_is_global_across_contender_batches_and_recycles_early_stops() {
+        // Six Wilson-band contenders span two batches. The first three can be requested
+        // under the 320-trial budget, but consume only 170 actual trials due to early stops.
+        // One more full-cap contender fits; the final 50 trials cannot start a full rerun.
+        let mut remaining = 320;
+        assert_eq!(full_refine_chunk_len(remaining, 100, 3), 3);
+        charge_refine_trials(&mut remaining, 170);
+        assert_eq!(remaining, 150);
+        assert_eq!(full_refine_chunk_len(remaining, 100, 3), 1);
+        charge_refine_trials(&mut remaining, 100);
+        assert_eq!(full_refine_chunk_len(remaining, 100, 2), 0);
+        assert_eq!(320 - remaining, 270);
+    }
 
     fn ranked_row(captain: &str, win_lo: f64, win_hi: f64) -> RankedCrewResult {
         let win_rate = (win_lo + win_hi) / 2.0;
@@ -1070,17 +1159,17 @@ mod workload_tests {
         let k = 3usize;
         let max_c = max_scout_refine_contenders(k, rows.len());
         let hs = scout_refine_candidate_hashes(&rows, k, 2, max_c);
-        let h0 = crew_candidate_stable_hash(&CrewCandidate {
+        let h0 = crew_candidate_ordered_hash(&CrewCandidate {
             captain: "c0".into(),
             bridge: vec!["b1".into(), "b2".into()],
             below_decks: vec!["d1".into(), "d2".into(), "d3".into()],
         });
-        let h2 = crew_candidate_stable_hash(&CrewCandidate {
+        let h2 = crew_candidate_ordered_hash(&CrewCandidate {
             captain: "c2".into(),
             bridge: vec!["b1".into(), "b2".into()],
             below_decks: vec!["d1".into(), "d2".into(), "d3".into()],
         });
-        let h3 = crew_candidate_stable_hash(&CrewCandidate {
+        let h3 = crew_candidate_ordered_hash(&CrewCandidate {
             captain: "c3".into(),
             bridge: vec!["b1".into(), "b2".into()],
             below_decks: vec!["d1".into(), "d2".into(), "d3".into()],

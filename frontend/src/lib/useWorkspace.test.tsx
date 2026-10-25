@@ -441,6 +441,62 @@ describe("useWorkspace", () => {
     expect(result.current.workspaceInfo).toMatch(/New Actian best saved/);
   });
 
+  it("#301 forwards grouped settings without resetting refinement, history or group constraints", async () => {
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current.activeProfileId).toBe("p1"));
+    act(() => {
+      result.current.setShipId("saladin");
+      result.current.setScenarioId("2918121098");
+      result.current.updateOptimizerSettings({
+        maxCandidates: 250,
+        localRefinement: true,
+        tieredScoutSims: 50,
+      });
+      result.current.updateOptimizerSettings({
+        noveltyLambdaText: "0.6",
+        noveltyHistoryAnchors: true,
+      });
+      result.current.updateOptimizerSettings({
+        optimizeGroupsJson:
+          '[{"officers":["Officer 1","Bridge 1"],"min_count":2}]',
+      });
+    });
+    await act(async () => {
+      await result.current.handleRunOptimize();
+    });
+    expect(apiMocks.mockOptimizeStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        max_candidates: 250,
+        local_refinement: true,
+        tiered_scout_sims: 50,
+        novelty_lambda: 0.6,
+        novelty_history_anchors: true,
+        optimize_cache_key: expect.any(String),
+        constraints: {
+          groups: [{ officers: ["Officer 1", "Bridge 1"], min_count: 2 }],
+        },
+      }),
+      "p1",
+      expect.any(Object),
+    );
+  });
+
+  it("#302 blocks invalid group settings before starting an optimizer job", async () => {
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current.activeProfileId).toBe("p1"));
+    act(() => {
+      result.current.updateOptimizerSettings({
+        optimizeGroupsJson: '[{"officers":[],"min_count":1}]',
+      });
+    });
+    await act(async () => {
+      await result.current.handleRunOptimize();
+    });
+    expect(apiMocks.mockOptimizeStart).not.toHaveBeenCalled();
+    expect(result.current.error).toMatch(/choose at least one officer/i);
+    expect(result.current.loadingOptimize).toBe(false);
+  });
+
   it("trims below-deck slots when ship level decreases", async () => {
     const { result } = renderHook(() => useWorkspace(), { wrapper });
 

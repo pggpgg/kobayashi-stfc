@@ -1,0 +1,600 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "cache_sha256": "6cc5375f6cfd59f382ed67c88f5f7e629b933ce9c32aa99f68c431b78ea32f37",
+    "cache_byte_length": 24591608,
+    "protobuf_schema_revision": "netniV/stfc-mod@e0b8552bc2e8922423c6cdf3ba00ba0a81bf23c0",
+    "server_version": null,
+    "server_time": null,
+    "current_build_correspondence_verified": false,
+    "metadata_sha256": "ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04",
+    "game_assembly_sha256": "a5df6314bd78f15892a232a44e77cdcf2e3d20e9a6192f99120c0f3e52632274"
+  },
+  "selection": "Only five explicitly selected ResearchSpecs projects, their linked BuffSpec rows, and target/trigger definitions; no player state or unrelated payloads.",
+  "native_condition_proof": {
+    "method": "Digit.PrimeServer.Models.BuffCondition..cctor",
+    "address": "0x181b71610",
+    "assembly_listing_sha256": "e79be6da6cce2bddfcc49a7bcb266f60e5a5458db954c4a3a3af9e0d265df2b2",
+    "static_field_assignments": [
+      {
+        "field": "CondSelfHasMorale",
+        "code": 33,
+        "static_field_offset": 16
+      },
+      {
+        "field": "CondTargetHasHullBreach",
+        "code": 37,
+        "static_field_offset": 32
+      },
+      {
+        "field": "CondTargetHasBurning",
+        "code": 38,
+        "static_field_offset": 36
+      }
+    ]
+  },
+  "static_target_trigger_specs": [
+    {
+      "group": 54,
+      "mapKey": 2988263710,
+      "code": 1,
+      "id": 2988263710,
+      "idStr": "targ_self_ship",
+      "schema": null,
+      "span": [
+        11992064,
+        11992088
+      ]
+    },
+    {
+      "group": 55,
+      "mapKey": 3319355873,
+      "code": 18,
+      "id": 3319355873,
+      "idStr": "trig_round_start",
+      "schema": 1,
+      "span": [
+        21965373,
+        21965401
+      ]
+    },
+    {
+      "group": 55,
+      "mapKey": 3060580673,
+      "code": 24,
+      "id": 3060580673,
+      "idStr": "trig_self_launch",
+      "schema": 2,
+      "span": [
+        21965489,
+        21965517
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "rid": 2047743532,
+      "project": {
+        "byte_start": 12705277,
+        "byte_end": 12705641,
+        "sha256": "25fc054c86f9fd52e33ae595dc709aad8c2f953469cd1fe0f534b15e0506e63d",
+        "level_count": 10,
+        "buff_ids": [
+          679782642
+        ]
+      },
+      "buff": {
+        "byte_start": 16896875,
+        "byte_end": 16898516,
+        "sha256": "9bbc95f81b971ccf5df0abfa8db6960abcad71c81c80e0a707b476f3799c917f",
+        "buff_id": 679782642,
+        "loca_id": 70103,
+        "target_code": 1,
+        "trigger_code": 18,
+        "operation_code": 3,
+        "modifier_code": 73,
+        "condition_codes": [
+          38
+        ],
+        "ranked_value_type_encoded": null,
+        "show_percentage_encoded": 1,
+        "attributes": [
+          {
+            "field_number": 2,
+            "wire_type": 0,
+            "byte_offset": 16897697,
+            "signed_value": 1
+          },
+          {
+            "field_number": 8,
+            "wire_type": 0,
+            "byte_offset": 16897699,
+            "signed_value": -1
+          }
+        ],
+        "ranked_values": [
+          0.5,
+          0.75,
+          1.15,
+          1.6,
+          2.05,
+          2.6,
+          3.15,
+          3.75,
+          4.35,
+          5
+        ],
+        "ranked_value_count": 99,
+        "remaining_rank_values_all_zero": false,
+        "ranked_chances": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "rid": 535909811,
+      "project": {
+        "byte_start": 13171911,
+        "byte_end": 13172275,
+        "sha256": "37f336e2fafbf8b03b171f9c17921ff18e26c9ba6778adca1fb06d78ffaa5e29",
+        "level_count": 10,
+        "buff_ids": [
+          1142346453
+        ]
+      },
+      "buff": {
+        "byte_start": 16435097,
+        "byte_end": 16436738,
+        "sha256": "f0dcb95cb67dce201b37aea3c100b4744cd46dabb878cc17ac63f9cf1223278a",
+        "buff_id": 1142346453,
+        "loca_id": 70104,
+        "target_code": 1,
+        "trigger_code": 18,
+        "operation_code": 3,
+        "modifier_code": 73,
+        "condition_codes": [
+          33
+        ],
+        "ranked_value_type_encoded": null,
+        "show_percentage_encoded": 1,
+        "attributes": [
+          {
+            "field_number": 2,
+            "wire_type": 0,
+            "byte_offset": 16435919,
+            "signed_value": 1
+          },
+          {
+            "field_number": 8,
+            "wire_type": 0,
+            "byte_offset": 16435921,
+            "signed_value": -1
+          }
+        ],
+        "ranked_values": [
+          0.5,
+          0.75,
+          1.15,
+          1.6,
+          2.05,
+          2.6,
+          3.15,
+          3.75,
+          4.35,
+          5
+        ],
+        "ranked_value_count": 99,
+        "remaining_rank_values_all_zero": false,
+        "ranked_chances": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "rid": 1233598019,
+      "project": {
+        "byte_start": 12963317,
+        "byte_end": 12963681,
+        "sha256": "71c25344de1cf37cae48dc6753518a82336640ee909dcc2f6d6bdc2cf7937478",
+        "level_count": 10,
+        "buff_ids": [
+          4033066544
+        ]
+      },
+      "buff": {
+        "byte_start": 13563574,
+        "byte_end": 13565215,
+        "sha256": "1c83ac6da9de0cbf275cdfb29675602249855c08e8bd14b7e20b3dbed4832aa6",
+        "buff_id": 4033066544,
+        "loca_id": 70105,
+        "target_code": 1,
+        "trigger_code": 18,
+        "operation_code": 3,
+        "modifier_code": 73,
+        "condition_codes": [
+          37
+        ],
+        "ranked_value_type_encoded": null,
+        "show_percentage_encoded": 1,
+        "attributes": [
+          {
+            "field_number": 2,
+            "wire_type": 0,
+            "byte_offset": 13564396,
+            "signed_value": 1
+          },
+          {
+            "field_number": 8,
+            "wire_type": 0,
+            "byte_offset": 13564398,
+            "signed_value": -1
+          }
+        ],
+        "ranked_values": [
+          0.5,
+          0.75,
+          1.15,
+          1.6,
+          2.05,
+          2.6,
+          3.15,
+          3.75,
+          4.35,
+          5
+        ],
+        "ranked_value_count": 99,
+        "remaining_rank_values_all_zero": false,
+        "ranked_chances": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "rid": 3288570685,
+      "project": {
+        "byte_start": 12341565,
+        "byte_end": 12341929,
+        "sha256": "d0bf5680f9c172a1131c357b21043e03f24f5f68d8e55005beb2834ab8b2e552",
+        "level_count": 10,
+        "buff_ids": [
+          2286920377
+        ]
+      },
+      "buff": {
+        "byte_start": 15313152,
+        "byte_end": 15314793,
+        "sha256": "9cd076c7cb01114703aed3f136f7b74baf5769b492f1f0536c74ae9551314a18",
+        "buff_id": 2286920377,
+        "loca_id": 70107,
+        "target_code": 1,
+        "trigger_code": 18,
+        "operation_code": 3,
+        "modifier_code": 16,
+        "condition_codes": [
+          33
+        ],
+        "ranked_value_type_encoded": null,
+        "show_percentage_encoded": 1,
+        "attributes": [
+          {
+            "field_number": 2,
+            "wire_type": 0,
+            "byte_offset": 15313974,
+            "signed_value": 1
+          },
+          {
+            "field_number": 8,
+            "wire_type": 0,
+            "byte_offset": 15313976,
+            "signed_value": -1
+          }
+        ],
+        "ranked_values": [
+          0.01,
+          0.015,
+          0.025,
+          0.03,
+          0.04,
+          0.05,
+          0.065,
+          0.075,
+          0.085,
+          0.1
+        ],
+        "ranked_value_count": 99,
+        "remaining_rank_values_all_zero": false,
+        "ranked_chances": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "rid": 851540444,
+      "project": {
+        "byte_start": 13080877,
+        "byte_end": 13080948,
+        "sha256": "7305454201a4f27b51396544da2c47fc0fdb371fd9b7a8833dcbf0b466097133",
+        "level_count": 1,
+        "buff_ids": [
+          3573127943
+        ]
+      },
+      "buff": {
+        "byte_start": 14008015,
+        "byte_end": 14009638,
+        "sha256": "676ae21c637791a7f3cfed461ef88d1d9f8f791622f65a9a0a218ecd5835399a",
+        "buff_id": 3573127943,
+        "loca_id": 80007,
+        "target_code": 1,
+        "trigger_code": 24,
+        "operation_code": 1,
+        "modifier_code": 67,
+        "condition_codes": [
+          1,
+          0
+        ],
+        "ranked_value_type_encoded": null,
+        "show_percentage_encoded": null,
+        "attributes": [],
+        "ranked_values": [
+          1
+        ],
+        "ranked_value_count": 99,
+        "remaining_rank_values_all_zero": false,
+        "ranked_chances": [
+          1
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "The original and fresh cache envelopes omit server version and timestamp. Fresh static definitions were co-observed with build272 after login and are byte-identical for this selection; the cache itself does not encode a server/build binding.",
+    "Ranked doubles are exported unchanged; display flags do not rescale these observations.",
+    "Condition codes1 and0 on the deployment-only cargo buff are retained without interpreting their combined predicate.",
+    "No complete combat behavior or player-account completeness is claimed by this selected static evidence.",
+    "ModShieldHpRepair(16) is not mapped by the inspected GetStatTypes method; authoritative server repair denominator/order has not been established. The simulator uses its existing maximum-shield fractional repair channel."
+  ],
+  "native_modifier_proof": {
+    "method": "Digit.PrimeServer.Models.StatDataUtilities.GetStatTypes",
+    "address": "0x181e9b9e0",
+    "decompilation_sha256": "a429715bbde5c59d2c95ccdd45f7296cd3d0ab7a780a3c6a968c5f8c43716f20",
+    "stat_type_metadata_type_index": 10855,
+    "stat_type_initialization": {
+      "method": "Digit.PrimeServer.Models.StatType..cctor",
+      "address": "0x181e98e50",
+      "decompilation_sha256": "65ba5250c1798f7f5d873056227694b601e634710bb2e6829cb9c4410835aa5b",
+      "shared_class_global": "0x185cf49d8",
+      "assignments": [
+        {
+          "name": "Plating",
+          "static_field_offset": 36,
+          "stat_id_hex": "0x6d72b299"
+        },
+        {
+          "name": "Absorption",
+          "static_field_offset": 40,
+          "stat_id_hex": "0x9caefad9"
+        },
+        {
+          "name": "Dodge",
+          "static_field_offset": 44,
+          "stat_id_hex": "0xa4c8e461"
+        },
+        {
+          "name": "CargoProtected",
+          "static_field_offset": 76,
+          "stat_id_hex": "0x91cf3e88"
+        }
+      ]
+    },
+    "cases": [
+      {
+        "modifier_code": 73,
+        "stat_fields": [
+          {
+            "name": "Dodge",
+            "static_field_offset": 44
+          },
+          {
+            "name": "Plating",
+            "static_field_offset": 36
+          },
+          {
+            "name": "Absorption",
+            "static_field_offset": 40
+          }
+        ]
+      },
+      {
+        "modifier_code": 67,
+        "stat_fields": [
+          {
+            "name": "CargoProtected",
+            "static_field_offset": 76
+          }
+        ]
+      }
+    ]
+  },
+  "native_operation_proof": {
+    "method": "Digit.PrimeServer.Services.BuffService.ApplySingleBuffToStatContainer",
+    "address": "0x1817fe0c0",
+    "decompilation_sha256": "62bef5e01a5e08eeeb15938227fabb7c0cfb6040c95a142a2c7a419b5b799aa4",
+    "observations": [
+      {
+        "operation_code": 1,
+        "action": "Adds unchanged ranked double to ADD bucket"
+      },
+      {
+        "operation_code": 3,
+        "action": "Adds unchanged ranked double to MULT bucket"
+      }
+    ],
+    "apply_method": "Digit.PrimeServer.Services.BuffService.ApplyBuffModifiersToValue",
+    "apply_address": "0x1817c2450",
+    "apply_expression": "(input + AdditionVal) * (1 + MultVal)"
+  },
+  "fresh_capture_verification": {
+    "captured_at_utc": "2026-10-20T18:04:30.399Z",
+    "observed_client_build": 272,
+    "capture_context": "Frozen static cache collected after login during the build272 capture session; this establishes local co-observation, not an encoded server/build binding.",
+    "cache_sha256": "b7fcb7a021fa982144702a682e81eb6b7a31406522b0154cc77553a2c0776418",
+    "cache_byte_length": 24991479,
+    "server_version": null,
+    "server_time": null,
+    "encoded_server_build_binding": false,
+    "selected_projects": [
+      {
+        "rid": 2047743532,
+        "project": {
+          "byte_start": 6492109,
+          "byte_end": 6492473,
+          "sha256": "25fc054c86f9fd52e33ae595dc709aad8c2f953469cd1fe0f534b15e0506e63d"
+        },
+        "buff": {
+          "byte_start": 10754682,
+          "byte_end": 10756323,
+          "sha256": "9bbc95f81b971ccf5df0abfa8db6960abcad71c81c80e0a707b476f3799c917f"
+        },
+        "matches_original_bytes": true
+      },
+      {
+        "rid": 535909811,
+        "project": {
+          "byte_start": 6967594,
+          "byte_end": 6967958,
+          "sha256": "37f336e2fafbf8b03b171f9c17921ff18e26c9ba6778adca1fb06d78ffaa5e29"
+        },
+        "buff": {
+          "byte_start": 10286355,
+          "byte_end": 10287996,
+          "sha256": "f0dcb95cb67dce201b37aea3c100b4744cd46dabb878cc17ac63f9cf1223278a"
+        },
+        "matches_original_bytes": true
+      },
+      {
+        "rid": 1233598019,
+        "project": {
+          "byte_start": 6754286,
+          "byte_end": 6754650,
+          "sha256": "71c25344de1cf37cae48dc6753518a82336640ee909dcc2f6d6bdc2cf7937478"
+        },
+        "buff": {
+          "byte_start": 7360655,
+          "byte_end": 7362296,
+          "sha256": "1c83ac6da9de0cbf275cdfb29675602249855c08e8bd14b7e20b3dbed4832aa6"
+        },
+        "matches_original_bytes": true
+      },
+      {
+        "rid": 3288570685,
+        "project": {
+          "byte_start": 6117991,
+          "byte_end": 6118355,
+          "sha256": "d0bf5680f9c172a1131c357b21043e03f24f5f68d8e55005beb2834ab8b2e552"
+        },
+        "buff": {
+          "byte_start": 9138187,
+          "byte_end": 9139828,
+          "sha256": "9cd076c7cb01114703aed3f136f7b74baf5769b492f1f0536c74ae9551314a18"
+        },
+        "matches_original_bytes": true
+      },
+      {
+        "rid": 851540444,
+        "project": {
+          "byte_start": 6874794,
+          "byte_end": 6874865,
+          "sha256": "7305454201a4f27b51396544da2c47fc0fdb371fd9b7a8833dcbf0b466097133"
+        },
+        "buff": {
+          "byte_start": 7811682,
+          "byte_end": 7813305,
+          "sha256": "676ae21c637791a7f3cfed461ef88d1d9f8f791622f65a9a0a218ecd5835399a"
+        },
+        "matches_original_bytes": true
+      }
+    ],
+    "static_target_trigger_specs": [
+      {
+        "group": 54,
+        "mapKey": 2988263710,
+        "code": 1,
+        "id": 2988263710,
+        "idStr": "targ_self_ship",
+        "schema": null,
+        "span": [
+          16737698,
+          16737722
+        ],
+        "sha256": "9b57162a24c06ce3d7cfa8bb9c564d8e958921cdb6d0af0c42d87937d9518286",
+        "matches_original_bytes": true
+      },
+      {
+        "group": 55,
+        "mapKey": 3319355873,
+        "code": 18,
+        "id": 3319355873,
+        "idStr": "trig_round_start",
+        "schema": 1,
+        "span": [
+          16739071,
+          16739099
+        ],
+        "sha256": "77fc08e218a8571129a2e9073b67410a720ac2f0bea0897eb02dba27aae78b43",
+        "matches_original_bytes": true
+      },
+      {
+        "group": 55,
+        "mapKey": 3060580673,
+        "code": 24,
+        "id": 3060580673,
+        "idStr": "trig_self_launch",
+        "schema": 2,
+        "span": [
+          16739187,
+          16739215
+        ],
+        "sha256": "a19c564e571017e121018cacba2f612a1cf0fa6a20de3dab8b556035bca5fcae",
+        "matches_original_bytes": true
+      }
+    ],
+    "result": "All five selected project payloads, five complete linked buff payloads, and three target/trigger payloads are byte-identical to the original fixture source. No selected definition drift."
+  }
+}

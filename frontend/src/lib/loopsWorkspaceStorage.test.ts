@@ -29,6 +29,8 @@ function recommendation(
     captain: "Five of Eleven",
     bridge: ["Khan", "Georgiou"],
     below_decks: ["The Doctor"],
+    method_provenance: "exhaustive_mc",
+    trials_run: 100,
     win_rate: 0.9,
     win_rate_ci_low: 0.88,
     win_rate_ci_high: 0.92,

@@ -5,7 +5,7 @@
 /** Stats merged as additive fractions then (1 + bonus) on hull/shield in scenario (same as buildings). */
 export const HULL_SHIELD_HP_STATS = new Set(["hull_hp", "shield_hp"]);
 
-/** Stats that sometimes appear with value_is_percentage false but use fractional bonuses like 0.05. */
+/** Stats with legacy fractional/point values only when upstream omits percentage flags. */
 export const NON_PCT_DECIMAL_STATS = new Set([
   "armor",
   "shield_deflection",
@@ -22,6 +22,8 @@ export const NON_PCT_DECIMAL_STATS = new Set([
   "damage_reduction",
   "dodge",
   "accuracy",
+  "armor_piercing",
+  "shield_piercing",
   "apex_shred",
   "apex_barrier",
 ]);
@@ -34,16 +36,18 @@ export const NON_PCT_DECIMAL_STATS = new Set([
  * @returns {number|null}
  */
 export function normalizeBonusValue(buff, mapping, rawValue) {
-  let value = rawValue;
-  if (buff.value_is_percentage) {
-    // Percentage-point display (buildings + research hull/shield/weapon rows): 1.3 → +1.3% → 0.013.
-    // Large tier totals (130 → +130%, 1300 → +1300%) use the >1.5 branch when show_percentage is false.
-    if (buff.show_percentage && value >= 1 && value <= 100) {
-      return value / 100;
-    }
-    value = value >= 0 && value <= 1.5 ? value : value / 100;
-    return value;
+  if (!Number.isFinite(rawValue)) return null;
+  // A mapping's explicit unit is the only reliable way to distinguish a fraction
+  // from percentage points. In particular, never infer units from the raw value's
+  // magnitude or from the display-only upstream flags.
+  if (mapping.value_unit === "fraction" || mapping.value_unit === "absolute") {
+    return rawValue;
   }
+  if (mapping.value_unit === "percentage_points") return rawValue / 100;
+  // value_is_percentage/show_percentage do not describe the numeric encoding.
+  // Keep the row out of the combat catalog until a reviewed mapping supplies a unit.
+  if (buff.value_is_percentage === true) return null;
+  const value = rawValue;
   if (
     (mapping.stat === "apex_barrier" || mapping.stat === "apex_shred") &&
     !buff.value_is_percentage

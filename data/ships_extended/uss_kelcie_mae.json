@@ -2,6 +2,8 @@
   "id": "uss_kelcie_mae",
   "ship_name": "U.S.S. KELCIE MAE",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 6,
   "tiers": [
     {
       "tier": 1,

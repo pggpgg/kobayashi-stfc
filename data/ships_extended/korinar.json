@@ -2,6 +2,8 @@
   "id": "korinar",
   "ship_name": "KORINAR",
   "ship_class": "explorer",
+  "crit_damage_is_bonus": true,
+  "grade": 4,
   "faction": "klingon",
   "tiers": [
     {

@@ -2,6 +2,8 @@
   "id": "ss_revenant",
   "ship_name": "SS REVENANT",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

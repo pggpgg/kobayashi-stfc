@@ -1,6 +1,6 @@
 //! One-off sanity trace: U.S.S. Enterprise-D Galaxy class hull ability (level-scaled growth) + demo profile.
 //!
-//! **Crew:** Harry Kim is on **below decks**; LCARS [`below_decks_ability`] (“To the Journey!”) supplies
+//! **Crew:** Neelix is on **below decks**; LCARS [`below_decks_ability`] (“Chief Morale Officer”) supplies
 //! round-start **Morale**. The Galaxy hull ability (`448699234`) is **`additive_weapon_damage_growth`**
 //! (cumulative `g` diluted against profile `weapon_damage` `p` as `×(1+g/(1+p))`), gated on [`MoraleActive`],
 //! so you expect **per-round damage to trend up** when Morale procs reliably
@@ -113,7 +113,7 @@ fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
             "ent-e-data-871245".to_string(),
             "five-of-eleven-d9aa11".to_string(),
         ],
-        below_decks: vec!["harry-kim-a79fdf (T5)".to_string()],
+        below_decks: vec!["neelix-c8a380 (T5)".to_string()],
     };
 
     let replay = replay_optimize_iteration_with_registry(
@@ -170,7 +170,7 @@ fn galaxy_ent_d_round_damage_sanity_prints_per_round_damage() {
         assert_eq!(
             morale_by_round.get(&r).copied(),
             Some(true),
-            "round {r}: T5 Harry below decks — Morale should succeed every round (chance 1.0); see resolve_options_with_candidate_tiers"
+            "round {r}: T5 Neelix below decks — Morale should succeed every round (chance 1.0); see resolve_options_with_candidate_tiers"
         );
     }
 

@@ -1,4 +1,37 @@
 {
+  "679782642": {
+    "stat": "base_mitigation_stats_bonus",
+    "operator": "add",
+    "value_unit": "fraction",
+    "requires_defender_burning": true
+  },
+  "1142346453": {
+    "stat": "base_mitigation_stats_bonus",
+    "operator": "add",
+    "value_unit": "fraction",
+    "requires_morale": true
+  },
+  "4033066544": {
+    "stat": "base_mitigation_stats_bonus",
+    "operator": "add",
+    "value_unit": "fraction",
+    "requires_defender_hull_breach": true
+  },
+  "2286920377": {
+    "stat": "officer_shield_regen_max_fraction",
+    "operator": "add",
+    "value_unit": "fraction",
+    "requires_morale": true
+  },
+  "3573127943": {
+    "stat": "cargo_protection",
+    "exclude_global_merge": true
+  },
+  "1994654654": [
+    { "stat": "accuracy", "operator": "add", "attacker_min_grade": 4 },
+    { "stat": "armor_piercing", "operator": "add", "attacker_min_grade": 4 },
+    { "stat": "shield_piercing", "operator": "add", "attacker_min_grade": 4 }
+  ],
   "70895365": {
     "stat": "weapon_damage",
     "operator": "add",
@@ -143,7 +176,8 @@
   },
   "936000619": {
     "stat": "hull_hp",
-    "operator": "add"
+    "operator": "add",
+    "value_unit": "fraction"
   },
   "982655355": {
     "stat": "weapon_damage",

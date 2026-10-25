@@ -2,6 +2,8 @@
   "id": "uss_akira",
   "ship_name": "U.S.S. AKIRA",
   "ship_class": "interceptor",
+  "crit_damage_is_bonus": true,
+  "grade": 6,
   "faction": "federation",
   "tiers": [
     {

@@ -410,6 +410,8 @@ mod tests {
         };
         let from_ship = ability_condition_from_ship_ability(&ship).unwrap();
         let key = ResearchBonusConditionKey {
+            attacker_ship_class: None,
+            attacker_min_grade: None,
             defender_ship_class: Some("battleship".into()),
             defender_faction: Some("klingon".into()),
             attacker_faction: None,

@@ -33,3 +33,15 @@ export type SimulateResponse = Schemas["SimulateResponse"];
 
 export type OptimizeStartResponse = Schemas["OptimizeStartResponse"];
 export type OptimizeEstimate = Schemas["OptimizeEstimateResponse"];
+
+export type ChainSimulationSummary = Schemas["ChainSimulationSummary"];
+export type RefinementSlotChange = Schemas["RefinementSlotChange"];
+export type RefinementDetail = Schemas["RefinementDetail"];
+export type CrewRecommendation = Schemas["CrewRecommendation"];
+export type ChainGrindRequestBody = Schemas["ChainGrindRequest"];
+export type OptimizerFunnelTelemetry = Schemas["OptimizerFunnelTelemetry"];
+export type WarmStartCrewBody = Schemas["WarmStartCrewDto"];
+export type OptimizeResponse = Schemas["OptimizeResponse"];
+export type OptimizeStatusResponse = Schemas["OptimizeStatusResponse"];
+export type OptimizeCrewConstraintsBody = Schemas["OptimizeConstraintsDto"];
+export type OptimizeRequest = Schemas["OptimizeRequest"];

@@ -10,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   webServer: {
-    command: `${path.join(process.cwd(), "target/release/kobayashi")} serve`,
+    command: `"${path.join(process.cwd(), "target/release/kobayashi")}" serve`,
     url: process.env.KOBAYASHI_BASE_URL ?? "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",

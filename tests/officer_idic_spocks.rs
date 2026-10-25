@@ -90,7 +90,7 @@ fn idic_spock_bridge_abilities_map_ogn_faction_gate() {
     let officers = lcars_officers_by_id();
     for (id, stat, rank5_value) in [
         ("female-spock-c21a12", "isolytic_damage", 30.0_f64),
-        ("cat-spock-61edec", "crit_damage", 250.0_f64),
+        ("cat-spock-61edec", "crit_damage_flat", 250.0_f64),
         ("ambassador-spock-e7945f", "isolytic_defense", 800.0_f64),
     ] {
         let officer = officers.get(id).unwrap_or_else(|| panic!("{id} in model"));

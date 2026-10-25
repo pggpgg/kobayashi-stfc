@@ -2,6 +2,8 @@
   "id": "k_vort",
   "ship_name": "K'VORT",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 3,
   "faction": "klingon",
   "tiers": [
     {

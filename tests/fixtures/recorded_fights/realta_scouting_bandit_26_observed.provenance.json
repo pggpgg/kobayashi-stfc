@@ -1,0 +1,25 @@
+{
+  "kind": "observed game export; parser/accounting regression, not simulator accuracy fixture",
+  "observed_date": "2026-10-20",
+  "original_export_sha256": "f0bd6ef13ffa7fb4e0f845f59656acc4baf226a97adc33439c943cbff2c924c2",
+  "sanitized_fixture_sha256": "c5846988e33d3698d5d4053416c01946a30c2560b6469c83c9c69d2a1c057be5",
+  "redactions": [
+    "Player display-name cells replaced with Player",
+    "Alliance-name cells replaced with Alliance"
+  ],
+  "changed_cell_count": 23,
+  "numeric_cells_modified": false,
+  "source_scope": "One native-exported Realta level20 versus Scouting Bandit level26 battle; bridge crew and below-deck ability events are observable in the export.",
+  "limits": [
+    "One round cannot validate round-two shield repair.",
+    "Fleet headers do not expose all combat-time defense changes.",
+    "Raw damage and reported attack allocation can exceed actual enemy HP lost due to overkill.",
+    "Private profile snapshots and account identifiers are not included.",
+    "No engine prediction, fitted parameter or tolerance pass is claimed."
+  ],
+  "previous_sanitized_fixture_sha256": "910fa111a667570e786ab0717ebeae0efcdff14d1455bc68e8dd2e6b9894214d",
+  "formatting_transforms": [
+    "Normalize line endings to LF",
+    "Remove trailing empty row at end of file"
+  ]
+}

@@ -70,6 +70,63 @@ pub enum SensitivityJobRequest {
     Sobol(SobolRequest),
 }
 
+/// Refuse scenarios that would otherwise reach the deterministic placeholder combatants. Keep
+/// this shared by synchronous payload handlers and async job starts so every sensitivity method
+/// has the same loaded-data boundary.
+pub fn validate_sensitivity_scenario_ids(
+    registry: &DataRegistry,
+    ship: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    hostile: &str,
+) -> Result<(), String> {
+    if registry
+        .resolve_ship_with_tier_level(ship, ship_tier, ship_level)
+        .is_none()
+    {
+        return Err(format!(
+            "ship {:?} did not resolve from loaded data; sensitivity results require a known ship",
+            ship
+        ));
+    }
+    if registry.resolve_hostile(hostile).is_none() {
+        return Err(format!(
+            "hostile {:?} did not resolve from loaded data; sensitivity results require a known hostile",
+            hostile
+        ));
+    }
+    Ok(())
+}
+
+pub fn validate_sensitivity_job_request_ids(
+    registry: &DataRegistry,
+    request: &SensitivityJobRequest,
+) -> Result<(), String> {
+    match request {
+        SensitivityJobRequest::Oat(req) => validate_sensitivity_scenario_ids(
+            registry,
+            &req.ship,
+            req.ship_tier,
+            req.ship_level,
+            &req.hostile,
+        ),
+        SensitivityJobRequest::Morris(req) => validate_sensitivity_scenario_ids(
+            registry,
+            &req.ship,
+            req.ship_tier,
+            req.ship_level,
+            &req.hostile,
+        ),
+        SensitivityJobRequest::Sobol(req) => validate_sensitivity_scenario_ids(
+            registry,
+            &req.ship,
+            req.ship_tier,
+            req.ship_level,
+            &req.hostile,
+        ),
+    }
+}
+
 /// Tagged result type so the SSE stream / status endpoint can serialize whichever engine
 /// produced this job's output without forcing all three into a single response shape.
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]

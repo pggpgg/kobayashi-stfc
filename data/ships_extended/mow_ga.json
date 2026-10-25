@@ -2,6 +2,8 @@
   "id": "mow_ga",
   "ship_name": "MOW'GA",
   "ship_class": "survey",
+  "crit_damage_is_bonus": true,
+  "grade": 5,
   "faction": "klingon",
   "tiers": [
     {
