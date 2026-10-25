@@ -58,7 +58,16 @@ test.describe("workspace smoke flow", () => {
     await maxCrews.scrollIntoViewIfNeeded();
     await maxCrews.fill("12");
 
+    const started = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/optimize/start",
+    );
     await page.getByRole("button", { name: "Run optimization" }).click();
+    const startResponse = await started;
+    const startBody = await startResponse.text();
+    expect(startResponse.status(), startBody).toBe(200);
+    expect(JSON.parse(startBody)).toHaveProperty("job_id");
 
     await expect(
       page.getByRole("button", { name: "Run optimization" }),

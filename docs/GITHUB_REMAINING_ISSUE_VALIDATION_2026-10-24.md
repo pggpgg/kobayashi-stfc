@@ -70,7 +70,7 @@ not imply that a release containing it has shipped.
   floors and per-weapon inheritance were already preserved. Both paths passed.
 
 Both issues received comments explaining the checks and were closed. Neither is
-counted as a new production fix. Other issues remain open pending publication;
+counted as a new production fix. Other issues remain open pending merge;
 draft comments for reproduced issues have not been posted automatically.
 
 ## Evidence and coverage limits
@@ -132,7 +132,7 @@ observations and rejected candidate formulas are unchanged.
 - All-target Clippy with `-D warnings`, full formatting checks and the locked
   release build pass. The release executable validates the officer catalog,
   retaining warnings for unsupported or partial mechanics.
-- Frontend: **331 tests pass**, TypeScript and production build pass. After the
+- Frontend: **338 tests pass**, TypeScript and production build pass. After the
   dependency update, npm audit reports **zero findings**. The lock resolves Vite
   8.3.5 and Vitest/coverage/mocker 4.1.12.
 - Maintenance scripts: **96 tests pass**, also checked in the publication tree.
@@ -167,6 +167,16 @@ targets. The three workflow tests belong to PR #378, and the two supplemental
 checks are reported above separately. This clean-checkout run caught a new test
 that depended on ignored generated YAML; it now uses the canonical production
 loader and the full 1,134-test library passes without that YAML file.
+
+GitHub's browser smoke run exposed a rejected optimizer request: the generated
+cache namespace contained U+001F constraint separators, forbidden by the API.
+Six focused checks reproduced control-character, component-collision and byte-limit
+failures before the fix. Schema 6 serializes and encodes the key tuple; oversized
+optional server namespaces are omitted while local warm-start crews remain usable.
+The API's validation remains unchanged. All 127 frontend files pass Biome, and both
+Playwright smoke tests pass against a separate public-demo server, including
+simulation, optimization, preset saving and Results Library loading. The test now
+checks the start response directly so API failures report their actual response.
 
 The original development branch and Git index remain unchanged. The release
 binary is built; the existing capture server has not been redeployed by this

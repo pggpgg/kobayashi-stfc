@@ -12,6 +12,35 @@ const baseArgs = {
 };
 
 describe("buildOptimizeWarmStartKey", () => {
+  it("escapes constraint separators so the server accepts its cache namespace", () => {
+    const key = buildOptimizeWarmStartKey(baseArgs);
+    expect(key).not.toMatch(/\p{Cc}/u);
+    expect(new TextEncoder().encode(key).byteLength).toBeLessThanOrEqual(512);
+  });
+
+  it("accepts malformed surrogate input without throwing during encoding", () => {
+    expect(() =>
+      buildOptimizeWarmStartKey({
+        ...baseArgs,
+        constraintsFingerprint: "\ud800",
+      }),
+    ).not.toThrow();
+  });
+
+  it("distinguishes delimiters inside components from component boundaries", () => {
+    const first = buildOptimizeWarmStartKey({
+      ...baseArgs,
+      profileId: "a|b",
+      shipId: "c",
+    });
+    const second = buildOptimizeWarmStartKey({
+      ...baseArgs,
+      profileId: "a",
+      shipId: "b|c",
+    });
+    expect(first).not.toBe(second);
+  });
+
   it("changes when support buff selection changes", () => {
     const a = buildOptimizeWarmStartKey({
       ...baseArgs,

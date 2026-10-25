@@ -5,7 +5,7 @@
 
 import type { CrewRecommendation, WarmStartCrewBody } from "./api";
 
-const SCHEMA = 5;
+const SCHEMA = 6;
 
 export type BelowDecksPoolMode = "strict" | "scored" | "relaxed";
 const PREFIX = "kobayashi_opt_warm_v";
@@ -13,7 +13,9 @@ const PREFIX = "kobayashi_opt_warm_v";
 export type WarmStartCrewPayload = WarmStartCrewBody;
 
 function stableKey(parts: string[]): string {
-  return parts.join("|");
+  // JSON keeps component boundaries distinct and escapes lone surrogates before
+  // URI encoding makes the opaque server namespace free of control characters.
+  return encodeURIComponent(JSON.stringify(parts));
 }
 
 /** Build a cache key from scenario + coarse constraint fingerprint. */

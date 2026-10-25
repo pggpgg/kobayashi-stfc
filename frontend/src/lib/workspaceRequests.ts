@@ -34,6 +34,7 @@ export function buildWorkspaceSimulateParams(args: {
 } | null {
   if (!args.crew.captain) return null;
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
+
   return {
     ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
@@ -215,6 +216,16 @@ export function buildWorkspaceOptimizeStartBody(args: {
 
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
 
+  // Long constraint namespaces remain usable in localStorage. Server history is
+  // optional and has a stricter 512-byte, control-free key contract.
+  const cacheKey = args.optimizeCacheKey?.trim();
+  const serverCacheKey =
+    cacheKey &&
+    new TextEncoder().encode(cacheKey).byteLength <= 512 &&
+    !/\p{Cc}/u.test(cacheKey)
+      ? cacheKey
+      : undefined;
+
   return {
     ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
@@ -285,9 +296,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
       noveltyPoolText: args.noveltyPoolText ?? "",
       noveltyHistoryAnchors: args.noveltyHistoryAnchors,
     }),
-    ...(args.optimizeCacheKey != null && args.optimizeCacheKey.trim() !== ""
-      ? { optimize_cache_key: args.optimizeCacheKey.trim() }
-      : {}),
+    ...(serverCacheKey ? { optimize_cache_key: serverCacheKey } : {}),
     ...(args.enableLearnedPairPrior === false
       ? { enable_learned_pair_prior: false }
       : {}),
