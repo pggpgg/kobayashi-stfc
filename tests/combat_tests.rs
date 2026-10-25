@@ -13,6 +13,144 @@ use kobayashi::combat::{
 };
 use serde_json::{Map, Value};
 
+#[test]
+fn round_end_defender_regen_cannot_revive_a_lethal_kill() {
+    let attacker = Combatant {
+        id: "lethal-attacker".into(),
+        attack: 100.0,
+        hull_health: 1_000.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            ..WeaponStats::default()
+        }],
+        ..Combatant::default()
+    };
+    let defender = Combatant {
+        id: "repairing-defender".into(),
+        hull_health: 50.0,
+        ..Combatant::default()
+    };
+    let defender_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                weapon_scope: Default::default(),
+                name: "Round-end hull repair".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::RoundEnd,
+                boostable: false,
+                effect: AbilityEffect::HullRegen(100.0),
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let result = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &SimulationConfig {
+            rounds: 2,
+            seed: 3,
+            ..SimulationConfig::default()
+        },
+        &CrewConfiguration::default(),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    assert!(
+        result.attacker_won,
+        "lethal first-round damage must end the fight"
+    );
+    assert_eq!(result.defender_hull_remaining, 0.0);
+}
+
+#[test]
+fn defender_counter_fire_replay_uses_per_hit_hull_breach_state() {
+    let attacker = Combatant {
+        id: "stateful-counter-attacker".into(),
+        hull_health: 10_000.0,
+        shield_health: 0.0,
+        ..Combatant::default()
+    };
+    let defender = Combatant {
+        id: "stateful-counter-defender".into(),
+        crit_chance: 1.0,
+        crit_multiplier: 2.5,
+        crit_damage_floor: 2.5,
+        hull_health: 10_000.0,
+        weapons: vec![WeaponStats {
+            attack: 10.0,
+            shots: Some(4),
+            crit_chance: Some(1.0),
+            crit_multiplier: Some(2.5),
+            ..WeaponStats::default()
+        }],
+        ..Combatant::default()
+    };
+    let defender_crew = CrewConfiguration {
+        seats: vec![CrewSeatContext {
+            seat: CrewSeat::Ship,
+            ability: Ability {
+                weapon_scope: Default::default(),
+                name: "Guaranteed critical hull breach".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::AttackPhase,
+                boostable: false,
+                effect: AbilityEffect::HullBreach {
+                    chance: 1.0,
+                    duration_rounds: 2,
+                    requires_critical: true,
+                },
+                condition: None,
+            },
+            boosted: false,
+            officer_id: None,
+            contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+        }],
+    };
+    let config = |trace_mode| SimulationConfig {
+        rounds: 1,
+        seed: 19,
+        trace_mode,
+        ..SimulationConfig::default()
+    };
+    let batch_path = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config(TraceMode::Off),
+        &CrewConfiguration::default(),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    let scalar_replay = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config(TraceMode::Events),
+        &CrewConfiguration::default(),
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    assert_eq!(
+        batch_path.attacker_hull_remaining, scalar_replay.attacker_hull_remaining,
+        "trace replay and untraced scoring must use the same per-hit state"
+    );
+}
+
 fn approx_eq(a: f64, b: f64, tol: f64) {
     assert!((a - b).abs() <= tol, "expected {b}, got {a}");
 }
@@ -420,7 +558,7 @@ fn mitigation_output_is_bounded_for_extreme_inputs() {
 }
 
 #[test]
-fn golden_values_match_python_reference_for_each_ship_type() {
+fn golden_values_match_native_offset_reference_for_each_ship_type() {
     let defender = DefenderStats {
         armor: 100.0,
         shield_deflection: 80.0,
@@ -432,29 +570,31 @@ fn golden_values_match_python_reference_for_each_ship_type() {
         accuracy: 30.0,
     };
 
+    // Independent reference calculation uses the native binary32 offset
+    // 1.100000023841858, retaining the existing ship coefficients and tolerance.
     approx_eq(
         mitigation(defender, attacker, ShipType::Survey),
-        0.5489034243492552,
+        0.548903421316606,
         1e-12,
     );
     approx_eq(
         mitigation(defender, attacker, ShipType::Armada),
-        0.5489034243492552,
+        0.548903421316606,
         1e-12,
     );
     approx_eq(
         mitigation(defender, attacker, ShipType::Battleship),
-        0.5914393181871193,
+        0.5914393148308799,
         1e-12,
     );
     approx_eq(
         mitigation(defender, attacker, ShipType::Explorer),
-        0.5914393181871193,
+        0.5914393148308799,
         1e-12,
     );
     approx_eq(
         mitigation(defender, attacker, ShipType::Interceptor),
-        0.5914393181871193,
+        0.5914393148308799,
         1e-12,
     );
 }
@@ -944,7 +1084,8 @@ fn mitigation_with_morale_applies_all_piercing_bonus_when_active() {
         morale < baseline,
         "morale should lower mitigation and increase final damage"
     );
-    approx_eq(morale, 0.5636223639639175, 1e-12);
+    // Same independent native-offset reference, with all piercing axes ×1.1.
+    approx_eq(morale, 0.5636223600212451, 1e-12);
 }
 
 #[test]
@@ -1216,7 +1357,7 @@ fn shield_mitigation_splits_damage_between_shield_and_hull() {
 }
 
 #[test]
-fn shield_excess_reaches_hull_on_depleting_hit() {
+fn shield_excess_is_discarded_on_depleting_hit() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 1000.0,
@@ -1243,7 +1384,7 @@ fn shield_excess_reaches_hull_on_depleting_hit() {
         hostile_mitigation_params: None,
     };
     // Defender has only 100 SHP. Of 800 shield-assigned damage, 100 depletes the shield
-    // and the excess 700 joins the 200 direct hull damage on this hit.
+    // and the excess 700 is discarded; only the direct 200 damages hull.
     let defender = Combatant {
         id: "defender".to_string(),
         attack: 0.0,
@@ -1288,9 +1429,9 @@ fn shield_excess_reaches_hull_on_depleting_hit() {
         emit_state_snapshots: false,
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
-    approx_eq(result.total_damage, 1000.0, 1e-12);
+    approx_eq(result.total_damage, 300.0, 1e-12);
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
-    approx_eq(result.defender_hull_remaining, 1100.0, 1e-12);
+    approx_eq(result.defender_hull_remaining, 1800.0, 1e-12);
 }
 
 #[test]
@@ -1365,8 +1506,9 @@ fn when_shields_depleted_all_damage_goes_to_hull_next_rounds() {
     };
     let result = simulate_combat(&attacker, &defender, &config, &CrewConfiguration::default());
     approx_eq(result.defender_shield_remaining, 0.0, 1e-12);
-    // Round 1: 50 hull damage. Rounds 2 and 3: 100 each after shields are gone.
-    approx_eq(result.defender_hull_remaining, 250.0, 1e-12);
+    // Round 1: 20 direct hull damage; 30 excess shield damage is discarded.
+    // Rounds 2 and 3: 100 each after shields are gone.
+    approx_eq(result.defender_hull_remaining, 280.0, 1e-12);
 }
 
 #[test]
@@ -3441,6 +3583,8 @@ fn morale_boosts_all_piercing_stats_in_per_shot_dynamic_mitigation() {
         hull_health: 100_000.0,
         shield_mitigation: 0.8,
         hostile_mitigation_params: Some(HostileMitigationParams {
+            round_native_defense_stats: false,
+            base_attacker_weapon_stats: Vec::new(),
             defender_stats,
             base_attacker_stats: base_stats,
             ship_type: ShipType::Battleship,
@@ -4519,6 +4663,8 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
         hostile_mitigation_params: None,
     };
     let params = HostileMitigationParams {
+        round_native_defense_stats: false,
+        base_attacker_weapon_stats: Vec::new(),
         defender_stats: DefenderStats {
             armor: 200.0,
             shield_deflection: 140.0,

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ProfileProvider } from "../contexts/ProfileContext";
+import { ProfileProvider, useProfile } from "../contexts/ProfileContext";
 import type { ImportReport, PlayerProfile } from "../lib/api";
 import RosterProfile from "./RosterProfile";
 
@@ -52,6 +52,15 @@ function renderPage() {
   );
 }
 
+function SwitchProfile() {
+  const { setActiveProfileId } = useProfile();
+  return (
+    <button type="button" onClick={() => setActiveProfileId("p2")}>
+      Switch to second profile
+    </button>
+  );
+}
+
 describe("RosterProfile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -85,6 +94,58 @@ describe("RosterProfile", () => {
     });
     vi.mocked(api.importRoster).mockResolvedValue(importReportFixture);
     vi.mocked(api.updateProfile).mockResolvedValue(undefined);
+  });
+
+  it("#364 surfaces a profile-load failure and cannot save a default draft over it", async () => {
+    vi.mocked(api.fetchProfile).mockRejectedValue(
+      new Error("profile load unavailable"),
+    );
+    renderPage();
+    await waitFor(() => expect(api.fetchProfile).toHaveBeenCalledWith("p1"));
+    fireEvent.click(screen.getByRole("button", { name: "Player Bonuses" }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: "weapon %" }), {
+      target: { value: "8" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+    expect(api.updateProfile).not.toHaveBeenCalled();
+    expect(screen.getByText(/profile load unavailable/)).toBeTruthy();
+  });
+
+  it("#364 discards an old profile draft while the new profile is loading or fails", async () => {
+    vi.mocked(api.fetchProfiles).mockResolvedValue({
+      profiles: [
+        { id: "p1", name: "First", sync_token: "t1" },
+        { id: "p2", name: "Second", sync_token: "t2" },
+      ],
+      default_id: "p1",
+    });
+    vi.mocked(api.fetchProfile).mockImplementation((id) =>
+      id === "p2" ? new Promise(() => {}) : Promise.resolve(profileFixture),
+    );
+    render(
+      <ProfileProvider>
+        <SwitchProfile />
+        <RosterProfile />
+      </ProfileProvider>,
+    );
+    await screen.findByText("(First)");
+    fireEvent.click(screen.getByRole("button", { name: "Player Bonuses" }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: "weapon %" }), {
+      target: { value: "99" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to second profile" }),
+    );
+    await screen.findByText("(Second)");
+    fireEvent.click(screen.getByRole("button", { name: "Player Bonuses" }));
+    expect(screen.queryByDisplayValue("99")).toBeNull();
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Save profile",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
   });
 
   it("shows the active profile on the profile tab and mod-sync guidance", async () => {

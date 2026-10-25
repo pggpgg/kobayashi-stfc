@@ -7,16 +7,38 @@ import {
   inferCombatStatFromDescription,
   inferCombatStatFromProjectName,
 } from "./research_stat_inference.mjs";
+import { CLIENT_STAT_FAMILIES, mapClientResearchBuff,
+  isVerifiedEclipseDefenseBuff, mapVerifiedRoundStartMitigationBuff, mapVerifiedOrlopDefenseBuff,
+  isVerifiedOrlopResearchDetail, VERIFIED_ORLOP_DEFENSE_BUFF_ID } from "./research_client_semantics.mjs";
 
 export function statEntryFromJsonValue(v, defaultOp) {
   if (v == null) return null;
   if (typeof v === "string") return { stat: v, operator: defaultOp ?? "add" };
   if (typeof v === "object" && !Array.isArray(v) && typeof v.stat === "string") {
     const out = { stat: v.stat, operator: v.operator ?? defaultOp ?? "add" };
+    if (v.value_unit != null) {
+      if (!["fraction", "absolute", "percentage_points"].includes(v.value_unit)) {
+        throw new Error(`Invalid value_unit for research stat ${v.stat}`);
+      }
+      out.value_unit = v.value_unit;
+    }
+    if (v.attacker_min_grade != null) {
+      if (!Number.isInteger(v.attacker_min_grade) || v.attacker_min_grade < 1 ||
+          v.attacker_min_grade > 0xffffffff) {
+        throw new Error(`Invalid attacker_min_grade for research stat ${v.stat}`);
+      }
+      out.attacker_min_grade = v.attacker_min_grade;
+    }
     if (v.requires_defender_burning) out.requires_defender_burning = true;
     if (v.requires_morale) out.requires_morale = true;
     if (v.requires_defender_hull_breach) out.requires_defender_hull_breach = true;
     if (typeof v.defender_ship_class === "string") out.defender_ship_class = v.defender_ship_class;
+    if (v.attacker_ship_class != null) {
+      if (!["explorer", "interceptor", "battleship", "survey", "sentinel"].includes(v.attacker_ship_class)) {
+        throw new Error(`Invalid attacker_ship_class for research stat ${v.stat}`);
+      }
+      out.attacker_ship_class = v.attacker_ship_class;
+    }
     if (typeof v.defender_faction === "string") out.defender_faction = v.defender_faction;
     if (typeof v.attacker_faction === "string") out.attacker_faction = v.attacker_faction;
     if (Array.isArray(v.attacker_factions) && v.attacker_factions.length) {
@@ -58,6 +80,7 @@ export function coerceStatMapping(inferred) {
       : {}),
     ...(typeof inferred.defender_faction === "string" ? { defender_faction: inferred.defender_faction } : {}),
     ...(typeof inferred.attacker_faction === "string" ? { attacker_faction: inferred.attacker_faction } : {}),
+    ...(inferred.attacker_min_grade != null ? { attacker_min_grade: inferred.attacker_min_grade } : {}),
     ...(Array.isArray(inferred.attacker_factions) && inferred.attacker_factions.length
       ? {
           attacker_factions: inferred.attacker_factions.map(String).filter(Boolean),
@@ -74,6 +97,8 @@ export function coerceStatMapping(inferred) {
  * @property {Record<string, unknown>} locaIdToStat data/research/loca_id_to_stat.json — buff loca id keys
  * @property {Map<number,string>} [descriptionByLocaId] research_project_description text by loca id
  * @property {Map<number,string>} [projectNamesByLocaId] research_project_name by loca id
+ * @property {Record<string,object>} [clientBuffSemantics] source-verified selected BuffSpec facts.
+ *   When present, these stat families cannot fall back to display/text inference.
  */
 
 /**
@@ -86,22 +111,42 @@ export function resolveBuffStatMappings(ctx, buff, projectLocaId) {
   if (!buff || typeof buff.id !== "number") return [];
   const buffId = buff.id;
   const key = String(buffId);
+  if (buffId === VERIFIED_ORLOP_DEFENSE_BUFF_ID) {
+    // Exact native BID/project/source-rank gate. A changed or missing source row
+    // must not fall through to prose-derived crew-wide officer_defense.
+    return isVerifiedOrlopResearchDetail(ctx, buff, projectLocaId)
+      ? mapVerifiedOrlopDefenseBuff(buffId, ctx.clientBuffSemantics?.[key]) : [];
+  }
+  if (isVerifiedEclipseDefenseBuff(buffId, ctx.clientBuffSemantics?.[key])) {
+    // Its faction predicate is runtime-only and must not enter the static
+    // research catalog, where it could lose scope or duplicate the native seat.
+    return [];
+  }
+  if (ctx.clientBuffSemantics && Object.hasOwn(ctx.clientBuffSemantics, key)) {
+    // An unsupported native predicate/operator is an explicit quarantine. Never
+    // turn it into an unconditional bonus by falling through to prose or maps.
+    const nativeRow = ctx.clientBuffSemantics[key];
+    const verifiedRoundStart = mapVerifiedRoundStartMitigationBuff(buffId, nativeRow);
+    return verifiedRoundStart.length ? verifiedRoundStart : mapClientResearchBuff(nativeRow);
+  }
+  const allowed = (entries) => ctx.clientBuffSemantics
+    ? entries.filter((entry) => !CLIENT_STAT_FAMILIES.has(entry.stat)) : entries;
 
   const inline = ctx.researchBuffMapping?.[buffId] ?? ctx.researchBuffMapping?.[key];
   if (inline) {
     const entries = statEntriesFromJsonValue(inline, "add");
-    if (entries.length > 0) return entries;
+    if (entries.length > 0) return allowed(entries);
   }
 
   const researchExplicit = statEntriesFromJsonValue(ctx.researchBuffById[key], "add");
-  if (researchExplicit.length > 0) return researchExplicit;
+  if (researchExplicit.length > 0) return allowed(researchExplicit);
 
   const fromBuildings = statEntriesFromJsonValue(ctx.commonBuffNormalization[key], "add");
-  if (fromBuildings.length > 0) return fromBuildings;
+  if (fromBuildings.length > 0) return allowed(fromBuildings);
 
   if (typeof buff.loca_id === "number") {
     const fromLoca = statEntriesFromJsonValue(ctx.locaIdToStat[String(buff.loca_id)], "add");
-    if (fromLoca.length > 0) return fromLoca;
+    if (fromLoca.length > 0) return allowed(fromLoca);
   }
 
   const descriptionByLocaId = ctx.descriptionByLocaId;
@@ -112,13 +157,13 @@ export function resolveBuffStatMappings(ctx, buff, projectLocaId) {
       const t = descriptionByLocaId.get(buff.loca_id);
       const inferred = inferCombatStatFromDescription(t);
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
+      if (coerced) return allowed([coerced]);
     }
     if (typeof projectLocaId === "number") {
       const t = descriptionByLocaId.get(projectLocaId);
       const inferred = inferCombatStatFromDescription(t);
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
+      if (coerced) return allowed([coerced]);
     }
   }
 
@@ -126,12 +171,12 @@ export function resolveBuffStatMappings(ctx, buff, projectLocaId) {
     if (typeof buff.loca_id === "number") {
       const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(buff.loca_id));
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
+      if (coerced) return allowed([coerced]);
     }
     if (typeof projectLocaId === "number") {
       const inferred = inferCombatStatFromProjectName(projectNamesByLocaId.get(projectLocaId));
       const coerced = coerceStatMapping(inferred);
-      if (coerced) return [coerced];
+      if (coerced) return allowed([coerced]);
     }
   }
 

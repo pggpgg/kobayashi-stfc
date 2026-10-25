@@ -148,6 +148,10 @@ pub struct ShipRecord {
     pub id: String,
     pub ship_name: String,
     pub ship_class: String,
+    /// Ship grade (star rating), independent of its upgrade tier and level.
+    /// Missing legacy/upstream data stays unknown; grade-restricted buffs must not assume a match.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grade: Option<u32>,
     /// Optional owner faction slug (`federation`, `klingon`, `romulan`, ...).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub faction: Option<String>,
@@ -172,6 +176,11 @@ pub struct ShipRecord {
     pub attack: f64,
     pub crit_chance: f64,
     pub crit_damage: f64,
+    /// Native Attack.CritModifier is a bonus over the noncritical hit (1.5 means
+    /// +150%, hence a final factor of 2.5). Legacy/manual records keep final-factor
+    /// semantics unless this explicit source flag is set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crit_damage_is_bonus: Option<bool>,
     pub hull_health: f64,
     pub shield_health: f64,
     /// Fraction of incoming damage to shield (rest to hull). Base 0.8 for most ships; Sarcophagus is 0.2 (STFC Toolbox).
@@ -468,7 +477,7 @@ pub fn extract_component_tier_stats(components: &[Value], tier: u32) -> TierStat
             .get("crit_modifier")
             .or_else(|| data.get("crit_damage"))
             .and_then(Value::as_f64)
-            .filter(|value| value.is_finite() && *value > 0.0);
+            .filter(|value| value.is_finite() && *value >= 0.0);
         let row_proc_chance = data.get("proc_chance").and_then(Value::as_f64);
         let row_proc_multiplier = data
             .get("proc_multiplier")
@@ -845,6 +854,13 @@ pub struct ExtendedShipRecord {
     pub id: String,
     pub ship_name: String,
     pub ship_class: String,
+    /// Native critical-damage bonus units for every tier and weapon row.
+    /// Converted once when the resolved record is projected into combat stats.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crit_damage_is_bonus: Option<bool>,
+    /// Upstream ship grade (star rating). Preserved unchanged when resolving tier/level stats.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grade: Option<u32>,
     /// Optional owner faction slug (`federation`, `klingon`, `romulan`, ...).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub faction: Option<String>,
@@ -897,6 +913,7 @@ impl ExtendedShipRecord {
             id: self.id.clone(),
             ship_name: self.ship_name.clone(),
             ship_class: self.ship_class.clone(),
+            grade: self.grade,
             faction: self.faction.clone(),
             armor_piercing: t.armor_piercing,
             shield_piercing: t.shield_piercing,
@@ -907,6 +924,7 @@ impl ExtendedShipRecord {
             attack: t.attack,
             crit_chance: t.crit_chance,
             crit_damage: t.crit_damage,
+            crit_damage_is_bonus: self.crit_damage_is_bonus,
             hull_health: t.hull_health + health_bonus,
             shield_health: t.shield_health + shield_bonus,
             shield_mitigation: t.shield_mitigation,
@@ -937,6 +955,41 @@ pub struct ShipIndexEntry {
 }
 
 impl ShipRecord {
+    /// Final critical-hit factor at the data-to-combat boundary.
+    pub fn combat_crit_multiplier(&self) -> f64 {
+        critical_damage_to_multiplier(self.crit_damage, self.crit_damage_is_bonus.unwrap_or(false))
+    }
+
+    /// Unconditional launch-time flat HP belongs in the base before profile MULT.
+    /// Timed or conditional rows stay out of this setup-only path.
+    pub fn health_with_launch_bonuses(&self) -> (f64, f64) {
+        let mut hull = self.hull_health;
+        let mut shield = self.shield_health;
+        for ability in self.abilities.iter().flatten() {
+            if ability.timing != "combat_begin"
+                || ability.duration_rounds.is_some()
+                || ability.round_cap.is_some()
+                || ability.condition_morale
+                || ability.condition_defender_burning
+                || ability.condition_defender_hull_breach
+                || ability.condition_opponent_faction.is_some()
+                || ability.condition_opponent_ship_class.is_some()
+                || ability.condition_opponent_ship_class_not.is_some()
+                || ability.condition_defender_is_npc_hostile
+                || ability.condition_opponent_hostile_tags.is_some()
+                || !ability.value.is_finite()
+            {
+                continue;
+            }
+            match ability.effect_type.as_str() {
+                "hull_hp_flat" => hull += ability.value,
+                "shield_hp_flat" => shield += ability.value,
+                _ => {}
+            }
+        }
+        (hull, shield)
+    }
+
     pub fn to_attacker_stats(&self) -> AttackerStats {
         AttackerStats {
             armor_piercing: self.armor_piercing,
@@ -972,7 +1025,12 @@ impl ShipRecord {
                         shots: r.shots,
                         pierce: r.pierce,
                         crit_chance: r.crit_chance,
-                        crit_multiplier: r.crit_multiplier,
+                        crit_multiplier: r.crit_multiplier.map(|value| {
+                            critical_damage_to_multiplier(
+                                value,
+                                self.crit_damage_is_bonus.unwrap_or(false),
+                            )
+                        }),
                         proc_chance: r.proc_chance,
                         proc_multiplier: r.proc_multiplier,
                         weapon_type: weapon_type_from_slug(r.weapon_type.as_deref()),
@@ -985,6 +1043,15 @@ impl ShipRecord {
                     ..Default::default()
                 }]
             })
+    }
+}
+
+/// Preserve final-factor legacy values while translating explicitly native bonuses.
+pub(crate) fn critical_damage_to_multiplier(value: f64, is_bonus: bool) -> f64 {
+    if is_bonus {
+        1.0 + value
+    } else {
+        value
     }
 }
 
@@ -1009,7 +1076,13 @@ pub const DEFAULT_SHIPS_EXTENDED_DIR: &str = "data/ships_extended";
 pub fn load_extended_ship_record(extended_dir: &Path, id: &str) -> Option<ExtendedShipRecord> {
     let path = extended_dir.join(format!("{}.json", id));
     let data = fs::read_to_string(path).ok()?;
-    serde_json::from_str(&data).ok()
+    let mut record: ExtendedShipRecord = serde_json::from_str(&data).ok()?;
+    if record.crit_damage_is_bonus.is_none()
+        && crate::data::native_critical_damage::ship_has_native_critical_bonus(&record.id)
+    {
+        record.crit_damage_is_bonus = Some(true);
+    }
+    Some(record)
 }
 
 /// Ship id registry: numeric id (data.stfc.space) -> canonical id, ship_name, ship_class.
@@ -1117,6 +1190,7 @@ mod tests {
             id: "fixture".to_string(),
             ship_name: "Fixture".to_string(),
             ship_class: "battleship".to_string(),
+            grade: None,
             faction: None,
             // Pretend these are cumulative tier values; component overrides add only deltas.
             armor_piercing: 70.0,
@@ -1128,6 +1202,7 @@ mod tests {
             attack: 30.0,
             crit_chance: 0.2,
             crit_damage: 2.0,
+            crit_damage_is_bonus: None,
             hull_health: 110.0,
             shield_health: 205.0,
             shield_mitigation: Some(0.8),
@@ -1167,6 +1242,19 @@ mod tests {
         assert_eq!(ship.shield_deflection, 20.0);
         assert_eq!(ship.dodge, 5.0);
         assert_eq!(ship.weapons.as_ref().unwrap()[0].attack, 15.0);
+    }
+
+    #[test]
+    fn component_overrides_preserve_native_critical_bonus_units() {
+        let raw = component_fixture_raw_ship();
+        let mut ship = component_fixture_ship_record();
+        ship.crit_damage_is_bonus = Some(true);
+        apply_component_overrides_to_ship_record(&mut ship, &raw, 1, &[1, 2, 3, 4])
+            .expect("native component override resolves");
+        assert_eq!(ship.crit_damage_is_bonus, Some(true));
+        assert_eq!(ship.crit_damage, 2.0, "raw native value is retained");
+        assert_eq!(ship.combat_crit_multiplier(), 3.0);
+        assert_eq!(ship.to_weapons()[0].crit_multiplier, Some(3.0));
     }
 
     #[test]

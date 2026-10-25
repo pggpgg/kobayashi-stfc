@@ -99,8 +99,10 @@ export function mappingHasCombatConditions(mapping) {
   if (!mapping || typeof mapping !== "object") return false;
   return !!(
     mapping.defender_ship_class ||
+    mapping.attacker_ship_class ||
     mapping.defender_faction ||
     mapping.attacker_faction ||
+    mapping.attacker_min_grade != null ||
     (mapping.attacker_factions || []).length ||
     mapping.requires_morale ||
     mapping.requires_defender_burning ||
@@ -118,6 +120,7 @@ export function shouldExcludeUnconditionalGlobalMerge(opts) {
   const { mapping, buff, projectLocaId, descriptionByLocaId } = opts;
   if (!mapping || typeof mapping !== "object") return false;
   if (mapping.exclude_global_merge === true) return true;
+  if (mapping.client_verified === true) return false;
   if (mappingHasCombatConditions(mapping)) return false;
   const desc = descriptionForScopeCheck({
     projectLocaId,

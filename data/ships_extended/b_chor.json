@@ -2,6 +2,7 @@
   "id": "b_chor",
   "ship_name": "B'CHOR",
   "ship_class": "survey",
+  "grade": 4,
   "faction": "klingon",
   "tiers": [
     {

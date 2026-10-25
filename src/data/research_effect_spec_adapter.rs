@@ -118,6 +118,10 @@ fn norm_to_modifier(norm: &str) -> Option<AbilityModifierSpec> {
         }
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
+        "base_mitigation_stats_bonus" => Some(AbilityModifierSpec::BaseMitigationStatsBonus),
+        "officer_shield_regen_max_fraction" => {
+            Some(AbilityModifierSpec::OfficerShieldRegenMaxFraction)
+        }
         _ => None,
     }
 }
@@ -317,6 +321,11 @@ pub fn research_derived_attack_phase_seats_from_spec(
                 let conditional =
                     cumulative_conditional_research_bonuses(&records, &remaining_levels);
                 for ((key, stat), value) in conditional {
+                    // Grade-gated base piercing stats are resolved against the ship
+                    // before mitigation. Never erase this gate into an unconditional seat.
+                    if key.attacker_min_grade.is_some() || key.attacker_ship_class.is_some() {
+                        continue;
+                    }
                     if !value.is_finite() || value == 0.0 {
                         continue;
                     }
@@ -331,6 +340,10 @@ pub fn research_derived_attack_phase_seats_from_spec(
                     // applied during the isolytic damage leg). Morale-gated catalog `isolytic_damage`,
                     // `apex_barrier`, and `hull_hp` / `shield_hp` (`requires_morale`) use round-start timing.
                     let is_cascade = norm == "isolytic_cascade_damage";
+                    let is_stat_round_start = matches!(
+                        norm,
+                        "base_mitigation_stats_bonus" | "officer_shield_regen_max_fraction"
+                    );
                     let is_morale_gated_round_start = (norm == "isolytic_damage"
                         || norm == "apex_barrier"
                         || norm == "hull_hp"
@@ -346,7 +359,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
 
                     let trigger = if is_cascade {
                         AbilityTriggerSpec::AttackPhase
-                    } else if is_morale_gated_round_start {
+                    } else if is_morale_gated_round_start || is_stat_round_start {
                         AbilityTriggerSpec::RoundStart
                     } else if has_conditions {
                         AbilityTriggerSpec::AttackPhase
@@ -385,8 +398,8 @@ pub fn research_derived_attack_phase_seats_from_spec(
                         continue;
                     }
 
-                    let use_attack_phase_path =
-                        is_cascade || (!is_morale_gated_round_start && has_conditions);
+                    let use_attack_phase_path = is_cascade
+                        || (!is_morale_gated_round_start && !is_stat_round_start && has_conditions);
                     if use_attack_phase_path {
                         if let Ok(ctx) = compile_research_attack_phase_spec_to_seat(&spec) {
                             idx = name_idx;

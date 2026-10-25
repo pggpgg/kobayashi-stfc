@@ -2,6 +2,7 @@
   "id": "orion_corvette",
   "ship_name": "ORION CORVETTE",
   "ship_class": "battleship",
+  "grade": 1,
   "tiers": [
     {
       "tier": 1,

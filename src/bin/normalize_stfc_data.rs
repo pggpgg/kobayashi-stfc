@@ -3,6 +3,7 @@
 //! Writes data/hostiles/ with index.json. Ship output is no longer written (use data/ships_extended
 //! from normalize_data_stfc_space + build_ship_registry.py instead). Run after scripts/fetch_stfc_data.ps1.
 
+use std::collections::HashSet;
 use std::fs;
 
 use serde::Deserialize;
@@ -130,6 +131,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(&out_hostiles)?;
 
     // ----- Hostiles -----
+    let existing_hostile_index_path = out_hostiles.join("index.json");
+    let existing_hostile_index: Option<kobayashi::data::hostile::HostileIndex> =
+        if existing_hostile_index_path.is_file() {
+            Some(serde_json::from_slice(&fs::read(
+                &existing_hostile_index_path,
+            )?)?)
+        } else {
+            None
+        };
+    let existing_hostile_ids: HashSet<String> = existing_hostile_index
+        .as_ref()
+        .map(|index| index.hostiles.iter().map(|row| row.id.clone()).collect())
+        .unwrap_or_default();
     let mut hostile_index_entries: Vec<kobayashi::data::hostile::HostileIndexEntry> = Vec::new();
     {
         for entry in fs::read_dir(&hostiles_dir)? {
@@ -141,24 +155,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .and_then(|s| s.to_str())
                     .unwrap_or("")
                     .to_string();
+                if existing_hostile_ids.contains(&id) {
+                    continue;
+                }
                 let content = fs::read_to_string(&path)?;
-                let raw: RawHostile =
-                    serde_json::from_str(&content).unwrap_or_else(|_| RawHostile {
-                        hostile_name: id.clone(),
-                        level: 0,
-                        ship_class: String::new(),
-                        stats: RawHostileStats {
-                            defense: RawHostileStatsDefense {
-                                armor: 0.0,
-                                dodge: 0.0,
-                                shield_deflect: 0.0,
-                            },
-                            health: RawHostileStatsHealth {
-                                hull_health: 0.0,
-                                shield_health: 0.0,
-                            },
-                        },
-                    });
+                let raw: RawHostile = serde_json::from_str(&content).map_err(|error| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        format!("invalid hostile detail {}: {error}", path.display()),
+                    )
+                })?;
                 let rec = kobayashi::data::hostile::HostileRecord {
                     id: id.clone(),
                     hostile_name: raw.hostile_name.clone(),
@@ -197,6 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     shield_piercing: 0.0,
                     crit_chance: 0.0,
                     crit_damage: 0.0,
+                    crit_damage_is_bonus: Some(false),
                     hostile_tags: Vec::new(),
                     engagement_enemy_types: None,
                     components: Vec::new(),
@@ -225,11 +232,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let hostile_index = kobayashi::data::hostile::HostileIndex {
-        data_version: Some(data_version.clone()),
-        source_note: Some(SOURCE_NOTE.to_string()),
-        hostiles: hostile_index_entries,
-    };
+    hostile_index_entries.sort_by(|a, b| a.id.cmp(&b.id));
+    let added_hostiles = hostile_index_entries.len();
+    let mut hostile_index =
+        existing_hostile_index.unwrap_or_else(|| kobayashi::data::hostile::HostileIndex {
+            data_version: Some(data_version.clone()),
+            source_note: Some(SOURCE_NOTE.to_string()),
+            hostiles: Vec::new(),
+        });
+    hostile_index.hostiles.extend(hostile_index_entries);
     fs::write(
         out_hostiles.join("index.json"),
         serde_json::to_string_pretty(&hostile_index)?,
@@ -321,39 +332,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // ----- Registry -----
     let last_updated = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    let mut registry = kobayashi::data::registry::Registry::new();
-    registry.insert(
-        "hostiles".to_string(),
+    let registry_path = repo_data_path("data/registry.json");
+    let mut registry: kobayashi::data::registry::Registry = if registry_path.is_file() {
+        serde_json::from_slice(&fs::read(&registry_path)?)?
+    } else {
+        kobayashi::data::registry::Registry::new()
+    };
+    registry.entry("hostiles".to_string()).or_insert_with(|| {
         kobayashi::data::registry::DataSetEntry {
             source: "stfccommunity".to_string(),
             data_version: hostile_index.data_version.clone(),
             last_updated: Some(last_updated.clone()),
             path: "hostiles/index.json".to_string(),
-        },
-    );
+        }
+    });
     if !building_index_entries.is_empty() {
-        registry.insert(
-            "buildings".to_string(),
+        registry.entry("buildings".to_string()).or_insert_with(|| {
             kobayashi::data::registry::DataSetEntry {
                 source: "stfccommunity".to_string(),
                 data_version: Some(data_version.clone()),
                 last_updated: Some(last_updated.clone()),
                 path: "buildings/index.json".to_string(),
-            },
-        );
+            }
+        });
     }
     if !faction_list.is_empty() {
-        registry.insert(
-            "faction_reputation".to_string(),
-            kobayashi::data::registry::DataSetEntry {
+        registry
+            .entry("faction_reputation".to_string())
+            .or_insert_with(|| kobayashi::data::registry::DataSetEntry {
                 source: "stfccommunity".to_string(),
                 data_version: Some(data_version.clone()),
                 last_updated: Some(last_updated.clone()),
                 path: "faction_reputation/index.json".to_string(),
-            },
-        );
+            });
     }
-    let registry_path = repo_data_path("data/registry.json");
     if let Some(parent) = registry_path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -372,7 +384,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     println!(
         "Normalized {} hostiles, {} buildings, {} factions. (Ships use data/ships_extended.) data_version={:?} source_note={:?}",
-        hostile_index.hostiles.len(),
+        added_hostiles,
         building_index_entries.len(),
         faction_list.len(),
         hostile_index.data_version,

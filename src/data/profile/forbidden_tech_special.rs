@@ -157,6 +157,20 @@ pub(crate) fn forbidden_tech_bonus_value_for_imported_entry(
     imported: Option<&ForbiddenTechEntry>,
     scale_by_level_tier: bool,
 ) -> f64 {
+    if let Some(curve) = &bonus.rank_curve {
+        let Some(imported) = imported else {
+            return 0.0;
+        };
+        if imported.tier < i64::from(curve.minimum_tier) || imported.level <= 0 {
+            return 0.0;
+        }
+        return usize::try_from(imported.level - 1)
+            .ok()
+            .and_then(|rank| curve.values.get(rank))
+            .copied()
+            .filter(|value| value.is_finite())
+            .unwrap_or(0.0);
+    }
     if !scale_by_level_tier {
         return bonus.value;
     }
@@ -860,16 +874,19 @@ mod tests {
                         stat: "crit_chance".into(),
                         value: 0.2,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "hull_hp".into(),
                         value: 0.12,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "crit_damage".into(),
                         value: 0.85,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                 ],
             }],
@@ -919,16 +936,19 @@ mod tests {
                         stat: "crit_damage".into(),
                         value: 1.0,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "apex_shred".into(),
                         value: 0.1,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "hostile_crit_damage_reduction".into(),
                         value: 0.05,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                 ],
             }],
@@ -977,16 +997,19 @@ mod tests {
                         stat: "crit_chance".into(),
                         value: 0.16,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "shield_mitigation".into(),
                         value: 0.15,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "shield_hp".into(),
                         value: 0.195,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                 ],
             }],
@@ -1044,31 +1067,37 @@ mod tests {
                         stat: "armor".into(),
                         value: 0.08,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "shield_mitigation".into(),
                         value: 0.08,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "dodge".into(),
                         value: 0.08,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "hull_hp".into(),
                         value: 0.12,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "pierce".into(),
                         value: 0.06,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "weapon_damage".into(),
                         value: 0.155,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                 ],
             }],
@@ -1176,16 +1205,19 @@ mod tests {
                         stat: "hull_hp".into(),
                         value: 0.12,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "shield_mitigation".into(),
                         value: 0.08,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                     BonusEntry {
                         stat: "accuracy".into(),
                         value: 0.06,
                         operator: "add".into(),
+                        ..Default::default()
                     },
                 ],
             }],

@@ -64,15 +64,19 @@ pub fn resolve_hostile_with_index(
     {
         return load_hostile_record(data_dir, &entry.id);
     }
-    for entry in &index.hostiles {
-        let name_level = format!("{}_{}", normalize_lookup(&entry.hostile_name), entry.level);
-        if name_level == normalized {
-            return load_hostile_record(data_dir, &entry.id);
-        }
-        let name_space_level = format!("{} {}", normalize_lookup(&entry.hostile_name), entry.level);
-        if normalize_lookup(&name_space_level) == normalized {
-            return load_hostile_record(data_dir, &entry.id);
-        }
+    let name_level_matches: Vec<_> = index
+        .hostiles
+        .iter()
+        .filter(|entry| {
+            format!("{}_{}", normalize_lookup(&entry.hostile_name), entry.level) == normalized
+        })
+        .collect();
+    if let Some(first) = name_level_matches.first() {
+        let records = name_level_matches
+            .iter()
+            .map(|entry| load_hostile_record(data_dir, &entry.id))
+            .collect::<Option<Vec<_>>>()?;
+        return disambiguate_hostile_records(name_or_id, first.level, records).ok();
     }
     let by_name: Vec<_> = index
         .hostiles
@@ -113,8 +117,8 @@ fn normalize_display_name_for_lookup(name: &str) -> String {
 /// Resolve a hostile by game display name + level (from fight-export summary rows).
 ///
 /// Returns `Ok(None)` when no index entry matches. When multiple entries match the same
-/// display name and level, picks deterministically if they share the same combat faction tag
-/// and upstream `faction.id`; otherwise returns an error listing candidate ids.
+/// display name and level, picks deterministically only when all combat data agrees;
+/// otherwise returns an error listing candidate ids. Location-only variants are equivalent.
 pub fn resolve_hostile_by_display_name(
     display_name: &str,
     level: u32,
@@ -234,11 +238,11 @@ fn disambiguate_hostile_records(
         return Ok(records.into_iter().next().expect("len checked"));
     }
 
-    let first_tag = records[0].opponent_faction_tag();
-    let first_faction_id = records[0].faction.as_ref().map(|f| f.id).unwrap_or(-1);
-    if records.iter().all(|r| {
-        r.opponent_faction_tag() == first_tag
-            && r.faction.as_ref().map(|f| f.id).unwrap_or(-1) == first_faction_id
+    let signature = hostile_combat_signature(&records[0]);
+    if signature.as_ref().is_some_and(|signature| {
+        records
+            .iter()
+            .all(|r| hostile_combat_signature(r).as_ref() == Some(signature))
     }) {
         return Ok(records
             .into_iter()
@@ -248,9 +252,29 @@ fn disambiguate_hostile_records(
 
     let ids: Vec<_> = records.iter().map(|r| r.id.as_str()).collect();
     Err(format!(
-        "ambiguous hostile display name {display_name:?} level {level}: conflicting faction tags among ids {}",
+        "ambiguous hostile display name {display_name:?} level {level}: different combat variants among ids {}; use an explicit hostile id",
         ids.join(", ")
     ))
+}
+
+fn hostile_combat_signature(record: &HostileRecord) -> Option<serde_json::Value> {
+    let mut value = serde_json::to_value(record).ok()?;
+    let fields = value.as_object_mut()?;
+    // Exclude identity, display text and travel/reward metadata only. Keep class,
+    // faction, every stat, weapon component, ability and scenario tag in the check.
+    for key in [
+        "id",
+        "hostile_name",
+        "loca_id",
+        "systems",
+        "resources",
+        "xp_amount",
+        "warp",
+        "warp_with_superhighway",
+    ] {
+        fields.remove(key);
+    }
+    Some(value)
 }
 
 fn defender_context_from_hostile(rec: &HostileRecord) -> FightExportDefenderContext {
@@ -508,6 +532,23 @@ mod defender_faction_cli_tests {
     use crate::combat::export_csv::FightExport;
     use crate::combat::{OpponentFactionTag, ShipType};
     use crate::data::hostile::HostileRecord;
+
+    #[test]
+    fn same_faction_with_different_combat_stats_is_ambiguous() {
+        let first: HostileRecord = serde_json::from_str(
+            r#"{
+            "id":"1","hostile_name":"H","level":5,"ship_class":"battleship",
+            "armor":1,"shield_deflection":1,"dodge":1,"hull_health":100,"shield_health":50
+        }"#,
+        )
+        .unwrap();
+        let mut second = first.clone();
+        second.id = "2".into();
+        second.hull_health = 200.0;
+        let error = disambiguate_hostile_records("H", 5, vec![first, second])
+            .expect_err("same faction is not enough to identify a combat variant");
+        assert!(error.contains("1") && error.contains("2"));
+    }
 
     #[test]
     fn explicit_slug_and_none_default() {

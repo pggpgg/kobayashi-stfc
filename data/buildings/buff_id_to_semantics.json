@@ -1,9 +1,9 @@
 {
-  "96795919": {
-    "stat": "isolytic_damage",
+  "1024053940": {
+    "stat": "shield_deflection",
     "operator": "add",
     "conditions": [],
-    "notes": "Transogen Forge: Increases base Isolytic Damage for all ships."
+    "notes": "Modulated Federation (research): shield_deflection gated on player ship `faction` slug `federation` (merged into profile `research_owner_faction_bonuses`, applied in `apply_profile_to_attacker` when the resolved hull matches)."
   },
   "1030529782": {
     "stat": "weapon_damage",
@@ -23,6 +23,55 @@
     "conditions": [],
     "notes": "Syndicate line: Weapon damage increased for all ships."
   },
+  "1255158479": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Shield Efficiency (research): Mitigation Stats triplet; upstream values >100% as shield_mitigation were invalid (e.g. tier value 2.0).",
+    "targets": [
+      {
+        "stat": "armor"
+      },
+      {
+        "stat": "shield_deflection"
+      },
+      {
+        "stat": "dodge"
+      }
+    ]
+  },
+  "1328584071": {
+    "stat": "crit_damage_flat",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Client BuffSpec1328584071: ModCritDamage ADD at CombatStart against players (condition28). Raw additive critical amount."
+  },
+  "1400315411": {
+    "stat": "dodge",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Engine Technology Lab: increases ship dodge."
+  },
+  "1422729787": {
+    "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
+  },
+  "1446678821": {
+    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Transogen Forge: PvP apex barrier bonus disabled when Tal is on bridge."
+  },
   "1474824297": {
     "stat": "hull_hp",
     "operator": "add",
@@ -35,28 +84,68 @@
     "conditions": [],
     "notes": "The War Room: Increases base Isolytic Damage for all ships."
   },
+  "1655935815": {
+    "stat": "weapon_damage_vs_outpost",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
+  },
+  "1742688098": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Explorer Barriers (research): class mitigation line = armor, shield deflection, dodge; not engine shield_mitigation.",
+    "targets": [
+      {
+        "stat": "armor"
+      },
+      {
+        "stat": "shield_deflection"
+      },
+      {
+        "stat": "dodge"
+      }
+    ]
+  },
   "1743492763": {
     "stat": "shield_hp",
     "operator": "add",
     "conditions": [],
     "notes": "The Nova Squadron: Increases base SHP for all ships."
   },
-  "1768821190": {
-    "stat": "crit_damage",
+  "1761515720": {
+    "stat": "shield_hp",
     "operator": "add",
     "conditions": [
-      "defender_is_npc_hostile"
+      "attacker_ship_type_interceptor"
     ],
-    "notes": "Court of Q: Critical hit damage increased against hostiles."
+    "notes": "Engine Technology Lab: Shield Health Bonus for Interceptor-class player ships."
+  },
+  "1768821190": {
+    "stat": "crit_damage_flat",
+    "operator": "add",
+    "conditions": [
+      "native_condition_57_unverified",
+      "defender_is_non_armada_hostile"
+    ],
+    "notes": "Client BuffSpec1768821190: ModCritDamage ADD at CombatStart, conditions57/131. Scope57 is unverified; excluded until resolved. Raw additive critical amount, not multiplier."
   },
   "1776779724": {
     "operator": "add",
     "conditions": [],
     "notes": "District 56: base mitigation stats (armor, shield deflection, dodge); not shield_mitigation fraction.",
     "targets": [
-      { "stat": "armor" },
-      { "stat": "shield_deflection" },
-      { "stat": "dodge" }
+      {
+        "stat": "armor"
+      },
+      {
+        "stat": "shield_deflection"
+      },
+      {
+        "stat": "dodge"
+      }
     ]
   },
   "1944989778": {
@@ -80,6 +169,15 @@
     ],
     "notes": "District 56: Reduces critical hit damage of opponent player ships (not station defense)."
   },
+  "2101517349": {
+    "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
+  },
   "2236011365": {
     "stat": "apex_barrier_vs_player_tal_not_on_bridge",
     "operator": "add",
@@ -89,19 +187,17 @@
     ],
     "notes": "DTI Headquarters: Increases base Apex Barrier vs player targets; disabled when Tal is on bridge."
   },
-  "975669671": {
+  "2334827430": {
     "stat": "hull_hp",
     "operator": "add",
-    "conditions": [
-      "attacker_ship_faction_any_fed_klg_rom"
-    ],
-    "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
+    "conditions": [],
+    "notes": "Ship Hangar: increases ship hull health."
   },
-  "1400315411": {
-    "stat": "dodge",
+  "2485048539": {
+    "stat": "weapon_damage",
     "operator": "add",
     "conditions": [],
-    "notes": "Engine Technology Lab: increases ship dodge."
+    "notes": "The Nova Squadron: increases ship weapon damage."
   },
   "256687942": {
     "stat": "shield_hp",
@@ -121,11 +217,32 @@
     "conditions": [],
     "notes": "Armory: increases ship shield health."
   },
+  "3012721624": {
+    "stat": "crit_damage_flat",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_non_armada_hostile",
+      "attacker_ship_faction_any_fed_klg_rom",
+      "attacker_ship_grade_at_least_5"
+    ],
+    "notes": "Client BuffSpec3012721624: ModCritDamage ADD at CombatStart; conditions240(FKR),176(G5+),27(hostile),131(non-Armada). Raw additive critical amount."
+  },
   "3089815719": {
     "stat": "shield_deflection",
     "operator": "add",
     "conditions": [],
     "notes": "Science Lab: Shield Deflection Bonus (not shield_mitigation fraction)."
+  },
+  "3171687260": {
+    "stat": "crit_damage",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship",
+      "attacker_ship_faction_any_fed_klg_rom"
+    ],
+    "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
   },
   "322722281": {
     "stat": "apex_barrier",
@@ -135,6 +252,78 @@
       "defender_is_player_ship"
     ],
     "notes": "District 56: increases apex barrier in PvP only (no station defense)."
+  },
+  "3310569940": {
+    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_player_ship"
+    ],
+    "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
+  },
+  "334143899": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Command Center: Attack, Defense, and Health of all Officers increased per upgrade (loca_id=50090).",
+    "targets": [
+      {
+        "stat": "officer_attack"
+      },
+      {
+        "stat": "officer_defense"
+      },
+      {
+        "stat": "officer_health"
+      }
+    ]
+  },
+  "3380254177": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": [],
+    "notes": "The Facade: Increases base Shield Health for all ships."
+  },
+  "3401661757": {
+    "stat": "weapon_damage_vs_armada_hostile",
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Armada Control Center: weapon damage vs group armada hostiles (upstream ship_type armada target); applies solo or fleet."
+  },
+  "3655026185": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Academy: Attack, Defense and Health of all Officers increased per upgrade.",
+    "targets": [
+      {
+        "stat": "officer_attack"
+      },
+      {
+        "stat": "officer_defense"
+      },
+      {
+        "stat": "officer_health"
+      }
+    ]
+  },
+  "3665061326": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers.",
+    "targets": [
+      {
+        "stat": "officer_attack"
+      },
+      {
+        "stat": "officer_defense"
+      },
+      {
+        "stat": "officer_health"
+      }
+    ]
   },
   "3665944915": {
     "stat": "hull_hp",
@@ -163,65 +352,66 @@
     "conditions": [],
     "notes": "Mess Hall: increases ship weapon damage."
   },
-  "1446678821": {
-    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_player_ship"
-    ],
-    "notes": "Transogen Forge: PvP apex barrier bonus disabled when Tal is on bridge."
-  },
-  "2334827430": {
+  "4020372601": {
     "stat": "hull_hp",
     "operator": "add",
     "conditions": [],
-    "notes": "Ship Hangar: increases ship hull health."
+    "notes": "The Facade: Increases base Hull Health for all ships."
   },
-  "2485048539": {
-    "stat": "weapon_damage",
+  "4251825190": {
     "operator": "add",
     "conditions": [],
-    "notes": "The Nova Squadron: increases ship weapon damage."
-  },
-  "334143899": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "Command Center: Attack, Defense, and Health of all Officers increased per upgrade (loca_id=50090).",
+    "notes": "Station Defenses (research): Mitigation Stats style bonus; not engine shield_mitigation.",
     "targets": [
-      { "stat": "officer_attack" },
-      { "stat": "officer_defense" },
-      { "stat": "officer_health" }
+      {
+        "stat": "armor"
+      },
+      {
+        "stat": "shield_deflection"
+      },
+      {
+        "stat": "dodge"
+      }
     ]
   },
-  "3655026185": {
+  "4257724198": {
+    "stat": "shield_hp",
     "operator": "add",
-    "conditions": [],
-    "notes": "Academy: Attack, Defense and Health of all Officers increased per upgrade.",
-    "targets": [
-      { "stat": "officer_attack" },
-      { "stat": "officer_defense" },
-      { "stat": "officer_health" }
-    ]
-  },
-  "3665061326": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "DTI Headquarters: Base Attack, Defense, and Health increased for all Officers.",
-    "targets": [
-      { "stat": "officer_attack" },
-      { "stat": "officer_defense" },
-      { "stat": "officer_health" }
-    ]
+    "conditions": [
+      "attacker_ship_type_battleship"
+    ],
+    "notes": "Foundry: Shield Health Bonus for Battleship-class player ships."
   },
   "660954013": {
     "operator": "add",
     "conditions": [],
     "notes": "The War Room: Base Attack, Defense, and Health for all Officers.",
     "targets": [
-      { "stat": "officer_attack" },
-      { "stat": "officer_defense" },
-      { "stat": "officer_health" }
+      {
+        "stat": "officer_attack"
+      },
+      {
+        "stat": "officer_defense"
+      },
+      {
+        "stat": "officer_health"
+      }
+    ]
+  },
+  "711050273": {
+    "operator": "add",
+    "conditions": [],
+    "notes": "Prime Defenses (research): Mitigation Stats = armor, shield deflection, dodge (+100% at max tier per in-game text); not engine shield_mitigation (shield damage split).",
+    "targets": [
+      {
+        "stat": "armor"
+      },
+      {
+        "stat": "shield_deflection"
+      },
+      {
+        "stat": "dodge"
+      }
     ]
   },
   "717321813": {
@@ -229,9 +419,15 @@
     "conditions": [],
     "notes": "Mess Hall: Attack, Defense, and Health of all Officers increased per upgrade.",
     "targets": [
-      { "stat": "officer_attack" },
-      { "stat": "officer_defense" },
-      { "stat": "officer_health" }
+      {
+        "stat": "officer_attack"
+      },
+      {
+        "stat": "officer_defense"
+      },
+      {
+        "stat": "officer_health"
+      }
     ]
   },
   "724896192": {
@@ -239,86 +435,51 @@
     "conditions": [],
     "notes": "The Facade: Base Attack, Defense, and Health increased for all Officers.",
     "targets": [
-      { "stat": "officer_attack" },
-      { "stat": "officer_defense" },
-      { "stat": "officer_health" }
+      {
+        "stat": "officer_attack"
+      },
+      {
+        "stat": "officer_defense"
+      },
+      {
+        "stat": "officer_health"
+      }
     ]
   },
-  "3380254177": {
+  "753685799": {
     "stat": "shield_hp",
     "operator": "add",
+    "conditions": [
+      "attacker_ship_type_explorer"
+    ],
+    "notes": "Science Lab: Shield Health Bonus for Explorer-class player ships."
+  },
+  "864495595": {
+    "operator": "add",
     "conditions": [],
-    "notes": "The Facade: Increases base Shield Health for all ships."
-  },
-  "4020372601": {
-    "stat": "hull_hp",
-    "operator": "add",
-    "conditions": [],
-    "notes": "The Facade: Increases base Hull Health for all ships."
-  },
-  "3171687260": {
-    "stat": "crit_damage",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_player_ship",
-      "attacker_ship_faction_any_fed_klg_rom"
-    ],
-    "notes": "The Facade: Critical hit damage vs player targets for Federation/Klingon/Romulan ships (FKR). PvP ship combat only."
-  },
-  "3310569940": {
-    "stat": "apex_barrier_vs_player_tal_not_on_bridge",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_player_ship"
-    ],
-    "notes": "Starfleet Academy Remote Campus: Apex Barrier vs players; Tal-on-bridge gate applied at fight setup (same as DTI Headquarters)."
-  },
-  "2101517349": {
-    "stat": "apex_barrier_vs_npc_hostile_tal_not_on_bridge",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_npc_hostile"
-    ],
-    "notes": "Starfleet Academy Remote Campus: Apex Barrier vs non-Armada hostiles; Tal-on-bridge and defender-not-Armada gates at fight setup."
-  },
-  "1655935815": {
-    "stat": "weapon_damage_vs_outpost",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_npc_hostile"
-    ],
-    "notes": "Outpost Control Center: weapon damage vs outposts and retaliation ships; applied when hostile record is_outpost."
-  },
-  "3401661757": {
-    "stat": "weapon_damage_vs_armada_hostile",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_npc_hostile"
-    ],
-    "notes": "Armada Control Center: weapon damage vs group armada hostiles (upstream ship_type armada target); applies solo or fleet."
-  },
-  "1422729787": {
-    "stat": "hyperthermic_stabilizer_vs_aggregation_hostile",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_npc_hostile"
-    ],
-    "notes": "Recon Locus: reduces opponent Hyperthermic Decay vs Aggregation hostiles (percentage points subtracted from hostile decay fraction)."
+    "notes": "Armory: in-game Mitigation Stats Bonus = armor, shield deflection, dodge (parallel rows; not shield_mitigation fraction).",
+    "targets": [
+      {
+        "stat": "armor"
+      },
+      {
+        "stat": "shield_deflection"
+      },
+      {
+        "stat": "dodge"
+      }
+    ]
   },
   "866732757": {
     "stat": "isolytic_defense",
     "operator": "add",
     "conditions": [
       "ship_combat_only",
-      "defender_is_player_ship"
+      "defender_is_player_ship",
+      "attacker_ship_faction_any_fed_klg_rom",
+      "attacker_ship_grade_at_least_5"
     ],
-    "notes": "Signal Observatory: Isolytic Defense for G5+ FKR vs players. Simulator applies in PvP (player defender); no G5/FKR hull-class gate in profile merge."
+    "notes": "Client BuffSpec866732757: ModIsolyticDefense ADD at CombatStart; conditions240(FKR),28(player),176(G5+)."
   },
   "952223325": {
     "stat": "weapon_damage",
@@ -328,96 +489,18 @@
     ],
     "notes": "The Facade: damage vs Wave Defense hostiles. Modeled as weapon_damage when the defender is an NPC hostile (excludes PvP). Wave-engagement-only gating is not implemented in the sim."
   },
-  "1328584071": {
-    "stat": "crit_damage",
+  "96795919": {
+    "stat": "isolytic_damage",
+    "operator": "add",
+    "conditions": [],
+    "notes": "Transogen Forge: Increases base Isolytic Damage for all ships."
+  },
+  "975669671": {
+    "stat": "hull_hp",
     "operator": "add",
     "conditions": [
-      "ship_combat_only",
-      "defender_is_player_ship"
+      "attacker_ship_faction_any_fed_klg_rom"
     ],
-    "notes": "Court of Q: critical hit damage vs player targets. PvP ship combat only (no station defense)."
-  },
-  "3012721624": {
-    "stat": "crit_damage",
-    "operator": "add",
-    "conditions": [
-      "ship_combat_only",
-      "defender_is_npc_hostile"
-    ],
-    "notes": "Signal Observatory: crit damage vs non-Armada hostiles (G5+ FKR). Sim: NPC hostile ship combat only; Armada hostiles and G5/FKR gates are not distinguished in building merge context."
-  },
-  "864495595": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "Armory: in-game Mitigation Stats Bonus = armor, shield deflection, dodge (parallel rows; not shield_mitigation fraction).",
-    "targets": [
-      { "stat": "armor" },
-      { "stat": "shield_deflection" },
-      { "stat": "dodge" }
-    ]
-  },
-  "711050273": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "Prime Defenses (research): Mitigation Stats = armor, shield deflection, dodge (+100% at max tier per in-game text); not engine shield_mitigation (shield damage split).",
-    "targets": [
-      { "stat": "armor" },
-      { "stat": "shield_deflection" },
-      { "stat": "dodge" }
-    ]
-  },
-  "1024053940": {
-    "stat": "shield_deflection",
-    "operator": "add",
-    "conditions": [],
-    "notes": "Modulated Federation (research): shield_deflection gated on player ship `faction` slug `federation` (merged into profile `research_owner_faction_bonuses`, applied in `apply_profile_to_attacker` when the resolved hull matches)."
-  },
-  "1255158479": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "Shield Efficiency (research): Mitigation Stats triplet; upstream values >100% as shield_mitigation were invalid (e.g. tier value 2.0).",
-    "targets": [
-      { "stat": "armor" },
-      { "stat": "shield_deflection" },
-      { "stat": "dodge" }
-    ]
-  },
-  "1742688098": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "Explorer Barriers (research): class mitigation line = armor, shield deflection, dodge; not engine shield_mitigation.",
-    "targets": [
-      { "stat": "armor" },
-      { "stat": "shield_deflection" },
-      { "stat": "dodge" }
-    ]
-  },
-  "4251825190": {
-    "operator": "add",
-    "conditions": [],
-    "notes": "Station Defenses (research): Mitigation Stats style bonus; not engine shield_mitigation.",
-    "targets": [
-      { "stat": "armor" },
-      { "stat": "shield_deflection" },
-      { "stat": "dodge" }
-    ]
-  },
-  "4257724198": {
-    "stat": "shield_hp",
-    "operator": "add",
-    "conditions": ["attacker_ship_type_battleship"],
-    "notes": "Foundry: Shield Health Bonus for Battleship-class player ships."
-  },
-  "753685799": {
-    "stat": "shield_hp",
-    "operator": "add",
-    "conditions": ["attacker_ship_type_explorer"],
-    "notes": "Science Lab: Shield Health Bonus for Explorer-class player ships."
-  },
-  "1761515720": {
-    "stat": "shield_hp",
-    "operator": "add",
-    "conditions": ["attacker_ship_type_interceptor"],
-    "notes": "Engine Technology Lab: Shield Health Bonus for Interceptor-class player ships."
+    "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
   }
 }

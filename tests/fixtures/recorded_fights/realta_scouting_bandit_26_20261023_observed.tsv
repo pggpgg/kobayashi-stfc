@@ -1,0 +1,30 @@
+Player Name	Player Level	Outcome	Ship Name	Ship Level	Ship Strength	Ship XP	Officer One	Officer Two	Officer Three	Hull Health	Hull Health Remaining	Shield Health	Shield Health Remaining	Location	Timestamp
+Player	61	VICTORY	REALTA	20	712634	0	Enterprise-E Picard	Enterprise-E Data	Enterprise-E Riker	652159	651722	748507	746312	Sigma Tama	2026-10-23 5:43:52 AM
+Scouting Bandit	26	DEFEAT	HOSTILE EXPLORER	26	54559	0	Scouting Bandit	--	--	10800	0	11400	0	Sigma Tama	2026-10-23 5:43:52 AM
+
+Reward Name	Count
+Tritanium	1021
+
+Fleet Type	Attack	Defense	Health	Ship Ability	Captain Maneuver	Officer One Ability	Officer Two Ability	Officer Three Ability	Officer Attack Bonus	Damage Per Round	Armour Pierce	Shield Pierce	Accuracy	Critical Chance	Critical Damage	Officer Defense Bonus	Armour	Shield Deflection	Dodge	Officer Health Bonus	Shield Health	Hull Health	Impulse Speed	Warp Range	Warp Speed	Cargo Capacity	Protected Cargo	Mining Bonus	Debuff applied	Buff applied
+Player Fleet 1	8341	3960	700333	Enhanced Shield	Captain's Prerogative	We Used to Be Explorers	Saddle up. Lock and Load!	Fear Is the True Enemy	1	7401	62	62	929	0.22	3.64	1	86	677	29	1	748507	652159	257	33	83.1	29920	0	1	NO	NO
+Enemy Fleet 1	20959	22500	11100	Borg Cutting Beam	--	--	--	--	0	11959	750	750	4500	0.1	1.5	0	750	3000	750	0	11400	10800	14	2	2	0	0	1	NO	NO
+
+Round	Battle Event	Type	Attacker Name	Attacker Alliance	Attacker Ship	Attacker - Is Armada?	Target Name	Target Alliance	Target Ship	Target - Is Armada?	Hyperthermic Decay %	Hyperthermic Stablizer %	Critical Hit?	Hull Damage	Shield Damage	Mitigated Damage	Mitigated Isolytic Damage	Mitigated Apex Barrier	Total Damage	Total Isolytic Damage	Mitigated Critical Damage	Ability Type	Ability Value	Ability Name	Ability Owner Name	Target Defeated	Target Destroyed	Charging Weapons %
+1	1	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	4	War's Almost Over	Tom Paris	--	--	--
+1	2	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.4	Saddle up. Lock and Load!	Enterprise-E Data	--	--	--
+1	3	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	1	Ashes to Ashes	Harry Kim	--	--	--
+1	4	Attack	Scouting Bandit	--	HOSTILE EXPLORER	NO	Player	Alliance	REALTA	NO	--	--	NO	123	580	1878	0	56	2637	0	0	--	--	--	--	--	--	--
+1	5	Attack	Player	Alliance	REALTA	NO	Scouting Bandit	--	HOSTILE EXPLORER	NO	--	--	NO	2891	9958	2615	0	0	3937	11527	0	--	--	--	--	--	--	--
+1	6	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.04	Fear Is the True Enemy	Enterprise-E Riker	--	--	--
+1	7	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.1	We Used to Be Explorers	Enterprise-E Picard	--	--	--
+1	8	Attack	Scouting Bandit	--	HOSTILE EXPLORER	NO	Player	Alliance	REALTA	NO	--	--	NO	118	554	1793	0	53	2518	0	0	--	--	--	--	--	--	--
+1	9	Attack	Player	Alliance	REALTA	NO	Scouting Bandit	--	HOSTILE EXPLORER	NO	--	--	NO	2752	9481	2293	0	0	3452	11074	0	--	--	--	--	--	--	--
+1	10	Shield Depleted	Scouting Bandit	--	HOSTILE EXPLORER	NO	Player	Alliance	HOSTILE EXPLORER	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--	--
+1	11	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.04	Fear Is the True Enemy	Enterprise-E Riker	--	--	--
+1	12	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	0.1	We Used to Be Explorers	Enterprise-E Picard	--	--	--
+1	13	Attack	Scouting Bandit	--	HOSTILE EXPLORER	NO	Player	Alliance	REALTA	NO	--	--	NO	117	554	1792	0	53	2516	0	0	--	--	--	--	--	--	--
+2	15	battle_action_type_{0}	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	28.64	--	--	--	--
+2	16	Officer Ability	Player	Alliance	REALTA	NO	--	--	REALTA	NO	--	--	--	--	--	--	--	--	--	--	--	Officer	1	Ashes to Ashes	Harry Kim	--	--	--
+2	17	Attack	Scouting Bandit	--	HOSTILE EXPLORER	NO	Player	Alliance	REALTA	NO	--	--	NO	107	507	1639	0	49	2302	0	0	--	--	--	--	--	--	--
+2	18	Attack	Player	Alliance	REALTA	NO	Scouting Bandit	--	HOSTILE EXPLORER	NO	--	--	YES	122391	0	21262	0	0	32008	111645	0	--	--	--	--	--	--	--
+2	19	Combatant Destroyed	Scouting Bandit	--	HOSTILE EXPLORER	NO	Player	Alliance	HOSTILE EXPLORER	NO	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	--	YES	--

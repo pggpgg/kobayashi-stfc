@@ -2,6 +2,7 @@
   "id": "turas",
   "ship_name": "TURAS",
   "ship_class": "explorer",
+  "grade": 2,
   "tiers": [
     {
       "tier": 1,

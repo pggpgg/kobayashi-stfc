@@ -487,10 +487,11 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "hull_hp" | "hull" => Some(AbilityModifierSpec::HullHp),
         "shield_hp" | "shield" => Some(AbilityModifierSpec::ShieldHp),
         "crit_chance" => Some(AbilityModifierSpec::CritChance),
-        "crit_damage" => Some(AbilityModifierSpec::CritDamage),
+        "crit_damage" | "crit_damage_flat" => Some(AbilityModifierSpec::CritDamage),
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
         "armor" => Some(AbilityModifierSpec::MitigationAdditive),
+        "base_mitigation_stats_add" => Some(AbilityModifierSpec::BaseMitigationStatsAdd),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
@@ -574,7 +575,8 @@ pub fn lcars_effect_resolved_value(
 
 /// Resolve effect value for officer-stat scaling. When `effect.scaling.officer_stat` is set and
 /// per-level stats are available, the rank coefficient is multiplied by the officer's stat divided
-/// by 100. When the officer-stat reference is set but stats are missing, the rank coefficient
+/// by 100, except explicit raw-point modifiers, whose coefficients use native fractional units.
+/// When the officer-stat reference is set but stats are missing, the rank coefficient
 /// passes through unchanged (no-op fallback) — equivalent to the historical behavior, plus the
 /// scaling clause is preserved on `ValueSpec.officer_stat_scaling` for traceability.
 fn effect_value_with_officer_stat(
@@ -604,8 +606,13 @@ fn effect_value_with_officer_stat(
         coefficient_per_rank: coefficients_per_rank,
     };
     let rank_value = base_value;
+    let raw_points = effect.stat.as_deref() == Some("base_mitigation_stats_add");
     let resolved = match (rank_value, officer_stats) {
-        (Some(rv), Some(stats)) => Some(rv * stats.value_for(stat) / 100.0),
+        (Some(rv), Some(stats)) => {
+            Some(rv * stats.value_for(stat) / if raw_points { 1.0 } else { 100.0 })
+        }
+        // A dimensionless coefficient alone is not a raw defensive-stat amount.
+        (Some(_), None) if raw_points => None,
         (Some(rv), None) => Some(rv),
         (None, _) => None,
     };
@@ -862,6 +869,10 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
     let attributes = serde_json::Map::new();
     let mut officer = OfficerSpecAttrs {
         lcars_op: Some(op_norm.clone()),
+        post_weapon_grant: effect
+            .trigger
+            .as_deref()
+            .is_some_and(|trigger| trigger.trim().eq_ignore_ascii_case("EnemyTakesHit")),
         ..Default::default()
     };
     if effect

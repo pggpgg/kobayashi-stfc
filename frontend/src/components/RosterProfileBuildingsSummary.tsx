@@ -27,10 +27,9 @@ export default function RosterProfileBuildingsSummary({
           color: "var(--text-muted)",
         }}
       >
-        Starbase modules from sync (<code>buildings.imported.json</code>) and
-        the combat stat bonuses they contribute in ship combat (same rules as
-        simulate/optimize). Set ops level override under Player Bonuses if you
-        need it without sync.
+        Synced starbase modules and their setup bonuses. The scenario lens below
+        selects the ship used for class and grade conditions. Reviewed setup
+        stats use active buffs when available.
       </p>
       {buildingSummaryError && (
         <p
@@ -63,6 +62,18 @@ export default function RosterProfileBuildingsSummary({
             <dd style={styles.noMargin}>
               {buildingSummary.synced_building_count}
             </dd>
+            <dt style={styles.muted}>Ship context</dt>
+            <dd style={styles.noMargin}>
+              {buildingSummary.ship_id
+                ? `${buildingSummary.ship_id} (${buildingSummary.ship_class})`
+                : "Unspecified; class and grade bonuses excluded"}
+            </dd>
+            <dt style={styles.muted}>Setup source</dt>
+            <dd style={styles.noMargin}>
+              {buildingSummary.setup_bonus_source === "native_active_buffs"
+                ? "Synced active buffs"
+                : "Owned building catalog fallback"}
+            </dd>
             <dt style={styles.muted}>Ops (profile override)</dt>
             <dd style={styles.noMargin}>
               {buildingSummary.ops_level_profile_override ?? "—"}
@@ -75,7 +86,23 @@ export default function RosterProfileBuildingsSummary({
             <dd style={styles.noMargin}>
               {buildingSummary.ops_level_effective ?? "—"}
             </dd>
+            <dt style={styles.muted}>Syndicate level</dt>
+            <dd style={styles.noMargin}>
+              {buildingSummary.syndicate_level ?? "Unknown; loyalty bonuses excluded"}
+            </dd>
           </dl>
+          {buildingSummary.source_limitations?.map((message) => (
+            <p
+              key={message}
+              style={{
+                margin: "0 0 0.5rem",
+                color: "var(--text-muted)",
+                fontSize: "0.8rem",
+              }}
+            >
+              {message}
+            </p>
+          ))}
           {buildingSummary.unmapped_bids.length > 0 && (
             <p style={{ margin: "0 0 0.5rem", color: "var(--text-muted)" }}>
               Unmapped game <code>bid</code> values (no catalog entry):{" "}

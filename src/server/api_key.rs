@@ -1,4 +1,4 @@
-//! Optional shared secret for mutating HTTP API routes when the server is reachable
+//! Optional shared secret for writes and secret-bearing HTTP API routes when the server is reachable
 //! from beyond a trusted loopback client. See `docs/DEPLOYMENT_SECURITY.md`.
 
 use axum::body::Body;
@@ -44,13 +44,15 @@ pub(crate) fn is_mutating_api_route(method: &Method, path: &str) -> bool {
 
 pub(crate) const SYNC_INGRESS_PATH: &str = "/api/sync/ingress";
 
-/// When `KOBAYASHI_API_KEY` is set, mutating `/api/*` routes require a matching header unless the
+/// When `KOBAYASHI_API_KEY` is set, writes and profile-token reads require a matching header unless the
 /// peer is loopback and `KOBAYASHI_API_KEY_TRUST_LOOPBACK` is true (default).
 pub fn should_enforce_request(method: &Method, path: &str, peer: &SocketAddr) -> bool {
     if configured_key().is_none() {
         return false;
     }
-    if !is_mutating_api_route(method, path) {
+    let secret_read = matches!(*method, Method::GET | Method::HEAD)
+        && matches!(path, "/api/profiles" | "/api/profiles/export");
+    if !is_mutating_api_route(method, path) && !secret_read {
         return false;
     }
     if trust_loopback() && peer_is_loopback(peer) {
@@ -138,6 +140,52 @@ pub async fn middleware(
 mod tests {
     use super::*;
     use axum::http::HeaderValue;
+
+    #[test]
+    #[serial_test::serial]
+    fn configured_key_protects_sync_token_listing_and_backup_from_remote_peers() {
+        struct RestoreEnv(Option<String>, Option<String>);
+        impl Drop for RestoreEnv {
+            fn drop(&mut self) {
+                for (key, value) in [
+                    ("KOBAYASHI_API_KEY", &self.0),
+                    ("KOBAYASHI_API_KEY_TRUST_LOOPBACK", &self.1),
+                ] {
+                    match value {
+                        Some(value) => std::env::set_var(key, value),
+                        None => std::env::remove_var(key),
+                    }
+                }
+            }
+        }
+        let _restore = RestoreEnv(
+            std::env::var("KOBAYASHI_API_KEY").ok(),
+            std::env::var("KOBAYASHI_API_KEY_TRUST_LOOPBACK").ok(),
+        );
+        std::env::set_var("KOBAYASHI_API_KEY", "test-only-key");
+        std::env::set_var("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "true");
+        let remote: SocketAddr = "192.0.2.1:12345".parse().unwrap();
+        for path in ["/api/profiles", "/api/profiles/export"] {
+            assert!(
+                should_enforce_request(&Method::GET, path, &remote),
+                "{path}"
+            );
+            assert!(
+                should_enforce_request(&Method::HEAD, path, &remote),
+                "{path}"
+            );
+        }
+        assert!(!should_enforce_request(
+            &Method::GET,
+            "/api/health",
+            &remote
+        ));
+        assert!(!should_enforce_request(
+            &Method::POST,
+            SYNC_INGRESS_PATH,
+            &remote
+        ));
+    }
 
     #[test]
     fn mutating_route_detection() {

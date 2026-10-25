@@ -2,6 +2,7 @@
   "id": "minerva",
   "ship_name": "MINERVA",
   "ship_class": "explorer",
+  "grade": 6,
   "faction": "romulan",
   "tiers": [
     {

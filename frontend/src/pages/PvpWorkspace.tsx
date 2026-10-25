@@ -7,7 +7,10 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import type { ShipListItem } from "../lib/api";
 import { fetchShips, getShipTiersLevels } from "../lib/api";
-import { belowDeckSlotCount } from "../lib/types";
+import {
+  belowDeckSlotCount,
+  DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
+} from "../lib/types";
 import { usePvpWorkspace } from "../lib/usePvpWorkspace";
 
 const selectStyle = {
@@ -45,26 +48,52 @@ function ShipSelectors({
   useEffect(() => {
     if (!shipId) return;
     let cancelled = false;
-    getShipTiersLevels(shipId).then((tl) => {
-      if (cancelled || !tl) return;
-      setTiers(tl.tiers?.length ? tl.tiers : [1]);
-      setLevels(tl.levels?.length ? tl.levels : [50]);
-      if (tl.crew_slots?.length && onBelowDeckUnlockLevelsChange) {
-        onBelowDeckUnlockLevelsChange(
-          tl.crew_slots.map((s) => Number(s.unlock_level)),
+    getShipTiersLevels(shipId)
+      .then((tl) => {
+        if (cancelled || !tl) return;
+        const nextTiers = tl.tiers?.length ? tl.tiers : [1];
+        const nextLevels = tl.levels?.length ? tl.levels : [1];
+        setTiers(nextTiers);
+        setLevels(nextLevels);
+        if (!nextTiers.includes(shipTier)) onShipTierChange(nextTiers[0]);
+        if (!nextLevels.includes(shipLevel)) onShipLevelChange(nextLevels[0]);
+        onBelowDeckUnlockLevelsChange?.(
+          tl.crew_slots?.length
+            ? tl.crew_slots
+                .map((s) => Number(s.unlock_level))
+                .filter(Number.isFinite)
+                .sort((a, b) => a - b)
+            : [...DEFAULT_BELOW_DECK_UNLOCK_LEVELS],
         );
-      }
-    });
+      })
+      .catch(() => {
+        if (!cancelled)
+          onBelowDeckUnlockLevelsChange?.([
+            ...DEFAULT_BELOW_DECK_UNLOCK_LEVELS,
+          ]);
+      });
     return () => {
       cancelled = true;
     };
-  }, [shipId, onBelowDeckUnlockLevelsChange]);
+  }, [
+    shipId,
+    onBelowDeckUnlockLevelsChange,
+    onShipTierChange,
+    onShipLevelChange,
+  ]);
 
   return (
     <ShipRowDisplay
       label={label}
       shipId={shipId}
-      onShipIdChange={onShipIdChange}
+      onShipIdChange={(id) => {
+        onShipIdChange(id);
+        onShipTierChange(1);
+        onShipLevelChange(1);
+        setTiers([1]);
+        setLevels([1]);
+        onBelowDeckUnlockLevelsChange?.([...DEFAULT_BELOW_DECK_UNLOCK_LEVELS]);
+      }}
       shipTier={shipTier}
       onShipTierChange={onShipTierChange}
       shipLevel={shipLevel}
@@ -293,11 +322,14 @@ export default function PvpWorkspace() {
               shipLevel={pvp.defenderShipLevel}
               onShipLevelChange={pvp.setDefenderShipLevel}
               ships={ships}
+              onBelowDeckUnlockLevelsChange={
+                pvp.setDefenderBelowDeckUnlockLevels
+              }
             />
             <CrewBuilder
               belowDecksSlots={belowDeckSlotCount(
                 pvp.defenderShipLevel,
-                pvp.belowDeckUnlockLevels,
+                pvp.defenderBelowDeckUnlockLevels,
               )}
               crew={pvp.defenderCrew}
               onCrewChange={pvp.setDefenderCrew}

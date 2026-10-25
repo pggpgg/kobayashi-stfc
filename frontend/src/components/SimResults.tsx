@@ -21,6 +21,7 @@ import {
 
 const PER_PAGE_OPTIONS = [50, 100, 200, 500] as const;
 const DEFAULT_PER_PAGE = 50;
+const EMPTY_SELECTED_ROWS: ReadonlySet<number> = new Set();
 
 const TABLE_CELL_PAD = "var(--space-6) var(--space-8)";
 const TABLE_NUM_PAD = "var(--space-6) var(--space-5)";
@@ -240,6 +241,16 @@ export interface CompareWorkspaceParams {
   supportBuffs?: string[];
 }
 
+interface ComparisonState {
+  recommendations: CrewRecommendation[];
+  selected: ReadonlySet<number>;
+  workspaceKey: string;
+  loading: boolean;
+  crews: CompareCrewDistribution[] | null;
+  seed: number | null;
+  error: string | null;
+}
+
 function SideBySideHistograms({
   crews,
   title,
@@ -340,15 +351,41 @@ export default memo(function SimResults({
   compareWorkspace = null,
   optimizeEffectiveStrategy = null,
 }: SimResultsProps) {
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selection, setSelection] = useState(() => ({
+    recommendations,
+    indices: new Set<number>(),
+  }));
+  // Selection belongs to a result set, not to positions in a later run. Guard
+  // during render so even the first render of a shorter list is safe.
+  const selected =
+    selection.recommendations === recommendations
+      ? selection.indices
+      : EMPTY_SELECTED_ROWS;
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
-  const [compareDist, setCompareDist] = useState<
-    CompareCrewDistribution[] | null
-  >(null);
-  const [compareSeed, setCompareSeed] = useState<number | null>(null);
-  const [loadingCompareDist, setLoadingCompareDist] = useState(false);
-  const [compareDistErr, setCompareDistErr] = useState<string | null>(null);
+  const [comparison, setComparison] = useState<ComparisonState | null>(null);
+  const workspaceKey = JSON.stringify(
+    compareWorkspace && [
+      compareWorkspace.ship,
+      compareWorkspace.hostile,
+      compareWorkspace.shipTier,
+      compareWorkspace.shipLevel,
+      compareWorkspace.numSims,
+      compareWorkspace.belowDecksSlots,
+      compareWorkspace.profileId,
+      compareWorkspace.supportBuffs ?? [],
+    ],
+  );
+  const currentComparison =
+    comparison?.recommendations === recommendations &&
+    comparison.selected === selected &&
+    comparison.workspaceKey === workspaceKey
+      ? comparison
+      : null;
+  const compareDist = currentComparison?.crews ?? null;
+  const compareSeed = currentComparison?.seed ?? null;
+  const loadingCompareDist = currentComparison?.loading ?? false;
+  const compareDistErr = currentComparison?.error ?? null;
   const hasSim = simResult != null;
   const hasRecs = recommendations.length > 0;
   const visibleWarnings = unresolvedOfficers.length
@@ -438,19 +475,32 @@ export default memo(function SimResults({
   }, [totalPages, total]);
 
   useEffect(() => {
-    setCompareDist(null);
-    setCompareSeed(null);
-    setCompareDistErr(null);
+    setSelection((current) =>
+      current.recommendations === recommendations
+        ? current
+        : { recommendations, indices: new Set<number>() },
+    );
+    setComparison((current) =>
+      current?.recommendations === recommendations ? current : null,
+    );
   }, [recommendations]);
 
-  const toggleSelect = useCallback((i: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i);
-      else if (next.size < 5) next.add(i);
-      return next;
-    });
-  }, []);
+  const toggleSelect = useCallback(
+    (i: number) => {
+      setSelection((prev) => {
+        const current =
+          prev.recommendations === recommendations
+            ? prev.indices
+            : EMPTY_SELECTED_ROWS;
+        const next = new Set(current);
+        if (next.has(i)) next.delete(i);
+        else if (next.size < 5) next.add(i);
+        else return prev;
+        return { recommendations, indices: next };
+      });
+    },
+    [recommendations],
+  );
 
   const selectedList = useMemo(
     () => Array.from(selected).sort((a, b) => a - b),
@@ -462,8 +512,16 @@ export default memo(function SimResults({
 
   const runCompareDistributions = useCallback(async () => {
     if (!compareWorkspace || !showCompare) return;
-    setCompareDistErr(null);
-    setLoadingCompareDist(true);
+    const request: ComparisonState = {
+      recommendations,
+      selected,
+      workspaceKey,
+      loading: true,
+      crews: null,
+      seed: null,
+      error: null,
+    };
+    setComparison(request);
     try {
       const crews = selectedList.map((idx) =>
         crewRecommendationToSimulateCrew(
@@ -486,15 +544,28 @@ export default memo(function SimResults({
         },
         compareWorkspace.profileId,
       );
-      setCompareDist(res.crews);
-      setCompareSeed(res.seed);
+      // A newer request owns the state as soon as it starts. Context guards
+      // above also hide responses for a different selection/scenario/result set.
+      setComparison((current) =>
+        current === request
+          ? { ...request, loading: false, crews: res.crews, seed: res.seed }
+          : current,
+      );
     } catch (e) {
-      setCompareDist(null);
-      setCompareDistErr(formatApiError(e));
-    } finally {
-      setLoadingCompareDist(false);
+      setComparison((current) =>
+        current === request
+          ? { ...request, loading: false, error: formatApiError(e) }
+          : current,
+      );
     }
-  }, [compareWorkspace, recommendations, selectedList, showCompare]);
+  }, [
+    compareWorkspace,
+    recommendations,
+    selected,
+    selectedList,
+    showCompare,
+    workspaceKey,
+  ]);
 
   return (
     <section

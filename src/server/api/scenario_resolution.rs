@@ -38,7 +38,7 @@ pub fn validate_scenario_resolves(
                 errors.push(ValidationIssue {
                     field: "hostile",
                     messages: vec![format!(
-                        "unknown hostile {:?}: no hostile with this id, or name and level, exists in the loaded data",
+                        "unknown hostile or ambiguous name {:?}: use an explicit hostile id from the loaded data",
                         hostile.trim()
                     )],
                 });

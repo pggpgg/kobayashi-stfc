@@ -2,6 +2,7 @@
   "id": "vrax",
   "ship_name": "VRAX",
   "ship_class": "survey",
+  "grade": 5,
   "faction": "romulan",
   "tiers": [
     {

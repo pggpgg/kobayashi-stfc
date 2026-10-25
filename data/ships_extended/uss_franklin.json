@@ -2,6 +2,7 @@
   "id": "uss_franklin",
   "ship_name": "U.S.S. FRANKLIN",
   "ship_class": "explorer",
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

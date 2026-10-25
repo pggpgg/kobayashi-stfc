@@ -4,7 +4,9 @@ use serde::Deserialize;
 use std::collections::HashSet;
 use std::fmt;
 
-use crate::data::heuristics::BelowDecksStrategy;
+use crate::data::heuristics::{
+    is_valid_heuristic_seed_name, BelowDecksStrategy, MAX_HEURISTIC_SEEDS_PER_REQUEST,
+};
 use crate::data::optimize_history::{validate_optimize_cache_key, MAX_OPTIMIZE_CACHE_KEY_BYTES};
 use crate::optimizer::chain::{ChainGrindParams, ChainSecondaryObjective};
 use crate::optimizer::constraints::{
@@ -358,6 +360,45 @@ pub fn validate_request(
 ) -> Result<(), OptimizePayloadError> {
     let mut errors: Vec<ValidationIssue> = Vec::new();
 
+    if let Some(strategy) = request.strategy.as_deref() {
+        if !is_supported_strategy_name(strategy) {
+            errors.push(ValidationIssue {
+                field: "strategy",
+                messages: vec![format!(
+                    "must be one of exhaustive, genetic, tiered, linear_eval, random_stratified; got {strategy:?}"
+                )],
+            });
+        }
+    }
+
+    if let Some(seed_names) = request.heuristics_seeds.as_deref() {
+        if seed_names.len() > MAX_HEURISTIC_SEEDS_PER_REQUEST {
+            errors.push(ValidationIssue {
+                field: "heuristics_seeds",
+                messages: vec![format!(
+                    "must contain at most {MAX_HEURISTIC_SEEDS_PER_REQUEST} entries"
+                )],
+            });
+        }
+        let invalid_names: Vec<String> = seed_names
+            .iter()
+            .take(MAX_HEURISTIC_SEEDS_PER_REQUEST)
+            .enumerate()
+            .filter(|(_, name)| !is_valid_heuristic_seed_name(name))
+            .map(|(index, name)| {
+                format!(
+                    "entry {index} must be a 1–64 byte ASCII file stem using only letters, digits, '_' or '-': {name:?}"
+                )
+            })
+            .collect();
+        if !invalid_names.is_empty() {
+            errors.push(ValidationIssue {
+                field: "heuristics_seeds",
+                messages: invalid_names,
+            });
+        }
+    }
+
     if request.ship.trim().is_empty() {
         errors.push(ValidationIssue {
             field: "ship",
@@ -650,7 +691,11 @@ pub fn validate_request(
                 messages: vec!["requires non-empty heuristics_seeds".to_string()],
             });
         }
-        if request.strategy.as_deref() == Some("genetic") {
+        if request
+            .strategy
+            .as_deref()
+            .is_some_and(|strategy| strategy.trim().eq_ignore_ascii_case("genetic"))
+        {
             errors.push(ValidationIssue {
                 field: "fast_discovery",
                 messages: vec![
@@ -900,6 +945,13 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
         }
         _ => OptimizerStrategy::Exhaustive,
     }
+}
+
+fn is_supported_strategy_name(strategy: &str) -> bool {
+    matches!(
+        strategy.trim().to_ascii_lowercase().as_str(),
+        "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified"
+    )
 }
 
 /// Parsed `GET /api/optimize/estimate` query.

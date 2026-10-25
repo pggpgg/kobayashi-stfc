@@ -61,6 +61,8 @@ ships = true
 [sync.targets.kobayashi]
 url = "http://localhost:3000/api/sync/ingress"
 token = "<your Kobayashi profile's sync_token>"
+# Enable active-buff capture for this target, independent of other sync targets.
+buffs = true
 ```
 
 Set the `token` of the Kobayashi target to the `sync_token` of the profile that you want to
@@ -89,6 +91,18 @@ the same paths. Start the server from the root of the project. The server then f
 | buffs                                                           | Yes                | `profiles/{id}/buffs.imported.json` — the global active buffs (`bid`, `level`, optional `expiry_time`). To remove a buff, the mod sends `type: "expired_buffs"` with `bid`.                        |
 | battlelogs                                                      | Yes                | `profiles/{id}/battlelogs.imported.json` — a moving window of the **last 50** battle log objects. The server keeps the order in which it received them, and it drops the older entries.            |
 | resources, missions, traits, slots, inventory, jobs             | No (accepted, 200) | —                                                                                                                                                                                                  |
+
+The Community Mod serializes these JSON types as `buff`, `expired_buff`, and
+`battlelog`. Kobayashi accepts those names and the earlier plural aliases
+`buffs`, `expired_buffs`, and `battlelogs`. TOML option names remain `buffs`
+and `battlelogs`.
+
+Sync files describe the latest received player state; they are not immutable
+snapshots attached to each fight. For calibration, preserve the relevant player
+files immediately before and after a new fight, together with its journal,
+ship/crew configuration, capture time, and client version. The ordinary ship
+sync includes tier, level, hull id, and components, but not equipped crew or
+final combat stats.
 
 ## The data that the mod sends
 
@@ -183,8 +197,8 @@ file.
 | **ships** / **ship**       | `type`, `psid` (int64), `tier`, `level`, `level_percentage` (double), `hull_id` (int64), `components` (array of int64) | One ship of the player. The mod sends `type: "ship"`. Kobayashi accepts `"ships"` and `"ship"`. The server writes the item to `profiles/{id}/ships.imported.json`. |
 | **ft**                     | `type`, `fid` (int64), `tier`, `level`, `shard_count` (int64)                                                          | Forbidden tech and chaos tech. The server writes the item to `profiles/{id}/forbidden_tech.imported.json`.                                                    |
 | **tech**                   | The same fields as **ft**                                                                                              | The server writes the item as it writes **ft**. This is the queue name of the mod for the forbidden tech and the chaos tech.                                  |
-| **buffs**                  | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds)                                        | The global active buffs go to `profiles/{id}/buffs.imported.json`. To remove a buff, the mod sends `type: "expired_buffs"` with `bid`.                        |
-| **battlelogs**             | `type`, and the other fields that the mod sets for each object                                                          | The server adds the item to `profiles/{id}/battlelogs.imported.json`. It keeps only the last **50** objects, in the order in which it received them.          |
+| **buff** / **buffs**        | `type`, `bid` (buff id), `level`, optional `expiry_time` (null or unix seconds)                                        | The global active buffs go to `profiles/{id}/buffs.imported.json`. Removals use `type: "expired_buff"` (also accepts `"expired_buffs"`) with `bid`.            |
+| **battlelog** / **battlelogs** | `type`, `names`, `journal` (the latter two preserved as opaque JSON)                                               | The server adds the item to `profiles/{id}/battlelogs.imported.json`. It keeps only the last **50** objects, in the order in which it received them.          |
 
 The server accepts the other types (resources, missions, traits, slots, inventory, and jobs)
 and returns 200, but it does not write them to a file.

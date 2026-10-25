@@ -21,12 +21,23 @@ pub struct ForbiddenChaosRecord {
     pub bonuses: Vec<BonusEntry>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BonusEntry {
     pub stat: String,
     pub value: f64,
     #[serde(default)]
     pub operator: String,
+    /// Client-verified snapshots indexed by level - 1. Tier only unlocks the buff.
+    /// When present, this supersedes the legacy optional linear scaling heuristic.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rank_curve: Option<ForbiddenTechRankCurve>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForbiddenTechRankCurve {
+    pub buff_id: u64,
+    pub minimum_tier: u32,
+    pub values: Vec<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

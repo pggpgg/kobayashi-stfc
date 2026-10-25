@@ -2,6 +2,7 @@
   "id": "uss_excelsior",
   "ship_name": "U.S.S. EXCELSIOR",
   "ship_class": "battleship",
+  "grade": 5,
   "tiers": [
     {
       "tier": 1,

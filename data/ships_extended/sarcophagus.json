@@ -2,6 +2,7 @@
   "id": "sarcophagus",
   "ship_name": "SARCOPHAGUS",
   "ship_class": "battleship",
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

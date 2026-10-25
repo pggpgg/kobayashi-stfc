@@ -2,6 +2,7 @@
   "id": "phindra",
   "ship_name": "PHINDRA",
   "ship_class": "interceptor",
+  "grade": 2,
   "tiers": [
     {
       "tier": 1,

@@ -2,6 +2,7 @@
   "id": "sanctus",
   "ship_name": "SANCTUS",
   "ship_class": "interceptor",
+  "grade": 5,
   "faction": "romulan",
   "tiers": [
     {

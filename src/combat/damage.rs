@@ -71,7 +71,7 @@ pub fn combine_outbound_damage_before_apex(
 }
 
 /// Shield/hull split: returns (actual_shield_damage, hull_damage_this_round).
-/// Damage assigned to shields beyond their remaining HP spills into hull on the same hit.
+/// Shield-assigned damage beyond remaining shield HP is discarded on that hit.
 /// When shields are already gone, the entire hit damages hull.
 #[inline]
 pub fn apply_shield_hull_split(
@@ -79,17 +79,13 @@ pub fn apply_shield_hull_split(
     shield_mitigation: f64,
     defender_shield_remaining: f64,
 ) -> (f64, f64) {
-    // Most combatants have already depleted their shields by the time later volleys
-    // resolve. Avoid the shield split and overflow arithmetic for those hits.
     if defender_shield_remaining <= 0.0 || shield_mitigation <= 0.0 {
         return (0.0, damage_after_apex);
     }
-
     let shield_portion = damage_after_apex * shield_mitigation;
     let direct_hull_damage = damage_after_apex * (1.0 - shield_mitigation);
-    let actual_shield_damage = shield_portion.min(defender_shield_remaining.max(0.0));
-    let shield_overflow = shield_portion - actual_shield_damage;
-    (actual_shield_damage, direct_hull_damage + shield_overflow)
+    let actual_shield_damage = shield_portion.min(defender_shield_remaining);
+    (actual_shield_damage, direct_hull_damage)
 }
 
 #[cfg(test)]
@@ -255,11 +251,21 @@ mod tests {
     }
 
     #[test]
-    fn shield_split_partial_depletion_spills_excess_to_hull() {
+    fn shield_split_partial_depletion_discards_excess_shield_share() {
         // shields have 300 remaining, shield_portion would be 500
         let (shield_dmg, hull_dmg) = apply_shield_hull_split(1000.0, 0.5, 300.0);
         assert!((shield_dmg - 300.0).abs() < 1e-12);
-        assert!((hull_dmg - 700.0).abs() < 1e-12);
+        assert!((hull_dmg - 500.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn realta_recorded_second_hit_does_not_spill_8039_shield_damage_into_hull() {
+        // The build-273 journal records 2752 hull + 9481 shield damage, with
+        // 1442 shield HP before the hit. Hull moves 7909 -> 5157, not to zero.
+        let (shield, hull) = apply_shield_hull_split(12233.0, 9481.0 / 12233.0, 1442.0);
+        assert!((shield - 1442.0).abs() < 1e-9);
+        assert!((hull - 2752.0).abs() < 1e-9);
+        assert!((7909.0 - hull - 5157.0).abs() < 1e-9);
     }
 
     #[test]

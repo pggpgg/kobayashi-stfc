@@ -2,6 +2,7 @@
   "id": "uss_reliant",
   "ship_name": "U.S.S. RELIANT",
   "ship_class": "explorer",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

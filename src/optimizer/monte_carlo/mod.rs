@@ -18,10 +18,11 @@ pub use scenario::{
     unresolved_officers_for_candidate, DefenderOpponent, PvpScenarioParams,
 };
 pub use simulation::{
-    crew_candidate_stable_hash, replay_optimize_iteration_with_registry, run_monte_carlo,
-    run_monte_carlo_parallel, run_monte_carlo_parallel_deduped,
-    run_monte_carlo_parallel_deduped_chunked, run_monte_carlo_parallel_with_registry,
-    run_monte_carlo_with_registry, MonteCarloSeedReplay, SimulationResult,
+    crew_candidate_ordered_hash, crew_candidate_stable_hash,
+    replay_optimize_iteration_with_registry, run_monte_carlo, run_monte_carlo_parallel,
+    run_monte_carlo_parallel_deduped, run_monte_carlo_parallel_deduped_chunked,
+    run_monte_carlo_parallel_with_registry, run_monte_carlo_with_registry, MonteCarloSeedReplay,
+    SimulationResult,
 };
 pub(crate) use simulation::{
     full_mc_early_stop_enabled, run_monte_carlo_confirm_topk_with_shared,

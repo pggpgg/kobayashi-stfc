@@ -2,6 +2,7 @@
   "id": "vi_dar_talios",
   "ship_name": "VI'DAR TALIOS",
   "ship_class": "interceptor",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

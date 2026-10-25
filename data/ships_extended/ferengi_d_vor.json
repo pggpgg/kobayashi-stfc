@@ -2,6 +2,7 @@
   "id": "ferengi_d_vor",
   "ship_name": "FERENGI D'VOR",
   "ship_class": "survey",
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

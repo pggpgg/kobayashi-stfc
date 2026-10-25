@@ -7,7 +7,9 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-use crate::data::profile_index::{profile_path, BUDGET_TELEMETRY_JSONL};
+use crate::data::profile_index::{
+    profile_data_dir, profile_path, profile_store_transaction, BUDGET_TELEMETRY_JSONL,
+};
 
 /// One optimize completion row (stable field names for log parsers).
 #[derive(Debug, Serialize)]
@@ -111,6 +113,14 @@ pub fn maybe_append_row<'a>(profile_id: Option<&str>, row: &BudgetTelemetryRow<'
     let Some(path) = resolve_log_path(profile_id) else {
         return;
     };
+    let Ok(_transaction) = profile_store_transaction() else {
+        return;
+    };
+    if let Some(pid) = profile_id.map(str::trim) {
+        if path == profile_path(pid, BUDGET_TELEMETRY_JSONL) && !profile_data_dir(pid).is_dir() {
+            return;
+        }
+    }
     if let Some(parent) = path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }

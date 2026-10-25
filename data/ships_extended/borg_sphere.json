@@ -2,6 +2,7 @@
   "id": "borg_sphere",
   "ship_name": "BORG SPHERE",
   "ship_class": "battleship",
+  "grade": 5,
   "tiers": [
     {
       "tier": 1,

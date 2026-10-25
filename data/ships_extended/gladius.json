@@ -2,6 +2,7 @@
   "id": "gladius",
   "ship_name": "GLADIUS",
   "ship_class": "interceptor",
+  "grade": 3,
   "faction": "romulan",
   "tiers": [
     {

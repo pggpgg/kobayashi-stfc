@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "research_id": 2580836593,
+  "source_cache_sha256": "b7fcb7a021fa982144702a682e81eb6b7a31406522b0154cc77553a2c0776418",
+  "buff_id": 1855248137,
+  "buff_sha256": "32f6d3584c81adc53f619cd56f0ef404a2638bf15e9414870b865a47aa71a10e",
+  "modifier_code": 707,
+  "modifier_name": "ModIsolyticDamage",
+  "operation_code": 1,
+  "operation_name": "Add",
+  "target_code": 1,
+  "target_name": "Self",
+  "trigger_code": 18,
+  "trigger_name": "RoundStart",
+  "condition_codes": [38],
+  "condition_name": "CondTargetHasBurning",
+  "duration_rounds": 1,
+  "ranked_values_nonzero_prefix": [0.05, 0.06, 0.07, 0.09, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2],
+  "correction": "Preserve the native RoundStart trigger instead of defaulting an omitted canonical trigger to AttackPhase.",
+  "limitation": "RoundStart timing alone does not establish ordering among simultaneous state applications. No new same-phase condition sampling policy is introduced."
+}

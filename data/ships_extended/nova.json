@@ -2,6 +2,7 @@
   "id": "nova",
   "ship_name": "NOVA",
   "ship_class": "survey",
+  "grade": 5,
   "tiers": [
     {
       "tier": 1,

@@ -2,6 +2,7 @@
   "id": "uss_saladin",
   "ship_name": "U.S.S. SALADIN",
   "ship_class": "interceptor",
+  "grade": 3,
   "faction": "federation",
   "tiers": [
     {

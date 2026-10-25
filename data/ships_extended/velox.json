@@ -2,6 +2,7 @@
   "id": "velox",
   "ship_name": "VELOX",
   "ship_class": "interceptor",
+  "grade": 6,
   "faction": "romulan",
   "tiers": [
     {

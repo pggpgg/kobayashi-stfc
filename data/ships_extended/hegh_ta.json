@@ -2,6 +2,7 @@
   "id": "hegh_ta",
   "ship_name": "HEGH'TA",
   "ship_class": "interceptor",
+  "grade": 4,
   "faction": "klingon",
   "tiers": [
     {

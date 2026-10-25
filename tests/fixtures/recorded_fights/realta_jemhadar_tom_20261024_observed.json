@@ -1,0 +1,349 @@
+{
+  "schema_version": 1,
+  "kind": "Redacted paired Tom versus Jem'Hadar level 53 observation; source accounting, not a Tom engine calibration",
+  "source_json_sha256": "4dee4ed472ec5c8345a2f1c355d22d32f36c05b44b94f6b6241258a8c6cb0130",
+  "source_projection_sha256": "451610a7077f40723775f14d29d8fe78b8df17f6e91eedecb091370fbd022f39",
+  "source_setup_validation_v2_sha256": "cb993dfa9c9647f8cb55174e351586c2a8e87d61670dce094446133e9ec354bf",
+  "source_hypothesis_comparison_sha256": "142cbdee483eb37265766c30550e3e5b2b88a05a2efcade76020092c2ab5d23e",
+  "source_frozen_pre_observation_predictions_sha256": "2340e0207ca52a358e4b5032659fa65ab9cdcd7a940959b2ef1f9cd95a291948",
+  "paired_baseline_hypothesis_comparison_sha256": "d4c8b23cadd8012a1e0a768f7054b5e1bae913ef67b7cda9e27671f4b7c48706",
+  "battle_time": "2026-10-24T07:38:32",
+  "paired_baseline_time": "2026-10-24T02:54:29",
+  "observed_client_build": 273,
+  "parser_reference_client_build": 272,
+  "setup_check_summary": {
+    "all_checks_pass": true,
+    "checked_flags": {
+      "frozen_provenance_control_matches": true,
+      "frozen_provenance_exact_integer_ids": true,
+      "frozen_source_hashes_match_provenance": true,
+      "exact_jadzia_and_optional_tom_roles": true,
+      "raw_officer_56_57_58_59_match_source_rounded_totals": true,
+      "same_realta_tier_level_components_as_reference": true,
+      "realta_full_max_hull_652159": true,
+      "realta_full_max_shield_748507": true,
+      "ablative_inventory_tier4_level20_unchanged": true,
+      "exact_target_catalog_level_faction": true,
+      "exact_target_positive_components_in_order_with_duplicates": true,
+      "target_started_full_hull_and_shield": true,
+      "target_max_hull_and_shield_match_catalog": true,
+      "target_has_no_deployed_buffs": true,
+      "selected_global_0_1_11_12_13_57_59_73_707_808_unchanged": true,
+      "selected_deployed_0_1_11_12_13_57_59_73_707_808_unchanged": true,
+      "deployed_forbidden_tech_native_buffs_unchanged": true,
+      "paired_baseline_has_jadzia_only": true,
+      "paired_baseline_frozen_passed_setup_gate": true,
+      "no_other_profile_snapshot_change_since_paired_baseline": true
+    },
+    "sole_paired_crew_change": "Tom Paris level 20/rank 4 in below-decks slot 3"
+  },
+  "observed": {
+    "rounds": 1,
+    "subrounds": 4,
+    "total_damage_hits": 11,
+    "outgoing_damage_hits": 2,
+    "tom_ability_before_attacks": [
+      {
+        "source_index": 4,
+        "officer_id": 3849424588,
+        "ability_id": 3192273655,
+        "value": 4
+      }
+    ],
+    "incoming_hits": [
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 13,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 36589,
+        "shield_damage": 172493,
+        "mitigated_damage": 542069.8176624454,
+        "mitigated_apex_barrier": 16726.52,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 615570,
+        "remaining_shield": 576014
+      },
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 32,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 32451,
+        "shield_damage": 152981,
+        "mitigated_damage": 480756.07509777794,
+        "mitigated_apex_barrier": 14834.57,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 583119,
+        "remaining_shield": 423033
+      },
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 51,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 35030,
+        "shield_damage": 165144,
+        "mitigated_damage": 518974.5393048878,
+        "mitigated_apex_barrier": 16013.87,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 548089,
+        "remaining_shield": 257889
+      },
+      {
+        "round": 1,
+        "subround": 2,
+        "source_index": 95,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 1,
+        "hull_damage": 38869,
+        "shield_damage": 183238,
+        "mitigated_damage": 575838.3110822656,
+        "mitigated_apex_barrier": 17768.5,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 509220,
+        "remaining_shield": 74651
+      },
+      {
+        "round": 1,
+        "subround": 2,
+        "source_index": 114,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 37729,
+        "shield_damage": 177867,
+        "mitigated_damage": 558957.8340503854,
+        "mitigated_apex_barrier": 17247.62,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 471491,
+        "remaining_shield": 0
+      },
+      {
+        "round": 1,
+        "subround": 2,
+        "source_index": 133,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 186170,
+        "shield_damage": 0,
+        "mitigated_damage": 482668.4454691749,
+        "mitigated_apex_barrier": 14893.58,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 285321,
+        "remaining_shield": 0
+      },
+      {
+        "round": 1,
+        "subround": 3,
+        "source_index": 177,
+        "weapon_id": 519835226,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 479804,
+        "shield_damage": 0,
+        "mitigated_damage": 1279578.170499054,
+        "mitigated_apex_barrier": 38384.25,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 0,
+        "remaining_shield": 0
+      },
+      {
+        "round": 1,
+        "subround": 3,
+        "source_index": 196,
+        "weapon_id": 519835226,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 446084,
+        "shield_damage": 0,
+        "mitigated_damage": 1189652.2597880038,
+        "mitigated_apex_barrier": 35686.69,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 0,
+        "remaining_shield": 0
+      },
+      {
+        "round": 1,
+        "subround": 3,
+        "source_index": 215,
+        "weapon_id": 519835226,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 491044,
+        "shield_damage": 0,
+        "mitigated_damage": 1309555.3720964305,
+        "mitigated_apex_barrier": 39283.49,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 0,
+        "remaining_shield": 0
+      }
+    ],
+    "diagnostic_denominator_error_budget": 2.01,
+    "stronger_weapon": {
+      "weapon_id": 2806302352,
+      "directly_tested_in_paired_baseline": true,
+      "clean_noncritical_count": 3,
+      "clean_noncritical_interval": [
+        0.7059304997243507,
+        0.7059337524104821
+      ],
+      "clean_critical_count": 1,
+      "clean_critical_interval": [
+        0.7059300508825019,
+        0.7059335298548556
+      ],
+      "primary_combined_count": 4,
+      "primary_combined_interval": [
+        0.7059304997243507,
+        0.7059335298548556
+      ],
+      "frozen_source_placement_families": [
+        {
+          "source": "own_effective",
+          "placement": "pre_all_percentage_flat_addition",
+          "frozen_osr1_band": [
+            0.7042499305806091,
+            0.7042889655349858
+          ],
+          "frozen_osr0to1_fallback_band": [
+            0.7032875964410752,
+            0.7042889655349858
+          ]
+        },
+        {
+          "source": "own_effective",
+          "placement": "pre_all_except_ship_officer_percentage",
+          "frozen_osr1_band": [
+            0.7032877927958282,
+            0.7033305338880576
+          ],
+          "frozen_osr0to1_fallback_band": [
+            0.7032875964410752,
+            0.7033305338880576
+          ]
+        },
+        {
+          "source": "own_effective",
+          "placement": "multiplier_on_completed_defenses",
+          "frozen_osr1_band": [
+            0.7119441009411689,
+            0.7119466987625105
+          ],
+          "frozen_osr0to1_fallback_band": [
+            0.7119441009411689,
+            0.7119466987625105
+          ]
+        },
+        {
+          "source": "crew_effective",
+          "placement": "pre_all_percentage_flat_addition",
+          "frozen_osr1_band": [
+            0.7059014311616447,
+            0.7059221899249697
+          ],
+          "frozen_osr0to1_fallback_band": [
+            0.7051016025740142,
+            0.7059221899249697
+          ]
+        },
+        {
+          "source": "crew_effective",
+          "placement": "pre_all_except_ship_officer_percentage",
+          "frozen_osr1_band": [
+            0.7051017592001204,
+            0.7051246413493752
+          ],
+          "frozen_osr0to1_fallback_band": [
+            0.7051016025740142,
+            0.7051246413493752
+          ]
+        },
+        {
+          "source": "crew_effective",
+          "placement": "multiplier_on_completed_defenses",
+          "frozen_osr1_band": [
+            0.7119622686107189,
+            0.711963988629241
+          ],
+          "frozen_osr0to1_fallback_band": [
+            0.7119622686107189,
+            0.711963988629241
+          ]
+        }
+      ]
+    },
+    "weaker_weapon": {
+      "weapon_id": 519835226,
+      "primary_clean_count": 0,
+      "conditional_depleted_terminal_count": 3,
+      "conditional_depleted_terminal_interval": [
+        0.7117594105789219,
+        0.711760764105819
+      ]
+    },
+    "hp_ledger_exceptions": [
+      {
+        "source_index": 114,
+        "kind": "shield_overassigned_before_zero_remaining",
+        "assigned_excess": 103216
+      },
+      {
+        "source_index": 177,
+        "kind": "hull_overassigned_before_zero_remaining",
+        "assigned_excess": 194483
+      },
+      {
+        "source_index": 196,
+        "kind": "assigned_damage_after_zero_remaining_hull"
+      },
+      {
+        "source_index": 215,
+        "kind": "assigned_damage_after_zero_remaining_hull"
+      }
+    ]
+  },
+  "limitations": [
+    "All six frozen source/placement families are rejected by the four primary clean stronger-weapon hits under the retained diagnostic budget; this does not identify the missing mechanism.",
+    "The weaker weapon has only depleted or terminal assigned-damage records. Its conditional interval does not rescue a model rejected by the directly tested stronger weapon.",
+    "Critical reconstructed raw remains fractional; nearest-integer raw is diagnostic, not a direct server field or server numeric-type proof.",
+    "The conservative ±2.01 denominator budget and frozen phase/source bands are not widened to fit this observation.",
+    "The build 273 stream was projected with build 272 native parser evidence; independent build 273 parser drift proof remains open.",
+    "No winner or full-fight accuracy assertion is included."
+  ]
+}

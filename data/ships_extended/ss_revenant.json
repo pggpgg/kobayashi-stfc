@@ -2,6 +2,7 @@
   "id": "ss_revenant",
   "ship_name": "SS REVENANT",
   "ship_class": "interceptor",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

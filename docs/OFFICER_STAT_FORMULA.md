@@ -2,13 +2,13 @@
 
 Canonical reference for how per-officer Attack / Defense / Health stats sum across a crew and feed into a ship's effective combat stats. Authored by the maintainer; consumed by the engine extension that adds first-class officer A/D/H runtime support (see `/Users/pgagnong/.claude/plans/what-should-we-work-recursive-lobster.md`).
 
-Status: **specified and implemented**. The formula below is locked from in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates including attack, defense, and health). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs), [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs), [`tests/officer_round_start_stat.rs`](../tests/officer_round_start_stat.rs), and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). The one remaining gap is the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
+Status: **breakpoint routing implemented; stat-source validation incomplete**. The breakpoint model below is informed by in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates including attack, defense, and health). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs), [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs), [`tests/officer_round_start_stat.rs`](../tests/officer_round_start_stat.rs), and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). Remaining gaps include native seat-scoped source completeness, Tom Paris’s combat-time Defense source and operator placement, and the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
 
 ---
 
 ## 1. Crew slot weights
 
-**Slot position does not affect officer-stat weighting.** Every crewed officer contributes their A/D/H at the same weight regardless of whether they sit in the captain seat, a bridge seat, or a below-decks seat. The captain seat still grants its captain ability (in addition to its bridge ability), and below-decks seats still grant only their below-decks ability — those are ability-firing rules, not stat-weighting rules.
+**Base slot weights are equal; modifier eligibility can depend on the seat.** Every crewed officer contributes their base A/D/H at the same weight. Native Orlop Defense, for example, increases only the Defense of officers below decks; captain and bridge officer stats do not receive it. The captain seat still grants its captain ability in addition to its bridge ability, while below-decks seats grant only their below-decks ability.
 
 | Slot | Attack weight | Defense weight | Health weight |
 |---|---|---|---|
@@ -127,6 +127,16 @@ Naming: the in-game stat is **Shield Deflection**, and the engine's `shield_defl
 - interceptor: `dodge += ship.dodge × defense_bonus`
 - survey: ⅓ of `defense_bonus` applied to each channel above with the matching ship constant.
 
+`OfficerStatRuntimeBonus` stores these defense contributions as **raw stat
+amounts**. When a combatant has nonzero raw defense context, profile application
+divides each contribution by its matching base before storing it in the
+combatant's fractional component field. Incoming mitigation then reconstructs
+`base × (1 + profile_fraction + passive_fraction + research_fraction) + officer_raw_add`.
+Dynamic officer-defense deltas remain raw additions after the multipliers.
+This applies each source once and keeps flat `damage_reduction` separate from
+the defense-stat curve. Combatants without raw defense context, or with all-zero
+raw bases, retain the legacy component path.
+
 Empirical confirmation (Cerritos, both observations):
 
 | Crew | defense_rating | defense_bonus | shield_added | implied `shield_per_bonus` |
@@ -180,6 +190,14 @@ damage_per_round_raw   += attack_rating          // new additive channel
 ```
 
 This **answers Section 4**: the existing `officer_*` profile keys are **kept**, with **migrated semantics** (pre-aggregation multiplier on per-officer stats, not post-aggregation multiplier on ship stats).
+
+Orlop Defense is represented by `officer_defense_below_decks`, a separate
+pre-aggregation percentage pool. It adds only to Defense contributed by actual
+below-decks officers, alongside crew-wide officer Defense percentages. Rank 10
+is native fraction `1.0` (+100%), not `0.01`. The source-bound project and buff
+are retained in `data/research/verified_orlop_defense_2026-10-23.json`.
+It does not directly modify ship shield mitigation or Tom's independently
+unresolved combat ability source.
 
 ### 2f. Things that are explicitly NOT affected
 

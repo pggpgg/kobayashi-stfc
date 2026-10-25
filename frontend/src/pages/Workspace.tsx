@@ -256,68 +256,19 @@ export default function Workspace() {
               ws.setRightPanelCollapsed(!ws.rightPanelCollapsed)
             }
             officerOptions={officerOptions}
-            crew={ws.crew}
-            loadingOptimize={ws.loadingOptimize}
-            optimizeCrewsDone={ws.optimizeCrewsDone}
-            optimizeTotalCrews={ws.optimizeTotalCrews}
-            optimizePhase={ws.optimizePhase}
-            optimizeEtaSeconds={ws.optimizeEtaSeconds}
-            optimizeThroughput={ws.optimizeThroughput}
-            maxCandidates={ws.maxCandidates}
-            onMaxCandidatesChange={ws.setMaxCandidates}
-            belowDecksPoolMode={ws.belowDecksPoolMode}
-            onBelowDecksPoolModeChange={ws.setBelowDecksPoolMode}
+            settings={ws.optimizerSettings}
+            onChange={ws.updateOptimizerSettings}
             availableSeeds={ws.availableSeeds}
-            selectedSeeds={ws.selectedSeeds}
-            onSelectedSeedsChange={ws.setSelectedSeeds}
-            heuristicsOnly={ws.heuristicsOnly}
-            onHeuristicsOnlyChange={ws.setHeuristicsOnly}
-            fastDiscovery={ws.fastDiscovery}
-            onFastDiscoveryChange={ws.setFastDiscovery}
-            belowDecksStrategy={ws.belowDecksStrategy}
-            onBelowDecksStrategyChange={ws.setBelowDecksStrategy}
-            optimizerStrategy={ws.optimizerStrategy}
-            onOptimizerStrategyChange={ws.setOptimizerStrategy}
-            enableLearnedPairPrior={ws.enableLearnedPairPrior}
-            onEnableLearnedPairPriorChange={ws.setEnableLearnedPairPrior}
-            tieredScoutSims={ws.tieredScoutSims}
-            onTieredScoutSimsChange={ws.setTieredScoutSims}
-            tieredTopK={ws.tieredTopK}
-            onTieredTopKChange={ws.setTieredTopK}
-            tieredRandomExplorationPct={ws.tieredRandomExplorationPct}
-            onTieredRandomExplorationPctChange={
-              ws.setTieredRandomExplorationPct
-            }
-            localRefinement={ws.localRefinement}
-            onLocalRefinementChange={ws.setLocalRefinement}
-            noveltyLambdaText={ws.noveltyLambdaText}
-            onNoveltyLambdaTextChange={ws.setNoveltyLambdaText}
-            noveltyDiverseTopText={ws.noveltyDiverseTopText}
-            onNoveltyDiverseTopTextChange={ws.setNoveltyDiverseTopText}
-            noveltyPoolText={ws.noveltyPoolText}
-            onNoveltyPoolTextChange={ws.setNoveltyPoolText}
-            noveltyHistoryAnchors={ws.noveltyHistoryAnchors}
-            onNoveltyHistoryAnchorsChange={ws.setNoveltyHistoryAnchors}
-            optimizeMustInclude={ws.optimizeMustInclude}
-            onOptimizeMustIncludeChange={ws.setOptimizeMustInclude}
-            optimizeExclude={ws.optimizeExclude}
-            onOptimizeExcludeChange={ws.setOptimizeExclude}
-            optimizeCaptainMust={ws.optimizeCaptainMust}
-            onOptimizeCaptainMustChange={ws.setOptimizeCaptainMust}
-            optimizeBridgeMust={ws.optimizeBridgeMust}
-            onOptimizeBridgeMustChange={ws.setOptimizeBridgeMust}
-            optimizeBelowMust={ws.optimizeBelowMust}
-            onOptimizeBelowMustChange={ws.setOptimizeBelowMust}
-            optimizeGroupsJson={ws.optimizeGroupsJson}
-            onOptimizeGroupsJsonChange={ws.setOptimizeGroupsJson}
-            chainGrindEnabled={ws.chainGrindEnabled}
-            onChainGrindEnabledChange={ws.setChainGrindEnabled}
-            chainKillsTarget={ws.chainKillsTarget}
-            onChainKillsTargetChange={ws.setChainKillsTarget}
-            chainSecondary={ws.chainSecondary}
-            onChainSecondaryChange={ws.setChainSecondary}
-            cachedWarmStartBadge={ws.cachedWarmStartBadge}
-            staleCacheRefusedReason={ws.staleCacheRefusedReason}
+            progress={{
+              loadingOptimize: ws.loadingOptimize,
+              optimizeCrewsDone: ws.optimizeCrewsDone,
+              optimizeTotalCrews: ws.optimizeTotalCrews,
+              optimizePhase: ws.optimizePhase,
+              optimizeEtaSeconds: ws.optimizeEtaSeconds,
+              optimizeThroughput: ws.optimizeThroughput,
+              cachedWarmStartBadge: ws.cachedWarmStartBadge,
+              staleCacheRefusedReason: ws.staleCacheRefusedReason,
+            }}
           />
         )}
       </div>

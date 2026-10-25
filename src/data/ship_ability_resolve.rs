@@ -18,10 +18,11 @@
 //! [`AbilityEffect::GalaxyAdditiveWeaponDamageGrowth`] so growth stacks additively with profile
 //! `weapon_damage` (diluted by `1+p`), not as another term in `pre_attack_multiplier`.
 //!
-//! **Accuracy:** `accuracy` / `accuracy_bonus` at **combat begin** are summed by
+//! **Accuracy:** `accuracy` / `accuracy_bonus` at **combat begin** are summed as fractional bonuses by
 //! [`sum_combat_begin_accuracy_from_ship_abilities`] (using the hostile’s [`crate::combat::ShipType`])
-//! and folded into pre-mitigation [`AttackerStats`] (not a crew seat). Rows with [`crate::data::ship::ShipAbility::round_cap`]
-//! are skipped here (per-round accuracy is not applied in that path). Other timings are not modeled yet.
+//! and multiply the ship's base pre-mitigation accuracy rating (not a crew seat). Rows with
+//! [`crate::data::ship::ShipAbility::round_cap`] are skipped here (per-round accuracy is not applied
+//! in that path). Other timings are not modeled yet.
 //!
 //! **Round cap:** Optional [`crate::data::ship::ShipAbility::round_cap`] adds [`crate::combat::abilities::AbilityCondition::RoundRange`]
 //! `1..=N` so crew-seat effects apply only in the first **N** combat rounds.
@@ -94,6 +95,8 @@ pub fn ship_ability_effect_from_catalog(
     match normalize_key(effect_type).as_str() {
         // Catalogued for every hull; no combat seat until modeled explicitly.
         "combat_noop" | "unmodeled" | "not_applicable" => None,
+        // Applied to the unbuffed HP base by ShipRecord::health_with_launch_bonuses.
+        "hull_hp_flat" | "shield_hp_flat" => None,
         "hostile_crit_damage_reduction" | "reduce_hostile_crit_damage" => {
             if timing != TimingWindow::CombatBegin && timing != TimingWindow::RoundStart {
                 return None;
@@ -282,7 +285,7 @@ pub fn ship_ability_effect_from_catalog(
     }
 }
 
-/// Flat accuracy from hull abilities at combat begin, folded into [`crate::combat::AttackerStats`]
+/// Fractional accuracy bonus from hull abilities at combat begin, applied to the ship's base rating
 /// before hostile mitigation / pierce-through (see [`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
 pub fn sum_combat_begin_accuracy_from_ship_abilities(
     abilities: &[ShipAbility],

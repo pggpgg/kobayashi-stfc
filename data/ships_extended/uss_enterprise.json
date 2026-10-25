@@ -2,6 +2,7 @@
   "id": "uss_enterprise",
   "ship_name": "U.S.S. ENTERPRISE",
   "ship_class": "explorer",
+  "grade": 3,
   "faction": "federation",
   "tiers": [
     {

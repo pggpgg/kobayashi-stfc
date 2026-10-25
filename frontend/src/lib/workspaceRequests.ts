@@ -4,6 +4,7 @@ import type {
   OptimizerStrategyType,
   WarmStartCrewBody,
 } from "./api";
+import { validatedOfficerGroups } from "./optimizerGroups";
 import { normalizeSupportBuffSelection } from "./supportBuffs";
 import type { CrewState } from "./types";
 
@@ -65,35 +66,6 @@ export function joinOfficerList(names: string[]): string {
     .join(", ");
 }
 
-function parseGroupsJson(
-  raw: string | undefined,
-): OptimizeCrewConstraintsBody["groups"] {
-  const t = raw?.trim();
-  if (!t) return undefined;
-  try {
-    const v = JSON.parse(t) as unknown;
-    if (!Array.isArray(v)) return undefined;
-    const out: { officers: string[]; min_count: number }[] = [];
-    for (const item of v) {
-      if (!item || typeof item !== "object") continue;
-      const o = item as Record<string, unknown>;
-      if (!Array.isArray(o.officers) || typeof o.min_count !== "number")
-        continue;
-      const officers = o.officers
-        .filter((x): x is string => typeof x === "string")
-        .map((x) => x.trim())
-        .filter(Boolean);
-      const min_count = Math.floor(o.min_count);
-      if (officers.length > 0 && min_count >= 1) {
-        out.push({ officers, min_count });
-      }
-    }
-    return out.length ? out : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /** Build API `constraints` object from Workspace form strings (omit when empty). */
 export function buildOptimizeConstraintsFromForm(args: {
   mustIncludeComma: string;
@@ -110,7 +82,7 @@ export function buildOptimizeConstraintsFromForm(args: {
   const captainList = splitOfficerList(args.captainMust);
   const captain_must_be =
     captainList.length > 0 ? joinOfficerList(captainList) : undefined;
-  const groups = parseGroupsJson(args.groupsJson);
+  const groups = validatedOfficerGroups(args.groupsJson);
   if (
     !must_include.length &&
     !exclude.length &&

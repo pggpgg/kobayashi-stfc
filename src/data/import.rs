@@ -12,6 +12,7 @@ use serde_json::Value;
 
 const DEFAULT_ALIAS_MAP_PATH: &str = "data/officers/name_aliases.json";
 const DEFAULT_CANONICAL_OFFICERS_PATH: &str = "data/officers/officers.canonical.json";
+const DEFAULT_OFFICER_ID_REGISTRY_PATH: &str = "data/officers/id_registry.json";
 
 /// Output path for [import_roster_csv] / [import_spocks_export] when no explicit path is given:
 /// `profiles/<effective_profile_id>/roster.imported.json` (same file mod sync merges into).
@@ -74,6 +75,9 @@ pub struct ForbiddenTechEntry {
 pub struct RosterEntry {
     pub canonical_officer_id: String,
     pub canonical_name: String,
+    /// Original game officer definition id, retained so catalog identity corrections can be audited.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_oid: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rank: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -163,6 +167,7 @@ pub enum ImportError {
     Read(std::io::Error),
     Parse(serde_json::Error),
     ParseLine { line: usize, message: String },
+    NoResolvedOfficers,
     Write(std::io::Error),
 }
 
@@ -172,6 +177,10 @@ impl fmt::Display for ImportError {
             Self::Read(err) => write!(f, "failed to read import file: {err}"),
             Self::Parse(err) => write!(f, "failed to parse import JSON: {err}"),
             Self::ParseLine { line, message } => write!(f, "line {line}: {message}"),
+            Self::NoResolvedOfficers => write!(
+                f,
+                "import did not resolve any officers; existing roster was left unchanged"
+            ),
             Self::Write(err) => write!(f, "failed to persist import output: {err}"),
         }
     }
@@ -280,8 +289,15 @@ struct SpocksOfficerRef {
     name: Option<String>,
 }
 
-/// Raw record before name resolution: (raw_name, rank, tier, level).
-type RawRosterRecord = (String, Option<u8>, Option<u8>, Option<u16>);
+/// Raw record before identity resolution.
+#[derive(Debug, Clone)]
+struct RawRosterRecord {
+    input_name: String,
+    source_oid: Option<String>,
+    rank: Option<u8>,
+    tier: Option<u8>,
+    level: Option<u16>,
+}
 
 fn unique_canonical_display_names(
     canonical_by_name: &HashMap<String, Vec<CanonicalOfficer>>,
@@ -418,6 +434,12 @@ fn resolve_and_write_roster_to(
 ) -> Result<ImportReport, ImportError> {
     let alias_map = load_alias_map(DEFAULT_ALIAS_MAP_PATH)?;
     let canonical_by_name = load_canonical_index(DEFAULT_CANONICAL_OFFICERS_PATH)?;
+    let source_id_registry = load_officer_id_registry(DEFAULT_OFFICER_ID_REGISTRY_PATH);
+    let canonical_by_id: HashMap<&str, &CanonicalOfficer> = canonical_by_name
+        .values()
+        .flatten()
+        .map(|officer| (officer.id.as_str(), officer))
+        .collect();
 
     let mut resolved_by_id: HashMap<String, (usize, RosterEntry)> = HashMap::new();
     let mut duplicate_indices: HashMap<String, Vec<usize>> = HashMap::new();
@@ -428,14 +450,17 @@ fn resolve_and_write_roster_to(
     let mut diagnostics: Vec<RosterImportDiagnostic> = Vec::new();
     let suggestion_pool = unique_canonical_display_names(&canonical_by_name);
 
-    for (index, (raw_name, rank, tier, level)) in raw_records.iter().enumerate() {
-        let raw_name = raw_name.trim();
+    for (index, record) in raw_records.iter().enumerate() {
+        let raw_name = record.input_name.trim();
         if raw_name.is_empty() {
             continue;
         }
 
         diagnostics.extend(roster_tier_level_diagnostics(
-            index, raw_name, *tier, *level,
+            index,
+            raw_name,
+            record.tier,
+            record.level,
         ));
 
         let normalized_input = normalize_key(raw_name);
@@ -445,11 +470,24 @@ fn resolve_and_write_roster_to(
             .unwrap_or_else(|| raw_name.to_string());
         let normalized_name = normalize_key(&canonical_name);
 
-        let Some(candidates) = canonical_by_name.get(&normalized_name) else {
+        let id_candidate = record
+            .source_oid
+            .as_deref()
+            .and_then(|source_oid| source_id_registry.get(source_oid))
+            .and_then(|canonical_id| canonical_by_id.get(canonical_id.as_str()))
+            .copied();
+        let named_candidates = canonical_by_name.get(&normalized_name);
+        let candidate = id_candidate.or_else(|| {
+            named_candidates
+                .filter(|candidates| candidates.len() == 1)
+                .and_then(|candidates| candidates.first())
+        });
+
+        if candidate.is_none() && named_candidates.is_none() && id_candidate.is_none() {
             let suggested_matches = suggest_officer_names(&normalized_name, &suggestion_pool, 5);
             let hint = if suggested_matches.is_empty() {
                 Some(
-                    "Check spelling against officers in data/officers/officers.canonical.json, or add data/officers/name_aliases.json (alias → canonical name)."
+                    "Check the officer name or source id against data/officers/officers.canonical.json and data/officers/id_registry.json, or add data/officers/name_aliases.json (alias → canonical name)."
                         .to_string(),
                 )
             } else {
@@ -467,9 +505,10 @@ fn resolve_and_write_roster_to(
                 hint,
             });
             continue;
-        };
+        }
 
-        if candidates.len() > 1 {
+        if candidate.is_none() && named_candidates.is_some_and(|candidates| candidates.len() > 1) {
+            let candidates = named_candidates.expect("checked above");
             ambiguous_records += 1;
             unresolved.push(UnresolvedEntry {
                 record_index: index,
@@ -485,7 +524,20 @@ fn resolve_and_write_roster_to(
             continue;
         }
 
-        let candidate = &candidates[0];
+        let Some(candidate) = candidate else {
+            unresolved.push(UnresolvedEntry {
+                record_index: index,
+                input_name: raw_name.to_string(),
+                normalized_name,
+                reason: "unrecognized source officer id".to_string(),
+                suggested_matches: Vec::new(),
+                hint: Some(
+                    "Verify that the source id exists in data/officers/id_registry.json or include a canonical officer name."
+                        .to_string(),
+                ),
+            });
+            continue;
+        };
         matched_records += 1;
 
         duplicate_indices
@@ -496,9 +548,10 @@ fn resolve_and_write_roster_to(
         let entry = RosterEntry {
             canonical_officer_id: candidate.id.clone(),
             canonical_name: candidate.name.clone(),
-            rank: *rank,
-            tier: *tier,
-            level: *level,
+            source_oid: record.source_oid.clone(),
+            rank: record.rank,
+            tier: record.tier,
+            level: record.level,
         };
 
         if let Some((first_index, first_entry)) = resolved_by_id.get(&candidate.id) {
@@ -536,20 +589,26 @@ fn resolve_and_write_roster_to(
     roster.sort_by(|a, b| a.canonical_officer_id.cmp(&b.canonical_officer_id));
 
     let roster_len = roster.len();
+    if roster_len == 0 {
+        return Err(ImportError::NoResolvedOfficers);
+    }
     let output_payload = serde_json::json!({
         "source_path": source_path,
         "officers": roster,
     });
 
-    if let Some(parent) = Path::new(output_path).parent() {
-        fs::create_dir_all(parent).map_err(ImportError::Write)?;
-    }
     let serialized = serde_json::to_string_pretty(&output_payload).map_err(ImportError::Parse)?;
-    fs::write(output_path, serialized).map_err(ImportError::Write)?;
 
     let unresolved_count = unresolved.len();
     let conflict_count = conflicts.len();
     let critical_failures = unresolved_count + conflict_count;
+    let roster_entries_written = if critical_failures == 0 {
+        crate::data::atomic_file::write_atomic(Path::new(output_path), serialized.as_bytes())
+            .map_err(ImportError::Write)?;
+        roster_len
+    } else {
+        0
+    };
 
     Ok(ImportReport {
         source_path: source_path.to_string(),
@@ -561,7 +620,7 @@ fn resolve_and_write_roster_to(
         duplicate_records: duplicates.len(),
         conflict_records: conflict_count,
         critical_failures,
-        roster_entries_written: roster_len,
+        roster_entries_written,
         unresolved,
         duplicates,
         conflicts,
@@ -593,7 +652,17 @@ pub fn import_spocks_export_to(
                 .or(r.officer.as_ref().and_then(|o| o.id.as_ref()))
                 .map(|s| s.trim().to_string())
                 .unwrap_or_default();
-            (raw_name, r.rank, r.tier, r.level)
+            RawRosterRecord {
+                input_name: raw_name,
+                source_oid: r
+                    .id
+                    .as_ref()
+                    .or(r.officer.as_ref().and_then(|o| o.id.as_ref()))
+                    .map(|id| id.trim().to_string()),
+                rank: r.rank,
+                tier: r.tier,
+                level: r.level,
+            }
         })
         .collect();
 
@@ -663,7 +732,13 @@ fn parse_roster_csv_content(content: &str) -> Result<Vec<RawRosterRecord>, Impor
             }
         }
 
-        raw_records.push((name.to_string(), None, tier, level));
+        raw_records.push(RawRosterRecord {
+            input_name: name.to_string(),
+            source_oid: None,
+            rank: None,
+            tier,
+            level,
+        });
     }
 
     Ok(raw_records)
@@ -719,6 +794,15 @@ fn load_alias_map(path: &str) -> Result<HashMap<String, String>, ImportError> {
     Ok(aliases)
 }
 
+/// Loads original game officer ids for Spocks exports. If the optional registry is missing or
+/// malformed, name-based imports remain available and id-only rows are reported unresolved.
+fn load_officer_id_registry(path: &str) -> HashMap<String, String> {
+    fs::read_to_string(path)
+        .ok()
+        .and_then(|raw| serde_json::from_str(&raw).ok())
+        .unwrap_or_default()
+}
+
 fn load_canonical_index(path: &str) -> Result<HashMap<String, Vec<CanonicalOfficer>>, ImportError> {
     let raw = fs::read_to_string(path).map_err(ImportError::Read)?;
     let payload: CanonicalOfficersFile = serde_json::from_str(&raw).map_err(ImportError::Parse)?;
@@ -765,8 +849,50 @@ pub fn load_imported_roster(path: &str) -> Option<Vec<RosterEntry>> {
         officers: Vec<RosterEntry>,
     }
     let raw = fs::read_to_string(path).ok()?;
-    let payload: ImportedRosterPayload = serde_json::from_str(&raw).ok()?;
+    let mut payload: ImportedRosterPayload = serde_json::from_str(&raw).ok()?;
+    refresh_roster_source_identities(&mut payload.officers);
     Some(payload.officers)
+}
+
+/// Source ids survive catalog corrections; name-only imports keep their original identity.
+/// This is a read-time projection and never rewrites the player's saved roster.
+fn refresh_roster_source_identities(officers: &mut [RosterEntry]) {
+    if !officers.iter().any(|officer| officer.source_oid.is_some()) {
+        return;
+    }
+    let Some((registry, catalog)) = fs::read_to_string(crate::runtime_paths::resolve(
+        DEFAULT_OFFICER_ID_REGISTRY_PATH,
+    ))
+    .ok()
+    .and_then(|raw| serde_json::from_str::<HashMap<String, String>>(&raw).ok())
+    .zip(
+        fs::read_to_string(crate::runtime_paths::resolve(
+            DEFAULT_CANONICAL_OFFICERS_PATH,
+        ))
+        .ok()
+        .and_then(|raw| serde_json::from_str::<CanonicalOfficersFile>(&raw).ok()),
+    ) else {
+        return;
+    };
+    let names: HashMap<_, _> = catalog
+        .officers
+        .into_iter()
+        .map(|officer| (officer.id, officer.name))
+        .collect();
+    for officer in officers {
+        let Some(canonical_id) = officer
+            .source_oid
+            .as_ref()
+            .and_then(|oid| registry.get(oid))
+        else {
+            continue;
+        };
+        let Some(name) = names.get(canonical_id) else {
+            continue;
+        };
+        officer.canonical_officer_id.clone_from(canonical_id);
+        officer.canonical_name.clone_from(name);
+    }
 }
 
 /// Loads the set of canonical officer IDs from the imported roster file.
@@ -812,10 +938,11 @@ fn load_imported_roster_ids_inner_status(
         Ok(v) => v,
         Err(_) => return ImportedRosterIdsLoadStatus::MissingFile,
     };
-    let payload: ImportedRosterPayload = match serde_json::from_str(&raw) {
+    let mut payload: ImportedRosterPayload = match serde_json::from_str(&raw) {
         Ok(v) => v,
         Err(_) => return ImportedRosterIdsLoadStatus::InvalidFile,
     };
+    refresh_roster_source_identities(&mut payload.officers);
     let ids = payload
         .officers
         .into_iter()
@@ -928,6 +1055,53 @@ mod roster_import_diag_tests {
     use std::io::Write;
 
     #[test]
+    fn roster_source_ids_correct_catalog_identity_without_changing_progress() {
+        let dir = std::env::temp_dir().join(format!(
+            "kobayashi_roster_source_identity_{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("roster.imported.json");
+        let raw = r#"{"officers":[
+            {"canonical_officer_id":"neelix-c8a380","canonical_name":"Neelix","source_oid":"497650232","rank":5,"tier":5,"level":30},
+            {"canonical_officer_id":"harry-kim-a79fdf","canonical_name":"Harry Kim","source_oid":"1458469333","rank":2,"tier":2,"level":15},
+            {"canonical_officer_id":"legacy-name-import","canonical_name":"Legacy","rank":1,"level":5},
+            {"canonical_officer_id":"unknown-source-import","canonical_name":"Unknown","source_oid":"unrecognized","rank":1,"level":5}
+        ]}"#;
+        fs::write(&path, raw).expect("write roster");
+        let rows = load_imported_roster(path.to_str().unwrap()).expect("load roster");
+        assert_eq!(rows[0].canonical_officer_id, "harry-kim-a79fdf");
+        assert_eq!(rows[0].canonical_name, "Harry Kim");
+        assert_eq!(rows[0].source_oid.as_deref(), Some("497650232"));
+        assert_eq!(
+            (rows[0].rank, rows[0].tier, rows[0].level),
+            (Some(5), Some(5), Some(30))
+        );
+        assert_eq!(rows[1].canonical_officer_id, "neelix-c8a380");
+        assert_eq!(rows[1].canonical_name, "Neelix");
+        assert_eq!(
+            (rows[1].rank, rows[1].tier, rows[1].level),
+            (Some(2), Some(2), Some(15))
+        );
+        assert_eq!(rows[2].canonical_officer_id, "legacy-name-import");
+        assert_eq!(rows[2].source_oid, None);
+        assert_eq!(rows[3].canonical_officer_id, "unknown-source-import");
+        let ids = load_imported_roster_ids_unlocked_only(path.to_str().unwrap()).unwrap();
+        assert!(ids.contains("harry-kim-a79fdf"));
+        assert!(ids.contains("neelix-c8a380"));
+        assert_eq!(fs::read_to_string(&path).unwrap(), raw);
+        fs::write(
+            &path,
+            r#"{"officers":[{"canonical_officer_id":"neelix-c8a380","canonical_name":"Neelix","source_oid":"497650232","rank":5,"level":30}]}"#,
+        )
+        .expect("write single stale identity");
+        let ids = load_imported_roster_ids_unlocked_only(path.to_str().unwrap()).unwrap();
+        assert_eq!(ids, HashSet::from(["harry-kim-a79fdf".to_string()]));
+        fs::remove_file(&path).expect("remove roster");
+        fs::remove_dir(&dir).expect("remove temp dir");
+    }
+
+    #[test]
     fn csv_invalid_tier_returns_parse_line() {
         let err = parse_roster_csv_content("name,tier,level\nBob,6,1\n").unwrap_err();
         match err {
@@ -979,6 +1153,52 @@ mod roster_import_diag_tests {
         assert!(matches!(invalid, ImportedRosterIdsLoadStatus::InvalidFile));
         let _ = fs::remove_file(&path);
         let _ = fs::remove_dir(&dir);
+    }
+
+    #[test]
+    fn empty_roster_import_does_not_replace_existing_roster() {
+        let dir = std::env::temp_dir().join(format!(
+            "kobayashi_empty_roster_import_{}",
+            uuid::Uuid::new_v4()
+        ));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let source = dir.join("empty.csv");
+        let output = dir.join("roster.imported.json");
+        fs::write(&source, "name,tier,level\n\n").expect("write source");
+        let existing = r#"{"officers":[{"canonical_officer_id":"odo-04a97d","canonical_name":"Odo","rank":5,"tier":5,"level":50}]}"#;
+        fs::write(&output, existing).expect("write existing roster");
+
+        let result = import_roster_csv_to(source.to_str().unwrap(), output.to_str().unwrap());
+
+        assert!(result.is_err(), "empty import should be rejected");
+        assert_eq!(fs::read_to_string(&output).unwrap(), existing);
+        fs::remove_dir_all(&dir).expect("remove temp dir");
+    }
+
+    #[test]
+    fn spocks_officer_id_only_import_resolves_through_id_registry() {
+        let dir = std::env::temp_dir().join(format!(
+            "kobayashi_officer_id_import_{}",
+            uuid::Uuid::new_v4()
+        ));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let source = dir.join("source.json");
+        let output = dir.join("roster.imported.json");
+        fs::write(
+            &source,
+            r#"{"officers":[{"officerId":"1028718336","rank":5,"tier":5,"level":50}]}"#,
+        )
+        .expect("write source");
+
+        let report = import_spocks_export_to(source.to_str().unwrap(), output.to_str().unwrap())
+            .expect("import should resolve known officer id");
+        let roster: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&output).unwrap()).unwrap();
+
+        assert_eq!(report.matched_records, 1);
+        assert_eq!(roster["officers"][0]["canonical_officer_id"], "odo-04a97d");
+        assert_eq!(roster["officers"][0]["source_oid"], "1028718336");
+        fs::remove_dir_all(&dir).expect("remove temp dir");
     }
 }
 

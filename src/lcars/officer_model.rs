@@ -32,8 +32,8 @@ use serde::Deserialize;
 
 use crate::data::combat_effect_spec::OfficerStat;
 use crate::lcars::{
-    canonical_conditions_to_lcars, LcarsAbility, LcarsCondition, LcarsDuration, LcarsEffect,
-    LcarsFile, LcarsLevelStats, LcarsOfficer, LcarsScaling,
+    canonical_conditions_to_lcars, map_canonical_condition_token, LcarsAbility, LcarsCondition,
+    LcarsDuration, LcarsEffect, LcarsFile, LcarsLevelStats, LcarsOfficer, LcarsScaling,
 };
 
 /// Canonical/source paths (CWD-relative) consumed by [`build_officer_model_default`] at runtime.
@@ -264,8 +264,27 @@ fn load_upstream_officer_stats(
         return Ok(out);
     }
 
-    for entry in fs::read_dir(officer_data_dir)? {
-        let entry = entry?;
+    let entries = match fs::read_dir(officer_data_dir) {
+        Ok(entries) => entries,
+        Err(error) => {
+            eprintln!(
+                "Warning: upstream officer stats directory at {} could not be read — LCARS abilities will load without upstream stat rows: {error}",
+                officer_data_dir.display()
+            );
+            return Ok(out);
+        }
+    };
+    for entry in entries {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) => {
+                eprintln!(
+                    "Warning: an upstream officer stats directory entry under {} could not be read and was skipped: {error}",
+                    officer_data_dir.display()
+                );
+                continue;
+            }
+        };
         let path = entry.path();
         if path.extension().and_then(|s| s.to_str()) != Some("json") {
             continue;
@@ -277,9 +296,46 @@ fn load_upstream_officer_stats(
         else {
             continue;
         };
-        let raw = fs::read_to_string(&path)?;
-        let parsed: UpstreamOfficer = serde_json::from_str(&raw)?;
+        let raw = match fs::read(&path) {
+            Ok(raw) => raw,
+            Err(error) => {
+                eprintln!(
+                    "Warning: upstream officer stats file {} could not be read — that officer will load without upstream stat rows: {error}",
+                    path.display()
+                );
+                continue;
+            }
+        };
+        let native_source_matches =
+            crate::data::native_officer_core_stats::upstream_source_matches_native_snapshot(
+                id, &raw,
+            );
+        let parsed: UpstreamOfficer = match serde_json::from_slice(&raw) {
+            Ok(parsed) => parsed,
+            Err(error) => {
+                eprintln!(
+                    "Warning: malformed upstream officer stats file {} was skipped — that officer will load without upstream stat rows: {error}",
+                    path.display()
+                );
+                continue;
+            }
+        };
         let mut stats = parsed.stats;
+        // The exact byte binding includes the generator-validated native ID.
+        // Leave ignored custom ID fields as tolerant as the legacy loader.
+        if native_source_matches {
+            for row in &mut stats {
+                if let Some(native) =
+                    crate::data::native_officer_core_stats::stats_for_native_officer(id, row.level)
+                {
+                    row.attack = f64::from(native.attack);
+                    row.defense = f64::from(native.defense);
+                    row.health = f64::from(native.health);
+                }
+                // Unknown native IDs/levels retain the existing upstream row.
+                // Hand-authored LCARS rows bypass this source-only boundary.
+            }
+        }
         stats.sort_by_key(|s| s.level);
 
         let mut max_level_by_rank: Vec<u32> = Vec::new();
@@ -510,6 +566,14 @@ fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64
             }
         }
         "ShipArmor" | "OfficerStatDefense" => val,
+        "OfficerStatAll" | "OfficerStatHealth" => {
+            if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
+            {
+                -val
+            } else {
+                val
+            }
+        }
         "AllDefenses" => {
             if op.eq_ignore_ascii_case("MultiplySub") {
                 -val
@@ -582,6 +646,9 @@ fn effect_condition_from_canonical(
         canonical_conditions_to_lcars(&filtered, officer_name, ability_label)
             .into_iter()
             .collect();
+    let mut failed_gate = filtered
+        .iter()
+        .any(|token| map_canonical_condition_token(token).is_none());
 
     if wants_hull_faction {
         match faction_id_from_canonical_attributes(attrs) {
@@ -604,6 +671,7 @@ fn effect_condition_from_canonical(
                 conditions: None,
             }),
             None => {
+                failed_gate = true;
                 eprintln!(
                     "generate_lcars: EnemyHullFaction without parseable faction_id in attributes \
                      (officer {officer_name:?}, ability {ability_label:?})"
@@ -632,10 +700,13 @@ fn effect_condition_from_canonical(
                 battle_types: Some(ids),
                 conditions: None,
             }),
-            _ => eprintln!(
-                "generate_lcars: CombatBattleType without parseable battle_types in attributes \
-                 (officer {officer_name:?}, ability {ability_label:?})"
-            ),
+            _ => {
+                failed_gate = true;
+                eprintln!(
+                    "generate_lcars: CombatBattleType without parseable battle_types in attributes \
+                     (officer {officer_name:?}, ability {ability_label:?})"
+                );
+            }
         }
     }
 
@@ -659,10 +730,13 @@ fn effect_condition_from_canonical(
                 battle_types: None,
                 conditions: None,
             }),
-            None => eprintln!(
-                "generate_lcars: TargetMaxLevel without parseable max_level in attributes \
-                 (officer {officer_name:?}, ability {ability_label:?})"
-            ),
+            None => {
+                failed_gate = true;
+                eprintln!(
+                    "generate_lcars: TargetMaxLevel without parseable max_level in attributes \
+                     (officer {officer_name:?}, ability {ability_label:?})"
+                );
+            }
         }
     }
 
@@ -679,11 +753,35 @@ fn effect_condition_from_canonical(
     {
         match hull_health_condition_from_canonical_attributes(token, attrs, a.target.as_deref()) {
             Some(c) => conditions.push(c),
-            None => eprintln!(
-                "generate_lcars: {token} without parseable percentage in attributes \
-                 (officer {officer_name:?}, ability {ability_label:?})"
-            ),
+            None => {
+                failed_gate = true;
+                eprintln!(
+                    "generate_lcars: {token} without parseable percentage in attributes \
+                     (officer {officer_name:?}, ability {ability_label:?})"
+                );
+            }
         }
+    }
+
+    if failed_gate {
+        conditions.push(LcarsCondition {
+            weapon_scope: Default::default(),
+            condition_type: "literal_false".to_string(),
+            stat: None,
+            threshold_pct: None,
+            min: None,
+            max: None,
+            faction: None,
+            group: None,
+            min_members: None,
+            tag: None,
+            ship_type: None,
+            faction_id: None,
+            ship_id: None,
+            enemy_type: None,
+            battle_types: None,
+            conditions: None,
+        });
     }
 
     match conditions.len() {
@@ -834,13 +932,15 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|n| LcarsDuration::Rounds { rounds: n })
                     .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
-            } else if stat == "crit_damage"
-                && operator == "add"
+            } else if matches!(
+                stat.as_str(),
+                "crit_damage" | "crit_damage_flat" | "crit_chance" | "isolytic_cascade_damage"
+            ) && operator == "add"
                 && a.trigger.as_deref() == Some("EnemyTakesHit")
             {
-                // "Each time you score a hit" crit-damage buffs honor canonical `num_rounds`
+                // "Each time you score a hit" bonuses honor canonical `num_rounds`
                 // (Seska `num_rounds=4` → per-weapon on-hit stacks with intrinsic 4-round
-                // expiry; see AbilityEffect::OnHitCritDamageStack). Deliberately narrow:
+                // expiry; other timed bonuses use AbilityEffect::OnHitTimedBonus).
                 // `HitTaken` (damage-taken) rows and other stats keep their existing
                 // permanent-buff approximation.
                 num_rounds_from_attributes(a.attributes.as_deref())
@@ -1123,7 +1223,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
 
     let result = match modifier {
         "CritChance" => MappedEffect::StatModify("crit_chance".into(), "add".into(), val),
-        "CritDamage" => MappedEffect::StatModify("crit_damage".into(), "add".into(), val),
+        // Native critical damage is an additive bonus over a noncritical hit. Keep this
+        // contribution in the flat-addition pool; `crit_damage` is a multiplier key.
+        "CritDamage" => MappedEffect::StatModify("crit_damage_flat".into(), "add".into(), val),
         "AllDamage" | "OfficerStatAttack" => {
             let (op_str, v) = if op.eq_ignore_ascii_case("MultiplyAdd") {
                 ("multiply", 1.0 + val)
@@ -1147,20 +1249,23 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("armor".into(), "add".into(), val)
         }
         "OfficerStatHealth" => {
-            let v = if op.eq_ignore_ascii_case("MultiplyAdd") {
-                1.0 + val
+            if op.eq_ignore_ascii_case("MultiplyAdd") {
+                MappedEffect::StatModify("officer_health".into(), "add".into(), val)
+            } else if op.eq_ignore_ascii_case("MultiplySub")
+                || op.eq_ignore_ascii_case("MultiplyBaseSub")
+            {
+                MappedEffect::StatModify("officer_health".into(), "add".into(), -val)
             } else {
-                val
-            };
-            MappedEffect::StatModify("officer_health".into(), "multiply".into(), v)
+                MappedEffect::StatModify("officer_health".into(), "multiply".into(), val)
+            }
         }
         "OfficerStatAll" => {
             let (operator, v) = if op.eq_ignore_ascii_case("MultiplySub")
                 || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
-                ("sub".to_string(), val)
+                ("add".to_string(), -val)
             } else if op.eq_ignore_ascii_case("MultiplyAdd") {
-                ("multiply".to_string(), 1.0 + val)
+                ("add".to_string(), val)
             } else {
                 ("multiply".to_string(), val)
             };
@@ -1180,7 +1285,18 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
         "AllDefenses" => {
-            if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
+            // Client BuffSpec 3192273655 uses ModAllDefenses + MultiplyBaseAdd,
+            // with officer_stat=2. Its rank coefficient multiplies raw Defense;
+            // the result is raw points on all three defensive stats. Keep this
+            // source-backed correction narrow while other officer-stat sources
+            // and operation combinations are being verified.
+            if a.ability_id.as_deref() == Some("3192273655")
+                && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+                && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
+                    == Some(OfficerStat::Defense)
+            {
+                MappedEffect::StatModify("base_mitigation_stats_add".into(), "add".into(), val)
+            } else if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
                 MappedEffect::StatModify("shield_mitigation".into(), "add".into(), -val)
             } else {
@@ -1295,10 +1411,27 @@ fn map_trigger(canonical: &str) -> &'static str {
         "RoundStart" => "on_round_start",
         "RoundEnd" => "on_round_end",
         "CriticalShotFired" => "on_critical",
-        "EnemyTakesHit" | "HitTaken" => "on_hit",
+        // Preserve the source distinction so finite post-weapon grants do not
+        // get confused with ordinary AttackPhase buffs in the canonical IR.
+        "EnemyTakesHit" => "EnemyTakesHit",
+        // HitTaken is an incoming hit event; retain the source token so the resolver can
+        // place it in DefensePhase instead of the outbound AttackPhase used by on_hit.
+        "HitTaken" => "HitTaken",
         "ShieldsDepleted" => "on_shield_break",
+        // This source event is specifically the target's shields going down; the effect may
+        // still benefit SelfShip, so don't infer event side from the effect recipient.
+        "TargetShieldsDepleted" => "on_enemy_shield_break",
+        // These canonical events are distinct from the currently implemented engine windows:
+        // HullBreach means entering a proc-driven breached state, ReceiveDamage is counter-fire
+        // hull damage, and Kill is an in-combat kill rather than a completed battle. Keep them
+        // visible to the adapter's unknown-trigger drop report until matching timing exists.
+        "HullDamageTaken" => "unsupported_HullDamageTaken",
+        "ShieldDamageTaken" => "unsupported_ShieldDamageTaken",
+        "BattleWon" => "unsupported_BattleWon",
         "Kill" | "EnemyKilled" => "on_kill",
-        _ => "passive",
+        // Unknown and out-of-combat triggers must not become unconditional combat passives.
+        // The resolver reports and drops this unsupported timing instead.
+        _ => "unknown_trigger",
     }
 }
 
@@ -1427,6 +1560,175 @@ mod build_model_tests {
 #[cfg(test)]
 mod canonical_condition_tests {
     use super::*;
+
+    #[test]
+    fn canonical_event_triggers_do_not_alias_to_different_engine_windows() {
+        let effect_for = |canonical: &str, target: &str| LcarsEffect {
+            effect_type: "stat_modify".to_string(),
+            stat: Some("weapon_damage".to_string()),
+            target: Some(target.to_string()),
+            operator: Some("add".to_string()),
+            value: Some(0.1),
+            trigger: Some(map_trigger(canonical).to_string()),
+            duration: None,
+            scaling: None,
+            condition: None,
+            chance: None,
+            multiplier: None,
+            tag: None,
+            accumulate: None,
+            decay: None,
+        };
+        let timing_for = |canonical: &str, target: &str| {
+            let effect = effect_for(canonical, target);
+            crate::lcars::resolver::effect_trigger_timing(&effect)
+        };
+
+        let incoming_and_victory = [
+            ("HullDamageTaken", None),
+            ("ShieldDamageTaken", None),
+            ("BattleWon", None),
+            (
+                "HitTaken",
+                Some(crate::combat::abilities::TimingWindow::DefensePhase),
+            ),
+            (
+                "TargetShieldsDepleted",
+                Some(crate::combat::abilities::TimingWindow::ShieldBreak),
+            ),
+        ];
+        let actual = incoming_and_victory
+            .iter()
+            .map(|(canonical, _)| timing_for(canonical, "self"))
+            .collect::<Vec<_>>();
+        let expected = incoming_and_victory
+            .iter()
+            .map(|(_, timing)| *timing)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            actual, expected,
+            "canonical trigger timing must preserve event semantics"
+        );
+
+        for canonical in ["HullDamageTaken", "ShieldDamageTaken", "BattleWon"] {
+            let effect = effect_for(canonical, "self");
+            let mut report = crate::lcars::effect_spec_adapter::LcarsDropReport::default();
+            let spec =
+                crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec_with_report(
+                    &effect,
+                    "test-effect",
+                    "test-officer",
+                    "test-ability",
+                    None,
+                    None,
+                    0,
+                    Some(&mut report),
+                );
+            assert!(
+                spec.is_none(),
+                "unsupported {canonical} must not compile as another event"
+            );
+            assert_eq!(report.drops.len(), 1);
+            assert_eq!(
+                report.drops[0].reason,
+                format!("unknown_trigger:unsupported_{canonical}")
+            );
+        }
+    }
+
+    #[test]
+    fn unsupported_canonical_trigger_does_not_become_passive() {
+        assert_eq!(
+            map_trigger("HullDamageTaken"),
+            "unsupported_HullDamageTaken"
+        );
+        assert_eq!(map_trigger("BattleWon"), "unsupported_BattleWon");
+        assert_eq!(map_trigger("CriticalShotTaken"), "unknown_trigger");
+        assert_eq!(
+            map_trigger("ShieldDamageTaken"),
+            "unsupported_ShieldDamageTaken"
+        );
+        assert_eq!(map_trigger("ShipRecalled"), "unknown_trigger");
+        assert_eq!(map_trigger("HitTaken"), "HitTaken");
+        assert_eq!(
+            map_trigger("TargetShieldsDepleted"),
+            "on_enemy_shield_break"
+        );
+    }
+
+    #[test]
+    fn unknown_condition_is_retained_as_a_fail_closed_gate() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "modifier": "AllDamage",
+            "operation": "MultiplyAdd",
+            "trigger": "ShipLaunched",
+            "target": "SelfShip",
+            "conditions": ["FutureConditionToken"],
+            "value_by_rank": [0.2]
+        }))
+        .unwrap();
+        let c = effect_condition_from_canonical(&a, "Test", "AllDamage")
+            .expect("unknown gate must fail closed");
+        assert_eq!(c.condition_type, "literal_false");
+    }
+
+    #[test]
+    fn malformed_attribute_merged_faction_gate_is_retained_as_false() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "modifier": "AllDamage",
+            "operation": "MultiplyAdd",
+            "trigger": "CombatStart",
+            "target": "SelfShip",
+            "conditions": ["EnemyHullFaction"],
+            "attributes": "faction_id=oops",
+            "value_by_rank": [0.2]
+        }))
+        .unwrap();
+        let c = effect_condition_from_canonical(&a, "Test", "AllDamage")
+            .expect("malformed gate must fail closed");
+        assert_eq!(c.condition_type, "literal_false");
+    }
+
+    #[test]
+    fn additive_crit_damage_maps_to_flat_bonus_key() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "modifier": "CritDamage",
+            "operation": "Add",
+            "trigger": "ShipLaunched",
+            "target": "SelfShip",
+            "value_by_rank": [0.08]
+        }))
+        .unwrap();
+        match map_modifier("CritDamage", &a).expect("mapped") {
+            MappedEffect::StatModify(stat, operator, value) => {
+                assert_eq!(stat, "crit_damage_flat");
+                assert_eq!(operator, "add");
+                assert_eq!(value, 0.08);
+            }
+            _ => panic!("unexpected mapping type"),
+        }
+    }
+
+    #[test]
+    fn officer_stat_multiply_add_is_an_additive_fraction_for_rating_aggregation() {
+        for modifier in ["OfficerStatAll", "OfficerStatHealth"] {
+            let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+                "modifier": modifier,
+                "operation": "MultiplyAdd",
+                "trigger": "ShipLaunched",
+                "target": "SelfShip",
+                "value_by_rank": [0.08]
+            }))
+            .unwrap();
+            match map_modifier(modifier, &a).expect("mapped") {
+                MappedEffect::StatModify(_, operator, value) => {
+                    assert_eq!(operator, "add", "{modifier} uses additive rating pool");
+                    assert_eq!(value, 0.08, "{modifier} stores bonus fraction");
+                }
+                _ => panic!("unexpected mapping type"),
+            }
+        }
+    }
 
     #[test]
     fn add_state_canonical_attributes_map_morale() {

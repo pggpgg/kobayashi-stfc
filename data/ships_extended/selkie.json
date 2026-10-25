@@ -2,6 +2,7 @@
   "id": "selkie",
   "ship_name": "SELKIE",
   "ship_class": "survey",
+  "grade": 6,
   "tiers": [
     {
       "tier": 1,

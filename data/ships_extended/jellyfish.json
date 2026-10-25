@@ -2,6 +2,7 @@
   "id": "jellyfish",
   "ship_name": "JELLYFISH",
   "ship_class": "explorer",
+  "grade": 2,
   "faction": "federation",
   "tiers": [
     {

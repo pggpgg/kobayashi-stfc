@@ -18,6 +18,7 @@ use kobayashi::combat::abilities::AbilityEffect;
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::data::combat_effect_spec::{AbilityModifierSpec, AbilityTargetSpec};
 use kobayashi::lcars::{build_officer_model_file_default, lcars_effect_to_combat_effect_spec};
+use std::collections::HashSet;
 
 #[test]
 fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
@@ -81,17 +82,17 @@ fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
     }
 }
 
-/// All 5 target=self `shieldmitigation` officers in the bundled YAML compile to the new
-/// attacker-side channel — none leak into `ShieldMitigationBonus`. Pins the production
-/// roster shape so a future officer that gets the wrong target setting will fail loudly
-/// instead of regressing silently.
+/// The three currently compilable target=self `shieldmitigation` rows route to the attacker
+/// channel. Janeway and WOK Carol use `HullDamageTaken`, which is explicitly unsupported until
+/// an incoming-hull-damage timing exists; these rows must not be counted as compiled support.
 #[test]
 fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
     let Ok(file) = build_officer_model_file_default() else {
         return;
     };
 
-    let mut checked = 0usize;
+    let mut checked = HashSet::new();
+    let mut unsupported_hull_damage = HashSet::new();
     let mut leaked: Vec<String> = Vec::new();
 
     for officer in &file.officers {
@@ -118,10 +119,18 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
                     Some(1),
                     None,
                 ) else {
+                    if effect.trigger.as_deref() == Some("unsupported_HullDamageTaken") {
+                        unsupported_hull_damage.insert(officer.id.clone());
+                    } else {
+                        leaked.push(format!(
+                            "{}::{} unexpectedly failed to compile ({:?})",
+                            officer.id, ability.name, effect.trigger
+                        ));
+                    }
                     continue;
                 };
                 let (_, compiled, _) = compile_officer_combat_spec(&spec).expect("compile");
-                checked += 1;
+                checked.insert(officer.id.clone());
                 match compiled {
                     AbilityEffect::AttackerShieldMitigationBonus(_) => {}
                     AbilityEffect::ShieldMitigationBonus(v) => {
@@ -141,10 +150,17 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
         }
     }
 
-    assert!(
-        checked >= 5,
-        "expected at least 5 target=self shieldmitigation officers in the bundled YAML, scanned {checked}"
-    );
+    let expected_checked = HashSet::from([
+        "harry-mudd-374d5f".to_string(),
+        "one-of-eleven-ee0ee9".to_string(),
+        "snw-pike-c94ac4".to_string(),
+    ]);
+    assert_eq!(checked, expected_checked, "supported source rows only");
+    let expected_unsupported = HashSet::from([
+        "kathryn-janeway-bd4a19".to_string(),
+        "wok-carol-52a350".to_string(),
+    ]);
+    assert_eq!(unsupported_hull_damage, expected_unsupported);
     assert!(
         leaked.is_empty(),
         "target=self shieldmitigation effects leaked off the AttackerShieldMitigationBonus channel: {leaked:?}"

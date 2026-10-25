@@ -2,6 +2,7 @@
   "id": "aphelion",
   "ship_name": "APHELION",
   "ship_class": "survey",
+  "grade": 7,
   "tiers": [
     {
       "tier": 1,

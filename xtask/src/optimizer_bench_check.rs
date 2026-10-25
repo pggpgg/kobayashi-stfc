@@ -332,41 +332,49 @@ fn compare_case(
             });
             continue;
         };
-        if let (Some(expected_recall), Some(actual)) =
-            (expected.top_k_recall_mean, row.top_k_recall_mean)
-        {
+        if let Some(expected_recall) = expected.top_k_recall_mean {
             let floor = expected_recall - baseline.tolerances.recall_drop;
-            if actual < floor {
+            if row.top_k_recall_mean.is_none_or(|actual| actual < floor) {
                 failures.push(Failure {
                     case: case.to_string(),
                     method: method.clone(),
                     rule: "recall floor",
-                    detail: format!(
-                        "recall {actual:.3} below floor {floor:.3} (baseline {expected_recall:.3})"
-                    ),
+                    detail: match row.top_k_recall_mean {
+                        Some(actual) => format!(
+                            "recall {actual:.3} below floor {floor:.3} (baseline {expected_recall:.3})"
+                        ),
+                        None => format!("recall missing (baseline {expected_recall:.3})"),
+                    },
                 });
             }
         }
-        if let (Some(expected_regret), Some(actual)) =
-            (expected.score_regret_mean, row.score_regret_mean)
-        {
+        if let Some(expected_regret) = expected.score_regret_mean {
             let ceiling = expected_regret + baseline.tolerances.score_regret_increase;
-            if actual > ceiling {
+            if row.score_regret_mean.is_none_or(|actual| actual > ceiling) {
                 failures.push(Failure {
                     case: case.to_string(),
                     method: method.clone(),
                     rule: "regret ceiling",
-                    detail: format!(
-                        "score regret {actual:.5} above ceiling {ceiling:.5} (baseline {expected_regret:.5})"
-                    ),
+                    detail: match row.score_regret_mean {
+                        Some(actual) => format!(
+                            "score regret {actual:.5} above ceiling {ceiling:.5} (baseline {expected_regret:.5})"
+                        ),
+                        None => format!("score regret missing (baseline {expected_regret:.5})"),
+                    },
                 });
             }
         }
     }
-    if let Some(control) = observed
-        .get(CONTROL_METHOD)
-        .and_then(|r| r.score_regret_mean)
-    {
+    if let Some(control_row) = observed.get(CONTROL_METHOD) {
+        let Some(control) = control_row.score_regret_mean else {
+            failures.push(Failure {
+                case: case.to_string(),
+                method: CONTROL_METHOD.to_string(),
+                rule: "control ordering",
+                detail: "random control score regret missing".to_string(),
+            });
+            return failures;
+        };
         for (method, row) in observed {
             if method == CONTROL_METHOD {
                 continue;
@@ -544,6 +552,30 @@ mod tests {
         );
         let failures = compare(&baseline(), &bad);
         assert!(failures.iter().any(|f| f.rule == "regret ceiling"));
+    }
+
+    #[test]
+    fn missing_observed_metrics_fail_configured_rules() {
+        let observed = observed_for(
+            "case_a",
+            BTreeMap::from([
+                ("tiered".to_string(), row("tiered", None, None)),
+                (CONTROL_METHOD.to_string(), row(CONTROL_METHOD, None, None)),
+            ]),
+        );
+        let failures = compare(&baseline(), &observed);
+        assert!(
+            failures.iter().any(|f| f.rule == "recall floor"),
+            "{failures:?}"
+        );
+        assert!(
+            failures.iter().any(|f| f.rule == "regret ceiling"),
+            "{failures:?}"
+        );
+        assert!(
+            failures.iter().any(|f| f.rule == "control ordering"),
+            "{failures:?}"
+        );
     }
 
     #[test]

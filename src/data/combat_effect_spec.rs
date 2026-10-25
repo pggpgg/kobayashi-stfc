@@ -144,6 +144,11 @@ pub enum AbilityModifierSpec {
     /// LCARS `armor`; serde wire remains `"armor"` for existing combat specs.
     #[serde(rename = "armor")]
     MitigationAdditive,
+    /// Fraction added to each raw base armor, shield-deflection and dodge multiplier.
+    /// Eligibility is sampled at round start and retained for that round.
+    BaseMitigationStatsBonus,
+    /// Raw amount added to each defense component after its fractional bonuses.
+    BaseMitigationStatsAdd,
     /// Research/catalog `shield_deflection`; compiles identically to [`MitigationAdditive`](AbilityModifierSpec::MitigationAdditive).
     ShieldDeflection,
     Dodge,
@@ -261,7 +266,9 @@ pub enum OfficerStat {
 }
 
 /// Coefficients-per-rank reference to one of the officer's own stats. Coefficients are interpreted
-/// as percentages: `15.0` means `+15% of officer.<stat>`. Resolution: index 0 → rank 1, last entry
+/// as percentages by legacy modifiers: `15.0` means `+15% of officer.<stat>`.
+/// Explicit raw-point modifiers use native fractional coefficients instead (e.g. Tom Paris
+/// coefficient `4.0` means four times Defense). Resolution: index 0 → rank 1, last entry
 /// → highest known rank; out-of-range ranks clamp to the table edges.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OfficerStatScaling {
@@ -442,6 +449,10 @@ pub struct OfficerSpecAttrs {
     /// When true, the effect only procs on critical hits (e.g. Chang's bridge reload delay).
     #[serde(default, skip_serializing_if = "is_false")]
     pub requires_critical: bool,
+    /// The source trigger is enemy takes hit, rather than a pre-attack phase buff.
+    /// Finite critical-chance/cascade bonuses grant after one weapon volley.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub post_weapon_grant: bool,
     /// STFC state ids from canonical `multi_state=[…]` (each id is also its own weight). Empty →
     /// the compiler falls back to `DEFAULT_RANDOM_STATE_WEIGHTS`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -451,7 +462,10 @@ pub struct OfficerSpecAttrs {
 impl OfficerSpecAttrs {
     /// True when no officer-specific carry is set (used to skip serialization).
     pub fn is_empty(&self) -> bool {
-        self.lcars_op.is_none() && !self.requires_critical && self.random_state_weights.is_empty()
+        self.lcars_op.is_none()
+            && !self.requires_critical
+            && !self.post_weapon_grant
+            && self.random_state_weights.is_empty()
     }
 }
 

@@ -1,10 +1,15 @@
 import type {
+  CrewRecommendation,
+  components,
   DataVersionResponse,
   HostileListItem,
   MechanicsCoverageResponse,
   OfficerListItem,
   OptimizeEstimate,
+  OptimizeRequest,
+  OptimizeResponse,
   OptimizeStartResponse,
+  OptimizeStatusResponse,
   ProfileEntry,
   ProfilesResponse,
   ShipListItem,
@@ -14,20 +19,31 @@ import type {
 } from "./api/schema";
 
 export type {
+  ChainGrindRequestBody,
+  ChainSimulationSummary,
+  CrewRecommendation,
   DataVersionResponse,
   HostileListItem,
   MechanicsCoverageResponse,
   MechanicsTierCounts,
   OfficerListItem,
+  OptimizeCrewConstraintsBody,
   OptimizeEstimate,
+  OptimizeRequest,
+  OptimizeResponse,
+  OptimizerFunnelTelemetry,
   OptimizeStartResponse,
+  OptimizeStatusResponse,
   ProfileEntry,
   ProfilesResponse,
+  RefinementDetail,
+  RefinementSlotChange,
   ShipListItem,
   ShipTiersLevels,
   SimulateCrew,
   SimulateResponse,
   SimulateStats,
+  WarmStartCrewBody,
 } from "./api/schema";
 
 /**
@@ -445,8 +461,35 @@ export async function fetchOfficerEligibility(): Promise<OfficerEligibilityRespo
   return res.json();
 }
 
+const DEFENDER_SCENARIO_FIELDS = [
+  "defender_ship",
+  "defender_ship_tier",
+  "defender_ship_level",
+  "defender_profile_id",
+  "defender_opponent",
+  "defender_crew",
+  "defender_support_buffs",
+  "defender_alliance_debuffs",
+] as const;
+
+type DefenderScenarioParams = Pick<
+  components["schemas"]["SimulateRequest"],
+  (typeof DEFENDER_SCENARIO_FIELDS)[number]
+>;
+
+/** Keep the defender side intact on all simulation/optimization request paths. */
+function defenderScenarioFields(
+  params: Partial<Record<(typeof DEFENDER_SCENARIO_FIELDS)[number], unknown>>,
+): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const key of DEFENDER_SCENARIO_FIELDS) {
+    if (params[key] !== undefined) fields[key] = params[key];
+  }
+  return fields;
+}
+
 export async function simulate(
-  params: {
+  params: DefenderScenarioParams & {
     ship: string;
     hostile: string;
     crew: SimulateCrew;
@@ -459,6 +502,7 @@ export async function simulate(
   profileId?: string | null,
 ): Promise<SimulateResponse> {
   const body: Record<string, unknown> = {
+    ...defenderScenarioFields(params),
     ship: params.ship,
     hostile: params.hostile,
     crew: params.crew,
@@ -576,207 +620,11 @@ export async function compareCrewsDistributions(
   return res.json();
 }
 
-/** Chain grind Monte Carlo summary (POST /api optimize when `chain.enabled`). */
-export interface ChainSimulationSummary {
-  kills_target: number;
-  secondary_objective: "min_hull_damage" | "max_loot_per_hull_proxy";
-  primary_success_rate: number;
-  primary_ci_low: number;
-  primary_ci_high: number;
-  secondary_mean_given_primary: number;
-  secondary_ci_low: number;
-  secondary_ci_high: number;
-  n_primary_successes: number;
-}
-
-/** One seat local refinement changed, relative to the finalist it refined. */
-export interface RefinementSlotChange {
-  slot: "captain" | "bridge" | "below_decks";
-  /** Seat index within bridge/below-decks; absent for the captain. */
-  index?: number;
-  from: string;
-  to: string;
-}
-
-/** How the local-refinement pass arrived at a row (present only on refined rows). */
-export interface RefinementDetail {
-  kind: "local_swap" | "local_captain_swap" | "large_neighborhood_repair";
-  source_captain: string;
-  source_bridge: string[];
-  source_below_decks: string[];
-  changed_slots: RefinementSlotChange[];
-  baseline_score: number;
-  refined_score: number;
-  /** refined_score - baseline_score; always positive. */
-  gain: number;
-}
-
 /**
  * Recommendation view a row leads. `pareto_optimal` can appear on many rows (front membership);
  * the named views tag at most one row each.
  */
-export type ParetoTag =
-  | "pareto_optimal"
-  | "safest"
-  | "fastest_farming"
-  | "best_chain"
-  | "most_different";
-
-export interface CrewRecommendation {
-  captain: string;
-  /** API returns string[]; we accept string for backward compatibility. */
-  bridge: string | string[];
-  /** API returns string[]; we accept string for backward compatibility. */
-  below_decks: string | string[];
-  /** Optimizer source/method label for this row, when returned by the API. */
-  method_provenance?: string;
-  /**
-   * Monte Carlo trials actually run for this row — the depth of evidence behind its rates, which
-   * is below the requested sims for rows a scout phase ranked but never promoted to confirmation.
-   */
-  trials_run?: number;
-  win_rate: number;
-  win_rate_ci_low: number;
-  win_rate_ci_high: number;
-  stall_rate: number;
-  stall_rate_ci_low: number;
-  stall_rate_ci_high: number;
-  loss_rate: number;
-  loss_rate_ci_low: number;
-  loss_rate_ci_high: number;
-  /** Win on round 1 (not a round-limit stall). */
-  r1_kill_rate: number;
-  r1_kill_rate_ci_low: number;
-  r1_kill_rate_ci_high: number;
-  avg_hull_remaining: number;
-  avg_hull_remaining_ci_low: number;
-  avg_hull_remaining_ci_high: number;
-  avg_defender_hull_remaining: number;
-  avg_defender_hull_remaining_ci_low: number;
-  avg_defender_hull_remaining_ci_high: number;
-  /** Present when optimization used chain grind mode. */
-  chain?: ChainSimulationSummary;
-  /** Closed-form expected hull damage when strategy was linear_eval. */
-  expected_hull_damage?: number;
-  /** Present only when the local-refinement pass produced this row. */
-  refinement?: RefinementDetail;
-  /**
-   * Why this row is worth a look beyond its rank. Never affects ordering — the scalar score still
-   * sorts the table. Absent on untagged rows and on linear_eval runs.
-   */
-  pareto_tags?: ParetoTag[];
-  /** Plain-language reading of pareto_tags; present exactly when pareto_tags is non-empty. */
-  recommendation_reason?: string;
-}
-
-export interface ChainGrindRequestBody {
-  enabled: boolean;
-  kills_target?: number;
-  secondary?: "min_hull_damage" | "max_loot_per_hull_proxy";
-}
-
-export interface OptimizerFunnelTelemetry {
-  raw_role_pool?: {
-    captains: number;
-    bridge: number;
-    below_decks: number;
-  };
-  banned_role_pool?: {
-    captains: number;
-    bridge: number;
-    below_decks: number;
-  };
-  eligible_role_pool?: {
-    captains: number;
-    bridge: number;
-    below_decks: number;
-  };
-  roster_role_pool?: {
-    captains: number;
-    bridge: number;
-    below_decks: number;
-  };
-  final_role_pool?: {
-    captains: number;
-    bridge: number;
-    below_decks: number;
-  };
-  heuristic_candidates: number;
-  warm_start_candidates: number;
-  generated_candidates?: number;
-  after_warm_start_dedupe?: number;
-  after_constraints?: number;
-  analytical_prefilter_from?: number;
-  analytical_prefilter_kept?: number;
-  scout_candidates?: number;
-  confirmed_candidates?: number;
-  final_result_count: number;
-  phase_durations_ms?: Record<string, number>;
-  cancellation_point?: string;
-}
-
-/** Matches server `WarmStartCrewDto`; sent as `warm_start_crews` on optimize. */
-export type WarmStartCrewBody = {
-  captain: string;
-  bridge: string[];
-  below_decks: string[];
-};
-
-export interface OptimizeResponse {
-  status: string;
-  engine?: string;
-  scenario: {
-    ship: string;
-    hostile: string;
-    sims: number;
-    seed: number;
-    /** Resolved below-decks slot count used for candidate generation. */
-    below_decks_slots: number;
-    /** Present when optimize constraints were applied (counts only). */
-    optimize_constraints?: {
-      must_include: number;
-      exclude: number;
-      groups: number;
-      captain_must_be: boolean;
-      bridge_must_include: number;
-      below_decks_must_include: number;
-    };
-    analytical_prefilter_keep?: number;
-    analytical_prefilter_from?: number;
-    analytical_prefilter_kept?: number;
-    optimizer_funnel?: OptimizerFunnelTelemetry;
-    /** Echo of optimize request chain settings when present. */
-    chain?: ChainGrindRequestBody;
-    effective_strategy: string;
-    strategy_auto: boolean;
-    requested_strategy?: string | null;
-    /** Maximal marginal relevance blend when client requested novelty-aware ordering. */
-    novelty_lambda?: number | null;
-    novelty_diverse_top?: number | null;
-    novelty_pool?: number | null;
-    /** True when the server merged heuristic seeds into warm-start (fast discovery pipeline). */
-    fast_discovery?: boolean | null;
-    /** Tiered: crews that reused persisted confirmation stats from profile `optimize_history.json`. */
-    optimize_history_confirm_hits?: number | null;
-    /** True when the server wrote an entry to `optimize_history.json` for this run. */
-    optimize_history_wrote?: boolean | null;
-    /**
-     * True when stored confirmations existed for this cache key but were refused because the run's
-     * reuse fingerprint changed (engine, game data, profile, or matchup). Every crew was
-     * re-simulated, so this run's numbers are fresh.
-     */
-    optimize_history_reuse_refused?: boolean | null;
-    /** Which fingerprint segment changed: `engine` | `data` | `profile` | `scenario` | `schema` | `unfingerprinted`. */
-    optimize_history_reuse_refused_component?: string | null;
-    /** Reuse fingerprint this run computed (`schema:engine:data:profile:scenario`). */
-    optimize_reuse_fingerprint?: string | null;
-  };
-  recommendations: CrewRecommendation[];
-  duration_ms?: number;
-  notes?: string[];
-  approximate_notes?: string[];
-  warnings?: string[];
-}
+export type ParetoTag = NonNullable<CrewRecommendation["pareto_tags"]>[number];
 
 export async function getOptimizeEstimate(
   params: {
@@ -831,141 +679,11 @@ export async function getOptimizeEstimate(
   return res.json();
 }
 
-export async function optimize(
-  params: {
-    ship: string;
-    hostile: string;
-    sims?: number;
-    seed?: number;
-    max_candidates?: number | null;
-    ship_tier?: number | null;
-    ship_level?: number | null;
-    below_decks_slots?: number | null;
-  },
-  profileId?: string | null,
-): Promise<OptimizeResponse> {
+function optimizerRequestBody(
+  params: OptimizeRequest,
+): Record<string, unknown> {
   const body: Record<string, unknown> = {
-    ship: params.ship,
-    hostile: params.hostile,
-    sims: params.sims ?? 5000,
-    seed: params.seed,
-  };
-  if (params.max_candidates != null && params.max_candidates > 0) {
-    body.max_candidates = params.max_candidates;
-  }
-  if (params.ship_tier != null && params.ship_tier > 0) {
-    body.ship_tier = params.ship_tier;
-  }
-  if (params.ship_level != null && params.ship_level > 0) {
-    body.ship_level = params.ship_level;
-  }
-  if (params.below_decks_slots != null && params.below_decks_slots >= 0) {
-    body.below_decks_slots = params.below_decks_slots;
-  }
-  const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/optimize`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...profileHeaders(profileId),
-    },
-    body: JSON.stringify(body),
-  });
-  return res.json();
-}
-
-export interface OptimizeStatusResponse {
-  status: string;
-  progress?: number;
-  crews_done?: number;
-  total_crews?: number;
-  /** Server phase: heuristics, monte_carlo, genetic, tiered_scout, tiered_confirm */
-  phase?: string;
-  cancellation_point?: string;
-  throughput_crews_per_sec?: number;
-  eta_seconds?: number;
-  progress_preview?: CrewRecommendation[];
-  result?: OptimizeResponse;
-  error?: string;
-}
-
-/** Human-readable label for optimize job `phase` (status / SSE). */
-export function formatOptimizePhaseLabel(
-  phase: string | null | undefined,
-): string {
-  if (!phase) return "";
-  const map: Record<string, string> = {
-    heuristics: "Heuristics",
-    monte_carlo: "Monte Carlo",
-    genetic: "Genetic search",
-    tiered_scout: "Tiered (scout)",
-    tiered_confirm: "Tiered (confirm)",
-    linear_eval: "Linear eval",
-  };
-  return map[phase] ?? phase.replace(/_/g, " ");
-}
-
-export async function fetchHeuristics(): Promise<string[]> {
-  const res = await fetch(`${API_BASE}/api/heuristics`);
-  await checkOk(res);
-  const data = await res.json();
-  return data.seeds ?? [];
-}
-
-export type OptimizerStrategyType =
-  | "exhaustive"
-  | "genetic"
-  | "tiered"
-  | "linear_eval"
-  | "random_stratified";
-
-/** Optional hooks for `optimizeStart` (CPU admission may queue the request). */
-export type OptimizeStartOptions = {
-  onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
-};
-
-/** Sub-object for POST /api/optimize/start `constraints` (matches server OptimizeConstraintsDto). */
-export interface OptimizeCrewConstraintsBody {
-  must_include?: string[];
-  exclude?: string[];
-  groups?: { officers: string[]; min_count: number }[];
-  captain_must_be?: string;
-  bridge_must_include?: string[];
-  below_decks_must_include?: string[];
-}
-
-export async function optimizeStart(
-  params: {
-    ship: string;
-    hostile: string;
-    sims?: number;
-    seed?: number;
-    max_candidates?: number | null;
-    strategy?: OptimizerStrategyType;
-    below_decks_pool_mode?: import("./optimizeWarmStart").BelowDecksPoolMode;
-    heuristics_seeds?: string[];
-    heuristics_only?: boolean;
-    below_decks_strategy?: "ordered" | "exploration";
-    ship_tier?: number | null;
-    ship_level?: number | null;
-    below_decks_slots?: number | null;
-    constraints?: OptimizeCrewConstraintsBody;
-    support_buffs?: string[];
-    chain?: ChainGrindRequestBody;
-    warm_start_crews?: WarmStartCrewBody[];
-    tiered_scout_sims?: number;
-    tiered_top_k?: number;
-    tiered_random_exploration_pct?: number;
-    fast_discovery?: boolean;
-    enable_learned_pair_prior?: boolean;
-    novelty_lambda?: number;
-    novelty_diverse_top?: number;
-    novelty_pool?: number;
-    enemy_type?: string;
-  },
-  profileId?: string | null,
-  options?: OptimizeStartOptions,
-): Promise<OptimizeStartResponse> {
-  const body: Record<string, unknown> = {
+    ...defenderScenarioFields(params),
     ship: params.ship,
     hostile: params.hostile,
     sims: params.sims ?? 5000,
@@ -977,7 +695,7 @@ export async function optimizeStart(
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;
   }
-  if (params.strategy && params.strategy !== "exhaustive") {
+  if (params.strategy) {
     body.strategy = params.strategy;
   }
   if (
@@ -1056,6 +774,81 @@ export async function optimizeStart(
   if (params.novelty_pool != null && params.novelty_pool >= 2) {
     body.novelty_pool = params.novelty_pool;
   }
+  if (params.local_refinement === true) {
+    body.local_refinement = true;
+  }
+  if (params.optimize_cache_key?.trim()) {
+    body.optimize_cache_key = params.optimize_cache_key.trim();
+  }
+  if (params.novelty_history_anchors === true) {
+    body.novelty_history_anchors = true;
+  }
+  for (const field of [
+    "analytical_prefilter_keep",
+    "local_refinement_seeds",
+    "local_refinement_rounds",
+    "exhaustive_scout_sims",
+    "exhaustive_scout_top_keep",
+    "tiered_scout_uniform",
+    "tiered_confirm_budget_cap_mult",
+  ] as const) {
+    if (params[field] != null) body[field] = params[field];
+  }
+  return body;
+}
+
+export async function optimize(
+  params: OptimizeRequest,
+  profileId?: string | null,
+): Promise<OptimizeResponse> {
+  const body = optimizerRequestBody(params);
+  const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/optimize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+/** Human-readable label for optimize job `phase` (status / SSE). */
+export function formatOptimizePhaseLabel(
+  phase: string | null | undefined,
+): string {
+  if (!phase) return "";
+  const map: Record<string, string> = {
+    heuristics: "Heuristics",
+    monte_carlo: "Monte Carlo",
+    genetic: "Genetic search",
+    tiered_scout: "Tiered (scout)",
+    tiered_confirm: "Tiered (confirm)",
+    linear_eval: "Linear eval",
+  };
+  return map[phase] ?? phase.replace(/_/g, " ");
+}
+
+export async function fetchHeuristics(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/api/heuristics`);
+  await checkOk(res);
+  const data = await res.json();
+  return data.seeds ?? [];
+}
+
+export type OptimizerStrategyType = NonNullable<OptimizeRequest["strategy"]>;
+
+/** Optional hooks for `optimizeStart` (CPU admission may queue the request). */
+export type OptimizeStartOptions = {
+  onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
+};
+
+export async function optimizeStart(
+  params: OptimizeRequest,
+  profileId?: string | null,
+  options?: OptimizeStartOptions,
+): Promise<OptimizeStartResponse> {
+  const body = optimizerRequestBody(params);
   const res = await fetchWithCpuBusyRetries(
     `${API_BASE}/api/optimize/start`,
     {
@@ -1263,6 +1056,7 @@ export async function fetchForbiddenTechImported(
 }
 
 export interface PlayerProfile {
+  syndicate_level?: number | null;
   bonuses: Record<string, number>;
   /** @deprecated Legacy field; ignored for combat — use equipped_* slots. */
   forbidden_tech_override?: number[] | null;
@@ -1339,16 +1133,25 @@ export interface BuildingCombatSummary {
   ops_level_profile_override?: number | null;
   ops_level_inferred_from_sync?: number | null;
   ops_level_effective?: number | null;
+  syndicate_level?: number | null;
   synced_building_count: number;
   buildings: BuildingSummaryRow[];
   unmapped_bids: number[];
   combat_bonuses_from_buildings?: Record<string, number>;
+  ship_id?: string | null;
+  ship_class?: string | null;
+  setup_bonus_source?: string;
+  source_limitations?: string[];
 }
 
 export async function fetchBuildingCombatSummary(
   profileId?: string | null,
+  shipId?: string | null,
 ): Promise<BuildingCombatSummary> {
-  const q = profileId ? `?profile=${encodeURIComponent(profileId)}` : "";
+  const params = new URLSearchParams();
+  if (profileId) params.set("profile", profileId);
+  if (shipId?.trim()) params.set("ship_id", shipId.trim());
+  const q = params.size ? `?${params.toString()}` : "";
   const res = await fetch(`${API_BASE}/api/profile/buildings-summary${q}`, {
     headers: { ...profileHeaders(profileId) },
   });
@@ -1365,6 +1168,8 @@ export interface ResearchConditionalBonusLine {
   defender_faction?: string | null;
   attacker_faction?: string | null;
   attacker_factions?: string[];
+  attacker_min_grade?: number | null;
+  attacker_ship_class?: string | null;
   requires_morale?: boolean;
   requires_defender_burning?: boolean;
   requires_defender_hull_breach?: boolean;
@@ -1379,6 +1184,8 @@ export interface ResearchSummaryScenarioContext {
   ship_id: string;
   hostile_id: string;
   ship_faction?: string | null;
+  ship_grade?: number | null;
+  ship_class?: string | null;
   defender_faction: string;
   defender_ship_class: string;
 }
@@ -1416,6 +1223,8 @@ export interface ResearchCombatSummary {
   scenario_context?: ResearchSummaryScenarioContext | null;
   combat_bonuses_scenario_effective?: Record<string, number>;
   combat_conditional_scenario_active?: ResearchConditionalBonusLine[];
+  scenario_setup_bonus_source?: string | null;
+  source_limitations?: string[];
   research: ResearchSummaryRow[];
 }
 

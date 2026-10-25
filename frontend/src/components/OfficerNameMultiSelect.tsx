@@ -9,18 +9,33 @@ function canonName(raw: string, officers: OfficerListItem[]): string {
   return hit?.name ?? t;
 }
 
-interface OfficerNameMultiSelectProps {
+interface OfficerNameMultiSelectBaseProps {
   label: ReactNode;
-  valueComma: string;
-  onChangeComma: (comma: string) => void;
   officers: OfficerListItem[];
   placeholder?: string;
 }
+type OfficerNameMultiSelectProps = OfficerNameMultiSelectBaseProps &
+  (
+    | {
+        valueComma: string;
+        onChangeComma: (comma: string) => void;
+        valueNames?: never;
+        onChangeNames?: never;
+      }
+    | {
+        valueNames: string[];
+        onChangeNames: (names: string[]) => void;
+        valueComma?: never;
+        onChangeComma?: never;
+      }
+  );
 
 export default memo(function OfficerNameMultiSelect({
   label,
   valueComma,
   onChangeComma,
+  valueNames,
+  onChangeNames,
   officers,
   placeholder = "Type to search officers…",
 }: OfficerNameMultiSelectProps) {
@@ -28,7 +43,10 @@ export default memo(function OfficerNameMultiSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const selected = useMemo(() => splitOfficerList(valueComma), [valueComma]);
+  const selected = useMemo(
+    () => valueNames ?? splitOfficerList(valueComma),
+    [valueNames, valueComma],
+  );
   const q = query.trim().toLowerCase();
 
   const suggestions = useMemo(
@@ -48,21 +66,26 @@ export default memo(function OfficerNameMultiSelect({
     const c = canonName(name, officers);
     if (!c) return;
     if (selected.some((s) => s.toLowerCase() === c.toLowerCase())) return;
-    onChangeComma(joinOfficerList([...selected, c]));
+    const names = [...selected, c];
+    if (onChangeNames) onChangeNames(names);
+    else onChangeComma(joinOfficerList(names));
     setQuery("");
     setOpen(false);
   }
 
   function removeName(name: string) {
     const next = selected.filter((s) => s.toLowerCase() !== name.toLowerCase());
-    onChangeComma(joinOfficerList(next));
+    if (onChangeNames) onChangeNames(next);
+    else onChangeComma(joinOfficerList(next));
   }
 
   const displayValue = open ? query : "";
 
   return (
     <div style={{ fontSize: "0.8rem" }}>
-      <div style={{ marginBottom: 4 }}>{label}</div>
+      <div id={`${listId}-label`} style={{ marginBottom: 4 }}>
+        {label}
+      </div>
       <div
         style={{
           border: "1px solid var(--border)",
@@ -118,6 +141,7 @@ export default memo(function OfficerNameMultiSelect({
             type="text"
             role="combobox"
             aria-expanded={open}
+            aria-labelledby={`${listId}-label`}
             aria-controls={listId}
             aria-autocomplete="list"
             placeholder={placeholder}

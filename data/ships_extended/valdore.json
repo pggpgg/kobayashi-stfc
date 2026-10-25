@@ -2,6 +2,7 @@
   "id": "valdore",
   "ship_name": "VALDORE",
   "ship_class": "explorer",
+  "grade": 4,
   "faction": "romulan",
   "tiers": [
     {

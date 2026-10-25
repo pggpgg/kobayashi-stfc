@@ -7,6 +7,25 @@ import {
   noveltyFieldsForOptimizeBody,
 } from "./workspaceRequests";
 
+describe("#302 invalid officer-group submission", () => {
+  it.each([
+    "{damaged",
+    '[ {"officers":[],"min_count":1} ]',
+    '[{"officers":["Picard"],"min_count":2}]',
+  ])("rejects invalid saved settings rather than silently removing a constraint: %s", (groupsJson) => {
+    expect(() =>
+      buildOptimizeConstraintsFromForm({
+        mustIncludeComma: "",
+        excludeComma: "",
+        captainMust: "",
+        bridgeMustComma: "",
+        belowMustComma: "",
+        groupsJson,
+      }),
+    ).toThrow(/group/i);
+  });
+});
+
 describe("buildWorkspaceSimulateParams", () => {
   it("returns null without captain", () => {
     const crew = createEmptyCrew(50);

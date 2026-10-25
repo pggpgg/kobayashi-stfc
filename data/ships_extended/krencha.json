@@ -2,6 +2,7 @@
   "id": "krencha",
   "ship_name": "KRENCHA",
   "ship_class": "interceptor",
+  "grade": 6,
   "faction": "klingon",
   "tiers": [
     {

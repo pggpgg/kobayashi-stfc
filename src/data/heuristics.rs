@@ -21,7 +21,7 @@
 //! and exploration modifiers). Missing `modifier` is treated as ambiguous and kept. Pass `false` when
 //! the user allows non-combat below-decks picks (`below_decks_pool_mode = "relaxed"`).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -32,6 +32,8 @@ use crate::data::officer::{
 };
 
 pub const DEFAULT_HEURISTICS_DIR: &str = "data/heuristics";
+pub const MAX_HEURISTIC_SEED_NAME_BYTES: usize = 64;
+pub const MAX_HEURISTIC_SEEDS_PER_REQUEST: usize = 32;
 const BRIDGE_SLOTS: usize = 2;
 
 /// Canonical ability `modifier` strings treated as economy / non-combat for heuristic below-decks picks.
@@ -137,18 +139,44 @@ pub fn list_heuristics_seeds(dir: &str) -> Vec<String> {
         .flatten()
         .flatten()
         .filter_map(|e| {
+            if !e.file_type().ok().is_some_and(|kind| kind.is_file()) {
+                return None;
+            }
             let p = e.path();
             if p.extension().is_some_and(|ext| ext == "txt") {
                 p.file_stem()
                     .and_then(|s| s.to_str())
-                    .map(|s| s.to_string())
+                    .filter(|s| is_valid_heuristic_seed_name(s))
+                    .map(str::to_string)
             } else {
                 None
             }
         })
         .collect();
     seeds.sort();
-    seeds
+    dedupe_heuristic_seed_names(&seeds)
+}
+
+/// Seed names are file stems, never paths. Keep this grammar in sync with request validation and
+/// the public seed list so callers cannot select arbitrary files through the loader.
+pub fn is_valid_heuristic_seed_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= MAX_HEURISTIC_SEED_NAME_BYTES
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+}
+
+/// Remove duplicate and unsafe request names before any seed files are read or simulated.
+/// ASCII case folding avoids duplicate Windows paths, preserving the first spelling and order.
+pub fn dedupe_heuristic_seed_names(names: &[String]) -> Vec<String> {
+    let mut seen = HashSet::with_capacity(names.len());
+    names
+        .iter()
+        .filter(|name| is_valid_heuristic_seed_name(name))
+        .filter(|name| seen.insert(name.to_ascii_lowercase()))
+        .cloned()
+        .collect()
 }
 
 /// Load and parse a named seed file from the heuristics directory.
@@ -159,7 +187,22 @@ pub fn load_seed_file(
     dir: &str,
     canonical_names_override: Option<&[String]>,
 ) -> Vec<ParsedHeuristicsCrew> {
+    if !is_valid_heuristic_seed_name(seed_name) {
+        warn!(%seed_name, "heuristics: rejected unsafe seed name");
+        return Vec::new();
+    }
     let path = Path::new(dir).join(format!("{seed_name}.txt"));
+    match fs::symlink_metadata(&path) {
+        Ok(metadata) if metadata.file_type().is_file() => {}
+        Ok(_) => {
+            warn!(path = %path.display(), "heuristics: seed path is not a regular file");
+            return Vec::new();
+        }
+        Err(e) => {
+            warn!(path = %path.display(), error = %e, "heuristics: could not inspect seed file");
+            return Vec::new();
+        }
+    }
     let content = match fs::read_to_string(&path) {
         Ok(c) => c,
         Err(e) => {
@@ -704,12 +747,108 @@ fn load_name_aliases() -> HashMap<String, String> {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::data::officer::{Officer, OfficerAbility};
 
     use super::{
-        combinations, filter_heuristic_seed_crews, BelowDecksStrategy, ParsedHeuristicsCrew,
+        combinations, filter_heuristic_seed_crews, load_seed_file, BelowDecksStrategy,
+        ParsedHeuristicsCrew,
     };
+
+    #[test]
+    fn seed_loader_rejects_path_traversal_even_when_sentinel_has_parseable_names() {
+        let root = std::env::temp_dir().join(format!(
+            "kobayashi-heuristics-boundary-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let seeds = root.join("heuristics");
+        std::fs::create_dir_all(&seeds).unwrap();
+        struct RemoveDir(std::path::PathBuf);
+        impl Drop for RemoveDir {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveDir(root.clone());
+        std::fs::write(root.join("sentinel.txt"), "sentinel:Captain\n").unwrap();
+        let canonical_names = ["Captain".to_string()];
+
+        let traversed = load_seed_file(
+            "../sentinel",
+            seeds.to_str().unwrap(),
+            Some(&canonical_names),
+        );
+        assert!(
+            traversed.is_empty(),
+            "untrusted seed names must not escape the seed directory"
+        );
+    }
+
+    #[test]
+    fn seed_listing_filters_unsafe_names_and_deduplicates_case() {
+        let root = std::env::temp_dir().join(format!(
+            "kobayashi-heuristics-list-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        struct RemoveDir(std::path::PathBuf);
+        impl Drop for RemoveDir {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveDir(root.clone());
+        std::fs::write(root.join("Good_seed-1.txt"), "").unwrap();
+        std::fs::write(root.join("good_SEED-1.txt"), "").unwrap();
+        std::fs::write(root.join("bad name.txt"), "").unwrap();
+        std::fs::write(root.join("..outside.txt"), "").unwrap();
+        std::fs::create_dir(root.join("directory.txt")).unwrap();
+        for i in 0..300 {
+            std::fs::write(root.join(format!("seed-{i:03}.txt")), "").unwrap();
+        }
+
+        let listed = super::list_heuristics_seeds(root.to_str().unwrap());
+        assert!(listed.iter().all(|name| {
+            !name.is_empty()
+                && name.len() <= 64
+                && name
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+        }));
+        assert_eq!(
+            listed
+                .iter()
+                .filter(|name| name.eq_ignore_ascii_case("Good_seed-1"))
+                .count(),
+            1
+        );
+        assert!(!listed
+            .iter()
+            .any(|name| name == "bad name" || name == "..outside"));
+    }
+
+    #[test]
+    fn request_seed_names_deduplicate_case_insensitively_preserving_order() {
+        let names = [
+            "Crew-A".to_string(),
+            "crew-a".to_string(),
+            "Crew_B".to_string(),
+            "../bad".to_string(),
+        ];
+        assert_eq!(
+            super::dedupe_heuristic_seed_names(&names),
+            vec!["Crew-A".to_string(), "Crew_B".to_string()]
+        );
+    }
 
     fn officer_named(name: &str, group: Option<&str>, ability_slots: &[&str]) -> Officer {
         Officer {

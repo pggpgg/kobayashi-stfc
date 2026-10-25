@@ -2,6 +2,7 @@
   "id": "divitae",
   "ship_name": "DIVITAE",
   "ship_class": "survey",
+  "grade": 6,
   "faction": "romulan",
   "tiers": [
     {

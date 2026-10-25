@@ -2,6 +2,7 @@
   "id": "stella",
   "ship_name": "STELLA",
   "ship_class": "battleship",
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

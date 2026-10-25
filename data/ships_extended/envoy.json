@@ -2,6 +2,7 @@
   "id": "envoy",
   "ship_name": "ENVOY",
   "ship_class": "survey",
+  "grade": 2,
   "tiers": [
     {
       "tier": 1,

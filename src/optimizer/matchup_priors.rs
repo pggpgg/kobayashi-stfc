@@ -470,6 +470,8 @@ mod tests {
             applied_defender_support_buffs: vec![],
             applied_defender_alliance_debuffs: vec![],
             research_derived_seats: vec![],
+            native_defense_derived_seats: vec![],
+            native_defense_rounding: false,
             forbidden_tech_derived_seats: vec![],
             borg_alcove_hull_hp_bonus: None,
             class_gated_torpedo_family_hull_hp_bonus: None,

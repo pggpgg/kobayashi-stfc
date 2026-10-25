@@ -77,7 +77,7 @@ export function buildPvpSimulateParams(args: {
     defender_ship_level:
       args.defenderShipLevel >= 1 ? args.defenderShipLevel : 1,
     defender_profile_id: args.opponentProfileId.trim(),
-    defender_opponent: "player",
+    defender_opponent: "player" as const,
     crew: crewToApiBody(args.attackerCrew),
     defender_crew: crewToApiBody(args.defenderCrew),
     num_sims: args.simsPerCrew,
@@ -122,7 +122,7 @@ export function buildPvpOptimizeStartBody(args: {
     defender_ship_tier: args.defenderShipTier,
     defender_ship_level: args.defenderShipLevel,
     defender_profile_id: args.opponentProfileId.trim(),
-    defender_opponent: "player",
+    defender_opponent: "player" as const,
     defender_crew: crewToApiBody(args.defenderCrew),
     sims: args.simsPerCrew,
     max_candidates: args.maxCandidates ?? undefined,

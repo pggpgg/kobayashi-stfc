@@ -51,6 +51,10 @@ pub const RANDOM_DEFENDER_STATE_OUTCOMES_CAP: usize = 8;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AbilityEffect {
     AttackMultiplier(f64),
+    /// Fraction added to the native base weapon-damage percentage pool, which
+    /// also contains compiled profile bonuses. Distinct from the separate
+    /// pre-attack multiplier used by unverified legacy officer effects.
+    BaseWeaponDamageBonus(f64),
     /// Additive max-hull fraction from conditional research/LCARS (`0.12` ⇒ ×1.12 max hull when the seat's conditions pass).
     HullHpMultiplier(f64),
     /// Additive max-shield fraction from conditional research/LCARS (`0.08` ⇒ ×1.08 max shield when conditions pass).
@@ -139,6 +143,12 @@ pub enum AbilityEffect {
     /// folded into [`Combatant::mitigation`] at scenario build. Values are **mitigation fractions**
     /// in `0..1`; the resolver normalizes sheet-style magnitudes (`> 1`) as percent points (`÷ 100`).
     MitigationAdditive(f64),
+    /// Additive fraction on all three raw base defensive stats, not mitigation probability.
+    /// Only round-start effects are supported; their eligibility lasts for that round.
+    BaseMitigationStatsBonus(f64),
+    /// Raw points added to armor, shield deflection and dodge, after base scaling.
+    /// Requires raw-stat context; it is never converted into mitigation probability.
+    BaseMitigationStatsAdd(f64),
     /// Officer-granted dodge bonus; additive fraction (e.g. 0.10 = +10% dodge).
     /// Dodge is ship-type-weighted in the mitigation formula: interceptors benefit proportionally
     /// more from dodge than battleships. Applied to the player's effective mitigation on counter-fire.
@@ -149,6 +159,14 @@ pub enum AbilityEffect {
     /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
     /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
     CritDamageMultiplier(f64),
+    /// A successful weapon volley grants an additive bonus after firing. Each grant
+    /// expires independently after duration_rounds, counting the granting round.
+    /// It never benefits the weapon that caused the grant.
+    OnHitTimedBonus {
+        crit_chance: f64,
+        cascade_damage: f64,
+        duration_rounds: u32,
+    },
     /// On-hit crit-damage stack (Seska "each time you score a hit (Once per weapon)"): each
     /// attacker weapon's hit (re)arms one stack of `+bonus` (additive fraction on the crit-damage
     /// product channel) lasting `duration_rounds`; at most one active stack per weapon, refreshed
@@ -787,6 +805,8 @@ pub struct CrewConfiguration {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveAbilityEffect {
     pub ability_name: String,
+    /// Runtime source class, retained for officer-only effectiveness modifiers.
+    pub ability_class: AbilityClass,
     /// Canonical officer id when this row comes from an officer seat (for trace attribution).
     pub officer_id: Option<String>,
     pub effect: AbilityEffect,
@@ -808,7 +828,9 @@ impl AbilityClass {
 }
 
 pub fn can_activate_in_seat(context: &CrewSeatContext) -> bool {
-    context.seat == context.ability.class.allowed_seat()
+    (context.seat == context.ability.class.allowed_seat()
+        || (context.ability.class == AbilityClass::BridgeAbility
+            && context.seat == CrewSeat::Captain))
         && (context.ability.boostable || !context.boosted)
 }
 
@@ -823,6 +845,7 @@ pub fn active_effects_for_timing(
         })
         .map(|seat_context| ActiveAbilityEffect {
             ability_name: seat_context.ability.name.clone(),
+            ability_class: seat_context.ability.class,
             officer_id: seat_context.officer_id.clone(),
             effect: seat_context.ability.effect,
             boosted: seat_context.boosted,
@@ -980,10 +1003,19 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         }
         AbilityEffect::CritChanceBonus(c) => *c = cap_one(*c),
         AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
+        AbilityEffect::BaseWeaponDamageBonus(m) => *m = scale(*m),
         AbilityEffect::HullHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
         AbilityEffect::CritDamageMultiplier(m) => *m = scale_factor(*m),
+        AbilityEffect::OnHitTimedBonus {
+            crit_chance,
+            cascade_damage,
+            ..
+        } => {
+            *crit_chance = cap_one(*crit_chance);
+            *cascade_damage = scale(*cascade_damage);
+        }
         AbilityEffect::OnHitCritDamageStack {
             bonus,
             duration_rounds: _,
@@ -991,6 +1023,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
+        AbilityEffect::BaseMitigationStatsBonus(v) => *v = scale(*v),
+        AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
         AbilityEffect::DodgeBonus(v) => *v = cap_one(*v),
         AbilityEffect::IsolyticDamageBonus(v) => *v = scale(*v),
         AbilityEffect::IsolyticDefenseBonus(v) => *v = scale(*v),
@@ -1106,6 +1140,7 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
         }
         match &mut seat.ability.effect {
             AbilityEffect::AttackMultiplier(m) => *m *= multiplier,
+            AbilityEffect::BaseWeaponDamageBonus(m) => *m *= multiplier,
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
             // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness
@@ -2549,6 +2584,7 @@ mod tests {
     fn sum_mitigation_additive_sums_values() {
         let effects = vec![
             ActiveAbilityEffect {
+                ability_class: AbilityClass::BridgeAbility,
                 weapon_scope: Default::default(),
                 ability_name: "a".into(),
                 officer_id: None,
@@ -2557,6 +2593,7 @@ mod tests {
                 condition: None,
             },
             ActiveAbilityEffect {
+                ability_class: AbilityClass::BridgeAbility,
                 weapon_scope: Default::default(),
                 ability_name: "b".into(),
                 officer_id: None,
@@ -2572,6 +2609,7 @@ mod tests {
     fn sum_mitigation_additive_ignores_non_mitigation_effects() {
         let effects = vec![
             ActiveAbilityEffect {
+                ability_class: AbilityClass::BridgeAbility,
                 weapon_scope: Default::default(),
                 ability_name: "a".into(),
                 officer_id: None,
@@ -2580,6 +2618,7 @@ mod tests {
                 condition: None,
             },
             ActiveAbilityEffect {
+                ability_class: AbilityClass::BridgeAbility,
                 weapon_scope: Default::default(),
                 ability_name: "b".into(),
                 officer_id: None,

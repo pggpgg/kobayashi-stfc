@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CrewRecommendation, SimulateStats } from "../lib/api";
 import SimResults from "./SimResults";
 
@@ -23,8 +23,11 @@ function crewRec(p: {
   const r1 = p.r1_kill_rate ?? 0.05;
   return {
     captain: p.captain,
-    bridge: p.bridge,
-    below_decks: p.below_decks,
+    bridge: typeof p.bridge === "string" ? [p.bridge] : p.bridge,
+    below_decks:
+      typeof p.below_decks === "string" ? [p.below_decks] : p.below_decks,
+    method_provenance: "exhaustive_mc",
+    trials_run: 100,
     win_rate: w,
     win_rate_ci_low: Math.max(0, w - 0.02),
     win_rate_ci_high: Math.min(1, w + 0.02),
@@ -55,6 +58,247 @@ const baseProps = {
   optimizeCrewsDone: null as number | null,
   optimizeTotalCrews: null as number | null,
 };
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+function selectionRows(prefix = "Crew", count = 3) {
+  return Array.from({ length: count }, (_, i) =>
+    crewRec({
+      captain: `${prefix}${i}`,
+      bridge: `Bridge${i}`,
+      below_decks: `Below${i}`,
+      win_rate: 0.9 - i * 0.1,
+      stall_rate: 0.05,
+      loss_rate: 0.05 + i * 0.1,
+      avg_hull_remaining: 0.5,
+    }),
+  );
+}
+
+const compareWorkspace = {
+  ship: "realta",
+  hostile: "bandit",
+  shipTier: 4,
+  shipLevel: 20,
+  numSims: 10,
+  belowDecksSlots: 2,
+  profileId: "profile-1",
+};
+
+function deferredFetch() {
+  let resolve!: (response: Response) => void;
+  const promise = new Promise<Response>((done) => {
+    resolve = done;
+  });
+  return {
+    promise,
+    finish(seed: number, captain: string) {
+      resolve(
+        new Response(
+          JSON.stringify({
+            status: "ok",
+            seed,
+            crews: [
+              {
+                captain,
+                trials: 10,
+                wins: 8,
+                stalls: 1,
+                losses: 1,
+                rounds_histogram: [[1, 8]],
+                hull_remaining_bins: [1, 7],
+              },
+            ],
+          }),
+          { headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+    fail(message: string) {
+      resolve(new Response(JSON.stringify({ message }), { status: 400 }));
+    },
+  };
+}
+
+describe("SimResults result ownership regressions", () => {
+  it("#333 clears selection before rendering fewer replacement rows", () => {
+    const { rerender } = render(
+      <SimResults {...baseProps} recommendations={selectionRows()} />,
+    );
+    const boxes = screen.getAllByRole("checkbox");
+    fireEvent.click(boxes[1]);
+    fireEvent.click(boxes[2]);
+    expect(screen.getByText("Compare (delta)")).toBeTruthy();
+    rerender(
+      <SimResults {...baseProps} recommendations={selectionRows("New", 1)} />,
+    );
+    expect(screen.queryByText("Compare (delta)")).toBeNull();
+    expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(
+      false,
+    );
+  });
+
+  it("#333 does not transfer selected positions to different crews in a same-sized run", () => {
+    const { rerender } = render(
+      <SimResults {...baseProps} recommendations={selectionRows()} />,
+    );
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    rerender(
+      <SimResults {...baseProps} recommendations={selectionRows("New")} />,
+    );
+    expect(screen.queryByText("Compare (delta)")).toBeNull();
+    expect(
+      screen
+        .getAllByRole("checkbox")
+        .every((box) => !(box as HTMLInputElement).checked),
+    ).toBe(true);
+  });
+
+  it("#333 does not restore old selections when a prior result set is shown again", () => {
+    const original = selectionRows();
+    const { rerender } = render(
+      <SimResults {...baseProps} recommendations={original} />,
+    );
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    rerender(
+      <SimResults {...baseProps} recommendations={selectionRows("New")} />,
+    );
+    rerender(<SimResults {...baseProps} recommendations={original} />);
+    expect(screen.queryByText("Compare (delta)")).toBeNull();
+  });
+
+  it("#363 ignores a late comparison after the scenario changes", async () => {
+    const pending = deferredFetch();
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(pending.promise));
+    const recommendations = selectionRows();
+    const { rerender } = render(
+      <SimResults
+        {...baseProps}
+        recommendations={recommendations}
+        compareWorkspace={compareWorkspace}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare distributions (MC)" }),
+    );
+    rerender(
+      <SimResults
+        {...baseProps}
+        recommendations={recommendations}
+        compareWorkspace={{ ...compareWorkspace, hostile: "new-hostile" }}
+      />,
+    );
+    await act(async () => pending.finish(123, "Old scenario"));
+    expect(screen.queryByText("Distribution comparison")).toBeNull();
+    expect(screen.queryByText("seed=123")).toBeNull();
+  });
+
+  it("#363 ignores a late comparison after the selected crews change", async () => {
+    const pending = deferredFetch();
+    const fetchMock = vi.fn().mockReturnValue(pending.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <SimResults
+        {...baseProps}
+        recommendations={selectionRows()}
+        compareWorkspace={compareWorkspace}
+      />,
+    );
+    const boxes = screen.getAllByRole("checkbox");
+    fireEvent.click(boxes[0]);
+    fireEvent.click(boxes[1]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare distributions (MC)" }),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      JSON.parse(fetchMock.mock.calls[0][1].body).crews.map(
+        (c: { captain: string }) => c.captain,
+      ),
+    ).toEqual(["Crew0", "Crew1"]);
+    fireEvent.click(boxes[0]);
+    fireEvent.click(boxes[2]);
+    await act(async () => pending.finish(123, "Old comparison"));
+    expect(screen.queryByText("Distribution comparison")).toBeNull();
+    expect(screen.queryByText("seed=123")).toBeNull();
+  });
+
+  it("#363 keeps a newer compare response when an older request finishes later", async () => {
+    const first = deferredFetch(),
+      second = deferredFetch();
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <SimResults
+        {...baseProps}
+        recommendations={selectionRows()}
+        compareWorkspace={compareWorkspace}
+      />,
+    );
+    const boxes = screen.getAllByRole("checkbox");
+    fireEvent.click(boxes[0]);
+    fireEvent.click(boxes[1]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare distributions (MC)" }),
+    );
+    fireEvent.click(boxes[1]);
+    fireEvent.click(boxes[2]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare distributions (MC)" }),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await act(async () => second.finish(222, "New comparison"));
+    expect(screen.getByText("seed=222")).toBeTruthy();
+    await act(async () => first.finish(111, "Old comparison"));
+    expect(screen.getByText("seed=222")).toBeTruthy();
+    expect(screen.queryByText("seed=111")).toBeNull();
+  });
+
+  it("#363 ignores an older failure while the current comparison is still loading", async () => {
+    const first = deferredFetch(),
+      second = deferredFetch();
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <SimResults
+        {...baseProps}
+        recommendations={selectionRows()}
+        compareWorkspace={compareWorkspace}
+      />,
+    );
+    const boxes = screen.getAllByRole("checkbox");
+    fireEvent.click(boxes[0]);
+    fireEvent.click(boxes[1]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare distributions (MC)" }),
+    );
+    fireEvent.click(boxes[1]);
+    fireEvent.click(boxes[2]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare distributions (MC)" }),
+    );
+    await act(async () => first.fail("outdated comparison failed"));
+    expect(screen.queryByText("outdated comparison failed")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Running compare…" }),
+    ).toBeTruthy();
+    await act(async () => second.finish(222, "Current comparison"));
+    expect(screen.getByText("seed=222")).toBeTruthy();
+  });
+});
 
 describe("SimResults", () => {
   it("renders empty state message when no results", () => {

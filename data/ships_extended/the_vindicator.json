@@ -2,6 +2,7 @@
   "id": "the_vindicator",
   "ship_name": "THE VINDICATOR",
   "ship_class": "battleship",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

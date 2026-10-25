@@ -1,0 +1,18 @@
+{
+  "kind": "observed exported game log; accounting regression, not simulator accuracy fixture",
+  "observed_date": "2026-10-23",
+  "original_export_sha256": "c05ac56dfad6dbcf1e4a7319e1832d89199bc0479472fded74e29f714128717a",
+  "sanitized_fixture_sha256": "7357beb08765a3fa69a781a26f1baaf6e570d78f90999941c62ddd4def2a997e",
+  "changed_cell_count": 37,
+  "numeric_cells_modified": false,
+  "redactions": [
+    "Player display name replaced with Player",
+    "Alliance cells replaced with Alliance"
+  ],
+  "limits": [
+    "Export omits the numeric repair event; its summary health includes repair.",
+    "Automatic journal carries full repair28.64 and exact fractional health.",
+    "All seven attack rows agree with the automatic journal after native integer truncation.",
+    "No model prediction or fitted tolerance pass is claimed."
+  ]
+}

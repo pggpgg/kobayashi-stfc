@@ -2,6 +2,7 @@
   "id": "legionary",
   "ship_name": "LEGIONARY",
   "ship_class": "battleship",
+  "grade": 3,
   "faction": "romulan",
   "tiers": [
     {

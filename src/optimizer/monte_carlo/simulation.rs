@@ -97,21 +97,35 @@ pub(crate) fn zeroed_loss_result(candidate: CrewCandidate) -> SimulationResult {
     }
 }
 
-/// Stable hash for deduplicating identical crews in GA populations (same process = deterministic).
-///
-/// **Order-sensitive**: `bridge` and `below_decks` hash in `Vec` order, so two spellings of one
-/// crew only collide once something canonicalizes them (see `refinement::canonicalize_crew` and
-/// `genetic::init_population_seeded`). Code that keys rows by this hash must tolerate duplicates
-/// whenever a canonicalizing path can feed it.
+/// Stable, role-aware crew set identity for candidate deduplication and benchmark comparisons.
+/// Captain identity and the bridge/below-decks distinction matter; order within either
+/// non-captain role does not. Never use this key for numerical simulation results:
+/// stochastic officer effects consume RNG in seat order.
 pub fn crew_candidate_stable_hash(c: &CrewCandidate) -> u64 {
     let mut h = std::collections::hash_map::DefaultHasher::new();
     c.captain.hash(&mut h);
-    for s in &c.bridge {
+    c.bridge.len().hash(&mut h);
+    let mut bridge: Vec<&str> = c.bridge.iter().map(String::as_str).collect();
+    bridge.sort_unstable();
+    for s in bridge {
         s.hash(&mut h);
     }
-    for s in &c.below_decks {
+    c.below_decks.len().hash(&mut h);
+    let mut below_decks: Vec<&str> = c.below_decks.iter().map(String::as_str).collect();
+    below_decks.sort_unstable();
+    for s in below_decks {
         s.hash(&mut h);
     }
+    h.finish()
+}
+
+/// Identity for numerical results, seeds, and persisted history. Keep bridge and below-decks
+/// order because the current combat engine evaluates stochastic officer effects in seat order.
+pub fn crew_candidate_ordered_hash(c: &CrewCandidate) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    c.captain.hash(&mut h);
+    c.bridge.hash(&mut h);
+    c.below_decks.hash(&mut h);
     h.finish()
 }
 
@@ -570,17 +584,8 @@ fn run_candidate_monte_carlo(
     const BATCH_SIZE: usize = 64;
 
     let mut n_done = 0usize;
-    while n_done < max_iterations {
+    'batches: while n_done < max_iterations {
         let batch_end = (n_done + BATCH_SIZE).min(max_iterations);
-
-        // Check early stop / progressive abandon at batch boundaries
-        // when check_every aligns — we also check per-trial below.
-        let should_checkpoint = |trials: usize, cfg: &ScoutEarlyStopCfg| {
-            trials >= cfg.min_trials
-                && trials < max_iterations
-                && cfg.check_every > 0
-                && trials.is_multiple_of(cfg.check_every)
-        };
 
         // Aggregate directly so the optimizer hot path does not allocate seed and result vectors
         // for every 64-trial checkpoint batch. Replay/debug callers retain the public batch API.
@@ -627,38 +632,40 @@ fn run_candidate_monte_carlo(
             if result.attacker_won && result.rounds_simulated == 1 {
                 r1_kills += 1;
             }
-        }
 
-        n_done = batch_end;
-
-        // Early stop check after processing the batch
-        if let Some(cfg) = early_scout {
-            if should_checkpoint(n_done, &cfg)
-                && win_rate_upper_wilson_95(wins, n_done) < cfg.eliminate_upper_below
-            {
-                break;
+            // The requested checkpoint may fall inside a 64-trial batch. Check at the
+            // exact completed-trial count so a 500-trial scout can stop at 100, 150, ...
+            // without changing the allocation-free combat loop.
+            if let Some(cfg) = early_scout {
+                if i >= cfg.min_trials
+                    && i < max_iterations
+                    && cfg.check_every > 0
+                    && i.is_multiple_of(cfg.check_every)
+                    && win_rate_upper_wilson_95(wins, i) < cfg.eliminate_upper_below
+                {
+                    n_done = i;
+                    break 'batches;
+                }
             }
-        }
-
-        // Progressive abandonment check after batch. Score upper bound = 0.8·(win Wilson upper)
-        // + 0.2·(hull normal upper); `hull_mean`/`hull_m2` track avg_hull_remaining (Welford), so
-        // this matches the blended ranking score the leaderboard is sorted by.
-        if let (Some(bsf), Some(cfg)) = (best_so_far, progressive_abandon) {
-            if should_checkpoint_abandon(n_done, &cfg) {
-                let win_upper = win_rate_upper_wilson_95(wins, n_done);
-                let hull_upper = normal_upper_95(hull_mean, hull_m2, n_done);
-                let score_upper = blended_score(win_upper, hull_upper);
-                let leader = bsf.lock().unwrap();
-                if !leader.can_beat_leader(score_upper, cfg.margin) {
-                    break;
+            if let (Some(bsf), Some(cfg)) = (best_so_far, progressive_abandon) {
+                if i >= cfg.min_trials
+                    && i < max_iterations
+                    && cfg.check_every > 0
+                    && i.is_multiple_of(cfg.check_every)
+                {
+                    let win_upper = win_rate_upper_wilson_95(wins, i);
+                    let hull_upper = normal_upper_95(hull_mean, hull_m2, i);
+                    let score_upper = blended_score(win_upper, hull_upper);
+                    let leader = bsf.lock().unwrap();
+                    if !leader.can_beat_leader(score_upper, cfg.margin) {
+                        n_done = i;
+                        break 'batches;
+                    }
                 }
             }
         }
-    }
 
-    // Add a helper for ProgressiveAbandonCfg checkpoint
-    fn should_checkpoint_abandon(trials: usize, cfg: &ProgressiveAbandonCfg) -> bool {
-        trials >= cfg.min_trials && cfg.check_every > 0 && trials.is_multiple_of(cfg.check_every)
+        n_done = batch_end;
     }
 
     let n = n_done as f64;
@@ -806,7 +813,7 @@ pub fn run_monte_carlo_parallel_deduped(
     let mut seen_hashes: HashSet<u64> = HashSet::with_capacity(candidates.len());
     let mut unique_indices: Vec<usize> = Vec::new();
     for (i, c) in candidates.iter().enumerate() {
-        let k = crew_candidate_stable_hash(c);
+        let k = crew_candidate_ordered_hash(c);
         if seen_hashes.insert(k) {
             unique_indices.push(i);
         }
@@ -831,7 +838,7 @@ pub fn run_monte_carlo_parallel_deduped(
     let mut by_hash: HashMap<u64, SimulationResult> = HashMap::with_capacity(uniq_results.len());
     for (j, r) in uniq_results.into_iter().enumerate() {
         let c = &candidates[unique_indices[j]];
-        let k = crew_candidate_stable_hash(c);
+        let k = crew_candidate_ordered_hash(c);
         by_hash.insert(
             k,
             SimulationResult {
@@ -865,7 +872,7 @@ pub fn run_monte_carlo_parallel_deduped(
         .iter()
         .map(|c| {
             by_hash
-                .get(&crew_candidate_stable_hash(c))
+                .get(&crew_candidate_ordered_hash(c))
                 .expect("dedup MC: hash present")
                 .clone()
         })
@@ -895,7 +902,7 @@ pub fn run_monte_carlo_parallel_deduped_chunked(
     let mut seen_hashes: HashSet<u64> = HashSet::with_capacity(candidates.len());
     let mut unique_indices: Vec<usize> = Vec::new();
     for (i, c) in candidates.iter().enumerate() {
-        let k = crew_candidate_stable_hash(c);
+        let k = crew_candidate_ordered_hash(c);
         if seen_hashes.insert(k) {
             unique_indices.push(i);
         }
@@ -924,7 +931,7 @@ pub fn run_monte_carlo_parallel_deduped_chunked(
         );
         for (c, r) in chunk.iter().zip(part) {
             by_hash.insert(
-                crew_candidate_stable_hash(c),
+                crew_candidate_ordered_hash(c),
                 SimulationResult {
                     candidate: c.clone(),
                     trials_run: r.trials_run,
@@ -958,7 +965,7 @@ pub fn run_monte_carlo_parallel_deduped_chunked(
             .iter()
             .map(|c| {
                 by_hash
-                    .get(&crew_candidate_stable_hash(c))
+                    .get(&crew_candidate_ordered_hash(c))
                     .expect("dedup chunked MC: hash present")
                     .clone()
             })
@@ -988,7 +995,7 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
     let mut seen_hashes: HashSet<u64> = HashSet::with_capacity(candidates.len());
     let mut unique_indices: Vec<usize> = Vec::new();
     for (i, c) in candidates.iter().enumerate() {
-        let k = crew_candidate_stable_hash(c);
+        let k = crew_candidate_ordered_hash(c);
         if seen_hashes.insert(k) {
             unique_indices.push(i);
         }
@@ -1027,7 +1034,7 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
         );
         for (c, r) in chunk.iter().zip(part) {
             by_hash.insert(
-                crew_candidate_stable_hash(c),
+                crew_candidate_ordered_hash(c),
                 SimulationResult {
                     candidate: c.clone(),
                     trials_run: r.trials_run,
@@ -1061,7 +1068,7 @@ pub(crate) fn run_monte_carlo_parallel_deduped_chunked_with_shared(
             .iter()
             .map(|c| {
                 by_hash
-                    .get(&crew_candidate_stable_hash(c))
+                    .get(&crew_candidate_ordered_hash(c))
                     .expect("dedup chunked MC: hash present")
                     .clone()
             })
@@ -1574,7 +1581,7 @@ fn run_monte_carlo_inner_with_leader(
     // when it appears multiple times in the candidate list (e.g. from warm-start + generation overlap,
     // or multi-hostile batch consolidation).
     let n = candidates.len();
-    let hashes: Vec<u64> = candidates.iter().map(crew_candidate_stable_hash).collect();
+    let hashes: Vec<u64> = candidates.iter().map(crew_candidate_ordered_hash).collect();
     let mut unique_indices: Vec<usize> = Vec::with_capacity(n);
     let mut seen: HashSet<u64> = HashSet::with_capacity(n);
     for (i, &h) in hashes.iter().enumerate() {
@@ -1655,7 +1662,7 @@ fn run_monte_carlo_inner_variable_iterations(
 
     // Deduplicate identical crews (same approach as run_monte_carlo_inner).
     let n = candidates.len();
-    let hashes: Vec<u64> = candidates.iter().map(crew_candidate_stable_hash).collect();
+    let hashes: Vec<u64> = candidates.iter().map(crew_candidate_ordered_hash).collect();
     let mut unique_indices: Vec<usize> = Vec::with_capacity(n);
     let mut seen: HashSet<u64> = HashSet::with_capacity(n);
     for (i, &h) in hashes.iter().enumerate() {
@@ -1749,6 +1756,93 @@ mod tests {
     use super::*;
 
     #[test]
+    fn crew_identity_ignores_order_within_bridge_and_below_decks() {
+        let crew = CrewCandidate {
+            captain: "Captain".into(),
+            bridge: vec!["Zeta".into(), "Alpha".into()],
+            below_decks: vec!["D3".into(), "D1".into(), "D2".into()],
+        };
+        let reordered = CrewCandidate {
+            captain: crew.captain.clone(),
+            bridge: vec!["Alpha".into(), "Zeta".into()],
+            below_decks: vec!["D2".into(), "D3".into(), "D1".into()],
+        };
+        assert_eq!(
+            crew_candidate_stable_hash(&crew),
+            crew_candidate_stable_hash(&reordered)
+        );
+        let different_captain = CrewCandidate {
+            captain: "Alpha".into(),
+            ..crew.clone()
+        };
+        assert_ne!(
+            crew_candidate_stable_hash(&crew),
+            crew_candidate_stable_hash(&different_captain)
+        );
+        let different_roles = CrewCandidate {
+            captain: crew.captain.clone(),
+            bridge: vec!["Zeta".into(), "D1".into()],
+            below_decks: vec!["Alpha".into(), "D3".into(), "D2".into()],
+        };
+        assert_ne!(
+            crew_candidate_stable_hash(&crew),
+            crew_candidate_stable_hash(&different_roles)
+        );
+    }
+
+    #[test]
+    fn supported_stochastic_bridge_permutations_have_distinct_result_keys() {
+        let officers =
+            crate::lcars::build_officer_model_default().expect("canonical officer model");
+        for name in ["Georgiou", "Airiam"] {
+            let officer = officers
+                .iter()
+                .find(|officer| officer.name == name)
+                .unwrap();
+            assert!(officer
+                .bridge_ability
+                .as_ref()
+                .unwrap()
+                .effects
+                .iter()
+                .any(|effect| {
+                    effect.effect_type == "burning"
+                        && effect.trigger.as_deref() == Some("on_round_start")
+                }));
+        }
+        let first = CrewCandidate {
+            captain: "Nero".into(),
+            bridge: vec!["Georgiou".into(), "Airiam".into()],
+            below_decks: Vec::new(),
+        };
+        let reordered = CrewCandidate {
+            bridge: vec!["Airiam".into(), "Georgiou".into()],
+            ..first.clone()
+        };
+        assert_eq!(
+            crew_candidate_stable_hash(&first),
+            crew_candidate_stable_hash(&reordered)
+        );
+        assert_ne!(
+            crew_candidate_ordered_hash(&first),
+            crew_candidate_ordered_hash(&reordered)
+        );
+        let results = run_monte_carlo_parallel_deduped(
+            "saladin",
+            "2918121098",
+            &[first.clone(), reordered.clone()],
+            1,
+            777,
+            None,
+            None,
+            DefenderOpponent::Hostile,
+        );
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].candidate.bridge, first.bridge);
+        assert_eq!(results[1].candidate.bridge, reordered.bridge);
+    }
+
+    #[test]
     fn wilson_upper_at_zero_wins_decreases_with_n() {
         let u50 = super::win_rate_upper_wilson_95(0, 50);
         let u200 = super::win_rate_upper_wilson_95(0, 200);
@@ -1822,6 +1916,131 @@ mod tests {
             SeedPanelPolicy::CommonScenario,
         );
         assert_eq!(distinct_a.base_seed, distinct_b.base_seed);
+    }
+
+    #[test]
+    fn scout_checks_at_requested_trial_count_inside_a_batch() {
+        let shared = build_shared_scenario_data_standalone(
+            "saladin",
+            "2918121098",
+            support_buffs::SupportBuffScenarioRequest::attacker_only(None),
+            DefenderOpponent::Hostile,
+            None,
+        );
+        let candidate = CrewCandidate {
+            captain: "James T. Kirk".into(),
+            bridge: vec!["Spock".into(), "Leonard McCoy".into()],
+            below_decks: vec![],
+        };
+        // A threshold above 1 guarantees elimination at the first eligible check.
+        // With a 64-trial batch and check_every=50, that check is trial 100.
+        let result = run_candidate_monte_carlo(
+            &shared,
+            &candidate,
+            771,
+            500,
+            Some(ScoutEarlyStopCfg {
+                min_trials: 64,
+                check_every: 50,
+                eliminate_upper_below: 1.1,
+            }),
+            None,
+            None,
+            SeedPanelPolicy::CommonScenario,
+        );
+        assert_eq!(result.trials_run, 100);
+    }
+
+    #[test]
+    fn progressive_abandon_checks_at_requested_trial_count_inside_a_batch() {
+        let shared = build_shared_scenario_data_standalone(
+            "saladin",
+            "2918121098",
+            support_buffs::SupportBuffScenarioRequest::attacker_only(None),
+            DefenderOpponent::Hostile,
+            None,
+        );
+        let candidate = CrewCandidate {
+            captain: "James T. Kirk".into(),
+            bridge: vec!["Spock".into(), "Leonard McCoy".into()],
+            below_decks: vec![],
+        };
+        // An unreachable synthetic cut guarantees abandonment whenever checked; this
+        // isolates scheduling from the candidate's combat outcome.
+        let mut leader = TopKLeader::new(1);
+        leader.update(2.0, 2.0);
+        let leader = Mutex::new(leader);
+        let result = run_candidate_monte_carlo(
+            &shared,
+            &candidate,
+            771,
+            500,
+            None,
+            Some(&leader),
+            Some(ProgressiveAbandonCfg {
+                min_trials: 64,
+                check_every: 50,
+                margin: 0.0,
+            }),
+            SeedPanelPolicy::CommonScenario,
+        );
+        assert_eq!(result.trials_run, 100);
+    }
+
+    #[test]
+    fn shared_leader_abandons_across_candidate_batches_at_the_checkpoint() {
+        let registry = DataRegistry::load().expect("data registry");
+        let mut shared = build_shared_scenario_data_from_registry(
+            &registry,
+            "botany_bay",
+            "38048587",
+            Some(2),
+            Some(10),
+            None,
+            support_buffs::SupportBuffScenarioRequest::default(),
+            DefenderOpponent::Hostile,
+            None,
+            None,
+        );
+        let defender = shared.cached_defender.as_mut().expect("resolved hostile");
+        defender.hull_health = 1e15;
+        defender.shield_health = 1e15;
+        let candidates: Vec<_> = ["test_a", "test_b", "test_c", "test_d"]
+            .into_iter()
+            .map(|captain| CrewCandidate {
+                captain: captain.into(),
+                bridge: Vec::new(),
+                below_decks: Vec::new(),
+            })
+            .collect();
+        // Two synthetic completed winners with valid normalized scores establish a cut. The
+        // deliberately unbeatable defender makes every tested candidate a provable loser.
+        let mut board = TopKLeader::new(2);
+        board.update(0.9, 0.85);
+        board.update(0.9, 0.85);
+        let leader = Arc::new(Mutex::new(board));
+        let cfg = ProgressiveAbandonCfg {
+            min_trials: 64,
+            check_every: 50,
+            margin: 0.0,
+        };
+        let mut actual = Vec::new();
+        for batch in candidates.chunks(2) {
+            actual.extend(run_monte_carlo_inner_with_leader(
+                &shared,
+                batch,
+                500,
+                771,
+                false,
+                None,
+                Some((cfg, Arc::clone(&leader))),
+                SeedPanelPolicy::CommonScenario,
+                None,
+            ));
+        }
+        assert_eq!(actual.len(), candidates.len());
+        assert!(actual.iter().all(|row| row.trials_run == 100));
+        assert!(actual.iter().all(|row| row.win_rate == 0.0));
     }
 
     #[test]

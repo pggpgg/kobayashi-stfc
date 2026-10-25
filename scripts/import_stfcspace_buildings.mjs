@@ -371,6 +371,25 @@ async function main() {
   if (!Array.isArray(summary)) {
     throw new Error("Unexpected summary format: expected an array");
   }
+  const sourceIds = new Set(summary.filter((entry) => entry && Number.isSafeInteger(entry.id)).map((entry) => entry.id));
+  if (sourceIds.size === 0) {
+    throw new Error("No buildings in summary; existing building outputs were preserved");
+  }
+  // Check completeness before writing any records or pruning old filenames.
+  // An intentional removal must be explicit; a shortened download is not authority
+  // to discard the current catalog.
+  let previousIndex;
+  try {
+    previousIndex = JSON.parse(await fs.readFile(path.join(OUT_DIR, "index.json"), "utf8"));
+    if (!Array.isArray(previousIndex.buildings)) throw new Error("missing buildings array");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw new Error(`Cannot validate existing building index: ${error.message}`);
+  }
+  const removedIds = (previousIndex?.buildings ?? []).map((entry) => entry.bid ?? Number(String(entry.file).split("_")[0]))
+    .filter((id) => Number.isSafeInteger(id) && !sourceIds.has(id));
+  if (removedIds.length && !process.argv.includes("--allow-removals")) {
+    throw new Error(`Summary omits ${removedIds.length} existing building IDs; outputs preserved. Verify the source, then use --allow-removals for intentional removals.`);
+  }
 
   const nameByBid = await loadBuildingNameTranslations();
   if (nameByBid.size > 0) {

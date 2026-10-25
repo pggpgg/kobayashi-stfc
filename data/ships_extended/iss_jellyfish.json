@@ -2,6 +2,7 @@
   "id": "iss_jellyfish",
   "ship_name": "I.S.S. JELLYFISH",
   "ship_class": "explorer",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

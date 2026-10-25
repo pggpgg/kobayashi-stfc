@@ -2,6 +2,7 @@
   "id": "uss_athena",
   "ship_name": "U.S.S. ATHENA",
   "ship_class": "explorer",
+  "grade": 6,
   "tiers": [
     {
       "tier": 1,

@@ -1,0 +1,1202 @@
+{
+  "schema_version": 1,
+  "source": "Frozen game client static ThreatConfig, entity group 34; public game formulas only, no account data.",
+  "source_sha256": "b7fcb7a021fa982144702a682e81eb6b7a31406522b0154cc77553a2c0776418",
+  "client_build": 272,
+  "client_dll_sha256": "a5df6314bd78f15892a232a44e77cdcf2e3d20e9a6192f99120c0f3e52632274",
+  "client_metadata_sha256": "ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04",
+  "protobuf": "ThreatConfig equations field 1, static float constants field 2, staticDouble constants field 4; group response wrapper field 1.",
+  "native_call_chain": [
+    {
+      "method": "StaticSyncDataContainer.GetDPR",
+      "address": "0x1818f90e0",
+      "observation": "Reads ThreatConfig calculator dictionary at container offset 0x1c8 and evaluates the dpr RPN calculator."
+    },
+    {
+      "method": "ThreatLevelService.CalculateFleetBaseDPR",
+      "address": "0x181918a60",
+      "observation": "Uses the configured DPR equation for weapon statistics."
+    },
+    {
+      "method": "StaticSyncDataContainer.GetAverageDamage",
+      "address": "0x1818f8870",
+      "observation": "Returns (minimum damage + maximum damage) / 2."
+    }
+  ],
+  "equations": [
+    {
+      "key": "defense_rating",
+      "equation": "Plating Strength_Defense_Plating * Absorption Strength_Defense_Absorption * + Dodge Strength_Defense_Dodge * +",
+      "byte_range": [
+        7140,
+        7271
+      ]
+    },
+    {
+      "key": "dpr",
+      "equation": "AvgDMG Shots * ReloadingTime / CriticalChance CriticalDamage * * AvgDMG Shots * ReloadingTime / +",
+      "byte_range": [
+        7271,
+        7377
+      ]
+    },
+    {
+      "key": "forbidden_tech_rating",
+      "equation": "FT_LevelBaseRating FT_LevelMultiplier FT_Level 1 - ^ * FT_TierBaseRating FT_TierMultiplier FT_Tier 1 - ^ * +",
+      "byte_range": [
+        7377,
+        7513
+      ]
+    },
+    {
+      "key": "health_rating_remaining_hp",
+      "equation": "RemainingShieldHp Health_SHP_Factor * RemainingHullHp Health_HHP_Factor * +",
+      "byte_range": [
+        7513,
+        7620
+      ]
+    },
+    {
+      "key": "health_rating",
+      "equation": "TotalShieldHp Health_SHP_Factor * TotalHullHp Health_HHP_Factor * +",
+      "byte_range": [
+        7620,
+        7706
+      ]
+    },
+    {
+      "key": "offense_rating",
+      "equation": "WeaponDPR Strength_Attack_DPR * ACC Strength_Attack_Accuracy * + PEN Strength_Attack_Penetration * + MOD Strength_Attack_Modulation * +",
+      "byte_range": [
+        7706,
+        7863
+      ]
+    },
+    {
+      "key": "officer_rating",
+      "equation": "CoreStat1 CoreStat2 + CoreStat3 + OfficerRatingFactor *",
+      "byte_range": [
+        7863,
+        7938
+      ]
+    },
+    {
+      "key": "strength",
+      "equation": "AttackRating DefenseRating + HealthRating + ForbiddenTechRating +",
+      "byte_range": [
+        7938,
+        8017
+      ]
+    },
+    {
+      "key": "threat_level",
+      "equation": "Player_OffenseRating_Fleet Player_DefenseRating + Player_HealthRatingRemainingHp + Opponent_OffenseRating_Fleet Opponent_DefenseRating + Opponent_HealthRatingRemainingHp + / HullTypeMultiplier /",
+      "byte_range": [
+        8017,
+        8231
+      ]
+    }
+  ],
+  "static_float_constants": [
+    {
+      "key": "DefenseR_Absorption_HHP_Factor",
+      "value": 10,
+      "byte_range": [
+        8231,
+        8270
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Battleship",
+      "value": 0,
+      "byte_range": [
+        8270,
+        8320
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Destroyer",
+      "value": 0,
+      "byte_range": [
+        8320,
+        8369
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Explorer",
+      "value": 0,
+      "byte_range": [
+        8369,
+        8417
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Survey",
+      "value": 0,
+      "byte_range": [
+        8417,
+        8463
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Factor",
+      "value": 10,
+      "byte_range": [
+        8463,
+        8502
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Battleship",
+      "value": 0.4000000059604645,
+      "byte_range": [
+        8502,
+        8552
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Destroyer",
+      "value": 0.5,
+      "byte_range": [
+        8552,
+        8601
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Explorer",
+      "value": 0.6000000238418579,
+      "byte_range": [
+        8601,
+        8649
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Survey",
+      "value": 0.4000000059604645,
+      "byte_range": [
+        8649,
+        8695
+      ]
+    },
+    {
+      "key": "DefenseR_Dodge_HHP_Factor",
+      "value": 0.0035000001080334187,
+      "byte_range": [
+        8695,
+        8729
+      ]
+    },
+    {
+      "key": "DefenseR_Dodge_SHP_Factor",
+      "value": 0.0035000001080334187,
+      "byte_range": [
+        8729,
+        8763
+      ]
+    },
+    {
+      "key": "DefenseR_HHP_Factor",
+      "value": 0.07000000029802322,
+      "byte_range": [
+        8763,
+        8791
+      ]
+    },
+    {
+      "key": "DefenseR_Plating_HHP_Factor",
+      "value": 0.014999999664723873,
+      "byte_range": [
+        8791,
+        8827
+      ]
+    },
+    {
+      "key": "DefenseR_Plating_SHP_Factor",
+      "value": 0.014999999664723873,
+      "byte_range": [
+        8827,
+        8863
+      ]
+    },
+    {
+      "key": "DefenseR_SHP_Factor",
+      "value": 0.20000000298023224,
+      "byte_range": [
+        8863,
+        8891
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Common",
+      "value": 6500,
+      "byte_range": [
+        8891,
+        8926
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Epic",
+      "value": 100000,
+      "byte_range": [
+        8926,
+        8959
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Rare",
+      "value": 50000,
+      "byte_range": [
+        8959,
+        8992
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Uncommon",
+      "value": 15000,
+      "byte_range": [
+        8992,
+        9029
+      ]
+    },
+    {
+      "key": "FT_Level_Multiplier",
+      "value": 1.0499999523162842,
+      "byte_range": [
+        9029,
+        9057
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Common",
+      "value": 14000,
+      "byte_range": [
+        9057,
+        9091
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Epic",
+      "value": 100000,
+      "byte_range": [
+        9091,
+        9123
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Rare",
+      "value": 50000,
+      "byte_range": [
+        9123,
+        9155
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Uncommon",
+      "value": 15000,
+      "byte_range": [
+        9155,
+        9191
+      ]
+    },
+    {
+      "key": "FT_Tier_Multiplier",
+      "value": 1.100000023841858,
+      "byte_range": [
+        9191,
+        9218
+      ]
+    },
+    {
+      "key": "Health_HHP_Factor",
+      "value": 0.5,
+      "byte_range": [
+        9218,
+        9244
+      ]
+    },
+    {
+      "key": "Health_SHP_Factor",
+      "value": 0.5,
+      "byte_range": [
+        9244,
+        9270
+      ]
+    },
+    {
+      "key": "OffenseR_1stFiringTurn_Offset",
+      "value": 0.20000000298023224,
+      "byte_range": [
+        9270,
+        9308
+      ]
+    },
+    {
+      "key": "OffenseR_ACC_KNT_Factor",
+      "value": 0.004999999888241291,
+      "byte_range": [
+        9308,
+        9340
+      ]
+    },
+    {
+      "key": "OffenseR_ACC_NRG_Factor",
+      "value": 0.004000000189989805,
+      "byte_range": [
+        9340,
+        9372
+      ]
+    },
+    {
+      "key": "OffenseR_DMG_KNT_Factor",
+      "value": 0.4000000059604645,
+      "byte_range": [
+        9372,
+        9404
+      ]
+    },
+    {
+      "key": "OffenseR_DMG_NRG_Factor",
+      "value": 0.8999999761581421,
+      "byte_range": [
+        9404,
+        9436
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Factor",
+      "value": 20,
+      "byte_range": [
+        9436,
+        9468
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Battleship",
+      "value": 0,
+      "byte_range": [
+        9468,
+        9511
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Destroyer",
+      "value": 0,
+      "byte_range": [
+        9511,
+        9553
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Explorer",
+      "value": 0,
+      "byte_range": [
+        9553,
+        9594
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Survey",
+      "value": 0,
+      "byte_range": [
+        9594,
+        9633
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Factor",
+      "value": 20,
+      "byte_range": [
+        9633,
+        9665
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Battleship",
+      "value": 0.05000000074505806,
+      "byte_range": [
+        9665,
+        9708
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Destroyer",
+      "value": 0,
+      "byte_range": [
+        9708,
+        9750
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Explorer",
+      "value": 0.05000000074505806,
+      "byte_range": [
+        9750,
+        9791
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Survey",
+      "value": 0,
+      "byte_range": [
+        9791,
+        9830
+      ]
+    },
+    {
+      "key": "OffenseR_PEN_KNT_Factor",
+      "value": 0.04500000178813934,
+      "byte_range": [
+        9830,
+        9862
+      ]
+    },
+    {
+      "key": "OffenseR_PEN_NRG_Factor",
+      "value": 0.04500000178813934,
+      "byte_range": [
+        9862,
+        9894
+      ]
+    },
+    {
+      "key": "OfficerR_CoreStats_Factor",
+      "value": 0.4000000059604645,
+      "byte_range": [
+        9894,
+        9928
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor1",
+      "value": 1,
+      "byte_range": [
+        9928,
+        9958
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor2",
+      "value": 1.25,
+      "byte_range": [
+        9958,
+        9988
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor3",
+      "value": 1.399999976158142,
+      "byte_range": [
+        9988,
+        10018
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor4",
+      "value": 1.600000023841858,
+      "byte_range": [
+        10018,
+        10048
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor5",
+      "value": 1.899999976158142,
+      "byte_range": [
+        10048,
+        10078
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor6",
+      "value": 2.299999952316284,
+      "byte_range": [
+        10078,
+        10108
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor7",
+      "value": 3,
+      "byte_range": [
+        10108,
+        10138
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor1",
+      "value": 1,
+      "byte_range": [
+        10138,
+        10170
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor2",
+      "value": 1.25,
+      "byte_range": [
+        10170,
+        10202
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor3",
+      "value": 1.600000023841858,
+      "byte_range": [
+        10202,
+        10234
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor4",
+      "value": 2,
+      "byte_range": [
+        10234,
+        10266
+      ]
+    },
+    {
+      "key": "Strength_Attack_Accuracy",
+      "value": 0.5,
+      "byte_range": [
+        10266,
+        10299
+      ]
+    },
+    {
+      "key": "Strength_Attack_DPR",
+      "value": 1,
+      "byte_range": [
+        10299,
+        10327
+      ]
+    },
+    {
+      "key": "Strength_Attack_Modulation",
+      "value": 0.5,
+      "byte_range": [
+        10327,
+        10362
+      ]
+    },
+    {
+      "key": "Strength_Attack_Penetration",
+      "value": 0.5,
+      "byte_range": [
+        10362,
+        10398
+      ]
+    },
+    {
+      "key": "Strength_Defense_Absorption",
+      "value": 5,
+      "byte_range": [
+        10398,
+        10434
+      ]
+    },
+    {
+      "key": "Strength_Defense_Dodge",
+      "value": 5,
+      "byte_range": [
+        10434,
+        10465
+      ]
+    },
+    {
+      "key": "Strength_Defense_Plating",
+      "value": 5,
+      "byte_range": [
+        10465,
+        10498
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold1",
+      "value": 0.699999988079071,
+      "byte_range": [
+        10498,
+        10529
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold2",
+      "value": 0.8999999761581421,
+      "byte_range": [
+        10529,
+        10560
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold3",
+      "value": 1.25,
+      "byte_range": [
+        10560,
+        10591
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold4",
+      "value": 1.5,
+      "byte_range": [
+        10591,
+        10622
+      ]
+    }
+  ],
+  "static_double_constants": [
+    {
+      "key": "DefenseR_Absorption_HHP_Factor",
+      "value": 10,
+      "byte_range": [
+        10865,
+        10908
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Battleship",
+      "value": 0,
+      "byte_range": [
+        10908,
+        10962
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Destroyer",
+      "value": 0,
+      "byte_range": [
+        10962,
+        11015
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Explorer",
+      "value": 0,
+      "byte_range": [
+        11015,
+        11067
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_HHP_Offset_Survey",
+      "value": 0,
+      "byte_range": [
+        11067,
+        11117
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Factor",
+      "value": 10,
+      "byte_range": [
+        11117,
+        11160
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Battleship",
+      "value": 0.4,
+      "byte_range": [
+        11160,
+        11214
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Destroyer",
+      "value": 0.5,
+      "byte_range": [
+        11214,
+        11267
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Explorer",
+      "value": 0.6,
+      "byte_range": [
+        11267,
+        11319
+      ]
+    },
+    {
+      "key": "DefenseR_Absorption_SHP_Offset_Survey",
+      "value": 0.4,
+      "byte_range": [
+        11319,
+        11369
+      ]
+    },
+    {
+      "key": "DefenseR_Dodge_HHP_Factor",
+      "value": 0.0035,
+      "byte_range": [
+        11369,
+        11407
+      ]
+    },
+    {
+      "key": "DefenseR_Dodge_SHP_Factor",
+      "value": 0.0035,
+      "byte_range": [
+        11407,
+        11445
+      ]
+    },
+    {
+      "key": "DefenseR_HHP_Factor",
+      "value": 0.07,
+      "byte_range": [
+        11445,
+        11477
+      ]
+    },
+    {
+      "key": "DefenseR_Plating_HHP_Factor",
+      "value": 0.015,
+      "byte_range": [
+        11477,
+        11517
+      ]
+    },
+    {
+      "key": "DefenseR_Plating_SHP_Factor",
+      "value": 0.015,
+      "byte_range": [
+        11517,
+        11557
+      ]
+    },
+    {
+      "key": "DefenseR_SHP_Factor",
+      "value": 0.2,
+      "byte_range": [
+        11557,
+        11589
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Common",
+      "value": 6500,
+      "byte_range": [
+        11589,
+        11628
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Epic",
+      "value": 100000,
+      "byte_range": [
+        11628,
+        11665
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Rare",
+      "value": 50000,
+      "byte_range": [
+        11665,
+        11702
+      ]
+    },
+    {
+      "key": "FT_Level_BaseRating_Uncommon",
+      "value": 15000,
+      "byte_range": [
+        11702,
+        11743
+      ]
+    },
+    {
+      "key": "FT_Level_Multiplier",
+      "value": 1.05,
+      "byte_range": [
+        11743,
+        11775
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Common",
+      "value": 14000,
+      "byte_range": [
+        11775,
+        11813
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Epic",
+      "value": 100000,
+      "byte_range": [
+        11813,
+        11849
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Rare",
+      "value": 50000,
+      "byte_range": [
+        11849,
+        11885
+      ]
+    },
+    {
+      "key": "FT_Tier_BaseRating_Uncommon",
+      "value": 15000,
+      "byte_range": [
+        11885,
+        11925
+      ]
+    },
+    {
+      "key": "FT_Tier_Multiplier",
+      "value": 1.1,
+      "byte_range": [
+        11925,
+        11956
+      ]
+    },
+    {
+      "key": "Health_HHP_Factor",
+      "value": 0.5,
+      "byte_range": [
+        11956,
+        11986
+      ]
+    },
+    {
+      "key": "Health_SHP_Factor",
+      "value": 0.5,
+      "byte_range": [
+        11986,
+        12016
+      ]
+    },
+    {
+      "key": "OffenseR_1stFiringTurn_Offset",
+      "value": 0.2,
+      "byte_range": [
+        12016,
+        12058
+      ]
+    },
+    {
+      "key": "OffenseR_ACC_KNT_Factor",
+      "value": 0.005,
+      "byte_range": [
+        12058,
+        12094
+      ]
+    },
+    {
+      "key": "OffenseR_ACC_NRG_Factor",
+      "value": 0.004,
+      "byte_range": [
+        12094,
+        12130
+      ]
+    },
+    {
+      "key": "OffenseR_DMG_KNT_Factor",
+      "value": 0.4,
+      "byte_range": [
+        12130,
+        12166
+      ]
+    },
+    {
+      "key": "OffenseR_DMG_NRG_Factor",
+      "value": 0.9,
+      "byte_range": [
+        12166,
+        12202
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Factor",
+      "value": 20,
+      "byte_range": [
+        12202,
+        12238
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Battleship",
+      "value": 0,
+      "byte_range": [
+        12238,
+        12285
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Destroyer",
+      "value": 0,
+      "byte_range": [
+        12285,
+        12331
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Explorer",
+      "value": 0,
+      "byte_range": [
+        12331,
+        12376
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_KNT_Offset_Survey",
+      "value": 0,
+      "byte_range": [
+        12376,
+        12419
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Factor",
+      "value": 20,
+      "byte_range": [
+        12419,
+        12455
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Battleship",
+      "value": 0.05,
+      "byte_range": [
+        12455,
+        12502
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Destroyer",
+      "value": 0,
+      "byte_range": [
+        12502,
+        12548
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Explorer",
+      "value": 0.05,
+      "byte_range": [
+        12548,
+        12593
+      ]
+    },
+    {
+      "key": "OffenseR_MOD_NRG_Offset_Survey",
+      "value": 0,
+      "byte_range": [
+        12593,
+        12636
+      ]
+    },
+    {
+      "key": "OffenseR_PEN_KNT_Factor",
+      "value": 0.045,
+      "byte_range": [
+        12636,
+        12672
+      ]
+    },
+    {
+      "key": "OffenseR_PEN_NRG_Factor",
+      "value": 0.045,
+      "byte_range": [
+        12672,
+        12708
+      ]
+    },
+    {
+      "key": "OfficerR_CoreStats_Factor",
+      "value": 0.4,
+      "byte_range": [
+        12708,
+        12746
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor1",
+      "value": 1,
+      "byte_range": [
+        12746,
+        12780
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor2",
+      "value": 1.25,
+      "byte_range": [
+        12780,
+        12814
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor3",
+      "value": 1.4,
+      "byte_range": [
+        12814,
+        12848
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor4",
+      "value": 1.6,
+      "byte_range": [
+        12848,
+        12882
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor5",
+      "value": 1.9,
+      "byte_range": [
+        12882,
+        12916
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor6",
+      "value": 2.3,
+      "byte_range": [
+        12916,
+        12950
+      ]
+    },
+    {
+      "key": "OfficerR_Rank_Factor7",
+      "value": 3,
+      "byte_range": [
+        12950,
+        12984
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor1",
+      "value": 1,
+      "byte_range": [
+        12984,
+        13020
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor2",
+      "value": 1.25,
+      "byte_range": [
+        13020,
+        13056
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor3",
+      "value": 1.6,
+      "byte_range": [
+        13056,
+        13092
+      ]
+    },
+    {
+      "key": "OfficerR_Rarity_Factor4",
+      "value": 2,
+      "byte_range": [
+        13092,
+        13128
+      ]
+    },
+    {
+      "key": "Strength_Attack_Accuracy",
+      "value": 0.5,
+      "byte_range": [
+        13128,
+        13165
+      ]
+    },
+    {
+      "key": "Strength_Attack_DPR",
+      "value": 1,
+      "byte_range": [
+        13165,
+        13197
+      ]
+    },
+    {
+      "key": "Strength_Attack_Modulation",
+      "value": 0.5,
+      "byte_range": [
+        13197,
+        13236
+      ]
+    },
+    {
+      "key": "Strength_Attack_Penetration",
+      "value": 0.5,
+      "byte_range": [
+        13236,
+        13276
+      ]
+    },
+    {
+      "key": "Strength_Defense_Absorption",
+      "value": 5,
+      "byte_range": [
+        13276,
+        13316
+      ]
+    },
+    {
+      "key": "Strength_Defense_Dodge",
+      "value": 5,
+      "byte_range": [
+        13316,
+        13351
+      ]
+    },
+    {
+      "key": "Strength_Defense_Plating",
+      "value": 5,
+      "byte_range": [
+        13351,
+        13388
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold1",
+      "value": 0.7,
+      "byte_range": [
+        13388,
+        13423
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold2",
+      "value": 0.9,
+      "byte_range": [
+        13423,
+        13458
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold3",
+      "value": 1.25,
+      "byte_range": [
+        13458,
+        13493
+      ]
+    },
+    {
+      "key": "ThreatLevel_Threshold4",
+      "value": 1.5,
+      "byte_range": [
+        13493,
+        13528
+      ]
+    }
+  ],
+  "interpretation": {
+    "dpr": "AverageDamage * Shots / ReloadingTime * (1 + CriticalChance * CriticalDamage)",
+    "critical_damage": "CriticalDamage is an additional critical bonus in this native rating equation. This directly establishes client DPR semantics, not the inaccessible server combat implementation.",
+    "defense_rating": "A weighted strength score for Plating, Absorption and Dodge; this equation does not identify Tom Paris effective officer Defense or compute combat mitigation."
+  },
+  "limitations": [
+    "The client rating formula alone cannot prove the order of server combat modifiers.",
+    "No conversion of public synthetic Combatant.crit_multiplier inputs is implied; those inputs use final multipliers.",
+    "Court of Q condition 57 and effective officer-stat source selection are separate questions."
+  ]
+}

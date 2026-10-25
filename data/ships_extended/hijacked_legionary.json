@@ -2,6 +2,7 @@
   "id": "hijacked_legionary",
   "ship_name": "HIJACKED LEGIONARY",
   "ship_class": "battleship",
+  "grade": 3,
   "faction": "romulan",
   "tiers": [
     {

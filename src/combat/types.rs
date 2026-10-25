@@ -427,14 +427,22 @@ pub struct WeaponStats {
     pub weapon_type: WeaponType,
 }
 
-/// Parameters for dynamic hostile mitigation computation at combat time.
+/// Parameters for dynamic mitigation computation at combat time.
 /// When present on a [`Combatant`], the engine computes mitigation per-shot from these stats
 /// instead of the pre-computed `mitigation` scalar; while attacker Morale is active the piercing
 /// stats are boosted last via [`crate::combat::mitigation::apply_morale_piercing`].
-#[derive(Debug, Clone, Copy, PartialEq)]
+/// On the player combatant, this supplies unbuffed raw defense/opponent piercing
+/// for inbound counter-fire, including round-start base-mitigation-stat bonuses.
+/// Missing/all-zero raw defense keeps the legacy weighted-fraction calculation.
+#[derive(Debug, Clone, PartialEq)]
 pub struct HostileMitigationParams {
+    /// Native stat getters round final defense points before mitigation.
+    /// Synthetic raw-stat contexts can retain fractional arithmetic with false.
+    pub round_native_defense_stats: bool,
     pub defender_stats: DefenderStats,
     pub base_attacker_stats: AttackerStats,
+    /// Opponent piercing/accuracy in weapon order. Empty/missing rows use aggregate stats.
+    pub base_attacker_weapon_stats: Vec<AttackerStats>,
     pub ship_type: ShipType,
     pub mystery_mitigation_factor: f64,
     pub floor: f64,
@@ -448,19 +456,18 @@ pub struct Combatant {
     /// Aggregated mitigation scalar. After `apply_profile_to_attacker` ran, this is the
     /// clamped sum `armor + shield_deflection + dodge + damage_reduction`. Retained for
     /// backward compatibility with consumers that read a single scalar; the per-shot
-    /// inbound counter-fire path in `engine.rs` reads the individual components and
-    /// applies ship-type coefficients instead.
+    /// inbound counter-fire path in `engine.rs` applies the individual bonus
+    /// fractions to raw stats when available, or weights them as a legacy fallback.
     pub mitigation: f64,
-    /// Static armor (component of inbound mitigation). Weighted by ship-type `c_armor` at
-    /// combat time. Populated by `apply_profile_to_attacker` from the `armor` profile key
-    /// + officer `defense_armor_add` runtime bonus.
+    /// Static armor bonus fraction when raw defense context is available. Populated
+    /// from profile/crew fractions plus officer Defense converted from raw amounts.
+    /// Legacy inputs without raw context retain weighted-component semantics.
     #[serde(default)]
     pub armor: f64,
-    /// Static shield deflection. Weighted by ship-type `c_shield` at combat time.
+    /// Static shield-deflection bonus, with the same units and fallback as `armor`.
     #[serde(default)]
     pub shield_deflection: f64,
-    /// Static dodge. Weighted by ship-type `c_dodge` at combat time. Per-round dodge
-    /// bonuses from officer abilities are added on top before weighting.
+    /// Static dodge bonus, with the same units and fallback as `armor`.
     #[serde(default)]
     pub dodge: f64,
     /// Flat damage reduction (post-mitigation, not subject to ship-type coefficients).

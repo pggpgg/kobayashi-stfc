@@ -2,6 +2,7 @@
   "id": "monaveen",
   "ship_name": "MONAVEEN",
   "ship_class": "battleship",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

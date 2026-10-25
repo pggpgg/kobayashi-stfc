@@ -2,6 +2,7 @@
   "id": "pilum",
   "ship_name": "PILUM",
   "ship_class": "interceptor",
+  "grade": 4,
   "faction": "romulan",
   "tiers": [
     {

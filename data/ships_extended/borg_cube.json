@@ -2,6 +2,7 @@
   "id": "borg_cube",
   "ship_name": "BORG CUBE",
   "ship_class": "battleship",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

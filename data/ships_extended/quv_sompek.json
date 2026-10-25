@@ -2,6 +2,7 @@
   "id": "quv_sompek",
   "ship_name": "QUV'SOMPEK",
   "ship_class": "explorer",
+  "grade": 5,
   "faction": "klingon",
   "tiers": [
     {

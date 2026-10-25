@@ -2,6 +2,7 @@
   "id": "vi_dar",
   "ship_name": "VI'DAR",
   "ship_class": "interceptor",
+  "grade": 3,
   "tiers": [
     {
       "tier": 1,

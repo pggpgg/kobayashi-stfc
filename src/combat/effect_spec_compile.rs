@@ -324,6 +324,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::Burning { .. }
             | AbilityEffect::ShotsBonus { .. }
             | AbilityEffect::OnHitCritDamageStack { .. }
+            | AbilityEffect::OnHitTimedBonus { .. }
             | AbilityEffect::DefenderOnHitStack { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
@@ -379,7 +380,7 @@ pub fn compile_officer_combat_spec_full(
         // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
         || matches!(
             effect,
-            AbilityEffect::OnHitCritDamageStack { .. } | AbilityEffect::DefenderOnHitStack { .. }
+            AbilityEffect::OnHitCritDamageStack { .. } | AbilityEffect::OnHitTimedBonus { .. } | AbilityEffect::DefenderOnHitStack { .. }
         );
     let condition = if skip_round_gate {
         condition
@@ -466,6 +467,21 @@ fn compile_officer_combat_spec_impl(
                     compiled_condition.clone(),
                 ));
             }
+            // Frozen client BuffSpec 1898558353 is ModAllDamage with
+            // MultiplyAdd: it contributes to the same native MULT pool as
+            // profile weapon damage. The canonical Add operation retains its
+            // raw ranked fraction. Keep this correction source-specific until
+            // other native damage operations have been verified.
+            if spec.source == crate::data::combat_effect_spec::EffectSource::ResearchCatalog
+                && spec.source_ref.as_ref().and_then(|r| r.buff_id) == Some(1_898_558_353)
+                && spec.operation == AbilityOperationSpec::Add
+            {
+                return Ok((
+                    timing,
+                    AbilityEffect::BaseWeaponDamageBonus(v),
+                    compiled_condition.clone(),
+                ));
+            }
             // [`AbilityEffect::AttackMultiplier`] is an additive bonus fraction on the
             // pre-attack modifier sum (`base × (1 + Σ)`), so fold operators the same way as
             // the Pierce/Isolytic additive family: multiply-family `v` is the full factor
@@ -520,7 +536,18 @@ fn compile_officer_combat_spec_impl(
             };
             Ok((
                 timing,
-                AbilityEffect::CritChanceBonus(add),
+                match (timing, spec.duration.as_ref()) {
+                    (TimingWindow::AttackPhase, Some(DurationSpec::Rounds { rounds }))
+                        if spec.officer.post_weapon_grant =>
+                    {
+                        AbilityEffect::OnHitTimedBonus {
+                            crit_chance: add,
+                            cascade_damage: 0.0,
+                            duration_rounds: (*rounds).max(1),
+                        }
+                    }
+                    _ => AbilityEffect::CritChanceBonus(add),
+                },
                 compiled_condition.clone(),
             ))
         }
@@ -753,7 +780,18 @@ fn compile_officer_combat_spec_impl(
             let add = fold_operator_to_additive(op, v);
             Ok((
                 timing,
-                AbilityEffect::IsolyticCascadeDamageBonus(add),
+                match (timing, spec.duration.as_ref()) {
+                    (TimingWindow::AttackPhase, Some(DurationSpec::Rounds { rounds }))
+                        if spec.officer.post_weapon_grant =>
+                    {
+                        AbilityEffect::OnHitTimedBonus {
+                            crit_chance: 0.0,
+                            cascade_damage: add,
+                            duration_rounds: (*rounds).max(1),
+                        }
+                    }
+                    _ => AbilityEffect::IsolyticCascadeDamageBonus(add),
+                },
                 compiled_condition.clone(),
             ))
         }
@@ -799,6 +837,56 @@ fn compile_officer_combat_spec_impl(
             Ok((
                 timing,
                 AbilityEffect::ShieldMitigationBonus(add),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::BaseMitigationStatsAdd => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let raw = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::BaseMitigationStatsAdd(raw),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::BaseMitigationStatsBonus => {
+            if timing != TimingWindow::RoundStart {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::BaseMitigationStatsBonus(fraction),
                 compiled_condition.clone(),
             ))
         }
@@ -1210,9 +1298,10 @@ pub fn static_buff_op_from_lcars_op(normalized_op: &str) -> StaticBuffOp {
 /// Compile a passive-permanent `stat_modify` / mapped-tag [`CombatEffectSpec`] into a
 /// [`StaticBuffContribution`]. Returns `None` when the spec has no resolvable scalar value.
 ///
-/// The op classification reads the raw normalized LCARS op stashed by the adapter in
-/// `spec.officer.lcars_op` so multiply-family variants (`mul_add` etc.) are honoured — the coarser
-/// `spec.operation` enum collapses them all into `Add`.
+/// Officer-rating fractions add within their shared percentage pool. Other channels read
+/// the raw normalized LCARS op stashed in `spec.officer.lcars_op` so multiply-family
+/// variants (`mul_add` etc.) retain their operation; the coarser `spec.operation` enum
+/// collapses them all into `Add`.
 ///
 /// `stat_key` is the LCARS-side stat string the caller uses as the
 /// [`crate::combat::types::BuffSet::static_buffs`] hash-map key.
@@ -1221,7 +1310,17 @@ pub fn compile_officer_static_buff(
     stat_key: &str,
 ) -> Option<StaticBuffContribution> {
     let value = spec.value.as_ref()?.scalar?;
-    let op = static_buff_op_from_lcars_op(&lcars_op_from_officer_spec(spec));
+    // Officer-rating MultiplyAdd values are fractions of one shared percentage
+    // pool. Two officers granting .08 and .50 contribute .58, not .04.
+    // Other static stat channels retain their existing multiplicative semantics.
+    let op = if matches!(
+        stat_key,
+        "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
+    ) {
+        StaticBuffOp::Add
+    } else {
+        static_buff_op_from_lcars_op(&lcars_op_from_officer_spec(spec))
+    };
     Some(StaticBuffContribution {
         stat_key: stat_key.to_string(),
         op,
@@ -1427,6 +1526,24 @@ mod tests {
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
         }
+    }
+
+    #[test]
+    fn base_mitigation_stats_requires_self_round_start_and_preserves_large_fractions() {
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::AttackerSelf, 5.0);
+        spec.modifier = AbilityModifierSpec::BaseMitigationStatsBonus;
+        spec.trigger = AbilityTriggerSpec::RoundStart;
+        let (timing, effect, _) = compile_officer_combat_spec(&spec).unwrap();
+        assert_eq!(timing, TimingWindow::RoundStart);
+        assert_eq!(effect, AbilityEffect::BaseMitigationStatsBonus(5.0));
+        spec.trigger = AbilityTriggerSpec::AttackPhase;
+        assert!(compile_officer_combat_spec(&spec).is_err());
+        spec.trigger = AbilityTriggerSpec::RoundStart;
+        spec.target = AbilityTargetSpec::DefenderOpponent;
+        assert!(compile_officer_combat_spec(&spec).is_err());
+        spec.target = AbilityTargetSpec::AttackerSelf;
+        spec.operation = AbilityOperationSpec::Multiply;
+        assert!(compile_officer_combat_spec(&spec).is_err());
     }
 
     fn seska_shaped_crit_damage_spec() -> CombatEffectSpec {

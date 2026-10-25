@@ -2,18 +2,29 @@
 
 use serde_json::{Map, Value};
 
-use crate::combat::abilities::{AbilityEffect, ActiveAbilityEffect, TimingWindow};
+use crate::combat::abilities::{AbilityClass, AbilityEffect, ActiveAbilityEffect, TimingWindow};
 use crate::combat::events::round_f64;
 use crate::combat::stacking::{CategoryTotals, StackContribution};
 use crate::combat::types::{
     CombatEvent, Combatant, EventSource, TraceCollector, ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
 };
 
+pub(crate) struct MaxHpMultiplierUpdate<'a> {
+    pub(crate) base_hull_max: f64,
+    pub(crate) base_shield_max: f64,
+    pub(crate) previous_hull_factor: f64,
+    pub(crate) previous_shield_factor: f64,
+    pub(crate) hull_fraction_sum: f64,
+    pub(crate) shield_fraction_sum: f64,
+    pub(crate) attacker_shield_remaining: &'a mut f64,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct EffectAccumulator {
     stacks: EffectStatStacks,
     pre_attack_modifier_sum: f64,
-    /// Cumulative Galaxy-class hull growth `g` (weapon_damage fraction units); applied in the engine as `×(1+g/(1+p))`.
+    /// Native base weapon percentage additions, including Galaxy-class hull
+    /// growth; applied in the engine as `×(1+g/(1+p))`.
     galaxy_additive_weapon_frac: f64,
     attack_phase_damage_modifier_sum: f64,
     round_end_modifier_sum: f64,
@@ -456,7 +467,7 @@ impl EffectAccumulator {
             .iter()
             .filter_map(|e| {
                 if let AbilityEffect::ShieldRegenMaxFraction(f) =
-                    scale_effect(e.effect, assimilated_active)
+                    scale_active_effect(e, assimilated_active)
                 {
                     Some(f)
                 } else {
@@ -628,20 +639,48 @@ impl EffectAccumulator {
         (hull, shield)
     }
 
-    /// Scale attacker max hull/shield when conditional research seats apply (+fraction ⇒ ×(1+f) max; current remaining gains the delta).
+    /// Update conditional max-HP fractions relative to the prior round's applied fraction.
+    /// The attacker combatant is reused across rounds, so multiplying its already-scaled max
+    /// directly would compound a continuously active row once per round.
     pub(crate) fn apply_max_hp_multiplier_sums_to_attacker(
         attacker: &mut Combatant,
-        hull_fraction_sum: f64,
-        shield_fraction_sum: f64,
-        attacker_shield_remaining: &mut f64,
+        update: MaxHpMultiplierUpdate<'_>,
     ) {
-        if hull_fraction_sum.is_finite() && hull_fraction_sum != 0.0 {
-            let old_max = attacker.hull_health.max(0.0);
-            attacker.hull_health = old_max * (1.0 + hull_fraction_sum);
+        let MaxHpMultiplierUpdate {
+            base_hull_max,
+            base_shield_max,
+            previous_hull_factor,
+            previous_shield_factor,
+            hull_fraction_sum,
+            shield_fraction_sum,
+            attacker_shield_remaining,
+        } = update;
+        let next_hull_factor = if hull_fraction_sum.is_finite() {
+            1.0 + hull_fraction_sum
+        } else {
+            previous_hull_factor
+        };
+        let next_shield_factor = if shield_fraction_sum.is_finite() {
+            1.0 + shield_fraction_sum
+        } else {
+            previous_shield_factor
+        };
+        let hull_base = if previous_hull_factor.abs() > f64::EPSILON {
+            attacker.hull_health / previous_hull_factor
+        } else {
+            base_hull_max.max(0.0)
+        };
+        let shield_base = if previous_shield_factor.abs() > f64::EPSILON {
+            attacker.shield_health / previous_shield_factor
+        } else {
+            base_shield_max.max(0.0)
+        };
+        if next_hull_factor.is_finite() {
+            attacker.hull_health = hull_base.max(0.0) * next_hull_factor;
         }
-        if shield_fraction_sum.is_finite() && shield_fraction_sum != 0.0 {
+        if next_shield_factor.is_finite() {
             let old_max = attacker.shield_health.max(0.0);
-            let new_max = old_max * (1.0 + shield_fraction_sum);
+            let new_max = shield_base.max(0.0) * next_shield_factor;
             attacker.shield_health = new_max;
             if old_max > 0.0 {
                 *attacker_shield_remaining =
@@ -775,7 +814,7 @@ impl EffectAccumulator {
         round_index: u32,
     ) {
         for effect in effects {
-            let scaled = scale_effect(effect.effect, assimilated_active);
+            let scaled = scale_active_effect(effect, assimilated_active);
             let src = Some((effect.ability_name.as_str(), effect.officer_id.as_deref()));
             self.add_effect(timing, scaled, base_attack, round_index, src);
         }
@@ -789,6 +828,24 @@ impl EffectAccumulator {
         round_index: u32,
         source: Option<(&str, Option<&str>)>,
     ) {
+        if let AbilityEffect::BaseWeaponDamageBonus(value) = effect {
+            if value.is_finite() {
+                self.galaxy_additive_weapon_frac += value;
+                if self.trace_contributions {
+                    if let Some((ability, officer_id)) = source {
+                        self.push_contribution_line(
+                            ability,
+                            officer_id,
+                            timing,
+                            "BaseWeaponDamageBonus",
+                            "base_weapon_damage_bonus",
+                            value,
+                        );
+                    }
+                }
+            }
+            return;
+        }
         if matches!(
             timing,
             TimingWindow::CombatBegin
@@ -949,7 +1006,9 @@ impl EffectAccumulator {
                         "AttackerShieldMitigationBonus",
                     );
                 }
-                AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -980,8 +1039,10 @@ impl EffectAccumulator {
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
-                AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. }
+                AbilityEffect::CritDamageMultiplier(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1155,7 +1216,9 @@ impl EffectAccumulator {
                         "AttackerShieldMitigationBonus",
                     );
                 }
-                AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1186,8 +1249,10 @@ impl EffectAccumulator {
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
-                AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. }
+                AbilityEffect::CritDamageMultiplier(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1323,7 +1388,9 @@ impl EffectAccumulator {
                         "AttackerShieldMitigationBonus",
                     );
                 }
-                AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1354,8 +1421,10 @@ impl EffectAccumulator {
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
-                AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. }
+                AbilityEffect::CritDamageMultiplier(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1524,14 +1593,18 @@ impl EffectAccumulator {
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
-                AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. }
+                AbilityEffect::CritDamageMultiplier(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
                 | AbilityEffect::AccumulatingAttackMultiplier { .. }
                 | AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
                 | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
                 | AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::DodgeBonus(_)
                 | AbilityEffect::AccuracyBonus(_) => {}
             },
@@ -1669,7 +1742,9 @@ impl EffectAccumulator {
                         "AttackerShieldMitigationBonus",
                     );
                 }
-                AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1700,8 +1775,10 @@ impl EffectAccumulator {
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
-                AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. }
+                AbilityEffect::CritDamageMultiplier(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1881,7 +1958,9 @@ impl EffectAccumulator {
                         "AttackerShieldMitigationBonus",
                     );
                 }
-                AbilityEffect::MitigationAdditive(_) => {}
+                AbilityEffect::MitigationAdditive(_)
+                | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1912,8 +1991,10 @@ impl EffectAccumulator {
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
-                AbilityEffect::CritDamageMultiplier(_) => {}
-                AbilityEffect::OnHitCritDamageStack { .. }
+                AbilityEffect::CritDamageMultiplier(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
                     initial,
@@ -1970,13 +2051,17 @@ pub(crate) fn record_ability_activations(
     effects: &[ActiveAbilityEffect],
     assimilated_active: bool,
 ) {
-    let effectiveness_multiplier = if assimilated_active {
-        ASSIMILATED_EFFECTIVENESS_MULTIPLIER
-    } else {
-        1.0
-    };
-
     for effect in effects {
+        // Post-hit grants are logged only when the granting volley actually fired.
+        if phase != "after_hit" && matches!(effect.effect, AbilityEffect::OnHitTimedBonus { .. }) {
+            continue;
+        }
+        let effectiveness_multiplier =
+            if assimilated_active && !preserves_non_officer_research_value(effect) {
+                ASSIMILATED_EFFECTIVENESS_MULTIPLIER
+            } else {
+                1.0
+            };
         trace.record_if(|| CombatEvent {
             event_type: "ability_activation".to_string(),
             round_index,
@@ -1999,6 +2084,28 @@ pub(crate) fn record_ability_activations(
     }
 }
 
+fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
+    effect.ability_class == AbilityClass::ShipAbility
+        && matches!(
+            effect.effect,
+            AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::ShieldRegenMaxFraction(_)
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+        )
+}
+
+/// Preserve source-backed research defense/repair values under officer-only
+/// Assimilation. Other mechanic families keep their existing scaling behavior.
+pub(crate) fn scale_active_effect(
+    effect: &ActiveAbilityEffect,
+    assimilated_active: bool,
+) -> AbilityEffect {
+    scale_effect(
+        effect.effect,
+        assimilated_active && !preserves_non_officer_research_value(effect),
+    )
+}
+
 pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> AbilityEffect {
     if !assimilated_active {
         return effect;
@@ -2007,6 +2114,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
     match effect {
         AbilityEffect::AttackMultiplier(modifier) => {
             AbilityEffect::AttackMultiplier(modifier * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseWeaponDamageBonus(value) => {
+            AbilityEffect::BaseWeaponDamageBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::HullHpMultiplier(f) => {
             AbilityEffect::HullHpMultiplier(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
@@ -2139,6 +2249,15 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
         // Mirrors CritDamageMultiplier: the additive stack bonus scales by assimilated effectiveness.
+        AbilityEffect::OnHitTimedBonus {
+            crit_chance,
+            cascade_damage,
+            duration_rounds,
+        } => AbilityEffect::OnHitTimedBonus {
+            crit_chance: crit_chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            cascade_damage: cascade_damage * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+        },
         AbilityEffect::OnHitCritDamageStack {
             bonus,
             duration_rounds,
@@ -2150,6 +2269,12 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::DefenderOnHitStack { .. } => effect,
         AbilityEffect::MitigationAdditive(v) => {
             AbilityEffect::MitigationAdditive(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseMitigationStatsAdd(v) => {
+            AbilityEffect::BaseMitigationStatsAdd(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseMitigationStatsBonus(v) => {
+            AbilityEffect::BaseMitigationStatsBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
         AbilityEffect::HostileLethalEndOfRound { .. }
@@ -2194,12 +2319,37 @@ mod tests {
 
     fn make_active(effect: AbilityEffect) -> ActiveAbilityEffect {
         ActiveAbilityEffect {
+            ability_class: AbilityClass::BridgeAbility,
             weapon_scope: Default::default(),
             ability_name: "test".into(),
             officer_id: None,
             effect,
             boosted: false,
             condition: None,
+        }
+    }
+
+    #[test]
+    fn research_defense_and_repair_preserve_values_under_assimilation() {
+        for effect in [
+            AbilityEffect::BaseMitigationStatsBonus(5.0),
+            AbilityEffect::ShieldRegenMaxFraction(0.1),
+        ] {
+            let officer = make_active(effect);
+            assert_eq!(
+                scale_active_effect(&officer, true),
+                scale_effect(effect, true)
+            );
+            let research = ActiveAbilityEffect {
+                ability_class: AbilityClass::ShipAbility,
+                ..officer
+            };
+            assert_eq!(scale_active_effect(&research, true), effect);
+            if let AbilityEffect::ShieldRegenMaxFraction(fraction) = effect {
+                let mut accumulator = EffectAccumulator::default();
+                accumulator.add_effects(TimingWindow::RoundStart, &[research], 100.0, true, 1);
+                assert_eq!(accumulator.composed_shield_regen_max_fraction(), fraction);
+            }
         }
     }
 

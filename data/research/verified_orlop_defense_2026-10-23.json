@@ -1,0 +1,28 @@
+{
+  "research_id": 282179003,
+  "buff_id": 1895868262,
+  "project_loca_id": 43049,
+  "source_group": 66,
+  "client_build": 273,
+  "consumer_build": 272,
+  "cache_sha256": "b472e4460e3869cc8abb44e456a0873e3c5702ed6f3a9701b18d27938022f3cf",
+  "buff_spec_sha256": "90eb257edcaceff8659184bcf2cdf1b41d4ce616dded4db5487b3ad806ec11ac",
+  "modifier_code": 57,
+  "operation_code": 3,
+  "target_code": 11,
+  "trigger_code": 24,
+  "condition_codes": [],
+  "ranked_values": [0.2, 0.26, 0.33, 0.41, 0.5, 0.59, 0.69, 0.79, 0.89, 1, 0],
+  "ranked_value_count": 99,
+  "ranked_chances": [1],
+  "ranked_chance_count": 99,
+  "profile_stat": "officer_defense_below_decks",
+  "value_unit": "fraction",
+  "localization": {
+    "client_build": 273,
+    "locale_sha256": "e1bc354122ba6ba5b7a6f4028b8859559e9378fd8a912ada9103e5eedf36b3e4",
+    "name": "Orlop Defense",
+    "description": "Increases the base Defense stat for all officers below deck on a ship."
+  },
+  "limitations": "The selected native modifier 57 row and project localization establish scope and units for this buff only. They do not promote other modifier 57/59 buffs or Assault condition 231."
+}

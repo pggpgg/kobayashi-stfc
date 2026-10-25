@@ -2,6 +2,7 @@
   "id": "korinar",
   "ship_name": "KORINAR",
   "ship_class": "explorer",
+  "grade": 4,
   "faction": "klingon",
   "tiers": [
     {

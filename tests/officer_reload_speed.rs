@@ -10,8 +10,9 @@ use kobayashi::combat::abilities::{
 };
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::{
-    active_effects_for_timing, build_combat_setup, simulate_combat_from_setup, AbilityEffect,
-    Combatant, CrewConfiguration, ShipType, SimulationConfig, TimingWindow, TraceMode, WeaponStats,
+    active_effects_for_timing, build_combat_setup, simulate_combat_from_setup, AbilityCondition,
+    AbilityEffect, Combatant, CrewConfiguration, ShipType, SimulationConfig, TimingWindow,
+    TraceMode, WeaponStats,
 };
 use kobayashi::data::combat_effect_spec::AbilityModifierSpec;
 use kobayashi::lcars::{
@@ -446,24 +447,42 @@ fn pon_captain_compiles_enemy_delay_at_combat_begin() {
 }
 
 #[test]
-fn pon_captain_fires_delay_vs_player_defender_on_explorer() {
+fn pon_self_defending_unknown_gate_fails_closed_for_player_delay() {
     let crew = resolve_crew("pon-a2ddd4", &[], 3);
-    let mut saw_delay = false;
-    for seed in 0..300_u64 {
-        let setup = setup_fight(&crew, seed, 6, ShipType::Explorer, false, true);
-        let result = simulate_combat_from_setup(&setup, seed);
-        if delay_events(&result.events)
-            .iter()
-            .any(|e| event_bool(e, "triggered") && event_phase(e) == "combat_begin")
-        {
-            saw_delay = true;
-            break;
+    let delay = crew
+        .seats
+        .iter()
+        .find(|seat| matches!(seat.ability.effect, AbilityEffect::DefenderFireDelay { .. }))
+        .expect("Pon delay remains independently compilable");
+    fn contains_false_gate(condition: &AbilityCondition) -> bool {
+        match condition {
+            AbilityCondition::LiteralBool(false) => true,
+            AbilityCondition::And(children) | AbilityCondition::Or(children) => {
+                children.iter().any(contains_false_gate)
+            }
+            AbilityCondition::Not(child) => contains_false_gate(child),
+            _ => false,
         }
     }
     assert!(
-        saw_delay,
-        "Pon (Explorer vs player defender) should proc combat_begin defender fire delay in some seeds"
+        delay
+            .ability
+            .condition
+            .as_ref()
+            .is_some_and(contains_false_gate),
+        "unmapped canonical SelfDefending must remain an explicit fail-closed gate"
     );
+
+    for seed in 0..300_u64 {
+        let setup = setup_fight(&crew, seed, 6, ShipType::Explorer, false, true);
+        let result = simulate_combat_from_setup(&setup, seed);
+        assert!(
+            !delay_events(&result.events)
+            .iter()
+            .any(|e| event_bool(e, "triggered") && event_phase(e) == "combat_begin"),
+            "unsupported SelfDefending gate must not activate Pon's combat-begin delay (seed={seed})"
+        );
+    }
 }
 
 #[test]

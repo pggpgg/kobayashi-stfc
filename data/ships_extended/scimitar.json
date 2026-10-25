@@ -2,6 +2,7 @@
   "id": "scimitar",
   "ship_name": "SCIMITAR",
   "ship_class": "battleship",
+  "grade": 6,
   "faction": "romulan",
   "tiers": [
     {

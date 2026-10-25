@@ -2,6 +2,7 @@
   "id": "d_vor_feesha",
   "ship_name": "D'VOR FEESHA",
   "ship_class": "survey",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

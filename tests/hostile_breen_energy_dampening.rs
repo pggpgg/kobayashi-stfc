@@ -1,5 +1,5 @@
 //! Breen Warship "Energy-Dampening Field":
-//! 100% of incoming damage routes to the hostile's shields (overflow spills to hull) and the
+//! 100% of incoming damage routes to the hostile's shields (excess is discarded) and the
 //! hostile regenerates 25% of max shield HP at the start of each round. Per the ability text
 //! ("This cannot be altered by officers, Forbidden Tech, etc.") officer/FT shield-bypass does
 //! not punch through; the tag-gated U.S.S. Vengeance Advanced Sabotage hull ability — the
@@ -190,8 +190,11 @@ fn sustained_dps_below_regen_break_even_never_touches_hull_and_times_out() {
 
 #[test]
 fn burst_dps_above_break_even_breaks_through_and_kills() {
-    // 2M in one round vs 1M shields: 1M absorbed, 1M overflow spills to the hull and kills.
-    let att = attacker(2_000_000.0);
+    // Two 1M shots in one volley: the first empties shields, the second reaches hull
+    // before the next round's shield repair. A single oversized shot cannot spill.
+    let mut att = attacker(2_000_000.0);
+    att.weapons[0].attack = 1_000_000.0;
+    att.weapons[0].shots = Some(2);
     let def = breen_defender();
     let cfg = config(20, HOSTILE_TAG_MASK_BREEN_WARSHIP);
     let result = run(
@@ -206,6 +209,22 @@ fn burst_dps_above_break_even_breaks_through_and_kills() {
         "burst damage above the shield pool + regen must break through (hull remaining {})",
         result.defender_hull_remaining
     );
+    assert_eq!(result.rounds_simulated, 1);
+}
+
+#[test]
+fn one_oversized_shot_cannot_spill_through_routing_before_round_start_repair() {
+    let att = attacker(2_000_000.0);
+    let def = breen_defender();
+    let result = run(
+        &att,
+        &def,
+        &config(3, HOSTILE_TAG_MASK_BREEN_WARSHIP),
+        &CrewConfiguration::default(),
+        &routing_crew(0.25),
+    );
+    assert_eq!(result.defender_hull_remaining, def.hull_health);
+    assert!(result.winner_by_round_limit);
 }
 
 #[test]

@@ -66,7 +66,8 @@ fn production_kras_bridge_coverage_and_pending() {
         .as_ref()
         .and_then(|a| a.effects.first())
         .expect("bridge effect");
-    assert_eq!(bridge_eff.operator.as_deref(), Some("sub"));
+    // OfficerStatAll MultiplySub is represented as signed additive rank values.
+    assert_eq!(bridge_eff.operator.as_deref(), Some("add"));
     let cov = lcars_effect_coverage(bridge_eff, "kras-a47042", &opts);
     assert_eq!(
         cov.tier,
@@ -90,4 +91,43 @@ fn production_kras_bridge_coverage_and_pending() {
         pending.conditions.as_slice(),
         [AbilityConditionSpec::DefenderIsPlayerShip]
     ));
+}
+
+#[test]
+fn production_kras_bridge_multiply_sub_stays_negative_at_every_rank() {
+    let file = build_officer_model_file_default().expect("bundled officers");
+    let officers = index_lcars_officers_by_id(file.officers);
+    let officer = officers.get("kras-a47042").expect("kras");
+    let effect = officer
+        .bridge_ability
+        .as_ref()
+        .and_then(|ability| ability.effects.first())
+        .expect("bridge effect");
+
+    let values = effect
+        .scaling
+        .as_ref()
+        .and_then(|scaling| scaling.values.as_ref())
+        .expect("rank values");
+    assert_eq!(values.len(), 5);
+    assert!(
+        values.iter().all(|value| *value < 0.0),
+        "Kras MultiplySub rank values must remain reductions, got {values:?}"
+    );
+
+    let opts = ResolveOptions {
+        tier: Some(5),
+        ..ResolveOptions::default()
+    };
+    let buff = resolve_crew_to_buff_set("kras-a47042", &[], &[], &officers, &opts);
+    let pending = buff
+        .pending_officer_stat_contributions
+        .iter()
+        .find(|row| row.stat_key == "officer_stat_all" && !row.target_attacker)
+        .expect("enemy bridge pending row");
+    assert!(
+        (pending.value - 0.6).abs() < 1e-9,
+        "rank-5 Kras should preserve the typed positive 60% enemy-penalty magnitude, got {}",
+        pending.value
+    );
 }

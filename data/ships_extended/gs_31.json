@@ -2,6 +2,7 @@
   "id": "gs_31",
   "ship_name": "GS-31",
   "ship_class": "interceptor",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

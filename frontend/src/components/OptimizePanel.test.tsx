@@ -1,318 +1,371 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { type ComponentProps, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { CrewState } from "../lib/types";
+import {
+  defaultOptimizerSettings,
+  type OptimizerSettings,
+} from "../lib/useOptimizerSettings";
 import OptimizePanel from "./OptimizePanel";
 
-const emptyCrew: CrewState = {
-  captain: null,
-  bridge: [null, null],
-  belowDeck: [null, null, null],
-};
-
-const baseProps = {
+type PanelProps = ComponentProps<typeof OptimizePanel>;
+const baseProps: PanelProps = {
   collapsed: false,
   onToggleCollapsed: vi.fn(),
-  officerOptions: [] as import("../lib/api").OfficerListItem[],
-  crew: emptyCrew,
-  loadingOptimize: false,
-  optimizeCrewsDone: null as number | null,
-  optimizeTotalCrews: null as number | null,
-  maxCandidates: null as number | null,
-  onMaxCandidatesChange: vi.fn(),
-  belowDecksPoolMode:
-    "strict" as import("../lib/optimizeWarmStart").BelowDecksPoolMode,
-  onBelowDecksPoolModeChange: vi.fn(),
-  availableSeeds: [] as string[],
-  selectedSeeds: [] as string[],
-  onSelectedSeedsChange: vi.fn(),
-  heuristicsOnly: false,
-  onHeuristicsOnlyChange: vi.fn(),
-  fastDiscovery: false,
-  onFastDiscoveryChange: vi.fn(),
-  belowDecksStrategy: "ordered" as const,
-  onBelowDecksStrategyChange: vi.fn(),
-  optimizerStrategy: "tiered" as const,
-  onOptimizerStrategyChange: vi.fn(),
-  enableLearnedPairPrior: true,
-  onEnableLearnedPairPriorChange: vi.fn(),
-  tieredScoutSims: null as number | null,
-  onTieredScoutSimsChange: vi.fn(),
-  tieredTopK: null as number | null,
-  onTieredTopKChange: vi.fn(),
-  tieredRandomExplorationPct: null as number | null,
-  onTieredRandomExplorationPctChange: vi.fn(),
-  localRefinement: false,
-  onLocalRefinementChange: vi.fn(),
-  noveltyLambdaText: "",
-  onNoveltyLambdaTextChange: vi.fn(),
-  noveltyDiverseTopText: "",
-  onNoveltyDiverseTopTextChange: vi.fn(),
-  noveltyPoolText: "",
-  noveltyHistoryAnchors: false,
-  onNoveltyHistoryAnchorsChange: () => {},
-  onNoveltyPoolTextChange: vi.fn(),
-  optimizeMustInclude: "",
-  onOptimizeMustIncludeChange: vi.fn(),
-  optimizeExclude: "",
-  onOptimizeExcludeChange: vi.fn(),
-  optimizeCaptainMust: "",
-  onOptimizeCaptainMustChange: vi.fn(),
-  optimizeBridgeMust: "",
-  onOptimizeBridgeMustChange: vi.fn(),
-  optimizeBelowMust: "",
-  onOptimizeBelowMustChange: vi.fn(),
-  optimizeGroupsJson: "",
-  onOptimizeGroupsJsonChange: vi.fn(),
-  chainGrindEnabled: false,
-  onChainGrindEnabledChange: vi.fn(),
-  chainKillsTarget: 3,
-  onChainKillsTargetChange: vi.fn(),
-  chainSecondary: "min_hull_damage" as const,
-  onChainSecondaryChange: vi.fn(),
-  cachedWarmStartBadge: false,
+  officerOptions: [],
+  availableSeeds: [],
+  settings: { ...defaultOptimizerSettings(), maxCandidates: null },
+  onChange: vi.fn(),
+  progress: {
+    loadingOptimize: false,
+    optimizeCrewsDone: null,
+    optimizeTotalCrews: null,
+  },
 };
+function renderPanel(
+  settings: Partial<OptimizerSettings> = {},
+  props: Partial<PanelProps> = {},
+) {
+  return render(
+    <OptimizePanel
+      {...baseProps}
+      {...props}
+      settings={{ ...baseProps.settings, ...settings }}
+    />,
+  );
+}
+function GroupsHarness({ initial = "" }: { initial?: string }) {
+  const [settings, setSettings] = useState(() => ({
+    ...defaultOptimizerSettings(),
+    optimizeGroupsJson: initial,
+  }));
+  return (
+    <>
+      <OptimizePanel
+        {...baseProps}
+        settings={settings}
+        onChange={(patch) =>
+          setSettings((previous) => ({ ...previous, ...patch }))
+        }
+        officerOptions={[
+          { id: "a", name: "Picard", slot: "captain" },
+          { id: "b", name: "Data", slot: "bridge" },
+          { id: "c", name: "Riker", slot: "bridge" },
+        ]}
+      />
+      <output data-testid="saved-groups">{settings.optimizeGroupsJson}</output>
+    </>
+  );
+}
+function renderGroups(initial = "") {
+  const view = render(<GroupsHarness initial={initial} />);
+  const summary = screen.getByText("Search constraints");
+  if (!summary.closest("details")?.open) fireEvent.click(summary);
+  return view;
+}
+
+describe("#302 officer groups and recommendation wording", () => {
+  it("starts empty with an add action and no raw JSON editor", () => {
+    renderGroups();
+    expect(
+      screen.getByRole("button", { name: "Add officer group" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("textbox", { name: /Groups \(JSON\)/ }),
+    ).toBeNull();
+  });
+  it("adds searchable officers and changes the required count using the existing wire structure", () => {
+    render(<GroupsHarness />);
+    fireEvent.click(screen.getByRole("button", { name: "Add officer group" }));
+    const group = screen.getByRole("group", { name: "Officer group 1" });
+    fireEvent.change(within(group).getByRole("combobox"), {
+      target: { value: "pica" },
+    });
+    fireEvent.click(within(group).getByRole("option", { name: "Picard" }));
+    fireEvent.change(within(group).getByRole("combobox"), {
+      target: { value: "data" },
+    });
+    fireEvent.click(within(group).getByRole("option", { name: "Data" }));
+    fireEvent.change(
+      within(group).getByRole("spinbutton", {
+        name: "Minimum officers required",
+      }),
+      { target: { value: "2" } },
+    );
+    expect(
+      JSON.parse(screen.getByTestId("saved-groups").textContent || "null"),
+    ).toEqual([{ officers: ["Picard", "Data"], min_count: 2 }]);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(group.closest("details")?.open).toBe(true);
+  });
+  it("loads existing groups, allows multiple groups, removes members and removes a group", () => {
+    renderGroups('[{"officers":["Picard","Data"],"min_count":1}]');
+    const first = screen.getByRole("group", { name: "Officer group 1" });
+    expect(within(first).getByText("Picard")).toBeTruthy();
+    fireEvent.click(within(first).getByRole("button", { name: "Remove Data" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add officer group" }));
+    expect(screen.getByRole("group", { name: "Officer group 2" })).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove officer group 2" }),
+    );
+    expect(
+      JSON.parse(screen.getByTestId("saved-groups").textContent || "null"),
+    ).toEqual([{ officers: ["Picard"], min_count: 1 }]);
+  });
+  it("shows invalid empty groups and impossible minimum counts before submission", () => {
+    renderGroups('[{"officers":["Picard"],"min_count":2}]');
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /minimum.*selected officers/i,
+    );
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Minimum officers required" }),
+      { target: { value: "1" } },
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Remove Picard" }));
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /choose at least one officer/i,
+    );
+  });
+  it("preserves saved officer names containing commas when editing a group", () => {
+    renderGroups('[{"officers":["Picard, Locutus","Data"],"min_count":1}]');
+    fireEvent.click(screen.getByRole("button", { name: "Remove Data" }));
+    expect(
+      JSON.parse(screen.getByTestId("saved-groups").textContent || "null"),
+    ).toEqual([{ officers: ["Picard, Locutus"], min_count: 1 }]);
+  });
+  it("retains malformed saved group settings visibly until explicitly cleared", () => {
+    renderGroups("{damaged settings");
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /saved officer groups/i,
+    );
+    expect(screen.getByTestId("saved-groups").textContent).toBe(
+      "{damaged settings",
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Clear invalid groups" }),
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+  it("uses descriptions of recommendation effects instead of storage and algorithm labels", () => {
+    renderPanel({ noveltyLambdaText: "0.5" });
+    fireEvent.click(screen.getByText("Recommendation variety"));
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Prefer different officers from previous recommendations",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(/persisted optimize_history|warm-start cache key/),
+    ).toBeNull();
+    expect(screen.getByText("Recommendation variety")).toBeTruthy();
+  });
+});
 
 describe("OptimizePanel", () => {
   it("renders expanded panel with Strategy heading", () => {
-    render(<OptimizePanel {...baseProps} />);
+    renderPanel();
     expect(screen.getByText("Strategy")).toBeTruthy();
   });
-
   it("renders collapsed state with expand button", () => {
-    render(<OptimizePanel {...baseProps} collapsed={true} />);
+    renderPanel({}, { collapsed: true });
     expect(screen.getByLabelText("Expand panel")).toBeTruthy();
   });
-
   it("calls onToggleCollapsed when collapse button clicked", () => {
     const fn = vi.fn();
-    render(<OptimizePanel {...baseProps} onToggleCollapsed={fn} />);
+    renderPanel({}, { onToggleCollapsed: fn });
     fireEvent.click(screen.getByLabelText("Collapse panel"));
     expect(fn).toHaveBeenCalledOnce();
   });
-
-  it("shows heuristic seeds when available", () => {
-    render(
-      <OptimizePanel
-        {...baseProps}
-        availableSeeds={["swarm-crews", "borg-crews"]}
-      />,
-    );
-    expect(screen.getByText("Heuristics seeds")).toBeTruthy();
+  it("shows starter crews when available", () => {
+    renderPanel({}, { availableSeeds: ["swarm-crews", "borg-crews"] });
+    expect(screen.getByText("Starter crews")).toBeTruthy();
     expect(screen.getByText("swarm-crews")).toBeTruthy();
     expect(screen.getByText("borg-crews")).toBeTruthy();
   });
-
-  it("shows heuristics seeds heading and hint when no seeds", () => {
-    render(<OptimizePanel {...baseProps} availableSeeds={[]} />);
-    expect(screen.getByText("Heuristics seeds")).toBeTruthy();
+  it("shows starter crews heading and hint when no seeds", () => {
+    renderPanel();
+    expect(screen.getByText("Starter crews")).toBeTruthy();
     expect(
-      screen.getByRole("note", {
-        name: /data\/heuristics/i,
+      screen.getByRole("note", { name: /data\/heuristics/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/No starter crew lists are available/i),
+    ).toBeTruthy();
+  });
+  it("shows below-decks selection when seeds are selected", () => {
+    renderPanel(
+      { selectedSeeds: ["swarm-crews"] },
+      { availableSeeds: ["swarm-crews"] },
+    );
+    expect(screen.getByText("Below-decks selection")).toBeTruthy();
+    expect(screen.getByText(/Use only starter crews/)).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Include starter crews in the main search",
       }),
     ).toBeTruthy();
-    expect(screen.getByText(/No seeds were returned/i)).toBeTruthy();
   });
-
-  it("shows below-decks strategy when seeds are selected", () => {
-    render(
-      <OptimizePanel
-        {...baseProps}
-        availableSeeds={["swarm-crews"]}
-        selectedSeeds={["swarm-crews"]}
-      />,
-    );
-    expect(screen.getByText("Below-decks strategy")).toBeTruthy();
-    expect(screen.getByText(/Heuristics only/)).toBeTruthy();
-    expect(screen.getByText(/Fast discovery/)).toBeTruthy();
-  });
-
   it("disables fast discovery when strategy is genetic", () => {
-    render(
-      <OptimizePanel
-        {...baseProps}
-        availableSeeds={["swarm-crews"]}
-        selectedSeeds={["swarm-crews"]}
-        optimizerStrategy="genetic"
-      />,
+    renderPanel(
+      { selectedSeeds: ["swarm-crews"], optimizerStrategy: "genetic" },
+      { availableSeeds: ["swarm-crews"] },
     );
-    const fd = screen.getByRole("checkbox", {
-      name: /Fast discovery: merge seed crews into main optimize pipeline/,
-    });
-    expect((fd as HTMLInputElement).disabled).toBe(true);
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Include starter crews in the main search",
+        }) as HTMLInputElement
+      ).disabled,
+    ).toBe(true);
   });
-
-  it("calls onMaxCandidatesChange when input changes", () => {
+  it("updates max candidates through the typed settings callback", () => {
     const fn = vi.fn();
-    render(<OptimizePanel {...baseProps} onMaxCandidatesChange={fn} />);
-    const input = screen.getByPlaceholderText("No limit");
-    fireEvent.change(input, { target: { value: "500" } });
-    expect(fn).toHaveBeenCalledWith(500);
+    renderPanel({}, { onChange: fn });
+    fireEvent.change(screen.getByPlaceholderText("Auto limit (10,000)"), {
+      target: { value: "500" },
+    });
+    expect(fn).toHaveBeenCalledWith({ maxCandidates: 500 });
   });
-
+  it("#327 describes the server safety limit when max crews is blank", () => {
+    renderPanel();
+    expect(screen.getByPlaceholderText("Auto limit (10,000)")).toBeTruthy();
+    expect(
+      screen.getByText(/Blank uses the server's 10,000-candidate safety limit/),
+    ).toBeTruthy();
+  });
   it("clamps max candidates to 2,000,000", () => {
     const fn = vi.fn();
-    render(<OptimizePanel {...baseProps} onMaxCandidatesChange={fn} />);
-    const input = screen.getByPlaceholderText("No limit");
-    fireEvent.change(input, { target: { value: "9999999" } });
-    expect(fn).toHaveBeenCalledWith(2_000_000);
+    renderPanel({}, { onChange: fn });
+    fireEvent.change(screen.getByPlaceholderText("Auto limit (10,000)"), {
+      target: { value: "9999999" },
+    });
+    expect(fn).toHaveBeenCalledWith({ maxCandidates: 2_000_000 });
   });
-
-  it("sets maxCandidates to null when input cleared", () => {
+  it("sets max candidates to null when input cleared", () => {
     const fn = vi.fn();
-    render(
-      <OptimizePanel
-        {...baseProps}
-        maxCandidates={100}
-        onMaxCandidatesChange={fn}
-      />,
-    );
-    const input = screen.getByPlaceholderText("No limit");
-    fireEvent.change(input, { target: { value: "" } });
-    expect(fn).toHaveBeenCalledWith(null);
+    renderPanel({ maxCandidates: 100 }, { onChange: fn });
+    fireEvent.change(screen.getByPlaceholderText("Auto limit (10,000)"), {
+      target: { value: "" },
+    });
+    expect(fn).toHaveBeenCalledWith({ maxCandidates: null });
   });
-
   it("changes the below-decks pool mode select", () => {
     const fn = vi.fn();
-    render(<OptimizePanel {...baseProps} onBelowDecksPoolModeChange={fn} />);
-    const select = screen.getByRole("combobox", {
-      name: /Below-decks officer pool/,
-    });
-    fireEvent.change(select, { target: { value: "scored" } });
-    expect(fn).toHaveBeenCalledWith("scored");
+    renderPanel({}, { onChange: fn });
+    fireEvent.click(screen.getByText("Search scope"));
+    fireEvent.change(
+      screen.getByRole("combobox", { name: /Below-decks officer pool/ }),
+      { target: { value: "scored" } },
+    );
+    expect(fn).toHaveBeenCalledWith({ belowDecksPoolMode: "scored" });
   });
-
   it("shows live status during optimization", () => {
-    render(
-      <OptimizePanel
-        {...baseProps}
-        loadingOptimize={true}
-        optimizeCrewsDone={50}
-        optimizeTotalCrews={200}
-      />,
+    renderPanel(
+      {},
+      {
+        progress: {
+          loadingOptimize: true,
+          optimizeCrewsDone: 50,
+          optimizeTotalCrews: 200,
+        },
+      },
     );
     expect(screen.getByText(/Live: units 50 \/ 200/)).toBeTruthy();
   });
-
-  it("shows tiered scout/top-K fields when strategy is tiered", () => {
-    render(<OptimizePanel {...baseProps} optimizerStrategy="tiered" />);
+  it("shows scouting fields when strategy is tiered", () => {
+    renderPanel({ optimizerStrategy: "tiered" });
     expect(screen.getByPlaceholderText("500 (default)")).toBeTruthy();
     expect(screen.getByPlaceholderText("20 (default)")).toBeTruthy();
   });
-
-  it("hides tiered scout/top-K fields when strategy is not tiered", () => {
-    render(<OptimizePanel {...baseProps} optimizerStrategy="exhaustive" />);
+  it("hides scouting fields when strategy is not tiered", () => {
+    renderPanel({ optimizerStrategy: "exhaustive" });
     expect(screen.queryByPlaceholderText("500 (default)")).toBeNull();
     expect(screen.queryByPlaceholderText("20 (default)")).toBeNull();
   });
-
-  it("toggles learned pair prior checkbox", () => {
+  it("toggles the successful-pairs preference", () => {
     const fn = vi.fn();
-    render(
-      <OptimizePanel {...baseProps} onEnableLearnedPairPriorChange={fn} />,
-    );
+    renderPanel({}, { onChange: fn });
     fireEvent.click(
-      screen.getByRole("checkbox", { name: /Learned pair prior/i }),
+      screen.getByRole("checkbox", {
+        name: /Favor officer pairs that worked before/i,
+      }),
     );
-    expect(fn).toHaveBeenCalledWith(false);
+    expect(fn).toHaveBeenCalledWith({ enableLearnedPairPrior: false });
   });
-
   it("offers the refine-finalists toggle on the lanes that support it", () => {
-    for (const strategy of ["tiered", "genetic"] as const) {
-      const view = render(
-        <OptimizePanel {...baseProps} optimizerStrategy={strategy} />,
-      );
+    for (const optimizerStrategy of ["tiered", "genetic"] as const) {
+      const view = renderPanel({ optimizerStrategy });
       expect(
         screen.getByRole("checkbox", { name: /Refine finalists/i }),
       ).toBeTruthy();
       view.unmount();
     }
   });
-
   it("hides the refine-finalists toggle where the server ignores it", () => {
-    for (const strategy of ["exhaustive", "linear_eval"] as const) {
-      const view = render(
-        <OptimizePanel {...baseProps} optimizerStrategy={strategy} />,
-      );
+    for (const optimizerStrategy of ["exhaustive", "linear_eval"] as const) {
+      const view = renderPanel({ optimizerStrategy });
       expect(
         screen.queryByRole("checkbox", { name: /Refine finalists/i }),
       ).toBeNull();
       view.unmount();
     }
   });
-
   it("toggles refine finalists", () => {
     const fn = vi.fn();
-    render(
-      <OptimizePanel
-        {...baseProps}
-        optimizerStrategy="tiered"
-        onLocalRefinementChange={fn}
-      />,
-    );
+    renderPanel({ optimizerStrategy: "tiered" }, { onChange: fn });
     fireEvent.click(
       screen.getByRole("checkbox", { name: /Refine finalists/i }),
     );
-    expect(fn).toHaveBeenCalledWith(true);
+    expect(fn).toHaveBeenCalledWith({ localRefinement: true });
   });
-
-  it("calls onTieredScoutSimsChange and clamps to 100,000", () => {
+  it("updates scout sims and clamps to 100,000", () => {
     const fn = vi.fn();
-    render(
-      <OptimizePanel
-        {...baseProps}
-        onTieredScoutSimsChange={fn}
-        optimizerStrategy="tiered"
-      />,
-    );
+    renderPanel({ optimizerStrategy: "tiered" }, { onChange: fn });
     const input = screen.getByPlaceholderText("500 (default)");
     fireEvent.change(input, { target: { value: "2000" } });
-    expect(fn).toHaveBeenCalledWith(2000);
+    expect(fn).toHaveBeenCalledWith({ tieredScoutSims: 2000 });
     fireEvent.change(input, { target: { value: "999999" } });
-    expect(fn).toHaveBeenCalledWith(100_000);
+    expect(fn).toHaveBeenCalledWith({ tieredScoutSims: 100_000 });
   });
-
-  it("clears tiered scout sims when input emptied", () => {
+  it("clears scout sims when input emptied", () => {
     const fn = vi.fn();
-    render(
-      <OptimizePanel
-        {...baseProps}
-        tieredScoutSims={100}
-        onTieredScoutSimsChange={fn}
-        optimizerStrategy="tiered"
-      />,
-    );
+    renderPanel({ tieredScoutSims: 100 }, { onChange: fn });
     fireEvent.change(screen.getByPlaceholderText("500 (default)"), {
       target: { value: "" },
     });
-    expect(fn).toHaveBeenCalledWith(null);
+    expect(fn).toHaveBeenCalledWith({ tieredScoutSims: null });
   });
-
-  it("shows cached warm start badge when last run reused profile history", () => {
-    render(<OptimizePanel {...baseProps} cachedWarmStartBadge={true} />);
-    expect(screen.getByText("Cached warm start")).toBeTruthy();
+  it("shows saved results badge when last run reused profile history", () => {
+    renderPanel(
+      {},
+      { progress: { ...baseProps.progress, cachedWarmStartBadge: true } },
+    );
+    expect(screen.getByText("Saved results reused")).toBeTruthy();
   });
-
   it("says why saved results were ignored and names the cause", () => {
-    render(<OptimizePanel {...baseProps} staleCacheRefusedReason="profile" />);
+    renderPanel(
+      {},
+      {
+        progress: { ...baseProps.progress, staleCacheRefusedReason: "profile" },
+      },
+    );
     expect(screen.getByText("Saved results ignored")).toBeTruthy();
     expect(screen.getByText(/Your profile changed/i)).toBeTruthy();
     expect(screen.getByText(/re-simulated/i)).toBeTruthy();
   });
-
   it("hides the ignored-results notice when nothing was refused", () => {
-    render(<OptimizePanel {...baseProps} staleCacheRefusedReason={null} />);
+    renderPanel();
     expect(screen.queryByText("Saved results ignored")).toBeNull();
   });
-
-  it("shows linear eval strategy and hides tiered fields", () => {
-    render(<OptimizePanel {...baseProps} optimizerStrategy="linear_eval" />);
+  it("shows approximate ranking and hides incompatible fields", () => {
+    renderPanel({ optimizerStrategy: "linear_eval" });
     expect(
-      screen.getByRole("option", { name: /Linear eval \(expected damage\)/i }),
+      screen.getByRole("option", { name: "Estimate expected damage" }),
     ).toBeTruthy();
-    expect(
-      screen.queryByText("Tiered scout sims / crew (optional)"),
-    ).toBeNull();
+    expect(screen.queryByText("Quick trials per crew (optional)")).toBeNull();
     expect(screen.queryByText(/Chain grind/)).toBeNull();
-    expect(screen.queryByText("Learned pair prior")).toBeNull();
+    expect(
+      screen.queryByText("Favor officer pairs that worked before"),
+    ).toBeNull();
   });
 });

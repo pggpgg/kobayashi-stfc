@@ -5,17 +5,23 @@ use std::collections::{HashMap, HashSet};
 use serde::Serialize;
 
 use crate::combat::types::{OpponentFactionTag, ShipType};
+use crate::data::combat_effect_spec::{
+    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTriggerSpec,
+};
 use crate::data::import;
 use crate::data::profile::{
     combat_research_bonuses_from_import, combat_research_conditional_bonuses_from_import,
-    combat_research_owner_faction_bonuses_from_import, is_support_buff_gated_research_rid,
-    research_levels_by_rid_from_import,
+    combat_research_owner_faction_bonuses_from_import,
+    combat_research_ship_setup_bonuses_from_import, is_support_buff_gated_research_rid,
+    replace_research_setup_bonuses_with_native_snapshot, research_levels_by_rid_from_import,
+    research_ship_setup_condition_matches, PlayerProfile,
 };
-use crate::data::profile_index::{profile_path, RESEARCH_IMPORTED};
+use crate::data::profile_index::{profile_path, BUFFS_IMPORTED, RESEARCH_IMPORTED};
 use crate::data::research::{
     cumulative_dual_gate_hull_shield_research_fractions,
     cumulative_research_level_conditional_bonuses, load_research_canonical_overrides,
-    ResearchBonusConditionKey, ResearchCatalog, ResearchRecord, DEFAULT_RESEARCH_CANONICAL_PATH,
+    ResearchBonusConditionKey, ResearchCanonicalOverride, ResearchCatalog, ResearchRecord,
+    DEFAULT_RESEARCH_CANONICAL_PATH,
 };
 
 /// Resolved ship + hostile for scenario-effective research totals (optional query params).
@@ -25,11 +31,15 @@ pub struct ResearchSummaryScenarioContext {
     pub hostile_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ship_faction: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ship_grade: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ship_class: Option<String>,
     pub defender_faction: String,
     pub defender_ship_class: String,
 }
 
-/// One conditional research bonus line (attack-phase seat source, not flat profile merge).
+/// One conditional research bonus line (runtime seat source, not flat profile merge).
 #[derive(Debug, Clone, Serialize)]
 pub struct ResearchConditionalBonusLine {
     pub stat: String,
@@ -56,7 +66,7 @@ pub struct ResearchSummaryRow {
     pub level: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub research_name: Option<String>,
-    /// True when `research_catalog.json` contains this `rid`.
+    /// True when the catalog or a canonical override defines this `rid`.
     pub catalog_record_present: bool,
     /// How this row contributes to combat: `unmapped`, `non_combat`, `flat`, `owner_faction`, `conditional`, `mixed`, `support_buff_gated`.
     pub combat_kind: String,
@@ -86,7 +96,7 @@ pub struct ResearchSummaryOptions {
     pub hostile_id: Option<String>,
 }
 
-/// Effective research-derived combat bonuses for the active profile (same merge as scenario / optimize).
+/// Owned-project audit plus scenario totals using the same setup source as simulate / optimize.
 #[derive(Debug, Clone, Serialize)]
 pub struct ResearchCombatSummary {
     pub profile_id: String,
@@ -98,25 +108,29 @@ pub struct ResearchCombatSummary {
     /// Unmapped rows with levels, sorted by level descending (actionable triage list).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub unmapped_research: Vec<UnmappedResearchEntry>,
-    /// Aggregated combat stat bonuses from all synced research (engine keys).
+    /// Catalog bonuses from owned projects; ownership does not establish active deployment.
     #[serde(default, skip_serializing_if = "combat_bonuses_empty")]
     pub combat_bonuses_from_research: HashMap<String, f64>,
     /// Cumulative owner-faction-gated research (`faction_slug` → stat → value); same merge as
     /// [`crate::data::profile::PlayerProfile::research_owner_faction_bonuses`].
     #[serde(default, skip_serializing_if = "owner_faction_nested_empty")]
     pub combat_owner_faction_bonuses_from_research: HashMap<String, HashMap<String, f64>>,
-    /// Conditional research compiled to attack-phase seats (not in flat `combat_bonuses_from_research`).
+    /// Conditional research compiled to runtime seats (not in flat `combat_bonuses_from_research`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub combat_conditional_bonuses_from_research: Vec<ResearchConditionalBonusLine>,
     /// When `ship_id` + `hostile_id` query params resolve, describes the scenario lens.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scenario_context: Option<ResearchSummaryScenarioContext>,
-    /// Flat research totals for the scenario: unconditional + owner-faction slice for the ship + dual-gate hull/shield fractions.
+    /// Scenario setup totals: native active buffs replace reviewed catalog families when available.
     #[serde(default, skip_serializing_if = "combat_bonuses_empty")]
     pub combat_bonuses_scenario_effective: HashMap<String, f64>,
     /// Conditional lines whose static gates (faction / class / owner hull) match the scenario; runtime gates flagged on each line.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub combat_conditional_scenario_active: Vec<ResearchConditionalBonusLine>,
+    /// Source used for the reviewed setup families in scenario-effective totals.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scenario_setup_bonus_source: Option<String>,
+    pub source_limitations: Vec<String>,
     pub research: Vec<ResearchSummaryRow>,
 }
 
@@ -153,10 +167,16 @@ fn format_condition_label(key: &ResearchBonusConditionKey) -> String {
     if let Some(ref s) = key.defender_ship_class {
         parts.push(format!("vs {s}"));
     }
+    if let Some(ref s) = key.attacker_ship_class {
+        parts.push(format!("{s} ship"));
+    }
     if !key.attacker_factions.is_empty() {
         parts.push(format!("{} hull", key.attacker_factions.join("/")));
     } else if let Some(ref s) = key.attacker_faction {
         parts.push(format!("{s} hull"));
+    }
+    if let Some(grade) = key.attacker_min_grade {
+        parts.push(format!("ship grade {grade}+"));
     }
     if parts.is_empty() {
         "conditional".into()
@@ -229,9 +249,15 @@ fn owner_faction_keys_match_slug(key: &ResearchBonusConditionKey, owner_lc: &str
 fn research_condition_static_parts_match_scenario(
     key: &ResearchBonusConditionKey,
     ship_faction: Option<&str>,
+    ship_grade: Option<u32>,
     defender_faction: OpponentFactionTag,
     defender_ship_type: ShipType,
 ) -> bool {
+    if let Some(minimum) = key.attacker_min_grade {
+        if ship_grade.is_none_or(|grade| grade < minimum) {
+            return false;
+        }
+    }
     if let Some(ref slug) = key.defender_faction {
         let Some(tag) = OpponentFactionTag::from_data_slug(slug) else {
             return false;
@@ -270,6 +296,7 @@ struct ScenarioResolved {
     defender_ship_type: ShipType,
 }
 
+#[allow(clippy::too_many_arguments)] // These inputs are separate imported, catalog, scenario, and native data sources.
 fn build_scenario_effective(
     imported: &[import::ResearchEntry],
     catalog: &ResearchCatalog,
@@ -278,14 +305,44 @@ fn build_scenario_effective(
     owner_nested: &HashMap<String, HashMap<String, f64>>,
     conditional: &[ResearchConditionalBonusLine],
     scenario: &ScenarioResolved,
+    native: Option<&HashMap<String, f64>>,
 ) -> (HashMap<String, f64>, Vec<ResearchConditionalBonusLine>) {
-    let mut effective = flat.clone();
+    let ship_type = scenario
+        .context
+        .ship_class
+        .as_deref()
+        .and_then(ShipType::from_data_slug);
+    let mut scratch = PlayerProfile {
+        bonuses: flat.clone(),
+        research_owner_faction_bonuses: owner_nested.clone(),
+        ..Default::default()
+    };
+    for (stat, value) in combat_research_ship_setup_bonuses_from_import(
+        imported,
+        catalog,
+        Some(exclude),
+        scenario.context.ship_grade,
+        ship_type,
+    ) {
+        *scratch.bonuses.entry(stat).or_insert(0.0) += value;
+    }
+    if let Some(native) = native {
+        replace_research_setup_bonuses_with_native_snapshot(
+            &mut scratch,
+            imported,
+            catalog,
+            Some(exclude),
+            scenario.context.ship_grade,
+            ship_type,
+            native,
+        );
+    }
+    let mut effective = scratch.bonuses;
     if let Some(ref faction) = scenario.context.ship_faction {
         let fk = faction.trim().to_ascii_lowercase();
-        if let Some(inner) = owner_nested.get(&fk) {
+        if let Some(inner) = scratch.research_owner_faction_bonuses.get(&fk) {
             for (stat, value) in inner {
-                let cur = effective.get(stat).copied().unwrap_or(0.0);
-                effective.insert(stat.clone(), cur + value);
+                *effective.entry(stat.clone()).or_default() += value;
             }
         }
     }
@@ -314,9 +371,25 @@ fn build_scenario_effective(
     let active_conditional: Vec<ResearchConditionalBonusLine> = conditional
         .iter()
         .filter(|line| {
+            if (line.condition.attacker_min_grade.is_some()
+                || line.condition.attacker_ship_class.is_some())
+                && (!research_ship_setup_condition_matches(
+                    &line.condition,
+                    &line.stat,
+                    scenario.context.ship_grade,
+                    scenario
+                        .context
+                        .ship_class
+                        .as_deref()
+                        .and_then(ShipType::from_data_slug),
+                ) || !line.value.is_finite())
+            {
+                return false;
+            }
             research_condition_static_parts_match_scenario(
                 &line.condition,
                 scenario.context.ship_faction.as_deref(),
+                scenario.context.ship_grade,
                 scenario.defender_faction,
                 scenario.defender_ship_type,
             )
@@ -324,6 +397,7 @@ fn build_scenario_effective(
         .cloned()
         .collect();
 
+    effective.retain(|_, value| value.abs() > 1e-12);
     (effective, active_conditional)
 }
 
@@ -345,6 +419,62 @@ fn row_conditional_lines_for_record(
     }
     out.sort_by(|a, b| a.stat.cmp(&b.stat));
     out
+}
+
+/// Project the verified round-start modifier families from their canonical source.
+/// Other canonical effects may carry timing or conditions this summary cannot express.
+fn canonical_round_start_summary(
+    record: &ResearchCanonicalOverride,
+    player_level: u32,
+) -> Vec<ResearchConditionalBonusLine> {
+    let level = (player_level as usize).min(
+        record
+            .effects
+            .iter()
+            .map(|effect| effect.by_level.len())
+            .max()
+            .unwrap_or(0),
+    );
+    if level == 0 {
+        return Vec::new();
+    }
+    record
+        .effects
+        .iter()
+        .filter_map(|effect| {
+            if effect.trigger != Some(AbilityTriggerSpec::RoundStart)
+                || effect.operation != AbilityOperationSpec::Add
+                || effect.incoming_shield_mitigation_rounds.is_some()
+            {
+                return None;
+            }
+            let stat = match effect.modifier {
+                AbilityModifierSpec::BaseMitigationStatsBonus => "base_mitigation_stats_bonus",
+                AbilityModifierSpec::OfficerShieldRegenMaxFraction => {
+                    "officer_shield_regen_max_fraction"
+                }
+                _ => return None,
+            };
+            let mut key = ResearchBonusConditionKey::default();
+            for condition in &effect.conditions {
+                match condition {
+                    AbilityConditionSpec::MoraleActive => key.requires_morale = true,
+                    AbilityConditionSpec::DefenderBurning => key.requires_defender_burning = true,
+                    AbilityConditionSpec::DefenderHullBreach => {
+                        key.requires_defender_hull_breach = true
+                    }
+                    // Never discard an unsupported gate and display an unconditional effect.
+                    _ => return None,
+                }
+            }
+            let value = if effect.snapshot_by_level {
+                effect.by_level.get(level - 1).copied().unwrap_or(0.0)
+            } else {
+                effect.by_level.iter().take(level).sum()
+            };
+            (value.is_finite() && value != 0.0).then(|| conditional_line(&key, stat, value))
+        })
+        .collect()
 }
 
 /// Builds a summary for `profiles/{profile_id}/` using the same paths and merge rules as the optimizer.
@@ -423,8 +553,11 @@ fn research_combat_summary_from_imported(
             ) = match catalog_by_rid.as_ref() {
                 None => (false, None, HashMap::new(), HashMap::new(), Vec::new()),
                 Some(map) => {
-                    let present = map.contains_key(&e.rid);
-                    let name = map.get(&e.rid).and_then(|r| r.name.clone());
+                    let canonical = canonical_overrides.get(&e.rid);
+                    let present = map.contains_key(&e.rid) || canonical.is_some();
+                    let name = canonical
+                        .and_then(|r| r.name.clone())
+                        .or_else(|| map.get(&e.rid).and_then(|r| r.name.clone()));
                     let lvl_u32 = effective_level_u32(e.level);
                     let exclude_rid = exclude_catalog_rids.contains(&e.rid);
                     let (combat_bonuses_from_row, combat_owner_faction_bonuses_from_row) =
@@ -454,8 +587,8 @@ fn research_combat_summary_from_imported(
                                 .map(|rec| row_conditional_lines_for_record(rec, lvl_u32, false))
                                 .unwrap_or_default()
                         } else if present && exclude_rid {
-                            map.get(&e.rid)
-                                .map(|rec| row_conditional_lines_for_record(rec, lvl_u32, true))
+                            canonical
+                                .map(|rec| canonical_round_start_summary(rec, lvl_u32))
                                 .unwrap_or_default()
                         } else {
                             Vec::new()
@@ -494,10 +627,11 @@ fn research_combat_summary_from_imported(
     let mut unmapped_research: Vec<UnmappedResearchEntry> = levels_by_rid
         .iter()
         .filter(|(rid, _)| {
-            catalog_by_rid
-                .as_ref()
-                .map(|m| !m.contains_key(rid))
-                .unwrap_or(true)
+            !canonical_overrides.contains_key(rid)
+                && catalog_by_rid
+                    .as_ref()
+                    .map(|m| !m.contains_key(rid))
+                    .unwrap_or(true)
         })
         .map(|(&rid, &level)| UnmappedResearchEntry {
             rid,
@@ -531,19 +665,60 @@ fn research_combat_summary_from_imported(
             )
         })
         .unwrap_or_default();
-    let combat_conditional_bonuses_from_research =
+    let mut combat_conditional_bonuses_from_research =
         conditional_lines_from_tuples(&conditional_tuples);
+    for (rid, level) in &levels_by_rid {
+        if let Some(record) = canonical_overrides.get(rid) {
+            for line in canonical_round_start_summary(record, *level) {
+                if let Some(existing) =
+                    combat_conditional_bonuses_from_research
+                        .iter_mut()
+                        .find(|existing| {
+                            existing.stat == line.stat && existing.condition == line.condition
+                        })
+                {
+                    existing.value += line.value;
+                } else {
+                    combat_conditional_bonuses_from_research.push(line);
+                }
+            }
+        }
+    }
+    combat_conditional_bonuses_from_research.sort_by(|a, b| {
+        a.stat
+            .cmp(&b.stat)
+            .then_with(|| a.condition_label.cmp(&b.condition_label))
+    });
 
+    let global_buffs =
+        import::load_imported_buffs(&profile_path(profile_id, BUFFS_IMPORTED).to_string_lossy())
+            .unwrap_or_default();
+    let native_setup = scenario.as_ref().and_then(|sc| {
+        crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+            &global_buffs,
+            sc.context.ship_class.as_deref(),
+            chrono::Utc::now().timestamp(),
+        )
+    });
+    let scenario_setup_bonus_source = scenario.as_ref().map(|_| {
+        if native_setup.is_some() {
+            "native_active_buffs"
+        } else {
+            "owned_catalog_fallback"
+        }
+        .to_string()
+    });
     let (scenario_context, combat_bonuses_scenario_effective, combat_conditional_scenario_active) =
-        if let Some(ref sc) = scenario {
+        if let (Some(sc), Some(cat)) = (scenario.as_ref(), catalog_nonempty) {
             let (eff, active) = build_scenario_effective(
                 imported,
-                catalog_nonempty.expect("scenario requires catalog"),
+                cat,
                 &exclude_catalog_rids,
                 &combat_bonuses_from_research,
                 &combat_owner_faction_bonuses_from_research,
                 &combat_conditional_bonuses_from_research,
                 sc,
+                native_setup.as_ref(),
             );
             (Some(sc.context.clone()), eff, active)
         } else {
@@ -566,6 +741,15 @@ fn research_combat_summary_from_imported(
         scenario_context,
         combat_bonuses_scenario_effective,
         combat_conditional_scenario_active,
+        scenario_setup_bonus_source,
+        source_limitations: vec![
+            "Per-project rows and global catalog totals describe owned research; ownership alone does not prove deployment eligibility.".to_string(),
+            if native_setup.is_some() {
+                "Scenario setup totals use synced active buffs for reviewed hull, shield, weapon and critical families; other families and runtime conditions retain catalog rules.".to_string()
+            } else {
+                "No recognized active research snapshot was available for the scenario; catalog fallback cannot establish all deployment conditions.".to_string()
+            },
+        ],
         research: rows,
     }
 }
@@ -589,6 +773,8 @@ fn resolve_research_summary_scenario(
             ship_id: ship_id.to_string(),
             hostile_id: hostile_id.to_string(),
             ship_faction,
+            ship_grade: crate::data::loader::resolve_ship(ship_id).and_then(|ship| ship.grade),
+            ship_class: crate::data::loader::resolve_ship(ship_id).map(|ship| ship.ship_class),
             defender_faction: defender_faction_slug,
             defender_ship_class: defender_ship_class.to_string(),
         },
@@ -602,10 +788,12 @@ mod tests {
     use super::*;
     use crate::data::import::ResearchEntry;
     use crate::data::profile::{
-        merge_research_bonuses_into_profile, PlayerProfile,
-        TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS,
+        merge_research_bonuses_into_profile, merge_ship_grade_research_bonuses_into_profile,
+        PlayerProfile, TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS,
     };
-    use crate::data::research::{ResearchBonusEntry, ResearchLevel, ResearchRecord};
+    use crate::data::research::{
+        ResearchBonusEntry, ResearchLevel, ResearchLevelValueMode, ResearchRecord,
+    };
 
     fn tiny_catalog() -> ResearchCatalog {
         ResearchCatalog {
@@ -616,6 +804,7 @@ mod tests {
                 name: Some("Test Lab".to_string()),
                 data_version: None,
                 source_note: None,
+                level_value_mode: Default::default(),
                 levels: vec![ResearchLevel {
                     level: 1,
                     bonuses: vec![ResearchBonusEntry {
@@ -640,10 +829,161 @@ mod tests {
     }
 
     #[test]
+    fn scenario_native_setup_excludes_owned_inactive_research_and_owner_pool() {
+        let catalog = crate::data::research::load_research_catalog(
+            crate::data::research::DEFAULT_RESEARCH_CATALOG_PATH,
+        )
+        .unwrap();
+        let imported = [ResearchEntry {
+            rid: 1933674629,
+            level: 3,
+        }];
+        let owned = combat_research_bonuses_from_import(&imported, &catalog, None);
+        assert_eq!(owned.get("hull_hp"), Some(&0.4));
+        let native = crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+            &[import::GlobalBuffEntry {
+                bid: 434613423,
+                level: 10,
+                expiry_time: None,
+            }],
+            Some("explorer"),
+            0,
+        )
+        .unwrap();
+        let scenario = resolve_research_summary_scenario(
+            "realta",
+            "summary_test_hostile",
+            None,
+            OpponentFactionTag::Klingon,
+            "battleship",
+        );
+        let (effective, _) = build_scenario_effective(
+            &imported,
+            &catalog,
+            &HashSet::new(),
+            &owned,
+            &HashMap::new(),
+            &[],
+            &scenario,
+            Some(&native),
+        );
+        assert!(!effective.contains_key("hull_hp"));
+        assert_eq!(effective.get("hull_hp_flat"), Some(&3400.0));
+        assert_eq!(owned.get("hull_hp"), Some(&0.4));
+    }
+
+    #[test]
     fn summary_without_catalog_sets_error() {
         let s = research_combat_summary_for_profile("p", None);
         assert!(s.error.is_some());
         assert!(s.combat_bonuses_from_research.is_empty());
+    }
+
+    #[test]
+    fn missing_or_empty_catalog_with_resolved_scenario_returns_error_without_panicking() {
+        let empty = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: Vec::new(),
+        };
+        for catalog in [None, Some(&empty)] {
+            let summary = research_combat_summary_for_profile_with_scenario(
+                "missing_catalog_scenario",
+                catalog,
+                Some("realta"),
+                Some("summary_test_hostile"),
+                None,
+                Some(OpponentFactionTag::Klingon),
+                Some("battleship"),
+            );
+            assert!(summary.error.is_some());
+            assert!(summary.combat_bonuses_scenario_effective.is_empty());
+            assert!(summary.scenario_context.is_none());
+        }
+    }
+
+    #[test]
+    fn bundled_runtime_research_summary_retains_gates_without_flat_or_cargo_bonuses() {
+        let catalog = crate::data::research::load_research_catalog(
+            crate::data::research::DEFAULT_RESEARCH_CATALOG_PATH,
+        )
+        .expect("bundled research catalog");
+        let runtime_rids = [2047743532, 535909811, 1233598019, 3288570685];
+        for (level, mitigation, regen) in [(0, 0.0, 0.0), (2, 0.75, 0.015), (99, 5.0, 0.1)] {
+            let imported: Vec<ResearchEntry> = runtime_rids
+                .into_iter()
+                .chain([851540444])
+                .map(|rid| ResearchEntry { rid, level })
+                .collect();
+            let scenario = resolve_research_summary_scenario(
+                "uss_enterprise",
+                "summary_test_hostile",
+                Some("federation".into()),
+                OpponentFactionTag::Klingon,
+                "battleship",
+            );
+            let summary = research_combat_summary_from_imported(
+                "summary_fixture",
+                &imported,
+                Some(&catalog),
+                &ResearchSummaryOptions::default(),
+                Some(scenario),
+            );
+            assert!(summary.combat_bonuses_from_research.is_empty());
+            assert!(summary
+                .combat_owner_faction_bonuses_from_research
+                .is_empty());
+            assert!(summary.combat_bonuses_scenario_effective.is_empty());
+            let cargo = summary
+                .research
+                .iter()
+                .find(|row| row.rid == 851540444)
+                .unwrap();
+            assert_eq!(cargo.combat_kind, "non_combat");
+            assert!(cargo.combat_conditional_bonuses_from_row.is_empty());
+            assert!(!summary.unmapped_rids.contains(&851540444));
+            if level == 0 {
+                assert!(summary.combat_conditional_bonuses_from_research.is_empty());
+                assert!(summary.combat_conditional_scenario_active.is_empty());
+                continue;
+            }
+            assert_eq!(summary.combat_conditional_bonuses_from_research.len(), 4);
+            assert_eq!(summary.combat_conditional_scenario_active.len(), 4);
+            for rid in runtime_rids {
+                let row = summary.research.iter().find(|row| row.rid == rid).unwrap();
+                assert_eq!(row.combat_kind, "conditional");
+                assert_eq!(row.combat_conditional_bonuses_from_row.len(), 1);
+                let line = &row.combat_conditional_bonuses_from_row[0];
+                assert!(line.requires_runtime_state);
+                assert_eq!(line.condition.requires_defender_burning, rid == 2047743532);
+                assert_eq!(
+                    line.condition.requires_defender_hull_breach,
+                    rid == 1233598019
+                );
+                assert_eq!(
+                    line.condition.requires_morale,
+                    matches!(rid, 535909811 | 3288570685)
+                );
+                if rid == 3288570685 {
+                    assert_eq!(line.stat, "officer_shield_regen_max_fraction");
+                    assert_eq!(line.value, regen);
+                } else {
+                    assert_eq!(line.stat, "base_mitigation_stats_bonus");
+                    assert_eq!(line.value, mitigation);
+                }
+                let aggregate = summary
+                    .combat_conditional_bonuses_from_research
+                    .iter()
+                    .find(|candidate| {
+                        candidate.stat == line.stat && candidate.condition == line.condition
+                    })
+                    .unwrap();
+                assert_eq!(
+                    aggregate.value, line.value,
+                    "canonical and generated rows must not double count"
+                );
+            }
+        }
     }
 
     #[test]
@@ -705,6 +1045,7 @@ mod tests {
                     name: Some("Weapon Lab".to_string()),
                     data_version: None,
                     source_note: None,
+                    level_value_mode: Default::default(),
                     levels: vec![
                         ResearchLevel {
                             level: 1,
@@ -731,6 +1072,7 @@ mod tests {
                     name: Some("Hull Lab".to_string()),
                     data_version: None,
                     source_note: None,
+                    level_value_mode: Default::default(),
                     levels: vec![ResearchLevel {
                         level: 1,
                         bonuses: vec![ResearchBonusEntry {
@@ -746,6 +1088,7 @@ mod tests {
                     name: Some("Titan Gated Lab".to_string()),
                     data_version: None,
                     source_note: None,
+                    level_value_mode: Default::default(),
                     levels: vec![ResearchLevel {
                         level: 1,
                         bonuses: vec![ResearchBonusEntry {
@@ -829,6 +1172,7 @@ mod tests {
                 name: Some("Fed-only lab".into()),
                 data_version: None,
                 source_note: None,
+                level_value_mode: Default::default(),
                 levels: vec![ResearchLevel {
                     level: 1,
                     bonuses: vec![ResearchBonusEntry {
@@ -887,6 +1231,7 @@ mod tests {
                 name: Some("Crit vs Explorer".into()),
                 data_version: None,
                 source_note: None,
+                level_value_mode: Default::default(),
                 levels: vec![ResearchLevel {
                     level: 1,
                     bonuses: vec![ResearchBonusEntry {
@@ -930,6 +1275,7 @@ mod tests {
                 name: Some("Fed-only".into()),
                 data_version: None,
                 source_note: None,
+                level_value_mode: Default::default(),
                 levels: vec![ResearchLevel {
                     level: 1,
                     bonuses: vec![ResearchBonusEntry {
@@ -972,5 +1318,129 @@ mod tests {
             Some(0.04)
         );
         assert!(s.scenario_context.is_some());
+    }
+
+    fn grade_gated_catalog() -> ResearchCatalog {
+        ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: vec![ResearchRecord {
+                rid: 9009,
+                name: Some("Grade 4+ direct hit".into()),
+                data_version: None,
+                source_note: None,
+                level_value_mode: ResearchLevelValueMode::Snapshot,
+                levels: [(1, 0.21), (2, 0.24)]
+                    .into_iter()
+                    .map(|(level, value)| ResearchLevel {
+                        level,
+                        bonuses: ["accuracy", "armor_piercing", "shield_piercing"]
+                            .into_iter()
+                            .map(|stat| ResearchBonusEntry {
+                                stat: stat.into(),
+                                value,
+                                operator: "add".into(),
+                                condition: ResearchBonusConditionKey {
+                                    attacker_min_grade: Some(4),
+                                    ..Default::default()
+                                },
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+            }],
+        }
+    }
+
+    #[test]
+    fn scenario_grade_summary_matches_runtime_for_grade_3_4_5_and_unknown() {
+        let catalog = grade_gated_catalog();
+        let imported = [ResearchEntry {
+            rid: 9009,
+            level: 2,
+        }];
+        for (ship_id, grade) in [
+            ("uss_enterprise", Some(3)),
+            ("uss_enterprise_a", Some(4)),
+            ("uss_enterprise_d", Some(5)),
+            ("unknown-grade-summary-fixture", None),
+        ] {
+            let scenario = resolve_research_summary_scenario(
+                ship_id,
+                "test_hostile",
+                Some("federation".into()),
+                OpponentFactionTag::Klingon,
+                "battleship",
+            );
+            assert_eq!(scenario.context.ship_grade, grade, "{ship_id}");
+            let summary = research_combat_summary_from_imported(
+                "p",
+                &imported,
+                Some(&catalog),
+                &ResearchSummaryOptions::default(),
+                Some(scenario),
+            );
+            let mut runtime = PlayerProfile::default();
+            merge_research_bonuses_into_profile(&mut runtime, &imported, &catalog, None);
+            merge_ship_grade_research_bonuses_into_profile(
+                &mut runtime,
+                &imported,
+                &catalog,
+                None,
+                grade,
+            );
+            assert_eq!(summary.combat_bonuses_scenario_effective, runtime.bonuses);
+            assert!(summary.combat_bonuses_from_research.is_empty());
+            assert!(summary
+                .combat_owner_faction_bonuses_from_research
+                .is_empty());
+            assert_eq!(summary.research[0].combat_kind, "conditional");
+            assert_eq!(summary.combat_conditional_bonuses_from_research.len(), 3);
+            for line in &summary.combat_conditional_bonuses_from_research {
+                assert_eq!(line.condition_label.as_deref(), Some("ship grade 4+"));
+                assert!(!line.requires_runtime_state);
+                assert_eq!(line.value, 0.24, "snapshot must not sum lower ranks");
+            }
+            if grade.is_some_and(|grade| grade >= 4) {
+                assert_eq!(summary.combat_conditional_scenario_active.len(), 3);
+                for stat in ["accuracy", "armor_piercing", "shield_piercing"] {
+                    assert_eq!(summary.combat_bonuses_scenario_effective[stat], 0.24);
+                }
+            } else {
+                assert!(summary.combat_conditional_scenario_active.is_empty());
+                assert!(summary.combat_bonuses_scenario_effective.is_empty());
+            }
+            let context = serde_json::to_value(summary.scenario_context.unwrap()).unwrap();
+            assert_eq!(context.get("ship_grade").is_some(), grade.is_some());
+        }
+    }
+
+    #[test]
+    fn unsupported_grade_combinations_are_listed_but_not_scenario_active() {
+        let mut catalog = grade_gated_catalog();
+        let level = &mut catalog.items[0].levels[1];
+        level.bonuses[0].condition.requires_morale = true;
+        level.bonuses[1].condition.attacker_faction = Some("federation".into());
+        level.bonuses[2].stat = "hull_hp".into();
+        let scenario = resolve_research_summary_scenario(
+            "uss_enterprise_a",
+            "test_hostile",
+            Some("federation".into()),
+            OpponentFactionTag::Klingon,
+            "battleship",
+        );
+        let summary = research_combat_summary_from_imported(
+            "p",
+            &[ResearchEntry {
+                rid: 9009,
+                level: 2,
+            }],
+            Some(&catalog),
+            &ResearchSummaryOptions::default(),
+            Some(scenario),
+        );
+        assert_eq!(summary.combat_conditional_bonuses_from_research.len(), 3);
+        assert!(summary.combat_conditional_scenario_active.is_empty());
+        assert!(summary.combat_bonuses_scenario_effective.is_empty());
     }
 }

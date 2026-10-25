@@ -344,41 +344,47 @@ fn reasons_with_officer_samples_groups_distinct_and_caps_samples() {
     assert_eq!(samples, &vec!["alpha"]);
 }
 
-/// Drift detector for the bundled LCARS YAML. The baseline reflects the catalog at the time
-/// this test landed; if it drifts ±5% the test fails and the engineer must explicitly bless
-/// the new number (e.g. after Step 3 lands more `combat_tag_to_stat` mappings, this baseline
-/// should drop).
+/// Exact source-trigger quarantine for the bundled canonical officer model. The three source
+/// events are intentionally unsupported until matching engine timing exists, and must remain
+/// visible as drops rather than being aliased to another event window.
 #[test]
-fn production_yaml_drop_baseline() {
+fn production_unsupported_trigger_drop_counts() {
     // skip in minimal checkouts — matches resolver_bundled_lcars_yaml_* convention
     let Ok(file) = build_officer_model_file_default() else {
         return;
     };
     let drops = collect_lcars_drops(&file.officers);
 
-    // Baseline recorded 2026-05-17. Update with intent: a *drop* in count is good news (new
-    // mappings or `:non_combat` annotations in `generate_lcars`), but a rise should be
-    // investigated before bumping. Bump history:
-    //   107 → 39: marked 21 economy/travel/loot modifiers as `:non_combat` (2026-05-16).
-    //    39 → 18: Phase 3 of officer A/D/H runtime — mapped `officerstathealth` (9 officers)
-    //             and `officerstatall` (12 officers) tags to the officer-rating accumulator,
-    //             closing every silent drop except reload/cooldown/PvP-specific mechanics
-    //             that need their own engine-side modeling.
-    //    18 → 0: Officer LCARS gaps — DefenderFireDelay, RandomDefenderState,
-    //             OpponentCaptainManeuverEffect compile paths; ship active-ability modifiers
-    //             marked `:non_combat` in `generate_lcars`.
-    const BASELINE: usize = 0;
-    let lo = BASELINE * 95 / 100;
-    let hi = BASELINE * 105 / 100;
-    let total = drops.len();
-    assert!(
-        (lo..=hi).contains(&total),
-        "drop count {total} outside ±5% of baseline {BASELINE} (range {lo}..={hi}); \
-         categories: {:?}",
+    let count = |reason: &str| {
         drops
-            .category_counts()
-            .into_iter()
-            .map(|(c, n, _)| (c, n))
-            .collect::<Vec<_>>()
+            .drops
+            .iter()
+            .filter(|drop| drop.reason == reason)
+            .count()
+    };
+    assert_eq!(
+        count("unknown_trigger:unsupported_HullDamageTaken"),
+        11,
+        "HullDamageTaken rows must stay quarantined"
+    );
+    assert_eq!(
+        count("unknown_trigger:unsupported_ShieldDamageTaken"),
+        2,
+        "ShieldDamageTaken rows must stay quarantined"
+    );
+    assert_eq!(
+        count("unknown_trigger:unsupported_BattleWon"),
+        3,
+        "BattleWon rows must stay quarantined"
+    );
+    assert_eq!(
+        drops.len(),
+        19,
+        "no other source rows are currently dropped"
+    );
+    assert_eq!(
+        count("unknown_trigger:unknown_trigger"),
+        3,
+        "other unknown trigger rows remain explicitly reported"
     );
 }

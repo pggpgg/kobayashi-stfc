@@ -587,12 +587,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Synced building levels and combat bonuses */
+        /**
+         * Synced building levels and combat bonuses
+         * @description Reviewed setup totals use active building buffs when available. Optional ship_id supplies class and grade context; unknown hull gates are excluded.
+         */
         get: {
             parameters: {
                 query?: {
                     /** @description Profile id (alternative to X-Profile-Id) */
                     profile?: components["parameters"]["QueryProfile"];
+                    ship_id?: string;
                 };
                 header?: {
                     "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
@@ -1043,7 +1047,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Estimate candidate count and wall time */
+        /**
+         * Estimate candidate count and wall time
+         * @description Counts candidates without materializing crews; shares CPU admission with simulation and optimization.
+         */
         get: {
             parameters: {
                 query: {
@@ -1083,6 +1090,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ValidationErrorResponse"];
+                    };
+                };
+                /** @description CPU saturated when a bounded CPU queue wait is configured */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
                     };
                 };
             };
@@ -2511,135 +2527,37 @@ export interface components {
             error?: string;
         };
         OptimizeStatusResponse: {
-            status: string;
-            progress?: number;
-            crews_done?: number;
-            total_crews?: number;
-            phase?: string;
             cancellation_point?: string;
-            throughput_crews_per_sec?: number;
-            eta_seconds?: number;
-            progress_preview?: {
-                [key: string]: unknown;
-            }[];
-            /** @description Present when status is done; same shape as synchronous /api/optimize response */
-            result?: {
-                [key: string]: unknown;
-            };
+            /** Format: uint32 */
+            crews_done?: number;
             error?: string;
+            /** Format: uint64 */
+            eta_seconds?: number;
+            phase?: string;
+            /** Format: uint8 */
+            progress?: number;
+            progress_preview?: components["schemas"]["CrewRecommendation"][];
+            /** @description Present when status is done; same shape as synchronous /api/optimize response */
+            result?: components["schemas"]["OptimizeResponse"];
+            status: string;
+            /**
+             * Format: double
+             * @description Best-effort crews/sec for phases where `crews_done` / `total_crews` are crew counts (not generations).
+             */
+            throughput_crews_per_sec?: number;
+            /** Format: uint32 */
+            total_crews?: number;
         };
         OptimizeResponse: {
-            status: string;
-            engine: string;
-            scenario: {
-                /** @description True when persisted confirmation stats existed for this `optimize_cache_key` but were refused because the run's reuse fingerprint no longer matches. Every crew was re-simulated, so the reported numbers are fresh. Absent when nothing was stored or the stored entry was usable. */
-                optimize_history_reuse_refused?: boolean;
-                /**
-                 * @description Which fingerprint segment changed: the combat engine, the game-data catalogs, the player profile's contents, the resolved ship/hostile matchup, the fingerprint encoding itself, or `unfingerprinted` for entries written before fingerprinting existed.
-                 * @enum {string}
-                 */
-                optimize_history_reuse_refused_component?: "engine" | "data" | "profile" | "scenario" | "schema" | "unfingerprinted";
-                /** @description Reuse fingerprint this run computed, as `schema:engine:data:profile:scenario` (hashes only — no profile contents are exposed). */
-                optimize_reuse_fingerprint?: string;
-                /** @description Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final merged result width. */
-                optimizer_funnel?: {
-                    /** @description Full-catalog raw role pools before ban/eligibility filters. */
-                    raw_role_pool?: {
-                        captains?: number;
-                        bridge?: number;
-                        below_decks?: number;
-                    };
-                    /** @description Full-catalog role pools after the curation ban list. */
-                    banned_role_pool?: {
-                        captains?: number;
-                        bridge?: number;
-                        below_decks?: number;
-                    };
-                    /** @description Full-catalog role pools after ban/eligibility filters. */
-                    eligible_role_pool?: {
-                        captains?: number;
-                        bridge?: number;
-                        below_decks?: number;
-                    };
-                    /** @description Production role pools after roster/profile narrowing, before explicit constraints. */
-                    roster_role_pool?: {
-                        captains?: number;
-                        bridge?: number;
-                        below_decks?: number;
-                    };
-                    /** @description Production role pools after roster/profile narrowing and explicit constraints. */
-                    final_role_pool?: {
-                        captains?: number;
-                        bridge?: number;
-                        below_decks?: number;
-                    };
-                    heuristic_candidates: number;
-                    warm_start_candidates: number;
-                    generated_candidates?: number;
-                    after_warm_start_dedupe?: number;
-                    after_constraints?: number;
-                    analytical_prefilter_from?: number;
-                    analytical_prefilter_kept?: number;
-                    scout_candidates?: number;
-                    confirmed_candidates?: number;
-                    /** @description Stratified-random crews in the scout set (`random_stratified` strategy or the tiered `tiered_random_exploration_pct` slice). Absent when the lane did not run. */
-                    random_exploration_candidates?: number;
-                    final_result_count: number;
-                    /** @description Coarse wall-clock time spent in each optimize phase, milliseconds. */
-                    phase_durations_ms?: {
-                        [key: string]: number;
-                    };
-                    /** @description Phase observed when a background optimize job was cancelled. */
-                    cancellation_point?: string;
-                };
-            } & {
-                [key: string]: unknown;
-            };
-            recommendations: ({
-                /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. When the `local_refinement` pass produced a row, the label instead identifies the refinement neighborhood that found it: `local_swap` (one bridge/below-decks seat changed), `local_captain_swap` (captain changed), or `large_neighborhood_repair` (two or more seats changed via destroy-repair). */
-                method_provenance?: string;
-                /** @description Monte Carlo trials actually run for this row. Lower than the requested `sims` for rows a scout phase ranked but never promoted to confirmation, so this is the depth of evidence behind the row's rates and intervals. 0 when unknown (synthetic or closed-form rows). */
-                trials_run?: number;
-                /** @description Closed-form expected total hull damage over the fight (linear_eval only). */
-                expected_hull_damage?: number;
-                /** @description Present only on rows the `local_refinement` pass produced. Records which finalist the row was refined from, which seats changed, and the measured score gain that got the change accepted. */
-                refinement?: {
-                    /**
-                     * @description Refinement neighborhood; same value as `method_provenance`.
-                     * @enum {string}
-                     */
-                    kind: "local_swap" | "local_captain_swap" | "large_neighborhood_repair";
-                    source_captain: string;
-                    source_bridge: string[];
-                    source_below_decks: string[];
-                    /** @description Every seat that differs from the source finalist. */
-                    changed_slots: {
-                        /** @enum {string} */
-                        slot: "captain" | "bridge" | "below_decks";
-                        /** @description Seat index within `bridge` / `below_decks` in the canonicalized crew. Absent for the captain, which is a group of one. */
-                        index?: number;
-                        /** @description Officer who held the seat in the source finalist. */
-                        from: string;
-                        /** @description Officer who holds it in this row. */
-                        to: string;
-                    }[];
-                    /** @description Confirmed ranking score of the source finalist. */
-                    baseline_score: number;
-                    /** @description Confirmed ranking score of this row. */
-                    refined_score: number;
-                    /** @description `refined_score - baseline_score`. Always positive: refinement only keeps improvements that survive confirmation depth. */
-                    gain: number;
-                };
-                /** @description Why this row is worth a look beyond its rank. `pareto_optimal` means no other considered row is at least as good on every metric (win rate, hull left, round-1 kills, damage dealt, and risk — or chain success and its secondary in chain runs). The named views tag at most one row each: `safest` (lowest loss rate), `fastest_farming` (highest round-1 kill rate), `best_chain` (highest chain success, chain runs only), and `most_different` (competitive crew sharing the fewest officers with the top row). Tags never change ordering; the scalar score still sorts the table. Absent on untagged rows, on `linear_eval` runs (no simulated rates to trade off), and past the first 200 rows. */
-                pareto_tags?: ("pareto_optimal" | "safest" | "fastest_farming" | "best_chain" | "most_different")[];
-                /** @description Plain-language reading of `pareto_tags` for this row, plus a confirmation-depth caveat when the row was simulated less deeply than the deepest row in the table. Present exactly when `pareto_tags` is non-empty. */
-                recommendation_reason?: string;
-            } & {
-                [key: string]: unknown;
-            })[];
-            duration_ms?: number;
-            notes: string[];
+            /** @description Extra human-readable notes (e.g. approximate pre-filter semantics). */
             approximate_notes?: string[];
+            /** Format: uint64 */
+            duration_ms?: number;
+            engine: string;
+            notes: string[];
+            recommendations: components["schemas"]["CrewRecommendation"][];
+            scenario: components["schemas"]["ScenarioSummary"];
+            status: string;
             warnings?: string[];
         };
         /** @description JSON null means empty slot */
@@ -2953,21 +2871,28 @@ export interface components {
             warnings?: string[];
         };
         OfficerGroupConstraintDto: {
-            officers: string[];
+            /** Format: uint32 */
             min_count: number;
+            officers: string[];
         };
+        /** @description JSON body for `OptimizeRequest.constraints`. */
         OptimizeConstraintsDto: {
-            must_include?: string[];
-            exclude?: string[];
-            groups?: components["schemas"]["OfficerGroupConstraintDto"][];
-            captain_must_be?: string;
-            bridge_must_include?: string[];
+            /** @default [] */
             below_decks_must_include?: string[];
+            /** @default [] */
+            bridge_must_include?: string[];
+            captain_must_be?: string | null;
+            /** @default [] */
+            exclude?: string[];
+            /** @default [] */
+            groups?: components["schemas"]["OfficerGroupConstraintDto"][];
+            /** @default [] */
+            must_include?: string[];
         };
         WarmStartCrewDto: {
-            captain: string;
-            bridge: string[];
             below_decks: string[];
+            bridge: string[];
+            captain: string;
         };
         ChainGrindRequestDto: {
             enabled?: boolean;
@@ -2975,74 +2900,185 @@ export interface components {
             secondary?: string;
         };
         OptimizeRequest: {
-            ship: string;
-            hostile: string;
-            ship_tier?: number;
-            ship_level?: number;
-            sims?: number;
-            /** Format: int64 */
-            seed?: number;
-            max_candidates?: number;
-            /** @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull damage only; no Monte Carlo), or `random_stratified` (benchmark-control lane: legal crews sampled at random, stratified by captain faction/rarity and below-decks family, then scout → confirm; ignores warm-start and skips the analytical prefilter). When omitted, server auto-picks tiered vs exhaustive from candidate count. */
-            strategy?: string;
+            /**
+             * Format: uint32
+             * @description Keep only this many crews after approximate analytical ranking (closed-form expected hull damage) before Monte Carlo. Omitted = evaluate all generated candidates unless auto-cap applies. Ignored for genetic strategy.
+             */
+            analytical_prefilter_keep?: number | null;
             /**
              * @description Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers. `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power. Unknown values fall back to strict.
-             * @enum {string}
+             * @default null
+             * @enum {string|null}
              */
-            below_decks_pool_mode?: "strict" | "scored" | "relaxed";
-            heuristics_seeds?: string[];
-            heuristics_only?: boolean;
-            fast_discovery?: boolean;
-            below_decks_strategy?: string;
-            analytical_prefilter_keep?: number;
-            /** @description Analytical prefilter only. When false, disables learned pair co-occurrence prior from warm-start/history refs. Omitted defaults to enabled (backward compatible). */
-            enable_learned_pair_prior?: boolean;
-            tiered_scout_sims?: number;
-            tiered_top_k?: number;
-            tiered_scout_uniform?: boolean;
-            /** @description Tiered: when set, scales down per-top-K confirmation iterations so their sum does not exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no global cap (default). Typical values 1.5–3; must be in (0, 20]. */
-            tiered_confirm_budget_cap_mult?: number;
-            /** @description Tiered strategy only. Fraction of the scout candidate list — after warm-start, constraints, and analytical prefilter — replaced with stratified-random crews that bypass the analytical proxy (budget-neutral exploration slice). Injected crews are labeled `random_stratified` in `method_provenance` when they reach the results. Typical values 0.05–0.2. Omitted or 0 = off. */
-            tiered_random_exploration_pct?: number;
-            /** @description Tiered and genetic strategies. Opt-in local-refinement hill-climb around the top finalists after the main search finishes: single-slot bridge/below-decks swaps, captain swaps, and destroy-repair neighborhoods, scored through the same ranking as the main search. Runs after the main search as a small marginal cost, not a second full search. Rows it produces carry a refinement `method_provenance` label and a `refinement` detail object. Omitted or false = off (default). Ignored for every other strategy: exhaustive already evaluated the space a neighborhood would re-propose, `linear_eval` runs no Monte Carlo to confirm an improvement against, and `random_stratified` is a benchmark control that must stay unassisted. */
-            local_refinement?: boolean;
-            /** @description Local refinement only: how many top finalists to hill-climb from. Omitted uses the refinement module's default (3). */
-            local_refinement_seeds?: number;
-            /** @description Local refinement only: maximum accepted improving moves per seed crew. Omitted uses the refinement module's default (3). */
-            local_refinement_rounds?: number;
-            /** @description Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep. Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking. */
-            exhaustive_scout_sims?: number;
-            /** @description Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked crews receive the full per-crew simulation_count (others keep scout statistics). */
-            exhaustive_scout_top_keep?: number;
-            warm_start_crews?: components["schemas"]["WarmStartCrewDto"][];
-            below_decks_slots?: number;
-            constraints?: components["schemas"]["OptimizeConstraintsDto"];
-            support_buffs?: string[];
-            /** @description PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present, `support_buffs` is treated as attacker-only for static routing. */
-            defender_support_buffs?: string[];
-            /** @description PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled). */
-            defender_alliance_debuffs?: string[];
-            chain?: components["schemas"]["ChainGrindRequestDto"];
-            defender_opponent?: string;
-            /** @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities). Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation). */
-            defender_crew?: components["schemas"]["SimulateCrew"];
-            /** @description Fixed opponent player ship for PvP (mutually exclusive with `hostile`). Optimize searches attacker crews only. Requires `defender_profile_id`. */
-            defender_ship?: string;
-            defender_ship_tier?: number;
-            defender_ship_level?: number;
-            defender_profile_id?: string;
-            /** @description Combat scenario for officer eligibility filtering (snake_case EnemyType). Inferred from the target when unset. */
-            enemy_type?: string;
-            novelty_lambda?: number;
-            novelty_diverse_top?: number;
-            novelty_pool?: number;
-            /** @description When true with novelty_lambda, crews from optimize_history for this profile + optimize_cache_key (matching chain fingerprint) are treated as redundancy anchors for MMR; they are not added as recommendations. */
-            novelty_history_anchors?: boolean;
+            below_decks_pool_mode?: "strict" | "scored" | "relaxed" | null;
+            /**
+             * Format: uint32
+             * @description Below-decks slot count (0–7). Omitted = resolved from ship level + `crew_slots` when present, else tier heuristic.
+             */
+            below_decks_slots?: number | null;
+            below_decks_strategy?: string | null;
+            /** @default null */
+            chain?: components["schemas"]["ChainGrindRequest"] | null;
+            /**
+             * @description Optional crew search constraints (must-include, exclude, groups, seating).
+             * @default null
+             */
+            constraints?: components["schemas"]["OptimizeConstraintsDto"] | null;
+            /**
+             * @description PvP only: alliance debuffs applied to the attacker (e.g. Mantis sting when modeled).
+             * @default null
+             */
+            defender_alliance_debuffs?: string[] | null;
+            /**
+             * @description Optional LCARS crew for the defending combatant (merged with hostile ship abilities). Same shape as simulate `defender_crew`. Ignored when `strategy` is `genetic` (request fails validation).
+             * @default null
+             */
+            defender_crew?: components["schemas"]["DefenderOfficerCrewDto"] | null;
+            /** @default hostile */
+            defender_opponent?: components["schemas"]["DefenderOpponent"];
+            /** @default null */
+            defender_profile_id?: string | null;
+            /**
+             * @description Fixed opponent player ship for PvP (mutually exclusive with `hostile`). Optimize searches attacker crews only. Requires `defender_profile_id`.
+             * @default null
+             */
+            defender_ship?: string | null;
+            /** Format: uint32 */
+            defender_ship_level?: number | null;
+            /** Format: uint32 */
+            defender_ship_tier?: number | null;
+            /**
+             * @description PvP only: defender alliance support buff ids (Fortify, Defiant Reinforce). When present, `support_buffs` is treated as attacker-only for static routing.
+             * @default null
+             */
+            defender_support_buffs?: string[] | null;
+            /**
+             * @description Analytical prefilter only. When false, disables learned pair co-occurrence prior from warm-start/history refs. Omitted defaults to enabled (backward compatible).
+             * @default null
+             */
+            enable_learned_pair_prior?: boolean | null;
+            /**
+             * @description Combat scenario for officer eligibility filtering (snake_case EnemyType). Inferred from the target when unset.
+             * @default null
+             */
+            enemy_type?: string | null;
+            /**
+             * Format: uint32
+             * @description Exhaustive strategy only; must be sent together with exhaustive_scout_top_keep. Scout-phase Monte Carlo trials per remaining candidate after analytical prefilter; then full `sims` run only on the top exhaustive_scout_top_keep crews by scout ranking.
+             * @default null
+             */
+            exhaustive_scout_sims?: number | null;
+            /**
+             * Format: uint32
+             * @description Exhaustive strategy only; paired with exhaustive_scout_sims. How many top scout-ranked crews receive the full per-crew simulation_count (others keep scout statistics).
+             * @default null
+             */
+            exhaustive_scout_top_keep?: number | null;
+            /**
+             * @description When true with non-empty `heuristics_seeds`, expanded heuristic crews are merged into the optimizer warm-start list so they flow through analytical prefilter and tiered (or exhaustive) Monte Carlo instead of a separate full-sim pass on every seed crew first.
+             * @default null
+             */
+            fast_discovery?: boolean | null;
+            heuristics_only?: boolean | null;
+            /** @description Safe seed-file stems; duplicate names are loaded once, ignoring ASCII case. */
+            heuristics_seeds?: string[] | null;
+            hostile: string;
+            /**
+             * @description Tiered and genetic strategies. Opt-in local-refinement hill-climb around the top finalists after the main search finishes: single-slot bridge/below-decks swaps, captain swaps, and destroy-repair neighborhoods, scored through the same ranking as the main search. Runs after the main search as a small marginal cost, not a second full search. Rows it produces carry a refinement `method_provenance` label and a `refinement` detail object. Omitted or false = off (default). Ignored for every other strategy: exhaustive already evaluated the space a neighborhood would re-propose, `linear_eval` runs no Monte Carlo to confirm an improvement against, and `random_stratified` is a benchmark control that must stay unassisted.
+             * @default null
+             */
+            local_refinement?: boolean | null;
+            /**
+             * Format: uint32
+             * @description Local refinement only: maximum accepted improving moves per seed crew. Omitted uses the refinement module's default (3).
+             * @default null
+             */
+            local_refinement_rounds?: number | null;
+            /**
+             * Format: uint32
+             * @description Local refinement only: how many top finalists to hill-climb from. Omitted uses the refinement module's default (3).
+             * @default null
+             */
+            local_refinement_seeds?: number | null;
+            /** Format: uint32 */
+            max_candidates?: number | null;
+            /**
+             * Format: uint32
+             * @description How many leading recommendations use MMR (optional; server defaults when `novelty_lambda` is set).
+             */
+            novelty_diverse_top?: number | null;
+            /**
+             * @description When true with novelty_lambda, crews from optimize_history for this profile + optimize_cache_key (matching chain fingerprint) are treated as redundancy anchors for MMR; they are not added as recommendations.
+             * @default null
+             */
+            novelty_history_anchors?: boolean | null;
+            /**
+             * Format: float
+             * @description Maximal marginal relevance blend (0, 1]; when set, reorders the recommendation head for materially diverse officer sets.
+             */
+            novelty_lambda?: number | null;
+            /**
+             * Format: uint32
+             * @description Strength-sorted pool size considered for MMR (optional; must be ≥ `novelty_diverse_top` when both are set).
+             */
+            novelty_pool?: number | null;
             /**
              * @description Opaque client fingerprint (e.g. workspace warm-start key). When set and the request runs with an active profile, the server may load matching `optimize_history.json` rows for Monte Carlo reuse (tiered / exhaustive two-phase) and for analytical matchup priors (reference crews from history only; same chain fingerprint as this request’s `chain`).
              *     This key is client-supplied and not a trust boundary: reusing stored **metrics** also requires the server-computed reuse fingerprint to match (engine, data catalogs, profile contents, resolved matchup). A mismatch re-simulates every crew and is reported as `scenario.optimize_history_reuse_refused`. Reuse of crew **identities** for matchup priors and novelty anchors is not fingerprint-gated — a good crew composition survives an engine fix — and those crews are re-validated against the live catalog and roster.
+             * @default null
              */
-            optimize_cache_key?: string;
+            optimize_cache_key?: string | null;
+            /** Format: uint64 */
+            seed?: number | null;
+            ship: string;
+            /**
+             * Format: uint32
+             * @description Ship level (1-based). When set with tier, applies level bonuses from extended data.
+             */
+            ship_level?: number | null;
+            /**
+             * Format: uint32
+             * @description Ship tier (1-based). When set, uses data/ships_extended for accurate stats.
+             */
+            ship_tier?: number | null;
+            /** Format: uint32 */
+            sims?: number | null;
+            /**
+             * @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull damage only; no Monte Carlo), or `random_stratified` (benchmark-control lane: legal crews sampled at random, stratified by captain faction/rarity and below-decks family, then scout → confirm; ignores warm-start and skips the analytical prefilter). When omitted, server auto-picks tiered vs exhaustive from candidate count.
+             * @enum {string|null}
+             */
+            strategy?: "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | null;
+            /** @default null */
+            support_buffs?: string[] | null;
+            /**
+             * Format: double
+             * @description Tiered: when set, scales down per-top-K confirmation iterations so their sum does not exceed floor(mult * tiered_top_k * sims). Exhaustive two-phase: same cap on the width-based confirmation pass for the top exhaustive_scout_top_keep crews. Omit for no global cap (default). Typical values 1.5–3; must be in (0, 20].
+             * @default null
+             */
+            tiered_confirm_budget_cap_mult?: number | null;
+            /**
+             * Format: double
+             * @description Tiered strategy only. Fraction of the scout candidate list — after warm-start, constraints, and analytical prefilter — replaced with stratified-random crews that bypass the analytical proxy (budget-neutral exploration slice). Injected crews are labeled `random_stratified` in `method_provenance` when they reach the results. Typical values 0.05–0.2. Omitted or 0 = off.
+             * @default null
+             */
+            tiered_random_exploration_pct?: number | null;
+            /**
+             * Format: uint32
+             * @description Tiered strategy: scouting-phase sims per crew (1..=MAX_TIERED_SCOUT_SIMS). Omitted = scaled from candidate count.
+             */
+            tiered_scout_sims?: number | null;
+            /**
+             * @description When true, tiered scouting uses one uniform pass at the scout cap (legacy). Omitted or false = adaptive coarse→refine scout.
+             * @default null
+             */
+            tiered_scout_uniform?: boolean | null;
+            /**
+             * Format: uint32
+             * @description Tiered strategy: how many top scout crews receive full confirmation sims (1..=MAX_TIERED_TOP_K). Omitted = scaled from candidate count.
+             */
+            tiered_top_k?: number | null;
+            /** @description Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence. */
+            warm_start_crews?: components["schemas"]["WarmStartCrewDto"][] | null;
         };
         ReplaySeedCrew: {
             captain?: components["schemas"]["NullableString"];
@@ -3074,6 +3110,350 @@ export interface components {
             status?: string;
             message?: string;
             errors?: components["schemas"]["ValidationIssue"][];
+        };
+        /** @description Chain grinding: N sequential fights, HHP carry-over, full SHP each link (optimizer / simulate). */
+        ChainGrindRequest: {
+            /** @default false */
+            enabled?: boolean;
+            /** Format: uint32 */
+            kills_target?: number | null;
+            /** @description `min_hull_damage` (default) or `max_loot_per_hull_proxy` (placeholder economy). */
+            secondary?: string | null;
+        };
+        /** @description How to break ties among crews with similar chain-primary success (conditional on primary hit). */
+        ChainSecondaryObjective: "min_hull_damage" | "max_loot_per_hull_proxy";
+        /** @description Aggregated chain-grind Monte Carlo (attached to optimizer [`super::monte_carlo::SimulationResult`] when enabled). */
+        ChainSimulationSummary: {
+            /** Format: uint32 */
+            kills_target: number;
+            /** Format: uint */
+            n_primary_successes: number;
+            /** Format: double */
+            primary_ci_high: number;
+            /** Format: double */
+            primary_ci_low: number;
+            /** Format: double */
+            primary_success_rate: number;
+            /** Format: double */
+            secondary_ci_high: number;
+            /** Format: double */
+            secondary_ci_low: number;
+            /** Format: double */
+            secondary_mean_given_primary: number;
+            secondary_objective: components["schemas"]["ChainSecondaryObjective"];
+        };
+        /** @description Ranked crew row. Monte Carlo strategies populate win/stall/loss rates and CIs. `linear_eval` sets `expected_hull_damage` and leaves win-rate fields at zero. */
+        CrewRecommendation: {
+            /** Format: double */
+            avg_defender_hull_remaining: number;
+            /** Format: double */
+            avg_defender_hull_remaining_ci_high: number;
+            /** Format: double */
+            avg_defender_hull_remaining_ci_low: number;
+            /** Format: double */
+            avg_hull_remaining: number;
+            /** Format: double */
+            avg_hull_remaining_ci_high: number;
+            /** Format: double */
+            avg_hull_remaining_ci_low: number;
+            below_decks: string[];
+            bridge: string[];
+            captain: string;
+            chain?: components["schemas"]["ChainSimulationSummary"];
+            /**
+             * Format: double
+             * @description Closed-form expected total hull damage over the fight (linear_eval only).
+             */
+            expected_hull_damage?: number;
+            /** Format: double */
+            loss_rate: number;
+            /** Format: double */
+            loss_rate_ci_high: number;
+            /** Format: double */
+            loss_rate_ci_low: number;
+            /** @description Optimizer source/method label for this row, such as `exhaustive_mc`, `tiered_confirmed`, `heuristic_seed`, `warm_start`, `random_stratified`, or `linear_eval`. When the `local_refinement` pass produced a row, the label instead identifies the refinement neighborhood that found it: `local_swap` (one bridge/below-decks seat changed), `local_captain_swap` (captain changed), or `large_neighborhood_repair` (two or more seats changed via destroy-repair). */
+            method_provenance: string;
+            /** @description Why this row is worth a look beyond its rank. `pareto_optimal` means no other considered row is at least as good on every metric (win rate, hull left, round-1 kills, damage dealt, and risk — or chain success and its secondary in chain runs). The named views tag at most one row each: `safest` (lowest loss rate), `fastest_farming` (highest round-1 kill rate), `best_chain` (highest chain success, chain runs only), and `most_different` (competitive crew sharing the fewest officers with the top row). Tags never change ordering; the scalar score still sorts the table. Absent on untagged rows, on `linear_eval` runs (no simulated rates to trade off), and past the first 200 rows. */
+            pareto_tags?: ("pareto_optimal" | "safest" | "fastest_farming" | "best_chain" | "most_different")[];
+            /** Format: double */
+            r1_kill_rate: number;
+            /** Format: double */
+            r1_kill_rate_ci_high: number;
+            /** Format: double */
+            r1_kill_rate_ci_low: number;
+            /** @description Plain-language reading of `pareto_tags` for this row, plus a confirmation-depth caveat when the row was simulated less deeply than the deepest row in the table. Present exactly when `pareto_tags` is non-empty. */
+            recommendation_reason?: string;
+            /** @description Present only on rows the `local_refinement` pass produced. Records which finalist the row was refined from, which seats changed, and the measured score gain that got the change accepted. */
+            refinement?: components["schemas"]["RefinementDetail"];
+            /** Format: double */
+            stall_rate: number;
+            /** Format: double */
+            stall_rate_ci_high: number;
+            /** Format: double */
+            stall_rate_ci_low: number;
+            /**
+             * Format: uint
+             * @description Monte Carlo trials actually run for this row. Lower than the requested `sims` for rows a scout phase ranked but never promoted to confirmation, so this is the depth of evidence behind the row's rates and intervals. 0 when unknown (synthetic or closed-form rows).
+             */
+            trials_run: number;
+            /** Format: double */
+            win_rate: number;
+            /** Format: double */
+            win_rate_ci_high: number;
+            /** Format: double */
+            win_rate_ci_low: number;
+        };
+        /** @description Optional LCARS crew for the defending side (same shape as simulate `defender_crew`). */
+        DefenderOfficerCrewDto: {
+            below_deck?: (string | null)[] | null;
+            bridge?: (string | null)[] | null;
+            captain?: string | null;
+        };
+        /** @description Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`). */
+        DefenderOpponent: "hostile" | "player";
+        /** @description Counts-only echo of active optimize constraints (for clients / debugging). */
+        OptimizeConstraintsSummary: {
+            /** Format: uint */
+            below_decks_must_include: number;
+            /** Format: uint */
+            bridge_must_include: number;
+            captain_must_be: boolean;
+            /** Format: uint */
+            exclude: number;
+            /** Format: uint */
+            groups: number;
+            /** Format: uint */
+            must_include: number;
+        };
+        /** @description Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final merged result width. */
+        OptimizerFunnelTelemetry: {
+            /**
+             * Format: uint32
+             * @description Candidate count after explicit optimize constraints.
+             */
+            after_constraints?: number;
+            /**
+             * Format: uint32
+             * @description Candidate count after warm-start prepend and stable-hash dedupe.
+             */
+            after_warm_start_dedupe?: number;
+            /**
+             * Format: uint32
+             * @description Analytical prefilter input count when truncation ran.
+             */
+            analytical_prefilter_from?: number;
+            /**
+             * Format: uint32
+             * @description Analytical prefilter kept count when truncation ran.
+             */
+            analytical_prefilter_kept?: number;
+            /** @description Full-catalog role pools after the curation ban list. */
+            banned_role_pool?: components["schemas"]["OptimizerRolePoolTelemetry"];
+            /** @description Phase observed when a background optimize job was cancelled. */
+            cancellation_point?: string;
+            /**
+             * Format: uint32
+             * @description Candidate count entering confirmation or final ranking output.
+             */
+            confirmed_candidates?: number;
+            /** @description Full-catalog role pools after ban/eligibility filters. */
+            eligible_role_pool?: components["schemas"]["OptimizerRolePoolTelemetry"];
+            /**
+             * Format: uint32
+             * @description Rows returned after standalone heuristic and/or main optimizer results are merged.
+             */
+            final_result_count: number;
+            /** @description Production role pools after roster/profile narrowing and explicit constraints. */
+            final_role_pool?: components["schemas"]["OptimizerRolePoolTelemetry"];
+            /**
+             * Format: uint32
+             * @description Raw generated candidates before warm-start merge.
+             */
+            generated_candidates?: number;
+            /**
+             * Format: uint32
+             * @description Heuristic-expanded candidates after roster/seat legality and explicit constraints.
+             */
+            heuristic_candidates: number;
+            /** @description Coarse wall-clock time spent in each optimize phase, milliseconds. */
+            phase_durations_ms: {
+                [key: string]: number;
+            };
+            /**
+             * Format: uint32
+             * @description Stratified-random crews in the scout set (`random_stratified` strategy or the tiered `tiered_random_exploration_pct` slice). Absent when the lane did not run.
+             */
+            random_exploration_candidates?: number;
+            /** @description Full-catalog raw role pools before ban/eligibility filters. */
+            raw_role_pool?: components["schemas"]["OptimizerRolePoolTelemetry"];
+            /** @description Production role pools after roster/profile narrowing, before explicit constraints. */
+            roster_role_pool?: components["schemas"]["OptimizerRolePoolTelemetry"];
+            /**
+             * Format: uint32
+             * @description Candidate count entering scout / cheap-evaluation phase.
+             */
+            scout_candidates?: number;
+            /**
+             * Format: uint32
+             * @description Warm-start candidates sent into the main optimizer scenario (including fast-discovery merges).
+             */
+            warm_start_candidates: number;
+        };
+        OptimizerRolePoolTelemetry: {
+            /** Format: uint32 */
+            below_decks: number;
+            /** Format: uint32 */
+            bridge: number;
+            /** Format: uint32 */
+            captains: number;
+        };
+        /** @description Present only on rows the `local_refinement` pass produced. Records which finalist the row was refined from, which seats changed, and the measured score gain that got the change accepted. */
+        RefinementDetail: {
+            /**
+             * Format: double
+             * @description Confirmed ranking score of the source finalist.
+             */
+            baseline_score: number;
+            /** @description Every seat that differs from the source finalist. */
+            changed_slots: components["schemas"]["RefinementSlotChange"][];
+            /**
+             * Format: double
+             * @description `refined_score - baseline_score`. Always positive: refinement only keeps improvements that survive confirmation depth.
+             */
+            gain: number;
+            /**
+             * @description Refinement neighborhood; same value as `method_provenance`.
+             * @enum {string}
+             */
+            kind: "local_swap" | "local_captain_swap" | "large_neighborhood_repair";
+            /**
+             * Format: double
+             * @description Confirmed ranking score of this row.
+             */
+            refined_score: number;
+            source_below_decks: string[];
+            source_bridge: string[];
+            source_captain: string;
+        };
+        /** @description One seat local refinement changed, relative to the finalist it refined. */
+        RefinementSlotChange: {
+            /** @description Officer who held the seat in the source finalist. */
+            from: string;
+            /**
+             * Format: uint32
+             * @description Seat index within `bridge` / `below_decks` in the canonicalized crew. Absent for the captain, which is a group of one.
+             */
+            index?: number;
+            /**
+             * @description Seat group: `captain`, `bridge`, or `below_decks`.
+             * @enum {string}
+             */
+            slot: "captain" | "bridge" | "below_decks";
+            /** @description Officer who holds it in this row. */
+            to: string;
+        };
+        ScenarioSummary: {
+            /**
+             * Format: uint32
+             * @description Crew count before analytical truncation (only when truncation ran).
+             */
+            analytical_prefilter_from?: number;
+            /**
+             * Format: uint32
+             * @description Requested cap on crews after analytical ranking (if any).
+             */
+            analytical_prefilter_keep?: number;
+            /**
+             * Format: uint32
+             * @description Crew count after analytical truncation (only when truncation ran).
+             */
+            analytical_prefilter_kept?: number;
+            /**
+             * Format: uint32
+             * @description Resolved below-decks slot count used for candidate generation.
+             */
+            below_decks_slots: number;
+            chain?: components["schemas"]["ChainGrindRequest"];
+            /** @description Strategy actually run (`exhaustive`, `tiered`, or `genetic`). */
+            effective_strategy: string;
+            /** @description Exhaustive two-phase runs: scout-then-full-MC trial accounting (same struct shape as tiered budget stats). */
+            exhaustive_adaptive_budget?: components["schemas"]["TieredScoutBudgetStats"];
+            /** @description When true, heuristic seed crews were merged into warm-start for the main optimize path. */
+            fast_discovery?: boolean;
+            hostile: string;
+            /** Format: uint32 */
+            novelty_diverse_top?: number;
+            /** @description When true, history-backed redundancy anchors were requested for novelty MMR (see `approximate_notes`). */
+            novelty_history_anchors?: boolean;
+            /** Format: float */
+            novelty_lambda?: number;
+            /** Format: uint32 */
+            novelty_pool?: number;
+            optimize_constraints?: components["schemas"]["OptimizeConstraintsSummary"];
+            /**
+             * Format: uint32
+             * @description Tiered runs: crews that reused persisted confirmation stats from `optimize_history.json`.
+             */
+            optimize_history_confirm_hits?: number;
+            /** @description True when persisted confirmation stats existed for this `optimize_cache_key` but were refused because the run's reuse fingerprint no longer matches. Every crew was re-simulated, so the reported numbers are fresh. Absent when nothing was stored or the stored entry was usable. */
+            optimize_history_reuse_refused?: boolean;
+            /**
+             * @description Which fingerprint segment changed: the combat engine, the game-data catalogs, the player profile's contents, the resolved ship/hostile matchup, the fingerprint encoding itself, or `unfingerprinted` for entries written before fingerprinting existed.
+             * @enum {string}
+             */
+            optimize_history_reuse_refused_component?: "engine" | "data" | "profile" | "scenario" | "schema" | "unfingerprinted" | null;
+            /** @description True when this run updated `optimize_history.json` for `optimize_cache_key`. */
+            optimize_history_wrote?: boolean;
+            /** @description Reuse fingerprint this run computed, as `schema:engine:data:profile:scenario` (hashes only — no profile contents are exposed). */
+            optimize_reuse_fingerprint?: string;
+            /** @description Counts-only optimizer funnel telemetry for generation, filtering, scout/confirm, and final merged result width. */
+            optimizer_funnel: components["schemas"]["OptimizerFunnelTelemetry"];
+            /** @description Echo of the client `strategy` field when present. */
+            requested_strategy?: string;
+            /** Format: uint64 */
+            seed: number;
+            ship: string;
+            /** Format: uint32 */
+            sims: number;
+            /** @description True when `strategy` was omitted and the server chose tiered vs exhaustive from candidate count. */
+            strategy_auto: boolean;
+            /** @description Tiered runs: scout/confirm trial accounting (see `TieredScoutBudgetStats`). */
+            tiered_scout_budget?: components["schemas"]["TieredScoutBudgetStats"];
+        };
+        /** @description Trial accounting for tiered scouting (coarse pass, optional refine pass, final per-crew totals). */
+        TieredScoutBudgetStats: {
+            /**
+             * Format: uint64
+             * @description Sum of `trials_run` after the coarse scout pass (one row per crew).
+             */
+            coarse_pass_trials: number;
+            /** Format: uint */
+            confirm_sims_alloc_max: number;
+            /**
+             * Format: uint
+             * @description Min / max confirmation iterations allocated per top-K crew (after optional global cap shrink).
+             */
+            confirm_sims_alloc_min: number;
+            /**
+             * Format: uint64
+             * @description Sum of `trials_run` across the top-K confirmation phase (includes optimize-history cache hits). For exhaustive two-phase (`exhaustive_adaptive`), only the top-`keep` full-MC rows are summed (not scout-only crews).
+             */
+            confirm_trials_total: number;
+            /**
+             * Format: uint64
+             * @description Sum of `trials_run` from refine-only Monte Carlo runs (second pass on contenders).
+             */
+            refine_pass_trials: number;
+            /**
+             * Format: uint64
+             * @description Actual trials executed across every scout pass. Unlike `scout_trials_final`, this includes superseded coarse/minimal trials for crews that were rerun at a deeper racing bracket.
+             */
+            scout_trials_executed_total: number;
+            /**
+             * Format: uint64
+             * @description Sum of final per-crew `trials_run` after coarse + refine (used for total scout cost).
+             */
+            scout_trials_final: number;
         };
     };
     responses: never;

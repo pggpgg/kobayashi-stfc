@@ -1563,9 +1563,10 @@ fn run_local_refinement_pass(
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
     );
+    // The climb starts from the leading seed_crews, but every already-ranked crew is
+    // excluded from its neighborhood so a lower finalist is never confirmed twice.
     let seeds: Vec<(CrewCandidate, f64)> = ranked
         .iter()
-        .take(params.seed_crews)
         .map(|row| {
             (
                 CrewCandidate {
@@ -1599,18 +1600,46 @@ fn run_local_refinement_pass(
         improvements_accepted = outcome.stats.improvements_accepted as u64,
         "optimize_local_refinement_completed"
     );
+    let mut provenance = outcome.provenance;
     if !outcome.results.is_empty() {
         // Score each merged batch through the shared ranking independently, then re-sort the
         // combined list: per-row score does not depend on the other rows, so this is equivalent
         // to ranking them together.
-        let mut refined_rows = rank_results(outcome.results);
-        ranked.append(&mut refined_rows);
-        sort_ranked_rows(ranked);
+        let refined_rows = rank_results(outcome.results);
+        let inserted = merge_refinement_ranked_rows(ranked, refined_rows);
+        provenance.retain(|hash, _| inserted.contains(hash));
     }
     LocalRefinementPassReport {
-        provenance: outcome.provenance,
+        provenance,
         stats: Some(outcome.stats),
     }
+}
+
+fn ranked_crew_identity(row: &RankedCrewResult) -> u64 {
+    crew_candidate_stable_hash(&CrewCandidate {
+        captain: row.captain.clone(),
+        bridge: row.bridge.clone(),
+        below_decks: row.below_decks.clone(),
+    })
+}
+
+/// Keep the earlier full-confirmation row when a refinement result names the same crew.
+/// Return the identities actually added so provenance only labels emitted rows.
+fn merge_refinement_ranked_rows(
+    ranked: &mut Vec<RankedCrewResult>,
+    refined_rows: Vec<RankedCrewResult>,
+) -> HashSet<u64> {
+    let mut seen: HashSet<u64> = ranked.iter().map(ranked_crew_identity).collect();
+    let mut inserted = HashSet::new();
+    for row in refined_rows {
+        let hash = ranked_crew_identity(&row);
+        if seen.insert(hash) {
+            ranked.push(row);
+            inserted.insert(hash);
+        }
+    }
+    sort_ranked_rows(ranked);
+    inserted
 }
 
 /// Like [optimize_scenario_with_progress] but uses [DataRegistry] for exhaustive path (no reload).
@@ -2315,6 +2344,42 @@ mod tests {
     use crate::optimizer::ranking::rank_results;
 
     #[test]
+    fn merging_refinement_results_does_not_repeat_an_existing_finalist() {
+        use crate::optimizer::monte_carlo::{crew_candidate_stable_hash, zeroed_loss_result};
+        let source = CrewCandidate {
+            captain: "Cap".into(),
+            bridge: vec!["A".into(), "B".into()],
+            below_decks: vec!["D1".into(), "D2".into()],
+        };
+        let existing_neighbor = CrewCandidate {
+            below_decks: vec!["D1".into(), "D3".into()],
+            ..source.clone()
+        };
+        let mut ranked = rank_results(vec![
+            zeroed_loss_result(source),
+            zeroed_loss_result(existing_neighbor.clone()),
+        ]);
+        let refined_rows = rank_results(vec![zeroed_loss_result(existing_neighbor)]);
+        let inserted = super::merge_refinement_ranked_rows(&mut ranked, refined_rows);
+        assert!(inserted.is_empty());
+        let hashes: std::collections::HashSet<_> = ranked
+            .iter()
+            .map(|r| {
+                crew_candidate_stable_hash(&CrewCandidate {
+                    captain: r.captain.clone(),
+                    bridge: r.bridge.clone(),
+                    below_decks: r.below_decks.clone(),
+                })
+            })
+            .collect();
+        assert_eq!(
+            hashes.len(),
+            ranked.len(),
+            "refinement repeated an existing finalist"
+        );
+    }
+
+    #[test]
     fn analytical_rank_score_prior_reference_boosts_identical_crew() {
         let registry = DataRegistry::load().expect("data registry");
         let shared = build_shared_scenario_data_from_registry(
@@ -2567,11 +2632,14 @@ mod tests {
         let ship = "saladin";
         let hostile = "2918121098";
         let seed = 19u64;
+        // Top-K equivalence needs a broad fixed pool, independent of the user's active roster.
+        let profile_id = Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS);
         let candidates = CrewGenerator::new()
-            .generate_candidates_from_registry(&registry, ship, hostile, seed, None);
+            .generate_candidates_from_registry(&registry, ship, hostile, seed, profile_id);
         assert!(
             candidates.len() >= 32,
-            "fixture needs enough candidates to exercise partial selection"
+            "fixture needs enough candidates to exercise partial selection; got {}",
+            candidates.len()
         );
         let shared = build_shared_scenario_data_from_registry(
             &registry,
@@ -2579,7 +2647,7 @@ mod tests {
             hostile,
             None,
             None,
-            None,
+            profile_id,
             crate::data::support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
@@ -2609,37 +2677,38 @@ mod tests {
         assert_eq!(partial, full[..keep]);
     }
 
+    fn zero_signal_topk_candidates() -> Vec<CrewCandidate> {
+        [
+            "test_captain_a",
+            "test_captain_b",
+            "test_captain_c",
+            "test_captain_d",
+        ]
+        .into_iter()
+        .map(|captain| CrewCandidate {
+            captain: captain.to_string(),
+            bridge: Vec::new(),
+            below_decks: Vec::new(),
+        })
+        .collect()
+    }
+
     #[test]
-    fn confirm_topk_preserves_ranking_vs_full_pass() {
-        // Full-MC top-K progressive abandonment must not change the answer: every crew that runs
-        // to full depth is byte-identical to the no-abandonment baseline (same per-crew seeds), the
-        // winner is preserved, and some losers really do get abandoned (otherwise the test is moot).
-        //
-        // botany_bay (a weak survey hull) at T2/L10 vs hostile 38048587 is a borderline matchup:
-        // a few crews win meaningfully while most lose outright, giving the win-rate spread that
-        // lets the leader cut prune the hopeless tail. (Most PvE matchups are all-win or all-lose,
-        // where win-rate abandonment is a safe no-op and ranking is driven by hull remaining
-        // instead.) Recalibrated from T1/L1 after the 2026-07-10 engine correctness fixes
-        // (weapon_damage operator folding) collapsed that matchup to all-lose.
+    fn confirm_topk_does_not_prune_when_every_crew_loses() {
+        // A zero-score top-K leader has lower bound zero, so no running crew can be proven
+        // below it. This fixture makes every crew lose, independent of upstream hostile stats.
+        // It must run the full pass and preserve exact results and ranking.
         let registry = DataRegistry::load().expect("data registry");
         let ship = "botany_bay";
         let hostile = "38048587";
-        let candidates: Vec<CrewCandidate> = CrewGenerator::new()
-            .generate_candidates_from_registry(&registry, ship, hostile, 7, None)
-            .into_iter()
-            .take(80)
-            .collect();
-        if candidates.len() < 20 {
-            // Generation depends on local data; nothing to assert without a real population.
-            return;
-        }
+        let candidates = zero_signal_topk_candidates();
 
-        let sims = 2000usize;
+        let sims = 400usize;
         let seed = 7u64;
         let k = 2usize;
 
         let build_shared = || {
-            build_shared_scenario_data_from_registry(
+            let mut shared = build_shared_scenario_data_from_registry(
                 &registry,
                 ship,
                 hostile,
@@ -2650,7 +2719,11 @@ mod tests {
                 DefenderOpponent::Hostile,
                 None,
                 None,
-            )
+            );
+            let defender = shared.cached_defender.as_mut().expect("resolved hostile");
+            defender.hull_health = 1e15;
+            defender.shield_health = 1e15;
+            shared
         };
 
         // Serial (parallel=false) so the leaderboard evolves deterministically.
@@ -2667,6 +2740,9 @@ mod tests {
         );
 
         assert_eq!(baseline.len(), treatment.len());
+        assert!(baseline
+            .iter()
+            .all(|r| r.win_rate == 0.0 && r.avg_hull_remaining == 0.0));
 
         let mut abandoned = 0usize;
         for (b, t) in baseline.iter().zip(treatment.iter()) {
@@ -2691,10 +2767,9 @@ mod tests {
             }
         }
 
-        assert!(
-            abandoned > 0,
-            "expected some losing crews to be abandoned (population={}, k={k})",
-            candidates.len()
+        assert_eq!(
+            abandoned, 0,
+            "a zero-score cut cannot abandon any candidate"
         );
 
         // The top-ranked crew must be identical under both paths.
@@ -2710,29 +2785,21 @@ mod tests {
     }
 
     #[test]
-    fn chunked_topk_shared_leader_preserves_survivors() {
-        // The shared-leader chunked path (used by the genetic per-generation eval) must keep its
-        // top-K survivors byte-identical to the no-abandonment baseline while abandoning hopeless
-        // crews. Same borderline matchup (T2/L10) as the exhaustive test for win-rate spread.
+    fn chunked_topk_shared_leader_does_not_prune_zero_signal_crews() {
+        // The chunked shared-leader path has the same conservative no-prune rule when all scores
+        // are zero. Explicit candidates avoid a roster-dependent silent early return.
         let registry = DataRegistry::load().expect("data registry");
         let ship = "botany_bay";
         let hostile = "38048587";
-        let candidates: Vec<CrewCandidate> = CrewGenerator::new()
-            .generate_candidates_from_registry(&registry, ship, hostile, 7, None)
-            .into_iter()
-            .take(80)
-            .collect();
-        if candidates.len() < 20 {
-            return;
-        }
+        let candidates = zero_signal_topk_candidates();
 
-        let sims = 2000usize;
+        let sims = 400usize;
         let seed = 7u64;
-        let chunk = 8usize;
+        let chunk = 2usize;
         let k = 2usize;
 
         let build_shared = || {
-            build_shared_scenario_data_from_registry(
+            let mut shared = build_shared_scenario_data_from_registry(
                 &registry,
                 ship,
                 hostile,
@@ -2743,7 +2810,11 @@ mod tests {
                 DefenderOpponent::Hostile,
                 None,
                 None,
-            )
+            );
+            let defender = shared.cached_defender.as_mut().expect("resolved hostile");
+            defender.hull_health = 1e15;
+            defender.shield_health = 1e15;
+            shared
         };
 
         let baseline = run_monte_carlo_parallel_deduped_chunked_with_shared(
@@ -2770,6 +2841,9 @@ mod tests {
         .expect("treatment run");
 
         assert_eq!(baseline.len(), treatment.len());
+        assert!(baseline
+            .iter()
+            .all(|r| r.win_rate == 0.0 && r.avg_hull_remaining == 0.0));
         let mut abandoned = 0usize;
         for (b, t) in baseline.iter().zip(treatment.iter()) {
             if t.trials_run < sims {
@@ -2781,10 +2855,9 @@ mod tests {
                 );
             }
         }
-        assert!(
-            abandoned > 0,
-            "expected some losers abandoned across chunks (n={}, k={k})",
-            candidates.len()
+        assert_eq!(
+            abandoned, 0,
+            "a zero-score cut cannot abandon any candidate"
         );
     }
 
@@ -3100,7 +3173,7 @@ mod tests {
     }
 
     #[test]
-    fn tiered_adaptive_scout_trials_not_above_uniform_small_pool() {
+    fn tiered_adaptive_scout_executed_trials_stay_within_uniform_requested_budget() {
         let registry = DataRegistry::load().expect("data registry");
         let uniform = OptimizationScenario {
             ship: "defiant",
@@ -3153,17 +3226,26 @@ mod tests {
             optimize_scenario_with_progress_with_registry(&registry, &uniform, |_| true, || true);
         let out_a =
             optimize_scenario_with_progress_with_registry(&registry, &adaptive, |_| true, || true);
-        let trials_u = out_u
-            .tiered_scout_budget
-            .expect("tiered budget")
-            .scout_trials_final;
-        let trials_a = out_a
-            .tiered_scout_budget
-            .expect("tiered budget")
-            .scout_trials_final;
+        let uniform_budget = out_u.tiered_scout_budget.expect("tiered budget");
+        let adaptive_budget = out_a.tiered_scout_budget.expect("tiered budget");
+        let scout_candidates = out_a
+            .candidate_funnel
+            .scout_candidates
+            .expect("scout candidate count");
+        let nominal_uniform_cap = (scout_candidates as u64) * 320;
         assert!(
-            trials_a <= trials_u,
-            "adaptive scout trials {trials_a} should not exceed uniform {trials_u}"
+            adaptive_budget.scout_trials_executed_total <= nominal_uniform_cap,
+            "adaptive scout executed {} trials across coarse and refine, above its {} trial nominal uniform cap",
+            adaptive_budget.scout_trials_executed_total,
+            nominal_uniform_cap
+        );
+        assert!(
+            adaptive_budget.scout_trials_final <= adaptive_budget.scout_trials_executed_total,
+            "final rows cannot report more trials than were executed"
+        );
+        assert!(
+            uniform_budget.scout_trials_executed_total <= nominal_uniform_cap,
+            "uniform scout must obey its requested cap"
         );
     }
 

@@ -2,6 +2,7 @@
   "id": "nsea_protector",
   "ship_name": "NSEA PROTECTOR",
   "ship_class": "explorer",
+  "grade": 4,
   "tiers": [
     {
       "tier": 1,

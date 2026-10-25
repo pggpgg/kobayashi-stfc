@@ -3,16 +3,17 @@
 
 use crate::data::import;
 use crate::data::profile_index::{
-    load_profile_index, profile_id_by_sync_token, profile_path, resolve_profile_id_for_api,
-    BATTLELOGS_IMPORTED, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED,
-    LAST_MOD_SYNC_JSON, RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
+    load_profile_index, profile_id_by_sync_token, profile_path, profile_path_at,
+    resolve_profile_id_for_api, ProfileIndex, BATTLELOGS_IMPORTED, BUFFS_IMPORTED,
+    BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, LAST_MOD_SYNC_JSON, PROFILES_DIR,
+    RESEARCH_IMPORTED, ROSTER_IMPORTED, SHIPS_IMPORTED,
 };
 use crate::data::research::{load_research_catalog, DEFAULT_RESEARCH_CATALOG_PATH};
 use axum::http::StatusCode;
 use chrono::{TimeZone, Utc};
 use serde::Deserialize;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -42,11 +43,11 @@ fn sync_log_path() -> PathBuf {
     sync_log_path_from(std::env::var(SYNC_LOG_PATH_ENV).ok().as_deref())
 }
 
-fn append_sync_log(line: &str) {
+fn append_sync_log_at(path: &std::path::Path, line: &str) {
     let _ = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(sync_log_path())
+        .open(path)
         .and_then(|mut f| writeln!(f, "{}", line));
 }
 
@@ -61,8 +62,8 @@ static SYNC_BATTLELOGS_MTX: Mutex<()> = Mutex::new(());
 /// Rolling window of battle log objects per profile (Community Mod `battlelogs` batches).
 const BATTLELOGS_MAX_STORED: usize = 50;
 
-fn record_mod_sync_received(profile_id: &str) {
-    let path = profile_path(profile_id, LAST_MOD_SYNC_JSON);
+fn record_mod_sync_received_at(root: &std::path::Path, profile_id: &str) {
+    let path = profile_path_at(root, profile_id, LAST_MOD_SYNC_JSON);
     let payload = serde_json::json!({
         "received_at_utc": Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
     });
@@ -91,19 +92,52 @@ fn read_last_mod_sync_utc(profile_id: &str) -> Option<String> {
     v.get("received_at_utc")?.as_str().map(String::from)
 }
 
+/// Community Mod JSON uses singular names; retain the older plural API aliases.
+/// Normalize for routing without changing the opaque battle log objects we store.
+fn canonical_sync_type(type_lower: &str) -> &str {
+    match type_lower {
+        "buff" => "buffs",
+        "expired_buff" => "expired_buffs",
+        "battlelog" => "battlelogs",
+        other => other,
+    }
+}
+
 /// Handles POST /api/sync/ingress: token-based routing. The stfc-sync-token header
 /// identifies the profile; sync data is written to that profile's paths.
 /// Returns `(StatusCode, json_body_string)`.
 pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, String) {
+    ingress_payload_at(
+        body,
+        sync_token,
+        std::path::Path::new(PROFILES_DIR),
+        &sync_log_path(),
+        load_profile_index,
+    )
+}
+
+pub(crate) fn ingress_payload_at(
+    body: &str,
+    sync_token: Option<&str>,
+    profiles_root: &std::path::Path,
+    log_path: &std::path::Path,
+    load_index: impl FnOnce() -> ProfileIndex,
+) -> (StatusCode, String) {
+    let _transaction = match crate::data::profile_index::profile_store_transaction() {
+        Ok(guard) => guard,
+        Err(error) => {
+            return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string())
+        }
+    };
     let body_len = body.len();
     let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ");
-    append_sync_log(&format!(
-        "{} POST /api/sync/ingress body_len={}",
-        ts, body_len
-    ));
+    append_sync_log_at(
+        log_path,
+        &format!("{} POST /api/sync/ingress body_len={}", ts, body_len),
+    );
     info!(body_len, "sync ingress POST /api/sync/ingress");
 
-    let index = load_profile_index();
+    let index = load_index();
     let profile_id = profile_id_by_sync_token(&index, sync_token.unwrap_or(""));
     let Some(ref pid) = profile_id else {
         warn!("sync ingress 401: no profile for stfc-sync-token");
@@ -113,25 +147,25 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         );
     };
 
-    let roster_path = profile_path(pid, ROSTER_IMPORTED)
+    let roster_path = profile_path_at(profiles_root, pid, ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
-    let research_path = profile_path(pid, RESEARCH_IMPORTED)
+    let research_path = profile_path_at(profiles_root, pid, RESEARCH_IMPORTED)
         .to_string_lossy()
         .to_string();
-    let buildings_path = profile_path(pid, BUILDINGS_IMPORTED)
+    let buildings_path = profile_path_at(profiles_root, pid, BUILDINGS_IMPORTED)
         .to_string_lossy()
         .to_string();
-    let ships_path = profile_path(pid, SHIPS_IMPORTED)
+    let ships_path = profile_path_at(profiles_root, pid, SHIPS_IMPORTED)
         .to_string_lossy()
         .to_string();
-    let ft_path = profile_path(pid, FORBIDDEN_TECH_IMPORTED)
+    let ft_path = profile_path_at(profiles_root, pid, FORBIDDEN_TECH_IMPORTED)
         .to_string_lossy()
         .to_string();
-    let buffs_path = profile_path(pid, BUFFS_IMPORTED)
+    let buffs_path = profile_path_at(profiles_root, pid, BUFFS_IMPORTED)
         .to_string_lossy()
         .to_string();
-    let battlelogs_path = profile_path(pid, BATTLELOGS_IMPORTED)
+    let battlelogs_path = profile_path_at(profiles_root, pid, BATTLELOGS_IMPORTED)
         .to_string_lossy()
         .to_string();
 
@@ -159,10 +193,10 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
     let type_lower = type_str.to_ascii_lowercase();
     info!(sync_type = %type_str, count = payload.len(), "sync ingress batch");
 
-    let accepted = match type_lower.as_str() {
+    let accepted = match canonical_sync_type(&type_lower) {
         "officer" => match apply_officer_sync(&payload, DEFAULT_GAME_ID_MAP_PATH, &roster_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "officer", "sync ingress 200");
                 vec![format!("officer({accepted_count})")]
             }
@@ -173,7 +207,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "research" => match apply_research_sync(&payload, &research_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "research", "sync ingress 200");
                 vec![format!("research({accepted_count})")]
             }
@@ -184,7 +218,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "buildings" | "module" => match apply_buildings_sync(&payload, &buildings_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "buildings", "sync ingress 200");
                 vec![format!("buildings({accepted_count})")]
             }
@@ -195,7 +229,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "ships" | "ship" => match apply_ships_sync(&payload, &ships_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "ships", "sync ingress 200");
                 vec![format!("ships({accepted_count})")]
             }
@@ -206,7 +240,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "ft" => match apply_ft_sync(&payload, &ft_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "ft", "sync ingress 200");
                 vec![format!("ft({accepted_count})")]
             }
@@ -218,7 +252,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         // stfc-mod uses JSON type "tech" for forbidden/chaos tech (same payload as "ft": fid, tier, level, shard_count).
         "tech" => match apply_ft_sync(&payload, &ft_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(
                     accepted_count,
                     kind = "tech",
@@ -231,10 +265,10 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
                 return json_error_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
         },
-        // Mod may send only removals in a batch (`type: "expired_buffs"` on the first row).
+        // The mod may send only removals, or mix additions and removals in one batch.
         "buffs" | "expired_buffs" => match apply_buffs_sync(&payload, &buffs_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "buffs", "sync ingress 200");
                 vec![format!("buffs({accepted_count})")]
             }
@@ -245,7 +279,7 @@ pub fn ingress_payload(body: &str, sync_token: Option<&str>) -> (StatusCode, Str
         },
         "battlelogs" => match apply_battlelogs_sync(&payload, &battlelogs_path) {
             Ok(accepted_count) => {
-                record_mod_sync_received(pid);
+                record_mod_sync_received_at(profiles_root, pid);
                 info!(accepted_count, kind = "battlelogs", "sync ingress 200");
                 vec![format!("battlelogs({accepted_count})")]
             }
@@ -296,8 +330,7 @@ fn apply_officer_sync(
     let canonical_names = load_canonical_names("data/officers/officers.canonical.json")?;
 
     let mut roster_map: HashMap<String, import::RosterEntry> =
-        load_existing_roster(roster_output_path)
-            .unwrap_or_default()
+        load_savepoint_entries::<import::RosterEntry>(roster_output_path, "officers")?
             .into_iter()
             .map(|e| (e.canonical_officer_id.clone(), e))
             .collect();
@@ -323,6 +356,7 @@ fn apply_officer_sync(
         let tier = item.tier.and_then(|t| u8::try_from(t).ok()).or(rank);
 
         let entry = import::RosterEntry {
+            source_oid: Some(oid_key.clone()),
             canonical_officer_id: canonical_id,
             canonical_name,
             rank,
@@ -344,7 +378,10 @@ fn apply_officer_sync(
         std::fs::create_dir_all(parent)?;
     }
     let serialized = serde_json::to_string_pretty(&output_payload)?;
-    std::fs::write(roster_output_path, serialized)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(roster_output_path),
+        serialized.as_bytes(),
+    )?;
 
     Ok(accepted)
 }
@@ -404,14 +441,26 @@ fn load_canonical_names(
     Ok(map)
 }
 
-fn load_existing_roster(path: &str) -> Option<Vec<import::RosterEntry>> {
-    #[derive(serde::Deserialize)]
-    struct Payload {
-        officers: Vec<import::RosterEntry>,
-    }
-    let raw = std::fs::read_to_string(path).ok()?;
-    let payload: Payload = serde_json::from_str(&raw).ok()?;
-    Some(payload.officers)
+fn load_savepoint_entries<T: serde::de::DeserializeOwned>(
+    path: &str,
+    key: &str,
+) -> Result<Vec<T>, Box<dyn std::error::Error + Send + Sync>> {
+    let raw = match std::fs::read(path) {
+        Ok(raw) => raw,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => {
+            return Err(format!("cannot read existing sync savepoint {path}: {error}").into())
+        }
+    };
+    let payload: Value = serde_json::from_slice(&raw)
+        .map_err(|error| format!("invalid existing sync savepoint {path}: {error}"))?;
+    let entries = payload
+        .get(key)
+        .filter(|value| value.is_array())
+        .ok_or_else(|| format!("existing sync savepoint {path} has no {key} array"))?;
+    serde_json::from_value(entries.clone()).map_err(|error| {
+        format!("invalid {key} rows in existing sync savepoint {path}: {error}").into()
+    })
 }
 
 // ----- Research sync -----
@@ -446,8 +495,7 @@ fn apply_buffs_sync(
         .lock()
         .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_bid: HashMap<i64, import::GlobalBuffEntry> =
-        import::load_imported_buffs(output_path)
-            .unwrap_or_default()
+        load_savepoint_entries::<import::GlobalBuffEntry>(output_path, "buffs")?
             .into_iter()
             .map(|e| (e.bid, e))
             .collect();
@@ -458,7 +506,8 @@ fn apply_buffs_sync(
             Ok(i) => i,
             Err(_) => continue,
         };
-        let t = parsed._type.as_deref().unwrap_or("").to_ascii_lowercase();
+        let type_lower = parsed._type.as_deref().unwrap_or("").to_ascii_lowercase();
+        let t = canonical_sync_type(&type_lower);
         let expired = t == "expired_buffs" || (t.starts_with("expired_") && t.contains("buff"));
         let Some(bid) = parsed.bid else {
             continue;
@@ -497,27 +546,28 @@ fn apply_buffs_sync(
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
     }
-    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(output_path),
+        &serde_json::to_vec_pretty(&output_payload)?,
+    )?;
     Ok(accepted)
 }
 
-fn load_existing_battlelogs(output_path: &str) -> Vec<Value> {
-    let raw = match std::fs::read_to_string(output_path) {
-        Ok(s) => s,
-        Err(_) => return Vec::new(),
-    };
-    let v: Value = match serde_json::from_str(&raw) {
-        Ok(v) => v,
-        Err(_) => return Vec::new(),
-    };
-    v.get("battlelogs")
-        .and_then(|b| b.as_array())
-        .cloned()
-        .unwrap_or_default()
+fn battlelog_journal_id(item: &Value) -> Option<u64> {
+    let id = item.get("journal")?.get("id")?;
+    let value = id.as_u64().or_else(|| {
+        let text = id.as_str()?;
+        if text.is_empty() || !text.bytes().all(|b| b.is_ascii_digit()) {
+            return None;
+        }
+        text.parse().ok()
+    })?;
+    (value > 0).then_some(value)
 }
 
-/// Appends each payload object to `battlelogs.imported.json`, then keeps the last
-/// [`BATTLELOGS_MAX_STORED`] entries (receive order within and across batches).
+/// Retains one immutable journal per exact ID, including retries after a mod restart.
+/// Legacy payloads without an identifiable journal retain receive-order behavior.
+/// Then keeps the last [`BATTLELOGS_MAX_STORED`] distinct entries.
 fn apply_battlelogs_sync(
     payload: &[Value],
     output_path: &str,
@@ -525,10 +575,15 @@ fn apply_battlelogs_sync(
     let _guard = SYNC_BATTLELOGS_MTX
         .lock()
         .map_err(|e| format!("lock poisoned: {e}"))?;
-    let mut logs = load_existing_battlelogs(output_path);
+    let mut logs: Vec<Value> = load_savepoint_entries(output_path, "battlelogs")?;
+    let mut seen = HashSet::new();
+    logs.retain(|item| battlelog_journal_id(item).is_none_or(|id| seen.insert(id)));
     let mut accepted = 0usize;
     for item in payload {
-        logs.push(item.clone());
+        if battlelog_journal_id(item).is_none_or(|id| seen.insert(id)) {
+            logs.push(item.clone());
+        }
+        // Retries are acknowledged even when this journal is already persisted.
         accepted += 1;
     }
     if logs.len() > BATTLELOGS_MAX_STORED {
@@ -542,7 +597,10 @@ fn apply_battlelogs_sync(
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
     }
-    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(output_path),
+        &serde_json::to_vec_pretty(&output_payload)?,
+    )?;
     Ok(accepted)
 }
 
@@ -557,8 +615,7 @@ fn apply_research_sync(
         .lock()
         .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_rid: HashMap<i64, import::ResearchEntry> =
-        import::load_imported_research(output_path)
-            .unwrap_or_default()
+        load_savepoint_entries::<import::ResearchEntry>(output_path, "research")?
             .into_iter()
             .map(|e| (e.rid, e))
             .collect();
@@ -585,7 +642,10 @@ fn apply_research_sync(
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
     }
-    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(output_path),
+        &serde_json::to_vec_pretty(&output_payload)?,
+    )?;
     Ok(accepted)
 }
 
@@ -609,8 +669,7 @@ fn apply_buildings_sync(
         .lock()
         .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_bid: HashMap<i64, import::BuildingEntry> =
-        import::load_imported_buildings(output_path)
-            .unwrap_or_default()
+        load_savepoint_entries::<import::BuildingEntry>(output_path, "buildings")?
             .into_iter()
             .map(|e| (e.bid, e))
             .collect();
@@ -637,7 +696,10 @@ fn apply_buildings_sync(
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
     }
-    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(output_path),
+        &serde_json::to_vec_pretty(&output_payload)?,
+    )?;
     Ok(accepted)
 }
 
@@ -668,11 +730,11 @@ fn apply_ships_sync(
     let _guard = SYNC_SHIPS_MTX
         .lock()
         .map_err(|e| format!("lock poisoned: {e}"))?;
-    let mut by_psid: HashMap<i64, import::ShipEntry> = import::load_imported_ships(output_path)
-        .unwrap_or_default()
-        .into_iter()
-        .map(|e| (e.psid, e))
-        .collect();
+    let mut by_psid: HashMap<i64, import::ShipEntry> =
+        load_savepoint_entries::<import::ShipEntry>(output_path, "ships")?
+            .into_iter()
+            .map(|e| (e.psid, e))
+            .collect();
 
     let mut accepted = 0usize;
     for item in payload {
@@ -704,7 +766,10 @@ fn apply_ships_sync(
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
     }
-    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(output_path),
+        &serde_json::to_vec_pretty(&output_payload)?,
+    )?;
     Ok(accepted)
 }
 
@@ -732,8 +797,7 @@ fn apply_ft_sync(
         .lock()
         .map_err(|e| format!("lock poisoned: {e}"))?;
     let mut by_fid: HashMap<i64, import::ForbiddenTechEntry> =
-        import::load_imported_forbidden_tech(output_path)
-            .unwrap_or_default()
+        load_savepoint_entries::<import::ForbiddenTechEntry>(output_path, "forbidden_tech")?
             .into_iter()
             .map(|e| (e.fid, e))
             .collect();
@@ -765,7 +829,10 @@ fn apply_ft_sync(
     if let Some(parent) = std::path::Path::new(output_path).parent() {
         std::fs::create_dir_all(parent)?;
     }
-    std::fs::write(output_path, serde_json::to_string_pretty(&output_payload)?)?;
+    crate::data::atomic_file::write_atomic(
+        std::path::Path::new(output_path),
+        &serde_json::to_vec_pretty(&output_payload)?,
+    )?;
     Ok(accepted)
 }
 
@@ -868,6 +935,118 @@ pub fn sync_status_payload(profile_id: Option<&str>) -> (StatusCode, String) {
         r#"{"roster_path":"profiles/<profile_id>/roster.imported.json","last_modified_iso":null}"#.to_string()
     });
     (StatusCode::OK, body_str)
+}
+
+#[cfg(test)]
+mod isolated_persistence_tests {
+    use super::*;
+
+    struct TempRoot(PathBuf);
+    impl TempRoot {
+        fn new() -> Self {
+            let root = std::env::temp_dir()
+                .join(format!("kobayashi-isolated-sync-{}", uuid::Uuid::new_v4()));
+            std::fs::create_dir_all(&root).unwrap();
+            Self(root)
+        }
+    }
+    impl Drop for TempRoot {
+        fn drop(&mut self) {
+            assert!(self.0.is_absolute() && self.0.starts_with(std::env::temp_dir()));
+            assert!(self
+                .0
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("kobayashi-isolated-sync-"));
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    type Apply = fn(&[Value], &str) -> Result<usize, Box<dyn std::error::Error + Send + Sync>>;
+    fn rejects_corrupt_savepoint(apply: Apply) {
+        let root = TempRoot::new();
+        let path = root.0.join("savepoint.json");
+        let original = b"{\"existing_history\":";
+        std::fs::write(&path, original).unwrap();
+        let result = apply(
+            &[
+                serde_json::json!({"type":"buffs","oid":"3849424588","rank":4,"rid":123,"bid":123,"psid":123,"fid":123,"level":1,"journal":{"id":1}}),
+            ],
+            path.to_str().unwrap(),
+        );
+        assert!(
+            result.is_err(),
+            "an invalid existing savepoint must fail without overwriting it"
+        );
+        assert_eq!(std::fs::read(&path).unwrap(), original);
+    }
+    #[test]
+    fn isolated_persistence_research_retains_corrupt_savepoint() {
+        rejects_corrupt_savepoint(apply_research_sync);
+    }
+    #[test]
+    fn isolated_persistence_buildings_retain_corrupt_savepoint() {
+        rejects_corrupt_savepoint(apply_buildings_sync);
+    }
+    #[test]
+    fn isolated_persistence_buffs_retain_corrupt_savepoint() {
+        rejects_corrupt_savepoint(apply_buffs_sync);
+    }
+    #[test]
+    fn isolated_persistence_ships_retain_corrupt_savepoint() {
+        rejects_corrupt_savepoint(apply_ships_sync);
+    }
+    #[test]
+    fn isolated_persistence_tech_retains_corrupt_savepoint() {
+        rejects_corrupt_savepoint(apply_ft_sync);
+    }
+    #[test]
+    fn isolated_persistence_battlelogs_retain_corrupt_savepoint() {
+        rejects_corrupt_savepoint(apply_battlelogs_sync);
+    }
+    #[test]
+    fn isolated_persistence_roster_retains_corrupt_savepoint() {
+        rejects_corrupt_savepoint(|payload, path| {
+            apply_officer_sync(payload, DEFAULT_GAME_ID_MAP_PATH, path)
+        });
+    }
+
+    #[test]
+    fn isolated_persistence_research_merges_valid_batches_and_preserves_existing_rows() {
+        let root = TempRoot::new();
+        let path = root.0.join("savepoint.json");
+        let output = path.to_str().unwrap();
+        apply_research_sync(&[serde_json::json!({"rid":1,"level":2})], output).unwrap();
+        apply_research_sync(&[serde_json::json!({"rid":2,"level":3})], output).unwrap();
+        let actual: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(
+            actual["research"],
+            serde_json::json!([{"rid":1,"level":2},{"rid":2,"level":3}])
+        );
+        assert_eq!(std::fs::read_dir(&root.0).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn isolated_persistence_research_rejects_invalid_rows_and_unreadable_savepoints() {
+        let root = TempRoot::new();
+        let path = root.0.join("savepoint.json");
+        let original = b"{\"research\":[{\"rid\":\"invalid\",\"level\":3}]}";
+        std::fs::write(&path, original).unwrap();
+        assert!(apply_research_sync(
+            &[serde_json::json!({"rid":1,"level":2})],
+            path.to_str().unwrap()
+        )
+        .is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), original);
+        let directory = root.0.join("unreadable.json");
+        std::fs::create_dir(&directory).unwrap();
+        assert!(apply_research_sync(
+            &[serde_json::json!({"rid":1,"level":2})],
+            directory.to_str().unwrap()
+        )
+        .is_err());
+        assert!(directory.is_dir());
+    }
 }
 
 #[cfg(test)]
@@ -1013,13 +1192,14 @@ mod tests {
             .to_string_lossy()
             .to_string();
         let entries = import::load_imported_roster(&roster_path).expect("roster imported");
-        let neelix = entries
+        let harry_kim = entries
             .iter()
-            .find(|e| e.canonical_officer_id == "neelix-c8a380")
-            .expect("neelix roster row");
-        assert_eq!(neelix.rank, Some(2));
-        assert_eq!(neelix.tier, Some(5));
-        assert_eq!(neelix.level, Some(30));
+            .find(|e| e.canonical_officer_id == "harry-kim-a79fdf")
+            .expect("Harry Kim roster row");
+        assert_eq!(harry_kim.source_oid.as_deref(), Some("497650232"));
+        assert_eq!(harry_kim.rank, Some(2));
+        assert_eq!(harry_kim.tier, Some(5));
+        assert_eq!(harry_kim.level, Some(30));
     }
 
     #[test]
@@ -1110,6 +1290,101 @@ mod tests {
         assert_eq!(arr.len(), 2);
         assert_eq!(arr[0].get("seq"), Some(&json!(1)));
         assert_eq!(arr[1].get("seq"), Some(&json!(2)));
+    }
+
+    #[test]
+    fn ingress_mod_singular_buffs_merge_and_expire_in_mixed_batches() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let path = profile_path(&profile_id, BUFFS_IMPORTED);
+        let (status, response) = ingress_payload(
+            r#"[{"type":"buff","bid":777101,"level":2,"expiry_time":1800000000},{"type":"buffs","bid":777102,"level":4,"expiry_time":null}]"#,
+            Some(&token),
+        );
+        assert_eq!(status, StatusCode::OK);
+        assert!(response.contains("buffs(2)"));
+        let entries = import::load_imported_buffs(&path.to_string_lossy()).unwrap();
+        assert_eq!(entries.len(), 2);
+        let timed = entries.iter().find(|e| e.bid == 777101).unwrap();
+        assert_eq!(timed.level, 2);
+        assert_eq!(timed.expiry_time, Some(1800000000));
+
+        // A removal can be first, and each row's spelling is handled independently.
+        let (status, response) = ingress_payload(
+            r#"[{"type":"expired_buff","bid":777101},{"type":"buff","bid":777103,"level":5},{"type":"expired_buffs","bid":777102}]"#,
+            Some(&token),
+        );
+        assert_eq!(status, StatusCode::OK);
+        assert!(response.contains("buffs(3)"));
+        let entries = import::load_imported_buffs(&path.to_string_lossy()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].bid, 777103);
+        assert_eq!(entries[0].level, 5);
+        assert!(profile_path(&profile_id, LAST_MOD_SYNC_JSON).is_file());
+    }
+
+    #[test]
+    fn ingress_mod_singular_battlelog_preserves_journal() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (token, profile_id, _cleanup) = ensure_test_profile();
+        let log = json!({
+            "type": "battlelog",
+            "names": {},
+            "journal": {
+                "id": 777201,
+                "initiator_fleet_data": {"ships": []},
+                "target_fleet_data": {"ships": []},
+                "rounds": [{"unknown_future_field": [1, 2, 3]}]
+            }
+        });
+        let (status, response) = ingress_payload(&json!([log.clone()]).to_string(), Some(&token));
+        assert_eq!(status, StatusCode::OK);
+        assert!(response.contains("battlelogs(1)"));
+        let raw = std::fs::read_to_string(profile_path(&profile_id, BATTLELOGS_IMPORTED)).unwrap();
+        let stored: serde_json::Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(stored["battlelogs"], json!([log]));
+        assert!(profile_path(&profile_id, LAST_MOD_SYNC_JSON).is_file());
+    }
+
+    #[test]
+    fn battlelog_retries_are_idempotent_with_exact_large_ids() {
+        let _guard = SYNC_TEST_LOCK.lock().unwrap();
+        let (_token, profile_id, _cleanup) = ensure_test_profile();
+        let path = profile_path(&profile_id, BATTLELOGS_IMPORTED);
+        let first =
+            json!({"type":"battlelog", "journal":{"id":9007199254740992u64, "original":true}});
+        let adjacent = json!({"type":"battlelog", "journal":{"id":9007199254740993u64}});
+        // Clean up duplicates from earlier append-only captures on the next ingress.
+        std::fs::write(
+            &path,
+            json!({"battlelogs":[first.clone(),first.clone()]}).to_string(),
+        )
+        .unwrap();
+        let retry = json!({"type":"battlelog", "names":{"optional":"later"}, "journal":{"id":"9007199254740992"}});
+        let legacy = json!({"type":"battlelogs", "seq":1});
+        let batch = [retry, adjacent.clone(), legacy.clone()];
+        assert_eq!(
+            super::apply_battlelogs_sync(&batch, &path.to_string_lossy()).unwrap(),
+            3
+        );
+        let stored = super::load_savepoint_entries::<serde_json::Value>(
+            &path.to_string_lossy(),
+            "battlelogs",
+        )
+        .unwrap();
+        assert_eq!(stored, vec![first, adjacent, legacy]);
+        assert_eq!(
+            super::apply_battlelogs_sync(&batch[..2], &path.to_string_lossy()).unwrap(),
+            2
+        );
+        assert_eq!(
+            super::load_savepoint_entries::<serde_json::Value>(
+                &path.to_string_lossy(),
+                "battlelogs"
+            )
+            .unwrap(),
+            stored
+        );
     }
 
     #[test]
