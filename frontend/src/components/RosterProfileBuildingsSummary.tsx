@@ -88,7 +88,8 @@ export default function RosterProfileBuildingsSummary({
             </dd>
             <dt style={styles.muted}>Syndicate level</dt>
             <dd style={styles.noMargin}>
-              {buildingSummary.syndicate_level ?? "Unknown; loyalty bonuses excluded"}
+              {buildingSummary.syndicate_level ??
+                "Unknown; loyalty bonuses excluded"}
             </dd>
           </dl>
           {buildingSummary.source_limitations?.map((message) => (
