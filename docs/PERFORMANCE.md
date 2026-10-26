@@ -1,5 +1,11 @@
 # Sim performance (after efficiency improvements)
 
+For the current fixed-work experiment, see the [2026-10-26 throughput report](performance/2026-10-26.md).
+It separates executed rounds from configured limits and compares frozen release
+executables with exact result and event parity. The historical figures below
+mix hardware and workloads; the old 100-round CLI rate used the configured limit
+instead of executed rounds.
+
 Benchmarks were run after implementing the sim efficiency plan (lazy trace, pre-compute effects, EffectAccumulator reuse, Monte Carlo shared cache, SplitMix64 RNG).
 
 ## Regression gate (Criterion)

@@ -13,6 +13,7 @@ import math
 import os
 from pathlib import Path
 import random
+import re
 import statistics
 import subprocess
 import sys
@@ -72,6 +73,87 @@ def same_work(a, b):
             raise ValueError(f"Baseline/candidate parity mismatch in {key}")
 
 
+BUILD_SOURCE_KEYS = {
+    "src/bin/hot_path_bench.rs": "harness_sha256",
+    "src/bin/hot_path_bench/allocations.rs": "allocator_helper_sha256",
+    "Cargo.lock": "cargo_lock_sha256",
+}
+FROZEN_PROTOCOL_KEYS = (
+    "baseline_sha256", "harness_sha256", "allocator_helper_sha256",
+    "cargo_lock_sha256", "data_tree", "affinity_mask", "rayon_threads", "simd",
+)
+
+
+def read_build_manifest(manifest_path, executable, source_hashes):
+    """Check an external build-time attestation against the immutable executable.
+
+    The caller must capture this manifest at build time. Runtime source hashes
+    alone cannot recover compiler flags or prove what source an executable used.
+    Root metadata is retained for provenance; only the build configuration and
+    required source/executable hashes participate in configuration validation.
+    """
+    manifest_bytes = Path(manifest_path).read_bytes()
+    manifest = json.loads(manifest_bytes)
+    if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
+        raise ValueError("Unsupported build manifest schema_version")
+    executable_hash = manifest.get("executable_sha256")
+    sources = manifest.get("source_hashes")
+    if not isinstance(sources, dict) or not set(BUILD_SOURCE_KEYS).issubset(sources):
+        raise ValueError("Build manifest requires the harness/helper/lock source_hashes")
+    for digest in [executable_hash, *sources.values()]:
+        if not isinstance(digest, str) or not re.fullmatch(r"[a-f0-9]{64}", digest):
+            raise ValueError("Build manifest requires lowercase SHA-256 hashes")
+    if executable_hash != sha256(executable):
+        raise ValueError("Build manifest executable SHA-256 mismatch")
+    for source, expected_hash in source_hashes.items():
+        if sources[source] != expected_hash:
+            raise ValueError(f"Build manifest source SHA-256 mismatch: {source}")
+    build = manifest.get("build")
+    required = {"compiler", "target_triple", "profile", "features", "rustflags",
+                "cargo_profile", "target_config"}
+    if not isinstance(build, dict) or not required.issubset(build):
+        raise ValueError("Build manifest is missing compiler/profile/features/flags/target configuration")
+    for field in ("compiler", "target_triple"):
+        if not isinstance(build[field], str) or not build[field].strip():
+            raise ValueError(f"Build manifest requires nonempty {field}")
+    if build["profile"] != "release":
+        raise ValueError("Timing build manifest must use the release profile")
+    for field in ("features", "rustflags"):
+        if not isinstance(build[field], list) or not all(isinstance(x, str) for x in build[field]):
+            raise ValueError(f"Build manifest {field} must be an explicit string array")
+    if len(set(build["features"])) != len(build["features"]):
+        raise ValueError("Build manifest features must be unique")
+    if any(feature.rsplit("/", 1)[-1] == "bench-alloc-count" for feature in build["features"]):
+        raise ValueError("Allocation-instrumented build manifests cannot supply timing data")
+    for field, keys in (
+        ("cargo_profile", {"opt_level", "lto", "codegen_units", "panic", "strip", "debug"}),
+        ("target_config", {"target_cpu", "target_features", "linker"}),
+    ):
+        if not isinstance(build[field], dict) or not keys.issubset(build[field]):
+            raise ValueError(f"Build manifest requires explicit {field} settings")
+    return {"sha256": hashlib.sha256(manifest_bytes).hexdigest(), "manifest": manifest}
+
+
+def validate_build_pair(baseline, candidate):
+    if baseline["manifest"]["build"] != candidate["manifest"]["build"]:
+        raise ValueError("Baseline/candidate compiler/profile/features/flags/target configuration differs")
+
+
+def validate_frozen_protocol(frozen, current):
+    for key in FROZEN_PROTOCOL_KEYS:
+        if frozen[key] != current[key]:
+            raise ValueError(f"Frozen measurement protocol changed: {key}")
+    # Legacy baseline summaries predate optional external build manifests.
+    if frozen.get("build_manifests"):
+        recorded = frozen["build_manifests"]["baseline"]["manifest"]
+        supplied = current.get("build_manifests", {}).get("baseline", {}).get("manifest")
+        if supplied is None:
+            raise ValueError("Frozen measurement protocol requires its baseline build manifest")
+        for key in ("executable_sha256", "source_hashes", "build"):
+            if recorded[key] != supplied[key]:
+                raise ValueError(f"Frozen baseline build manifest changed: {key}")
+
+
 def paired_summary(blocks):
     """Pair each block's two baseline and two candidate fixed-work samples."""
     ratios = []
@@ -94,28 +176,56 @@ def paired_summary(blocks):
 
 
 class Runner:
-    def __init__(self, output, cwd, environment):
+    def __init__(self, output, cwd, environment, process_timeout=300):
+        if not math.isfinite(process_timeout) or process_timeout <= 0:
+            raise ValueError("Process timeout must be positive and finite")
         self.output = output
         self.cwd = cwd
         self.environment = environment
         self.sequence = 0
+        self.process_timeout = process_timeout
 
     def call(self, executable, arguments, label):
         self.sequence += 1
         stem = self.output / f"{self.sequence:04d}-{label}"
-        started = time.time()
-        result = subprocess.run([str(executable), *arguments], cwd=self.cwd,
-                                env=self.environment, capture_output=True, text=True,
-                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
-        stem.with_suffix(".stdout.jsonl").write_text(result.stdout, encoding="utf-8")
-        stem.with_suffix(".stderr.log").write_text(result.stderr, encoding="utf-8")
+        started = time.monotonic()
+        executable_hash = sha256(executable)
+        timed_out = False
+        launch_error = None
+        exit_code = None
+        try:
+            result = subprocess.run(
+                [str(executable), *arguments], cwd=self.cwd, env=self.environment,
+                capture_output=True, text=True, timeout=self.process_timeout,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            stdout, stderr, exit_code = result.stdout, result.stderr, result.returncode
+        except subprocess.TimeoutExpired as error:
+            # subprocess.run kills and waits for its own child before raising.
+            # Partial captured output may be bytes even when text=True.
+            stdout, stderr = error.stdout or "", error.stderr or ""
+            timed_out = True
+        except OSError as error:
+            stdout, stderr = "", str(error)
+            launch_error = type(error).__name__
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+        stem.with_suffix(".stdout.jsonl").write_text(stdout, encoding="utf-8")
+        stem.with_suffix(".stderr.log").write_text(stderr, encoding="utf-8")
         stem.with_suffix(".process.json").write_text(json.dumps({
-            "exit_code": result.returncode, "wall_seconds_including_setup": time.time() - started,
-            "arguments": arguments, "executable_sha256": sha256(executable),
+            "exit_code": exit_code, "timed_out": timed_out, "launch_error": launch_error,
+            "process_timeout_seconds": self.process_timeout,
+            "wall_seconds_including_setup": time.monotonic() - started,
+            "arguments": arguments, "executable_sha256": executable_hash,
         }, indent=2) + "\n", encoding="utf-8")
-        if result.returncode:
-            raise RuntimeError(f"Benchmark failed ({result.returncode}); see {stem.name} logs")
-        return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+        if timed_out:
+            raise RuntimeError(f"Benchmark exceeded {self.process_timeout}s process timeout; see {stem.name} logs")
+        if launch_error:
+            raise RuntimeError(f"Benchmark could not start ({launch_error}); see {stem.name} logs")
+        if exit_code:
+            raise RuntimeError(f"Benchmark failed ({exit_code}); see {stem.name} logs")
+        return [json.loads(line) for line in stdout.splitlines() if line.strip()]
 
     def timing(self, executable, name, iterations, label):
         rows = self.call(executable, ["--case", name, "--iterations", str(iterations)], label)
@@ -135,11 +245,21 @@ def main():
     parser.add_argument("--seconds", default=0.75, type=float)
     parser.add_argument("--affinity", type=lambda value: int(value, 0))
     parser.add_argument("--threads", default=1, type=int)
+    parser.add_argument("--process-timeout", default=300, type=float,
+                        help="Maximum wall-clock seconds per owned benchmark child, including probes (default 300)")
+    parser.add_argument("--baseline-build-manifest", type=Path)
+    parser.add_argument("--candidate-build-manifest", type=Path)
     parser.add_argument("--counts-from", type=Path,
                         help="Use frozen calibrated counts from an earlier baseline summary")
     args = parser.parse_args()
     if args.blocks < 2 or not 0 < args.seconds <= 60 or args.threads < 1:
         parser.error("Need blocks >= 2, seconds in (0,60], and threads >= 1")
+    if not math.isfinite(args.process_timeout) or args.process_timeout <= 0:
+        parser.error("Need a positive finite --process-timeout")
+    if args.candidate_build_manifest and not args.candidate:
+        parser.error("--candidate-build-manifest requires --candidate")
+    if args.candidate and bool(args.baseline_build_manifest) != bool(args.candidate_build_manifest):
+        parser.error("Paired build validation requires both build manifests")
     baseline = args.baseline.resolve(strict=True)
     candidate = args.candidate.resolve(strict=True) if args.candidate else None
     args.output.mkdir(parents=False, exist_ok=False)
@@ -148,7 +268,7 @@ def main():
     env.update({"KOBAYASHI_HOME": str(args.runtime.resolve()),
                 "KOBAYASHI_RAYON_THREADS": str(args.threads),
                 "KOBAYASHI_EXPERIMENTAL_SIMD_DAMAGE_KERNEL": "0"})
-    run = Runner(args.output, args.runtime.resolve(), env)
+    run = Runner(args.output, args.runtime.resolve(), env, args.process_timeout)
     listing = run.call(baseline, ["--list"], "baseline-list")[0]
     cases = args.cases or listing["cases"]
     if len(set(cases)) != len(cases) or not set(cases).issubset(listing["cases"]):
@@ -162,14 +282,26 @@ def main():
                "cargo_lock_sha256": sha256(args.runtime / "Cargo.lock"),
                "data_tree": data_tree(args.runtime / "data"),
                "affinity_mask": args.affinity, "rayon_threads": args.threads,
-               "simd": False, "cases": cases, "blocks": args.blocks,
-               "target_seconds": args.seconds, "results": {}}
+               # Retain the original protocol's field as the requested flag value.
+               # The baseline engine ignores that flag and automatically selects
+               # its AVX2 kernel in TraceOff mode. Do not claim scalar measurements.
+               "simd": False, "simd_field_scope": "requested environment flag only",
+               "kernel_policy": "unchanged automatic AVX2 when supported and tracing is off; legacy engine gate ignores the environment request",
+               "cases": cases, "blocks": args.blocks,
+               "target_seconds": args.seconds, "process_timeout_seconds": args.process_timeout,
+               "build_validation": "not_supplied", "results": {}}
+    if args.baseline_build_manifest:
+        source_hashes = {source: context[key] for source, key in BUILD_SOURCE_KEYS.items()}
+        baseline_build = read_build_manifest(args.baseline_build_manifest, baseline, source_hashes)
+        manifests = {"baseline": baseline_build}
+        if candidate:
+            manifests["candidate"] = read_build_manifest(args.candidate_build_manifest, candidate, source_hashes)
+            validate_build_pair(baseline_build, manifests["candidate"])
+        context["build_manifests"] = manifests
+        context["build_validation"] = "external_build_time_attestations_bound_to_executable_and_sources"
     frozen = json.loads(args.counts_from.read_text()) if args.counts_from else None
     if frozen:
-        for key in ("baseline_sha256", "harness_sha256", "allocator_helper_sha256",
-                    "cargo_lock_sha256", "data_tree", "affinity_mask", "rayon_threads", "simd"):
-            if frozen[key] != context[key]:
-                raise ValueError(f"Frozen measurement protocol changed: {key}")
+        validate_frozen_protocol(frozen, context)
     for name in cases:
         # Full-result hashes, including ordered traced events, are outside timing.
         baseline_parity = run.call(baseline, ["--case", name, "--parity"], f"{name}-baseline-parity")

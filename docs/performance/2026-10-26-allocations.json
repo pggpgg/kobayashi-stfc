@@ -1,0 +1,89 @@
+{
+  "scope": "Allocator requests in selected fixed TraceOff loop only; separate feature-instrumented executables, not timing data; 64 combats per case. Not live or peak heap usage. Exact work and checksum parity required.",
+  "results": {
+    "legacy_round_one": {
+      "baseline": {
+        "alloc_calls_per_combat": 13.0,
+        "alloc_requested_bytes_per_combat": 2322.0,
+        "realloc_calls_per_combat": 0.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 4.0,
+        "alloc_requested_bytes_per_combat": 2062.0,
+        "realloc_calls_per_combat": 0.0
+      }
+    },
+    "scalar_100_rounds": {
+      "baseline": {
+        "alloc_calls_per_combat": 904.0,
+        "alloc_requested_bytes_per_combat": 28062.0,
+        "realloc_calls_per_combat": 0.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 4.0,
+        "alloc_requested_bytes_per_combat": 2062.0,
+        "realloc_calls_per_combat": 0.0
+      }
+    },
+    "weapons_40_rounds": {
+      "baseline": {
+        "alloc_calls_per_combat": 2166.0,
+        "alloc_requested_bytes_per_combat": 64846.0,
+        "realloc_calls_per_combat": 0.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 6.0,
+        "alloc_requested_bytes_per_combat": 2446.0,
+        "realloc_calls_per_combat": 0.0
+      }
+    },
+    "status_40_rounds": {
+      "baseline": {
+        "alloc_calls_per_combat": 3548.109375,
+        "alloc_requested_bytes_per_combat": 472188.140625,
+        "realloc_calls_per_combat": 1.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 687.15625,
+        "alloc_requested_bytes_per_combat": 125211.515625,
+        "realloc_calls_per_combat": 1.0
+      }
+    },
+    "catalog_lcars_profile_free": {
+      "baseline": {
+        "alloc_calls_per_combat": 79.6875,
+        "alloc_requested_bytes_per_combat": 9488.3125,
+        "realloc_calls_per_combat": 0.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 20.3125,
+        "alloc_requested_bytes_per_combat": 5102.375,
+        "realloc_calls_per_combat": 0.0
+      }
+    },
+    "scalar_100_rounds_wrapper": {
+      "baseline": {
+        "alloc_calls_per_combat": 913.0,
+        "alloc_requested_bytes_per_combat": 28187.0,
+        "realloc_calls_per_combat": 1.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 13.0,
+        "alloc_requested_bytes_per_combat": 2187.0,
+        "realloc_calls_per_combat": 1.0
+      }
+    },
+    "dynamic_officer_stats_40": {
+      "baseline": {
+        "alloc_calls_per_combat": 1218.15625,
+        "alloc_requested_bytes_per_combat": 59003.25,
+        "realloc_calls_per_combat": 0.0
+      },
+      "candidate": {
+        "alloc_calls_per_combat": 6.0,
+        "alloc_requested_bytes_per_combat": 1910.0,
+        "realloc_calls_per_combat": 0.0
+      }
+    }
+  }
+}

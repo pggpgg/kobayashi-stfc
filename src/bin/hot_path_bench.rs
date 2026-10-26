@@ -328,9 +328,7 @@ fn synthetic_case(name: &str) -> Option<Case> {
                 &contributions,
                 OfficerStatConditionContext::default(),
             );
-            if case.officer_stat_round.is_none() {
-                return None;
-            }
+            case.officer_stat_round.as_ref()?;
             case.crew.seats = vec![seat(
                 "dynamic-morale",
                 TimingWindow::RoundStart,
