@@ -2714,6 +2714,50 @@ impl std::fmt::Display for OptimizeStatusError {
 
 impl std::error::Error for OptimizeStatusError {}
 
+/// Finish registry bookkeeping even when a worker unwinds. The thread panic
+/// still propagates to its join handle and the panic hook still runs; no partially
+/// computed optimizer state is resumed. Abort-on-panic builds (including the
+/// current release profile) terminate the process and cannot run this cleanup.
+struct OptimizeWorkerCleanup<'a> {
+    job_id: &'a str,
+}
+
+impl Drop for OptimizeWorkerCleanup<'_> {
+    fn drop(&mut self) {
+        let unfinished = REGISTRY
+            .with_state_mut(self.job_id, |state| {
+                if !matches!(state.status, OptimizeJobStatus::Running) {
+                    return false;
+                }
+                state.status = OptimizeJobStatus::Error;
+                state.phase = None;
+                state.cancellation_point = None;
+                state.progress_preview = None;
+                state.result = None;
+                state.error = Some("Internal optimization error".to_string());
+                true
+            })
+            .unwrap_or(false);
+        REGISTRY.remove_cancel(self.job_id);
+        if unfinished {
+            tracing::error!(job_id = %self.job_id, "optimize_job_worker_exited_before_completion");
+        }
+        info!(job_id = %self.job_id, "optimize_job_cleanup");
+    }
+}
+
+fn spawn_optimize_worker(
+    job_id: String,
+    cpu_permit: OwnedSemaphorePermit,
+    worker: impl FnOnce() + Send + 'static,
+) -> std::thread::JoinHandle<()> {
+    std::thread::spawn(move || {
+        let _cpu_permit = cpu_permit;
+        let _cleanup = OptimizeWorkerCleanup { job_id: &job_id };
+        worker();
+    })
+}
+
 /// Start an optimize job in the background; returns job_id. Caller must have validated request.
 /// `cpu_permit` is held until the job thread finishes so `/api/optimize/start` shares the same
 /// CPU concurrency budget as `/api/optimize` and `/api/simulate`.
@@ -2761,7 +2805,7 @@ pub fn start_optimize_job(
     let job_id_thread = job_id.clone();
     let profile_owned = profile_id.map(String::from);
 
-    std::thread::spawn(move || {
+    spawn_optimize_worker(job_id.clone(), cpu_permit, move || {
         let job_span = info_span!(
             "optimize_job_run",
             job_id = %job_id_thread,
@@ -2772,7 +2816,6 @@ pub fn start_optimize_job(
             profile_id_present = profile_owned.is_some()
         );
         let _job_span = job_span.enter();
-        let _cpu_permit = cpu_permit;
         let start = Instant::now();
         let mut sink = OptimizeProgressSink::Job {
             job_id: job_id_thread.clone(),
@@ -2842,8 +2885,6 @@ pub fn start_optimize_job(
                 });
             }
         }
-        REGISTRY.remove_cancel(&job_id_thread);
-        info!(job_id = %job_id_thread, "optimize_job_cleanup");
     });
 
     Ok(OptimizeStartResponse { job_id })
@@ -2933,6 +2974,116 @@ pub fn patch_optimize_job_for_tests(
 // Note: the previous `parse_job_timestamp_reads_opt_prefix` and
 // `prune_drops_oldest_completed_first` unit tests covered helpers that have moved into
 // the shared `crate::server::job_registry` module; equivalent tests live there.
+
+#[cfg(test)]
+mod optimize_worker_tests {
+    use super::*;
+
+    fn running_job() -> String {
+        let job_id = REGISTRY.next_id("opt_worker_test");
+        seed_optimize_job_for_tests(
+            &job_id,
+            OptimizeJobState {
+                status: OptimizeJobStatus::Running,
+                progress: 42,
+                crews_done: 4,
+                total_crews: 10,
+                phase: Some("monte_carlo".into()),
+                cancellation_point: Some("stale_phase".into()),
+                progress_preview: Some(Vec::new()),
+                result: None,
+                error: None,
+                started_at_ms: now_ms().saturating_sub(1000),
+            },
+        );
+        job_id
+    }
+
+    #[test]
+    fn worker_return_without_terminal_status_is_an_error() {
+        let job_id = running_job();
+        let admission = Arc::new(tokio::sync::Semaphore::new(1));
+        let permit = admission.clone().try_acquire_owned().unwrap();
+        spawn_optimize_worker(job_id.clone(), permit, || {})
+            .join()
+            .unwrap();
+        let status = get_job_status(&job_id).unwrap();
+        assert_eq!(status.status, "error");
+        assert_eq!(status.error.as_deref(), Some("Internal optimization error"));
+        assert!(matches!(
+            cancel_job(&job_id),
+            Err(OptimizeStatusError::NotFound)
+        ));
+        assert_eq!(admission.available_permits(), 1);
+    }
+
+    #[test]
+    fn completed_failed_and_cancelled_jobs_keep_their_terminal_outcome() {
+        for (expected_status, error, cancellation_point) in [
+            ("done", None, None),
+            ("error", Some("validation error"), None),
+            (
+                "error",
+                Some("Cancelled during tiered_confirm"),
+                Some("tiered_confirm"),
+            ),
+        ] {
+            let job_id = running_job();
+            let worker_job_id = job_id.clone();
+            let admission = Arc::new(tokio::sync::Semaphore::new(1));
+            let permit = admission.clone().try_acquire_owned().unwrap();
+            spawn_optimize_worker(job_id.clone(), permit, move || {
+                REGISTRY.with_state_mut(&worker_job_id, |state| {
+                    state.status = if expected_status == "done" {
+                        OptimizeJobStatus::Done
+                    } else {
+                        OptimizeJobStatus::Error
+                    };
+                    state.phase = None;
+                    state.progress_preview = None;
+                    state.error = error.map(str::to_string);
+                    state.cancellation_point = cancellation_point.map(str::to_string);
+                });
+            })
+            .join()
+            .unwrap();
+            let status = get_job_status(&job_id).unwrap();
+            assert_eq!(status.status, expected_status);
+            assert_eq!(status.error.as_deref(), error);
+            assert_eq!(status.cancellation_point.as_deref(), cancellation_point);
+            assert!(matches!(
+                cancel_job(&job_id),
+                Err(OptimizeStatusError::NotFound)
+            ));
+            assert_eq!(admission.available_permits(), 1);
+        }
+    }
+
+    #[test]
+    fn worker_panic_reaches_terminal_error_and_releases_resources() {
+        let job_id = running_job();
+        let admission = Arc::new(tokio::sync::Semaphore::new(1));
+        let permit = admission.clone().try_acquire_owned().unwrap();
+        let worker = spawn_optimize_worker(job_id.clone(), permit, || {
+            panic!("private panic payload must not enter job status");
+        });
+        assert!(worker.join().is_err(), "worker panic must still propagate");
+        let status = get_job_status(&job_id).unwrap();
+        assert_eq!(status.status, "error");
+        assert_eq!(status.error.as_deref(), Some("Internal optimization error"));
+        assert!(status.phase.is_none());
+        assert!(status.cancellation_point.is_none());
+        assert!(status.progress_preview.is_none());
+        assert!(status.result.is_none());
+        assert!(status.eta_seconds.is_none());
+        assert!(status.throughput_crews_per_sec.is_none());
+        assert!(matches!(
+            cancel_job(&job_id),
+            Err(OptimizeStatusError::NotFound)
+        ));
+        assert_eq!(admission.available_permits(), 1);
+    }
+}
 
 #[cfg(test)]
 mod curated_warm_start_tests {
