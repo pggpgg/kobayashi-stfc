@@ -152,12 +152,12 @@ tower = { version = "0.4", features = ["util"] }
 opt-level = 1
 debug = "line-tables-only"
 
-# Release builds: enable LTO, single codegen unit, abort on panic for max throughput.
+# Release builds: enable LTO, single codegen unit, unwind on panic so background jobs can report failures.
 # Compile times are significantly longer — dev iteration should use `profile.profiling`.
 [profile.release]
 lto = "fat"
 codegen-units = 1
-panic = "abort"
+panic = "unwind"
 strip = "symbols"
 
 # Release-grade optimizations with debuginfo for local profilers (samply, Instruments).

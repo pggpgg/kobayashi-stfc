@@ -148,6 +148,7 @@ export type CpuBusyWaitInfo = { waitMs: number; attempt: number };
 
 export type FetchCpuBusyOptions = {
   onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
+  signal?: AbortSignal;
 };
 
 function sleepMs(ms: number): Promise<void> {
@@ -167,6 +168,8 @@ export async function fetchWithCpuBusyRetries(
   let cpuBusyRound = 0;
 
   while (true) {
+    options?.signal?.throwIfAborted();
+    // Keep an in-flight start request alive so its accepted job can be cancelled.
     const res = await fetch(url, init);
     if (res.ok) return res;
 
@@ -209,7 +212,26 @@ export async function fetchWithCpuBusyRetries(
       attempt: cpuBusyRound + 1,
     });
 
-    await sleepMs(waitMs);
+    if (options?.signal) {
+      const signal = options.signal;
+      await new Promise<void>((resolve, reject) => {
+        if (signal.aborted) {
+          reject(signal.reason);
+          return;
+        }
+        const timer = setTimeout(() => {
+          signal.removeEventListener("abort", onAbort);
+          resolve();
+        }, waitMs);
+        const onAbort = () => {
+          clearTimeout(timer);
+          reject(signal.reason);
+        };
+        signal.addEventListener("abort", onAbort, { once: true });
+      });
+    } else {
+      await sleepMs(waitMs);
+    }
     totalWaitedMs += waitMs;
     cpuBusyRound += 1;
   }
@@ -841,6 +863,7 @@ export type OptimizerStrategyType = NonNullable<OptimizeRequest["strategy"]>;
 /** Optional hooks for `optimizeStart` (CPU admission may queue the request). */
 export type OptimizeStartOptions = {
   onCpuBusyWait?: (info: CpuBusyWaitInfo) => void;
+  signal?: AbortSignal;
 };
 
 export async function optimizeStart(
@@ -859,7 +882,7 @@ export async function optimizeStart(
       },
       body: JSON.stringify(body),
     },
-    { onCpuBusyWait: options?.onCpuBusyWait },
+    { onCpuBusyWait: options?.onCpuBusyWait, signal: options?.signal },
   );
   return res.json();
 }

@@ -219,7 +219,7 @@ where
         // that disagrees with the pending count can never index out of bounds. Rows are looked up
         // and cloned rather than removed: `fresh_by_hash` holds one entry per distinct hash, so a
         // duplicate crew in `pending_crews` would make a second `remove` return `None`. Both used
-        // to panic, and release builds abort on panic — taking the server down with the job. The
+        // to panic and fail the job. The
         // invariants still hold today (`prepend_warm_start_dedupe` makes candidates hash-unique),
         // so the fallbacks are unreachable and assert loudly in debug.
         let mut pending = pending_crews.iter();
@@ -246,7 +246,7 @@ where
 
     // Drain the slots into the confirmed map. Zipping the two together bounds the walk by the
     // shorter of the pair, so a slot vector out of step with `top_crews` degrades instead of
-    // panicking (release aborts on panic, which would kill the server, not just this job).
+    // panicking and failing the job.
     for (crew, slot) in top_crews.iter().zip(confirmation_slots.iter_mut()) {
         let h = crew_candidate_ordered_hash(crew);
         let row = slot.take().unwrap_or_else(|| {

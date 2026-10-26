@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider, useProfile } from "../contexts/ProfileContext";
 import type { ImportReport, PlayerProfile } from "../lib/api";
@@ -253,6 +259,9 @@ describe("RosterProfile", () => {
         "p1",
       );
     });
+    await waitFor(() =>
+      expect((saveButton as HTMLButtonElement).disabled).toBe(true),
+    );
 
     vi.mocked(api.updateProfile).mockRejectedValueOnce(
       new Error("save failed"),
@@ -263,5 +272,39 @@ describe("RosterProfile", () => {
     await waitFor(() => {
       expect(screen.getByText(/save failed/)).toBeTruthy();
     });
+  });
+
+  it("keeps edits made during a save dirty and serializes saves", async () => {
+    let finishSave!: () => void;
+    vi.mocked(api.updateProfile).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSave = resolve;
+        }),
+    );
+    renderPage();
+    await screen.findByText("(HiggsBozo)");
+    fireEvent.click(screen.getByRole("button", { name: "Player Bonuses" }));
+    const weaponInput = screen.getByRole("spinbutton", { name: "weapon %" });
+    const saveButton = screen.getByRole("button", {
+      name: "Save profile",
+    }) as HTMLButtonElement;
+    fireEvent.change(weaponInput, { target: { value: "7" } });
+    fireEvent.click(saveButton);
+    expect(saveButton.disabled).toBe(true);
+    fireEvent.change(weaponInput, { target: { value: "8" } });
+    fireEvent.click(saveButton);
+    expect(api.updateProfile).toHaveBeenCalledTimes(1);
+    await act(async () => finishSave());
+    expect(saveButton.disabled).toBe(false);
+    fireEvent.click(saveButton);
+    await waitFor(() => expect(api.updateProfile).toHaveBeenCalledTimes(2));
+    expect(api.updateProfile).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        bonuses: expect.objectContaining({ weapon: 8 }),
+      }),
+      "p1",
+    );
+    await waitFor(() => expect(saveButton.disabled).toBe(true));
   });
 });

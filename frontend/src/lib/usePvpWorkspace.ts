@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useProfile } from "../contexts/ProfileContext";
 import { useWorkspaceMode } from "../contexts/WorkspaceModeContext";
 import {
   type CrewRecommendation,
+  cancelOptimizeJob,
   formatApiError,
   getOptimizeStatus,
   optimizeStart,
@@ -111,6 +112,17 @@ export function usePvpWorkspace() {
   );
   const [loadingOptimize, setLoadingOptimize] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const generationRef = useRef(0);
+  const jobRef = useRef<string | null>(null);
+  const startAbortRef = useRef<AbortController | null>(null);
+  const invalidateRun = () => {
+    generationRef.current += 1;
+    startAbortRef.current?.abort();
+    startAbortRef.current = null;
+    const jobId = jobRef.current;
+    jobRef.current = null;
+    if (jobId) cancelOptimizeJob(jobId).catch(() => {});
+  };
 
   useEffect(() => {
     if (!opponentProfileId && profiles.length > 0) {
@@ -135,6 +147,32 @@ export function usePvpWorkspace() {
   const [defenderAllianceDebuffs, setDefenderAllianceDebuffs] = useState<
     SupportBuffId[]
   >([]);
+  // Results and active jobs belong to the exact inputs that produced them.
+  useEffect(() => {
+    setLoadingSim(false);
+    setLoadingOptimize(false);
+    setSimResult(null);
+    setRecommendations([]);
+    setResultWarnings([]);
+    setUnresolvedOfficers([]);
+    return invalidateRun;
+  }, [
+    activeProfileId,
+    attackerShipId,
+    attackerShipTier,
+    attackerShipLevel,
+    attackerCrew,
+    defenderShipId,
+    defenderShipTier,
+    defenderShipLevel,
+    defenderCrew,
+    opponentProfileId,
+    simsPerCrew,
+    belowDeckUnlockLevels,
+    attackerSupportBuffs,
+    defenderSupportBuffs,
+    defenderAllianceDebuffs,
+  ]);
   const setValidatedAttackerSupportBuffs = (ids: readonly string[]) => {
     setAttackerSupportBuffs(normalizeSupportBuffSelection(ids).ids);
   };
@@ -196,20 +234,25 @@ export function usePvpWorkspace() {
       setError("Invalid PvP simulate parameters.");
       return;
     }
+    invalidateRun();
+    const generation = generationRef.current;
     setLoadingSim(true);
+    setLoadingOptimize(false);
     setError(null);
     setResultWarnings([]);
     setUnresolvedOfficers([]);
     try {
       const res = await simulate(params, activeProfileId);
+      if (generation !== generationRef.current) return;
       setSimResult(res.stats);
       setRecommendations([]);
       setResultWarnings(res.warnings ?? []);
       setUnresolvedOfficers(res.unresolved_officers ?? []);
     } catch (e) {
+      if (generation !== generationRef.current) return;
       setError(formatApiError(e));
     } finally {
-      setLoadingSim(false);
+      if (generation === generationRef.current) setLoadingSim(false);
     }
   }, [
     canRun,
@@ -236,6 +279,11 @@ export function usePvpWorkspace() {
       );
       return;
     }
+    invalidateRun();
+    const generation = generationRef.current;
+    const startAbort = new AbortController();
+    startAbortRef.current = startAbort;
+    setLoadingSim(false);
     setLoadingOptimize(true);
     setError(null);
     setRecommendations([]);
@@ -271,12 +319,22 @@ export function usePvpWorkspace() {
       const start = await optimizeStart(
         body as Parameters<typeof optimizeStart>[0],
         activeProfileId,
+        { signal: startAbort.signal },
       );
       const jobId = start.job_id;
+      if (generation !== generationRef.current) {
+        cancelOptimizeJob(jobId).catch(() => {});
+        return;
+      }
+      startAbortRef.current = null;
+      jobRef.current = jobId;
       for (;;) {
         await new Promise((r) => setTimeout(r, 450));
+        if (generation !== generationRef.current) return;
         const status = await getOptimizeStatus(jobId);
+        if (generation !== generationRef.current) return;
         if (status.status === "done" && status.result) {
+          jobRef.current = null;
           const recs = status.result.recommendations ?? [];
           setRecommendations(recs);
           setSimResult(null);
@@ -286,13 +344,22 @@ export function usePvpWorkspace() {
           break;
         }
         if (status.status === "error") {
+          jobRef.current = null;
           throw new Error(status.error?.trim() || "Optimize failed");
         }
       }
     } catch (e) {
+      if (generation !== generationRef.current) return;
+      if (jobRef.current) {
+        cancelOptimizeJob(jobRef.current).catch(() => {});
+        jobRef.current = null;
+      }
       setError(formatApiError(e));
     } finally {
-      setLoadingOptimize(false);
+      if (generation === generationRef.current) {
+        startAbortRef.current = null;
+        setLoadingOptimize(false);
+      }
     }
   }, [
     canRun,
