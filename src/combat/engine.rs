@@ -15,17 +15,20 @@ pub use crate::combat::types::{
     SURVEY_COEFFICIENTS,
 };
 
+use std::borrow::Cow;
+
 use serde_json::{Map, Value};
 
 use crate::combat::abilities::{
     active_effects_for_timing, apply_duplicate_officer_policy,
     attacker_crew_tal_assigned_captain_or_bridge, captain_maneuver_multiplier_from_effects,
     defender_shield_drain_per_round_from_crew, filter_effects_by_condition,
-    hostile_counter_stat_debuff_from_crew, hostile_crit_damage_reduction_active_at_round,
-    hostile_denticle_blade_gates_weapon, hostile_kemocite_attack_multiplier_bonus,
-    hostile_kemocite_try_add_stack, hostile_lethal_end_of_round_hull_damage,
-    opponent_captain_maneuver_multiplier_from_effects, roll_hostile_denticle_blade_at_combat_begin,
-    roll_hostile_lethal_combat_begin, scale_crew_captain_maneuver_effects, sum_accuracy_bonus,
+    filter_effects_by_condition_borrowed, hostile_counter_stat_debuff_from_crew,
+    hostile_crit_damage_reduction_active_at_round, hostile_denticle_blade_gates_weapon,
+    hostile_kemocite_attack_multiplier_bonus, hostile_kemocite_try_add_stack,
+    hostile_lethal_end_of_round_hull_damage, opponent_captain_maneuver_multiplier_from_effects,
+    roll_hostile_denticle_blade_at_combat_begin, roll_hostile_lethal_combat_begin,
+    scale_crew_captain_maneuver_effects, sum_accuracy_bonus,
     sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
     sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
     AbilityEffect, ActiveAbilityEffect, ActiveHostileCritReduction, CombatContext,
@@ -323,7 +326,7 @@ pub fn build_combat_setup_with_officer_stat(
         defender_level: config.defender_level,
     };
     let combat_begin_pre_scale_filtered =
-        filter_effects_by_condition(&combat_begin_pre_scale, &combat_begin_ctx);
+        filter_effects_by_condition_borrowed(&combat_begin_pre_scale, &combat_begin_ctx);
     let bridge_ability_effectiveness_add =
         crate::combat::abilities::sum_bridge_ability_effectiveness_add(
             &combat_begin_pre_scale_filtered,
@@ -705,10 +708,14 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         .any(|e| matches!(e.effect, AbilityEffect::Burning { .. }))
     {
         let defender_begin_burning: Vec<ActiveAbilityEffect> =
-            filter_effects_by_condition(defender_combat_begin_effects, &setup.combat_begin_ctx)
-                .into_iter()
-                .filter(|e| matches!(e.effect, AbilityEffect::Burning { .. }))
-                .collect();
+            filter_effects_by_condition_borrowed(
+                defender_combat_begin_effects,
+                &setup.combat_begin_ctx,
+            )
+            .iter()
+            .filter(|e| matches!(e.effect, AbilityEffect::Burning { .. }))
+            .cloned()
+            .collect();
         roll_burning_triggers(
             &mut RoundPhaseCtx {
                 trace: &mut trace,
@@ -730,11 +737,14 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::HullBreach { .. }))
     {
-        let defender_begin_breach: Vec<ActiveAbilityEffect> =
-            filter_effects_by_condition(defender_combat_begin_effects, &setup.combat_begin_ctx)
-                .into_iter()
-                .filter(|e| matches!(e.effect, AbilityEffect::HullBreach { .. }))
-                .collect();
+        let defender_begin_breach: Vec<ActiveAbilityEffect> = filter_effects_by_condition_borrowed(
+            defender_combat_begin_effects,
+            &setup.combat_begin_ctx,
+        )
+        .iter()
+        .filter(|e| matches!(e.effect, AbilityEffect::HullBreach { .. }))
+        .cloned()
+        .collect();
         roll_combat_begin_attacker_hull_breach(
             &mut RoundPhaseCtx {
                 trace: &mut trace,
@@ -881,18 +891,22 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
         let mut phase_effects = EffectAccumulator::default();
         let combat_begin_this_round =
-            filter_effects_by_condition(combat_begin_effects, &combat_ctx);
+            filter_effects_by_condition_borrowed(combat_begin_effects, &combat_ctx);
         // Split off weapon-scoped rows: they must not enter the shared round-level accumulator
         // (it feeds every weapon via `weapon_round_base`); they are re-added per matching weapon
         // in the sub-round loop with the same timing and assimilated flag.
-        let (combat_begin_round_level, combat_begin_weapon_scoped): (Vec<_>, Vec<_>) =
-            if attacker_has_weapon_scoped_effects {
-                combat_begin_this_round
-                    .into_iter()
-                    .partition(|e| e.weapon_scope == WeaponTypeScope::All)
-            } else {
-                (combat_begin_this_round, Vec::new())
-            };
+        let (combat_begin_round_level, combat_begin_weapon_scoped): (
+            Cow<'_, [ActiveAbilityEffect]>,
+            Vec<ActiveAbilityEffect>,
+        ) = if attacker_has_weapon_scoped_effects {
+            let (round_level, weapon_scoped): (Vec<_>, Vec<_>) = combat_begin_this_round
+                .into_owned()
+                .into_iter()
+                .partition(|e| e.weapon_scope == WeaponTypeScope::All);
+            (Cow::Owned(round_level), weapon_scoped)
+        } else {
+            (combat_begin_this_round, Vec::new())
+        };
         let combat_begin_assimilated_this_round = st.assimilated_rounds_remaining > 0;
         phase_effects.add_effects(
             TimingWindow::CombatBegin,
@@ -923,7 +937,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
         let round_start_assimilated = st.assimilated_rounds_remaining > 0;
         // Round-start conditions that do not use [AbilityCondition::MoraleActive] (morale unknown yet).
-        let bench = filter_effects_by_condition(round_start_effects, &combat_ctx);
+        let bench = filter_effects_by_condition_borrowed(round_start_effects, &combat_ctx);
         record_ability_activations(
             &mut trace,
             round_index,
@@ -1025,7 +1039,8 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         combat_ctx.defender_burning_active = st.defender_burning_rounds > 0;
         combat_ctx.attacker_burning_active = st.attacker_burning_rounds > 0;
 
-        let full_round_start = filter_effects_by_condition(round_start_effects, &combat_ctx);
+        let full_round_start =
+            filter_effects_by_condition_borrowed(round_start_effects, &combat_ctx);
         // BattleBuffSchema round-start effects last one round. Sample eligibility
         // once after round-start state rolls; a later hit must not enable this
         // bonus retroactively, nor can it accumulate into the following round.
@@ -1128,8 +1143,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         apply_attacker_round_start_regen(
             attacker,
             round_index,
-            round_start_effects,
-            &combat_ctx,
+            &full_round_start,
             round_start_assimilated,
             &mut phase_effects,
             &mut st.attacker_shield_remaining,
@@ -1179,17 +1193,19 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         }
 
         let round_end_assimilated_early = st.assimilated_rounds_remaining > 0;
-        let round_end_filtered = filter_effects_by_condition(round_end_effects, &combat_ctx);
+        let round_end_filtered =
+            filter_effects_by_condition_borrowed(round_end_effects, &combat_ctx);
         // RoundEnd stacking (apex, isolytic, shield mitigation, round-end damage multipliers, regen)
         // must not feed the same-round weapon sub-rounds. Apply RoundEnd only after all weapons
         // for this round (see merge into `phase_effects_round` below).
-        let mut phase_effects_round = phase_effects.clone();
+        let mut phase_effects_round = phase_effects;
         let num_sub_rounds = attacker.weapon_count().max(defender.weapon_count());
 
         let attack_phase_assimilated = st.assimilated_rounds_remaining > 0;
-        let attack_phase_filtered = filter_effects_by_condition(attack_phase_effects, &combat_ctx);
+        let attack_phase_filtered =
+            filter_effects_by_condition_borrowed(attack_phase_effects, &combat_ctx);
         let defense_phase_filtered =
-            filter_effects_by_condition(defense_phase_effects, &combat_ctx);
+            filter_effects_by_condition_borrowed(defense_phase_effects, &combat_ctx);
 
         record_ability_activations(
             &mut trace,
@@ -1210,7 +1226,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         );
 
         let defender_inbound_defense_filtered =
-            filter_effects_by_condition(defender_defense_phase_effects, &combat_ctx);
+            filter_effects_by_condition_borrowed(defender_defense_phase_effects, &combat_ctx);
         record_ability_activations(
             &mut trace,
             round_index,
@@ -1547,7 +1563,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 && effective_shots > 0
                 && attacker.weapon_attack(weapon_index).is_some()
             {
-                for effect in &attack_phase_filtered {
+                for effect in attack_phase_filtered.iter() {
                     if !effect
                         .weapon_scope
                         .matches(attacker.weapon_type(weapon_index))
@@ -1587,7 +1603,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 && effective_shots > 0
                 && attacker.weapon_attack(weapon_index).is_some()
             {
-                for effect in &attack_phase_filtered {
+                for effect in attack_phase_filtered.iter() {
                     if let AbilityEffect::OnHitCritDamageStack {
                         bonus,
                         duration_rounds,
@@ -1668,7 +1684,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 defender_level: combat_ctx.defender_level,
             };
             let after_subround_filtered =
-                filter_effects_by_condition(after_subround_effects, &ctx_after_subround);
+                filter_effects_by_condition_borrowed(after_subround_effects, &ctx_after_subround);
             record_ability_activations(
                 &mut trace,
                 round_index,
@@ -1979,7 +1995,7 @@ fn resolve_defender_kill(
             defender_assimilated_active: defender_assimilated_rounds_remaining > 0,
         },
     );
-    let kill_filtered = filter_effects_by_condition(kill_effects, &kill_ctx);
+    let kill_filtered = filter_effects_by_condition_borrowed(kill_effects, &kill_ctx);
     let kill_assimilated = assimilated_rounds_remaining > 0;
     record_ability_activations(
         trace,
@@ -2058,7 +2074,8 @@ fn apply_combat_end_phase(
             defender_assimilated_active: false,
         },
     );
-    let combat_end_filtered = filter_effects_by_condition(combat_end_effects, &combat_end_ctx);
+    let combat_end_filtered =
+        filter_effects_by_condition_borrowed(combat_end_effects, &combat_end_ctx);
     record_ability_activations(
         trace,
         rounds_completed,
@@ -2220,7 +2237,7 @@ fn apply_round_end_phase(
         },
     );
     let round_end_burn_filtered =
-        filter_effects_by_condition(round_end_effects, &ctx_after_weapons);
+        filter_effects_by_condition_borrowed(round_end_effects, &ctx_after_weapons);
     roll_burning_triggers(
         &mut RoundPhaseCtx {
             trace: &mut *trace,
@@ -2312,7 +2329,7 @@ fn apply_round_end_phase(
     }
 
     let defender_round_end_filtered =
-        filter_effects_by_condition(defender_round_end_effects, &ctx_after_weapons);
+        filter_effects_by_condition_borrowed(defender_round_end_effects, &ctx_after_weapons);
     let defender_re_assimilated = defender_assimilated_rounds_remaining > 0;
     record_ability_activations(
         trace,
@@ -2374,7 +2391,8 @@ fn process_defender_shield_break(
     total_hull_damage: &mut f64,
     defender_shield_break_carry: &mut Vec<ActiveAbilityEffect>,
 ) {
-    let shield_break_filtered = filter_effects_by_condition(shield_break_effects, combat_ctx);
+    let shield_break_filtered =
+        filter_effects_by_condition_borrowed(shield_break_effects, combat_ctx);
     record_ability_activations(
         trace,
         round_index,
@@ -2404,7 +2422,7 @@ fn process_defender_shield_break(
         defender_burning_rounds,
     );
 
-    for effect in &shield_break_filtered {
+    for effect in shield_break_filtered.iter() {
         if let AbilityEffect::DefenderFireDelay {
             chance,
             delay_rounds,
@@ -2427,7 +2445,8 @@ fn process_defender_shield_break(
         }
     }
 
-    let def_sb_filtered = filter_effects_by_condition(defender_shield_break_effects, combat_ctx);
+    let def_sb_filtered =
+        filter_effects_by_condition_borrowed(defender_shield_break_effects, combat_ctx);
     record_ability_activations(
         trace,
         round_index,
@@ -2436,7 +2455,7 @@ fn process_defender_shield_break(
         &def_sb_filtered,
         false,
     );
-    for e in &def_sb_filtered {
+    for e in def_sb_filtered.iter() {
         match scale_effect(e.effect, false) {
             AbilityEffect::ShieldRegen(v) => {
                 *defender_shield_remaining =
@@ -2478,9 +2497,9 @@ fn roll_defender_round_start_shots_bonus(
     defender_shots_bonus_entries: &mut Vec<ShotsBonusEntry>,
 ) {
     let defender_rstart_filtered =
-        filter_effects_by_condition(defender_round_start_effects, combat_ctx);
+        filter_effects_by_condition_borrowed(defender_round_start_effects, combat_ctx);
     let defender_rstart_assimilated = defender_assimilated_rounds_remaining > 0;
-    for effect in &defender_rstart_filtered {
+    for effect in defender_rstart_filtered.iter() {
         let effective_effect = scale_effect(effect.effect, defender_rstart_assimilated);
         if let AbilityEffect::ShotsBonus {
             chance,
@@ -2599,8 +2618,7 @@ fn roll_morale_activation(
 fn apply_attacker_round_start_regen(
     attacker: &Combatant,
     round_index: u32,
-    round_start_effects: &[ActiveAbilityEffect],
-    combat_ctx: &CombatContext,
+    round_start_filtered: &[ActiveAbilityEffect],
     round_start_assimilated: bool,
     phase_effects: &mut EffectAccumulator,
     attacker_shield_remaining: &mut f64,
@@ -2628,10 +2646,10 @@ fn apply_attacker_round_start_regen(
     }
     phase_effects.clear_shield_hull_regen_stacks();
 
+    // Reuse eligibility sampled after the round-start state rolls, before healing.
     // PIC Hugh: heal a fraction of hull damage taken in the **previous** combat round (round 1: none).
-    let round_start_prev_heal = filter_effects_by_condition(round_start_effects, combat_ctx);
     let prev_round_frac = EffectAccumulator::sum_hull_regen_prev_round_fraction(
-        &round_start_prev_heal,
+        round_start_filtered,
         round_start_assimilated,
     )
     .min(1.0);
@@ -2641,7 +2659,7 @@ fn apply_attacker_round_start_regen(
     }
 
     let shield_prev_frac = EffectAccumulator::sum_shield_regen_prev_round_fraction(
-        &round_start_prev_heal,
+        round_start_filtered,
         round_start_assimilated,
     )
     .min(1.0);
@@ -2990,29 +3008,12 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         shield_routing_mitigation_override,
     } = p;
     let weapon_index_u = weapon_index as u32;
-    let mut simd_damage_batch: Vec<f64> = if use_simd_outbound_weapon_path && effective_shots > 0 {
-        Vec::with_capacity(4)
-    } else {
-        Vec::new()
-    };
-    let mut simd_isolytic_batch: Vec<f64> = if use_simd_outbound_weapon_path && effective_shots > 0
-    {
-        Vec::with_capacity(4)
-    } else {
-        Vec::new()
-    };
-    let mut simd_shield_mitigation_batch: Vec<f64> =
-        if use_simd_outbound_weapon_path && effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
-    let mut simd_damage_after_apex_batch: Vec<f64> =
-        if use_simd_outbound_weapon_path && effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
+    // Every batch flushes at four hits; inactive lanes never reach the kernel or HP loop.
+    let mut simd_damage_batch = [0.0_f64; 4];
+    let mut simd_isolytic_batch = [0.0_f64; 4];
+    let mut simd_shield_mitigation_batch = [0.0_f64; 4];
+    let mut simd_damage_after_apex_batch = [0.0_f64; 4];
+    let mut simd_batch_len = 0;
 
     for hit_index in 0..effective_shots {
         // The caller has already checked that the defender is alive before this
@@ -3565,21 +3566,21 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 // `isolytic_taken=&[isolytic_taken]` (len 1), the length-mismatch
                 // error was silently dropped via `let _`, the output buffer stayed
                 // empty, and zero damage was applied on every avx2_supported() host.
-                simd_damage_batch.push(damage);
-                simd_isolytic_batch.push(isolytic_taken);
-                simd_shield_mitigation_batch.push(effective_shield_mitigation);
+                simd_damage_batch[simd_batch_len] = damage;
+                simd_isolytic_batch[simd_batch_len] = isolytic_taken;
+                simd_shield_mitigation_batch[simd_batch_len] = effective_shield_mitigation;
+                simd_batch_len += 1;
 
-                let flush_batch = simd_damage_batch.len() == 4 || hit_index + 1 == effective_shots;
+                let flush_batch = simd_batch_len == 4 || hit_index + 1 == effective_shots;
                 if flush_batch {
-                    simd_damage_after_apex_batch.resize(simd_damage_batch.len(), 0.0);
                     let _ = compute_damage_after_apex_batch(
-                        &simd_damage_batch,
-                        &simd_isolytic_batch,
+                        &simd_damage_batch[..simd_batch_len],
+                        &simd_isolytic_batch[..simd_batch_len],
                         apex_damage_factor,
                         defender_isolytic_vulnerability,
-                        &mut simd_damage_after_apex_batch,
+                        &mut simd_damage_after_apex_batch[..simd_batch_len],
                     );
-                    for lane in 0..simd_damage_after_apex_batch.len() {
+                    for lane in 0..simd_batch_len {
                         if lane > 0 && st.total_hull_damage >= defender.hull_health {
                             break;
                         }
@@ -3601,9 +3602,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                         st.total_hull_damage += hull_damage_this_round;
                         st.total_shield_damage += actual_shield_damage;
                     }
-                    simd_damage_batch.clear();
-                    simd_isolytic_batch.clear();
-                    simd_shield_mitigation_batch.clear();
+                    simd_batch_len = 0;
                 }
                 continue;
             }
@@ -3622,7 +3621,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             st.total_hull_damage += hull_damage_this_round;
             st.total_shield_damage += actual_shield_damage;
 
-            if hull_damage_this_round > 0.0 {
+            if hull_damage_this_round > 0.0 && !defender_receive_damage_effects.is_empty() {
                 let def_rd_assim = st.defender_assimilated_rounds_remaining > 0;
                 let mut ctx_def_rd = combat_ctx.clone();
                 ctx_def_rd.defender_hull_pct =
@@ -3632,8 +3631,10 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 } else {
                     1.0
                 };
-                let def_rd_filtered =
-                    filter_effects_by_condition(defender_receive_damage_effects, &ctx_def_rd);
+                let def_rd_filtered = filter_effects_by_condition_borrowed(
+                    defender_receive_damage_effects,
+                    &ctx_def_rd,
+                );
                 roll_burning_triggers(
                     &mut RoundPhaseCtx {
                         trace: &mut *trace,
@@ -3990,13 +3991,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         defender_level: combat_ctx.defender_level,
     };
     let defender_combat_begin_filtered =
-        filter_effects_by_condition(defender_combat_begin_effects, &defender_ctx);
+        filter_effects_by_condition_borrowed(defender_combat_begin_effects, &defender_ctx);
     let defender_round_start_filtered =
-        filter_effects_by_condition(defender_round_start_effects, &defender_ctx);
+        filter_effects_by_condition_borrowed(defender_round_start_effects, &defender_ctx);
     let defender_attack_filtered =
-        filter_effects_by_condition(defender_attack_phase_effects, &defender_ctx);
+        filter_effects_by_condition_borrowed(defender_attack_phase_effects, &defender_ctx);
     let defender_defense_filtered =
-        filter_effects_by_condition(defender_defense_phase_effects, &defender_ctx);
+        filter_effects_by_condition_borrowed(defender_defense_phase_effects, &defender_ctx);
 
     // Counter-fire batching may precompute crit/proc rolls before applying hit damage. Keep the
     // scalar ordering whenever any seat can observe or mutate per-hit combat state; this makes an
@@ -4082,36 +4083,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     let counter_apex_factor =
         compute_apex_damage_factor(defender.apex_shred.max(0.0), counter_apex_barrier);
 
-    let mut counter_simd_damage_batch: Vec<f64> =
-        if use_simd_counter_damage && def_effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
-    let mut counter_simd_isolytic_batch: Vec<f64> =
-        if use_simd_counter_damage && def_effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
-    let mut counter_simd_shield_mit_batch: Vec<f64> =
-        if use_simd_counter_damage && def_effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
-    let mut counter_simd_crit_batch: Vec<bool> =
-        if use_simd_counter_damage && def_effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
-    let mut counter_simd_after_apex_batch: Vec<f64> =
-        if use_simd_counter_damage && def_effective_shots > 0 {
-            Vec::with_capacity(4)
-        } else {
-            Vec::new()
-        };
+    let mut counter_simd_damage_batch = [0.0_f64; 4];
+    let mut counter_simd_isolytic_batch = [0.0_f64; 4];
+    let mut counter_simd_shield_mit_batch = [0.0_f64; 4];
+    let mut counter_simd_crit_batch = [false; 4];
+    let mut counter_simd_after_apex_batch = [0.0_f64; 4];
+    let mut counter_simd_batch_len = 0;
 
     for hit_index in 0..def_effective_shots {
         if hit_index > 0 && st.total_attacker_hull_damage >= attacker.hull_health {
@@ -4403,23 +4380,22 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 defender_phase_effects.composed_shield_mitigation_bypass(),
                 attacker_shield_mitigation_forced_zero,
             );
-            counter_simd_damage_batch.push(counter_after_attack_phase);
-            counter_simd_isolytic_batch.push(counter_iso_taken);
-            counter_simd_shield_mit_batch.push(att_mit_for_batch);
-            counter_simd_crit_batch.push(def_is_crit);
+            counter_simd_damage_batch[counter_simd_batch_len] = counter_after_attack_phase;
+            counter_simd_isolytic_batch[counter_simd_batch_len] = counter_iso_taken;
+            counter_simd_shield_mit_batch[counter_simd_batch_len] = att_mit_for_batch;
+            counter_simd_crit_batch[counter_simd_batch_len] = def_is_crit;
+            counter_simd_batch_len += 1;
 
-            let flush_batch =
-                counter_simd_damage_batch.len() == 4 || hit_index + 1 == def_effective_shots;
+            let flush_batch = counter_simd_batch_len == 4 || hit_index + 1 == def_effective_shots;
             if flush_batch {
-                counter_simd_after_apex_batch.resize(counter_simd_damage_batch.len(), 0.0);
                 let _ = compute_damage_after_apex_batch(
-                    &counter_simd_damage_batch,
-                    &counter_simd_isolytic_batch,
+                    &counter_simd_damage_batch[..counter_simd_batch_len],
+                    &counter_simd_isolytic_batch[..counter_simd_batch_len],
                     counter_apex_factor,
                     false,
-                    &mut counter_simd_after_apex_batch,
+                    &mut counter_simd_after_apex_batch[..counter_simd_batch_len],
                 );
-                for lane in 0..counter_simd_after_apex_batch.len() {
+                for lane in 0..counter_simd_batch_len {
                     if lane > 0 && st.total_attacker_hull_damage >= attacker.hull_health {
                         break;
                     }
@@ -4557,8 +4533,10 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                         ctx_self_sb.attacker_hull_pct = 1.0
                             - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0))
                                 .min(1.0);
-                        let self_sb_filtered =
-                            filter_effects_by_condition(self_shield_break_effects, &ctx_self_sb);
+                        let self_sb_filtered = filter_effects_by_condition_borrowed(
+                            self_shield_break_effects,
+                            &ctx_self_sb,
+                        );
                         record_ability_activations(
                             &mut *trace,
                             round_index,
@@ -4567,7 +4545,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                             &self_sb_filtered,
                             attack_phase_assimilated,
                         );
-                        for e in &self_sb_filtered {
+                        for e in self_sb_filtered.iter() {
                             match scale_effect(e.effect, attack_phase_assimilated) {
                                 AbilityEffect::ShieldRegen(v) => {
                                     st.attacker_shield_remaining = (st.attacker_shield_remaining
@@ -4640,8 +4618,10 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                         } else {
                             0.0
                         };
-                        let receive_damage_filtered =
-                            filter_effects_by_condition(receive_damage_effects, &ctx_receive);
+                        let receive_damage_filtered = filter_effects_by_condition_borrowed(
+                            receive_damage_effects,
+                            &ctx_receive,
+                        );
                         roll_burning_triggers(
                             &mut RoundPhaseCtx {
                                 trace: &mut *trace,
@@ -4657,10 +4637,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                         );
                     }
                 }
-                counter_simd_damage_batch.clear();
-                counter_simd_isolytic_batch.clear();
-                counter_simd_shield_mit_batch.clear();
-                counter_simd_crit_batch.clear();
+                counter_simd_batch_len = 0;
             }
             // Push after each hit iteration (even when damage is batched) so hit N+1 of the
             // same round sees prior stacks. Intra-batch damage application remains deferred.
@@ -4808,7 +4785,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             ctx_self_sb.attacker_hull_pct =
                 1.0 - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
             let self_sb_filtered =
-                filter_effects_by_condition(self_shield_break_effects, &ctx_self_sb);
+                filter_effects_by_condition_borrowed(self_shield_break_effects, &ctx_self_sb);
             record_ability_activations(
                 &mut *trace,
                 round_index,
@@ -4817,7 +4794,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 &self_sb_filtered,
                 attack_phase_assimilated,
             );
-            for e in &self_sb_filtered {
+            for e in self_sb_filtered.iter() {
                 match scale_effect(e.effect, attack_phase_assimilated) {
                     AbilityEffect::ShieldRegen(v) => {
                         st.attacker_shield_remaining =
@@ -4888,7 +4865,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 0.0
             };
             let receive_damage_filtered =
-                filter_effects_by_condition(receive_damage_effects, &ctx_receive);
+                filter_effects_by_condition_borrowed(receive_damage_effects, &ctx_receive);
             roll_burning_triggers(
                 &mut RoundPhaseCtx {
                     trace: &mut *trace,
@@ -4918,7 +4895,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         );
     }
 
-    if counter_hull_damage_this_subround {
+    if counter_hull_damage_this_subround && !receive_damage_effects.is_empty() {
         let mut ctx_rd = combat_ctx.clone();
         ctx_rd.attacker_hull_pct =
             1.0 - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0);
@@ -4927,7 +4904,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         } else {
             0.0
         };
-        let receive_damage_filtered = filter_effects_by_condition(receive_damage_effects, &ctx_rd);
+        let receive_damage_filtered =
+            filter_effects_by_condition_borrowed(receive_damage_effects, &ctx_rd);
         record_ability_activations(
             &mut *trace,
             round_index,
@@ -5294,7 +5272,7 @@ fn apply_defender_round_start(
         },
     );
     let defender_rs_for_assim =
-        filter_effects_by_condition(defender_round_start_effects, &ctx_def_round_start);
+        filter_effects_by_condition_borrowed(defender_round_start_effects, &ctx_def_round_start);
     let def_rs_assim_active = *defender_assimilated_rounds_remaining > 0;
     roll_assimilated_extensions_from_effects(
         &mut RoundPhaseCtx {
@@ -5620,7 +5598,7 @@ fn apply_hull_breach_timing_window(
         HullBreachSide::Attacker => ctx.attacker_hull_breach_active = true,
     }
     let phase = side.phase();
-    let hull_breach_filtered = filter_effects_by_condition(hull_breach_effects, &ctx);
+    let hull_breach_filtered = filter_effects_by_condition_borrowed(hull_breach_effects, &ctx);
     record_ability_activations(
         pc.trace,
         pc.round_index,
@@ -5717,6 +5695,121 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 mod reusable_attacker_tests {
     use super::*;
     use crate::combat::abilities::{Ability, AbilityClass, CrewSeat, CrewSeatContext};
+
+    fn batch_test_ship(id: &str, attack: f64, hull: f64, shots: u32) -> Combatant {
+        Combatant {
+            id: id.into(),
+            attack,
+            hull_health: hull,
+            crit_chance: 0.0,
+            crit_multiplier: 1.0,
+            proc_chance: 0.0,
+            proc_multiplier: 1.0,
+            weapons: vec![WeaponStats {
+                attack,
+                shots: Some(shots),
+                ..WeaponStats::default()
+            }],
+            ..Combatant::default()
+        }
+    }
+
+    fn assert_batch_matches_traced_scalar(
+        attacker: &Combatant,
+        defender: &Combatant,
+        seed: u64,
+    ) -> SimulationResult {
+        let config = SimulationConfig {
+            rounds: 3,
+            seed,
+            trace_mode: TraceMode::Off,
+            emit_state_snapshots: true,
+            ..SimulationConfig::default()
+        };
+        // AVX2 hosts take the existing batched path only with tracing disabled.
+        // On other hosts this also checks the unchanged scalar fallback.
+        let result = simulate_combat(attacker, defender, &config, &CrewConfiguration::default());
+        let traced_config = SimulationConfig {
+            trace_mode: TraceMode::Events,
+            ..config
+        };
+        let mut traced = simulate_combat(
+            attacker,
+            defender,
+            &traced_config,
+            &CrewConfiguration::default(),
+        );
+        let repeated = simulate_combat(
+            attacker,
+            defender,
+            &traced_config,
+            &CrewConfiguration::default(),
+        );
+        assert_eq!(
+            traced, repeated,
+            "seeded trace and state provenance changed"
+        );
+        assert!(traced
+            .events
+            .iter()
+            .any(|e| e.event_type == "state_snapshot"));
+        traced.events.clear();
+        assert_eq!(
+            result, traced,
+            "batched/scalar result mismatch, seed {seed}"
+        );
+        result
+    }
+
+    #[test]
+    fn fixed_simd_scratch_preserves_partial_batches_and_each_lethal_lane() {
+        for shots in [1, 3, 4, 5, 9] {
+            for lethal_hit in 1..=shots {
+                let lethal_hull = (lethal_hit - 1) as f64 * 128.0 + 1.0;
+                let attacker = batch_test_ship("batch-attacker", 128.0, 1_000_000.0, shots);
+                let defender = batch_test_ship("batch-defender", 0.0, lethal_hull, shots);
+                let outbound = assert_batch_matches_traced_scalar(&attacker, &defender, 71);
+                assert!(outbound.attacker_won);
+                assert_eq!(outbound.total_damage, lethal_hit as f64 * 128.0);
+
+                let attacker = batch_test_ship("batch-attacker", 0.0, lethal_hull, shots);
+                let defender = batch_test_ship("batch-defender", 128.0, 1_000_000.0, shots);
+                let counter = assert_batch_matches_traced_scalar(&attacker, &defender, 73);
+                assert!(!counter.attacker_won);
+                assert_eq!(counter.attacker_hull_remaining, 0.0);
+                assert_eq!(counter.total_damage, 0.0);
+            }
+        }
+    }
+
+    #[test]
+    fn fixed_simd_scratch_preserves_shield_spill_and_seeded_crit_provenance() {
+        for shots in [1, 3, 4, 5, 6, 9] {
+            let mut attacker = batch_test_ship("batch-attacker", 128.0, 1_000_000.0, shots);
+            let mut defender = batch_test_ship("batch-defender", 64.0, 1_000_000.0, shots);
+            attacker.shield_health = 192.0;
+            attacker.shield_mitigation = 0.5;
+            attacker.crit_chance = 0.375;
+            attacker.crit_multiplier = 2.0;
+            defender.shield_health = 320.0;
+            defender.shield_mitigation = 0.5;
+            defender.crit_chance = 0.375;
+            defender.crit_multiplier = 2.0;
+            if shots == 6 {
+                // Four lanes followed by a two-lane tail, with both damage channels
+                // and nonzero apex inputs. Each apex factor is exactly one half.
+                attacker.isolytic_damage = 0.25;
+                attacker.apex_shred = 1.0;
+                attacker.apex_barrier = 40_000.0;
+                defender.isolytic_damage = 0.125;
+                defender.apex_shred = 3.0;
+                defender.apex_barrier = 20_000.0;
+            }
+            for seed in 1..=12 {
+                assert_batch_matches_traced_scalar(&attacker, &defender, seed);
+            }
+        }
+    }
 
     #[test]
     fn active_max_hp_fraction_does_not_compound_each_round() {

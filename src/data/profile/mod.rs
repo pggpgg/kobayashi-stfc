@@ -1418,11 +1418,43 @@ fn get_bonus(profile: &PlayerProfile, key: &str) -> f64 {
     profile.bonuses.get(key).copied().unwrap_or(0.0)
 }
 
-fn owner_faction_lookup_key(owner_faction_slug: Option<&str>) -> Option<String> {
+fn owner_faction_lookup_key(owner_faction_slug: Option<&str>) -> Option<Cow<'_, str>> {
     owner_faction_slug
         .map(str::trim)
         .filter(|s| !s.is_empty())
-        .map(|s| s.to_ascii_lowercase())
+        .map(|s| {
+            if s.bytes().any(|b| b.is_ascii_uppercase()) {
+                Cow::Owned(s.to_ascii_lowercase())
+            } else {
+                Cow::Borrowed(s)
+            }
+        })
+}
+
+/// Resolve the faction map once for a group of lookups without changing the order of
+/// each flat-bonus + owner-bonus addition.
+struct ProfileBonusLookup<'a> {
+    profile: &'a PlayerProfile,
+    owner_bonuses: Option<&'a HashMap<String, f64>>,
+}
+
+impl<'a> ProfileBonusLookup<'a> {
+    fn new(profile: &'a PlayerProfile, owner_faction_slug: Option<&str>) -> Self {
+        let owner_bonuses = owner_faction_lookup_key(owner_faction_slug)
+            .and_then(|key| profile.research_owner_faction_bonuses.get(key.as_ref()));
+        Self {
+            profile,
+            owner_bonuses,
+        }
+    }
+
+    fn get(&self, key: &str) -> f64 {
+        let mut v = get_bonus(self.profile, key);
+        if let Some(inner) = self.owner_bonuses {
+            v += inner.get(key).copied().unwrap_or(0.0);
+        }
+        v
+    }
 }
 
 /// Flat `profile.bonuses[key]` plus [`PlayerProfile::research_owner_faction_bonuses`] for the resolved ship `faction` slug.
@@ -1431,13 +1463,7 @@ pub fn get_bonus_with_owner_faction_research(
     key: &str,
     owner_faction_slug: Option<&str>,
 ) -> f64 {
-    let mut v = get_bonus(profile, key);
-    if let Some(fk) = owner_faction_lookup_key(owner_faction_slug) {
-        if let Some(inner) = profile.research_owner_faction_bonuses.get(&fk) {
-            v += inner.get(key).copied().unwrap_or(0.0);
-        }
-    }
-    v
+    ProfileBonusLookup::new(profile, owner_faction_slug).get(key)
 }
 
 /// Apply LCARS/officer static buffs to a Combatant (e.g. from [BuffSet::static_buffs]).
@@ -1779,6 +1805,51 @@ struct OfficerStatAxisMults {
     bridge_only_health: f64,
 }
 
+/// Only the ship data consumed by officer-stat breakpoint lookup and channel routing.
+/// The round path borrows these fields instead of reconstructing an owned ship record.
+#[derive(Clone, Copy)]
+pub(crate) struct OfficerStatShipView<'a> {
+    pub officer_bonus: &'a crate::data::ship::OfficerBonusTable,
+    pub ship_class: &'a str,
+    pub armor: f64,
+    pub shield_deflection: f64,
+    pub dodge: f64,
+}
+
+impl<'a> From<&'a crate::data::ship::ShipRecord> for OfficerStatShipView<'a> {
+    fn from(ship: &'a crate::data::ship::ShipRecord) -> Self {
+        Self {
+            officer_bonus: &ship.officer_bonus,
+            ship_class: &ship.ship_class,
+            armor: ship.armor,
+            shield_deflection: ship.shield_deflection,
+            dodge: ship.dodge,
+        }
+    }
+}
+
+/// Borrowed active row; eligibility is evaluated before it reaches the accumulator.
+#[derive(Clone, Copy)]
+pub(crate) struct OfficerStatContributionRef<'a> {
+    pub stat_key: &'a str,
+    pub value: f64,
+    pub target_attacker: bool,
+    pub opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope,
+}
+
+impl<'a> From<&'a crate::lcars::resolver::PendingOfficerStatContribution>
+    for OfficerStatContributionRef<'a>
+{
+    fn from(row: &'a crate::lcars::resolver::PendingOfficerStatContribution) -> Self {
+        Self {
+            stat_key: &row.stat_key,
+            value: row.value,
+            target_attacker: row.target_attacker,
+            opponent_scope: row.opponent_scope,
+        }
+    }
+}
+
 /// Apply pending officer-stat rows whose `target_attacker` matches `want_target_attacker`.
 /// When `want_target_attacker` is false (Phase 4c: `target: enemy` debuffs on the opponent's
 /// crewed officers), values are negated so positive LCARS magnitudes become rating penalties.
@@ -1838,9 +1909,9 @@ fn apply_pending_officer_stat_contributions(
 
 /// Like [`apply_pending_officer_stat_contributions`] but skips condition evaluation — rows are
 /// pre-filtered by the Phase 4d per-round combat path.
-fn apply_unconditional_officer_stat_contributions(
+fn apply_unconditional_officer_stat_contributions<'a>(
     mults: &mut OfficerStatAxisMults,
-    pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    pending: impl IntoIterator<Item = OfficerStatContributionRef<'a>>,
     want_target_attacker: bool,
 ) {
     use crate::lcars::resolver::OfficerStatOpponentScope;
@@ -1855,8 +1926,7 @@ fn apply_unconditional_officer_stat_contributions(
         };
         let bridge_only =
             !want_target_attacker && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
-        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key.as_str()
-        {
+        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key {
             "officer_attack" => *attack += v,
             "officer_defense" => *defense += v,
             "officer_health" => *health += v,
@@ -1949,10 +2019,46 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
     _combat_ctx: Option<&crate::combat::abilities::CombatContext>,
     _eval_timing: Option<crate::combat::abilities::TimingWindow>,
 ) -> OfficerStatRuntimeBonus {
+    compute_officer_stat_runtime_bonus_from_parts(
+        totals,
+        bridge_totals,
+        ship.into(),
+        profile,
+        owner_faction_slug,
+        static_buffs,
+        self_pending_contributions,
+        cond_ctx,
+        opponent_enemy_target_pending,
+        round_active_pending
+            .iter()
+            .map(OfficerStatContributionRef::from),
+        round_active_pending
+            .iter()
+            .map(OfficerStatContributionRef::from),
+    )
+}
+
+/// Shared arithmetic for owned setup records and borrowed per-round inputs. Keep the
+/// self and opponent round iterators separate: folding them together changes addition order.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn compute_officer_stat_runtime_bonus_from_parts<'a>(
+    totals: crate::combat::CrewOfficerStatTotals,
+    bridge_totals: crate::combat::CrewOfficerStatTotals,
+    ship: OfficerStatShipView<'_>,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+    self_pending_contributions: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
+    opponent_enemy_target_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    round_self: impl IntoIterator<Item = OfficerStatContributionRef<'a>>,
+    round_opponent: impl IntoIterator<Item = OfficerStatContributionRef<'a>>,
+) -> OfficerStatRuntimeBonus {
     if ship.officer_bonus.is_empty() {
         return OfficerStatRuntimeBonus::default();
     }
-    let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
+    let bonus_lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
+    let gb = |k: &str| bonus_lookup.get(k);
     // §3 LCARS officerstat* ability contributions: passive/permanent effects with mapped
     // officer-rating axis. Per-axis tags add to their channel; `officer_stat_all` (from
     // `officerstatall` tags) adds to all three axes simultaneously.
@@ -1979,8 +2085,8 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
         cond_ctx,
     );
     // Phase 4d: per-round dynamic rows pre-filtered by the combat loop (conditions already true).
-    apply_unconditional_officer_stat_contributions(&mut mults, round_active_pending, true);
-    apply_unconditional_officer_stat_contributions(&mut mults, round_active_pending, false);
+    apply_unconditional_officer_stat_contributions(&mut mults, round_self, true);
+    apply_unconditional_officer_stat_contributions(&mut mults, round_opponent, false);
 
     let below_decks = crate::combat::CrewOfficerStatTotals {
         attack: (totals.attack - bridge_totals.attack).max(0.0),
@@ -2020,13 +2126,14 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
     let health_bonus = ship.officer_bonus.health_bonus(health_rating);
 
     // §2c: route defense_bonus × ship-channel-constant to the ship-class primary mitigation stat.
-    let class = ship.ship_class.trim().to_ascii_lowercase();
-    let (defense_armor_add, defense_shield_deflection_add, defense_dodge_add) = match class.as_str()
-    {
-        "battleship" => (ship.armor * defense_bonus, 0.0, 0.0),
-        "explorer" => (0.0, ship.shield_deflection * defense_bonus, 0.0),
-        "interceptor" => (0.0, 0.0, ship.dodge * defense_bonus),
-        "survey" => (
+    let class = ship.ship_class.trim();
+    let (defense_armor_add, defense_shield_deflection_add, defense_dodge_add) = match class {
+        c if c.eq_ignore_ascii_case("battleship") => (ship.armor * defense_bonus, 0.0, 0.0),
+        c if c.eq_ignore_ascii_case("explorer") => {
+            (0.0, ship.shield_deflection * defense_bonus, 0.0)
+        }
+        c if c.eq_ignore_ascii_case("interceptor") => (0.0, 0.0, ship.dodge * defense_bonus),
+        c if c.eq_ignore_ascii_case("survey") => (
             ship.armor * defense_bonus / 3.0,
             ship.shield_deflection * defense_bonus / 3.0,
             ship.dodge * defense_bonus / 3.0,
@@ -2069,7 +2176,8 @@ pub fn apply_profile_to_attacker(
     {
         return attacker;
     }
-    let gb = |k: &str| get_bonus_with_owner_faction_research(profile, k, owner_faction_slug);
+    let bonus_lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
+    let gb = |k: &str| bonus_lookup.get(k);
     let weapon = 1.0 + gb("weapon_damage");
     // Officer Health contributes to the same native MULT pool as HP research,
     // buildings and technology, rather than multiplying the completed pool again.
@@ -2185,6 +2293,158 @@ mod tests {
     use crate::data::import::ForbiddenTechEntry;
 
     use super::*;
+
+    #[test]
+    fn resolved_faction_bonus_lookup_preserves_normalization_and_float_bits() {
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("weapon_damage".into(), 0.1),
+                ("negative_zero".into(), -0.0),
+                ("infinite".into(), f64::INFINITY),
+            ]),
+            research_owner_faction_bonuses: HashMap::from([
+                (
+                    "federation".into(),
+                    HashMap::from([("weapon_damage".into(), 0.2)]),
+                ),
+                (
+                    "fédÉration".into(),
+                    HashMap::from([("weapon_damage".into(), 0.4)]),
+                ),
+            ]),
+            ..PlayerProfile::default()
+        };
+        for faction in [
+            None,
+            Some(""),
+            Some("  "),
+            Some("federation"),
+            Some(" FEDERATION "),
+            Some("FéDÉRATION"),
+            Some("unknown"),
+        ] {
+            let lookup = ProfileBonusLookup::new(&profile, faction);
+            for key in ["weapon_damage", "negative_zero", "infinite", "missing"] {
+                let mut expected = profile.bonuses.get(key).copied().unwrap_or(0.0);
+                if let Some(faction) = faction.map(str::trim).filter(|s| !s.is_empty()) {
+                    if let Some(bonuses) = profile
+                        .research_owner_faction_bonuses
+                        .get(&faction.to_ascii_lowercase())
+                    {
+                        expected += bonuses.get(key).copied().unwrap_or(0.0);
+                    }
+                }
+                assert_eq!(
+                    lookup.get(key).to_bits(),
+                    expected.to_bits(),
+                    "{faction:?}: {key}"
+                );
+                assert_eq!(
+                    get_bonus_with_owner_faction_research(&profile, key, faction).to_bits(),
+                    expected.to_bits()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn round_officer_stat_folds_preserve_phase_order_at_breakpoints() {
+        use crate::combat::CrewOfficerStatTotals;
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+        use crate::lcars::{OfficerStatOpponentScope, PendingOfficerStatContribution};
+
+        let row = |value, target_attacker| PendingOfficerStatContribution {
+            stat_key: "officer_stat_all".into(),
+            value,
+            target_attacker,
+            conditions: vec![],
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+        };
+        let breakpoints = vec![
+            OfficerBonusBreakpoint {
+                value: 100.0,
+                bonus: 0.25,
+            },
+            OfficerBonusBreakpoint {
+                value: 150.0,
+                bonus: 0.5,
+            },
+            OfficerBonusBreakpoint {
+                value: 200.0,
+                bonus: 0.75,
+            },
+        ];
+        let ship = ShipRecord {
+            ship_class: " Survey ".into(),
+            armor: 300.0,
+            shield_deflection: 600.0,
+            dodge: 900.0,
+            officer_bonus: OfficerBonusTable {
+                attack: breakpoints.clone(),
+                defense: breakpoints.clone(),
+                health: breakpoints,
+            },
+            ..ShipRecord::default()
+        };
+        let totals = CrewOfficerStatTotals {
+            attack: 100.0,
+            defense: 100.0,
+            health: 100.0,
+        };
+        let compute = |self_pending: &[PendingOfficerStatContribution],
+                       opponent_pending: &[PendingOfficerStatContribution],
+                       dynamic: &[PendingOfficerStatContribution]| {
+            compute_officer_stat_runtime_bonus_with_round(
+                totals,
+                totals,
+                &ship,
+                &PlayerProfile::default(),
+                None,
+                &HashMap::new(),
+                self_pending,
+                &OfficerStatConditionContext::default(),
+                opponent_pending,
+                dynamic,
+                None,
+                None,
+            )
+        };
+
+        // The small dynamic additions survive only after the two static phases cancel.
+        let phased = compute(
+            &[row(1e16, true)],
+            &[row(1e16, false)],
+            &[row(1.0, true), row(0.5, false)],
+        );
+        assert_eq!(
+            phased,
+            OfficerStatRuntimeBonus {
+                attack_bonus: 0.5,
+                health_bonus: 0.5,
+                defense_armor_add: 50.0,
+                defense_shield_deflection_add: 100.0,
+                defense_dodge_add: 150.0,
+            }
+        );
+
+        // Despite storage order, self rows fold first: 1e16 + 1 - 1e16 == 0.
+        // A single interleaved fold would retain 1 and select the next breakpoint.
+        let separated = compute(
+            &[],
+            &[],
+            &[row(1e16, false), row(1e16, true), row(1.0, true)],
+        );
+        assert_eq!(
+            separated,
+            OfficerStatRuntimeBonus {
+                attack_bonus: 0.25,
+                health_bonus: 0.25,
+                defense_armor_add: 25.0,
+                defense_shield_deflection_add: 50.0,
+                defense_dodge_add: 75.0,
+            }
+        );
+    }
 
     #[test]
     fn normalize_profile_combat_stat_maps_isolytic_cascade_aliases() {

@@ -7,6 +7,7 @@
 //! --log  Append one row to benchmark_log.csv (date, combats_per_sec, combats_per_min, rounds_per_sec, rounds_per_combat).
 
 use std::fs::OpenOptions;
+use std::hint::black_box;
 use std::io::Write;
 use std::time::Instant;
 
@@ -95,28 +96,37 @@ fn main() {
 
     let start = Instant::now();
     let mut combats: u32 = 0;
+    let mut actual_rounds: u64 = 0;
     while start.elapsed().as_millis() < MIN_DURATION_MS as u128 || combats < MIN_COMBATS {
-        let _ = simulate_combat(&attacker, &defender, &config, &crew);
+        let result = black_box(simulate_combat(
+            black_box(&attacker),
+            black_box(&defender),
+            black_box(&config),
+            black_box(&crew),
+        ));
+        actual_rounds += u64::from(result.rounds_simulated);
         combats += 1;
     }
     let elapsed_secs = start.elapsed().as_secs_f64();
 
     let combats_per_sec = combats as f64 / elapsed_secs;
     let combats_per_min = combats_per_sec * 60.0;
-    let rounds_per_sec = combats_per_sec * (rounds_per_combat as f64);
+    let rounds_per_sec = actual_rounds as f64 / elapsed_secs;
+    let actual_rounds_per_combat = actual_rounds as f64 / f64::from(combats);
 
-    println!("Simulator benchmark ({} rounds/combat):", rounds_per_combat);
+    println!("Simulator benchmark (round limit {}):", rounds_per_combat);
     println!("  Combats:     {}", combats);
     println!("  Duration:    {:.2} s", elapsed_secs);
     println!("  Combats/s:   {:.2}", combats_per_sec);
     println!("  Combats/min: {:.2}", combats_per_min);
     println!("  Rounds/s:    {:.2}", rounds_per_sec);
+    println!("  Actual rounds/combat: {:.2}", actual_rounds_per_combat);
 
     if log {
         let date = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
         let line = format!(
             "{},{:.4},{:.4},{:.4},{}\n",
-            date, combats_per_sec, combats_per_min, rounds_per_sec, rounds_per_combat
+            date, combats_per_sec, combats_per_min, rounds_per_sec, actual_rounds_per_combat
         );
         let path = "benchmark_log.csv";
         let mut file = OpenOptions::new()

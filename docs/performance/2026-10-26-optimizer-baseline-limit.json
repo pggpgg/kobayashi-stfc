@@ -1,0 +1,27 @@
+{
+  "original_engine_revision": "884c4701a5d5986d265abb80986a5e77e5936dcb",
+  "harness_source_sha256": "9825a80939722599ad65a9c9ae587abca803d74f9f8447c8d0866c0a3079f89b",
+  "baseline_executable_sha256": "39a7845b099407747eaeb14d50b8e230c85724375cb9f77de5c8c0a9192cac44",
+  "command": "optimizer_throughput_bench --parity --case mc_compile_1 --threads 1",
+  "setup": "Isolated original-engine checkout, unmodified public demo profile, same process/registry/seed/candidates, three same-mode preflight repetitions required; explicit empty synthetic profile also prepared for separate cases.",
+  "observed": {
+    "case": "mc_compile_1",
+    "comparison": {
+      "actual_sha256": "342bd772fb58b55fbb0b4c404bd6c42c7d49145b9850cbd818a50073224eb197",
+      "expected_sha256": "77a747082b62e6cbcc81c5ebf507dc3c05ad8865dfd9125049d8d4cf7e34025e",
+      "first_difference": {
+        "actual": "3fe00ab74f267c14",
+        "expected": "3fe00ab74f267c16",
+        "path": "/ordered_results/0/avg_hull_remaining/f64_bits"
+      },
+      "identical": false
+    },
+    "repetition": 2,
+    "schema": "optimizer-throughput-failure-v2",
+    "stage": "untimed_same_mode_preflight",
+    "timing_valid": false,
+    "workload_sha256": "4b3642ab816811873c4b8beb20e8a57c8b09fb5cea2f25090d5ed3f7352b51a0"
+  },
+  "exit_code": 1,
+  "conclusion": "Original-engine scenario rebuild is not bit-reproducible for this demo workload. No throughput claim accepted for this workload. Verified unordered research/building fold and research-seat emission sites are candidate causes; exact cause has not been isolated. No tolerance, rounding or production formula was changed."
+}

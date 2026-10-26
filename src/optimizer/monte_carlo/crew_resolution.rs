@@ -55,9 +55,7 @@ pub fn crew_from_officer_names(
         officer_levels: None,
     };
     // Empty captain id (unresolved) is skipped by the resolver, like any absent id.
-    resolve_crew_to_buff_set(&captain_id, &bridge_ids, &below_ids, &by_id, &options)
-        .to_crew_config()
-        .clone()
+    resolve_crew_to_buff_set(&captain_id, &bridge_ids, &below_ids, &by_id, &options).crew
 }
 
 /// Unique canonical officer ids for captain + bridge + below (tier suffixes stripped).

@@ -2,6 +2,16 @@
 
 Prefer **`cargo xtask --help`** from the repo root for a single discoverable entry point; each subcommand runs the same steps documented below. Under the hood this crate invokes the `node` / `python` / `cargo` commands in this file.
 
+## Fixed-work simulator throughput
+
+`compare_hot_path.py` compares separately frozen, uninstrumented release builds of
+`hot_path_bench`. It requires exact workload and result parity, then retains all
+samples from alternating paired blocks. Build manifests can verify compiler,
+feature and source identities. Timeouts retain child output and failure metadata.
+The [measurement report](../docs/performance/2026-10-26.md) gives commands, scopes
+and the distinction between throughput gain and elapsed-time reduction. Run the
+driver tests with `python -m unittest discover -s scripts/test -p test_compare_hot_path.py`.
+
 ## Optimizer API contracts
 
 Optimizer transport types are aliases of the bundled OpenAPI schemas. When Rust optimizer

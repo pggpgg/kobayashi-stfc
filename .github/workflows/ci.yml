@@ -308,6 +308,9 @@ jobs:
       - name: Run tools/combat_engine tests
         run: python -m pytest tools/combat_engine/tests/ -v
 
+      - name: Fixed-work benchmark driver tests
+        run: python -m unittest discover -s scripts/test -p test_compare_hot_path.py -v
+
   e2e_smoke:
     name: E2E smoke (Playwright)
     runs-on: ubuntu-latest
