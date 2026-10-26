@@ -3226,7 +3226,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             let crit = resolve_vehicle_weapon_crit(
                 attacker.weapon_crit_chance(weapon_index),
                 phase_effects.crit_chance_bonus() + breach_crit_chance_add,
-                attacker.weapon_crit_multiplier(weapon_index),
+                attacker.weapon_crit_multiplier(weapon_index)
+                    + phase_effects.base_crit_damage_bonus(),
                 phase_effects.crit_damage_multiplier(),
                 breach_crit_damage_add,
                 effective_attacker_crit_reduction.additive_points,
@@ -4289,7 +4290,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         let def_crit = resolve_vehicle_weapon_crit(
             defender.weapon_crit_chance(weapon_index),
             defender_phase_effects.crit_chance_bonus(),
-            defender.weapon_crit_multiplier(weapon_index),
+            defender.weapon_crit_multiplier(weapon_index)
+                + defender_phase_effects.base_crit_damage_bonus(),
             defender_phase_effects.crit_damage_multiplier(),
             0.0,
             0.0,

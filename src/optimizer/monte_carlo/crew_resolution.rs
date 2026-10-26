@@ -135,15 +135,6 @@ pub(crate) fn hash_identifier(value: &str) -> u64 {
     })
 }
 
-pub(crate) fn seeded_variance(seed: u64) -> f64 {
-    let mixed = seed
-        .wrapping_add(0x9e37_79b9_7f4a_7c15)
-        .rotate_left(17)
-        .wrapping_mul(0xbf58_476d_1ce4_e5b9);
-    let unit = (mixed as f64) / (u64::MAX as f64);
-    0.85 + (unit * 0.30)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

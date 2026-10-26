@@ -15,6 +15,16 @@ that is not always one. Research (66), building (68) and forbidden-tech (141)
 IDs are explicitly excluded during extraction so they cannot enter both their
 existing profile path and this global-buff path.
 
+The CombatStart compiler also accepts 21 offensive definitions with the exact
+NPC/non-Armada predicates 27/131: nine modifier-2 MULT weapon bonuses and twelve
+modifier-10 ADD critical bonuses. These remain outside the 114 setup definitions.
+Only active, nonexpired imported IDs contribute, at their current ranks. The
+weapon additions share the base percentage pool. Critical additions enter the
+base critical factor before timed critical multipliers. They are unboostable
+ship seats and do not receive officer-only Assimilation scaling. Armada and PvP
+contexts exclude them. This extends the reviewed predicate/compiler coverage;
+it does not prove that all 21 definitions are active in a particular account.
+
 The setup compiler accepts only self-targeting scalar buffs at launch or combat start,
 without attributes or unknown fields, and with no predicate or one verified
 ship-class predicate. Unknown grade, faction, ship, status and other conditions

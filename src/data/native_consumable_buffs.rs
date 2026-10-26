@@ -99,6 +99,59 @@ pub fn combat_start_defense_seats_for_imported_buffs(
     )
 }
 
+/// Reviewed group-116 offensive rows: self, CombatStart, NPC and non-Armada.
+/// Keep these out of launch pools and never infer other predicates from names.
+pub fn combat_start_offense_seats_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    combat_start_offense_seats_from_catalog(embedded_catalog(), imported, now_unix_seconds)
+}
+
+fn combat_start_offense_seats_from_catalog(
+    catalog: &NativeConsumableBuffCatalog,
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    if catalog.schema_version != 1 || catalog.source_group != 116 {
+        return Vec::new();
+    }
+    active_highest_levels(imported, now_unix_seconds)
+        .into_iter()
+        .filter_map(|(bid, level)| {
+            let spec = catalog.buffs.get(&bid)?;
+            if spec.condition_codes != [27, 131] || spec.num_rounds != 0 {
+                return None;
+            }
+            // Reuse the reviewed target, trigger, rank and predicate checks;
+            // only the two explicitly selected offensive operations differ.
+            let effect: fn(f64) -> AbilityEffect = match (spec.modifier_code, spec.operation_code) {
+                (2, 3) => AbilityEffect::BaseWeaponDamageBonus,
+                (10, 1) => AbilityEffect::BaseCritDamageBonus,
+                _ => return None,
+            };
+            let condition = combat_start_condition(spec, 116, bid, None)?;
+            let rank = usize::try_from(level - 1).unwrap_or(usize::MAX);
+            let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
+            (value != 0.0).then(|| CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: format!("native_116_{bid}"),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: effect(value),
+                    condition,
+                    weapon_scope: Default::default(),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            })
+        })
+        .collect()
+}
+
 pub(crate) fn combat_start_defense_seats_from_catalog_for_group(
     catalog: &NativeConsumableBuffCatalog,
     expected_group: u32,
@@ -113,8 +166,10 @@ pub(crate) fn combat_start_defense_seats_from_catalog_for_group(
         .into_iter()
         .filter_map(|(bid, level)| {
             let spec = catalog.buffs.get(&bid)?;
-            let condition =
-                combat_start_defense_condition(spec, expected_group, bid, attacker_ship_class)?;
+            if spec.modifier_code != 73 || spec.operation_code != 3 {
+                return None;
+            }
+            let condition = combat_start_condition(spec, expected_group, bid, attacker_ship_class)?;
             let rank = usize::try_from(level - 1).unwrap_or(usize::MAX);
             let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
             (value != 0.0).then(|| CrewSeatContext {
@@ -136,7 +191,7 @@ pub(crate) fn combat_start_defense_seats_from_catalog_for_group(
         .collect()
 }
 
-fn combat_start_defense_condition(
+fn combat_start_condition(
     spec: &NativeBuffSpec,
     source_group: u32,
     bid: i64,
@@ -168,9 +223,7 @@ fn combat_start_defense_condition(
             1_750_120_904,
         )));
     }
-    if spec.modifier_code != 73
-        || spec.operation_code != 3
-        || spec.target_code != 1
+    if spec.target_code != 1
         || spec.trigger_code != 25
         || spec.ranked_value_type != 0
         || spec.ranked_values.is_empty()
@@ -279,6 +332,26 @@ pub(crate) fn bonuses_from_catalog_for_group(
     syndicate_level: Option<u32>,
     now_unix_seconds: i64,
 ) -> HashMap<String, f64> {
+    bonuses_from_catalog_for_ship(
+        catalog,
+        expected_group,
+        imported,
+        attacker_ship_class,
+        syndicate_level,
+        None,
+        now_unix_seconds,
+    )
+}
+
+pub(crate) fn bonuses_from_catalog_for_ship(
+    catalog: &NativeConsumableBuffCatalog,
+    expected_group: u32,
+    imported: &[GlobalBuffEntry],
+    attacker_ship_class: Option<&str>,
+    syndicate_level: Option<u32>,
+    ship_grade: Option<u32>,
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
     let mut out = HashMap::new();
     if catalog.schema_version != 1 || catalog.source_group != expected_group {
         return out;
@@ -287,12 +360,18 @@ pub(crate) fn bonuses_from_catalog_for_group(
         let Some(spec) = catalog.buffs.get(&bid) else {
             continue;
         };
-        let Some(stats) = supported_stats_with_syndicate(
-            spec,
-            attacker_ship_class,
-            syndicate_level,
-            expected_group == 68,
-        ) else {
+        let stats =
+            if expected_group == 66 && matches!(spec.modifier_code, 6 | 7 | 8 | 74 | 56..=59) {
+                supported_research_stat_sources(spec, bid, attacker_ship_class, ship_grade)
+            } else {
+                supported_stats_with_syndicate(
+                    spec,
+                    attacker_ship_class,
+                    syndicate_level,
+                    expected_group == 68,
+                )
+            };
+        let Some(stats) = stats else {
             continue;
         };
         let rank = usize::try_from(level - 1).unwrap_or(usize::MAX);
@@ -304,6 +383,78 @@ pub(crate) fn bonuses_from_catalog_for_group(
         }
     }
     out
+}
+
+/// Same reviewed launch families as the native research importer. Target 5 is
+/// crew-wide; target 11 is admitted only for the hash-bound Orlop Defense row.
+fn supported_research_stat_sources(
+    spec: &NativeBuffSpec,
+    bid: i64,
+    ship_class: Option<&str>,
+    ship_grade: Option<u32>,
+) -> Option<&'static [&'static str]> {
+    if spec.operation_code != 3
+        || spec.trigger_code != 24
+        || spec.num_rounds != 0
+        || spec.ranked_value_type != 0
+        || spec.ranked_values.is_empty()
+        || spec.ranked_values.len() > spec.ranked_value_count
+        || spec.ranked_values.iter().any(|v| !v.is_finite())
+        || spec.ranked_chances.is_empty()
+        || spec.ranked_chances.len() > spec.ranked_chance_count
+        || spec.ranked_chances.iter().any(|v| *v != 1.0)
+        || !spec.attribute_fields.is_empty()
+        || !spec.unknown_fields.is_empty()
+    {
+        return None;
+    }
+    if spec.target_code == 11 {
+        return (bid == 1895868262
+            && spec.modifier_code == 57
+            && spec.sha256 == "90eb257edcaceff8659184bcf2cdf1b41d4ce616dded4db5487b3ad806ec11ac"
+            && spec.condition_codes.is_empty()
+            && spec.ranked_values
+                == [0.2, 0.26, 0.33, 0.41, 0.5, 0.59, 0.69, 0.79, 0.89, 1.0, 0.0]
+            && spec.ranked_value_count == 99
+            && spec.ranked_chances == [1.0]
+            && spec.ranked_chance_count == 99)
+            .then_some(&["officer_defense_below_decks"]);
+    }
+    if matches!(spec.modifier_code, 56..=59) {
+        if spec.target_code != 5 || !spec.condition_codes.is_empty() {
+            return None;
+        }
+        return match spec.modifier_code {
+            56 => Some(&["officer_attack"]),
+            57 => Some(&["officer_defense"]),
+            58 => Some(&["officer_health"]),
+            59 => Some(&["officer_attack", "officer_defense", "officer_health"]),
+            _ => None,
+        };
+    }
+    if spec.target_code != 1 {
+        return None;
+    }
+    let matches_scope = match spec.condition_codes.as_slice() {
+        [] => true,
+        [0] => ship_class == Some("explorer"),
+        [1] => ship_class == Some("interceptor"),
+        [2] => ship_class == Some("battleship"),
+        [3] => ship_class == Some("survey"),
+        [116] => ship_class == Some("sentinel"),
+        [123] if spec.modifier_code == 74 => ship_grade.is_some_and(|grade| grade >= 4),
+        _ => false,
+    };
+    if !matches_scope {
+        return None;
+    }
+    match spec.modifier_code {
+        6 => Some(&["accuracy"]),
+        7 => Some(&["armor_piercing"]),
+        8 => Some(&["shield_piercing"]),
+        74 => Some(&["accuracy", "armor_piercing", "shield_piercing"]),
+        _ => None,
+    }
 }
 
 #[cfg(test)]

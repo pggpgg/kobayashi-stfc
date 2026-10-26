@@ -908,7 +908,7 @@ pub(crate) struct SharedScenarioData {
     pub applied_defender_alliance_debuffs: Vec<AppliedSupportBuffTrace>,
     /// Conditional research (`crit_chance` / `crit_damage` with hull/faction/morale/etc. gates).
     pub research_derived_seats: Vec<CrewSeatContext>,
-    /// Native CombatStart defense buffs, distinct from launch-time profile pools.
+    /// Native CombatStart defense and offensive account buffs, distinct from launch pools.
     pub native_defense_derived_seats: Vec<CrewSeatContext>,
     /// Selects native integer defense rounding only when active native source
     /// rows contribute to the launch or CombatStart defense pools.
@@ -2783,7 +2783,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
     );
 
     let (native_defense_derived_seats, native_defense_rounding) =
-        native_defense_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
+        native_combat_start_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -2854,9 +2854,10 @@ fn merge_native_research_bonuses(
     let imported =
         import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
             .unwrap_or_default();
-    if let Some(native) = crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+    if let Some(native) = crate::data::native_research_buffs::research_bonuses_for_ship(
         &imported,
         ship.map(|ship| ship.ship_class.as_str()),
+        ship.and_then(|ship| ship.grade),
         chrono::Utc::now().timestamp(),
     ) {
         replace_research_setup_bonuses_with_native_snapshot(
@@ -2908,7 +2909,7 @@ fn native_building_bonuses_for_profile(
 
 /// Resolve source membership and ranks once per scenario, outside crew search.
 /// Opponent and combat-start gates remain typed conditions on the resulting seats.
-fn native_defense_seats_for_profile(
+fn native_combat_start_seats_for_profile(
     pid: &str,
     ship: Option<&ShipRecord>,
     syndicate_level: Option<u32>,
@@ -2959,6 +2960,11 @@ fn native_defense_seats_for_profile(
                 ),
             );
     let rounding = launch_source_present || !seats.is_empty();
+    seats.extend(
+        crate::data::native_consumable_buffs::combat_start_offense_seats_for_imported_buffs(
+            &imported, now,
+        ),
+    );
     (seats, rounding)
 }
 
@@ -3604,7 +3610,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .unwrap_or_else(|| hostile.to_string());
 
     let (native_defense_derived_seats, native_defense_rounding) =
-        native_defense_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
+        native_combat_start_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
 
     SharedScenarioData {
         ship: ship.to_string(),

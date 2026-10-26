@@ -243,6 +243,19 @@ and current levels. The generated project catalog remains the fallback when
 that source is unavailable. Canonical status/timing seats and nonselected
 research families retain their separate paths.
 
+Selected setup families now also include accuracy, armor/shield piercing and
+crew-wide officer Attack/Defense/Health. Native rank selection retains ship-class
+gates and Direct Hit's grade-4 minimum. Unknown grades cannot satisfy that gate.
+The exact hash-bound Orlop Defense row remains below-decks-only; other target-11
+officer rows remain unsupported. Replacement removes only the previously merged
+research contribution, preserving manual, building and other sources. Scenario
+summaries use the same ship grade and active-source selection as combat setup.
+
+NS Hull Breach Isolytic Damage (buff 638902322) now explicitly declares
+`round_start`, matching its retained native trigger 18, condition 37 and one-round
+duration. Its raw rank values are unchanged. This corrects the former AttackPhase
+default without establishing a new order for simultaneous round-start effects.
+
 This distinction is present in the retained native game code.
 `FleetPlayerData.EvaluateBuffs` (`0x181a196d0`, metadata method 70893) takes
 `globalBuffs: List<BuffData>` and evaluates the entries in that supplied list;

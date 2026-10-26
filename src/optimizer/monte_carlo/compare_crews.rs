@@ -4,14 +4,15 @@ use std::collections::HashMap;
 
 use rayon::prelude::*;
 
+use super::simulation::surviving_hull_fraction;
+use crate::combat::engine::simulate_combat_from_setup_reusing_attacker;
 use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, OpponentFactionTag, SimulationConfig,
+    build_combat_setup_with_officer_stat, OpponentFactionTag, SimulationConfig,
     SimulationResult as CombatSimResult, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::support_buffs;
 use crate::optimizer::crew_generator::CrewCandidate;
-use crate::optimizer::monte_carlo::crew_resolution::seeded_variance;
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
     CombatSimulationInput, DefenderOpponent, SharedScenarioData,
@@ -57,7 +58,7 @@ fn simulate_trial(
     input: &CombatSimulationInput,
     iteration_seed: u64,
     trace: TraceMode,
-) -> CombatSimResult {
+) -> (CombatSimResult, f64) {
     let mut combat_config = SimulationConfig {
         rounds: input.rounds,
         seed: iteration_seed,
@@ -88,7 +89,7 @@ fn simulate_trial(
     let defender_ship_type = shared.defender_ship_type_for_combat();
     let attacker_ship_type = shared.attacker_ship_type_for_combat();
     combat_config.seed = iteration_seed;
-    simulate_combat_with_defender_faction_and_defender_crew(
+    let setup = build_combat_setup_with_officer_stat(
         &input.attacker,
         &input.defender,
         &combat_config,
@@ -99,18 +100,11 @@ fn simulate_trial(
         shared.defender_opponent.defender_is_npc_hostile(),
         shared.defender_opponent.defender_is_player_ship(),
         &input.defender_crew,
-    )
-}
-
-fn hull_fraction_on_win(
-    input: &CombatSimulationInput,
-    result: &CombatSimResult,
-    iteration_seed: u64,
-) -> f64 {
-    // Only called on wins; wins are always kills (timeouts are never wins), so the overkill
-    // fraction is the surviving-hull proxy.
-    let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
-    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0)
+        input.officer_stat_round.clone(),
+    );
+    let mut attacker = setup.attacker.clone();
+    let result = simulate_combat_from_setup_reusing_attacker(&setup, iteration_seed, &mut attacker);
+    (result, attacker.hull_health)
 }
 
 fn hull_bin_index(frac: f64) -> usize {
@@ -138,7 +132,8 @@ fn collect_proc_counts(
         let iteration_seed = base_seed
             .wrapping_add(10_000_000)
             .wrapping_add(u64::from(t));
-        let result = simulate_trial(shared, &input_template, iteration_seed, TraceMode::Events);
+        let (result, _) =
+            simulate_trial(shared, &input_template, iteration_seed, TraceMode::Events);
         let mut seen: HashMap<String, u32> = HashMap::new();
         for e in &result.events {
             if PROC_LABELS.contains(&e.event_type.as_str()) {
@@ -169,14 +164,15 @@ fn distribution_for_crew(
 
     for n_done in 0..iterations {
         let iteration_seed = input_template.base_seed.wrapping_add(n_done as u64);
-        let result = simulate_trial(shared, &input_template, iteration_seed, TraceMode::Off);
+        let (result, max_hull) =
+            simulate_trial(shared, &input_template, iteration_seed, TraceMode::Off);
         if result.winner_by_round_limit {
             stalls += 1;
         } else if result.attacker_won {
             wins += 1;
             let b = rounds_bucket(result.rounds_simulated);
             *rounds_hist.entry(b).or_insert(0) += 1;
-            let hf = hull_fraction_on_win(&input_template, &result, iteration_seed);
+            let hf = surviving_hull_fraction(&result, max_hull);
             hull_bins[hull_bin_index(hf)] += 1;
         } else {
             losses += 1;

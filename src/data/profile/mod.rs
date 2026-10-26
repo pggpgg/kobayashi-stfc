@@ -1218,6 +1218,13 @@ pub fn replace_research_setup_bonuses_with_native_snapshot(
                 | "crit_damage_flat"
                 | "isolytic_damage"
                 | "isolytic_defense"
+                | "accuracy"
+                | "armor_piercing"
+                | "shield_piercing"
+                | "officer_attack"
+                | "officer_defense"
+                | "officer_health"
+                | "officer_defense_below_decks"
                 | "armor"
                 | "shield_deflection"
                 | "dodge"
@@ -3112,7 +3119,10 @@ mod tests {
         assert!((profile.bonuses["armor"] - 21.29).abs() < 1e-9);
         assert!((profile.bonuses["shield_deflection"] - 22.29).abs() < 1e-9);
         assert!((profile.bonuses["dodge"] - 21.69).abs() < 1e-9);
-        assert_eq!(profile.bonuses["accuracy"], 0.2);
+        assert_eq!(
+            profile.bonuses["accuracy"], 0.0,
+            "inactive piercing research is now replaced too"
+        );
         assert!(
             !profile.bonuses.contains_key("crit_chance"),
             "morale stays conditional"
