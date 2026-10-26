@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::combat::condition::round_in_inclusive_first_n;
 use crate::combat::types::{EnemyType, EnemyTypes, OpponentFactionTag, ShipType};
 
@@ -876,6 +878,29 @@ pub fn filter_effects_by_condition(
         }
     }
     out
+}
+
+/// Read-only engine filtering without cloning rows when every condition passes.
+/// Evaluate at the caller's current timing window, in source order, exactly once
+/// per row. A rejected row materializes the same ordered subset as the owned API.
+pub(crate) fn filter_effects_by_condition_borrowed<'a>(
+    effects: &'a [ActiveAbilityEffect],
+    ctx: &CombatContext,
+) -> Cow<'a, [ActiveAbilityEffect]> {
+    let Some(first_rejected) = effects
+        .iter()
+        .position(|e| e.condition.as_ref().is_some_and(|c| !c.evaluate(ctx)))
+    else {
+        return Cow::Borrowed(effects);
+    };
+    let mut out = Vec::with_capacity(effects.len());
+    out.extend_from_slice(&effects[..first_rejected]);
+    for effect in &effects[first_rejected + 1..] {
+        if effect.condition.as_ref().is_none_or(|c| c.evaluate(ctx)) {
+            out.push(effect.clone());
+        }
+    }
+    Cow::Owned(out)
 }
 
 /// Sum [`AbilityEffect::MitigationAdditive`] from combat-begin (or similar) filtered rows.
@@ -1923,6 +1948,104 @@ mod tests {
     }
 
     // ── filter_effects_by_condition ──
+
+    #[test]
+    fn borrowed_filter_reuses_all_passing_rows_and_empty_input() {
+        let mut effect = ActiveAbilityEffect {
+            ability_name: "borrowed".into(),
+            ability_class: AbilityClass::BridgeAbility,
+            officer_id: Some("source".into()),
+            effect: AbilityEffect::AttackMultiplier(0.25),
+            boosted: false,
+            condition: None,
+            weapon_scope: WeaponTypeScope::All,
+        };
+        let ctx = ctx_default();
+        assert!(matches!(
+            filter_effects_by_condition_borrowed(&[], &ctx),
+            Cow::Borrowed(_)
+        ));
+        for condition in [None, Some(AbilityCondition::LiteralBool(true))] {
+            effect.condition = condition;
+            let rows = [effect.clone()];
+            let filtered = filter_effects_by_condition_borrowed(&rows, &ctx);
+            assert!(matches!(filtered, Cow::Borrowed(_)));
+            assert_eq!(filtered.as_ptr(), rows.as_ptr());
+            assert_eq!(filtered.as_ref(), filter_effects_by_condition(&rows, &ctx));
+        }
+    }
+
+    #[test]
+    fn borrowed_filter_matches_owned_for_every_rejection_position_and_context() {
+        for mask in 0u32..32 {
+            let rows: Vec<_> = (0..5)
+                .map(|index| ActiveAbilityEffect {
+                    ability_name: format!("row_{index}"),
+                    ability_class: AbilityClass::BridgeAbility,
+                    officer_id: Some(format!("source_{index}")),
+                    effect: AbilityEffect::AttackMultiplier(index as f64 * 0.125),
+                    boosted: index % 2 == 0,
+                    condition: Some(AbilityCondition::And(vec![
+                        AbilityCondition::LiteralBool(mask & (1 << index) != 0),
+                        AbilityCondition::Or(vec![
+                            AbilityCondition::MoraleActive,
+                            AbilityCondition::RoundRange { min: 2, max: 3 },
+                        ]),
+                    ])),
+                    weapon_scope: WeaponTypeScope::All,
+                })
+                .collect();
+            for round_index in 1..=4 {
+                for morale in [false, true] {
+                    let mut ctx = ctx_default();
+                    ctx.round_index = round_index;
+                    ctx.attacker_morale_active = morale;
+                    let expected = filter_effects_by_condition(&rows, &ctx);
+                    let actual = filter_effects_by_condition_borrowed(&rows, &ctx);
+                    assert_eq!(actual.as_ref(), expected);
+                    assert_eq!(
+                        matches!(actual, Cow::Borrowed(_)),
+                        expected.len() == rows.len()
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_filter_preserves_duplicate_rows_and_nonfinite_effect_values() {
+        let row = ActiveAbilityEffect {
+            ability_name: "duplicate".into(),
+            ability_class: AbilityClass::BridgeAbility,
+            officer_id: None,
+            effect: AbilityEffect::AttackMultiplier(f64::NAN),
+            boosted: false,
+            condition: None,
+            weapon_scope: WeaponTypeScope::All,
+        };
+        let mut rejected = row.clone();
+        rejected.condition = Some(AbilityCondition::StatBelow {
+            stat: "hull_hp".into(),
+            threshold_pct: f64::NAN,
+        });
+        let rows = [row.clone(), rejected, row];
+        let ctx = ctx_default();
+        let actual = filter_effects_by_condition_borrowed(&rows, &ctx);
+        let expected = filter_effects_by_condition(&rows, &ctx);
+        assert!(matches!(actual, Cow::Owned(_)));
+        assert_eq!(actual.len(), expected.len());
+        assert_eq!(actual.len(), 2);
+        for (actual, expected) in actual.iter().zip(&expected) {
+            assert_eq!(actual.ability_name, expected.ability_name);
+            let AbilityEffect::AttackMultiplier(actual) = actual.effect else {
+                panic!("effect changed");
+            };
+            let AbilityEffect::AttackMultiplier(expected) = expected.effect else {
+                panic!("effect changed");
+            };
+            assert_eq!(actual.to_bits(), expected.to_bits());
+        }
+    }
 
     #[test]
     fn filter_no_condition_always_passes() {

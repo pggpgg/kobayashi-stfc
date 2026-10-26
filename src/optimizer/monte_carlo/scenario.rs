@@ -1,5 +1,6 @@
 //! Scenario and candidate → combat input: SharedScenarioData, scenario_to_combat_input, build_crew_and_buffs.
 
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
@@ -1185,10 +1186,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         );
     }
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
+    let crew = CrewConfiguration { seats: crew_seats };
     let attacker_tal_assigned_captain_or_bridge =
-        attacker_crew_tal_assigned_captain_or_bridge(&CrewConfiguration {
-            seats: crew_seats.clone(),
-        });
+        attacker_crew_tal_assigned_captain_or_bridge(&crew);
+    let crew_seats = crew.seats;
 
     // Use the process-wide cached catalog instead of re-reading + re-parsing the JSON file
     // on every candidate. Source of the `__open` hotspot in earlier profiling.
@@ -1388,7 +1389,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         if !merged_static.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
         }
-        let mut seats = crew_seats.clone();
+        let mut seats = crew_seats;
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
@@ -1545,7 +1546,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
     }
 
-    let mut seats = crew_seats.clone();
+    let mut seats = crew_seats;
     extend_crew_with_ship_abilities(&mut seats, shared.ship_rec.as_ref());
     extend_crew_with_research_derived_attack_phase_seats(
         &mut seats,
@@ -1794,26 +1795,42 @@ fn enrich_hostile_defender_for_scenario(
 ///
 /// Imported roster tiers remain as defaults; explicit `(T#)` on captain / bridge / below decks
 /// overrides per canonical officer id (same ids LCARS uses in [`resolve_crew_to_buff_set`]).
-fn resolve_options_with_candidate_tiers(
-    base: &ResolveOptions,
+fn resolve_options_with_candidate_tiers<'a>(
+    base: &'a ResolveOptions,
     candidate: &CrewCandidate,
     lcars: Option<&LcarsOfficerData>,
-) -> ResolveOptions {
+) -> Cow<'a, ResolveOptions> {
     let Some(lcars) = lcars else {
-        return base.clone();
+        return Cow::Borrowed(base);
     };
 
-    let mut officer_tiers = base.officer_tiers.clone().unwrap_or_default();
+    // Preserve the existing LCARS path's level reset and empty-map normalization. The
+    // common case can borrow the roster map until a resolved tier override is found.
+    let mut resolved = if base.officer_levels.is_some()
+        || base.officer_tiers.as_ref().is_some_and(HashMap::is_empty)
+    {
+        Cow::Owned(ResolveOptions {
+            tier: base.tier,
+            officer_tiers: base.officer_tiers.clone().filter(|tiers| !tiers.is_empty()),
+            officer_levels: None,
+        })
+    } else {
+        Cow::Borrowed(base)
+    };
 
     let mut apply_slot = |slot: &str| {
         let (name, tier_opt) = split_name_and_tier(slot);
         let Some(tier) = tier_opt else {
             return;
         };
-        let Some(id) = lcars.name_to_id.get(&normalize_lookup_key(&name)).cloned() else {
+        let Some(id) = lcars.name_to_id.get(&normalize_lookup_key(&name)) else {
             return;
         };
-        officer_tiers.insert(id, tier);
+        resolved
+            .to_mut()
+            .officer_tiers
+            .get_or_insert_with(HashMap::new)
+            .insert(id.clone(), tier);
     };
 
     apply_slot(&candidate.captain);
@@ -1824,15 +1841,7 @@ fn resolve_options_with_candidate_tiers(
         apply_slot(s);
     }
 
-    ResolveOptions {
-        tier: base.tier,
-        officer_tiers: if officer_tiers.is_empty() {
-            None
-        } else {
-            Some(officer_tiers)
-        },
-        officer_levels: None,
-    }
+    resolved
 }
 
 /// Build (crew_seats, static_buffs, proc_chance, proc_multiplier, officer_stat_totals) from
@@ -1880,7 +1889,7 @@ fn build_crew_and_buffs(
             resolve_options,
         );
         (
-            buff_set.to_crew_config().seats.clone(),
+            buff_set.crew.seats,
             buff_set.static_buffs,
             buff_set.proc_chance,
             buff_set.proc_multiplier,
@@ -2190,7 +2199,7 @@ pub(crate) fn scenario_to_combat_input(
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
         }
-        let mut seats = crew_seats.clone();
+        let mut seats = crew_seats;
         extend_crew_with_ship_abilities(&mut seats, Some(&ship_rec));
         extend_crew_with_isolytic_cascade_profile_and_static(
             &mut seats,
@@ -2315,7 +2324,7 @@ pub(crate) fn scenario_to_combat_input(
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
     }
 
-    let mut seats = crew_seats.clone();
+    let mut seats = crew_seats;
     extend_crew_with_ship_abilities(&mut seats, resolve_ship(ship).as_ref());
     extend_crew_with_isolytic_cascade_profile_and_static(&mut seats, profile, static_cascade_bonus);
 
@@ -3695,6 +3704,86 @@ mod tests {
     use uuid::Uuid;
 
     static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn candidate_tier_options_preserve_level_reset_and_override_order() {
+        let lcars = LcarsOfficerData {
+            by_id: HashMap::new(),
+            name_to_id: HashMap::from([
+                ("alpha".into(), "alpha-id".into()),
+                ("beta".into(), "beta-id".into()),
+            ]),
+        };
+        let candidates = [
+            CrewCandidate {
+                captain: "Alpha".into(),
+                bridge: vec!["Beta".into()],
+                below_decks: vec![],
+            },
+            CrewCandidate {
+                captain: "Alpha (T2)".into(),
+                bridge: vec!["Alpha (T3)".into(), "Beta (T4)".into()],
+                below_decks: vec!["Alpha (T5)".into(), "Unknown (T9)".into()],
+            },
+            CrewCandidate {
+                captain: "Unknown (T9)".into(),
+                bridge: vec![],
+                below_decks: vec![],
+            },
+        ];
+        for officer_tiers in [
+            None,
+            Some(HashMap::new()),
+            Some(HashMap::from([
+                ("alpha-id".into(), 1),
+                ("beta-id".into(), 2),
+            ])),
+        ] {
+            for officer_levels in [None, Some(HashMap::from([("alpha-id".into(), 12)]))] {
+                let base = ResolveOptions {
+                    tier: Some(4),
+                    officer_tiers: officer_tiers.clone(),
+                    officer_levels,
+                };
+                for candidate in &candidates {
+                    // Reference the previous owned implementation, including level reset,
+                    // normalization of Some(empty), and last occupied-slot override wins.
+                    let mut expected_tiers = base.officer_tiers.clone().unwrap_or_default();
+                    for slot in std::iter::once(&candidate.captain)
+                        .chain(&candidate.bridge)
+                        .chain(&candidate.below_decks)
+                    {
+                        let (name, tier) = split_name_and_tier(slot);
+                        if let (Some(tier), Some(id)) =
+                            (tier, lcars.name_to_id.get(&normalize_lookup_key(&name)))
+                        {
+                            expected_tiers.insert(id.clone(), tier);
+                        }
+                    }
+                    let actual =
+                        resolve_options_with_candidate_tiers(&base, candidate, Some(&lcars));
+                    assert_eq!(actual.tier, base.tier);
+                    assert_eq!(actual.officer_levels, None);
+                    assert_eq!(
+                        actual.officer_tiers,
+                        (!expected_tiers.is_empty()).then_some(expected_tiers)
+                    );
+                    if candidate.captain == "Alpha"
+                        && base.officer_levels.is_none()
+                        && !base.officer_tiers.as_ref().is_some_and(HashMap::is_empty)
+                    {
+                        assert!(matches!(actual, Cow::Borrowed(_)));
+                    }
+
+                    let without_lcars =
+                        resolve_options_with_candidate_tiers(&base, candidate, None);
+                    assert_eq!(without_lcars.tier, base.tier);
+                    assert_eq!(without_lcars.officer_tiers, base.officer_tiers);
+                    assert_eq!(without_lcars.officer_levels, base.officer_levels);
+                }
+            }
+        }
+    }
 
     #[test]
     fn defender_combatant_inherits_top_level_hostile_crit_damage_and_chance() {

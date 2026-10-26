@@ -2051,6 +2051,9 @@ pub(crate) fn record_ability_activations(
     effects: &[ActiveAbilityEffect],
     assimilated_active: bool,
 ) {
+    if !trace.is_enabled() {
+        return;
+    }
     for effect in effects {
         // Post-hit grants are logged only when the granting volley actually fired.
         if phase != "after_hit" && matches!(effect.effect, AbilityEffect::OnHitTimedBonus { .. }) {

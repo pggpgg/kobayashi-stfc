@@ -8,7 +8,10 @@ use std::collections::HashMap;
 use crate::combat::abilities::{CombatContext, TimingWindow};
 use crate::combat::condition::evaluate_ability_condition;
 use crate::combat::{Combatant, CrewOfficerStatTotals};
-use crate::data::profile::{OfficerStatConditionContext, OfficerStatRuntimeBonus, PlayerProfile};
+use crate::data::profile::{
+    OfficerStatConditionContext, OfficerStatContributionRef, OfficerStatRuntimeBonus,
+    OfficerStatShipView, PlayerProfile,
+};
 use crate::data::ship::{OfficerBonusTable, ShipRecord};
 use crate::lcars::{DynamicOfficerStatContribution, PendingOfficerStatContribution};
 
@@ -138,46 +141,45 @@ impl OfficerStatRoundContext {
         combat_ctx: &CombatContext,
         timing: TimingWindow,
     ) -> OfficerStatRuntimeBonus {
-        let active_dynamic: Vec<PendingOfficerStatContribution> = self
-            .dynamic_contributions
-            .iter()
-            .filter(|c| c.timing == timing)
-            .filter(|c| {
-                c.runtime_condition
-                    .as_ref()
-                    .is_none_or(|cond| evaluate_ability_condition(cond, combat_ctx))
-            })
-            .map(|c| PendingOfficerStatContribution {
-                stat_key: c.stat_key.clone(),
-                value: c.value,
-                target_attacker: c.target_attacker,
-                conditions: Vec::new(),
-                opponent_scope: c.opponent_scope,
-            })
-            .collect();
+        // Preserve the original self-then-opponent folds, evaluating each matching row
+        // once without materializing active rows or cloning their stat keys.
+        let active_dynamic = |target_attacker| {
+            self.dynamic_contributions
+                .iter()
+                .filter(move |c| c.target_attacker == target_attacker && c.timing == timing)
+                .filter(|c| {
+                    c.runtime_condition
+                        .as_ref()
+                        .is_none_or(|cond| evaluate_ability_condition(cond, combat_ctx))
+                })
+                .map(|c| OfficerStatContributionRef {
+                    stat_key: &c.stat_key,
+                    value: c.value,
+                    target_attacker: c.target_attacker,
+                    opponent_scope: c.opponent_scope,
+                })
+        };
 
-        let ship = ShipRecord {
-            ship_class: self.ship_class.clone(),
+        let ship = OfficerStatShipView {
+            ship_class: &self.ship_class,
             armor: self.base_armor,
             shield_deflection: self.base_shield_deflection,
             dodge: self.base_dodge,
-            officer_bonus: self.officer_bonus.clone(),
-            ..ShipRecord::default()
+            officer_bonus: &self.officer_bonus,
         };
 
-        crate::data::profile::compute_officer_stat_runtime_bonus_with_round(
+        crate::data::profile::compute_officer_stat_runtime_bonus_from_parts(
             self.totals,
             self.bridge_totals,
-            &ship,
+            ship,
             &self.profile,
             self.owner_faction.as_deref(),
             &self.static_buffs,
             &self.static_pending,
             &self.static_cond_ctx,
             &self.opponent_enemy_pending,
-            &active_dynamic,
-            Some(combat_ctx),
-            Some(timing),
+            active_dynamic(true),
+            active_dynamic(false),
         )
     }
 
@@ -274,31 +276,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn round_delta_zero_when_no_dynamic_rows_active() {
-        let ship = test_ship();
-        let dynamic = vec![DynamicOfficerStatContribution {
-            stat_key: "officer_stat_all".to_string(),
-            value: 0.40,
-            target_attacker: true,
-            opponent_scope: OfficerStatOpponentScope::AllCrewed,
-            runtime_condition: Some(AbilityCondition::MoraleActive),
-            timing: TimingWindow::RoundStart,
-        }];
-        let ctx = OfficerStatRoundContext::try_from_ship_and_buffs(
-            &ship,
-            &PlayerProfile::default(),
-            &HashMap::new(),
-            CrewOfficerStatTotals::default(),
-            CrewOfficerStatTotals::default(),
-            &[],
-            &[],
-            &dynamic,
-            OfficerStatConditionContext::default(),
-        )
-        .expect("context");
-
-        let combat_ctx = CombatContext {
+    fn test_combat_context() -> CombatContext {
+        CombatContext {
             round_index: 1,
             defender_hull_pct: 1.0,
             defender_shield_pct: 1.0,
@@ -324,10 +303,266 @@ mod tests {
             engagement_enemy_types: std::sync::Arc::new(Default::default()),
             combat_battle_type_id: None,
             defender_level: Some(50),
-        };
+        }
+    }
+
+    #[test]
+    fn round_delta_zero_when_no_dynamic_rows_active() {
+        let ship = test_ship();
+        let dynamic = vec![DynamicOfficerStatContribution {
+            stat_key: "officer_stat_all".to_string(),
+            value: 0.40,
+            target_attacker: true,
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            runtime_condition: Some(AbilityCondition::MoraleActive),
+            timing: TimingWindow::RoundStart,
+        }];
+        let ctx = OfficerStatRoundContext::try_from_ship_and_buffs(
+            &ship,
+            &PlayerProfile::default(),
+            &HashMap::new(),
+            CrewOfficerStatTotals::default(),
+            CrewOfficerStatTotals::default(),
+            &[],
+            &[],
+            &dynamic,
+            OfficerStatConditionContext::default(),
+        )
+        .expect("context");
+        let combat_ctx = test_combat_context();
 
         let delta = ctx.delta_for_timing(&combat_ctx, TimingWindow::RoundStart);
         assert!(delta.is_effectively_zero());
+    }
+
+    #[test]
+    fn borrowed_round_inputs_match_materialized_rows_for_gates_scopes_and_classes() {
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+
+        // Retain the old materialization as a test reference. It evaluates all dynamic
+        // conditions once before the two target passes and owns its ship/active rows.
+        let materialized = |ctx: &OfficerStatRoundContext, combat: &CombatContext, timing| {
+            let active: Vec<_> = ctx
+                .dynamic_contributions
+                .iter()
+                .filter(|c| c.timing == timing)
+                .filter(|c| {
+                    c.runtime_condition
+                        .as_ref()
+                        .is_none_or(|condition| evaluate_ability_condition(condition, combat))
+                })
+                .map(|c| PendingOfficerStatContribution {
+                    stat_key: c.stat_key.clone(),
+                    value: c.value,
+                    target_attacker: c.target_attacker,
+                    conditions: vec![],
+                    opponent_scope: c.opponent_scope,
+                })
+                .collect();
+            let ship = ShipRecord {
+                ship_class: ctx.ship_class.clone(),
+                armor: ctx.base_armor,
+                shield_deflection: ctx.base_shield_deflection,
+                dodge: ctx.base_dodge,
+                officer_bonus: ctx.officer_bonus.clone(),
+                ..ShipRecord::default()
+            };
+            crate::data::profile::compute_officer_stat_runtime_bonus_with_round(
+                ctx.totals,
+                ctx.bridge_totals,
+                &ship,
+                &ctx.profile,
+                ctx.owner_faction.as_deref(),
+                &ctx.static_buffs,
+                &ctx.static_pending,
+                &ctx.static_cond_ctx,
+                &ctx.opponent_enemy_pending,
+                &active,
+                Some(combat),
+                Some(timing),
+            )
+        };
+        let bits = |bonus: OfficerStatRuntimeBonus| {
+            [
+                bonus.attack_bonus.to_bits(),
+                bonus.health_bonus.to_bits(),
+                bonus.defense_armor_add.to_bits(),
+                bonus.defense_shield_deflection_add.to_bits(),
+                bonus.defense_dodge_add.to_bits(),
+            ]
+        };
+        let pending = |key: &str, value, target_attacker, conditions, opponent_scope| {
+            PendingOfficerStatContribution {
+                stat_key: key.into(),
+                value,
+                target_attacker,
+                conditions,
+                opponent_scope,
+            }
+        };
+        let dynamic =
+            |key: &str, value, target_attacker, runtime_condition, timing, opponent_scope| {
+                DynamicOfficerStatContribution {
+                    stat_key: key.into(),
+                    value,
+                    target_attacker,
+                    runtime_condition,
+                    timing,
+                    opponent_scope,
+                }
+            };
+        let all = OfficerStatOpponentScope::AllCrewed;
+        let bridge = OfficerStatOpponentScope::BridgeOfficers;
+        let breakpoints: Vec<_> = (0..=60)
+            .map(|i| OfficerBonusBreakpoint {
+                value: f64::from(i) * 50.0,
+                bonus: f64::from(i) * 0.1,
+            })
+            .collect();
+        let ship = ShipRecord {
+            armor: 103.0,
+            shield_deflection: 311.0,
+            dodge: 719.0,
+            faction: Some(" FEDERATION ".into()),
+            officer_bonus: OfficerBonusTable {
+                attack: breakpoints.clone(),
+                defense: breakpoints.clone(),
+                health: breakpoints,
+            },
+            ..test_ship()
+        };
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("officer_attack".into(), 0.2),
+                ("officer_defense_below_decks".into(), 0.3),
+            ]),
+            research_owner_faction_bonuses: HashMap::from([(
+                "federation".into(),
+                HashMap::from([("officer_defense".into(), 0.4)]),
+            )]),
+            ..PlayerProfile::default()
+        };
+        let dynamic_rows = vec![
+            dynamic(
+                "officer_defense",
+                0.45,
+                false,
+                Some(AbilityCondition::DefenderBurning),
+                TimingWindow::RoundStart,
+                bridge,
+            ),
+            dynamic(
+                "officer_stat_all",
+                0.4,
+                true,
+                Some(AbilityCondition::MoraleActive),
+                TimingWindow::RoundStart,
+                all,
+            ),
+            dynamic(
+                "officer_attack",
+                0.1,
+                false,
+                None,
+                TimingWindow::RoundStart,
+                all,
+            ),
+            dynamic(
+                "officer_health",
+                0.5,
+                true,
+                None,
+                TimingWindow::RoundEnd,
+                all,
+            ),
+            dynamic(
+                "officer_stat_all",
+                99.0,
+                true,
+                Some(AbilityCondition::LiteralBool(false)),
+                TimingWindow::RoundStart,
+                all,
+            ),
+        ];
+        let mut ctx = OfficerStatRoundContext::try_from_ship_and_buffs(
+            &ship,
+            &profile,
+            &HashMap::from([
+                ("officer_stat_all".into(), 0.125),
+                ("officer_attack".into(), 0.25),
+            ]),
+            CrewOfficerStatTotals {
+                attack: 200.0,
+                defense: 300.0,
+                health: 400.0,
+            },
+            CrewOfficerStatTotals {
+                attack: 100.0,
+                defense: 175.0,
+                health: 250.0,
+            },
+            &[
+                pending("officer_stat_all", 0.1, true, vec![], all),
+                pending(
+                    "officer_defense",
+                    0.2,
+                    true,
+                    vec![AbilityConditionSpec::DefenderIsNpcHostile],
+                    all,
+                ),
+                pending(
+                    "officer_health",
+                    0.4,
+                    true,
+                    vec![AbilityConditionSpec::DefenderIsPlayerShip],
+                    all,
+                ),
+            ],
+            &[pending("officer_stat_all", 0.05, false, vec![], bridge)],
+            &dynamic_rows,
+            OfficerStatConditionContext::default(),
+        )
+        .expect("dynamic context");
+        let mut combat = test_combat_context();
+        for class in [
+            "battleship",
+            " EXPLORER ",
+            "Interceptor",
+            " Survey ",
+            "unknown",
+            "",
+            "Éxplorer",
+        ] {
+            ctx.ship_class = class.into();
+            for morale in [false, true] {
+                combat.attacker_morale_active = morale;
+                for burning in [false, true] {
+                    combat.defender_burning_active = burning;
+                    for timing in [
+                        TimingWindow::RoundStart,
+                        TimingWindow::RoundEnd,
+                        TimingWindow::CombatBegin,
+                    ] {
+                        let actual = ctx.runtime_bonus_for_timing(&combat, timing);
+                        assert_eq!(
+                            bits(actual),
+                            bits(materialized(&ctx, &combat, timing)),
+                            "{class:?} {morale} {burning} {timing:?}"
+                        );
+                    }
+                }
+            }
+        }
+        ctx.dynamic_contributions.clear();
+        assert_eq!(
+            bits(ctx.runtime_bonus_for_timing(&combat, TimingWindow::RoundStart)),
+            bits(materialized(&ctx, &combat, TimingWindow::RoundStart))
+        );
+        ctx.officer_bonus = OfficerBonusTable::default();
+        assert_eq!(
+            ctx.runtime_bonus_for_timing(&combat, TimingWindow::RoundStart),
+            OfficerStatRuntimeBonus::default()
+        );
     }
 
     #[test]
