@@ -98,6 +98,10 @@ The historical profile-based suite in
 These diagnostics do not inflate its recorded-fight pass count. Promote broader
 accuracy cases only after their required inputs and observations are complete.
 
+The [fresh captain-swap controls](TOM_PARIS_CAPTAIN_SWAP_20261026.md) add two
+source-bound observations and replay manifests. Their measured hypothesis
+compatibility is separate from the current simulator's replay results.
+
 ## Regression checks
 
 ```powershell

@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "kind": "Redacted fresh captain-swap observation; raw-channel measurement, not an engine accuracy calibration",
+  "source_json_sha256": "e671c682e2bfec50086f7d978caca81b5d3360830a225eed1d3f6d3f0d06f5c1",
+  "source_projection_sha256": "06ab6d03d207894c933dbef92ee3d338ae91f62a42f21397aaf545ced597adc9",
+  "source_setup_gate_sha256": "3ab9816ac9216154e4422303f19fe8c2e0bace50911b6aca2dbe66a6b7bae178",
+  "source_combat_setup_gate_sha256": "260dee17bd25cc15710cec3cd1841679a3a09cec7a88d2c9335fa078d48c4c38",
+  "source_source_gate_sha256": "1b72c1aa870163bfe06e9cbaef88554a18a4139d9e6571c91fdecb4dcb18c13b",
+  "source_paired_setup_gate_sha256": "1b72c1aa870163bfe06e9cbaef88554a18a4139d9e6571c91fdecb4dcb18c13b",
+  "source_measurement_sha256": "b2185af928743df24f0f862ef97879b0d3c760200c2ef16c5dd2e47be81e3f1a",
+  "source_preregistration_sha256": "4bf7950f339667ebb055ebebe13121a55a7546f99fad6287e4d4635ccf966455",
+  "source_paired_inference_sha256": "a17afaf9e205d00a3d87820cce2632dc709a2983c3ed0c97c324c916d5669d42",
+  "source_historical_discrepancy_sha256": "472a39c3cfb4a854f0f365bc4753ba0297bb21662e6402fc922dcc808b4af8a3",
+  "source_officer_event_audit_sha256": "9da53c0915cb3ab48f531f1ea66ff4e5453be715ea375196dd6b55a931a42716",
+  "battle_time": "2026-10-26T05:35:45",
+  "paired_battle_time": "2026-10-26T03:31:48",
+  "observed_client_build": null,
+  "parser_reference_client_build": 272,
+  "parser_reference_metadata_sha256": "ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04",
+  "parser_current_build_drift_verified": false,
+  "setup_check_summary": {
+    "all_combat_setup_checks_pass": true,
+    "original_all_checks_pass": false,
+    "original_failed_checks": [
+      "global_buffs_unchanged"
+    ],
+    "accepted_exception": "Only independently classified impulse-speed buff expiration; original global-equality gate remains failed.",
+    "player_started_full_hull_and_shield": true,
+    "target_started_full_hull_and_shield": true,
+    "paired_complete_ship_maps_and_target_setup_identical": true,
+    "paired_player_deployed_buff_signatures_identical": true,
+    "paired_source_files_identical": true,
+    "paired_expiry_boundary_crossed": false,
+    "sole_intended_crew_change": "Captain Jadzia Dax level5/rank1 to Mirror Troi level1/rank1; Tom Paris level20/rank4 remains alone below decks.",
+    "unbound_deployed_buff_definition_count": 2
+  },
+  "setup": {
+    "player": {
+      "name": "Realta",
+      "hull_id": 987222969,
+      "level": 20,
+      "tier": 4,
+      "components": [
+        39427021,
+        609159757,
+        3744160286,
+        1848246016,
+        2821665303,
+        409142410,
+        3437487539,
+        1211946817,
+        1211946817,
+        -1,
+        -1,
+        -1,
+        -1,
+        2250919877
+      ],
+      "initial_hull": 652159,
+      "initial_shield": 748507,
+      "maximum_hull": 652159,
+      "maximum_shield": 748507,
+      "reported_ship_stats_by_native_code": {
+        "3": 1,
+        "6": 164,
+        "7": 6,
+        "8": 6,
+        "9": 0.22000000000000003,
+        "10": 3.64,
+        "60": 748507,
+        "61": 652159
+      },
+      "captain": "Mirror Troi",
+      "crew": [
+        {
+          "slot": 0,
+          "public_officer_id": 3598147546,
+          "rank": 1,
+          "level": 1
+        },
+        {
+          "slot": 3,
+          "public_officer_id": 3849424588,
+          "rank": 4,
+          "level": 20
+        }
+      ],
+      "raw_officer_stats_by_native_code": {
+        "56": 317,
+        "57": 451,
+        "58": 570,
+        "59": 1338
+      },
+      "forbidden_tech": "Ablative Armor tier4/level20",
+      "chaos_tech": "none"
+    },
+    "target": {
+      "name": "Jem'Hadar Battleship",
+      "catalog_id": 4156015417,
+      "faction_id": 1530685377,
+      "hull_id": 2877708190,
+      "level": 53,
+      "tier": 1,
+      "components": [
+        635429245,
+        3811996662,
+        1477582093,
+        1683039417,
+        2821665303,
+        409142410,
+        2534309121,
+        2806302352,
+        2806302352,
+        519835226,
+        519835226,
+        -1,
+        -1,
+        -1
+      ],
+      "initial_hull": 33515867,
+      "initial_shield": 25136732,
+      "maximum_hull": 33515867,
+      "maximum_shield": 25136732,
+      "reported_ship_stats_by_native_code": {
+        "3": 3,
+        "6": 625155,
+        "7": 656410,
+        "8": 1060688.5,
+        "9": 0.1,
+        "10": 1.8,
+        "60": 25136732,
+        "61": 33515867
+      },
+      "deployed_buff_count": 0
+    },
+    "native_code_legend": {
+      "3": "hull type; player1 Explorer, target3 Battleship",
+      "6": "accuracy",
+      "7": "armor piercing",
+      "8": "shield piercing",
+      "9": "critical chance fraction",
+      "10": "critical damage multiplier",
+      "56": "raw officer Attack aggregate",
+      "57": "raw officer Defense aggregate",
+      "58": "raw officer Health aggregate",
+      "59": "raw officer total aggregate",
+      "60": "maximum shield health",
+      "61": "maximum hull health"
+    }
+  },
+  "observed": {
+    "rounds": 1,
+    "subrounds": 4,
+    "incoming_total_count": 9,
+    "incoming_accepted_count": 9,
+    "incoming_excluded_count": 0,
+    "published_incoming_hit_count": 4,
+    "published_hit_scope": "Only the four clean stronger-weapon hits; remaining depleted or terminal incoming rows are not published here.",
+    "tom_ability_before_attacks": [
+      {
+        "source_index": 4,
+        "officer_id": 3849424588,
+        "ability_id": 3192273655,
+        "value": 4
+      }
+    ],
+    "captain_ability_event_count": 0,
+    "incoming_hits": [
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 13,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 36351,
+        "shield_damage": 171369,
+        "mitigated_damage": 540552.077458064,
+        "mitigated_apex_barrier": 16617.61,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 615808,
+        "remaining_shield": 577138
+      },
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 32,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 36105,
+        "shield_damage": 170208,
+        "mitigated_damage": 536890.6355339831,
+        "mitigated_apex_barrier": 16505.05,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 579703,
+        "remaining_shield": 406930
+      },
+      {
+        "round": 1,
+        "subround": 1,
+        "source_index": 51,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 32539,
+        "shield_damage": 153396,
+        "mitigated_damage": 483860.15096708375,
+        "mitigated_apex_barrier": 14874.79,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 547164,
+        "remaining_shield": 253534
+      },
+      {
+        "round": 1,
+        "subround": 2,
+        "source_index": 95,
+        "weapon_id": 2806302352,
+        "shot_hit": 1,
+        "is_critical": 0,
+        "hull_damage": 32549,
+        "shield_damage": 153446,
+        "mitigated_damage": 484016.3329136619,
+        "mitigated_apex_barrier": 14879.59,
+        "isolytic_damage": 0,
+        "mitigated_isolytic_damage": 0,
+        "mitigated_critical_damage": 0,
+        "mitigated_isolytic_critical_damage": 0,
+        "remaining_hull": 514615,
+        "remaining_shield": 100088
+      }
+    ],
+    "diagnostic_denominator_error_budget": 2.01,
+    "physical_accounting": "D = hull_damage + shield_damage + mitigated_damage + mitigated_apex_barrier; per-hit interval = [mitigated_damage/(D+2.01), mitigated_damage/(D-2.01)]. ISO and critical-mitigation channels must all equal zero.",
+    "stronger_weapon": {
+      "weapon_id": 2806302352,
+      "clean_noncritical_count": 4,
+      "clean_noncritical_interval": [
+        0.7067040722947582,
+        0.7067077762553273
+      ],
+      "clean_critical_count": 0,
+      "clean_critical_interval": null,
+      "primary_combined_count": 4,
+      "primary_combined_interval": [
+        0.7067040722947582,
+        0.7067077762553273
+      ]
+    },
+    "unpublished_tail_summary": [
+      {
+        "weapon_id": 2806302352,
+        "category": "shield_depleted_nonlethal_noncrit",
+        "count": 2,
+        "conditional_interval": [
+          0.7067033607105602,
+          0.706707317363381
+        ],
+        "primary": false
+      },
+      {
+        "weapon_id": 519835226,
+        "category": "terminal_noncrit",
+        "count": 3,
+        "conditional_interval": [
+          0.7118062038116741,
+          0.7118076165439282
+        ],
+        "primary": false
+      }
+    ]
+  },
+  "paired_comparison": {
+    "direction": "Mirror minus Jadzia",
+    "fraction_interval": [
+      0.0007803148373901614,
+      0.0007875091800400025
+    ],
+    "percentage_point_interval": [
+      0.07803148373901614,
+      0.07875091800400025
+    ],
+    "zero_delta_compatible": false,
+    "frozen_hypotheses": [
+      {
+        "id": "sum_individual_effective_before_percentage_pools",
+        "old_Jadzia_prediction": 0.705922078,
+        "Mirror_prediction": 0.7067056406,
+        "expected_delta_approximately": 0.0007835624,
+        "jadzia_absolute_compatible": true,
+        "mirror_absolute_compatible": true,
+        "registered_delta_compatible": true
+      },
+      {
+        "id": "raw_crew_times_Tom_context_before_percentage_pools",
+        "old_Jadzia_prediction": 0.705928613,
+        "Mirror_prediction": 0.7067148581,
+        "expected_delta_approximately": 0.000786245,
+        "jadzia_absolute_compatible": false,
+        "mirror_absolute_compatible": false,
+        "registered_delta_compatible": true
+      }
+    ]
+  },
+  "historical_counterexample": {
+    "public_fixture": "realta_jemhadar_tom_20261024_observed.json",
+    "battle_time": "2026-10-24T07:38:32",
+    "primary_interval": [
+      0.7059304997243507,
+      0.7059335298548556
+    ],
+    "fresh_jadzia_primary_interval": [
+      0.7059202670752873,
+      0.705923757457368
+    ],
+    "old_minus_fresh_jadzia_interval": [
+      0.000006742266982717737,
+      0.000013262779568257166
+    ],
+    "intervals_overlap": false,
+    "accounting_and_budget_unchanged": true,
+    "cause": "Unresolved; the fresh pair does not remove this contradiction."
+  },
+  "limitations": [
+    "Observation and interval arithmetic only; no winner, full-fight or engine-accuracy pass is claimed.",
+    "The fixed2.01 denominator budget is an accounting diagnostic, not a proved server rounding bound.",
+    "Current client build is unknown; build272 supplies parser evidence only. Native parser drift remains unverified.",
+    "Clean hits are kept separate from depleted and terminal assigned damage; matching channel totals does not validate complete player buffs.",
+    "The two crew-source hypotheses both fit the paired delta, but only sum-individual fits both fresh absolute intervals. No formula was fitted or production rule changed.",
+    "Raw officer Defense changes440 to451. Recovered client logic uses effective officer Defense above the bonus cap, but the server bonus source and threshold remain unbound. Zero-change rejection is conditional on an unchanged defense-bonus pool.",
+    "Two unchanged deployed buff definitions remain unbound; identical source membership does not prove every hidden server condition.",
+    "The older Jadzia interval contradicts both registered Jadzia point predictions. That observation is retained without widening uncertainty.",
+    "The damaged-target Mirror attempt was excluded before its damage was inspected and is not used here."
+  ]
+}

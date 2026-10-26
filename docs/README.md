@@ -60,6 +60,8 @@ main [README](../README.md) is the front page. The documents here give more deta
 
 - [SNAPSHOT_REPLAY_VALIDATION.md](SNAPSHOT_REPLAY_VALIDATION.md) — Replay frozen
   capture inputs in an isolated runtime and compare scoped combat observations.
+- [TOM_PARIS_CAPTAIN_SWAP_20261026.md](TOM_PARIS_CAPTAIN_SWAP_20261026.md) — Compare
+  fresh captain controls and retain the older measurement discrepancy.
 - [RESEARCH_COMBAT_VALIDATION.md](RESEARCH_COMBAT_VALIDATION.md) — research correction,
   recorded combat observations, and limits of the available historical snapshots.
 - [STFC_CLIENT_REVERSE_ENGINEERING.md](STFC_CLIENT_REVERSE_ENGINEERING.md) — REA

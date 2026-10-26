@@ -64,3 +64,34 @@ The accompanying run logs record 112 Node tests passing, 17 focused Rust tests
 passing across the engine golden-master, native combat defense and trace
 invariant suites, and Clippy exiting successfully. The full private replay
 reports and frozen profile inputs remain outside the repository.
+
+## Fresh captain-swap controls
+
+Two additional full-health controls were recorded on 2026-10-26. Tom remained
+alone below decks while Jadzia Dax was replaced by Mirror Troi as captain.
+
+| Captain | Observed stronger-weapon interval | Current unrounded prediction | Comparison |
+| --- | --- | ---: | --- |
+| Jadzia Dax | `[0.7059202670752873, 0.705923757457368]` | `0.16199191092664578` | `mismatch` |
+| Mirror Troi | `[0.7067040722947582, 0.7067077762553273]` | `0.16199191092664578` | `mismatch` |
+
+Both modeled weapon indexes 0 and 1 refer to the same observed stronger component.
+They are two comparisons against one component-level observation, not independent
+measurements. Each observation contains four clean noncritical hits. The damaged
+Mirror attempt is excluded and has no replay manifest.
+
+These runs used the same binary identified above and public-data fingerprint
+`e3f0ea1b60a71ba58b006ecce0891cab89914d3f700047b69535bfdacacd5a8f`.
+The fingerprint includes the updated modeling-fidelity note. Predictions and
+outcome summaries exactly match the runs made before that note changed.
+
+| Captain | Manifest SHA-256 | Observation SHA-256 |
+| --- | --- | --- |
+| Jadzia Dax | `f5e24fabf1d1b134503f58e517bfc3f82411e26e095bd75f6a82382082988635` | `82c7f427498420a19d59f0c63f5cd90328de7022710f0fe56b1c66a287ce7b4d` |
+| Mirror Troi | `180dd66261cac9fd40c13dc398ccd2045eb38d02c973b7bb9d42ee735a818c8d` | `297a61160b8d071ecaeff56b20d489d94960016f562e966739fe323f47af4efe` |
+
+The [captain-swap research note](TOM_PARIS_CAPTAIN_SWAP_20261026.md) compares the
+registered source hypotheses with these measurements. Their compatibility is
+separate from the production simulator results above. The earlier Jadzia/Tom
+counterexample remains unresolved; no coefficient, observed interval, or combat
+formula was changed to remove it.
