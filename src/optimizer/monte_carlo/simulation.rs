@@ -62,9 +62,8 @@ pub struct SimulationResult {
 /// A zeroed, all-loss [`SimulationResult`] for `candidate`.
 ///
 /// Used only on the unreachable branch of the optimizer's row-alignment steps, where a crew
-/// must map to exactly one result row. Those steps used to `expect` the row's presence; since
-/// release builds set `panic = "abort"`, a broken alignment invariant took the whole server
-/// process down rather than failing one job. Degrading to an all-loss row keeps results aligned
+/// must map to exactly one result row. Those steps used to `expect` the row's presence, so a
+/// broken alignment invariant would fail the job. Degrading to an all-loss row keeps results aligned
 /// 1:1 with candidates and sorts the affected crew to the bottom instead of crashing.
 ///
 /// Callers pair this with a `debug_assert!` so a genuinely broken invariant still fails loudly

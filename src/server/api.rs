@@ -1764,11 +1764,9 @@ pub fn profile_put_payload(
         })?;
     let id = resolve_profile_id(profile_id);
     let path = profile_path(&id, PROFILE_JSON);
-    if let Some(parent) = path.parent() {
-        let _ = fs::create_dir_all(parent);
-    }
     let body = serde_json::to_string(&profile)?;
-    fs::write(&path, body).map_err(serde_json::Error::io)?;
+    crate::data::atomic_file::write_atomic(&path, body.as_bytes())
+        .map_err(serde_json::Error::io)?;
     serde_json::to_string(&serde_json::json!({ "status": "ok" }))
 }
 
@@ -2376,7 +2374,7 @@ pub fn preset_post_payload(
         provenance: build_preset_provenance(registry),
     };
     let raw = serde_json::to_string(&preset).map_err(PresetError::Serialize)?;
-    fs::write(&path, raw).map_err(PresetError::Io)?;
+    crate::data::atomic_file::write_atomic(&path, raw.as_bytes()).map_err(PresetError::Io)?;
     serde_json::to_string(&preset).map_err(PresetError::Serialize)
 }
 

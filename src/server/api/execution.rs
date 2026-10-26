@@ -2716,8 +2716,8 @@ impl std::error::Error for OptimizeStatusError {}
 
 /// Finish registry bookkeeping even when a worker unwinds. The thread panic
 /// still propagates to its join handle and the panic hook still runs; no partially
-/// computed optimizer state is resumed. Abort-on-panic builds (including the
-/// current release profile) terminate the process and cannot run this cleanup.
+/// computed optimizer state is resumed. The release profile unwinds, allowing
+/// this cleanup to run; abort-on-panic builds terminate the process instead.
 struct OptimizeWorkerCleanup<'a> {
     job_id: &'a str,
 }

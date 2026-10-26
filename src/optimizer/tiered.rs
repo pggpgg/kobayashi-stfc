@@ -313,8 +313,8 @@ fn charge_refine_trials(remaining: &mut u64, actual: u64) {
 ///
 /// `slots` is allocated 1:1 with `crews`, and by the time confirmation finishes every slot is
 /// filled — either from `preconfirmed` or from this phase's fresh Monte Carlo. Both used to be
-/// asserted with `expect`, which under release `panic = "abort"` turned a broken alignment
-/// invariant into a whole-process abort instead of a failed job. Zipping bounds the walk by the
+/// asserted with `expect`, which would fail the job on a broken alignment invariant.
+/// Zipping bounds the walk by the
 /// shorter side and an unfilled slot degrades to an all-loss row, so the caller always gets a
 /// vector aligned with `crews`; debug builds still fail loudly.
 fn take_confirmation_slots(
@@ -826,9 +826,8 @@ where
             fresh.extend(part);
         }
         // Fill unconfirmed slots from the fresh rows, driven by an iterator so a slot count that
-        // disagrees with the row count degrades instead of indexing out of bounds. Release builds
-        // abort on panic, so a broken alignment invariant here would take the server down rather
-        // than failing this job.
+        // disagrees with the row count degrades instead of indexing out of bounds and failing
+        // the job.
         let mut fresh_rows = fresh.iter();
         for slot in &mut confirmation_slots {
             if slot.is_none() {

@@ -107,6 +107,24 @@ fn fitness_from_result(result: &SimulationResult) -> f32 {
     }
 }
 
+/// Retain promising scouts and candidates whose optimistic fitness could approach the elite.
+/// The stored win interval is Wilson's interval; a normal approximation incorrectly gives
+/// zero uncertainty for zero wins. For single fights, per-trial hull remaining is at most
+/// the win indicator, so the win upper bound also bounds the weighted fitness. For chains,
+/// conditional hull is at most one in the fitness proxy, including when no chain succeeded.
+fn should_promote_offspring(result: &SimulationResult, elite_best: f32) -> bool {
+    if result.trials_run == 0 {
+        return true;
+    }
+    let optimistic_fitness = if result.chain.is_some() {
+        result.win_rate_ci_high * 1e4 + 1.0
+    } else {
+        result.win_rate_ci_high
+    };
+    fitness_from_result(result) as f64 >= elite_best as f64 * 0.8
+        || optimistic_fitness >= elite_best as f64 * 0.9
+}
+
 /// Whether per-generation full-budget population evals prune hopeless crews via top-K progressive
 /// abandonment. **Opt-in** (default off): benchmarks showed it rarely fires on this codebase's
 /// saturated win/loss matchups and the shared-leader lock adds contention, making it a small net
@@ -792,27 +810,13 @@ fn run_genetic_optimizer_with_shared_result(
                         .map(fitness_from_result)
                         .fold(-1.0_f32, f32::max);
 
-                    // Phase 2: promote offspring whose scout fitness >= (elite_best * 0.8)
-                    // or whose Wilson upper bound suggests potential.
+                    // Phase 2: compare both observed and optimistic fitness on the same
+                    // objective scale as the elite, including the chain fitness proxy.
                     let mut full_indices: Vec<usize> = Vec::new();
                     let mut full_crews: Vec<CrewCandidate> = Vec::new();
 
                     for (idx, row) in scout_results.iter().enumerate() {
-                        let fit = fitness_from_result(row);
-                        // Compute approximate Wilson upper bound using normal approx
-                        let wilson_upper = if row.trials_run > 0 {
-                            let p = row.win_rate;
-                            let n = row.trials_run as f64;
-                            let margin = 1.96 * (p * (1.0 - p) / n).sqrt();
-                            (p + margin).min(1.0)
-                        } else {
-                            0.0
-                        };
-
-                        // Promote to full sims if fit is close to elite or Wilson CI suggests potential
-                        if fit as f64 >= elite_best as f64 * 0.8
-                            || wilson_upper >= elite_best as f64 * 0.9
-                        {
+                        if should_promote_offspring(row, elite_best) {
                             full_indices.push(uncached_indices[idx]);
                             full_crews.push(uncached_crews[idx].clone());
                         } else {
@@ -876,8 +880,7 @@ fn run_genetic_optimizer_with_shared_result(
             // below-deck permutations into identical crews, and elitism can carry
             // a crew forward alongside a regenerated copy — so look up the shared
             // row by hash instead of removing it. Removing panicked on the second
-            // copy of any duplicate, which in release builds (`panic = "abort"`)
-            // aborts the whole server process.
+            // copy of any duplicate and failed the job.
             reassemble_sim_results_in_population_order(&population, &slot_by_hash)
         } else {
             // ── Legacy: run full sims on the entire population ──
@@ -1022,8 +1025,7 @@ pub fn run_genetic_optimizer(
 /// The `unwrap_or_else` branch is unreachable in practice — every population member
 /// is either in the elite cache or was simulated this generation — but degrading to
 /// a zeroed (all-loss) row keeps `sim_results` aligned 1:1 with `population` and
-/// guarantees the optimizer worker can never panic here (release builds abort on
-/// panic, which would take down the whole server process).
+/// avoids failing the optimizer job here.
 fn reassemble_sim_results_in_population_order(
     population: &[CrewCandidate],
     slot_by_hash: &HashMap<u64, SimulationResult>,
@@ -1115,9 +1117,10 @@ mod tests {
     use super::{
         crew_candidate_ordered_hash, crew_candidate_stable_hash, crossover, init_population_seeded,
         mutate, random_crew, reassemble_sim_results_in_population_order, repair_crew,
-        zeroed_loss_result, GeneticConfig, SimulationResult,
+        should_promote_offspring, zeroed_loss_result, GeneticConfig, SimulationResult,
     };
     use crate::combat::rng::Rng;
+    use crate::optimizer::chain::{ChainSecondaryObjective, ChainSimulationSummary};
     use crate::optimizer::crew_generator::{
         CrewCandidate, OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
     };
@@ -1176,6 +1179,43 @@ mod tests {
         row.loss_rate = 1.0 - win_rate;
         row.trials_run = 100;
         row
+    }
+
+    #[test]
+    fn scout_promotion_keeps_zero_win_candidates_with_wilson_potential() {
+        let crew = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let mut scout = sim_row(&crew, 0.0);
+        scout.trials_run = 125;
+        // Wilson's two-sided 95% upper bound for zero successes in 125 trials.
+        scout.win_rate_ci_high = 0.029_816;
+
+        assert!(should_promote_offspring(&scout, 0.03));
+        assert!(!should_promote_offspring(&scout, 0.1));
+        scout.trials_run = 0;
+        assert!(should_promote_offspring(&scout, 0.1));
+    }
+
+    #[test]
+    fn chain_scout_promotion_compares_confidence_on_chain_fitness_scale() {
+        let crew = make_crew("CapA", &["B1", "B2"], &["D1", "D2", "D3"]);
+        let mut scout = sim_row(&crew, 0.1);
+        scout.win_rate_ci_high = 0.21;
+        scout.chain = Some(ChainSimulationSummary {
+            kills_target: 2,
+            secondary_objective: ChainSecondaryObjective::MinHullDamage,
+            primary_success_rate: 0.1,
+            primary_ci_low: 0.0,
+            primary_ci_high: 0.21,
+            secondary_mean_given_primary: 0.0,
+            secondary_ci_low: 0.0,
+            secondary_ci_high: 0.0,
+            n_primary_successes: 10,
+        });
+
+        // The point estimate is too low, but its upper bound can approach a 20% elite.
+        assert!(should_promote_offspring(&scout, 2000.0));
+        // Clearly weaker upper bounds are still pruned.
+        assert!(!should_promote_offspring(&scout, 5000.0));
     }
 
     #[test]

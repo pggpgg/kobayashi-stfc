@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import RosterProfileAttributesCard from "../components/RosterProfileAttributesCard";
 import RosterProfileBonusesTab from "../components/RosterProfileBonusesTab";
 import RosterProfileBuildingsSummary from "../components/RosterProfileBuildingsSummary";
@@ -55,6 +55,9 @@ function RosterProfileEditor({
   const [importError, setImportError] = useState<string | null>(null);
   const [profile, setProfile] = useState<PlayerProfile>({ bonuses: {} });
   const [profileDirty, setProfileDirty] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const profileRevision = useRef(0);
+  const saveInFlight = useRef(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -205,7 +208,10 @@ function RosterProfileEditor({
   };
 
   const handleSaveProfile = async () => {
-    if (!profileLoaded) return;
+    if (!profileLoaded || saveInFlight.current) return;
+    saveInFlight.current = true;
+    setProfileSaving(true);
+    const savedRevision = profileRevision.current;
     setProfileError(null);
     try {
       await updateProfile(
@@ -216,15 +222,25 @@ function RosterProfileEditor({
         },
         activeProfileId,
       );
-      setProfile((p) => ({
-        ...p,
-        forbidden_tech_override: null,
-        chaos_tech_override: null,
-      }));
-      setProfileDirty(false);
+      if (profileRevision.current === savedRevision) {
+        setProfile((p) => ({
+          ...p,
+          forbidden_tech_override: null,
+          chaos_tech_override: null,
+        }));
+        setProfileDirty(false);
+      }
     } catch (e) {
       setProfileError(formatApiError(e));
+    } finally {
+      saveInFlight.current = false;
+      setProfileSaving(false);
     }
+  };
+
+  const markProfileDirty = () => {
+    profileRevision.current += 1;
+    setProfileDirty(true);
   };
 
   const setBonus = (key: string, value: number) => {
@@ -233,7 +249,7 @@ function RosterProfileEditor({
       ...p,
       bonuses: { ...p.bonuses, [key]: value },
     }));
-    setProfileDirty(true);
+    markProfileDirty();
   };
 
   const catalogByFid = useMemo(() => {
@@ -373,7 +389,7 @@ function RosterProfileEditor({
             equippedFid={profile.equipped_forbidden_fid}
             onChange={(fid) => {
               setProfile((p) => ({ ...p, equipped_forbidden_fid: fid }));
-              setProfileDirty(true);
+              markProfileDirty();
             }}
             emptyMessage={
               <>
@@ -397,14 +413,14 @@ function RosterProfileEditor({
             equippedFid={profile.equipped_chaos_fid}
             onChange={(fid) => {
               setProfile((p) => ({ ...p, equipped_chaos_fid: fid }));
-              setProfileDirty(true);
+              markProfileDirty();
             }}
             emptyMessage="No chaos-tech rows in sync inventory with a catalog match."
           />
           <button
             type="button"
             onClick={handleSaveProfile}
-            disabled={!profileDirty}
+            disabled={!profileDirty || profileSaving}
             style={{
               marginTop: 16,
               padding: "0.5rem 1rem",
@@ -439,7 +455,7 @@ function RosterProfileEditor({
             bonuses={profile.bonuses}
             onBonusChange={setBonus}
             onSave={handleSaveProfile}
-            profileDirty={profileDirty}
+            profileDirty={profileDirty && !profileSaving}
             profileError={profileError}
           />
         </fieldset>

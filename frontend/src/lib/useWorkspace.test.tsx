@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ProfileProvider } from "../contexts/ProfileContext";
+import { ProfileProvider, useProfile } from "../contexts/ProfileContext";
 import { WorkspaceModeProvider } from "../contexts/WorkspaceModeContext";
 import type { Preset } from "./api";
 import { getLoopBestRecord, savePendingLoopRun } from "./loopsWorkspaceStorage";
@@ -22,6 +22,7 @@ const { apiMocks, doneOptimizeStatus } = vi.hoisted(() => {
       },
       recommendations: [] as unknown[],
       duration_ms: 0,
+      warnings: [] as string[],
     },
   };
   const apiMocks = {
@@ -56,6 +57,7 @@ const { apiMocks, doneOptimizeStatus } = vi.hoisted(() => {
       .fn()
       .mockRejectedValue(new Error("skip optimize in test")),
     mockGetOptimizeStatus: vi.fn().mockResolvedValue(doneOptimizeStatus),
+    mockCancelOptimizeJob: vi.fn().mockResolvedValue(undefined),
   };
   return { apiMocks, doneOptimizeStatus };
 });
@@ -79,7 +81,7 @@ vi.mock("./api", () => ({
   optimizeStart: apiMocks.mockOptimizeStart,
   getOptimizeStatus: apiMocks.mockGetOptimizeStatus,
   getOptimizeStreamUrl: vi.fn(() => "http://test/stream"),
-  cancelOptimizeJob: vi.fn(),
+  cancelOptimizeJob: apiMocks.mockCancelOptimizeJob,
 }));
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -98,6 +100,111 @@ describe("useWorkspace", () => {
     localStorage.clear();
     sessionStorage.clear();
     apiMocks.mockGetOptimizeStatus.mockResolvedValue(doneOptimizeStatus);
+  });
+
+  it("cancels a job accepted after the pending start was cancelled", async () => {
+    let resolveStart!: (value: { job_id: string }) => void;
+    apiMocks.mockOptimizeStart.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveStart = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current.activeProfileId).toBe("p1"));
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.handleRunOptimize();
+    });
+    expect(apiMocks.mockOptimizeStart).toHaveBeenCalled();
+    act(() => result.current.handleCancelOptimize());
+    await act(async () => {
+      resolveStart({ job_id: "late-job" });
+      await pending;
+    });
+    expect(apiMocks.mockCancelOptimizeJob).toHaveBeenCalledWith("late-job");
+    expect(result.current.loadingOptimize).toBe(false);
+    expect(
+      sessionStorage.getItem("kobayashi_active_optimize_job_v1"),
+    ).toBeNull();
+  });
+
+  it("ignores a delayed status response after cancellation", async () => {
+    let resolveStatus!: (value: typeof doneOptimizeStatus) => void;
+    apiMocks.mockOptimizeStart.mockResolvedValueOnce({ job_id: "old-job" });
+    apiMocks.mockGetOptimizeStatus.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveStatus = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current.activeProfileId).toBe("p1"));
+    await act(async () => {
+      await result.current.handleRunOptimize();
+    });
+    await waitFor(() =>
+      expect(apiMocks.mockGetOptimizeStatus).toHaveBeenCalledWith("old-job"),
+    );
+    act(() => result.current.handleCancelOptimize());
+    await act(async () => {
+      resolveStatus({
+        ...doneOptimizeStatus,
+        result: { ...doneOptimizeStatus.result, warnings: ["old result"] },
+      });
+    });
+    expect(result.current.recommendations).toEqual([]);
+    expect(result.current.resultWarnings).toEqual([]);
+    expect(result.current.loadingOptimize).toBe(false);
+    expect(apiMocks.mockCancelOptimizeJob).toHaveBeenCalledWith("old-job");
+  });
+
+  it("cancels the old profile's active job when the profile changes", async () => {
+    apiMocks.mockOptimizeStart.mockResolvedValueOnce({ job_id: "profile-job" });
+    apiMocks.mockGetOptimizeStatus.mockReturnValueOnce(new Promise(() => {}));
+    const { result } = renderHook(
+      () => ({ workspace: useWorkspace(), profile: useProfile() }),
+      { wrapper },
+    );
+    await waitFor(() =>
+      expect(result.current.workspace.activeProfileId).toBe("p1"),
+    );
+    await act(async () => {
+      await result.current.workspace.handleRunOptimize();
+    });
+    act(() => result.current.profile.setActiveProfileId("p2"));
+    expect(apiMocks.mockCancelOptimizeJob).toHaveBeenCalledWith("profile-job");
+    expect(result.current.workspace.loadingOptimize).toBe(false);
+  });
+
+  it("cancels an active job when the scenario changes and ignores its response", async () => {
+    let resolveStatus!: (value: typeof doneOptimizeStatus) => void;
+    apiMocks.mockOptimizeStart.mockResolvedValueOnce({
+      job_id: "scenario-job",
+    });
+    apiMocks.mockGetOptimizeStatus.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveStatus = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current.activeProfileId).toBe("p1"));
+    await act(async () => {
+      await result.current.handleRunOptimize();
+    });
+    await waitFor(() =>
+      expect(apiMocks.mockGetOptimizeStatus).toHaveBeenCalledWith(
+        "scenario-job",
+      ),
+    );
+    act(() => result.current.setScenarioId("new-scenario"));
+    await act(async () => {
+      resolveStatus({
+        ...doneOptimizeStatus,
+        result: { ...doneOptimizeStatus.result, warnings: ["old result"] },
+      });
+    });
+    expect(apiMocks.mockCancelOptimizeJob).toHaveBeenCalledWith("scenario-job");
+    expect(result.current.resultWarnings).toEqual([]);
+    expect(result.current.loadingOptimize).toBe(false);
   });
 
   it("sets error and does not call simulate when captain is missing", async () => {
