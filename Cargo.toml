@@ -108,6 +108,10 @@ name = "genetic_throughput"
 harness = false
 path = "benches/genetic_throughput_bench.rs"
 
+[features]
+# Allocation diagnostics for the hot_path_bench utility only. Keep disabled for timing runs.
+bench-alloc-count = []
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 axum = { version = "0.7", features = ["macros"] }
