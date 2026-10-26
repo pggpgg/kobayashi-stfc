@@ -694,9 +694,10 @@ fn research_combat_summary_from_imported(
         import::load_imported_buffs(&profile_path(profile_id, BUFFS_IMPORTED).to_string_lossy())
             .unwrap_or_default();
     let native_setup = scenario.as_ref().and_then(|sc| {
-        crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+        crate::data::native_research_buffs::research_bonuses_for_ship(
             &global_buffs,
             sc.context.ship_class.as_deref(),
+            sc.context.ship_grade,
             chrono::Utc::now().timestamp(),
         )
     });

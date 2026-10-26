@@ -60,11 +60,15 @@ the recorded hit was critical while this deterministic replay is not. The raw
 matching snapshot. The earlier October run's different raw magnitude remains an
 input/model-history question, not a reason to tune a multiplier.
 
-The existing Monte Carlo `avg_hull_remaining` used here is a legacy overkill-derived
-score, not an independently measured remaining-HP fraction. This change neither
-changes that optimizer behavior nor treats its floor as validation of the June
-fight's 93.21% surviving hull. That metric deserves a separate correction with
-its callers and cache invalidation considered together.
+At the time of this investigation, Monte Carlo `avg_hull_remaining` was an
+overkill-derived score. Its floor did not validate the June fight's 93.21%
+surviving hull. The subsequent integration correction uses actual attacker hull
+divided by the final effective maximum hull on wins, and zero on losses or
+stalls. Comparison histograms use the same calculation. Conditional maximum-HP
+effects are included in the denominator. Chain-mode secondary scores retain
+their separate contract. Replay metadata no longer applies the unused synthetic
+defender-hull variance. Behavior version 13 invalidates earlier cached metrics.
+This corrects scoring; it does not validate the historical player's raw damage.
 
 No recorded fight, numerical tolerance or game setup was changed. Human-assisted
 fights remain paused. The production capture server was not redeployed.

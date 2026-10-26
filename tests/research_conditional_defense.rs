@@ -589,3 +589,39 @@ fn native_burning_isolytic_research_runs_at_round_start_with_its_state_gate() {
                 .as_deref()
                 .is_some_and(|id| id.contains("research_2580836593_iso_burning"))));
 }
+
+#[test]
+fn native_hull_breach_isolytic_research_uses_its_declared_round_start_phase() {
+    let mut crew = research(1_995_496_344, 4);
+    assert_eq!(crew.seats.len(), 1);
+    assert_eq!(crew.seats[0].ability.timing, TimingWindow::RoundStart);
+    assert_eq!(
+        crew.seats[0].ability.effect,
+        AbilityEffect::IsolyticDamageBonus(0.085)
+    );
+    assert_eq!(
+        crew.seats[0].ability.condition,
+        Some(AbilityCondition::DefenderHullBreach)
+    );
+    assert_eq!(run(&attacker(), &crew, 1).total_isolytic_damage, 0.0);
+    crew.seats.push(state(
+        AbilityEffect::HullBreach {
+            chance: 1.0,
+            duration_rounds: 2,
+            requires_critical: false,
+        },
+        TimingWindow::RoundStart,
+        2,
+    ));
+    let active = run(&attacker(), &crew, 1);
+    assert!(active.total_isolytic_damage > 0.0);
+    assert!(active
+        .events
+        .iter()
+        .any(|e| e.event_type == "ability_activation"
+            && e.phase == "round_start"
+            && e.source
+                .ship_ability_id
+                .as_deref()
+                .is_some_and(|id| id.contains("research_1995496344_iso_hb"))));
+}

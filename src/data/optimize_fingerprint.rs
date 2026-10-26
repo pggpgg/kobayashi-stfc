@@ -84,7 +84,11 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Additive officer/critical buffs and ship accuracy retain their native units.
 ///   Optimizer checkpoints, crew identity, partial seeds, learned-score cohorts
 ///   and defender ship seat schedules also change persisted result semantics.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 12;
+/// * 12 → 13 (2026-10): native NPC offensive buffs and active piercing/officer
+///   research sources are compiled; Hull Breach isolytic research uses RoundStart.
+///   Survival metrics use actual attacker HP, including conditional maximum HP.
+///   Profile-free canaries cannot observe source membership or optimizer metrics.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 13;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -561,6 +565,33 @@ fn canary_fights() -> Vec<CanaryFight> {
     );
     let f_defender = d_defender.clone();
 
+    let mut g_attacker = canary_combatant("canary_g_attacker");
+    g_attacker.attack = 125.0;
+    g_attacker.crit_chance = 1.0;
+    g_attacker.crit_multiplier = 2.5;
+    let g_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseWeaponDamageBonus(0.4),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseCritDamageBonus(0.1),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritDamageMultiplier(1.5),
+            ),
+        ],
+    };
+
     vec![
         (
             "a_plain",
@@ -603,6 +634,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             f_defender,
             canary_config(8, 23),
             CrewConfiguration::default(),
+        ),
+        (
+            "g_native_offense",
+            g_attacker,
+            canary_combatant("canary_g_defender"),
+            canary_config(8, 29),
+            g_crew,
         ),
     ]
 }
@@ -1184,7 +1222,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 6, "expected six canary fights");
+        assert_eq!(summaries.len(), 7, "expected seven canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

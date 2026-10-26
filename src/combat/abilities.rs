@@ -161,6 +161,9 @@ pub enum AbilityEffect {
     /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
     /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
     CritDamageMultiplier(f64),
+    /// Native ADD to the weapon critical factor before timed multiplicative effects.
+    /// The same source units are used by setup `crit_damage_flat` bonuses.
+    BaseCritDamageBonus(f64),
     /// A successful weapon volley grants an additive bonus after firing. Each grant
     /// expires independently after duration_rounds, counting the granting round.
     /// It never benefits the weapon that caused the grant.
@@ -1028,7 +1031,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         }
         AbilityEffect::CritChanceBonus(c) => *c = cap_one(*c),
         AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
-        AbilityEffect::BaseWeaponDamageBonus(m) => *m = scale(*m),
+        AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
+            *m = scale(*m)
+        }
         AbilityEffect::HullHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
@@ -1165,7 +1170,9 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
         }
         match &mut seat.ability.effect {
             AbilityEffect::AttackMultiplier(m) => *m *= multiplier,
-            AbilityEffect::BaseWeaponDamageBonus(m) => *m *= multiplier,
+            AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
+                *m *= multiplier
+            }
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
             // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness

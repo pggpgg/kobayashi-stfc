@@ -12,7 +12,7 @@ use std::sync::OnceLock;
 use crate::combat::CrewSeatContext;
 use crate::data::import::GlobalBuffEntry;
 use crate::data::native_consumable_buffs::{
-    bonuses_from_catalog_for_group, combat_start_defense_seats_from_catalog_for_group,
+    bonuses_from_catalog_for_ship, combat_start_defense_seats_from_catalog_for_group,
     NativeConsumableBuffCatalog,
 };
 
@@ -36,6 +36,16 @@ pub fn research_bonuses_for_imported_buffs(
     attacker_ship_class: Option<&str>,
     now_unix_seconds: i64,
 ) -> Option<HashMap<String, f64>> {
+    research_bonuses_for_ship(imported, attacker_ship_class, None, now_unix_seconds)
+}
+
+/// Scenario-aware variant retaining the verified Direct Hit minimum-grade gate.
+pub fn research_bonuses_for_ship(
+    imported: &[GlobalBuffEntry],
+    attacker_ship_class: Option<&str>,
+    ship_grade: Option<u32>,
+    now_unix_seconds: i64,
+) -> Option<HashMap<String, f64>> {
     let catalog = embedded_catalog();
     let recognized = imported.iter().any(|buff| {
         buff.bid > 0
@@ -46,12 +56,13 @@ pub fn research_bonuses_for_imported_buffs(
             && catalog.contains_buff(buff.bid)
     });
     recognized.then(|| {
-        bonuses_from_catalog_for_group(
+        bonuses_from_catalog_for_ship(
             catalog,
             66,
             imported,
             attacker_ship_class,
             None,
+            ship_grade,
             now_unix_seconds,
         )
     })

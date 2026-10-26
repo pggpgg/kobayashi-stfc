@@ -32,6 +32,7 @@ pub(crate) struct EffectAccumulator {
     crit_chance_bonus: f64,
     /// Product of timed [`AbilityEffect::CritDamageMultiplier`] for the current shot stack.
     crit_damage_multiplier: f64,
+    base_crit_damage_bonus: f64,
     /// Additive max-hull fractions from conditional seats this stack (research/LCARS `hull_hp` `add` rows).
     hull_hp_multiplier_sum: f64,
     /// Additive max-shield fractions from conditional seats this stack.
@@ -200,6 +201,7 @@ impl Default for EffectAccumulator {
             round_end_modifier_sum: 0.0,
             crit_chance_bonus: 0.0,
             crit_damage_multiplier: 1.0,
+            base_crit_damage_bonus: 0.0,
             hull_hp_multiplier_sum: 0.0,
             shield_hp_multiplier_sum: 0.0,
             trace_contributions: false,
@@ -583,6 +585,10 @@ impl EffectAccumulator {
     }
 
     #[inline]
+    pub(crate) fn base_crit_damage_bonus(&self) -> f64 {
+        self.base_crit_damage_bonus
+    }
+
     pub(crate) fn crit_damage_multiplier(&self) -> f64 {
         self.crit_damage_multiplier
     }
@@ -697,6 +703,7 @@ impl EffectAccumulator {
         self.round_end_modifier_sum = 0.0;
         self.crit_chance_bonus = 0.0;
         self.crit_damage_multiplier = 1.0;
+        self.base_crit_damage_bonus = 0.0;
         self.hull_hp_multiplier_sum = 0.0;
         self.shield_hp_multiplier_sum = 0.0;
         self.contribution_lines.clear();
@@ -710,6 +717,7 @@ impl EffectAccumulator {
         self.round_end_modifier_sum = other.round_end_modifier_sum;
         self.crit_chance_bonus += other.crit_chance_bonus;
         self.crit_damage_multiplier *= other.crit_damage_multiplier;
+        self.base_crit_damage_bonus += other.base_crit_damage_bonus;
         self.hull_hp_multiplier_sum += other.hull_hp_multiplier_sum;
         self.shield_hp_multiplier_sum += other.shield_hp_multiplier_sum;
         if self.trace_contributions {
@@ -727,6 +735,7 @@ impl EffectAccumulator {
         self.round_end_modifier_sum += carry.round_end_modifier_sum;
         self.crit_chance_bonus += carry.crit_chance_bonus;
         self.crit_damage_multiplier *= carry.crit_damage_multiplier;
+        self.base_crit_damage_bonus += carry.base_crit_damage_bonus;
         if self.trace_contributions {
             self.contribution_lines
                 .extend(carry.contribution_lines.iter().cloned());
@@ -759,6 +768,12 @@ impl EffectAccumulator {
             out.insert(
                 "crit_chance_bonus".to_string(),
                 Value::from(round_f64(self.crit_chance_bonus)),
+            );
+        }
+        if self.base_crit_damage_bonus.abs() > EPS {
+            out.insert(
+                "base_crit_damage_bonus".to_string(),
+                Value::from(round_f64(self.base_crit_damage_bonus)),
             );
         }
         if (self.crit_damage_multiplier - 1.0).abs() > EPS {
@@ -828,6 +843,24 @@ impl EffectAccumulator {
         round_index: u32,
         source: Option<(&str, Option<&str>)>,
     ) {
+        if let AbilityEffect::BaseCritDamageBonus(value) = effect {
+            if value.is_finite() {
+                self.base_crit_damage_bonus += value;
+                if self.trace_contributions {
+                    if let Some((ability, officer_id)) = source {
+                        self.push_contribution_line(
+                            ability,
+                            officer_id,
+                            timing,
+                            "BaseCritDamageBonus",
+                            "base_crit_damage_bonus",
+                            value,
+                        );
+                    }
+                }
+            }
+            return;
+        }
         if let AbilityEffect::BaseWeaponDamageBonus(value) = effect {
             if value.is_finite() {
                 self.galaxy_additive_weapon_frac += value;
@@ -1040,7 +1073,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_)
-                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1250,7 +1284,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_)
-                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1422,7 +1457,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_)
-                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1594,7 +1630,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_)
-                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1776,7 +1813,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_)
-                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -1992,7 +2030,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_) => {}
                 AbilityEffect::CritDamageMultiplier(_)
-                | AbilityEffect::BaseWeaponDamageBonus(_) => {}
+                | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
@@ -2094,6 +2133,7 @@ fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
             AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::ShieldRegenMaxFraction(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::BaseCritDamageBonus(_)
         )
 }
 
@@ -2117,6 +2157,9 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
     match effect {
         AbilityEffect::AttackMultiplier(modifier) => {
             AbilityEffect::AttackMultiplier(modifier * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseCritDamageBonus(value) => {
+            AbilityEffect::BaseCritDamageBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::BaseWeaponDamageBonus(value) => {
             AbilityEffect::BaseWeaponDamageBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

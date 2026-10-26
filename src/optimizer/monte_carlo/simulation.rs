@@ -19,7 +19,6 @@ use std::collections::{BTreeMap, BinaryHeap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
-use super::crew_resolution::seeded_variance;
 use super::scenario::{
     build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
     scenario_to_combat_input_from_shared, stable_scenario_seed_panel, DefenderOpponent,
@@ -45,7 +44,7 @@ pub struct SimulationResult {
     pub r1_kill_rate: f64,
     pub r1_kill_rate_ci_low: f64,
     pub r1_kill_rate_ci_high: f64,
-    /// Mean attacker hull fraction (0–1): on wins, score from remaining HP / formula; 0 on losses/stalls.
+    /// Mean actual attacker hull / effective maximum hull on wins; zero on losses/stalls.
     pub avg_hull_remaining: f64,
     /// Normal-approx 95% CI for the per-trial mean (hull fraction on wins, 0 on losses).
     pub avg_hull_remaining_ci_low: f64,
@@ -340,6 +339,23 @@ impl TopKLeader {
     }
 }
 
+/// Zero on non-wins; otherwise use the final effective maximum, including
+/// conditional HP effects. Damage dealt and overkill are not survival measures.
+#[inline]
+pub(super) fn surviving_hull_fraction(
+    result: &crate::combat::SimulationResult,
+    max_hull: f64,
+) -> f64 {
+    if !result.attacker_won
+        || result.winner_by_round_limit
+        || !max_hull.is_finite()
+        || max_hull <= 0.0
+    {
+        return 0.0;
+    }
+    (result.attacker_hull_remaining / max_hull).clamp(0.0, 1.0)
+}
+
 /// Single-fight ranking score from win rate and mean hull remaining, matching [`rank_results`].
 #[inline]
 fn blended_score(win_rate: f64, avg_hull_remaining: f64) -> f64 {
@@ -596,7 +612,6 @@ fn run_candidate_monte_carlo(
                 iteration_seed,
                 &mut attacker_scratch,
             );
-            let effective_hull = input.defender_hull * seeded_variance(iteration_seed);
 
             if result.winner_by_round_limit {
                 stalls += 1;
@@ -606,16 +621,8 @@ fn run_candidate_monte_carlo(
                 losses += 1;
             }
 
-            let hull_draw = if result.attacker_won {
-                // attacker_won implies a kill (timeouts are never wins), so overkill fraction
-                // is the right surviving-hull proxy.
-                let remaining =
-                    ((result.total_damage - effective_hull) / effective_hull).clamp(0.0, 1.0);
-                surviving_hull_sum += remaining;
-                remaining
-            } else {
-                0.0
-            };
+            let hull_draw = surviving_hull_fraction(&result, attacker_scratch.hull_health);
+            surviving_hull_sum += hull_draw;
             let i = trial_index + 1;
             let delta = hull_draw - hull_mean;
             hull_mean += delta / i as f64;
@@ -1249,7 +1256,7 @@ pub fn replay_optimize_iteration_with_registry(
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
     let external_buffs = external_buffs_trace_payload(&shared);
     let iteration_seed = input.base_seed.wrapping_add(sim_index);
-    let effective_defender_hull = input.defender_hull * seeded_variance(iteration_seed);
+    let effective_defender_hull = input.defender.hull_health;
 
     let defender_faction = shared
         .hostile_rec
@@ -1754,6 +1761,77 @@ pub(crate) fn run_monte_carlo_with_shared_variable_iterations(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn survival_uses_actual_hp_and_effective_maximum_instead_of_overkill() {
+        use crate::combat::{
+            Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
+            CrewSeatContext, ShipType, TimingWindow,
+        };
+        let attacker = Combatant {
+            attack: 60.0,
+            hull_health: 1000.0,
+            ..Default::default()
+        };
+        let defender = Combatant {
+            attack: 100.0,
+            hull_health: 100.0,
+            ..Default::default()
+        };
+        let crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Ship,
+                Ability {
+                    name: "conditional_max_hull".into(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::HullHpMultiplier(1.0),
+                    condition: None,
+                    weapon_scope: Default::default(),
+                },
+                false,
+            )],
+        };
+        let setup = build_combat_setup_with_officer_stat(
+            &attacker,
+            &defender,
+            &SimulationConfig {
+                rounds: 5,
+                ..Default::default()
+            },
+            &crew,
+            OpponentFactionTag::Unknown,
+            ShipType::Explorer,
+            ShipType::Explorer,
+            true,
+            false,
+            &CrewConfiguration::default(),
+            None,
+        );
+        let mut scratch = attacker.clone();
+        let result = simulate_combat_from_setup_reusing_attacker(&setup, 7, &mut scratch);
+        assert!(result.attacker_won);
+        assert_eq!(scratch.hull_health, 2000.0);
+        let score = surviving_hull_fraction(&result, scratch.hull_health);
+        assert!(score > 0.8 && score < 1.0, "{score}");
+        assert_eq!(score, result.attacker_hull_remaining / 2000.0);
+        let mut overkill = result.clone();
+        overkill.total_damage *= 1000.0;
+        assert_eq!(
+            surviving_hull_fraction(&overkill, scratch.hull_health),
+            score
+        );
+        overkill.attacker_hull_remaining *= 0.5;
+        assert_eq!(
+            surviving_hull_fraction(&overkill, scratch.hull_health),
+            score * 0.5
+        );
+        overkill.attacker_won = false;
+        assert_eq!(surviving_hull_fraction(&overkill, scratch.hull_health), 0.0);
+        overkill.winner_by_round_limit = true;
+        assert_eq!(surviving_hull_fraction(&overkill, scratch.hull_health), 0.0);
+    }
 
     #[test]
     fn crew_identity_ignores_order_within_bridge_and_below_decks() {
