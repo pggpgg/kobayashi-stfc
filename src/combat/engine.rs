@@ -4193,6 +4193,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                         Value::Bool(raw_stat_mitigation.is_some()),
                     );
                     if let Some((stats, breakdown, mitigation, pierce)) = raw_stat_mitigation {
+                        // Replay comparisons can have observational intervals narrower than
+                        // the stable six-decimal trace display. Preserve the calculated
+                        // value separately without changing legacy fields or combat math.
+                        values.insert(
+                            "base_stat_mitigation_unrounded".into(),
+                            Value::from(mitigation),
+                        );
                         for (key, value) in [
                             ("effective_armor", stats.armor),
                             ("effective_shield_deflection", stats.shield_deflection),

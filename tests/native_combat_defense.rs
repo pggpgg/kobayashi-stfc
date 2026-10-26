@@ -57,6 +57,22 @@ fn fight_with_rounding(
     pvp: bool,
     round_native_defense_stats: bool,
 ) -> SimulationResult {
+    fight_with_trace_mode(
+        crew,
+        opponent,
+        pvp,
+        round_native_defense_stats,
+        TraceMode::Events,
+    )
+}
+
+fn fight_with_trace_mode(
+    crew: &CrewConfiguration,
+    opponent: ShipType,
+    pvp: bool,
+    round_native_defense_stats: bool,
+    trace_mode: TraceMode,
+) -> SimulationResult {
     let attacker = Combatant {
         attack: 1.0,
         hull_health: 1e8,
@@ -95,7 +111,7 @@ fn fight_with_rounding(
         &defender,
         &SimulationConfig {
             rounds: 2,
-            trace_mode: TraceMode::Events,
+            trace_mode,
             ..Default::default()
         },
         crew,
@@ -205,6 +221,52 @@ fn native_integer_defense_matches_the_pike_only_control_curve() {
             hit["mitigated_damage"].as_f64().unwrap() / raw,
         );
     }
+}
+
+#[test]
+fn counter_trace_preserves_precision_without_changing_legacy_display_or_outcome() {
+    let traced = fight_with_rounding(&native_crew(), ShipType::Explorer, false, true);
+    let expected = kobayashi::combat::mitigation(
+        DefenderStats {
+            armor: 125.0,
+            shield_deflection: 963.0,
+            dodge: 42.0,
+        },
+        AttackerStats {
+            armor_piercing: 750.0,
+            shield_piercing: 750.0,
+            accuracy: 4500.0,
+        },
+        ShipType::Explorer,
+    );
+    let rows = counters(&traced);
+    assert!(!rows.is_empty());
+    for row in rows {
+        let full = row.values["base_stat_mitigation_unrounded"]
+            .as_f64()
+            .unwrap();
+        let display = row.values["base_stat_mitigation"].as_f64().unwrap();
+        assert!((full - expected).abs() < 1e-14);
+        assert_eq!(display, (full * 1_000_000.0).round() / 1_000_000.0);
+        assert!((full - display).abs() > 1e-9);
+        // JSON is the transport used by snapshot replays; retain sub-display precision.
+        let serialized = serde_json::to_string(row).unwrap();
+        let parsed: CombatEvent = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(
+            parsed.values["base_stat_mitigation_unrounded"],
+            row.values["base_stat_mitigation_unrounded"]
+        );
+    }
+    let untraced = fight_with_trace_mode(
+        &native_crew(),
+        ShipType::Explorer,
+        false,
+        true,
+        TraceMode::Off,
+    );
+    let mut without_events = traced;
+    without_events.events.clear();
+    assert_eq!(without_events, untraced);
 }
 
 fn reconstructed_regular_damage(hit: &serde_json::Value) -> f64 {

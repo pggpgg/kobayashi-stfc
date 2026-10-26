@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "id": "realta_exchange_baseline_20261023",
+  "snapshot_files": {
+    "profile.json": "e0a66d7348c57ae98f524295624e84ae77117141a41967a4def3c6ba271fe34e",
+    "roster.imported.json": "a70bd1d6d8bb6c70e14687dada86a8f541b55be21630cc14924f97cd0402fdcc",
+    "research.imported.json": "7aea40feb97f78c036c03d5cfbf4fe89d7b0e8b8c25660b32940a4e8579d7d23",
+    "buffs.imported.json": "b3c0bb0467e794f3364c2a88784f5e95d1d28dc8c215fea2eaca777aca93b595",
+    "buildings.imported.json": "6d46c5730179820eb3c918bc049e1c73def613e27d032d99dabbbbd1cd07fb6e",
+    "ships.imported.json": "e218f6b76f3132a9c1212b5451dcba776fd4182689b17a357da68388d9427dba",
+    "forbidden_tech.imported.json": "99bd460428b06333b45aeb975ba20478e775cded65e7984da6f7f1c9c7a94ea3",
+    "battlelogs.imported.json": "408d7a02e2defd36a7b8e2c98aed497c18e79e61f0b6896161e8eb21927222d9"
+  },
+  "catalog_files": {
+    "ships_extended/realta.json": "31d895a6faf4d45cd3cfdcd9d6b4e0d4c5485a4bc96dc91baa1a4868b4895d49",
+    "hostiles/3053281684.json": "a01ed2a6b93ef1574e94e8f6804c8d143e9aefba6f149085590443a022025963",
+    "officers/officers.canonical.json": "dc7efe147cfe6d321565148c52b86a5a1cbdb291f96653dc742cdbddaf410db7",
+    "native_officer_core_stats.json": "513c8b41a5c0b174c3d436c831d01cea3510c304595258d5dbea21e3bed78a44",
+    "native_critical_damage_sources.json": "13f108ddd868d70d673e088d47609b73e831acae3ed4f59b6095a8d0532314bc",
+    "native_building_buff_catalog.json": "bfe061f4a51eedd75b273682c00122933f2cbdbf146c1b5ae5d94988076f8272",
+    "native_consumable_buff_catalog.json": "147dec5ecc9d9f25b5b38dc5a4f83f98a044ff5936e3b61c7b26aaad3142717c",
+    "research/client_buff_semantics_2026-10-20.json": "a9b6f280abd339f6f7d34c7b50b53ff665a8f1996cfabace3eb9124a30c82e38",
+    "research_catalog.json": "7c9c436066ce8a0f973c97dd2fd1b479244ac2453447960fa2c3c11ca84fee47",
+    "research_canonical.json": "204827dde6515ee78f4a3e48547dcb000307c8914fed62d98386d63c34627909",
+    "forbidden_chaos_tech.json": "d68ea7c6cf021d2c10fd9c6a24bd1f861268dbf5f70c9a3bf42dead36a395b5c",
+    "upstream/data-stfc-space/ship_id_registry.json": "93bd22be71c318da44e88d04fe6f31de562103f75be5d45d5bd17ef71e9f1f01"
+  },
+  "observation": {
+    "path": "realta_exchange_baseline_20261023_observed.json",
+    "sha256": "f38e196d5f4d4e8d53077298f3c0c417e330fe625012f0105be94946cb05f8c4"
+  },
+  "journals": [
+    {
+      "battle_time": "2026-10-23T18:59:03",
+      "player": {
+        "hull_id": 987222969,
+        "level": 20,
+        "max_hull_health": 652159.0,
+        "max_shield_health": 748507.0,
+        "components": [
+          39427021,
+          609159757,
+          3744160286,
+          1848246016,
+          2821665303,
+          409142410,
+          3437487539,
+          1211946817,
+          1211946817,
+          -1,
+          -1,
+          -1,
+          -1,
+          2250919877
+        ],
+        "tier": 4,
+        "captain": {
+          "officer_id": 1916661181,
+          "rank": 1,
+          "level": 5
+        },
+        "bridge": [
+          null,
+          null
+        ],
+        "below_decks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "target": {
+        "hull_id": 3050436003,
+        "level": 40,
+        "max_hull_health": 11192866.0,
+        "max_shield_health": 6747057.0,
+        "components": [
+          635429245,
+          2676071668,
+          1766355141,
+          3471971131,
+          2821665303,
+          409142410,
+          2534309121,
+          1538460971,
+          1155077617,
+          -1,
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "faction": 1750120904
+      },
+      "request": {
+        "ship": "realta",
+        "hostile": "3053281684",
+        "ship_tier": 4,
+        "ship_level": 20,
+        "seed": 0,
+        "sim_index": 0,
+        "max_trace_events": 2000,
+        "crew": {
+          "captain": "jadzia-dax-736698",
+          "bridge": [
+            null,
+            null
+          ],
+          "below_deck": []
+        }
+      },
+      "comparisons": [
+        {
+          "metric": "incoming_base_stat_mitigation",
+          "weapon_indexes": [
+            0,
+            1
+          ],
+          "evidence_scope": "pooled_fight",
+          "observed_path": "/observed/mitigation/joint_diagnostic_interval"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "forbidden_tech_level_tier_scaling": false
+  },
+  "assumptions": [
+    "Frozen profile files were read sequentially; source hashes and independent setup checks establish this selected setup, not an atomic server snapshot.",
+    "The game server random seed is unknown. Seed-zero outcomes and durations are diagnostic predictions, not exact replay accuracy gates.",
+    "Current public catalogs are explicitly pinned by hash; these files are not claimed to be the historical server catalog.",
+    "Only incoming base-stat mitigation is compared here. Passing does not establish full buff, damage-roll or full-fight accuracy."
+  ],
+  "unsupported": [
+    "Build 273 combat data was decoded using retained build 272 parser evidence; independent build 273 parser drift verification remains open.",
+    "Unknown and quarantined native buffs remain model coverage gaps; this runner does not silently convert them into supported effects."
+  ]
+}

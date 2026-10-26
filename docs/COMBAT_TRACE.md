@@ -21,6 +21,12 @@ For each weapon sub-round, the engine records:
      - `mitigation_additive_bonus`
      - `dodge_bonus`, `dodge_coefficient`, `dodge_mitigation_bonus`
    - Includes the same scalar `mitigation` and `multiplier` fields used by outbound shots.
+   - When raw defense stats are available, `base_stat_mitigation` retains the stable
+     six-decimal display. `base_stat_mitigation_unrounded` preserves the calculated
+     `f64` for replay comparisons with narrower observed intervals. This extra field
+     does not change damage, RNG draws, or the existing trace values. For older traces,
+     account for display rounding before comparing an interval; a rounded point alone
+     cannot establish agreement with a narrower bound.
 
 2. **`pierce_calc`** (phase `attack`)  
    - **`pierce`**: effective additive pierce for this round (ship base + pre-attack pierce bonuses, ×1.10 when Morale fired — Morale also lowers per-shot dynamic mitigation via +10% on all piercing stats).  

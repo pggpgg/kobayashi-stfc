@@ -43,6 +43,17 @@ digests and malformed schema/UTF-8/ID data are rejected. Run
 regressions. The [data contract](../data/README.md#native-officer-base-corestats)
 describes native rounding and conservative fallback after upstream changes.
 
+## Snapshot-bound combat replay
+
+`node scripts/replay_snapshot.mjs --help` lists the frozen-capture replay options.
+The runner verifies capture and observation hashes, checks the selected ship,
+crew and hostile, and launches an isolated server with a synthetic profile.
+It compares measured mitigation intervals with current simulator predictions;
+known discrepancies remain visible. It does not overwrite live profiles or
+claim that a seeded fight reconstructs the game RNG. See
+[snapshot replay validation](../docs/SNAPSHOT_REPLAY_VALIDATION.md) for input
+requirements, privacy, report statuses and limitations.
+
 ## Inspect local STFC combat configuration
 
 Read an explicitly selected `ServerRequestCache` protobuf response and extract
