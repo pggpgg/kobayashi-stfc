@@ -31,8 +31,9 @@
 //! [`crate::combat::abilities::AbilityCondition::DefenderHostileTagsAllPresent`] (AND of known slugs).
 //! **Borg Sphere Omicron (ability 509252162):** upstream raw rank values are already fractional
 //! multipliers: at ship level 10, 26,650 is displayed as 2,665,000%. The native client applies
-//! this to component base damage, but the server combat ordering remains unverified. Preserve the
-//! source value and condition and report the combat effect as unsupported until validated.
+//! this to component base damage. Component damage is retained separately from scaled attack;
+//! this contribution is added to the legacy scaled attack before critical and isolytic damage.
+//! The precise interaction with legacy officer and profile pools remains an approximation.
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
@@ -98,6 +99,9 @@ pub fn ship_ability_effect_from_catalog(
             coefficient: value,
             chance: 1.0,
         }),
+        "component_base_weapon_damage" if timing == TimingWindow::CombatBegin => {
+            Some(AbilityEffect::ComponentBaseWeaponDamageBonus(value))
+        }
         // Catalogued for every hull; no combat seat until modeled explicitly.
         "combat_noop" | "unmodeled" | "not_applicable" => None,
         // Applied to the unbuffed HP base by ShipRecord::health_with_launch_bonuses.
@@ -422,7 +426,7 @@ mod tests {
     use crate::combat::types::{OpponentFactionTag, ShipType};
 
     #[test]
-    fn sphere_omicron_preserves_raw_level_curve_and_is_reported_unsupported() {
+    fn sphere_omicron_preserves_raw_level_curve_and_conqueror_gate() {
         use crate::combat::hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
         use crate::data::ship::ExtendedShipRecord;
 
@@ -449,11 +453,11 @@ mod tests {
                     .as_f64()
                     .unwrap()
             );
-            assert_eq!(omicron.effect_type, "unsupported_base_weapon_damage");
+            assert_eq!(omicron.effect_type, "component_base_weapon_damage");
             let seat = ship_ability_to_crew_seat_context(omicron).unwrap();
             assert!(matches!(seat.ability.effect,
-                AbilityEffect::UnsupportedOfficerEffect { coefficient, chance }
-                    if coefficient == omicron.value && chance == 1.0));
+                AbilityEffect::ComponentBaseWeaponDamageBonus(coefficient)
+                    if coefficient == omicron.value));
             assert!(matches!(seat.ability.condition,
                 Some(AbilityCondition::DefenderHostileTagsAllPresent { required_mask })
                     if required_mask == HOSTILE_TAG_MASK_CONQUEROR_BORG));

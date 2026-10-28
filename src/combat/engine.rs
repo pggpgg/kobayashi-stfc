@@ -3086,6 +3086,14 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 }
                 _ => attacker_weapon_attack * pre_mult * galaxy_dilution,
             };
+            // The component-base contribution is separate from the profile-scaled
+            // weapon value.  Multiplying the latter by a base-damage bonus would
+            // apply the profile and officer multipliers to it a second time.
+            let effective_attack = effective_attack
+                + attacker
+                    .weapon_component_base_attack(weapon_index)
+                    .unwrap_or(0.0)
+                    * phase_effects.component_base_weapon_damage_frac();
 
             let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
             trace.record_if(|| CombatEvent {
@@ -4023,6 +4031,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 .get(weapon_index)
                 .copied()
                 .unwrap_or(params.base_attacker_stats);
+            // Morale increases the three raw piercing stats, before their
+            // ratios enter the mitigation curve.
+            let opponent = if st.defender_morale_rounds_remaining > 0 {
+                apply_morale_piercing(opponent)
+            } else {
+                opponent
+            };
             let breakdown = mitigation_breakdown(
                 stats,
                 opponent,
@@ -4030,12 +4045,11 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 params.mystery_mitigation_factor,
             );
             let mitigation = breakdown.raw_mitigation.clamp(params.floor, params.ceiling);
-            let pierce = crate::combat::mitigation::pierce_damage_through_bonus(
-                stats,
-                opponent,
-                params.ship_type,
-            );
-            (stats, breakdown, mitigation, pierce)
+            // Raw piercing has already been applied to the component ratios.
+            // Adding a second synthetic damage-through term double-counts it:
+            // independently captured inbound hits partition raw damage into
+            // mitigation, apex, hull and shield without that extra term.
+            (stats, breakdown, mitigation, 0.0)
         });
     let eff_player_mitigation = if let Some((_, _, mitigation, _)) = raw_stat_mitigation {
         // Flat legacy damage reductions stay separate from the raw defense curve.
@@ -4391,6 +4405,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         if hostile_counter_debuff > 0.0
             && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
         {
+            if raw_stat_mitigation.is_some() {
+                static WARN_COUNTER_PIERCE_DEBUFF_RAW_ONCE: std::sync::Once =
+                    std::sync::Once::new();
+                WARN_COUNTER_PIERCE_DEBUFF_RAW_ONCE.call_once(|| tracing::warn!(
+                    "Hostile counter-piercing debuffs on raw piercing stats are unsupported; their native timing is not yet established"
+                ));
+            }
             counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
         }
         // Pen of Kahless-style percentage pierce buffs on the hostile's own counter-fire.
@@ -4404,6 +4425,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             })
             .sum();
         if counter_pierce_bonus_fraction > 0.0 {
+            if raw_stat_mitigation.is_some() {
+                static WARN_COUNTER_PIERCE_RAW_ONCE: std::sync::Once = std::sync::Once::new();
+                WARN_COUNTER_PIERCE_RAW_ONCE.call_once(|| tracing::warn!(
+                    "Hostile counter-piercing multipliers on raw piercing stats are unsupported; their native timing is not yet established"
+                ));
+            }
             counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
         }
         let counter_damage_through = compute_damage_through_factor(

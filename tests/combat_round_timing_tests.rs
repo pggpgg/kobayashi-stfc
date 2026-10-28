@@ -273,6 +273,7 @@ fn per_weapon_pierce_crit_proc_override_ship_defaults_in_engine() {
             WeaponStats {
                 weapon_type: Default::default(),
                 attack: 100.0,
+                component_base_attack: None,
                 shots: Some(1),
                 pierce: Some(0.5),
                 crit_chance: Some(1.0),

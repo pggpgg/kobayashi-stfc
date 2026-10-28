@@ -1452,7 +1452,7 @@
     {
       "id": "509252162",
       "timing": "combat_begin",
-      "effect_type": "unsupported_base_weapon_damage",
+      "effect_type": "component_base_weapon_damage",
       "value": 14500.0,
       "duration_rounds": null,
       "condition_morale": false,

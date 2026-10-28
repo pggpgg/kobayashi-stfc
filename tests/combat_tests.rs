@@ -2270,7 +2270,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
 }
 
 #[test]
-fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppression() {
+fn evolutionary_assimilation_instant_loss_is_not_blocked_by_beam_suppression() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 50.0,
@@ -2394,8 +2394,9 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         false,
         &CrewConfiguration::default(),
     );
-    assert!(r_ok.rounds_simulated > 0);
-    assert!(r_ok.attacker_hull_remaining > 0.0);
+    assert_eq!(r_ok.rounds_simulated, 0);
+    assert_eq!(r_ok.attacker_hull_remaining, 0.0);
+    approx_eq(r_ok.attacker_shield_remaining, 500.0, 1e-9);
 }
 
 #[test]

@@ -88,7 +88,7 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   research sources are compiled; Hull Breach isolytic research uses RoundStart.
 ///   Survival metrics use actual attacker HP, including conditional maximum HP.
 ///   Profile-free canaries cannot observe source membership or optimizer metrics.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 15;
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 16;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -629,6 +629,24 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
+    // (j) base-component damage is distinct from already buffed weapon attack.
+    let mut j_attacker = canary_combatant("canary_j_attacker");
+    j_attacker.weapons = vec![crate::combat::WeaponStats {
+        attack: 250.0,
+        component_base_attack: Some(40.0),
+        ..Default::default()
+    }];
+    let mut j_defender = canary_combatant("canary_j_defender");
+    j_defender.hull_health = 8_000.0;
+    let j_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::ComponentBaseWeaponDamageBonus(3.0),
+        )],
+    };
+
     vec![
         (
             "a_plain",
@@ -694,6 +712,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             i_defender,
             canary_config(5, 37),
             i_crew,
+        ),
+        (
+            "j_component_base_damage",
+            j_attacker,
+            j_defender,
+            canary_config(7, 41),
+            j_crew,
         ),
     ]
 }
@@ -1275,7 +1300,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 9, "expected nine canary fights");
+        assert_eq!(summaries.len(), 10, "expected ten canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

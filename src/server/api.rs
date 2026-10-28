@@ -469,6 +469,60 @@ pub struct SimulateResponse {
     pub eligibility_notes: Vec<EligibilityNote>,
 }
 
+/// Accept either the canonical ship id or a display name resolved by the catalog.
+fn sphere_ship_name_or_id(ship: &str) -> bool {
+    crate::combat::conqueror_borg_beams::attacker_hull_is_borg_sphere(ship)
+        || crate::data::loader::resolve_ship(ship).is_some_and(|record| {
+            crate::combat::conqueror_borg_beams::attacker_hull_is_borg_sphere(&record.id)
+        })
+}
+
+/// Native data and a capture support a separate decay proc, but its interactions remain uncertain.
+fn sphere_obliterator_warning(ship: &str, hostile: &str, npc: bool) -> Option<String> {
+    let mask = crate::data::loader::resolve_hostile(hostile)
+        .map(|record| record.hostile_tag_mask())
+        .unwrap_or(0);
+    (sphere_ship_name_or_id(ship)
+        && crate::combat::conqueror_borg_beams::sphere_obliterator_instant_loss_unresolved(
+            "borg_sphere", npc, mask,
+        ))
+        .then(|| "A Borg Sphere was instantly destroyed by an Obliterator in a captured fight despite modeled beam suppression. Native hull data contains a separate 80% Hyperthermic Decay buff, but its interactions with suppression and stabilizers are not modeled. Survivability, kills per hull, and crew rankings are unreliable for this scenario.".to_string())
+}
+
+fn sphere_omicron_warning(ship: &str, hostile: &str, npc: bool) -> Option<String> {
+    let mask = crate::data::loader::resolve_hostile(hostile)
+        .map(|record| record.hostile_tag_mask())
+        .unwrap_or(0);
+    (npc && sphere_ship_name_or_id(ship)
+        && mask & crate::combat::hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG != 0)
+        .then(|| "Omicron component-base scaling is approximate; the interaction with other damage bonuses and the weapon damage-roll distribution remain unverified. Missing component-base damage omits this contribution. Incoming mitigation in captured Sphere fights also differs substantially from the model; survivability, kills per hull, and crew rankings are unvalidated.".to_string())
+}
+
+#[cfg(test)]
+mod sphere_warning_tests {
+    use super::{sphere_obliterator_warning, sphere_omicron_warning};
+
+    #[test]
+    fn sphere_warnings_cover_canonical_id_and_display_name_and_stay_scenario_scoped() {
+        // Public catalog IDs: level-55 Suppressor and level-65 Obliterator.
+        for ship in ["borg_sphere", "Borg Sphere"] {
+            let suppressor = sphere_omicron_warning(ship, "80039078", true).unwrap();
+            assert!(suppressor.contains("Incoming mitigation"));
+            assert!(suppressor.contains("Omicron"));
+            assert!(sphere_obliterator_warning(ship, "80039078", true).is_none());
+            assert!(sphere_obliterator_warning(ship, "316662618", true).is_some());
+            assert!(sphere_omicron_warning(ship, "316662618", true).is_some());
+            assert!(sphere_omicron_warning(ship, "80039078", false).is_none());
+            assert!(sphere_obliterator_warning(ship, "316662618", false).is_none());
+            assert!(
+                sphere_omicron_warning(ship, "kobayashi_theoretical_damage_sponge", true).is_none()
+            );
+        }
+        assert!(sphere_omicron_warning("realta", "80039078", true).is_none());
+        assert!(sphere_obliterator_warning("realta", "316662618", true).is_none());
+    }
+}
+
 /// Human-friendly label for a combat scenario (used in eligibility warning strings).
 fn enemy_type_label(e: crate::combat::EnemyType) -> &'static str {
     use crate::combat::EnemyType::*;
@@ -981,6 +1035,20 @@ pub fn simulate_payload(
     let ci = binomial_95_ci(wins, num_sims);
 
     let mut warnings = Vec::new();
+    if let Some(warning) = sphere_obliterator_warning(
+        &req.ship,
+        &scenario_hostile,
+        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+    ) {
+        warnings.push(warning);
+    }
+    if let Some(warning) = sphere_omicron_warning(
+        &req.ship,
+        &scenario_hostile,
+        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+    ) {
+        warnings.push(warning);
+    }
     if let Some(message) =
         crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(
             profile_id,
@@ -1256,6 +1324,20 @@ pub fn compare_crews_payload(
     );
 
     let mut warnings = Vec::new();
+    if let Some(warning) = sphere_obliterator_warning(
+        &req.ship,
+        &scenario_hostile,
+        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+    ) {
+        warnings.push(warning);
+    }
+    if let Some(warning) = sphere_omicron_warning(
+        &req.ship,
+        &scenario_hostile,
+        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+    ) {
+        warnings.push(warning);
+    }
     if let Some(message) =
         crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(
             profile_id,
@@ -1699,6 +1781,20 @@ pub fn replay_optimize_seed_payload(
     );
 
     let mut warnings = Vec::new();
+    if let Some(warning) = sphere_obliterator_warning(
+        &req.ship,
+        &req.hostile,
+        req.defender_opponent.defender_is_npc_hostile(),
+    ) {
+        warnings.push(warning);
+    }
+    if let Some(warning) = sphere_omicron_warning(
+        &req.ship,
+        &req.hostile,
+        req.defender_opponent.defender_is_npc_hostile(),
+    ) {
+        warnings.push(warning);
+    }
     if let Some(message) =
         crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(
             profile_id,

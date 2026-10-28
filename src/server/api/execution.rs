@@ -2534,6 +2534,20 @@ fn build_optimize_response(
     append_optimize_observations(request, meta, &ranked_results, profile_id, sims, seed);
 
     let mut warnings = Vec::new();
+    if let Some(warning) = super::sphere_obliterator_warning(
+        &request.ship,
+        &request.hostile,
+        request.defender_opponent.defender_is_npc_hostile() && request.defender_ship.is_none(),
+    ) {
+        warnings.push(warning);
+    }
+    if let Some(warning) = super::sphere_omicron_warning(
+        &request.ship,
+        &request.hostile,
+        request.defender_opponent.defender_is_npc_hostile() && request.defender_ship.is_none(),
+    ) {
+        warnings.push(warning);
+    }
     if let Some(message) =
         crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(
             profile_id,

@@ -57,6 +57,9 @@ pub enum AbilityEffect {
     /// also contains compiled profile bonuses. Distinct from the separate
     /// pre-attack multiplier used by unverified legacy officer effects.
     BaseWeaponDamageBonus(f64),
+    /// Fraction of the unbuffed weapon component's damage, added to the shot.
+    /// Kept separate from legacy, already profile-scaled attack pools.
+    ComponentBaseWeaponDamageBonus(f64),
     /// Additive max-hull fraction from conditional research/LCARS (`0.12` ⇒ ×1.12 max hull when the seat's conditions pass).
     HullHpMultiplier(f64),
     /// Additive max-shield fraction from conditional research/LCARS (`0.08` ⇒ ×1.08 max shield when conditions pass).
@@ -539,10 +542,9 @@ pub fn apply_defender_random_state_id(
     }
 }
 
-/// Counter-fire pierce with defender Morale: +10% on the aggregate pierce scalar for any hull
-/// class. The player-inbound mitigation path has no per-channel hostile piercing stats (it is a
-/// weighted percentage sum of the player's armor/shield/dodge), so the spec's "all piercing
-/// stats +10%" collapses onto this single damage-through scalar, applied after all other bonuses.
+/// Apply defender Morale to a legacy aggregate counter-fire pierce scalar.
+/// When raw hostile stats are available, the inbound mitigation path separately
+/// applies Morale to those stats before evaluating the mitigation curve.
 pub fn defender_morale_adjusted_pierce(base_pierce: f64, morale_active: bool) -> f64 {
     if !morale_active {
         return base_pierce;
@@ -1056,9 +1058,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *chance = cap_one(*chance);
         }
         AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
-        AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
-            *m = scale(*m)
-        }
+        AbilityEffect::BaseWeaponDamageBonus(m)
+        | AbilityEffect::ComponentBaseWeaponDamageBonus(m)
+        | AbilityEffect::BaseCritDamageBonus(m) => *m = scale(*m),
         AbilityEffect::HullHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
@@ -1198,9 +1200,9 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
         }
         match &mut seat.ability.effect {
             AbilityEffect::AttackMultiplier(m) => *m *= multiplier,
-            AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
-                *m *= multiplier
-            }
+            AbilityEffect::BaseWeaponDamageBonus(m)
+            | AbilityEffect::ComponentBaseWeaponDamageBonus(m)
+            | AbilityEffect::BaseCritDamageBonus(m) => *m *= multiplier,
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
             AbilityEffect::HostileCritChanceReduction(c) => *c *= multiplier,
