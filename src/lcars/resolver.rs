@@ -217,6 +217,11 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
         return false;
     }
     if effect.effect_type == "stat_modify" {
+        if effective_stat_for_effect(effect) == Some("unsupported_officer_effect") {
+            // Keep the inert diagnostic marker as a seat, even for a
+            // launch/passive source, so each simulated crew can be warned.
+            return false;
+        }
         if effect.condition.is_some()
             && effective_stat_for_effect(effect).is_some_and(|stat| !is_officer_stat_key(stat))
         {
@@ -328,6 +333,12 @@ pub fn lcars_effect_coverage(
     officer_id: &str,
     options: &ResolveOptions,
 ) -> LcarsEffectCoverage {
+    if effective_stat_for_effect(effect) == Some("unsupported_officer_effect") {
+        return LcarsEffectCoverage {
+            tier: MechanicCoverageTier::Ignored,
+            pathway: "unsupported_officer_effect".to_string(),
+        };
+    }
     if effect.effect_type == "tag" {
         // Mapped combat tags → treat like stat_modify for coverage reporting.
         let tag_str = effect.tag.as_deref().unwrap_or("");
@@ -782,6 +793,9 @@ pub fn resolve_crew_to_buff_set(
             let Some(stat) = effective_stat_for_effect(effect) else {
                 continue;
             };
+            if stat == "unsupported_officer_effect" {
+                continue;
+            }
             // Phase 4a: officer-rating keys accept on_combat_start / on_round_start in addition
             // to passive+permanent (see docs/OFFICER_STAT_FORMULA.md §3).
             let officer_stat_key = is_officer_stat_key(stat);

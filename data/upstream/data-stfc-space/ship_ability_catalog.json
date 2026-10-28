@@ -116,11 +116,10 @@
     },
     "509252162": {
       "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "effect_type": "unsupported_base_weapon_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "values_scale_with_ship_level": true,
-      "post_scale": 0.001,
       "condition_opponent_hostile_tags": [
         "conqueror_borg"
       ]

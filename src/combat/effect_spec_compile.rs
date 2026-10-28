@@ -376,6 +376,10 @@ pub fn compile_officer_combat_spec_full(
     // into the accumulator for the rest of the fight.
     let skip_round_gate = (timing == TimingWindow::CombatBegin
         && effect_has_intrinsic_duration(&effect))
+        // State durations describe each proc after it fires, not an expiry
+        // window for the ability itself. In particular, a hit-triggered burn
+        // with a two-round duration can still proc in round three or later.
+        || matches!(effect, AbilityEffect::Assimilated { .. } | AbilityEffect::HullBreach { .. } | AbilityEffect::Burning { .. } | AbilityEffect::RandomDefenderState { .. })
         // On-hit stacks manage expiry per weapon inside the engine; a RoundRange gate would
         // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
         || matches!(
@@ -508,6 +512,71 @@ fn compile_officer_combat_spec_impl(
             Ok((
                 timing,
                 AbilityEffect::PierceBonus(add),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::UnsupportedOfficerEffect => {
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf
+                    | AbilityTargetSpec::SelfShip
+                    | AbilityTargetSpec::DefenderOpponent
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let coefficient = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let chance = spec.chance.as_ref().and_then(|c| c.scalar).unwrap_or(0.0);
+            if !coefficient.is_finite()
+                || coefficient < 0.0
+                || !chance.is_finite()
+                || !(0.0..=1.0).contains(&chance)
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            Ok((
+                timing,
+                AbilityEffect::UnsupportedOfficerEffect {
+                    coefficient,
+                    chance,
+                },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::HostileCritChanceReduction => {
+            if !matches!(spec.target, AbilityTargetSpec::DefenderOpponent)
+                || spec.operation != AbilityOperationSpec::Add
+                || timing != TimingWindow::CombatBegin
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let amount = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            if !amount.is_finite() || amount < 0.0 {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            Ok((
+                timing,
+                AbilityEffect::HostileCritChanceReduction(amount),
                 compiled_condition.clone(),
             ))
         }

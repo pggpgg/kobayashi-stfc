@@ -531,7 +531,11 @@ pub fn cumulative_building_bonuses_with_context(
     let index: HashMap<&str, &BuildingRecord> =
         records.iter().map(|r| (r.id.as_str(), r)).collect();
 
-    for (id, level) in levels_by_id {
+    // Building IDs are collected in a HashMap. Sum them in a stable order so
+    // the same inputs cannot differ through floating-point addition order.
+    let mut levels: Vec<_> = levels_by_id.iter().collect();
+    levels.sort_unstable_by(|a, b| a.0.cmp(b.0));
+    for (id, level) in levels {
         let Some(rec) = index.get(id.as_str()) else {
             continue;
         };
@@ -641,6 +645,42 @@ mod tests {
                     ],
                 },
             ],
+        }
+    }
+
+    #[test]
+    fn building_project_sums_are_stable_across_hashmap_orders() {
+        let make_record = |id: &str, value| BuildingRecord {
+            id: id.into(),
+            building_name: id.into(),
+            data_version: None,
+            source_note: None,
+            levels: vec![BuildingLevel {
+                level: 1,
+                ops_min: None,
+                ops_max: None,
+                bonuses: vec![BonusEntry {
+                    stat: "weapon_damage".into(),
+                    value,
+                    operator: "add".into(),
+                    conditions: vec![],
+                    notes: None,
+                }],
+            }],
+        };
+        let records = vec![
+            make_record("a", 1e16),
+            make_record("b", 1.0),
+            make_record("c", 1.0),
+        ];
+        for _ in 0..64 {
+            let levels: HashMap<String, u32> = [("c".into(), 1), ("a".into(), 1), ("b".into(), 1)]
+                .into_iter()
+                .collect();
+            assert_eq!(
+                cumulative_building_bonuses(&records, &levels)["weapon_damage"],
+                1e16
+            );
         }
     }
 

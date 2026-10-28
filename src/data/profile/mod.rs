@@ -708,6 +708,8 @@ pub fn merge_building_bonuses_with_native_snapshot(
         }
     }
 
+    let mut bonuses: Vec<_> = bonuses.into_iter().collect();
+    bonuses.sort_unstable_by(|a, b| a.0.cmp(&b.0));
     for (stat, value) in bonuses {
         let Some(key) = normalize_profile_combat_stat(&stat) else {
             continue;
@@ -975,6 +977,8 @@ fn combat_research_bonuses_from_entries_slice(
 
     let bonuses = cumulative_research_bonuses(&records, &levels_by_rid);
     let mut out: HashMap<String, f64> = HashMap::new();
+    let mut bonuses: Vec<_> = bonuses.into_iter().collect();
+    bonuses.sort_unstable_by(|a, b| a.0.cmp(&b.0));
     for (stat, value) in bonuses {
         let Some(key) = normalize_profile_combat_stat(&stat) else {
             continue;
@@ -1073,7 +1077,13 @@ fn combat_research_conditional_bonuses_from_entries_slice(
         }
         out.push((key, norm.to_string(), value));
     }
-    out.sort_by(|a, b| a.1.cmp(&b.1).then_with(|| a.2.total_cmp(&b.2)));
+    // Equal stat/value rows can carry different conditions. Sort those too so
+    // randomized HashMap order cannot change ability ordering or RNG draws.
+    out.sort_by(|a, b| {
+        a.1.cmp(&b.1)
+            .then_with(|| a.2.total_cmp(&b.2))
+            .then_with(|| a.0.cmp(&b.0))
+    });
     out
 }
 

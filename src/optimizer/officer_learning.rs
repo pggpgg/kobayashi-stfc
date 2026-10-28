@@ -305,6 +305,7 @@ pub fn build_from_history_entry(
         .crews
         .iter()
         .map(|crew| RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: crew.captain.clone(),
             bridge: crew.bridge.clone(),
             below_decks: crew.below_decks.clone(),
@@ -386,6 +387,7 @@ mod tests {
         let mut scores = OfficerPerformanceScores::new();
         // Create a minimal ranked result (just needs officer names)
         let result = crate::optimizer::ranking::RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: "Kirk".into(),
             bridge: vec!["Spock".into(), "McCoy".into()],
             below_decks: vec!["Scotty".into(), "Sulu".into(), "Uhura".into()],
@@ -425,6 +427,7 @@ mod tests {
     fn decay_reduces_old_scores_on_update() {
         let mut scores = OfficerPerformanceScores::with_params(0.01, 0.2, 0.5);
         let result = crate::optimizer::ranking::RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: "Kirk".into(),
             bridge: vec!["Spock".into(), "McCoy".into()],
             below_decks: vec!["Scotty".into(), "Sulu".into(), "Uhura".into()],

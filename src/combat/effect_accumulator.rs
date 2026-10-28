@@ -597,6 +597,13 @@ impl EffectAccumulator {
         self.compose_damage_channel(EffectStatKey::AttackPhaseDamage, pre_attack_damage)
     }
 
+    /// Attack-phase multipliers affect the isolytic base, but the flat
+    /// AttackPhaseDamage contribution currently represents conventional
+    /// piercing and must not amplify the isolytic leg.
+    pub(crate) fn compose_isolytic_base_damage(&self, unmitigated_damage: f64) -> f64 {
+        unmitigated_damage * (1.0 + self.attack_phase_damage_modifier_sum)
+    }
+
     pub(crate) fn compose_round_end_damage(&self, round_end_damage: f64) -> f64 {
         self.compose_damage_channel(EffectStatKey::RoundEndDamage, round_end_damage)
     }
@@ -1074,7 +1081,9 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
@@ -1288,7 +1297,9 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
@@ -1464,7 +1475,9 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
@@ -1637,7 +1650,9 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
@@ -1826,7 +1841,9 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
@@ -2046,7 +2063,9 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
@@ -2309,6 +2328,16 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::CritChanceBonus(v) => {
             AbilityEffect::CritChanceBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::HostileCritChanceReduction(v) => {
+            AbilityEffect::HostileCritChanceReduction(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient,
+            chance,
+        } => AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: coefficient * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+        },
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
@@ -3375,5 +3404,26 @@ mod tests {
         // compose_attack_phase_damage(1000) = 1000 * (1 + 0.3) + 0 = 1300
         let dmg = acc.compose_attack_phase_damage(1000.0);
         assert!((dmg - 1300.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn isolytic_base_gets_attack_multiplier_but_not_conventional_piercing_flat() {
+        let mut acc = EffectAccumulator::default();
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::PierceBonus(0.2),
+            500.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::AttackMultiplier(0.3),
+            500.0,
+            1,
+            None,
+        );
+        assert!((acc.compose_attack_phase_damage(1000.0) - 1350.0).abs() < 1e-12);
+        assert!((acc.compose_isolytic_base_damage(1000.0) - 1300.0).abs() < 1e-12);
     }
 }

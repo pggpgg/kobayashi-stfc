@@ -1187,7 +1187,7 @@ impl OptimizeProgressSink {
 
 fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
     SimulationResult {
-        unsupported_crew_health_effects: None,
+        unsupported_crew_health_effects: r.unsupported_crew_health_effects,
         candidate: CrewCandidate {
             captain: r.captain,
             bridge: r.bridge,
@@ -2300,6 +2300,38 @@ fn gather_optimize_simulation_results(
     Ok((all_results, meta))
 }
 
+fn format_rank_ranges(ranks: &[usize]) -> String {
+    let mut pieces = Vec::new();
+    let mut i = 0;
+    while i < ranks.len() {
+        let start = ranks[i];
+        let mut end = start;
+        while i + 1 < ranks.len() && ranks[i + 1] == end + 1 {
+            i += 1;
+            end = ranks[i];
+        }
+        pieces.push(if start == end {
+            start.to_string()
+        } else {
+            format!("{start}–{end}")
+        });
+        i += 1;
+    }
+    pieces.join(", ")
+}
+
+#[cfg(test)]
+mod unsupported_rank_warning_tests {
+    use super::format_rank_ranges;
+
+    #[test]
+    fn formats_every_rank_without_losing_disjoint_rows() {
+        assert_eq!(format_rank_ranges(&[]), "");
+        assert_eq!(format_rank_ranges(&[1]), "1");
+        assert_eq!(format_rank_ranges(&[1, 2, 3, 5, 7, 8]), "1–3, 5, 7–8");
+    }
+}
+
 fn build_optimize_response(
     request: &OptimizeRequest,
     all_results: Vec<SimulationResult>,
@@ -2307,12 +2339,27 @@ fn build_optimize_response(
     meta: &OptimizeGatherMeta,
     profile_id: Option<&str>,
 ) -> OptimizeResponse {
-    let unresolved_crew_health = all_results
-        .iter()
-        .any(|r| r.unsupported_crew_health_effects == Some(true));
-    let unknown_crew_health = all_results
-        .iter()
-        .any(|r| r.unsupported_crew_health_effects.is_none());
+    // Preserve exact seat order when carrying support diagnostics through
+    // ranking and optional novelty reordering; simulation identity is ordered.
+    let mut support_by_crew: HashMap<(String, Vec<String>, Vec<String>), Option<bool>> =
+        HashMap::new();
+    for row in &all_results {
+        let key = (
+            row.candidate.captain.clone(),
+            row.candidate.bridge.clone(),
+            row.candidate.below_decks.clone(),
+        );
+        support_by_crew
+            .entry(key)
+            .and_modify(|old| {
+                *old = match (*old, row.unsupported_crew_health_effects) {
+                    (Some(true), _) | (_, Some(true)) => Some(true),
+                    (None, _) | (_, None) => None,
+                    _ => Some(false),
+                };
+            })
+            .or_insert(row.unsupported_crew_health_effects);
+    }
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     let seed = request.seed.unwrap_or(0);
     let chain_grind = request
@@ -2352,6 +2399,22 @@ fn build_optimize_response(
             novelty_history_anchors_slice,
         );
     }
+    let ranks_for = |status: Option<bool>| -> Vec<usize> {
+        ranked_results
+            .iter()
+            .enumerate()
+            .filter_map(|(i, row)| {
+                let key = (
+                    row.captain.clone(),
+                    row.bridge.clone(),
+                    row.below_decks.clone(),
+                );
+                (support_by_crew.get(&key).copied().unwrap_or(None) == status).then_some(i + 1)
+            })
+            .collect()
+    };
+    let unsupported_ranks = ranks_for(Some(true));
+    let unknown_ranks = ranks_for(None);
 
     let engine = if meta.heuristics_only {
         "heuristics"
@@ -2471,11 +2534,33 @@ fn build_optimize_response(
     append_optimize_observations(request, meta, &ranked_results, profile_id, sims, seed);
 
     let mut warnings = Vec::new();
-    if unresolved_crew_health {
-        warnings.push("At least one result has a raw-stat ability that cannot be evaluated because crew Health or required raw-stat context was unavailable. Its score omits the effect if its condition applies.".to_string());
+    if let Some(message) =
+        crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(
+            profile_id,
+        )
+    {
+        warnings.push(message);
     }
-    if unknown_crew_health {
-        warnings.push("Crew-Health-scaled ability support could not be checked for one or more stored or reconstructed results.".to_string());
+    if let (Some(_), Some(id)) = (
+        request.defender_ship.as_ref(),
+        request.defender_profile_id.as_deref(),
+    ) {
+        if let Some(message) =
+            crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(Some(
+                id,
+            ))
+        {
+            warnings.push(format!("Defender: {message}"));
+        }
+    }
+    if !unsupported_ranks.is_empty() {
+        warnings.push(format!("Ranked result(s) {} may omit a combat effect if its conditions apply, because the effect or required raw-stat context is unsupported.", format_rank_ranges(&unsupported_ranks)));
+    }
+    if !unknown_ranks.is_empty() {
+        warnings.push(format!(
+            "Combat ability support could not be checked for ranked result(s) {}.",
+            format_rank_ranges(&unknown_ranks)
+        ));
     }
     if meta.fast_discovery_no_resolved_crews {
         warnings.push(

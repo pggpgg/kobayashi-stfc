@@ -88,7 +88,7 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   research sources are compiled; Hull Breach isolytic research uses RoundStart.
 ///   Survival metrics use actual attacker HP, including conditional maximum HP.
 ///   Profile-free canaries cannot observe source membership or optimizer metrics.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 14;
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 15;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -611,6 +611,24 @@ fn canary_fights() -> Vec<CanaryFight> {
     let mut h_config = canary_config(3, 31);
     h_config.initial_attacker_hull_damage = 1_100.0;
 
+    // (i) an enemy critical-chance reduction applies to incoming fire.
+    let mut i_attacker = canary_combatant("canary_i_attacker");
+    i_attacker.attack = 75.0;
+    i_attacker.hull_health = 2_000.0;
+    let mut i_defender = canary_combatant("canary_i_defender");
+    i_defender.attack = 150.0;
+    i_defender.crit_chance = 1.0;
+    i_defender.crit_multiplier = 3.0;
+    i_defender.hull_health = 3_000.0;
+    let i_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileCritChanceReduction(1.0),
+        )],
+    };
+
     vec![
         (
             "a_plain",
@@ -669,6 +687,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             CrewConfiguration {
                 seats: vec![h_ability],
             },
+        ),
+        (
+            "i_hostile_crit_reduction",
+            i_attacker,
+            i_defender,
+            canary_config(5, 37),
+            i_crew,
         ),
     ]
 }
@@ -1250,7 +1275,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 8, "expected eight canary fights");
+        assert_eq!(summaries.len(), 9, "expected nine canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

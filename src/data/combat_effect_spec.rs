@@ -129,6 +129,10 @@ pub enum AbilityModifierSpec {
     HullHp,
     ShieldHp,
     CritChance,
+    /// Absolute critical-hit probability reduction for the opponent's weapons.
+    HostileCritChanceReduction,
+    /// Source coefficient and proc are retained, but the combat mechanic is unverified.
+    UnsupportedOfficerEffect,
     CritDamage,
     Pierce,
     /// Additive shield-mitigation bonus. `target=AttackerSelf` buffs the attacker's own mitigation

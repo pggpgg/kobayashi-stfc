@@ -74,7 +74,7 @@ pub struct ResearchLevel {
 /// `defender_faction` and `attacker_faction` require matching opponent tag **and** matching attacker
 /// owner faction. [`cumulative_conditional_research_bonuses`] keys rows by the full struct so dual gates
 /// do not collapse with single-gate rows.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
 pub struct ResearchBonusConditionKey {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attacker_ship_class: Option<String>,
@@ -454,7 +454,7 @@ pub fn cumulative_dual_gate_hull_shield_research_fractions(
     let mut hull_frac = 0.0_f64;
     let mut shield_frac = 0.0_f64;
 
-    for (&rid, &level) in levels_by_rid {
+    for (rid, level) in sorted_research_levels(levels_by_rid) {
         let Some(rec) = by_rid.get(&rid) else {
             continue;
         };
@@ -706,7 +706,7 @@ pub fn cumulative_conditional_research_bonuses(
 ) -> HashMap<(ResearchBonusConditionKey, String), f64> {
     let by_rid: HashMap<i64, &ResearchRecord> = records.iter().map(|r| (r.rid, *r)).collect();
     let mut out: HashMap<(ResearchBonusConditionKey, String), f64> = HashMap::new();
-    for (&rid, &level) in levels_by_rid {
+    for (rid, level) in sorted_research_levels(levels_by_rid) {
         let Some(rec) = by_rid.get(&rid) else {
             continue;
         };
@@ -734,6 +734,18 @@ fn merge_owner_faction_nested_maps(
     }
 }
 
+/// Sum independently loaded projects in stable ID order. HashMap iteration order
+/// is randomized, and floating-point addition is not associative, so walking
+/// the map directly can change a fight for the same complete inputs and seed.
+pub(crate) fn sorted_research_levels(levels_by_rid: &HashMap<i64, u32>) -> Vec<(i64, u32)> {
+    let mut levels: Vec<_> = levels_by_rid
+        .iter()
+        .map(|(&rid, &level)| (rid, level))
+        .collect();
+    levels.sort_unstable_by_key(|(rid, _)| *rid);
+    levels
+}
+
 /// Returns cumulative **owner-faction-gated** bonuses from multiple research projects.
 pub fn cumulative_research_owner_faction_bonuses(
     records: &[&ResearchRecord],
@@ -741,7 +753,7 @@ pub fn cumulative_research_owner_faction_bonuses(
 ) -> HashMap<String, HashMap<String, f64>> {
     let by_rid: HashMap<i64, &ResearchRecord> = records.iter().map(|r| (r.rid, *r)).collect();
     let mut out: HashMap<String, HashMap<String, f64>> = HashMap::new();
-    for (&rid, &level) in levels_by_rid {
+    for (rid, level) in sorted_research_levels(levels_by_rid) {
         let Some(rec) = by_rid.get(&rid) else {
             continue;
         };
@@ -758,7 +770,7 @@ pub fn cumulative_research_bonuses(
 ) -> HashMap<String, f64> {
     let by_rid: HashMap<i64, &ResearchRecord> = records.iter().map(|r| (r.rid, *r)).collect();
     let mut out: HashMap<String, f64> = HashMap::new();
-    for (&rid, &level) in levels_by_rid {
+    for (rid, level) in sorted_research_levels(levels_by_rid) {
         let Some(rec) = by_rid.get(&rid) else {
             continue;
         };
@@ -1045,6 +1057,71 @@ mod tests {
         let b = cumulative_research_bonuses(&records, &levels);
         assert_eq!(b.get("weapon_damage"), Some(&0.05));
         assert_eq!(b.get("shield_hp"), Some(&0.08));
+    }
+
+    #[test]
+    fn cumulative_research_project_sums_are_stable_across_hashmap_orders() {
+        // These values make addition order observable in IEEE-754: adding the
+        // small contributions before the large one differs by one ULP.
+        let make_record = |rid, value, condition| ResearchRecord {
+            rid,
+            name: None,
+            data_version: None,
+            source_note: None,
+            level_value_mode: ResearchLevelValueMode::Cumulative,
+            levels: vec![ResearchLevel {
+                level: 1,
+                bonuses: vec![ResearchBonusEntry {
+                    stat: "weapon_damage".into(),
+                    value,
+                    operator: "add".into(),
+                    condition,
+                }],
+            }],
+        };
+        let plain = [
+            make_record(1, 1e16, ResearchBonusConditionKey::default()),
+            make_record(2, 1.0, ResearchBonusConditionKey::default()),
+            make_record(3, 1.0, ResearchBonusConditionKey::default()),
+        ];
+        let conditional_key = ResearchBonusConditionKey {
+            defender_faction: Some("borg".into()),
+            ..Default::default()
+        };
+        let conditional = [
+            make_record(1, 1e16, conditional_key.clone()),
+            make_record(2, 1.0, conditional_key.clone()),
+            make_record(3, 1.0, conditional_key.clone()),
+        ];
+        let owner_key = ResearchBonusConditionKey {
+            attacker_faction: Some("federation".into()),
+            ..Default::default()
+        };
+        let owner = [
+            make_record(1, 1e16, owner_key.clone()),
+            make_record(2, 1.0, owner_key.clone()),
+            make_record(3, 1.0, owner_key),
+        ];
+        let plain_refs: Vec<_> = plain.iter().collect();
+        let conditional_refs: Vec<_> = conditional.iter().collect();
+        let owner_refs: Vec<_> = owner.iter().collect();
+        for _ in 0..64 {
+            let levels: HashMap<i64, u32> = [(3, 1), (1, 1), (2, 1)].into_iter().collect();
+            assert_eq!(
+                cumulative_research_bonuses(&plain_refs, &levels)["weapon_damage"],
+                1e16
+            );
+            assert_eq!(
+                cumulative_conditional_research_bonuses(&conditional_refs, &levels)
+                    [&(conditional_key.clone(), "weapon_damage".into())],
+                1e16
+            );
+            assert_eq!(
+                cumulative_research_owner_faction_bonuses(&owner_refs, &levels)["federation"]
+                    ["weapon_damage"],
+                1e16
+            );
+        }
     }
 
     #[test]

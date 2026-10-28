@@ -487,6 +487,8 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "hull_hp" | "hull" => Some(AbilityModifierSpec::HullHp),
         "shield_hp" | "shield" => Some(AbilityModifierSpec::ShieldHp),
         "crit_chance" => Some(AbilityModifierSpec::CritChance),
+        "hostile_crit_chance_reduction" => Some(AbilityModifierSpec::HostileCritChanceReduction),
+        "unsupported_officer_effect" => Some(AbilityModifierSpec::UnsupportedOfficerEffect),
         "crit_damage" | "crit_damage_flat" => Some(AbilityModifierSpec::CritDamage),
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
@@ -594,7 +596,11 @@ fn effect_value_with_officer_stat(
     let base_value = effect_value_at_officer_tier(effect, tier);
     if matches!(
         effect.stat.as_deref(),
-        Some("base_mitigation_stats_per_crew_health" | "base_armor_piercing_per_crew_health")
+        Some(
+            "base_mitigation_stats_per_crew_health"
+                | "base_armor_piercing_per_crew_health"
+                | "unsupported_officer_effect"
+        )
     ) {
         // These coefficients refer to the full crew, not this one officer.
         // The scenario resolves them once effective crew Health is known.

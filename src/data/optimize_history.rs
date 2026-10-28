@@ -417,6 +417,7 @@ fn crew_record_to_ranked_anchor(r: &OptimizeHistoryCrewRecord) -> RankedCrewResu
         (r.win_rate * 0.8 + r.avg_hull_remaining * 0.2) as f32
     };
     RankedCrewResult {
+        unsupported_crew_health_effects: None,
         captain: r.captain.trim().to_string(),
         bridge: r.bridge.clone(),
         below_decks: r.below_decks.clone(),

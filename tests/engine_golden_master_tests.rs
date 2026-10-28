@@ -12,6 +12,10 @@
 //! ```
 //! …then review the fixture diff like any other behavior change.
 //!
+//! The isolytic/apex synthetic scenario was intentionally updated when the
+//! isolytic leg moved before conventional mitigation for both participants.
+//! The other scenarios and all win/round/trace fields remained unchanged.
+//!
 //! Floats are compared with 1e-9 relative tolerance instead of bitwise equality: `powf` may
 //! differ by ULPs across libm implementations (macOS/ARM vs CI/x86), and `round_f64` (6 decimals)
 //! does not fully quantize large magnitudes. 1e-9 is far below any real behavior change (an RNG

@@ -164,6 +164,16 @@ pub enum AbilityEffect {
     /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
     /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
     CritChanceBonus(f64),
+    /// Additive reduction to the opposing ship's critical-hit chance. Resolved
+    /// on incoming fire only while the combat-begin conditions hold.
+    HostileCritChanceReduction(f64),
+    /// Officer effect whose target, units or timing are not yet represented.
+    /// Keep the original coefficient/chance for diagnostics;
+    /// it has no combat effect and consumes no RNG roll.
+    UnsupportedOfficerEffect {
+        coefficient: f64,
+        chance: f64,
+    },
     /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
     /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
     CritDamageMultiplier(f64),
@@ -646,10 +656,10 @@ pub enum AbilityCondition {
     /// True when [`CombatContext::engagement_enemy_types`] lists this tag (e.g. group armadas only).
     EngagementIncludes(EnemyType),
     /// True when the engagement battle-type id is in this allow-list.
-    /// If battle type is unavailable in context, this condition currently evaluates leniently true.
+    /// If battle type is unavailable in context, this condition fails closed.
     CombatBattleTypeAny(Vec<u32>),
     /// True when defender level is <= max_level.
-    /// If defender level is unavailable in context, this condition currently evaluates leniently true.
+    /// If defender level is unavailable in context, this condition fails closed.
     DefenderLevelAtMost(u32),
     /// Constant used when a canonical token has no dynamic [`CombatContext`] signal yet, but the
     /// Kobayashi **ship-vs-hostile** scenario fixes its truth value (see `docs/CANONICAL_CONDITIONS.md`).
@@ -1035,7 +1045,16 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *chance = cap_one(*chance);
             *bonus = scale(*bonus);
         }
-        AbilityEffect::CritChanceBonus(c) => *c = cap_one(*c),
+        AbilityEffect::CritChanceBonus(c) | AbilityEffect::HostileCritChanceReduction(c) => {
+            *c = cap_one(*c)
+        }
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient,
+            chance,
+        } => {
+            *coefficient = scale(*coefficient);
+            *chance = cap_one(*chance);
+        }
         AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
         AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
             *m = scale(*m)
@@ -1184,6 +1203,7 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
             }
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
+            AbilityEffect::HostileCritChanceReduction(c) => *c *= multiplier,
             // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness
             // debuff would push a crit below ×1.0 (weaker than a normal hit).
             AbilityEffect::CritDamageMultiplier(c) => {

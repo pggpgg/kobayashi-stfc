@@ -1547,7 +1547,10 @@ mod integration_tests {
             "the regression needs a real tiered ship and hostile"
         );
         assert_eq!(first.win_rate, expected[0].win_rate);
-        assert_eq!(first.avg_hull_remaining, expected[0].avg_hull_remaining);
+        assert_eq!(
+            first.avg_hull_remaining, expected[0].avg_hull_remaining,
+            "candidate={candidate:?}"
+        );
         assert_eq!(first.r1_kill_rate, expected[0].r1_kill_rate);
     }
 

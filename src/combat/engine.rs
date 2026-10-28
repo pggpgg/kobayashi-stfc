@@ -3571,8 +3571,11 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 ]),
             });
 
-            let pre_attack_damage =
-                effective_attack * damage_through_factor * crit_multiplier * proc_multiplier;
+            // Isolytic damage bypasses conventional mitigation. Keep the
+            // pre-mitigation weapon leg separate from the mitigated standard
+            // leg through the same attack-phase modifiers.
+            let unmitigated_weapon_damage = effective_attack * crit_multiplier * proc_multiplier;
+            let pre_attack_damage = unmitigated_weapon_damage * damage_through_factor;
             phase_effects.set_pre_attack_damage_base(pre_attack_damage);
             let pre_attack_damage = phase_effects.composed_pre_attack_damage();
             let damage = phase_effects.compose_attack_phase_damage(pre_attack_damage);
@@ -3601,7 +3604,10 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 }
             });
 
-            // Isolytic: from pre-apex standard damage; report formula: isolytic taken = Isolytic Damage / (1 + I_def).
+            // Isolytic bypasses conventional mitigation but remains subject to
+            // isolytic defense and the final Apex Barrier. Its base shares
+            // attack-phase multipliers but not conventional piercing flats.
+            // https://startrekfleetcommand.com/news/update-55-voyager-part-2/
             let effective_isolytic_damage = (attacker.isolytic_damage
                 + phase_effects.composed_isolytic_damage_bonus())
             .max(0.0);
@@ -3613,7 +3619,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 .composed_isolytic_cascade_damage_bonus()
                 .max(0.0);
             let isolytic_taken = compute_isolytic_taken(
-                damage,
+                phase_effects.compose_isolytic_base_damage(unmitigated_weapon_damage),
                 effective_isolytic_damage,
                 effective_isolytic_defense,
                 effective_isolytic_cascade,
@@ -4113,6 +4119,26 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // clamped to [0, 0.95] inside the resolver — see PR #188).
     let hostile_crit_reduction =
         hostile_crit_damage_reduction_active_at_round(attacker_crew, &defender_ctx, round_index);
+    // Combat-begin enemy crit-chance debuffs affect only counter-fire. Their
+    // conditions (including finite round range) are evaluated on the player's
+    // combat context, rather than the opponent's swapped context.
+    let hostile_crit_chance_reduction: f64 = attacker_crew
+        .seats
+        .iter()
+        .filter(|seat| seat.ability.timing == TimingWindow::CombatBegin)
+        .filter(|seat| {
+            seat.ability
+                .condition
+                .as_ref()
+                .is_none_or(|condition| condition.evaluate(combat_ctx))
+        })
+        .filter_map(|seat| {
+            match scale_effect(seat.ability.effect, st.assimilated_rounds_remaining > 0) {
+                AbilityEffect::HostileCritChanceReduction(value) => Some(value.max(0.0)),
+                _ => None,
+            }
+        })
+        .sum();
     let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
         hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
 
@@ -4390,7 +4416,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         // Counter-side CDR is applied below so the hostile crit floor can clamp after it.
         let def_crit = resolve_vehicle_weapon_crit(
             defender.weapon_crit_chance(weapon_index),
-            defender_phase_effects.crit_chance_bonus(),
+            defender_phase_effects.crit_chance_bonus() - hostile_crit_chance_reduction,
             defender.weapon_crit_multiplier(weapon_index)
                 + defender_phase_effects.base_crit_damage_bonus(),
             defender_phase_effects.crit_damage_multiplier(),
@@ -4452,8 +4478,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         };
         let counter_effective_attack =
             defender_weapon_attack * defender_phase_effects.pre_attack_multiplier();
-        let counter_base_damage =
-            counter_effective_attack * counter_damage_through * def_crit_mult * def_proc_mult;
+        let counter_unmitigated_weapon_damage =
+            counter_effective_attack * def_crit_mult * def_proc_mult;
+        let counter_base_damage = counter_unmitigated_weapon_damage * counter_damage_through;
         defender_phase_effects.set_pre_attack_damage_base(counter_base_damage);
         let counter_pre_attack_damage = defender_phase_effects.composed_pre_attack_damage();
         let counter_after_attack_phase =
@@ -4462,7 +4489,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         // must reduce isolytic taken on counter-fire, not only on outbound shots.
         let attacker_static_iso_def_bonus = weapon_round_base.composed_isolytic_defense_bonus();
         let counter_iso_taken = compute_isolytic_taken(
-            counter_after_attack_phase,
+            defender_phase_effects.compose_isolytic_base_damage(counter_unmitigated_weapon_damage),
             (defender.isolytic_damage + defender_phase_effects.composed_isolytic_damage_bonus())
                 .max(0.0),
             (attacker.isolytic_defense
@@ -5914,6 +5941,91 @@ mod reusable_attacker_tests {
                 assert_batch_matches_traced_scalar(&attacker, &defender, seed);
             }
         }
+    }
+
+    #[test]
+    fn hostile_crit_chance_debuff_is_incoming_only_and_expires() {
+        let ship = |id: &str, crit: f64| Combatant {
+            id: id.into(),
+            hull_health: 100_000.0,
+            weapons: vec![WeaponStats {
+                attack: 1.0,
+                shots: Some(1),
+                crit_chance: Some(crit),
+                crit_multiplier: Some(2.0),
+                ..WeaponStats::default()
+            }],
+            ..Combatant::default()
+        };
+        let attacker = ship("player", 0.7);
+        let defender = ship("target", 1.0);
+        let crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    weapon_scope: WeaponTypeScope::All,
+                    name: "Enemy crit chance reduction".into(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::HostileCritChanceReduction(0.6),
+                    condition: Some(AbilityCondition::And(vec![
+                        AbilityCondition::RoundRange { min: 1, max: 2 },
+                        AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+                    ])),
+                },
+                false,
+            )],
+        };
+        let config = SimulationConfig {
+            rounds: 3,
+            trace_mode: TraceMode::Events,
+            ..Default::default()
+        };
+        let fight = |ship_type| {
+            simulate_combat_with_defender_faction_and_defender_crew(
+                &attacker,
+                &defender,
+                &config,
+                &crew,
+                OpponentFactionTag::Unknown,
+                ShipType::Explorer,
+                ship_type,
+                true,
+                false,
+                &CrewConfiguration::default(),
+            )
+        };
+        let matching = fight(ShipType::Battleship);
+        for event in matching
+            .events
+            .iter()
+            .filter(|e| e.event_type == "crit_resolution")
+        {
+            let chance = event.values["effective_crit_chance"].as_f64().unwrap();
+            let expected = if event.phase == "counter" && event.round_index <= 2 {
+                0.4
+            } else if event.phase == "counter" {
+                1.0
+            } else {
+                0.7
+            };
+            assert!((chance - expected).abs() < 1e-9, "{event:?}");
+        }
+        assert_eq!(
+            matching
+                .events
+                .iter()
+                .filter(|e| e.event_type == "crit_resolution" && e.phase == "counter")
+                .count(),
+            3
+        );
+        let nonmatching = fight(ShipType::Explorer);
+        assert!(nonmatching
+            .events
+            .iter()
+            .filter(|e| e.event_type == "crit_resolution" && e.phase == "counter")
+            .all(|e| e.values["effective_crit_chance"].as_f64() == Some(1.0)));
     }
 
     #[test]

@@ -28,7 +28,7 @@ use super::scenario::{
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
     pub candidate: CrewCandidate,
-    /// True when crew-health-scaled raw stat effects could not be evaluated;
+    /// True when an officer effect or required raw-stat context could not be evaluated;
     /// None for historical results that did not persist this diagnostic.
     pub unsupported_crew_health_effects: Option<bool>,
     /// Monte Carlo trials actually executed (may be less than requested when scout early-stop fires).
@@ -382,6 +382,35 @@ pub(super) fn unsupported_crew_health_effects(
                     || params.defender_stats.dodge > 0.0
             }),
     ) || unsupported_defender_raw_effects(&input.defender_crew)
+        // Battle type is not currently carried in CombatSimulationInput. Do
+        // not evaluate type-gated effects as unconditional; identify them in
+        // the same result diagnostic as other unsupported combat mechanics.
+        || crew_has_unavailable_condition(&input.crew, input.defender_level.is_none())
+        || crew_has_unavailable_condition(&input.defender_crew, input.defender_level.is_none())
+}
+
+fn crew_has_unavailable_condition(
+    crew: &crate::combat::CrewConfiguration,
+    level_unknown: bool,
+) -> bool {
+    use crate::combat::AbilityCondition;
+    fn unavailable(condition: &AbilityCondition, level_unknown: bool) -> bool {
+        match condition {
+            AbilityCondition::CombatBattleTypeAny(_) => true,
+            AbilityCondition::DefenderLevelAtMost(_) => level_unknown,
+            AbilityCondition::Not(inner) => unavailable(inner, level_unknown),
+            AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
+                parts.iter().any(|part| unavailable(part, level_unknown))
+            }
+            _ => false,
+        }
+    }
+    crew.seats.iter().any(|seat| {
+        seat.ability
+            .condition
+            .as_ref()
+            .is_some_and(|condition| unavailable(condition, level_unknown))
+    })
 }
 
 fn unsupported_defender_raw_effects(crew: &crate::combat::CrewConfiguration) -> bool {
@@ -391,8 +420,10 @@ fn unsupported_defender_raw_effects(crew: &crate::combat::CrewConfiguration) -> 
             seat.ability.effect,
             AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. }
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
         )
     })
 }
@@ -405,7 +436,8 @@ fn unsupported_crew_health_effects_for_crew(
     use crate::combat::AbilityEffect;
     crew.seats.iter().any(|seat| match seat.ability.effect {
         AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
-        | AbilityEffect::BaseMitigationStatsPerCrewHealth(_) => true,
+        | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+        | AbilityEffect::UnsupportedOfficerEffect { .. } => true,
         AbilityEffect::BaseArmorPiercingAdd(value) if value != 0.0 => !has_outbound_raw,
         AbilityEffect::BaseMitigationStatsAdd(value) if value != 0.0 => !has_inbound_raw,
         _ => false,
@@ -1820,6 +1852,41 @@ mod tests {
     use super::*;
 
     #[test]
+    fn repeated_registry_scenario_inputs_are_bitwise_stable() {
+        let registry = DataRegistry::load().expect("registry");
+        let candidate = CrewCandidate {
+            captain: "SNW Pike".into(),
+            bridge: vec!["Navi".into(), "SNW La'an".into()],
+            below_decks: vec![],
+        };
+        let build = || {
+            build_shared_scenario_data_from_registry(
+                registry.as_ref(),
+                "gorn_eviscerator",
+                "447012258",
+                Some(10),
+                Some(50),
+                Some("demo"),
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            )
+        };
+        let a = build();
+        for _ in 0..40 {
+            let b = build();
+            assert_eq!(a.profile.bonuses, b.profile.bonuses);
+            let one = scenario_to_combat_input_from_shared(&a, &candidate, 41);
+            let two = scenario_to_combat_input_from_shared(&b, &candidate, 41);
+            assert_eq!(one.attacker, two.attacker);
+            assert_eq!(one.defender, two.defender);
+            assert_eq!(one.crew, two.crew);
+            assert_eq!(one.defender_crew, two.defender_crew);
+        }
+    }
+
+    #[test]
     fn crew_health_diagnostic_detects_unresolved_and_missing_raw_context() {
         use crate::combat::{
             Ability, AbilityClass, AbilityEffect, CrewConfiguration, CrewSeat, CrewSeatContext,
@@ -1842,6 +1909,11 @@ mod tests {
         };
         assert!(unsupported_crew_health_effects_for_crew(&crew, true, true));
         assert!(unsupported_defender_raw_effects(&crew));
+        crew.seats[0].ability.effect = AbilityEffect::HostileCritChanceReduction(0.45);
+        assert!(
+            unsupported_defender_raw_effects(&crew),
+            "defender-side crit reduction is not modeled"
+        );
         crew.seats[0].ability.effect = AbilityEffect::BaseMitigationStatsPerCrewHealth(18.0);
         assert!(unsupported_crew_health_effects_for_crew(&crew, true, true));
         assert!(unsupported_defender_raw_effects(&crew));
@@ -1857,6 +1929,44 @@ mod tests {
         assert!(!unsupported_crew_health_effects_for_crew(
             &crew, false, false
         ));
+        crew.seats[0].ability.effect = AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: 3.0,
+            chance: 0.4,
+        };
+        assert!(unsupported_crew_health_effects_for_crew(&crew, true, true));
+        assert!(unsupported_defender_raw_effects(&crew));
+    }
+
+    #[test]
+    fn diagnostics_identify_unknown_nested_battle_type_and_level() {
+        use crate::combat::{
+            Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewConfiguration, CrewSeat,
+            CrewSeatContext, TimingWindow,
+        };
+        let mut crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "unknown scenario".into(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::CritChanceBonus(0.1),
+                    condition: Some(AbilityCondition::Not(Box::new(
+                        AbilityCondition::CombatBattleTypeAny(vec![2]),
+                    ))),
+                    weapon_scope: Default::default(),
+                },
+                false,
+            )],
+        };
+        assert!(crew_has_unavailable_condition(&crew, false));
+        crew.seats[0].ability.condition = Some(AbilityCondition::Or(vec![
+            AbilityCondition::LiteralBool(true),
+            AbilityCondition::DefenderLevelAtMost(60),
+        ]));
+        assert!(crew_has_unavailable_condition(&crew, true));
+        assert!(!crew_has_unavailable_condition(&crew, false));
     }
 
     #[test]

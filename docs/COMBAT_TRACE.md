@@ -78,6 +78,13 @@ is not interchangeable with the game's raw isolytic export column. Mixed standar
 and isolytic attribution is a proportional accounting convention after their
 shared routing, not an independently verified server rule.
 
+The modeled isolytic leg uses the weapon damage before conventional mitigation,
+then applies isolytic defense. The standard leg uses conventional mitigation;
+the final Apex factor applies to their combined pool. This follows Scopely's
+[isolytic description](https://startrekfleetcommand.com/news/update-55-voyager-part-2/)
+and [Apex description](https://startrekfleetcommand.com/news/new-battle-stat-apex-barrier-modifier/).
+These modeled values do not by themselves reproduce the game's raw telemetry columns.
+
 ## Stack resolution (crew buffs)
 
 Static and timed effects are composed in [`src/combat/stacking.rs`](../src/combat/stacking.rs) (base → modifier → flat → multiply → cap). Per-round, [`EffectAccumulator`](../src/combat/effect_accumulator.rs) maps LCARS stats into keys such as:
