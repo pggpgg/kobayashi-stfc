@@ -94,6 +94,7 @@ fn mitigation_event(raw_context: bool, bonus: f64) -> serde_json::Map<String, se
                 shield_deflection: 677.0,
                 dodge: 29.0,
             },
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: AttackerStats {
                 armor_piercing: 750.0,
                 shield_piercing: 750.0,

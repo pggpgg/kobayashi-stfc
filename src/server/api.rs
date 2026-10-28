@@ -948,6 +948,7 @@ pub fn simulate_payload(
         pvp,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
+        unsupported_crew_health_effects: None,
         candidate: CrewCandidate {
             captain,
             bridge,
@@ -980,6 +981,11 @@ pub fn simulate_payload(
     let ci = binomial_95_ci(wins, num_sims);
 
     let mut warnings = Vec::new();
+    match result.unsupported_crew_health_effects {
+        Some(true) => warnings.push("A raw-stat ability cannot be evaluated because crew Health or required raw-stat context was unavailable. The effect is omitted if its condition applies.".to_string()),
+        None => warnings.push("Crew-Health-scaled ability support could not be checked for this result.".to_string()),
+        Some(false) => {}
+    }
     if let Some(v) = &req.support_buffs {
         if v.len() > support_buffs::MAX_SUPPORT_BUFFS_PER_REQUEST {
             warnings.push(format!(
@@ -1263,6 +1269,9 @@ pub fn compare_crews_payload(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
                 .to_string(),
         );
+    }
+    if outcome.unsupported_crew_health_effects {
+        warnings.push("At least one crew has a raw-stat ability that cannot be evaluated because crew Health or required raw-stat context was unavailable. The effect is omitted if its condition applies.".to_string());
     }
     if let Some(message) = roster_import_fallback_warning_message(profile_id) {
         warnings.push(message);
@@ -1657,6 +1666,9 @@ pub fn replay_optimize_seed_payload(
             "Ship or hostile did not resolve from loaded data; combat used deterministic placeholder stats."
                 .to_string(),
         );
+    }
+    if replay.unsupported_crew_health_effects {
+        warnings.push("A raw-stat ability cannot be evaluated because crew Health or required raw-stat context was unavailable. The effect is omitted if its condition applies.".to_string());
     }
     if let Some(message) = roster_import_fallback_warning_message(profile_id) {
         warnings.push(message);

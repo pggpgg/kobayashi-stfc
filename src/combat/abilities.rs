@@ -151,6 +151,12 @@ pub enum AbilityEffect {
     /// Raw points added to armor, shield deflection and dodge, after base scaling.
     /// Requires raw-stat context; it is never converted into mitigation probability.
     BaseMitigationStatsAdd(f64),
+    /// Raw armor-piercing points, applied before mitigation is calculated.
+    BaseArmorPiercingAdd(f64),
+    /// Deferred setup coefficient; scenario construction resolves it to raw points.
+    BaseArmorPiercingPerCrewHealth(f64),
+    /// Deferred setup coefficient; scenario construction resolves it to raw points.
+    BaseMitigationStatsPerCrewHealth(f64),
     /// Officer-granted dodge bonus; additive fraction (e.g. 0.10 = +10% dodge).
     /// Dodge is ship-type-weighted in the mitigation formula: interceptors benefit proportionally
     /// more from dodge than battleships. Applied to the player's effective mitigation on counter-fire.
@@ -1055,6 +1061,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsBonus(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
+        AbilityEffect::BaseArmorPiercingAdd(v) => *v = scale(*v),
+        AbilityEffect::BaseArmorPiercingPerCrewHealth(v)
+        | AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => *v = scale(*v),
         AbilityEffect::DodgeBonus(v) => *v = cap_one(*v),
         AbilityEffect::IsolyticDamageBonus(v) => *v = scale(*v),
         AbilityEffect::IsolyticDefenseBonus(v) => *v = scale(*v),

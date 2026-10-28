@@ -492,6 +492,13 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
         "armor" => Some(AbilityModifierSpec::MitigationAdditive),
         "base_mitigation_stats_add" => Some(AbilityModifierSpec::BaseMitigationStatsAdd),
+        "base_mitigation_stats_per_crew_health" => {
+            Some(AbilityModifierSpec::BaseMitigationStatsPerCrewHealth)
+        }
+        "base_armor_piercing_per_crew_health" => {
+            Some(AbilityModifierSpec::BaseArmorPiercingPerCrewHealth)
+        }
+        "base_armor_piercing_add" => Some(AbilityModifierSpec::BaseArmorPiercingAdd),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
         "accuracy" => Some(AbilityModifierSpec::Accuracy),
@@ -585,6 +592,14 @@ fn effect_value_with_officer_stat(
     officer_stats: Option<&LcarsLevelStats>,
 ) -> (Option<f64>, Option<OfficerStatScaling>) {
     let base_value = effect_value_at_officer_tier(effect, tier);
+    if matches!(
+        effect.stat.as_deref(),
+        Some("base_mitigation_stats_per_crew_health" | "base_armor_piercing_per_crew_health")
+    ) {
+        // These coefficients refer to the full crew, not this one officer.
+        // The scenario resolves them once effective crew Health is known.
+        return (base_value, None);
+    }
     let Some(ref scaling) = effect.scaling else {
         return (base_value, None);
     };

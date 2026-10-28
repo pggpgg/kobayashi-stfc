@@ -550,7 +550,10 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         total_isolytic_damage: 0.0,
         defender_shield_remaining: defender.shield_health.max(0.0),
         attacker_shield_remaining: attacker.shield_health.max(0.0),
-        total_attacker_hull_damage: config.initial_attacker_hull_damage.clamp(0.0, max_att_hull),
+        // A conditional max-hull bonus can make the carried damage exceed the
+        // unbuffed maximum while the ship still has hull. Do not erase it before
+        // the combat-begin max-HP effects have been applied.
+        total_attacker_hull_damage: config.initial_attacker_hull_damage.max(0.0),
         attacker_hull_gross_damage_this_round: 0.0,
         attacker_hull_gross_damage_last_round: 0.0,
         attacker_shield_gross_damage_this_round: 0.0,
@@ -663,6 +666,28 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
     let conqueror_borg_beam_suppression = setup.conqueror_borg_beam_suppression;
     let combat_begin_assimilated = st.assimilated_rounds_remaining > 0;
+    // Launch-time max hull must already be reflected in the vitals sampled by
+    // round-start conditions. In particular, a chain can carry more damage than
+    // the unbuffed hull maximum while still having hull left after a launch buff.
+    // Record the applied factor so the ordinary per-round update does not
+    // compound it. Combat-begin shield handling is unchanged here.
+    let begin_hull_bonus: f64 = combat_begin_filtered
+        .iter()
+        .filter(|effect| effect.weapon_scope == WeaponTypeScope::All)
+        .filter_map(
+            |effect| match scale_active_effect(effect, combat_begin_assimilated) {
+                AbilityEffect::HullHpMultiplier(value) if value.is_finite() => Some(value),
+                _ => None,
+            },
+        )
+        .sum();
+    if begin_hull_bonus.is_finite() && begin_hull_bonus != 0.0 {
+        let factor = 1.0 + begin_hull_bonus;
+        if factor.is_finite() && factor >= 0.0 {
+            attacker.hull_health = max_att_hull * factor;
+            st.attacker_hull_hp_multiplier_factor = factor;
+        }
+    }
     apply_combat_begin_phase(
         &mut trace,
         &mut rng,
@@ -1073,6 +1098,19 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 }
             })
             .sum();
+        let attacker_base_armor_piercing_add: f64 = combat_begin_round_level
+            .iter()
+            .map(|effect| scale_active_effect(effect, combat_begin_assimilated_this_round))
+            .chain(
+                full_round_start
+                    .iter()
+                    .map(|effect| scale_active_effect(effect, round_start_assimilated)),
+            )
+            .filter_map(|effect| match effect {
+                AbilityEffect::BaseArmorPiercingAdd(raw) => Some(raw),
+                _ => None,
+            })
+            .sum();
         let mut round_start_weapon_scoped = round_start_weapon_scoped;
         let round_start_extra: Vec<_> = full_round_start
             .iter()
@@ -1241,9 +1279,15 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
         let (round_hull_hp_mult, round_shield_hp_mult) = {
             let (mut hull, mut shield) = EffectAccumulator::sum_max_hp_multipliers_from_effects(
+                &combat_begin_round_level,
+                combat_begin_assimilated_this_round,
+            );
+            let (start_hull, start_shield) = EffectAccumulator::sum_max_hp_multipliers_from_effects(
                 &full_round_start,
                 round_start_assimilated,
             );
+            hull += start_hull;
+            shield += start_shield;
             let (atk_hull, atk_shield) = EffectAccumulator::sum_max_hp_multipliers_from_effects(
                 &attack_phase_filtered,
                 attack_phase_assimilated,
@@ -1547,6 +1591,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 emit_snapshots,
                 use_simd_outbound_weapon_path,
                 attacker_accuracy_bonus,
+                attacker_base_armor_piercing_add,
                 phase_effects: &mut phase_effects,
                 hull_breach_effects,
                 defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
@@ -2955,6 +3000,7 @@ struct FireAttackerWeapon<'a> {
     emit_snapshots: bool,
     use_simd_outbound_weapon_path: bool,
     attacker_accuracy_bonus: f64,
+    attacker_base_armor_piercing_add: f64,
     phase_effects: &'a mut EffectAccumulator,
     hull_breach_effects: &'a [ActiveAbilityEffect],
     defender_inbound_defense_filtered: &'a [ActiveAbilityEffect],
@@ -3000,6 +3046,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         emit_snapshots,
         use_simd_outbound_weapon_path,
         attacker_accuracy_bonus,
+        attacker_base_armor_piercing_add,
         phase_effects,
         hull_breach_effects,
         defender_inbound_defense_filtered,
@@ -3065,9 +3112,40 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             });
 
             let mut mitigation_trace_breakdown = None;
+            let mut armor_piercing_delta = 0.0;
             let effective_mitigation = if let Some(params) = &defender.hostile_mitigation_params {
                 let mut adjusted_attacker = params.base_attacker_stats;
                 adjusted_attacker.accuracy += attacker_accuracy_bonus;
+                if attacker_base_armor_piercing_add != 0.0 {
+                    let without_addition = params
+                        .base_attacker_weapon_stats
+                        .get(weapon_index)
+                        .copied()
+                        .unwrap_or(params.base_attacker_stats);
+                    let mut with_addition = without_addition;
+                    with_addition.armor_piercing =
+                        (with_addition.armor_piercing + attacker_base_armor_piercing_add).max(0.0);
+                    adjusted_attacker.armor_piercing = (adjusted_attacker.armor_piercing
+                        + attacker_base_armor_piercing_add)
+                        .max(0.0);
+                    let pierce_defender_stats = params
+                        .weapon_pierce_defender_stats
+                        .unwrap_or(params.defender_stats);
+                    armor_piercing_delta = pierce_damage_through_bonus(
+                        pierce_defender_stats,
+                        with_addition,
+                        params.ship_type,
+                    ) - pierce_damage_through_bonus(
+                        pierce_defender_stats,
+                        without_addition,
+                        params.ship_type,
+                    );
+                    // Existing weapon pierce is precomputed from the same row
+                    // and receives this same morale factor above.
+                    if combat_ctx.attacker_morale_active {
+                        armor_piercing_delta *= 1.0 + MORALE_PIERCING_BONUS;
+                    }
+                }
                 // Morale: +10% on all piercing stats, applied last (after all other bonuses).
                 if combat_ctx.attacker_morale_active {
                     adjusted_attacker = apply_morale_piercing(adjusted_attacker);
@@ -3194,7 +3272,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             // Damage-through factor: fraction of attack that gets through (can exceed 1.0 with pierce).
             let damage_through_factor = compute_damage_through_factor(
                 mitigation_multiplier,
-                effective_pierce,
+                effective_pierce + armor_piercing_delta,
                 combined_defense_mitigation_bonus,
             );
             trace.record_if(|| CombatEvent {
@@ -3207,13 +3285,29 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                     ..EventSource::default()
                 },
                 weapon_index: None,
-                values: Map::from_iter([
-                    ("pierce".to_string(), Value::from(effective_pierce)),
-                    (
-                        "damage_through_factor".to_string(),
-                        Value::from(round_f64(damage_through_factor)),
-                    ),
-                ]),
+                values: {
+                    let mut values = Map::from_iter([
+                        (
+                            "pierce".to_string(),
+                            Value::from(effective_pierce + armor_piercing_delta),
+                        ),
+                        (
+                            "damage_through_factor".to_string(),
+                            Value::from(round_f64(damage_through_factor)),
+                        ),
+                    ]);
+                    if attacker_base_armor_piercing_add != 0.0 {
+                        values.insert(
+                            "armor_piercing_raw_add".to_string(),
+                            Value::from(attacker_base_armor_piercing_add),
+                        );
+                        values.insert(
+                            "armor_piercing_raw_context_available".to_string(),
+                            Value::Bool(defender.hostile_mitigation_params.is_some()),
+                        );
+                    }
+                    values
+                },
             });
 
             let hull_breach_active = st.defender_hull_breach_rounds > 0;
@@ -5703,7 +5797,9 @@ pub fn simulate_combat_with_defender_faction_and_defender_crew(
 #[cfg(test)]
 mod reusable_attacker_tests {
     use super::*;
-    use crate::combat::abilities::{Ability, AbilityClass, CrewSeat, CrewSeatContext};
+    use crate::combat::abilities::{
+        Ability, AbilityClass, AbilityCondition, CrewSeat, CrewSeatContext,
+    };
 
     fn batch_test_ship(id: &str, attack: f64, hull: f64, shots: u32) -> Combatant {
         Combatant {
@@ -5863,6 +5959,371 @@ mod reusable_attacker_tests {
             "a continuously active +10% max-hull row should yield one +10% pool, got {}",
             result.attacker_hull_remaining
         );
+    }
+
+    #[test]
+    fn combat_begin_conditional_max_hull_preserves_preexisting_damage() {
+        let attacker = Combatant {
+            id: "attacker".into(),
+            hull_health: 1000.0,
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "defender".into(),
+            hull_health: 10000.0,
+            ..Combatant::default()
+        };
+        let crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    weapon_scope: WeaponTypeScope::All,
+                    name: "Conditional max hull".into(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::HullHpMultiplier(0.5),
+                    condition: Some(AbilityCondition::AttackerShipTypeIs(ShipType::Battleship)),
+                },
+                false,
+            )],
+        };
+        let config = SimulationConfig {
+            rounds: 4,
+            initial_attacker_hull_damage: 700.0,
+            ..SimulationConfig::default()
+        };
+        let fight = |config: &SimulationConfig, ship_type| {
+            simulate_combat_with_defender_faction_and_defender_crew(
+                &attacker,
+                &defender,
+                config,
+                &crew,
+                OpponentFactionTag::Unknown,
+                ShipType::Explorer,
+                ship_type,
+                true,
+                false,
+                &CrewConfiguration::default(),
+            )
+        };
+        assert_eq!(
+            fight(&config, ShipType::Battleship).attacker_hull_remaining,
+            800.0
+        );
+        assert_eq!(
+            fight(&config, ShipType::Explorer).attacker_hull_remaining,
+            300.0
+        );
+        let high_damage = SimulationConfig {
+            initial_attacker_hull_damage: 1100.0,
+            ..config
+        };
+        assert_eq!(
+            fight(&high_damage, ShipType::Battleship).attacker_hull_remaining,
+            400.0
+        );
+    }
+
+    #[test]
+    fn combat_begin_max_hull_precedes_round_start_hull_thresholds() {
+        let attacker = Combatant {
+            id: "attacker".into(),
+            hull_health: 1000.0,
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "defender".into(),
+            hull_health: 10000.0,
+            ..Combatant::default()
+        };
+        let seat = |name: &str, timing, effect, condition| {
+            CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    weapon_scope: WeaponTypeScope::All,
+                    name: name.into(),
+                    class: AbilityClass::BridgeAbility,
+                    timing,
+                    boostable: false,
+                    effect,
+                    condition,
+                },
+                false,
+            )
+        };
+        let crew = CrewConfiguration {
+            seats: vec![
+                seat(
+                    "Launch max hull",
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::HullHpMultiplier(0.5),
+                    Some(AbilityCondition::AttackerShipTypeIs(ShipType::Battleship)),
+                ),
+                seat(
+                    "Low hull repair",
+                    TimingWindow::RoundStart,
+                    AbilityEffect::HullRegen(100.0),
+                    Some(AbilityCondition::StatBelow {
+                        stat: "attacker_hull_hp".into(),
+                        threshold_pct: 0.5,
+                    }),
+                ),
+            ],
+        };
+        let fight = |damage, ship_type| {
+            simulate_combat_with_defender_faction_and_defender_crew(
+                &attacker,
+                &defender,
+                &SimulationConfig {
+                    rounds: 1,
+                    initial_attacker_hull_damage: damage,
+                    ..SimulationConfig::default()
+                },
+                &crew,
+                OpponentFactionTag::Unknown,
+                ShipType::Explorer,
+                ship_type,
+                true,
+                false,
+                &CrewConfiguration::default(),
+            )
+        };
+        // 800 / 1500 is above 50%; an unbuffed 300 / 1000 would falsely trigger repair.
+        assert_eq!(
+            fight(700.0, ShipType::Battleship).attacker_hull_remaining,
+            800.0
+        );
+        // 600 / 1500 is below 50%, so the repair should trigger.
+        assert_eq!(
+            fight(900.0, ShipType::Battleship).attacker_hull_remaining,
+            700.0
+        );
+        // A nonmatching launch gate must retain the unbuffed threshold behavior.
+        assert_eq!(
+            fight(700.0, ShipType::Explorer).attacker_hull_remaining,
+            400.0
+        );
+    }
+
+    #[test]
+    fn raw_armor_piercing_uses_each_weapon_baseline_and_exposes_missing_context() {
+        use crate::combat::types::{AttackerStats, DefenderStats, HostileMitigationParams};
+        let defense = DefenderStats {
+            armor: 200.0,
+            shield_deflection: 200.0,
+            dodge: 200.0,
+        };
+        let aggregate = AttackerStats {
+            armor_piercing: 100.0,
+            shield_piercing: 100.0,
+            accuracy: 100.0,
+        };
+        let weapons = [
+            AttackerStats {
+                armor_piercing: 10.0,
+                ..aggregate
+            },
+            AttackerStats {
+                armor_piercing: 1000.0,
+                ..aggregate
+            },
+        ];
+        let attacker = Combatant {
+            id: "attacker".into(),
+            hull_health: 1000.0,
+            weapons: weapons
+                .iter()
+                .map(|stats| WeaponStats {
+                    attack: 10.0,
+                    shots: Some(1),
+                    pierce: Some(pierce_damage_through_bonus(
+                        defense,
+                        *stats,
+                        ShipType::Battleship,
+                    )),
+                    ..WeaponStats::default()
+                })
+                .collect(),
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "defender".into(),
+            hull_health: 1e8,
+            hostile_mitigation_params: Some(HostileMitigationParams {
+                round_native_defense_stats: false,
+                defender_stats: defense,
+                weapon_pierce_defender_stats: None,
+                base_attacker_stats: aggregate,
+                base_attacker_weapon_stats: weapons.to_vec(),
+                ship_type: ShipType::Battleship,
+                mystery_mitigation_factor: 0.0,
+                floor: 0.0,
+                ceiling: 1.0,
+            }),
+            ..Combatant::default()
+        };
+        let mut crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Bridge,
+                Ability {
+                    name: "raw armor pierce".into(),
+                    class: AbilityClass::BridgeAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::BaseArmorPiercingAdd(80.0),
+                    condition: None,
+                    weapon_scope: WeaponTypeScope::All,
+                },
+                false,
+            )],
+        };
+        let config = SimulationConfig {
+            rounds: 1,
+            trace_mode: TraceMode::Events,
+            ..SimulationConfig::default()
+        };
+        for morale in [false, true] {
+            if morale {
+                crew.seats.push(CrewSeatContext::legacy(
+                    CrewSeat::Bridge,
+                    Ability {
+                        name: "morale".into(),
+                        class: AbilityClass::BridgeAbility,
+                        timing: TimingWindow::RoundStart,
+                        boostable: false,
+                        effect: AbilityEffect::Morale(1.0),
+                        condition: None,
+                        weapon_scope: WeaponTypeScope::All,
+                    },
+                    false,
+                ));
+            }
+            let result = simulate_combat(&attacker, &defender, &config, &crew);
+            let events: Vec<_> = result
+                .events
+                .iter()
+                .filter(|e| e.event_type == "pierce_calc")
+                .collect();
+            assert_eq!(events.len(), 2);
+            for (index, event) in events.iter().enumerate() {
+                let with = AttackerStats {
+                    armor_piercing: weapons[index].armor_piercing + 80.0,
+                    ..weapons[index]
+                };
+                let expected = pierce_damage_through_bonus(defense, with, ShipType::Battleship)
+                    * if morale {
+                        1.0 + MORALE_PIERCING_BONUS
+                    } else {
+                        1.0
+                    };
+                let actual = event.values["pierce"].as_f64().unwrap();
+                assert!(
+                    (actual - expected).abs() < 1e-12,
+                    "weapon {index}, morale {morale}: {actual} != {expected}"
+                );
+                assert_eq!(event.values["armor_piercing_raw_context_available"], true);
+            }
+        }
+        // Missing per-weapon rows use the aggregate baseline that was used
+        // when that weapon's precomputed pierce value was built.
+        let mut fallback_attacker = attacker.clone();
+        fallback_attacker.weapons[1].pierce = Some(pierce_damage_through_bonus(
+            defense,
+            aggregate,
+            ShipType::Battleship,
+        ));
+        let mut fallback_defender = defender.clone();
+        fallback_defender
+            .hostile_mitigation_params
+            .as_mut()
+            .unwrap()
+            .base_attacker_weapon_stats
+            .truncate(1);
+        let fallback = simulate_combat(&fallback_attacker, &fallback_defender, &config, &crew);
+        let events: Vec<_> = fallback
+            .events
+            .iter()
+            .filter(|e| e.event_type == "pierce_calc")
+            .collect();
+        assert_eq!(events.len(), 2);
+        let fallback_boosted = AttackerStats {
+            armor_piercing: aggregate.armor_piercing + 80.0,
+            ..aggregate
+        };
+        let expected = pierce_damage_through_bonus(defense, fallback_boosted, ShipType::Battleship)
+            * (1.0 + MORALE_PIERCING_BONUS);
+        assert!((events[1].values["pierce"].as_f64().unwrap() - expected).abs() < 1e-12);
+
+        // Aggregation-style defense scaling affects mitigation, but the
+        // existing per-weapon pierce baseline was built with unscaled defense.
+        // The raw additive delta must use that same baseline.
+        let mut scaled_defender = defender.clone();
+        let params = scaled_defender.hostile_mitigation_params.as_mut().unwrap();
+        params.defender_stats = DefenderStats {
+            armor: 800.0,
+            shield_deflection: 800.0,
+            dodge: 800.0,
+        };
+        params.weapon_pierce_defender_stats = Some(defense);
+        let scaled = simulate_combat(&attacker, &scaled_defender, &config, &crew);
+        let events: Vec<_> = scaled
+            .events
+            .iter()
+            .filter(|e| e.event_type == "pierce_calc")
+            .collect();
+        assert_eq!(events.len(), 2);
+        for (index, event) in events.iter().enumerate() {
+            let with = AttackerStats {
+                armor_piercing: weapons[index].armor_piercing + 80.0,
+                ..weapons[index]
+            };
+            let expected = pierce_damage_through_bonus(defense, with, ShipType::Battleship)
+                * (1.0 + MORALE_PIERCING_BONUS);
+            assert!((event.values["pierce"].as_f64().unwrap() - expected).abs() < 1e-12);
+        }
+        // The mitigation path must continue to use the scaled defense.
+        let mitigation = scaled
+            .events
+            .iter()
+            .find(|e| e.event_type == "mitigation_calc" && e.phase == "defense")
+            .unwrap();
+        let boosted = AttackerStats {
+            armor_piercing: aggregate.armor_piercing + 80.0,
+            ..aggregate
+        };
+        let expected_mitigation = mitigation_breakdown(
+            DefenderStats {
+                armor: 800.0,
+                shield_deflection: 800.0,
+                dodge: 800.0,
+            },
+            apply_morale_piercing(boosted),
+            ShipType::Battleship,
+            0.0,
+        )
+        .raw_mitigation;
+        assert!(
+            (mitigation.values["mitigation"].as_f64().unwrap() - expected_mitigation).abs() < 1e-6
+        );
+
+        let no_context = Combatant {
+            hostile_mitigation_params: None,
+            ..defender
+        };
+        let result = simulate_combat(&attacker, &no_context, &config, &crew);
+        let events: Vec<_> = result
+            .events
+            .iter()
+            .filter(|e| e.event_type == "pierce_calc")
+            .collect();
+        assert_eq!(events.len(), 2);
+        for (index, event) in events.iter().enumerate() {
+            assert_eq!(event.values["armor_piercing_raw_context_available"], false);
+            assert_eq!(event.values["armor_piercing_raw_add"], 80.0);
+            let expected = attacker.weapons[index].pierce.unwrap() * (1.0 + MORALE_PIERCING_BONUS);
+            assert!((event.values["pierce"].as_f64().unwrap() - expected).abs() < 1e-12);
+        }
     }
 
     #[test]

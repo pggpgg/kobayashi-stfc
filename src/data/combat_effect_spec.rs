@@ -149,6 +149,12 @@ pub enum AbilityModifierSpec {
     BaseMitigationStatsBonus,
     /// Raw amount added to each defense component after its fractional bonuses.
     BaseMitigationStatsAdd,
+    /// Raw points added to armor piercing before the defensive-stat curve.
+    BaseArmorPiercingAdd,
+    /// Coefficient times the effective crew health at combat setup.
+    BaseArmorPiercingPerCrewHealth,
+    /// Coefficient times the effective crew health at combat setup, for all defenses.
+    BaseMitigationStatsPerCrewHealth,
     /// Research/catalog `shield_deflection`; compiles identically to [`MitigationAdditive`](AbilityModifierSpec::MitigationAdditive).
     ShieldDeflection,
     Dodge,

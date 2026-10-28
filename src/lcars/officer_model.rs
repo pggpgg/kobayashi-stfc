@@ -1290,7 +1290,16 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             // the result is raw points on all three defensive stats. Keep this
             // source-backed correction narrow while other officer-stat sources
             // and operation combinations are being verified.
-            if a.ability_id.as_deref() == Some("3192273655")
+            if a.ability_id.as_deref() == Some("2416006584")
+                && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+                && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
+                    == Some(OfficerStat::Health)
+            {
+                // SNW Ortegas: the coefficient applies to total crew Health at
+                // combat start. Keep it deferred until the scenario has profile
+                // and crew-stat conditions; it is not a percentage of Armor.
+                MappedEffect::StatModify("base_mitigation_stats_per_crew_health".into(), "add".into(), val)
+            } else if a.ability_id.as_deref() == Some("3192273655")
                 && op.eq_ignore_ascii_case("MultiplyBaseAdd")
                 && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
                     == Some(OfficerStat::Defense)
@@ -1302,6 +1311,15 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             } else {
                 MappedEffect::StatModify("armor".into(), "add".into(), val)
             }
+        }
+        "ArmorPiercing" if a.ability_id.as_deref() == Some("2825675256")
+            && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+            && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
+                == Some(OfficerStat::Health) =>
+        {
+            // Charvanek's bridge ability scales raw Armor Piercing by total
+            // crew Health, resolved after profile and setup conditions.
+            MappedEffect::StatModify("base_armor_piercing_per_crew_health".into(), "add".into(), val)
         }
         "ArmorPiercing" | "AllPiercing" => {
             MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)

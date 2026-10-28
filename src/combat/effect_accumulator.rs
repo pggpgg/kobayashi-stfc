@@ -1041,6 +1041,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1252,6 +1255,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1425,6 +1431,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1641,6 +1650,9 @@ impl EffectAccumulator {
                 | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
                 | AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::DodgeBonus(_)
                 | AbilityEffect::AccuracyBonus(_) => {}
@@ -1781,6 +1793,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1998,6 +2013,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -2318,6 +2336,17 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::BaseMitigationStatsAdd(v) => {
             AbilityEffect::BaseMitigationStatsAdd(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseArmorPiercingAdd(v) => {
+            AbilityEffect::BaseArmorPiercingAdd(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseArmorPiercingPerCrewHealth(v) => {
+            AbilityEffect::BaseArmorPiercingPerCrewHealth(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => {
+            AbilityEffect::BaseMitigationStatsPerCrewHealth(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
         }
         AbilityEffect::BaseMitigationStatsBonus(v) => {
             AbilityEffect::BaseMitigationStatsBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)

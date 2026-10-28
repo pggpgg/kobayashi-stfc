@@ -443,6 +443,10 @@ pub struct HostileMitigationParams {
     /// Synthetic raw-stat contexts can retain fractional arithmetic with false.
     pub round_native_defense_stats: bool,
     pub defender_stats: DefenderStats,
+    /// Defender raw stats used for the precomputed per-weapon pierce baseline.
+    /// Hostile mitigation abilities can scale `defender_stats` separately; None
+    /// uses that same context for callers constructing combatants directly.
+    pub weapon_pierce_defender_stats: Option<DefenderStats>,
     pub base_attacker_stats: AttackerStats,
     /// Opponent piercing/accuracy in weapon order. Empty/missing rows use aggregate stats.
     pub base_attacker_weapon_stats: Vec<AttackerStats>,

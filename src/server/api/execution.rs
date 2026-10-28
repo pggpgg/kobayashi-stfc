@@ -1187,6 +1187,7 @@ impl OptimizeProgressSink {
 
 fn ranked_crew_to_simulation_result(r: RankedCrewResult) -> SimulationResult {
     SimulationResult {
+        unsupported_crew_health_effects: None,
         candidate: CrewCandidate {
             captain: r.captain,
             bridge: r.bridge,
@@ -2306,6 +2307,12 @@ fn build_optimize_response(
     meta: &OptimizeGatherMeta,
     profile_id: Option<&str>,
 ) -> OptimizeResponse {
+    let unresolved_crew_health = all_results
+        .iter()
+        .any(|r| r.unsupported_crew_health_effects == Some(true));
+    let unknown_crew_health = all_results
+        .iter()
+        .any(|r| r.unsupported_crew_health_effects.is_none());
     let sims = request.sims.unwrap_or(DEFAULT_SIMS);
     let seed = request.seed.unwrap_or(0);
     let chain_grind = request
@@ -2464,6 +2471,12 @@ fn build_optimize_response(
     append_optimize_observations(request, meta, &ranked_results, profile_id, sims, seed);
 
     let mut warnings = Vec::new();
+    if unresolved_crew_health {
+        warnings.push("At least one result has a raw-stat ability that cannot be evaluated because crew Health or required raw-stat context was unavailable. Its score omits the effect if its condition applies.".to_string());
+    }
+    if unknown_crew_health {
+        warnings.push("Crew-Health-scaled ability support could not be checked for one or more stored or reconstructed results.".to_string());
+    }
     if meta.fast_discovery_no_resolved_crews {
         warnings.push(
             "fast_discovery was requested but no heuristic crews resolved after filters; falling back to standard heuristic handling (if any) without warm-start merge."

@@ -68,6 +68,7 @@ fn raw_context() -> HostileMitigationParams {
             shield_deflection: 40.0,
             dodge: 70.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 100.0,
             shield_piercing: 160.0,

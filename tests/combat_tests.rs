@@ -3586,6 +3586,7 @@ fn morale_boosts_all_piercing_stats_in_per_shot_dynamic_mitigation() {
             round_native_defense_stats: false,
             base_attacker_weapon_stats: Vec::new(),
             defender_stats,
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: base_stats,
             ship_type: ShipType::Battleship,
             mystery_mitigation_factor: 0.0,
@@ -4670,6 +4671,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
             shield_deflection: 140.0,
             dodge: 110.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 80.0,
             shield_piercing: 60.0,

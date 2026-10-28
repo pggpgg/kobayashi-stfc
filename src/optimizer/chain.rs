@@ -1,9 +1,7 @@
 //! Sequential chain-grind trials: attacker HHP carries over, SHP full each link (see DESIGN.md).
 
-use crate::combat::{
-    simulate_combat_with_defender_faction_and_defender_crew, OpponentFactionTag, SimulationConfig,
-    TraceMode,
-};
+use crate::combat::engine::{build_combat_setup, simulate_combat_from_setup_reusing_attacker};
+use crate::combat::{OpponentFactionTag, SimulationConfig, TraceMode};
 use serde::{Deserialize, Serialize};
 
 use crate::optimizer::monte_carlo::scenario::{CombatSimulationInput, SharedScenarioData};
@@ -62,7 +60,6 @@ pub(crate) fn run_chain_trial(
     trial_seed: u64,
 ) -> ChainTrialOutcome {
     let n = params.kills_target.max(1);
-    let max_hull = input.attacker.hull_health.max(1.0);
     let def_max = input.defender.hull_health.max(1.0);
     let mut initial_hull_damage = 0.0_f64;
     let mut first_link_r1_clean_win = false;
@@ -101,7 +98,7 @@ pub(crate) fn run_chain_trial(
             emit_state_snapshots: false,
         };
 
-        let result = simulate_combat_with_defender_faction_and_defender_crew(
+        let setup = build_combat_setup(
             &input.attacker,
             &input.defender,
             &combat_config,
@@ -113,6 +110,9 @@ pub(crate) fn run_chain_trial(
             shared.defender_opponent.defender_is_player_ship(),
             &input.defender_crew,
         );
+        let mut attacker = setup.attacker.clone();
+        let result = simulate_combat_from_setup_reusing_attacker(&setup, fight_seed, &mut attacker);
+        let effective_max_hull = attacker.hull_health.max(1.0);
 
         last_def_frac = (result.defender_hull_remaining / def_max).clamp(0.0, 1.0);
 
@@ -139,7 +139,7 @@ pub(crate) fn run_chain_trial(
             first_link_r1_clean_win = true;
         }
 
-        let hull_frac = (result.attacker_hull_remaining / max_hull).clamp(0.0, 1.0);
+        let hull_frac = (result.attacker_hull_remaining / effective_max_hull).clamp(0.0, 1.0);
 
         if link + 1 == n {
             return ChainTrialOutcome {
@@ -151,7 +151,8 @@ pub(crate) fn run_chain_trial(
             };
         }
 
-        initial_hull_damage = (max_hull - result.attacker_hull_remaining).clamp(0.0, max_hull);
+        initial_hull_damage =
+            (effective_max_hull - result.attacker_hull_remaining).clamp(0.0, effective_max_hull);
     }
 
     ChainTrialOutcome {
@@ -180,6 +181,194 @@ pub(crate) fn secondary_draw(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::combat::{
+        Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
+        CrewSeat, CrewSeatContext, ShipType, TimingWindow,
+    };
+    use crate::optimizer::monte_carlo::DefenderOpponent;
+
+    fn test_shared() -> SharedScenarioData {
+        SharedScenarioData {
+            ship: "test".into(),
+            hostile: "test".into(),
+            officer_index: Default::default(),
+            profile: Default::default(),
+            lcars_data: None,
+            resolve_options: Default::default(),
+            ship_rec: None,
+            hostile_rec: None,
+            cached_defender: None,
+            cached_rounds: None,
+            cached_defender_hull: None,
+            cached_pierce: None,
+            cached_defender_mitigation: None,
+            using_placeholder_combatants: false,
+            resolved_support_buffs: vec![],
+            applied_support_buffs: vec![],
+            support_static_buffs: Default::default(),
+            support_defender_static_buffs: Default::default(),
+            support_attacker_debuff_static_buffs: Default::default(),
+            unknown_support_buff_ids: vec![],
+            resolved_defender_support_buffs: vec![],
+            resolved_defender_alliance_debuffs: vec![],
+            unknown_defender_support_buff_ids: vec![],
+            unknown_defender_alliance_debuffs_ids: vec![],
+            applied_defender_support_buffs: vec![],
+            applied_defender_alliance_debuffs: vec![],
+            research_derived_seats: vec![],
+            native_defense_derived_seats: vec![],
+            native_defense_rounding: false,
+            forbidden_tech_derived_seats: vec![],
+            borg_alcove_hull_hp_bonus: None,
+            class_gated_torpedo_family_hull_hp_bonus: None,
+            class_gated_torpedo_family_hostile_shield_mitigation_sum: None,
+            defender_opponent: DefenderOpponent::Hostile,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
+            dual_gate_research_hull_hp: 0.0,
+            dual_gate_research_shield_hp: 0.0,
+            engagement_enemy_types: Default::default(),
+            defender_level: None,
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
+            player_defender_officer_seats: vec![],
+            player_defender_static_buffs: Default::default(),
+            defender_officer_stat_totals: Default::default(),
+            defender_bridge_officer_stat_totals: Default::default(),
+            defender_pending_officer_stat_contributions: vec![],
+            pvp: None,
+            defender_ship_rec: None,
+            defender_profile: None,
+            defender_incoming_shield_mitigation_bonus: 0.0,
+            defender_incoming_shield_mitigation_bonus_rounds: 0,
+        }
+    }
+
+    fn test_input() -> CombatSimulationInput {
+        CombatSimulationInput {
+            attacker: Combatant {
+                id: "a".into(),
+                attack: 100.0,
+                hull_health: 1000.0,
+                ..Combatant::default()
+            },
+            defender: Combatant {
+                id: "d".into(),
+                attack: 50.0,
+                hull_health: 150.0,
+                ..Combatant::default()
+            },
+            defender_crew: CrewConfiguration::default(),
+            crew: CrewConfiguration::default(),
+            rounds: 4,
+            defender_hull: 150.0,
+            base_seed: 0,
+            weapon_damage_profile_additive_pool: None,
+            profile_weapon_damage_fraction: 0.0,
+            engagement_enemy_types: Default::default(),
+            defender_level: None,
+            attacker_roster_officer_ids: vec![],
+            incoming_shield_mitigation_bonus: 0.0,
+            incoming_shield_mitigation_bonus_rounds: 0,
+            attacker_hyperthermic_decay_fraction: 0.0,
+            attacker_owner_faction: OpponentFactionTag::Unknown,
+            officer_stat_round: None,
+        }
+    }
+
+    #[test]
+    fn conditional_max_hull_chain_carries_damage_between_fights() {
+        let shared = test_shared();
+        let mut input = test_input();
+        let run = |input: &CombatSimulationInput, kills_target| {
+            run_chain_trial(
+                &shared,
+                input,
+                &ChainGrindParams {
+                    kills_target,
+                    secondary: ChainSecondaryObjective::MinHullDamage,
+                },
+                42,
+            )
+        };
+        let baseline_one = run(&input, 1).hull_fraction_end.unwrap();
+        let baseline_two = run(&input, 2).hull_fraction_end.unwrap();
+        assert!(
+            baseline_two < baseline_one,
+            "unbuffed damage must carry forward"
+        );
+        let old_fight = |seed, damage| {
+            let config = SimulationConfig {
+                rounds: input.rounds,
+                seed,
+                initial_attacker_hull_damage: damage,
+                ..SimulationConfig::default()
+            };
+            crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+                &input.attacker,
+                &input.defender,
+                &config,
+                &input.crew,
+                OpponentFactionTag::Unknown,
+                ShipType::Battleship,
+                ShipType::Battleship,
+                true,
+                false,
+                &input.defender_crew,
+            )
+        };
+        let first = old_fight(42, 0.0);
+        let second = old_fight(
+            42 + FIGHT_SEED_STRIDE,
+            1000.0 - first.attacker_hull_remaining,
+        );
+        assert_eq!(
+            baseline_two,
+            second.attacker_hull_remaining / 1000.0,
+            "unbuffed chain must match the original fight path"
+        );
+        input.crew.seats.push(CrewSeatContext::legacy(
+            CrewSeat::Bridge,
+            Ability {
+                weapon_scope: Default::default(),
+                name: "max hull".into(),
+                class: AbilityClass::BridgeAbility,
+                timing: TimingWindow::CombatBegin,
+                boostable: false,
+                effect: AbilityEffect::HullHpMultiplier(0.5),
+                condition: Some(AbilityCondition::AttackerShipTypeIs(ShipType::Battleship)),
+            },
+            false,
+        ));
+        let one = run(&input, 1).hull_fraction_end.unwrap();
+        let two = run(&input, 2).hull_fraction_end.unwrap();
+        assert!(
+            two < one,
+            "conditional max hull must not erase carried damage: {one} {two}"
+        );
+        assert!(
+            two > baseline_two,
+            "larger pool should retain more hull fraction"
+        );
+        assert_eq!(
+            two,
+            run(&input, 2).hull_fraction_end.unwrap(),
+            "seeded chain must be deterministic"
+        );
+        input.crew.seats[0].ability.condition =
+            Some(AbilityCondition::AttackerShipTypeIs(ShipType::Explorer));
+        assert_eq!(
+            baseline_two,
+            run(&input, 2).hull_fraction_end.unwrap(),
+            "nonmatching gate must preserve baseline"
+        );
+        input.crew.seats[0].ability.condition =
+            Some(AbilityCondition::RoundRange { min: 1, max: 1 });
+        assert_eq!(
+            baseline_two,
+            run(&input, 2).hull_fraction_end.unwrap(),
+            "an expired max-HP effect must not heal carried damage"
+        );
+    }
 
     #[test]
     fn secondary_loot_proxy_monotone() {

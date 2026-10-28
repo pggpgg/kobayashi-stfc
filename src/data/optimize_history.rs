@@ -180,6 +180,7 @@ impl OptimizeHistoryCrewRecord {
 
     pub fn to_simulation_result(&self) -> SimulationResult {
         SimulationResult {
+            unsupported_crew_health_effects: None,
             candidate: CrewCandidate {
                 captain: self.captain.clone(),
                 bridge: self.bridge.clone(),
@@ -720,6 +721,7 @@ pub fn preconfirmed_for_candidates(
 
 fn ranked_to_simulation(r: &RankedCrewResult) -> SimulationResult {
     SimulationResult {
+        unsupported_crew_health_effects: None,
         candidate: CrewCandidate {
             captain: r.captain.clone(),
             bridge: r.bridge.clone(),
@@ -1062,6 +1064,7 @@ mod tests {
 
     fn dummy_sim(candidate: CrewCandidate, win_rate: f64) -> SimulationResult {
         SimulationResult {
+            unsupported_crew_health_effects: None,
             candidate,
             trials_run: 100,
             win_rate,

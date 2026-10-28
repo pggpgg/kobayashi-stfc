@@ -224,6 +224,7 @@ fn scenarios() -> Vec<Scenario> {
             shield_deflection: 1_200.0,
             dodge: 900.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 1_000.0,
             shield_piercing: 1_100.0,
