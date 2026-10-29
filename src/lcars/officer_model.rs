@@ -811,14 +811,21 @@ fn effect_condition_from_canonical(
 fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option<LcarsEffect> {
     let modifier = a.modifier.as_deref().unwrap_or("");
     let mapped = map_modifier(modifier, a)?;
-    let trigger = if modifier == "HullRepair" || modifier == "ShieldRepairPrevRound" {
+    let mapped_trigger = map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"));
+    let trigger = if matches!(&mapped, MappedEffect::StatModify(ref stat, _, _) if stat == "unsupported_officer_effect")
+        && (mapped_trigger == "unknown_trigger" || mapped_trigger.starts_with("unsupported_"))
+    {
+        // This is an inert diagnostic marker, not an unconditional activation.
+        // Preserve the unknown canonical event in source and warn per crew.
+        "on_combat_start"
+    } else if modifier == "HullRepair" || modifier == "ShieldRepairPrevRound" {
         "on_round_start"
     } else if matches!(&mapped, MappedEffect::StatModify(ref stat, _, _) if stat == "accuracy") {
         // Resolver folds this into `static_buffs.accuracy_cb_mult` (combat-begin timing). Canonical
         // RoundStart / ShipLaunched still becomes `passive` so the accuracy loop picks it up.
         "passive"
     } else {
-        map_trigger(a.trigger.as_deref().unwrap_or("ShipLaunched"))
+        mapped_trigger
     };
     let target = map_target(a);
     let op = a.operation.as_deref().unwrap_or("Add");
@@ -890,7 +897,15 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 operator: None,
                 value: None,
                 trigger: Some(trigger.to_string()),
-                duration: Some(LcarsDuration::Permanent("permanent".to_string())),
+                // Morale currently has no duration field in the runtime effect;
+                // do not turn its proc duration into an ability-expiry gate.
+                duration: Some(if state_type == StateType::Morale {
+                    LcarsDuration::Permanent("permanent".to_string())
+                } else {
+                    num_rounds_from_attributes(a.attributes.as_deref())
+                        .map(|rounds| LcarsDuration::Rounds { rounds })
+                        .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+                }),
                 scaling: scaling_from_ranks(&[], &a.chance_by_rank, "AddState", None),
                 condition: cond.clone(),
                 chance: chance_field,
@@ -905,7 +920,13 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 .value_by_rank
                 .iter()
                 .copied()
-                .map(|v| transform_canonical_to_lcars_value(modifier, op, v))
+                .map(|v| {
+                    if stat == "unsupported_officer_effect" {
+                        v
+                    } else {
+                        transform_canonical_to_lcars_value(modifier, op, v)
+                    }
+                })
                 .collect();
             let scaling = scaling_from_ranks(
                 &lcars_values,
@@ -922,6 +943,19 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 LcarsDuration::Rounds {
                     rounds: num_rounds_from_attributes(a.attributes.as_deref()).unwrap_or(2),
                 }
+            } else if matches!(
+                stat.as_str(),
+                "crit_damage"
+                    | "crit_damage_flat"
+                    | "crit_chance"
+                    | "hostile_crit_chance_reduction"
+            ) && a.trigger.as_deref() == Some("CombatStart")
+            {
+                // A source-declared combat-start duration applies from round one;
+                // the combat compiler preserves it as a round-range condition.
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|rounds| LcarsDuration::Rounds { rounds })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
             } else if matches!(
                 stat.as_str(),
                 "officer_attack" | "officer_defense" | "officer_health" | "officer_stat_all"
@@ -1091,9 +1125,15 @@ fn hull_health_condition_from_canonical_attributes(
     target: Option<&str>,
 ) -> Option<LcarsCondition> {
     let threshold_pct = percentage_from_canonical_attributes(attrs)?;
-    let stat = if target
-        .map(|t| t.to_ascii_lowercase().contains("enemy"))
-        .unwrap_or(false)
+    // Native condition 43 (HullHealthBelow) refers to the opponent's hull;
+    // the ability target is the recipient of the effect, not the condition's
+    // subject. Chang and Marcus target SelfShip while checking enemy hull,
+    // while Dezoc targets EnemyShip with the same native condition.
+    let stat = if token.eq_ignore_ascii_case("HullHealthBelow")
+        || (!token.eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
+            && target
+                .map(|t| t.to_ascii_lowercase().contains("enemy"))
+                .unwrap_or(false))
     {
         "hull_hp"
     } else {
@@ -1221,7 +1261,88 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
     let op = a.operation.as_deref().unwrap_or("Add");
     let chance = a.chance_by_rank.first().copied().unwrap_or(1.0);
 
+    // These source abilities require combat operations or target/trigger
+    // semantics not yet represented by the runtime. Retain their coefficients
+    // and proc chances for per-crew diagnostics instead of applying a known
+    // wrong damage, mitigation or regeneration proxy.
+    let crew_scaled = a
+        .attributes
+        .as_deref()
+        .and_then(officer_stat_from_canonical_attributes)
+        .is_some();
+    let supported_ortegas_defense = modifier == "AllDefenses"
+        && a.ability_id.as_deref() == Some("2416006584")
+        && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+        && a.attributes
+            .as_deref()
+            .and_then(officer_stat_from_canonical_attributes)
+            == Some(OfficerStat::Health);
+    let unsupported_source_pattern = matches!(modifier, "OfficerStatAttack" | "OfficerStatDefense")
+        || (modifier == "AllPiercing")
+        || (modifier == "AllDefenses" && !supported_ortegas_defense)
+        // Existing LCARS self-stat routing does not preserve these seat scopes
+        // or flat-add units; applying them crew-wide would alter combat stats.
+        || (matches!(modifier, "OfficerStatAll" | "OfficerStatHealth")
+            && (matches!(a.target.as_deref(), Some("SelfCaptain" | "SelfBridge" | "SelfOfficer"))
+                || op.eq_ignore_ascii_case("Add")))
+        || (crew_scaled && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+            && matches!(modifier, "AllDamage" | "ShieldPiercing" | "Shields"))
+        // Condition 44 compares against the hull at the beginning of each
+        // fight, including pre-existing damage. The engine currently tracks
+        // only percent of maximum hull, so a chain cannot evaluate it safely.
+        || a.conditions.iter().any(|condition|
+            condition.trim().eq_ignore_ascii_case("HullHealthBelowStartOfCombat"))
+        // Enemy hull drains are neither attacker healing nor flat self damage.
+        // Their cumulative timing is not yet represented by this effect path.
+        || (matches!(modifier, "HullHPRepair" | "HullRegen")
+            && a.target.as_deref().is_some_and(|target| target.to_ascii_lowercase().contains("enemy"))
+            && (op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")));
+    if unsupported_source_pattern
+        || matches!(
+            a.ability_id.as_deref(),
+            Some(
+                "3958845992"
+                    | "3939864485"
+                    | "1877391678"
+                    | "1180450595"
+                    | "4289717791"
+                    | "2633638696"
+                    | "2281926825"
+                    // Mudd's source rank values conflict with the advertised
+                    // fixed mitigation and their rank encoding is unknown.
+                    | "2186472721"
+                    // Eurydice heals a fraction of max shields with a chance;
+                    // the current self-shield-break path treats this as a flat,
+                    // guaranteed heal.
+                    | "1608351478"
+                    // Suder's native trigger is RoundEnd, but his text does
+                    // not establish when previous-round repair is applied.
+                    | "2041170794"
+            )
+        )
+    {
+        return Some(MappedEffect::StatModify(
+            "unsupported_officer_effect".into(),
+            "add".into(),
+            val,
+        ));
+    }
+
     let result = match modifier {
+        "CritChance"
+            if a.target.as_deref() == Some("EnemyShip")
+                && op.eq_ignore_ascii_case("Sub")
+                && a.trigger.as_deref() == Some("CombatStart") =>
+        {
+            // Opponent critical chance is a different combat stat from our
+            // own chance. Carry a positive reduction to the inbound path.
+            MappedEffect::StatModify("hostile_crit_chance_reduction".into(), "add".into(), val)
+        }
+        "CritChance" if a.target.as_deref().is_some_and(|t| t.starts_with("Enemy")) => {
+            // Other enemy-crit timings/operators do not have a supported
+            // target-aware consumer; do not turn them into our crit bonus.
+            MappedEffect::StatModify("unsupported_officer_effect".into(), "add".into(), val)
+        }
         "CritChance" => MappedEffect::StatModify("crit_chance".into(), "add".into(), val),
         // Native critical damage is an additive bonus over a noncritical hit. Keep this
         // contribution in the flat-addition pool; `crit_damage` is a multiplier key.
@@ -1285,23 +1406,33 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
         "AllDefenses" => {
-            // Client BuffSpec 3192273655 uses ModAllDefenses + MultiplyBaseAdd,
-            // with officer_stat=2. Its rank coefficient multiplies raw Defense;
-            // the result is raw points on all three defensive stats. Keep this
-            // source-backed correction narrow while other officer-stat sources
-            // and operation combinations are being verified.
-            if a.ability_id.as_deref() == Some("3192273655")
+            // The SNW Ortegas source has a dedicated crew-health pathway.
+            // Other all-defense abilities are quarantined above until their
+            // individual raw-stat source and stacking are verified.
+            if a.ability_id.as_deref() == Some("2416006584")
                 && op.eq_ignore_ascii_case("MultiplyBaseAdd")
                 && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
-                    == Some(OfficerStat::Defense)
+                    == Some(OfficerStat::Health)
             {
-                MappedEffect::StatModify("base_mitigation_stats_add".into(), "add".into(), val)
+                // SNW Ortegas: the coefficient applies to total crew Health at
+                // combat start. Keep it deferred until the scenario has profile
+                // and crew-stat conditions; it is not a percentage of Armor.
+                MappedEffect::StatModify("base_mitigation_stats_per_crew_health".into(), "add".into(), val)
             } else if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
                 MappedEffect::StatModify("shield_mitigation".into(), "add".into(), -val)
             } else {
                 MappedEffect::StatModify("armor".into(), "add".into(), val)
             }
+        }
+        "ArmorPiercing" if a.ability_id.as_deref() == Some("2825675256")
+            && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+            && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
+                == Some(OfficerStat::Health) =>
+        {
+            // Charvanek's bridge ability scales raw Armor Piercing by total
+            // crew Health, resolved after profile and setup conditions.
+            MappedEffect::StatModify("base_armor_piercing_per_crew_health".into(), "add".into(), val)
         }
         "ArmorPiercing" | "AllPiercing" => {
             MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)
@@ -1975,6 +2106,35 @@ mod canonical_condition_tests {
     }
 
     #[test]
+    fn ortegas_defense_requires_verified_operation_and_health_source() {
+        let source = serde_json::json!({
+            "ability_id": "2416006584", "modifier": "AllDefenses",
+            "operation": "MultiplyBaseAdd", "trigger": "CombatStart", "target": "SelfShip",
+            "attributes": "officer_stat=3", "value_by_rank": [18.0], "chance_by_rank": [1.0]
+        });
+        let effect = |value| {
+            let ability: CanonicalAbility = serde_json::from_value(value).unwrap();
+            convert_ability_to_effect(&ability, "SNW Ortegas").unwrap()
+        };
+        assert_eq!(
+            effect(source.clone()).stat.as_deref(),
+            Some("base_mitigation_stats_per_crew_health")
+        );
+        let mut wrong_operation = source.clone();
+        wrong_operation["operation"] = "MultiplyAdd".into();
+        assert_eq!(
+            effect(wrong_operation).stat.as_deref(),
+            Some("unsupported_officer_effect")
+        );
+        let mut wrong_source = source;
+        wrong_source["attributes"] = "officer_stat=2".into();
+        assert_eq!(
+            effect(wrong_source).stat.as_deref(),
+            Some("unsupported_officer_effect")
+        );
+    }
+
+    #[test]
     fn multi_state_from_attributes_parses_bracket_list() {
         assert_eq!(
             super::multi_state_from_attributes(Some("multi_state=[8, 4, 2], num_rounds=3")),
@@ -2042,8 +2202,8 @@ mod canonical_condition_tests {
     }
 
     #[test]
-    fn hull_health_below_token_merges_to_stat_below_attacker_hull_threshold() {
-        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+    fn hull_health_below_targets_opponent_independently_of_effect_recipient() {
+        let mut a: CanonicalAbility = serde_json::from_value(serde_json::json!({
             "slot": "officer",
             "trigger": "RoundStart",
             "modifier": "AllDamage",
@@ -2057,8 +2217,12 @@ mod canonical_condition_tests {
         .unwrap();
         let c = super::effect_condition_from_canonical(&a, "Chang", "AllDamage").expect("cond");
         assert_eq!(c.condition_type, "stat_below");
-        assert_eq!(c.stat.as_deref(), Some("attacker_hull_hp"));
+        assert_eq!(c.stat.as_deref(), Some("hull_hp"));
         assert_eq!(c.threshold_pct, Some(0.6));
+
+        a.target = Some("EnemyShip".into());
+        let c = super::effect_condition_from_canonical(&a, "Dezoc", "AddState").expect("cond");
+        assert_eq!(c.stat.as_deref(), Some("hull_hp"));
     }
 
     #[test]
@@ -2084,7 +2248,7 @@ mod canonical_condition_tests {
         assert_eq!(kids[1].stat.as_deref(), Some("hull_hp"));
         assert_eq!(kids[1].threshold_pct, Some(0.3));
         assert_eq!(kids[2].condition_type, "stat_below");
-        assert_eq!(kids[2].stat.as_deref(), Some("hull_hp"));
+        assert_eq!(kids[2].stat.as_deref(), Some("attacker_hull_hp"));
         assert_eq!(kids[2].threshold_pct, Some(0.3));
     }
 

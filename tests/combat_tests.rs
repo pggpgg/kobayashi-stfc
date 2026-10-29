@@ -2270,7 +2270,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
 }
 
 #[test]
-fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppression() {
+fn evolutionary_assimilation_instant_loss_is_not_blocked_by_beam_suppression() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 50.0,
@@ -2394,8 +2394,9 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         false,
         &CrewConfiguration::default(),
     );
-    assert!(r_ok.rounds_simulated > 0);
-    assert!(r_ok.attacker_hull_remaining > 0.0);
+    assert_eq!(r_ok.rounds_simulated, 0);
+    assert_eq!(r_ok.attacker_hull_remaining, 0.0);
+    approx_eq(r_ok.attacker_shield_remaining, 500.0, 1e-9);
 }
 
 #[test]
@@ -3586,6 +3587,7 @@ fn morale_boosts_all_piercing_stats_in_per_shot_dynamic_mitigation() {
             round_native_defense_stats: false,
             base_attacker_weapon_stats: Vec::new(),
             defender_stats,
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: base_stats,
             ship_type: ShipType::Battleship,
             mystery_mitigation_factor: 0.0,
@@ -4670,6 +4672,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
             shield_deflection: 140.0,
             dodge: 110.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 80.0,
             shield_piercing: 60.0,

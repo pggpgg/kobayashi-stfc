@@ -26,6 +26,7 @@ pub(crate) struct EffectAccumulator {
     /// Native base weapon percentage additions, including Galaxy-class hull
     /// growth; applied in the engine as `×(1+g/(1+p))`.
     galaxy_additive_weapon_frac: f64,
+    component_base_weapon_damage_frac: f64,
     attack_phase_damage_modifier_sum: f64,
     round_end_modifier_sum: f64,
     /// Sum of timed [`AbilityEffect::CritChanceBonus`] for the current shot stack.
@@ -197,6 +198,7 @@ impl Default for EffectAccumulator {
             stacks: EffectStatStacks::default(),
             pre_attack_modifier_sum: 0.0,
             galaxy_additive_weapon_frac: 0.0,
+            component_base_weapon_damage_frac: 0.0,
             attack_phase_damage_modifier_sum: 0.0,
             round_end_modifier_sum: 0.0,
             crit_chance_bonus: 0.0,
@@ -393,6 +395,11 @@ impl EffectAccumulator {
     #[inline]
     pub(crate) fn galaxy_additive_weapon_frac(&self) -> f64 {
         self.galaxy_additive_weapon_frac
+    }
+
+    #[inline]
+    pub(crate) fn component_base_weapon_damage_frac(&self) -> f64 {
+        self.component_base_weapon_damage_frac
     }
 
     pub(crate) fn pre_attack_pierce_bonus(&self) -> f64 {
@@ -597,6 +604,13 @@ impl EffectAccumulator {
         self.compose_damage_channel(EffectStatKey::AttackPhaseDamage, pre_attack_damage)
     }
 
+    /// Attack-phase multipliers affect the isolytic base, but the flat
+    /// AttackPhaseDamage contribution currently represents conventional
+    /// piercing and must not amplify the isolytic leg.
+    pub(crate) fn compose_isolytic_base_damage(&self, unmitigated_damage: f64) -> f64 {
+        unmitigated_damage * (1.0 + self.attack_phase_damage_modifier_sum)
+    }
+
     pub(crate) fn compose_round_end_damage(&self, round_end_damage: f64) -> f64 {
         self.compose_damage_channel(EffectStatKey::RoundEndDamage, round_end_damage)
     }
@@ -699,6 +713,7 @@ impl EffectAccumulator {
         self.stacks.clear();
         self.pre_attack_modifier_sum = 0.0;
         self.galaxy_additive_weapon_frac = 0.0;
+        self.component_base_weapon_damage_frac = 0.0;
         self.attack_phase_damage_modifier_sum = 0.0;
         self.round_end_modifier_sum = 0.0;
         self.crit_chance_bonus = 0.0;
@@ -713,6 +728,7 @@ impl EffectAccumulator {
         self.stacks.merge_from(&other.stacks);
         self.pre_attack_modifier_sum = other.pre_attack_modifier_sum;
         self.galaxy_additive_weapon_frac = other.galaxy_additive_weapon_frac;
+        self.component_base_weapon_damage_frac = other.component_base_weapon_damage_frac;
         self.attack_phase_damage_modifier_sum = other.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum = other.round_end_modifier_sum;
         self.crit_chance_bonus += other.crit_chance_bonus;
@@ -731,6 +747,7 @@ impl EffectAccumulator {
         self.stacks.merge_from(&carry.stacks);
         self.pre_attack_modifier_sum += carry.pre_attack_modifier_sum;
         self.galaxy_additive_weapon_frac += carry.galaxy_additive_weapon_frac;
+        self.component_base_weapon_damage_frac += carry.component_base_weapon_damage_frac;
         self.attack_phase_damage_modifier_sum += carry.attack_phase_damage_modifier_sum;
         self.round_end_modifier_sum += carry.round_end_modifier_sum;
         self.crit_chance_bonus += carry.crit_chance_bonus;
@@ -854,6 +871,24 @@ impl EffectAccumulator {
                             timing,
                             "BaseCritDamageBonus",
                             "base_crit_damage_bonus",
+                            value,
+                        );
+                    }
+                }
+            }
+            return;
+        }
+        if let AbilityEffect::ComponentBaseWeaponDamageBonus(value) = effect {
+            if value.is_finite() {
+                self.component_base_weapon_damage_frac += value;
+                if self.trace_contributions {
+                    if let Some((ability, officer_id)) = source {
+                        self.push_contribution_line(
+                            ability,
+                            officer_id,
+                            timing,
+                            "ComponentBaseWeaponDamageBonus",
+                            "component_base_weapon_damage_bonus",
                             value,
                         );
                     }
@@ -1041,6 +1076,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1071,9 +1109,12 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
@@ -1252,6 +1293,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1282,9 +1326,12 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
@@ -1425,6 +1472,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1455,9 +1505,12 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
@@ -1628,9 +1681,12 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
@@ -1641,6 +1697,9 @@ impl EffectAccumulator {
                 | AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. }
                 | AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::DodgeBonus(_)
                 | AbilityEffect::AccuracyBonus(_) => {}
@@ -1781,6 +1840,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1811,9 +1873,12 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
@@ -1998,6 +2063,9 @@ impl EffectAccumulator {
                 }
                 AbilityEffect::MitigationAdditive(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::BaseArmorPiercingAdd(_)
+                | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -2028,9 +2096,12 @@ impl EffectAccumulator {
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
-                AbilityEffect::CritChanceBonus(_) => {}
+                AbilityEffect::CritChanceBonus(_)
+                | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
@@ -2133,6 +2204,7 @@ fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
             AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::ShieldRegenMaxFraction(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
+                | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_)
         )
 }
@@ -2163,6 +2235,11 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::BaseWeaponDamageBonus(value) => {
             AbilityEffect::BaseWeaponDamageBonus(value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::ComponentBaseWeaponDamageBonus(value) => {
+            AbilityEffect::ComponentBaseWeaponDamageBonus(
+                value * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
         }
         AbilityEffect::HullHpMultiplier(f) => {
             AbilityEffect::HullHpMultiplier(f * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
@@ -2291,6 +2368,16 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::CritChanceBonus(v) => {
             AbilityEffect::CritChanceBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::HostileCritChanceReduction(v) => {
+            AbilityEffect::HostileCritChanceReduction(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient,
+            chance,
+        } => AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: coefficient * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+        },
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
@@ -2318,6 +2405,17 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::BaseMitigationStatsAdd(v) => {
             AbilityEffect::BaseMitigationStatsAdd(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseArmorPiercingAdd(v) => {
+            AbilityEffect::BaseArmorPiercingAdd(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseArmorPiercingPerCrewHealth(v) => {
+            AbilityEffect::BaseArmorPiercingPerCrewHealth(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => {
+            AbilityEffect::BaseMitigationStatsPerCrewHealth(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
         }
         AbilityEffect::BaseMitigationStatsBonus(v) => {
             AbilityEffect::BaseMitigationStatsBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
@@ -3346,5 +3444,26 @@ mod tests {
         // compose_attack_phase_damage(1000) = 1000 * (1 + 0.3) + 0 = 1300
         let dmg = acc.compose_attack_phase_damage(1000.0);
         assert!((dmg - 1300.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn isolytic_base_gets_attack_multiplier_but_not_conventional_piercing_flat() {
+        let mut acc = EffectAccumulator::default();
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::PierceBonus(0.2),
+            500.0,
+            1,
+            None,
+        );
+        acc.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::AttackMultiplier(0.3),
+            500.0,
+            1,
+            None,
+        );
+        assert!((acc.compose_attack_phase_damage(1000.0) - 1350.0).abs() < 1e-12);
+        assert!((acc.compose_isolytic_base_damage(1000.0) - 1300.0).abs() < 1e-12);
     }
 }

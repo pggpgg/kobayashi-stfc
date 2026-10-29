@@ -29,9 +29,11 @@
 //!
 //! **Hostile tags:** [`crate::data::ship::ShipAbility::condition_opponent_hostile_tags`] maps to
 //! [`crate::combat::abilities::AbilityCondition::DefenderHostileTagsAllPresent`] (AND of known slugs).
-//! **Borg Sphere Omicron (ability 509252162):** upstream percentage rows use catalog `post_scale: 0.001`
-//! in the `normalize_data_stfc_space` binary so `raw × 0.01 × post_scale` matches the intended fractional
-//! attack bonus (calibrate vs client tooltips if they drift).
+//! **Borg Sphere Omicron (ability 509252162):** upstream raw rank values are already fractional
+//! multipliers: at ship level 10, 26,650 is displayed as 2,665,000%. The native client applies
+//! this to component base damage. Component damage is retained separately from scaled attack;
+//! this contribution is added to the legacy scaled attack before critical and isolytic damage.
+//! The precise interaction with legacy officer and profile pools remains an approximation.
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityEffect, CrewSeat, CrewSeatContext, TimingWindow,
@@ -93,6 +95,13 @@ pub fn ship_ability_effect_from_catalog(
     duration_rounds: Option<u32>,
 ) -> Option<AbilityEffect> {
     match normalize_key(effect_type).as_str() {
+        "unsupported_base_weapon_damage" => Some(AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: value,
+            chance: 1.0,
+        }),
+        "component_base_weapon_damage" if timing == TimingWindow::CombatBegin => {
+            Some(AbilityEffect::ComponentBaseWeaponDamageBonus(value))
+        }
         // Catalogued for every hull; no combat seat until modeled explicitly.
         "combat_noop" | "unmodeled" | "not_applicable" => None,
         // Applied to the unbuffed HP base by ShipRecord::health_with_launch_bonuses.
@@ -415,6 +424,48 @@ mod tests {
     use super::*;
     use crate::combat::abilities::{AbilityCondition, AbilityEffect};
     use crate::combat::types::{OpponentFactionTag, ShipType};
+
+    #[test]
+    fn sphere_omicron_preserves_raw_level_curve_and_conqueror_gate() {
+        use crate::combat::hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
+        use crate::data::ship::ExtendedShipRecord;
+
+        let source: serde_json::Value = serde_json::from_str(include_str!(
+            "../../data/upstream/data-stfc-space/ships/2251018025.json"
+        ))
+        .unwrap();
+        let raw = source["ability"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|ability| ability["id"].as_u64() == Some(509252162))
+            .unwrap();
+        let extended: ExtendedShipRecord =
+            serde_json::from_str(include_str!("../../data/ships_extended/borg_sphere.json"))
+                .unwrap();
+        for level in [1, 10, 75] {
+            let ship = extended.to_ship_record(Some(2), Some(level)).unwrap();
+            let abilities = ship.abilities.unwrap();
+            let omicron = abilities.iter().find(|a| a.id == "509252162").unwrap();
+            assert_eq!(
+                omicron.value,
+                raw["values"][(level - 1) as usize]["value"]
+                    .as_f64()
+                    .unwrap()
+            );
+            assert_eq!(omicron.effect_type, "component_base_weapon_damage");
+            let seat = ship_ability_to_crew_seat_context(omicron).unwrap();
+            assert!(matches!(seat.ability.effect,
+                AbilityEffect::ComponentBaseWeaponDamageBonus(coefficient)
+                    if coefficient == omicron.value));
+            assert!(matches!(seat.ability.condition,
+                Some(AbilityCondition::DefenderHostileTagsAllPresent { required_mask })
+                    if required_mask == HOSTILE_TAG_MASK_CONQUEROR_BORG));
+            let apex = abilities.iter().find(|a| a.id == "1781715001").unwrap();
+            assert_eq!(apex.value, 50_000.0);
+        }
+        assert_eq!(raw["values"][9]["value"].as_f64(), Some(26_650.0));
+    }
 
     #[test]
     fn normalize_probability_treats_one_as_always_and_percents_above_one() {

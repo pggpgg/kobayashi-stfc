@@ -47,6 +47,12 @@ pub fn round_in_inclusive_first_n(round_index: u32, n: u32) -> bool {
 
 /// Single entry point for [`AbilityCondition`] during combat resolution.
 pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) -> bool {
+    // An unavailable input must not become true through `Not` or through an
+    // unrelated branch of a compound gate. The caller reports unsupported
+    // combat effects separately; evaluation itself fails closed.
+    if condition_input_unavailable(cond, ctx) {
+        return false;
+    }
     match cond {
         AbilityCondition::StatBelow {
             stat,
@@ -87,20 +93,35 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
         AbilityCondition::EngagementIncludes(tag) => ctx.engagement_enemy_types.contains(*tag),
         AbilityCondition::CombatBattleTypeAny(allowed) => {
             if allowed.is_empty() {
-                return true;
+                return false;
             }
             ctx.combat_battle_type_id
                 .map(|id| allowed.contains(&id))
-                .unwrap_or(true)
+                .unwrap_or(false)
         }
         AbilityCondition::DefenderLevelAtMost(max_level) => ctx
             .defender_level
             .map(|level| level <= *max_level)
-            .unwrap_or(true),
+            .unwrap_or(false),
         AbilityCondition::LiteralBool(v) => *v,
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
         AbilityCondition::Or(conds) => conds.iter().any(|c| evaluate_ability_condition(c, ctx)),
+    }
+}
+
+/// Whether evaluation needs scenario data absent from this combat context.
+pub fn condition_input_unavailable(cond: &AbilityCondition, ctx: &CombatContext) -> bool {
+    match cond {
+        AbilityCondition::CombatBattleTypeAny(ids) => {
+            ids.is_empty() || ctx.combat_battle_type_id.is_none()
+        }
+        AbilityCondition::DefenderLevelAtMost(_) => ctx.defender_level.is_none(),
+        AbilityCondition::Not(inner) => condition_input_unavailable(inner, ctx),
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => parts
+            .iter()
+            .any(|part| condition_input_unavailable(part, ctx)),
+        _ => false,
     }
 }
 
@@ -263,6 +284,23 @@ mod tests {
         let ctx = sample_ctx();
         assert!((stat_pct_for_condition("hull_hp", &ctx).unwrap() - 0.4).abs() < 1e-12);
         assert!(stat_pct_for_condition("unknown_stat", &ctx).is_none());
+    }
+
+    #[test]
+    fn enemy_hull_threshold_uses_enemy_not_attacker_and_is_strict() {
+        let mut ctx = sample_ctx();
+        let cond = AbilityCondition::StatBelow {
+            stat: "hull_hp".into(),
+            threshold_pct: 0.6,
+        };
+        ctx.attacker_hull_pct = 0.5;
+        ctx.defender_hull_pct = 0.8;
+        assert!(!evaluate_ability_condition(&cond, &ctx));
+        ctx.attacker_hull_pct = 0.8;
+        ctx.defender_hull_pct = 0.5;
+        assert!(evaluate_ability_condition(&cond, &ctx));
+        ctx.defender_hull_pct = 0.6;
+        assert!(!evaluate_ability_condition(&cond, &ctx));
     }
 
     #[test]
@@ -468,10 +506,15 @@ mod tests {
         ctx.combat_battle_type_id = Some(2);
         assert!(!evaluate_ability_condition(&cond, &ctx));
         ctx.combat_battle_type_id = None;
-        assert!(
-            evaluate_ability_condition(&cond, &ctx),
-            "unknown battle type should remain lenient to avoid regressions"
-        );
+        assert!(!evaluate_ability_condition(&cond, &ctx));
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::Not(Box::new(cond.clone())),
+            &ctx
+        ));
+        assert!(!evaluate_ability_condition(
+            &AbilityCondition::Or(vec![AbilityCondition::LiteralBool(true), cond]),
+            &ctx
+        ));
     }
 
     #[test]
@@ -483,9 +526,6 @@ mod tests {
         ctx.defender_level = Some(52);
         assert!(!evaluate_ability_condition(&cond, &ctx));
         ctx.defender_level = None;
-        assert!(
-            evaluate_ability_condition(&cond, &ctx),
-            "unknown defender level should remain lenient to avoid regressions"
-        );
+        assert!(!evaluate_ability_condition(&cond, &ctx));
     }
 }

@@ -376,6 +376,10 @@ pub fn compile_officer_combat_spec_full(
     // into the accumulator for the rest of the fight.
     let skip_round_gate = (timing == TimingWindow::CombatBegin
         && effect_has_intrinsic_duration(&effect))
+        // State durations describe each proc after it fires, not an expiry
+        // window for the ability itself. In particular, a hit-triggered burn
+        // with a two-round duration can still proc in round three or later.
+        || matches!(effect, AbilityEffect::Assimilated { .. } | AbilityEffect::HullBreach { .. } | AbilityEffect::Burning { .. } | AbilityEffect::RandomDefenderState { .. })
         // On-hit stacks manage expiry per weapon inside the engine; a RoundRange gate would
         // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
         || matches!(
@@ -508,6 +512,71 @@ fn compile_officer_combat_spec_impl(
             Ok((
                 timing,
                 AbilityEffect::PierceBonus(add),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::UnsupportedOfficerEffect => {
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf
+                    | AbilityTargetSpec::SelfShip
+                    | AbilityTargetSpec::DefenderOpponent
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let coefficient = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let chance = spec.chance.as_ref().and_then(|c| c.scalar).unwrap_or(0.0);
+            if !coefficient.is_finite()
+                || coefficient < 0.0
+                || !chance.is_finite()
+                || !(0.0..=1.0).contains(&chance)
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            Ok((
+                timing,
+                AbilityEffect::UnsupportedOfficerEffect {
+                    coefficient,
+                    chance,
+                },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::HostileCritChanceReduction => {
+            if !matches!(spec.target, AbilityTargetSpec::DefenderOpponent)
+                || spec.operation != AbilityOperationSpec::Add
+                || timing != TimingWindow::CombatBegin
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let amount = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            if !amount.is_finite() || amount < 0.0 {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            Ok((
+                timing,
+                AbilityEffect::HostileCritChanceReduction(amount),
                 compiled_condition.clone(),
             ))
         }
@@ -840,6 +909,58 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::BaseArmorPiercingPerCrewHealth
+        | AbilityModifierSpec::BaseMitigationStatsPerCrewHealth => {
+            if timing != TimingWindow::CombatBegin {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let coefficient = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let effect = if spec.modifier == AbilityModifierSpec::BaseArmorPiercingPerCrewHealth {
+                AbilityEffect::BaseArmorPiercingPerCrewHealth(coefficient)
+            } else {
+                AbilityEffect::BaseMitigationStatsPerCrewHealth(coefficient)
+            };
+            Ok((timing, effect, compiled_condition.clone()))
+        }
+        AbilityModifierSpec::BaseArmorPiercingAdd => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let raw = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::BaseArmorPiercingAdd(raw),
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::BaseMitigationStatsAdd => {
             if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
                 return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
@@ -1058,10 +1179,10 @@ fn compile_officer_combat_spec_impl(
                 "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
                 | "multiplybaseadd" => {
                     let bonus = v - 1.0;
-                    if bonus.is_finite() && bonus > 0.0 {
+                    if bonus.is_finite() && bonus >= 0.0 {
                         Ok((
                             timing,
-                            AbilityEffect::HullRegenMaxFraction(bonus),
+                            AbilityEffect::HullHpMultiplier(bonus),
                             compiled_condition.clone(),
                         ))
                     } else {
@@ -1896,6 +2017,25 @@ mod tests {
         let (_, effect, _) = compile_officer_combat_spec(&spec).expect("hull max fraction");
         assert!(
             matches!(effect, AbilityEffect::HullRegenMaxFraction(v) if (v - 0.25).abs() < 1e-12)
+        );
+    }
+
+    #[test]
+    fn conditional_max_hull_compiles_to_max_health_not_regeneration() {
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::SelfShip, 1.4);
+        spec.modifier = AbilityModifierSpec::HullHp;
+        spec.trigger = AbilityTriggerSpec::ShipLaunched;
+        spec.officer.lcars_op = Some("multiply".into());
+        let (timing, effect, _) = compile_officer_combat_spec(&spec).unwrap();
+        assert_eq!(timing, TimingWindow::CombatBegin);
+        assert!(matches!(effect, AbilityEffect::HullHpMultiplier(v) if (v - 0.4).abs() < 1e-12));
+
+        // Explicit hull repair is a separate modifier and must remain repair.
+        spec.modifier = AbilityModifierSpec::OfficerHullRegenMaxFraction;
+        spec.value.as_mut().unwrap().scalar = Some(0.2);
+        let (_, effect, _) = compile_officer_combat_spec(&spec).unwrap();
+        assert!(
+            matches!(effect, AbilityEffect::HullRegenMaxFraction(v) if (v - 0.2).abs() < 1e-12)
         );
     }
 

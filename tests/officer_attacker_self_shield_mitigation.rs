@@ -82,7 +82,7 @@ fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
     }
 }
 
-/// The three currently compilable target=self `shieldmitigation` rows route to the attacker
+/// The currently compilable target=self `shieldmitigation` rows route to the attacker
 /// channel. Janeway and WOK Carol use `HullDamageTaken`, which is explicitly unsupported until
 /// an incoming-hull-damage timing exists; these rows must not be counted as compiled support.
 #[test]
@@ -151,7 +151,6 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
     }
 
     let expected_checked = HashSet::from([
-        "harry-mudd-374d5f".to_string(),
         "one-of-eleven-ee0ee9".to_string(),
         "snw-pike-c94ac4".to_string(),
     ]);

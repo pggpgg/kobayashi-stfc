@@ -708,6 +708,8 @@ pub fn merge_building_bonuses_with_native_snapshot(
         }
     }
 
+    let mut bonuses: Vec<_> = bonuses.into_iter().collect();
+    bonuses.sort_unstable_by(|a, b| a.0.cmp(&b.0));
     for (stat, value) in bonuses {
         let Some(key) = normalize_profile_combat_stat(&stat) else {
             continue;
@@ -975,6 +977,8 @@ fn combat_research_bonuses_from_entries_slice(
 
     let bonuses = cumulative_research_bonuses(&records, &levels_by_rid);
     let mut out: HashMap<String, f64> = HashMap::new();
+    let mut bonuses: Vec<_> = bonuses.into_iter().collect();
+    bonuses.sort_unstable_by(|a, b| a.0.cmp(&b.0));
     for (stat, value) in bonuses {
         let Some(key) = normalize_profile_combat_stat(&stat) else {
             continue;
@@ -1073,7 +1077,13 @@ fn combat_research_conditional_bonuses_from_entries_slice(
         }
         out.push((key, norm.to_string(), value));
     }
-    out.sort_by(|a, b| a.1.cmp(&b.1).then_with(|| a.2.total_cmp(&b.2)));
+    // Equal stat/value rows can carry different conditions. Sort those too so
+    // randomized HashMap order cannot change ability ordering or RNG draws.
+    out.sort_by(|a, b| {
+        a.1.cmp(&b.1)
+            .then_with(|| a.2.total_cmp(&b.2))
+            .then_with(|| a.0.cmp(&b.0))
+    });
     out
 }
 
@@ -1972,6 +1982,54 @@ fn axis_rating_from_parts(
         + below_raw * (1.0 + profile_mult + crew_mult + below_only_mult)
 }
 
+/// Effective Health of all crewed officers at combat setup. This is distinct
+/// from the ship's breakpoint bonus and remains available when no breakpoint
+/// table exists. LCARS officer-stat sources can be scoped to individual seats;
+/// their scope is not preserved by the current adapter, so an active or
+/// undecidable crew Health contribution cannot be resolved safely here.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn effective_crew_health_at_combat_start(
+    totals: crate::combat::CrewOfficerStatTotals,
+    bridge_totals: crate::combat::CrewOfficerStatTotals,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+    self_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
+    opponent_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    dynamic: &[crate::lcars::resolver::DynamicOfficerStatContribution],
+) -> Option<f64> {
+    let affects_health = |key: &str| matches!(key, "officer_health" | "officer_stat_all");
+    if dynamic.iter().any(|row| affects_health(&row.stat_key)) {
+        return None;
+    }
+    if ["officer_health", "officer_stat_all"]
+        .iter()
+        .any(|key| static_buffs.get(*key).is_some_and(|value| *value != 0.0))
+    {
+        return None;
+    }
+    for (rows, attacker_target) in [(self_pending, true), (opponent_pending, false)] {
+        for row in rows
+            .iter()
+            .filter(|row| row.target_attacker == attacker_target && affects_health(&row.stat_key))
+        {
+            let evaluated: Vec<_> = row
+                .conditions
+                .iter()
+                .map(|condition| eval_static_condition(condition, cond_ctx))
+                .collect();
+            if !evaluated.contains(&Some(false)) {
+                return None;
+            }
+        }
+    }
+    let below = (totals.health - bridge_totals.health).max(0.0);
+    let profile_health = ProfileBonusLookup::new(profile, owner_faction_slug).get("officer_health");
+    let health = axis_rating_from_parts(bridge_totals.health, below, profile_health, 0.0, 0.0, 0.0);
+    health.is_finite().then_some(health)
+}
+
 /// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /
 /// hostile-only records); callers do not need to special-case that path.
 ///
@@ -2300,6 +2358,85 @@ mod tests {
     use crate::data::import::ForbiddenTechEntry;
 
     use super::*;
+
+    #[test]
+    fn crew_health_uses_profile_and_setup_buffs_and_rejects_unknown_conditions() {
+        use crate::combat::{CrewOfficerStatTotals, TimingWindow};
+        use crate::data::combat_effect_spec::AbilityConditionSpec;
+        use crate::lcars::resolver::{
+            DynamicOfficerStatContribution, OfficerStatOpponentScope,
+            PendingOfficerStatContribution,
+        };
+        let totals = CrewOfficerStatTotals {
+            health: 100.0,
+            ..Default::default()
+        };
+        let bridge = CrewOfficerStatTotals {
+            health: 70.0,
+            ..Default::default()
+        };
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([("officer_health".into(), 0.5)]),
+            ..Default::default()
+        };
+        let static_buffs = HashMap::new();
+        let own = PendingOfficerStatContribution {
+            stat_key: "officer_health".into(),
+            value: 0.2,
+            target_attacker: true,
+            conditions: vec![AbilityConditionSpec::LiteralBool { value: true }],
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+        };
+        let ctx = OfficerStatConditionContext::default();
+        let evaluate = |own_rows: &[PendingOfficerStatContribution],
+                        dynamic: &[DynamicOfficerStatContribution]| {
+            effective_crew_health_at_combat_start(
+                totals,
+                bridge,
+                &profile,
+                None,
+                &static_buffs,
+                own_rows,
+                &ctx,
+                &[],
+                dynamic,
+            )
+        };
+        assert!((evaluate(&[], &[]).unwrap() - 150.0).abs() < 1e-9);
+        assert_eq!(evaluate(std::slice::from_ref(&own), &[]), None);
+        let mut inactive = own.clone();
+        inactive.conditions = vec![AbilityConditionSpec::LiteralBool { value: false }];
+        assert!((evaluate(&[inactive], &[]).unwrap() - 150.0).abs() < 1e-9);
+        let mut unknown = own.clone();
+        unknown.conditions = vec![AbilityConditionSpec::AttackerShipTypeIs {
+            ship_type: "battleship".into(),
+        }];
+        assert_eq!(evaluate(&[unknown], &[]), None);
+        let scoped = HashMap::from([("officer_health".into(), 0.1)]);
+        assert_eq!(
+            effective_crew_health_at_combat_start(
+                totals,
+                bridge,
+                &profile,
+                None,
+                &scoped,
+                &[],
+                &ctx,
+                &[],
+                &[]
+            ),
+            None
+        );
+        let dynamic = DynamicOfficerStatContribution {
+            stat_key: "officer_health".into(),
+            value: 0.5,
+            target_attacker: true,
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            runtime_condition: None,
+            timing: TimingWindow::RoundStart,
+        };
+        assert_eq!(evaluate(&[own], &[dynamic]), None);
+    }
 
     #[test]
     fn resolved_faction_bonus_lookup_preserves_normalization_and_float_bits() {
@@ -3436,6 +3573,7 @@ mod tests {
         crate::combat::HostileMitigationParams {
             round_native_defense_stats: false,
             defender_stats: stats,
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: AttackerStats {
                 armor_piercing: 300.0,
                 shield_piercing: 2000.0,

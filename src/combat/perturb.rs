@@ -295,6 +295,7 @@ mod tests {
         a.weapons.push(crate::combat::WeaponStats {
             weapon_type: Default::default(),
             attack: 50.0,
+            component_base_attack: None,
             shots: Some(1),
             pierce: None,
             crit_chance: None,

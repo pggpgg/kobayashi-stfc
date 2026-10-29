@@ -223,9 +223,9 @@ health_rating  = Σ officer.effective_health
 
 Examples:
 
-- **Cadet Kirk captain "Motivational" `target: self +8%`** — every crewed officer on Kirk's side gets +8% to each of A/D/H. Kirk is one of the affected officers (his +8% applies to himself like to anyone else).
+- **Cadet Kirk captain "Motivational"** — its bridge-only scope is not yet implemented; the effect is quarantined and reported as unsupported.
 - **Kras bridge "Know Your Enemy" `target: enemy_bridge -20%`** — captain + the two bridge officers on the *defender's* side get -20% to each of A/D/H; below-decks officers are unaffected. (On the player-vs-hostile path the defender is a hostile with no crewed officers — no-op.)
-- **Marla bridge "Let Me Help You" `target: self +50%`** — same crew-wide-pre-sum scope as Kirk's, just larger.
+- **Marla bridge "Let Me Help You"** — this is an economic effect and does not apply a combat officer-stat bonus.
 
 **The scoping rule is the same regardless of trigger phase.** Passive, on_combat_start, on_round_start, conditional — all apply to per-officer A/D/H before the rating sum. Differences between triggers only affect *when* the buff is active, not *who* it covers.
 
@@ -276,18 +276,15 @@ health_rating  = Σ officer.effective_health    // then feeds the §2d channels
 
 These three anchors are tied to their real production officers and exercised by
 [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs). That
-test currently asserts the **LCARS→engine routing and the direction** of each effect (and records
-the engine's predicted bonus in its assertion messages). The **expected in-game damage delta** for
+test checks Kras's routing and guards the quarantined or economic effects. The **expected in-game damage delta** for
 each is still `_TBD_` — supply observed numbers (plus the exact ship + crew used) to upgrade these
 from direction/routing checks to exact-magnitude calibration. After the snapshot freeze, record
 anchor fights with `officer_anchor` set to `kirk`, `marla`, or `kras` in
 [`recorded_fight_suite.json`](../tests/fixtures/recorded_fights/recorded_fight_suite.json) and
 copy observed damage deltas into this section and the manifest `bands`.
 
-- Cadet Kirk `cadet-kirk-a80563` captain "Motivational" +8% all stats (crew-wide, `target: self`),
-  vs a fixed hostile: expected damage delta = _TBD_. *(Routing locked: `officer_stat_all += 0.08`.)*
-- Marla `marla-9732c7` "Let Me Help You" +50% all stats (bridge, crew-wide, `target: self`),
-  captained: expected damage delta = _TBD_. *(Routing locked: `officer_stat_all += 0.50`.)*
+- Cadet Kirk `cadet-kirk-a80563` captain "Motivational": bridge-only scope remains unsupported.
+- Marla `marla-9732c7` "Let Me Help You": economic effect, excluded from combat.
 - Kras `kras-a47042` "Know your Enemy" -20% all stats on the enemy bridge
   (`target: enemy_bridge`, gated on `DefenderIsPlayerShip` → no-op vs NPC hostiles, active in PvP):
   expected damage delta = _TBD_. *(Routing locked: enemy-bridge pending contribution, value 0.20.)*

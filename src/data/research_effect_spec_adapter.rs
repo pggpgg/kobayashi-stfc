@@ -231,7 +231,7 @@ pub fn incoming_shield_mitigation_for_combat(
     let levels_by_rid = research_levels_by_rid_from_import(imported_research);
     let mut bonus = 0.0_f64;
     let mut rounds_out = 0_u32;
-    for (&rid, &player_level) in &levels_by_rid {
+    for (rid, player_level) in crate::data::research::sorted_research_levels(&levels_by_rid) {
         if player_level == 0 {
             continue;
         }
@@ -291,7 +291,7 @@ pub fn research_derived_attack_phase_seats_from_spec(
     // Track which RIDs were handled canonically so they are excluded from the
     // catalog fallback path.
     let mut canonical_handled_rids: Vec<i64> = Vec::new();
-    for (&rid, &player_level) in &levels_by_rid {
+    for (rid, player_level) in crate::data::research::sorted_research_levels(&levels_by_rid) {
         if let Some(ov) = canonical_overrides.get(&rid) {
             let seats = compile_canonical_override_seats(ov, player_level, &mut idx);
             canonical_handled_rids.push(rid);
@@ -320,6 +320,8 @@ pub fn research_derived_attack_phase_seats_from_spec(
             if !records.is_empty() {
                 let conditional =
                     cumulative_conditional_research_bonuses(&records, &remaining_levels);
+                let mut conditional: Vec<_> = conditional.into_iter().collect();
+                conditional.sort_unstable_by(|a, b| a.0.cmp(&b.0));
                 for ((key, stat), value) in conditional {
                     // Grade-gated base piercing stats are resolved against the ship
                     // before mitigation. Never erase this gate into an unconditional seat.

@@ -2,9 +2,7 @@
 //! These verify engine semantics, not historical player-profile accuracy.
 
 use kobayashi::combat::abilities::NO_EXPLICIT_CONTRIBUTION_BATCH;
-use kobayashi::combat::mitigation::{
-    apply_base_mitigation_stat_bonuses, mitigation_for_hostile, pierce_damage_through_bonus,
-};
+use kobayashi::combat::mitigation::{apply_base_mitigation_stat_bonuses, mitigation_for_hostile};
 use kobayashi::combat::{
     build_combat_setup_with_officer_stat, simulate_combat, simulate_combat_from_setup, Ability,
     AbilityClass, AbilityCondition, AbilityEffect, AttackerStats, CombatEvent, Combatant,
@@ -68,6 +66,7 @@ fn raw_context() -> HostileMitigationParams {
             shield_deflection: 40.0,
             dodge: 70.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 100.0,
             shield_piercing: 160.0,
@@ -221,10 +220,10 @@ fn each_research_gate_uses_raw_base_stats_and_each_opponent_weapon() {
             let opponent = raw_context().base_attacker_weapon_stats[i];
             let mitigation =
                 mitigation_for_hostile(effective, opponent, ShipType::Battleship, 0.0, 0.16, 0.72);
-            let pierce = pierce_damage_through_bonus(effective, opponent, ShipType::Battleship);
             close(value(row, "mitigation"), mitigation);
-            close(value(row, "base_stat_pierce"), pierce);
-            expected_damage_taken += 100.0 * (1.0 - mitigation + pierce);
+            close(value(row, "base_stat_pierce"), 0.0);
+            // Raw piercing is already accounted for in the mitigation curve.
+            expected_damage_taken += 100.0 * (1.0 - mitigation);
         }
         close(
             active.attacker_hull_remaining,

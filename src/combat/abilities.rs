@@ -57,6 +57,9 @@ pub enum AbilityEffect {
     /// also contains compiled profile bonuses. Distinct from the separate
     /// pre-attack multiplier used by unverified legacy officer effects.
     BaseWeaponDamageBonus(f64),
+    /// Fraction of the unbuffed weapon component's damage, added to the shot.
+    /// Kept separate from legacy, already profile-scaled attack pools.
+    ComponentBaseWeaponDamageBonus(f64),
     /// Additive max-hull fraction from conditional research/LCARS (`0.12` ⇒ ×1.12 max hull when the seat's conditions pass).
     HullHpMultiplier(f64),
     /// Additive max-shield fraction from conditional research/LCARS (`0.08` ⇒ ×1.08 max shield when conditions pass).
@@ -151,6 +154,12 @@ pub enum AbilityEffect {
     /// Raw points added to armor, shield deflection and dodge, after base scaling.
     /// Requires raw-stat context; it is never converted into mitigation probability.
     BaseMitigationStatsAdd(f64),
+    /// Raw armor-piercing points, applied before mitigation is calculated.
+    BaseArmorPiercingAdd(f64),
+    /// Deferred setup coefficient; scenario construction resolves it to raw points.
+    BaseArmorPiercingPerCrewHealth(f64),
+    /// Deferred setup coefficient; scenario construction resolves it to raw points.
+    BaseMitigationStatsPerCrewHealth(f64),
     /// Officer-granted dodge bonus; additive fraction (e.g. 0.10 = +10% dodge).
     /// Dodge is ship-type-weighted in the mitigation formula: interceptors benefit proportionally
     /// more from dodge than battleships. Applied to the player's effective mitigation on counter-fire.
@@ -158,6 +167,16 @@ pub enum AbilityEffect {
     /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
     /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
     CritChanceBonus(f64),
+    /// Additive reduction to the opposing ship's critical-hit chance. Resolved
+    /// on incoming fire only while the combat-begin conditions hold.
+    HostileCritChanceReduction(f64),
+    /// Officer effect whose target, units or timing are not yet represented.
+    /// Keep the original coefficient/chance for diagnostics;
+    /// it has no combat effect and consumes no RNG roll.
+    UnsupportedOfficerEffect {
+        coefficient: f64,
+        chance: f64,
+    },
     /// Multiplicative factor on [`Combatant::crit_multiplier`] for this shot stack when a crit lands.
     /// Values chain as a product (e.g. 1.1 then 1.2 → ×1.32). Ignored when non-finite or ≤ 0.
     CritDamageMultiplier(f64),
@@ -523,10 +542,9 @@ pub fn apply_defender_random_state_id(
     }
 }
 
-/// Counter-fire pierce with defender Morale: +10% on the aggregate pierce scalar for any hull
-/// class. The player-inbound mitigation path has no per-channel hostile piercing stats (it is a
-/// weighted percentage sum of the player's armor/shield/dodge), so the spec's "all piercing
-/// stats +10%" collapses onto this single damage-through scalar, applied after all other bonuses.
+/// Apply defender Morale to a legacy aggregate counter-fire pierce scalar.
+/// When raw hostile stats are available, the inbound mitigation path separately
+/// applies Morale to those stats before evaluating the mitigation curve.
 pub fn defender_morale_adjusted_pierce(base_pierce: f64, morale_active: bool) -> f64 {
     if !morale_active {
         return base_pierce;
@@ -640,10 +658,10 @@ pub enum AbilityCondition {
     /// True when [`CombatContext::engagement_enemy_types`] lists this tag (e.g. group armadas only).
     EngagementIncludes(EnemyType),
     /// True when the engagement battle-type id is in this allow-list.
-    /// If battle type is unavailable in context, this condition currently evaluates leniently true.
+    /// If battle type is unavailable in context, this condition fails closed.
     CombatBattleTypeAny(Vec<u32>),
     /// True when defender level is <= max_level.
-    /// If defender level is unavailable in context, this condition currently evaluates leniently true.
+    /// If defender level is unavailable in context, this condition fails closed.
     DefenderLevelAtMost(u32),
     /// Constant used when a canonical token has no dynamic [`CombatContext`] signal yet, but the
     /// Kobayashi **ship-vs-hostile** scenario fixes its truth value (see `docs/CANONICAL_CONDITIONS.md`).
@@ -1029,11 +1047,20 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *chance = cap_one(*chance);
             *bonus = scale(*bonus);
         }
-        AbilityEffect::CritChanceBonus(c) => *c = cap_one(*c),
-        AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
-        AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
-            *m = scale(*m)
+        AbilityEffect::CritChanceBonus(c) | AbilityEffect::HostileCritChanceReduction(c) => {
+            *c = cap_one(*c)
         }
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient,
+            chance,
+        } => {
+            *coefficient = scale(*coefficient);
+            *chance = cap_one(*chance);
+        }
+        AbilityEffect::AttackMultiplier(m) => *m = scale(*m),
+        AbilityEffect::BaseWeaponDamageBonus(m)
+        | AbilityEffect::ComponentBaseWeaponDamageBonus(m)
+        | AbilityEffect::BaseCritDamageBonus(m) => *m = scale(*m),
         AbilityEffect::HullHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::ShieldHpMultiplier(m) => *m = scale(*m),
         AbilityEffect::PierceBonus(p) => *p = scale(*p),
@@ -1055,6 +1082,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsBonus(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
+        AbilityEffect::BaseArmorPiercingAdd(v) => *v = scale(*v),
+        AbilityEffect::BaseArmorPiercingPerCrewHealth(v)
+        | AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => *v = scale(*v),
         AbilityEffect::DodgeBonus(v) => *v = cap_one(*v),
         AbilityEffect::IsolyticDamageBonus(v) => *v = scale(*v),
         AbilityEffect::IsolyticDefenseBonus(v) => *v = scale(*v),
@@ -1170,11 +1200,12 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
         }
         match &mut seat.ability.effect {
             AbilityEffect::AttackMultiplier(m) => *m *= multiplier,
-            AbilityEffect::BaseWeaponDamageBonus(m) | AbilityEffect::BaseCritDamageBonus(m) => {
-                *m *= multiplier
-            }
+            AbilityEffect::BaseWeaponDamageBonus(m)
+            | AbilityEffect::ComponentBaseWeaponDamageBonus(m)
+            | AbilityEffect::BaseCritDamageBonus(m) => *m *= multiplier,
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
+            AbilityEffect::HostileCritChanceReduction(c) => *c *= multiplier,
             // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness
             // debuff would push a crit below ×1.0 (weaker than a normal hit).
             AbilityEffect::CritDamageMultiplier(c) => {

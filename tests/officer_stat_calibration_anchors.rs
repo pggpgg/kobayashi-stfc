@@ -1,37 +1,16 @@
 //! Calibration anchors for first-class officer A/D/H — docs/OFFICER_STAT_FORMULA.md §"Examples
 //! to validate the spec against" (§261-263).
 //!
-//! The spec lists three in-game anchor cases whose expected damage deltas are still `_TBD_`
-//! (they need observed in-game numbers). These tests do the half that *can* be done without
-//! in-game data:
-//!
-//!   1. Tie each anchor to its **real production officer** and assert the LCARS → engine mapping
-//!      (buff magnitude + target routing: crew-wide `self` vs `enemy_bridge`).
-//!   2. Drive each resolved buff through the live officer-stat pipeline
-//!      ([`compute_officer_stat_runtime_bonus`]) on a representative breakpoint table and **record
-//!      the engine's current predicted bonus** in the assertion messages.
-//!
-//! When the maintainer supplies the observed in-game deltas (and the exact ship + crew used),
-//! swap the representative ship/crew here for the real ones and tighten the `>=`/`<=` asserts to
-//! exact-equality against the game. Until then these guard the *direction* and *routing* of each
-//! anchor and surface the engine's numbers for comparison.
-//!
-//! Anchor officers (verified against data/officers/officers.lcars.yaml):
-//!   - Cadet Kirk `cadet-kirk-a80563` — captain "Motivational": officerstatall `+0.08`, target self.
-//!   - Marla      `marla-9732c7`      — bridge  "Let Me Help You": officerstatall `+0.50`, target self.
-//!   - Kras       `kras-a47042`       — bridge  "Know your Enemy": officerstatall `-0.20`, target enemy_bridge.
-//!
-//! The captain seat fires both its captain *and* bridge ability, so resolving Marla/Kras as
-//! captain cleanly surfaces their bridge officerstatall in isolation (their captain abilities
-//! carry no officerstatall).
+//! Kras's enemy-bridge routing remains modeled. Cadet Kirk's bridge-only scope is
+//! quarantined, and Marla's stat effect is economic rather than a combat bonus.
+//! Recorded in-game damage deltas remain pending for these anchors.
 
 use std::collections::HashMap;
 
 use kobayashi::combat::CrewOfficerStatTotals;
 use kobayashi::data::combat_effect_spec::AbilityConditionSpec;
 use kobayashi::data::profile::{
-    compute_officer_stat_runtime_bonus, OfficerStatConditionContext, OfficerStatRuntimeBonus,
-    PlayerProfile,
+    compute_officer_stat_runtime_bonus, OfficerStatConditionContext, PlayerProfile,
 };
 use kobayashi::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
 use kobayashi::lcars::{
@@ -110,122 +89,18 @@ fn representative_explorer() -> ShipRecord {
     }
 }
 
-/// Compute the attacker-side officer-stat bonus for a given crew total + static buff set.
-fn attacker_bonus(
-    ship: &ShipRecord,
-    totals: CrewOfficerStatTotals,
-    static_buffs: &HashMap<String, f64>,
-) -> OfficerStatRuntimeBonus {
-    compute_officer_stat_runtime_bonus(
-        totals,
-        totals, // treat the whole crew as bridge: crew-wide self buffs cover below-decks anyway
-        ship,
-        &PlayerProfile::default(),
-        None,
-        static_buffs,
-        &[],
-        &OfficerStatConditionContext::default(),
-        &[],
-    )
-}
-
-// ---------------------------------------------------------------------------
-// Anchor 1 — Cadet Kirk "Motivational" +8% all stats (target: self, crew-wide).
-// ---------------------------------------------------------------------------
-
+// Cadet Kirk's bridge-only scope is quarantined; Marla's bonus is economic.
 #[test]
-fn anchor_cadet_kirk_motivational_plus_8pct_crew_wide() {
-    let Some(buff) = resolve_as_captain("cadet-kirk-a80563") else {
-        return;
-    };
-
-    let stat_all = buff
-        .static_buffs
-        .get("officer_stat_all")
-        .copied()
-        .unwrap_or(0.0);
-    assert!(
-        (stat_all - 0.08).abs() < 1e-9,
-        "Cadet Kirk 'Motivational' should map to a crew-wide officer_stat_all of +0.08; got {stat_all}"
-    );
-
-    // Representative crew sized just below the 2000 breakpoint so the +8% crosses it.
-    let ship = representative_explorer();
-    let totals = CrewOfficerStatTotals {
-        attack: 1950.0,
-        defense: 1950.0,
-        health: 1950.0,
-    };
-
-    let baseline = attacker_bonus(&ship, totals, &HashMap::new());
-    let buffed = attacker_bonus(&ship, totals, &buff.static_buffs);
-
-    assert!(
-        buffed.attack_bonus >= baseline.attack_bonus
-            && buffed.health_bonus >= baseline.health_bonus
-            && buffed.defense_shield_deflection_add >= baseline.defense_shield_deflection_add,
-        "+8% crew buff must not reduce any axis (baseline={baseline:?}, buffed={buffed:?})"
-    );
-
-    // Recorded engine prediction (pending in-game confirmation per spec §261):
-    //   rating 1950 → attack_bonus 0.4 ; ×1.08 = 2106 → attack_bonus 0.8.
-    assert!(
-        buffed.attack_bonus > baseline.attack_bonus,
-        "ENGINE PREDICTION (Kirk +8%): attack_bonus {} → {} ; health_bonus {} → {} ; \
-         shield_defl_add {} → {}. Expected the +8% to cross a breakpoint with this crew size.",
-        baseline.attack_bonus,
-        buffed.attack_bonus,
-        baseline.health_bonus,
-        buffed.health_bonus,
-        baseline.defense_shield_deflection_add,
-        buffed.defense_shield_deflection_add,
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Anchor 2 — Marla "Let Me Help You" +50% all stats (target: self, crew-wide).
-// ---------------------------------------------------------------------------
-
-#[test]
-fn anchor_marla_let_me_help_you_plus_50pct_crew_wide() {
-    let Some(buff) = resolve_as_captain("marla-9732c7") else {
-        return;
-    };
-
-    let stat_all = buff
-        .static_buffs
-        .get("officer_stat_all")
-        .copied()
-        .unwrap_or(0.0);
-    assert!(
-        (stat_all - 0.50).abs() < 1e-9,
-        "Marla 'Let Me Help You' should map to a crew-wide officer_stat_all of +0.50; got {stat_all}"
-    );
-
-    // Representative crew just below the 4000 breakpoint so the +50% crosses it.
-    let ship = representative_explorer();
-    let totals = CrewOfficerStatTotals {
-        attack: 2900.0,
-        defense: 2900.0,
-        health: 2900.0,
-    };
-
-    let baseline = attacker_bonus(&ship, totals, &HashMap::new());
-    let buffed = attacker_bonus(&ship, totals, &buff.static_buffs);
-
-    // Recorded engine prediction (pending in-game confirmation per spec §262):
-    //   rating 2900 → attack_bonus 0.8 ; ×1.50 = 4350 → attack_bonus 1.6.
-    assert!(
-        buffed.attack_bonus > baseline.attack_bonus,
-        "ENGINE PREDICTION (Marla +50%): attack_bonus {} → {} ; health_bonus {} → {} ; \
-         shield_defl_add {} → {}.",
-        baseline.attack_bonus,
-        buffed.attack_bonus,
-        baseline.health_bonus,
-        buffed.health_bonus,
-        baseline.defense_shield_deflection_add,
-        buffed.defense_shield_deflection_add,
-    );
+fn unsupported_or_economic_stat_anchors_do_not_boost_combat_crew() {
+    use kobayashi::combat::AbilityEffect;
+    let kirk = resolve_as_captain("cadet-kirk-a80563").unwrap();
+    assert!(!kirk.static_buffs.contains_key("officer_stat_all"));
+    assert!(kirk.crew.seats.iter().any(|seat| matches!(
+        seat.ability.effect,
+        AbilityEffect::UnsupportedOfficerEffect { .. }
+    )));
+    let marla = resolve_as_captain("marla-9732c7").unwrap();
+    assert!(!marla.static_buffs.contains_key("officer_stat_all"));
 }
 
 // ---------------------------------------------------------------------------

@@ -524,6 +524,7 @@ fn weapon_stats_from_component_data(
 
     Some(WeaponStats {
         attack,
+        component_base_attack: None,
         shots,
         pierce: None,
         crit_chance,

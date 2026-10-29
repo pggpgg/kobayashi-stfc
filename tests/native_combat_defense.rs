@@ -88,6 +88,7 @@ fn fight_with_trace_mode(
                 shield_deflection: 22.0,
                 dodge: 1.0,
             },
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: AttackerStats {
                 armor_piercing: 750.0,
                 shield_piercing: 750.0,

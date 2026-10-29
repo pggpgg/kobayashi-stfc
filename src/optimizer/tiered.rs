@@ -1043,6 +1043,7 @@ mod workload_tests {
     fn ranked_row(captain: &str, win_lo: f64, win_hi: f64) -> RankedCrewResult {
         let win_rate = (win_lo + win_hi) / 2.0;
         RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: captain.to_string(),
             bridge: vec!["b1".into(), "b2".into()],
             below_decks: vec!["d1".into(), "d2".into(), "d3".into()],

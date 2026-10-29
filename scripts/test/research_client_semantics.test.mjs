@@ -14,6 +14,30 @@ const verified = { modifier_code: 61, operation_code: 3, target_code: 1, trigger
   condition_codes: [], attribute_fields: [], ranked_value_type: 0,
   ranked_values: [0.5, 5, 0], ranked_chances: [1], unknown_fields: [] };
 
+test("native Apex research retains supported scopes and quarantines unknown predicates", () => {
+  const apex = { ...verified, modifier_code: 67001, operation_code: 1, trigger_code: 25,
+    ranked_values: [500, 800] };
+  assert.deepEqual(mapClientResearchBuff(apex)[0], { stat: "apex_barrier", operator: "add",
+    value_unit: "absolute", client_verified: true, client_ranked_values: [500, 800] });
+  assert.equal(mapClientResearchBuff({ ...apex, condition_codes: [2] })[0].attacker_ship_class, "battleship");
+  assert.deepEqual(mapClientResearchBuff({ ...apex, condition_codes: [17] }), []);
+  assert.deepEqual(mapClientResearchBuff({ ...apex, trigger_code: 18 }), []);
+  assert.deepEqual(mapClientResearchBuff({ ...apex, operation_code: 3 }), []);
+
+  // These independent native definitions include unresolved predicate combinations;
+  // an explicit or prose mapping must not make them unconditional.
+  for (const id of [1238401736, 3611224086, 2600848580, 3663216413]) {
+    const native = manifest.buffs[id];
+    assert.equal(native.modifier_code, 67001);
+    assert.ok(native.condition_codes.length);
+    assert.deepEqual(resolveBuffStatMappings({ ...context,
+      researchBuffById: { [id]: "apex_barrier" } }, { id }, null), []);
+  }
+  // Absent native evidence cannot fall through to an inferred global Apex buff.
+  assert.deepEqual(resolveBuffStatMappings({ ...context,
+    researchBuffById: { 42: "apex_barrier" } }, { id: 42 }, null), []);
+});
+
 test("Eclipse CombatStart verifier binds only the exact native BuffSpec and project", () => {
   const row = manifest.buffs["1238121830"];
   const detail = JSON.parse(fs.readFileSync(new URL("../../data/upstream/data-stfc-space/research/3260398513.json", import.meta.url)));
@@ -335,6 +359,16 @@ test("research extractor includes isolytic707 and quarantines its unsupported op
   const result = extractResearchBuffSemantics(cache(entry(42, add)));
   assert.equal(result.buffs[42].modifier_code, 707);
   assert.equal(mapClientResearchBuff(result.buffs[42])[0].stat, "isolytic_damage");
+});
+
+test("research extractor retains native Apex predicates and raw ranked values", () => {
+  const gated = concat(integer(1, 42), integer(7, 1), integer(8, 25), integer(12, 1),
+    packed(13, [1], 4), integer(17, 17), integer(18, 67001), packed(21, [500, 800], 8));
+  const row = extractResearchBuffSemantics(cache(entry(42, gated))).buffs[42];
+  assert.equal(row.modifier_code, 67001);
+  assert.deepEqual(row.ranked_values, [500, 800]);
+  assert.deepEqual(row.condition_codes, [17]);
+  assert.equal(clientResearchBuffExclusion(row), "unsupported_condition");
 });
 
 test("research extractor includes isolytic808 with native ADD rank snapshots", () => {

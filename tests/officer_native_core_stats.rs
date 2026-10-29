@@ -78,7 +78,10 @@ fn source_backed_core_stats_flow_into_crew_totals_and_tom_coefficient() {
     assert_eq!(tom_seat.ability.timing, TimingWindow::CombatBegin);
     assert_eq!(
         tom_seat.ability.effect,
-        AbilityEffect::BaseMitigationStatsAdd(1684.0)
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: 4.0,
+            chance: 1.0
+        }
     );
 }
 
@@ -173,6 +176,9 @@ fn hand_authored_lcars_fractional_stat_remains_fractional() {
     assert_eq!(resolved.crew.seats.len(), 1);
     assert_eq!(
         resolved.crew.seats[0].ability.effect,
-        AbilityEffect::BaseMitigationStatsAdd(4.0 * 420.6)
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: 4.0,
+            chance: 1.0
+        }
     );
 }
