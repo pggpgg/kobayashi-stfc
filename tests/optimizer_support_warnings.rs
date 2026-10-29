@@ -32,7 +32,7 @@ fn optimizer_warnings_identify_the_final_rank_after_novelty_ordering() {
         "novelty_diverse_top":2, "novelty_pool":2,
         "warm_start_crews":[
             {"captain":"Spock", "bridge":["Kirk","Phlox"], "below_decks":[]},
-            {"captain":"Spock", "bridge":["Kirk","Ro Mudd"], "below_decks":[]}
+            {"captain":"Beverly Crusher", "bridge":["TMP Hikaru Sulu","Shev"], "below_decks":[]}
         ]
     });
     let body = optimize_payload(
@@ -48,10 +48,11 @@ fn optimizer_warnings_identify_the_final_rank_after_novelty_ordering() {
     let unsupported_rank = recommendations
         .iter()
         .position(|row| {
-            row["bridge"].as_array().unwrap().iter().any(|name| {
-                name.as_str()
-                    .is_some_and(|s| s.to_lowercase().contains("ro mudd") || s.contains("ro-mudd"))
-            })
+            row["bridge"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|name| name.as_str().is_some_and(|s| s == "Shev"))
         })
         .unwrap_or_else(|| {
             panic!("unsupported warm-start crew must remain in the ranked result: {response}")

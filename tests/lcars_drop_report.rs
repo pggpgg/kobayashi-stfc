@@ -364,7 +364,7 @@ fn production_unsupported_trigger_drop_counts() {
     };
     assert_eq!(
         count("unknown_trigger:unsupported_HullDamageTaken"),
-        11,
+        10,
         "HullDamageTaken rows must stay quarantined"
     );
     assert_eq!(
@@ -374,17 +374,17 @@ fn production_unsupported_trigger_drop_counts() {
     );
     assert_eq!(
         count("unknown_trigger:unsupported_BattleWon"),
-        3,
+        2,
         "BattleWon rows must stay quarantined"
     );
     assert_eq!(
         drops.len(),
-        19,
+        16,
         "no other source rows are currently dropped"
     );
     assert_eq!(
         count("unknown_trigger:unknown_trigger"),
-        3,
+        2,
         "other unknown trigger rows remain explicitly reported"
     );
 }

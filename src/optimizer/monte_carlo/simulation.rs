@@ -369,24 +369,37 @@ fn blended_score(win_rate: f64, avg_hull_remaining: f64) -> f64 {
 pub(super) fn unsupported_crew_health_effects(
     input: &super::scenario::CombatSimulationInput,
 ) -> bool {
+    let inbound_raw = input
+        .attacker
+        .hostile_mitigation_params
+        .as_ref()
+        .is_some_and(|p| {
+            p.defender_stats.armor > 0.0
+                || p.defender_stats.shield_deflection > 0.0
+                || p.defender_stats.dodge > 0.0
+        });
     unsupported_crew_health_effects_for_crew(
         &input.crew,
         input.defender.hostile_mitigation_params.is_some(),
-        input
-            .attacker
-            .hostile_mitigation_params
-            .as_ref()
-            .is_some_and(|params| {
-                params.defender_stats.armor > 0.0
-                    || params.defender_stats.shield_deflection > 0.0
-                    || params.defender_stats.dodge > 0.0
-            }),
+        inbound_raw,
     ) || unsupported_defender_raw_effects(&input.defender_crew)
+        || unsupported_raw_counter_piercing(&input.crew, &input.defender_crew, inbound_raw)
         // Battle type is not currently carried in CombatSimulationInput. Do
         // not evaluate type-gated effects as unconditional; identify them in
         // the same result diagnostic as other unsupported combat mechanics.
         || crew_has_unavailable_condition(&input.crew, input.defender_level.is_none())
         || crew_has_unavailable_condition(&input.defender_crew, input.defender_level.is_none())
+}
+
+fn unsupported_raw_counter_piercing(
+    attacker: &crate::combat::CrewConfiguration,
+    defender: &crate::combat::CrewConfiguration,
+    inbound_raw: bool,
+) -> bool {
+    use crate::combat::AbilityEffect;
+    inbound_raw
+        && (attacker.seats.iter().any(|s| matches!(s.ability.effect, AbilityEffect::HostileCounterStatDebuff { reduction, .. } if reduction > 0.0))
+            || defender.seats.iter().any(|s| matches!(s.ability.effect, AbilityEffect::HostileCounterPierceMultiplier { bonus } if bonus > 0.0)))
 }
 
 fn crew_has_unavailable_condition(
@@ -1909,6 +1922,17 @@ mod tests {
         };
         assert!(unsupported_crew_health_effects_for_crew(&crew, true, true));
         assert!(unsupported_defender_raw_effects(&crew));
+        let empty = CrewConfiguration::default();
+        crew.seats[0].ability.effect = AbilityEffect::HostileCounterStatDebuff {
+            reduction: 0.15,
+            duration_rounds: 2,
+        };
+        assert!(unsupported_raw_counter_piercing(&crew, &empty, true));
+        assert!(!unsupported_raw_counter_piercing(&crew, &empty, false));
+        assert!(!unsupported_raw_counter_piercing(&empty, &crew, true));
+        crew.seats[0].ability.effect = AbilityEffect::HostileCounterPierceMultiplier { bonus: 0.2 };
+        assert!(unsupported_raw_counter_piercing(&empty, &crew, true));
+        assert!(!unsupported_raw_counter_piercing(&empty, &crew, false));
         crew.seats[0].ability.effect = AbilityEffect::HostileCritChanceReduction(0.45);
         assert!(
             unsupported_defender_raw_effects(&crew),

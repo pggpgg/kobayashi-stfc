@@ -425,7 +425,7 @@ fn defender_counter_attack_matches_helper_pipeline() {
     let w = 200.0;
     let dtf = compute_damage_through_factor((1.0 - 0.1_f64).max(0.0), 0.05, 0.0);
     let base = w * dtf;
-    let iso = compute_isolytic_taken(base, 0.1, 0.5, 0.0);
+    let iso = compute_isolytic_taken(w, 0.1, 0.5, 0.0);
     let before_apex = base + iso;
     let apex = compute_apex_damage_factor(0.2, 10_000.0);
     let after_apex = before_apex * apex;

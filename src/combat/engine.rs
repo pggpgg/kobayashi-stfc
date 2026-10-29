@@ -4405,13 +4405,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         if hostile_counter_debuff > 0.0
             && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
         {
-            if raw_stat_mitigation.is_some() {
-                static WARN_COUNTER_PIERCE_DEBUFF_RAW_ONCE: std::sync::Once =
-                    std::sync::Once::new();
-                WARN_COUNTER_PIERCE_DEBUFF_RAW_ONCE.call_once(|| tracing::warn!(
-                    "Hostile counter-piercing debuffs on raw piercing stats are unsupported; their native timing is not yet established"
-                ));
-            }
             counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
         }
         // Pen of Kahless-style percentage pierce buffs on the hostile's own counter-fire.
@@ -4425,12 +4418,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             })
             .sum();
         if counter_pierce_bonus_fraction > 0.0 {
-            if raw_stat_mitigation.is_some() {
-                static WARN_COUNTER_PIERCE_RAW_ONCE: std::sync::Once = std::sync::Once::new();
-                WARN_COUNTER_PIERCE_RAW_ONCE.call_once(|| tracing::warn!(
-                    "Hostile counter-piercing multipliers on raw piercing stats are unsupported; their native timing is not yet established"
-                ));
-            }
             counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
         }
         let counter_damage_through = compute_damage_through_factor(
