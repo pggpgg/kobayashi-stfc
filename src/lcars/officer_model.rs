@@ -591,7 +591,7 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
                     }
                 }
             } else {
-                eprintln!("Warning: captain synergy for {} ({}) is unsupported: canonical captain ID/value/chance does not match the upstream captain source; retaining existing resolution", o.name, o.id);
+                eprintln!("Warning: officer synergy for {} ({}) is unsupported: canonical captain ID/value/chance does not match the upstream captain source; retaining existing resolution", o.name, o.id);
             }
         }
         crate::lcars::NativeOfficerSynergy {
@@ -601,7 +601,7 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
         }
     });
     if captain_ability.is_some() && native_synergy.is_none() {
-        eprintln!("Warning: captain synergy for {} ({}) is unsupported: missing byte-bound native officer group/class source; retaining existing resolution", o.name, o.id);
+        eprintln!("Warning: officer synergy for {} ({}) is unsupported: missing byte-bound native officer group/class source; retaining existing resolution", o.name, o.id);
     }
 
     (
