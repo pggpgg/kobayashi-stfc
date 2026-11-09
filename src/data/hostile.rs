@@ -190,6 +190,9 @@ impl HostileRecord {
     /// Bitmask for [`crate::combat::SimulationConfig::defender_hostile_tag_mask`] / [`crate::combat::CombatContext::defender_hostile_tag_mask`].
     pub fn hostile_tag_mask(&self) -> u32 {
         crate::combat::hostile_tags::mask_from_slugs(&self.hostile_tags)
+            | self.faction.as_ref().map_or(0, |faction| {
+                crate::combat::hostile_tags::mask_from_native_faction(faction.id)
+            })
     }
 
     /// Tags for [`crate::combat::SimulationConfig::engagement_enemy_types`] when set; else [`EnemyTypes::default`].

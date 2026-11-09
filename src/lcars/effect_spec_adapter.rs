@@ -484,8 +484,8 @@ pub fn known_officer_stat(stat: &str) -> bool {
 fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
     match stat.trim() {
         "weapon_damage" | "attack" => Some(AbilityModifierSpec::WeaponDamage),
-        "hull_hp" | "hull" => Some(AbilityModifierSpec::HullHp),
-        "shield_hp" | "shield" => Some(AbilityModifierSpec::ShieldHp),
+        "hull_hp" | "hull" | "hull_hp_additive_pool" => Some(AbilityModifierSpec::HullHp),
+        "shield_hp" | "shield" | "shield_hp_additive_pool" => Some(AbilityModifierSpec::ShieldHp),
         "crit_chance" => Some(AbilityModifierSpec::CritChance),
         "hostile_crit_chance_reduction" => Some(AbilityModifierSpec::HostileCritChanceReduction),
         "unsupported_officer_effect" => Some(AbilityModifierSpec::UnsupportedOfficerEffect),
@@ -494,6 +494,9 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
         "armor" => Some(AbilityModifierSpec::MitigationAdditive),
         "base_mitigation_stats_add" => Some(AbilityModifierSpec::BaseMitigationStatsAdd),
+        "hostile_base_piercing_stats_reduction" => {
+            Some(AbilityModifierSpec::HostileBasePiercingStatsReduction)
+        }
         "base_mitigation_stats_per_crew_health" => {
             Some(AbilityModifierSpec::BaseMitigationStatsPerCrewHealth)
         }
@@ -1360,6 +1363,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,

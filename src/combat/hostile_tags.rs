@@ -13,6 +13,16 @@ pub const HOSTILE_TAG_MASK_AGGREGATION_HOSTILE: u32 = 1 << 3;
 pub const HOSTILE_TAG_MASK_GORN_HUNTER: u32 = 1 << 4;
 /// Breen Warship family (Warship, Elite, Primarch — `loca_id` 80600–80602); U.S.S. Vengeance Advanced Sabotage.
 pub const HOSTILE_TAG_MASK_BREEN_WARSHIP: u32 = 1 << 5;
+/// Texas-class NPCs. Native Monaveen buff 49906243 gates on hull faction 2796195869.
+pub const HOSTILE_TAG_MASK_TEXAS_CLASS: u32 = 1 << 6;
+
+/// Native faction ids are a stable gate even when a legacy normalized row has no tags.
+pub fn mask_from_native_faction(faction_id: i64) -> u32 {
+    match faction_id {
+        2_796_195_869 => HOSTILE_TAG_MASK_TEXAS_CLASS,
+        _ => 0,
+    }
+}
 
 /// Map a single data slug (from `ShipAbility` / hostile JSON) to one bit, if known.
 pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
@@ -24,6 +34,7 @@ pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
         "aggregation_hostile" => Some(HOSTILE_TAG_MASK_AGGREGATION_HOSTILE),
         "gorn_hunter" => Some(HOSTILE_TAG_MASK_GORN_HUNTER),
         "breen_warship" => Some(HOSTILE_TAG_MASK_BREEN_WARSHIP),
+        "texas_class" => Some(HOSTILE_TAG_MASK_TEXAS_CLASS),
         _ => None,
     }
 }

@@ -22,6 +22,10 @@ pub struct LcarsOfficer {
     pub rarity: Option<String>,
     #[serde(default)]
     pub group: Option<String>,
+    /// Source-joined native identity and captain variants. Absent for custom or
+    /// mismatched sources; display group labels do not establish native synergy.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_synergy: Option<NativeOfficerSynergy>,
     #[serde(default)]
     pub captain_ability: Option<LcarsAbility>,
     #[serde(default)]
@@ -37,6 +41,20 @@ pub struct LcarsOfficer {
     /// for stat lookups when the caller has not specified one. Empty when unknown.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub max_level_by_rank: Vec<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NativeOfficerSynergy {
+    pub identity: crate::data::synergy::OfficerSynergyIdentity,
+    /// Bind cached variants to the exact ability validated by the source
+    /// converter. A caller may replace or edit that ability after loading.
+    /// This runtime binding is not part of serialized LCARS definitions.
+    #[serde(skip)]
+    pub source_captain_ability: Option<LcarsAbility>,
+    /// Index = left synergy index * 3 + right synergy index. Only the native
+    /// captain source is transformed; bridge rank curves remain independent.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub captain_variants: Vec<LcarsAbility>,
 }
 
 /// One row of the officer's own per-level stat table.
@@ -103,7 +121,7 @@ impl LcarsLevelStats {
 }
 
 /// One ability block (captain, bridge, or below decks) with a name and effects.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsAbility {
     pub name: String,
     #[serde(default)]
@@ -112,7 +130,7 @@ pub struct LcarsAbility {
 
 /// Single effect within an ability. Unknown `type` values are preserved and
 /// skipped at resolve time (graceful degradation).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsEffect {
     #[serde(rename = "type")]
     pub effect_type: String,
@@ -148,7 +166,7 @@ pub struct LcarsEffect {
     pub decay: Option<LcarsDecay>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsAccumulate {
     #[serde(rename = "type", default)]
     pub type_: Option<String>,
@@ -158,7 +176,7 @@ pub struct LcarsAccumulate {
     pub ceiling: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsDecay {
     #[serde(rename = "type", default)]
     pub type_: Option<String>,
@@ -169,7 +187,7 @@ pub struct LcarsDecay {
 }
 
 /// Duration of an effect. In YAML: `permanent` (string) or `rounds: N` (map).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LcarsDuration {
     Permanent(String),
@@ -183,7 +201,7 @@ impl LcarsDuration {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsScaling {
     #[serde(default)]
     pub base: Option<f64>,
@@ -256,7 +274,7 @@ impl LcarsScaling {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsCondition {
     #[serde(rename = "type")]
     pub condition_type: String,
@@ -389,6 +407,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -454,6 +473,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -471,6 +491,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -489,6 +510,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -508,6 +530,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,

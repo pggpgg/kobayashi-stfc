@@ -126,6 +126,7 @@ proptest! {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "Fuzzed".to_string(),
                 effects: vec![fuzz_effect(format!("zzz_unknown_{suffix}"), field, value)],

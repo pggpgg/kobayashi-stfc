@@ -144,6 +144,14 @@ Implementation: `scripts/data-refresh.mjs`. **Canonical order** (do not reorder 
 
 **CI:** The integration test `tests/scenario_research_integration_tests.rs` requires a populated `data/research_catalog.json` when `CI=true` (GitHub Actions). If you work without that file, other tests still run; the scenario test skips unless you set `KOBAYASHI_REQUIRE_RESEARCH_CATALOG=1` to match CI.
 
+Reviewed Quantum Slipstream rank curves are maintained separately from CSV
+summary values. With a saved native static cache, run
+`node scripts/apply_native_forbidden_health_curves.mjs <cache.bin> data/forbidden_chaos_tech.json data/native_forbidden_health_curves.json`.
+The extractor reads only the reviewed static buff rows, checks their upstream
+identity and tier unlocks, and retains native units. The CSV importer preserves
+these verified curves. Combat requires the equipped item and owned rank; a
+catalog summary value cannot replace missing equipment or rank context.
+
 Related docs: [data/README.md](../data/README.md), [docs/STFC_SPACE_DATA_STRATEGY.md](../docs/STFC_SPACE_DATA_STRATEGY.md), [data/import/README.md](../data/import/README.md).
 
 ---

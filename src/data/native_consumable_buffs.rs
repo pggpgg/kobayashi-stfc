@@ -715,6 +715,117 @@ fn active_highest_levels(
     levels
 }
 
+/// Native launch HP/defense percentages gated on the resolved owner's hull, minimum
+/// grade or faction. These predicates are disjoint from the class/Syndicate
+/// setup route, so a row cannot enter both pools. Active BID membership selects
+/// the source once; project ownership and building levels never add another copy.
+pub(crate) fn ship_gated_setup_bonuses_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    owner_faction: Option<&str>,
+    ship_id: &str,
+    ship_class: Option<&str>,
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
+    ship_gated_setup_bonuses_from_catalogs(
+        &[
+            embedded_catalog(),
+            crate::data::native_building_buffs::embedded_catalog(),
+            crate::data::native_research_buffs::embedded_catalog(),
+        ],
+        imported,
+        ship_grade,
+        owner_faction,
+        ship_id,
+        ship_class,
+        now_unix_seconds,
+    )
+}
+
+fn ship_gated_setup_bonuses_from_catalogs(
+    catalogs: &[&NativeConsumableBuffCatalog],
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    owner_faction: Option<&str>,
+    ship_id: &str,
+    ship_class: Option<&str>,
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
+    let owner = owner_faction.map(|s| s.trim().to_ascii_lowercase());
+    let mut out = HashMap::new();
+    for (bid, level) in active_highest_levels(imported, now_unix_seconds) {
+        let mut sources = catalogs.iter().filter_map(|catalog| {
+            (catalog.schema_version == 1 && matches!(catalog.source_group, 66 | 68 | 116))
+                .then(|| catalog.buffs.get(&bid))
+                .flatten()
+        });
+        let Some(spec) = sources.next() else { continue };
+        // An ambiguous source-group collision is not evidence for two bonuses.
+        if sources.next().is_some() {
+            continue;
+        }
+        let rank = usize::try_from(level - 1).unwrap_or(usize::MAX);
+        if !matches!(spec.modifier_code, 11 | 12 | 13 | 60 | 61 | 73)
+            || spec.operation_code != 3
+            || spec.target_code != 1
+            || spec.trigger_code != 24
+            || spec.num_rounds != 0
+            || spec.ranked_value_type != 0
+            || spec.ranked_values.is_empty()
+            || spec.ranked_values.len() > spec.ranked_value_count
+            || rank >= spec.ranked_value_count
+            || spec.ranked_values.iter().any(|v| !v.is_finite())
+            || spec.ranked_chances.is_empty()
+            || spec.ranked_chances.len() > spec.ranked_chance_count
+            || rank >= spec.ranked_chance_count
+            || spec.ranked_chances.iter().any(|v| *v != 1.0)
+            || !spec.attribute_fields.is_empty()
+            || !spec.unknown_fields.is_empty()
+        {
+            continue;
+        }
+        // Native BuffCondition.Values: Grade4/5 retain the minimum-grade
+        // interpretation independently reviewed for Direct Hit. Owner faction
+        // and class predicates are separate from the opponent's class/faction.
+        let matches_scope = match spec.condition_codes.as_slice() {
+            [123] => ship_grade.is_some_and(|grade| grade >= 4),
+            [176] => ship_grade.is_some_and(|grade| grade >= 5),
+            [124] => owner.as_deref() == Some("federation"),
+            [125] => owner.as_deref() == Some("romulan"),
+            [126] => owner.as_deref() == Some("klingon"),
+            [240] => matches!(owner.as_deref(), Some("federation" | "klingon" | "romulan")),
+            [217] => ship_id == "uss_enterprise_d",
+            [class @ (0..=3), 123] => {
+                ship_grade.is_some_and(|grade| grade >= 4)
+                    && ship_class
+                        == Some(match class {
+                            0 => "explorer",
+                            1 => "interceptor",
+                            2 => "battleship",
+                            _ => "survey",
+                        })
+            }
+            _ => false,
+        };
+        if matches_scope {
+            let stats: &[&str] = match spec.modifier_code {
+                61 => &["hull_hp"],
+                60 => &["shield_hp"],
+                11 => &["dodge"],
+                12 => &["armor"],
+                13 => &["shield_deflection"],
+                73 => &["armor", "shield_deflection", "dodge"],
+                _ => unreachable!(),
+            };
+            let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
+            for stat in stats {
+                *out.entry((*stat).to_owned()).or_insert(0.0) += value;
+            }
+        }
+    }
+    out
+}
+
 /// Explicit-catalog variant for validation and future runtime data reloads.
 pub fn bonuses_from_catalog(
     catalog: &NativeConsumableBuffCatalog,
@@ -1016,6 +1127,216 @@ mod tests {
             schema_version: 1,
             source_group: 116,
             buffs: rows.into_iter().collect(),
+        }
+    }
+
+    #[test]
+    fn native_launch_hp_uses_resolved_minimum_grade_owner_and_hull_gates() {
+        for (condition, grade, faction, hull, applies) in [
+            (123, Some(4), None, "unknown", true),
+            (123, Some(5), None, "unknown", true),
+            (123, Some(3), None, "unknown", false),
+            (123, None, None, "unknown", false),
+            (176, Some(5), None, "unknown", true),
+            (176, Some(4), None, "unknown", false),
+            (124, None, Some(" FEDERATION "), "unknown", true),
+            (124, None, Some("romulan"), "unknown", false),
+            (125, None, Some("romulan"), "unknown", true),
+            (125, None, Some("klingon"), "unknown", false),
+            (126, None, Some("klingon"), "unknown", true),
+            (126, None, Some("romulan"), "unknown", false),
+            (240, None, Some("federation"), "unknown", true),
+            (240, None, Some("klingon"), "unknown", true),
+            (240, None, Some("romulan"), "unknown", true),
+            (240, None, Some("independent"), "unknown", false),
+            (240, None, None, "unknown", false),
+            (217, None, None, "uss_enterprise_d", true),
+            (217, None, None, "uss_enterprise", false),
+        ] {
+            let mut row = spec();
+            row.condition_codes = vec![condition];
+            let c = catalog(vec![(1, row)]);
+            let out = ship_gated_setup_bonuses_from_catalogs(
+                &[&c],
+                &[entry(1, 2, None)],
+                grade,
+                faction,
+                hull,
+                None,
+                100,
+            );
+            assert_eq!(
+                out.get("hull_hp").copied(),
+                applies.then_some(5.0),
+                "condition {condition}"
+            );
+        }
+    }
+
+    #[test]
+    fn native_launch_defense_preserves_axis_grade_owner_and_class_conjunctions() {
+        for (modifier, expected) in [
+            (11, vec!["dodge"]),
+            (12, vec!["armor"]),
+            (13, vec!["shield_deflection"]),
+            (73, vec!["armor", "shield_deflection", "dodge"]),
+        ] {
+            let mut row = spec();
+            row.modifier_code = modifier;
+            row.condition_codes = vec![0, 123];
+            let c = catalog(vec![(1, row)]);
+            for (grade, class, applies) in [
+                (Some(4), Some("explorer"), true),
+                (Some(5), Some("explorer"), true),
+                (Some(3), Some("explorer"), false),
+                (None, Some("explorer"), false),
+                (Some(5), Some("battleship"), false),
+                (Some(5), None, false),
+            ] {
+                let out = ship_gated_setup_bonuses_from_catalogs(
+                    &[&c],
+                    &[entry(1, 2, None)],
+                    grade,
+                    Some("federation"),
+                    "fixture",
+                    class,
+                    100,
+                );
+                assert_eq!(out.len(), if applies { expected.len() } else { 0 });
+                if applies {
+                    for axis in &expected {
+                        assert_eq!(out[*axis], 5.0);
+                    }
+                }
+            }
+            assert!(
+                bonuses_from_catalog(&c, &[entry(1, 2, None)], Some("explorer"), 100).is_empty(),
+                "classANDgrade sources must not also enter the ordinary setup route"
+            );
+        }
+        let mut fed = spec();
+        fed.modifier_code = 73;
+        fed.condition_codes = vec![124];
+        let c = catalog(vec![(1, fed)]);
+        assert_eq!(
+            ship_gated_setup_bonuses_from_catalogs(
+                &[&c],
+                &[entry(1, 2, None)],
+                Some(5),
+                Some("federation"),
+                "fixture",
+                Some("explorer"),
+                100
+            )
+            .len(),
+            3
+        );
+        assert!(ship_gated_setup_bonuses_from_catalogs(
+            &[&c],
+            &[entry(1, 2, None)],
+            Some(5),
+            Some("klingon"),
+            "fixture",
+            Some("explorer"),
+            100
+        )
+        .is_empty());
+    }
+
+    #[test]
+    fn native_launch_defense_real_grade_and_federation_rows_retain_source_fractions() {
+        let rows = [
+            entry(1_019_365_535, 6, None),
+            entry(3_249_974_457, 10, None),
+            entry(2_880_082_268, 10, None),
+            entry(1_728_837_131, 10, None),
+            entry(2_580_220_592, 10, None),
+            entry(1_024_053_940, 10, None),
+        ];
+        let out = ship_gated_setup_bonuses_for_imported_buffs(
+            &rows,
+            Some(5),
+            Some("federation"),
+            "uss_enterprise_d",
+            Some("explorer"),
+            100,
+        );
+        assert_eq!(out.len(), 3);
+        assert!((out["armor"] - 3.65).abs() < 1e-12);
+        assert!((out["dodge"] - 3.65).abs() < 1e-12);
+        assert!((out["shield_deflection"] - 6.55).abs() < 1e-12);
+    }
+
+    #[test]
+    fn native_launch_hp_deduplicates_active_ids_and_preserves_other_setup_families() {
+        let ordinary = spec();
+        let mut gated = spec();
+        gated.modifier_code = 60;
+        gated.condition_codes = vec![123];
+        let c = catalog(vec![(1, ordinary), (2, gated)]);
+        let imported = [
+            entry(1, 1, None),
+            entry(2, 1, None),
+            entry(2, 2, None),
+            entry(2, 3, Some(99)),
+        ];
+        let ordinary = bonuses_from_catalog(&c, &imported, Some("explorer"), 100);
+        assert_eq!(ordinary.get("hull_hp"), Some(&0.5));
+        assert!(!ordinary.contains_key("shield_hp"));
+        let gated = ship_gated_setup_bonuses_from_catalogs(
+            &[&c],
+            &imported,
+            Some(5),
+            Some("federation"),
+            "uss_enterprise_d",
+            None,
+            100,
+        );
+        assert_eq!(gated.len(), 1);
+        assert_eq!(gated.get("shield_hp"), Some(&5.0));
+        // A collision between catalog source groups is ambiguous, not additive.
+        assert!(ship_gated_setup_bonuses_from_catalogs(
+            &[&c, &c],
+            &imported,
+            Some(5),
+            Some("federation"),
+            "uss_enterprise_d",
+            None,
+            100,
+        )
+        .is_empty());
+    }
+
+    #[test]
+    fn native_launch_hp_keeps_unknown_timing_attributes_and_ranks_quarantined() {
+        for variant in 0..9 {
+            let mut row = spec();
+            row.condition_codes = vec![123];
+            match variant {
+                0 => row.trigger_code = 25,
+                1 => row.condition_codes.push(999),
+                2 => row.target_code = 6,
+                3 => row.operation_code = 5,
+                4 => row.attribute_fields.push(8),
+                5 => row.unknown_fields.push(99),
+                6 => row.num_rounds = 1,
+                7 => row.ranked_chances = vec![0.5],
+                _ => row.ranked_value_count = 1,
+            }
+            let c = catalog(vec![(1, row)]);
+            assert!(
+                ship_gated_setup_bonuses_from_catalogs(
+                    &[&c],
+                    &[entry(1, 2, None)],
+                    Some(5),
+                    Some("federation"),
+                    "uss_enterprise_d",
+                    None,
+                    100,
+                )
+                .is_empty(),
+                "variant {variant}"
+            );
         }
     }
 

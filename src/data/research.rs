@@ -21,8 +21,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::combat::types::OpponentFactionTag;
 use crate::data::combat_effect_spec::{
-    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTriggerSpec,
-    EffectCategory, EffectConfidence, SourceRef,
+    AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
+    AbilityTriggerSpec, EffectCategory, EffectConfidence, SourceRef,
 };
 
 /// How a project's level rows represent its bonus values.
@@ -325,6 +325,9 @@ pub struct ResearchCanonicalOverride {
 pub struct ResearchCanonicalEffectEntry {
     pub id: String,
     pub modifier: AbilityModifierSpec,
+    /// Defaults to this player's ship; opponent effects must declare their target.
+    #[serde(default)]
+    pub target: Option<AbilityTargetSpec>,
     pub operation: AbilityOperationSpec,
     #[serde(default)]
     pub by_level: Vec<f64>,

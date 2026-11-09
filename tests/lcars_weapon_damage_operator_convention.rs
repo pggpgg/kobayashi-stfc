@@ -21,6 +21,7 @@ fn weapon_damage_officer(operator: &str, value: f64) -> LcarsOfficer {
         faction: None,
         rarity: None,
         group: None,
+        native_synergy: None,
         captain_ability: None,
         bridge_ability: Some(LcarsAbility {
             name: "wd_conv".to_string(),

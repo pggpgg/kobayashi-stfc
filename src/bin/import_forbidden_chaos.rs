@@ -261,6 +261,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 {
                     bonus.rank_curve = verified.rank_curve.clone();
                     bonus.operator = verified.operator.clone();
+                    bonus.value = verified.value;
                 }
             }
         }

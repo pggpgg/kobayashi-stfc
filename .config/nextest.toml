@@ -12,12 +12,16 @@ final-status-level = "flaky"
 # src/server/sync.rs tests cannot serialize their access to the shared profiles/ files.
 # (A previous `filter = "not test(...)"` key tried to skip them, but `filter` is not a
 # recognized profile option — the tests still ran and raced.) Run the module
-# single-threaded via a test group instead; everything else keeps full parallelism.
+# single-threaded via a test group instead. Scenario tests that create/delete
+# profiles and CLI startup's profile-directory reconciliation share the same
+# index, so they must join this group too; process-local
+# profile-index mutexes cannot protect read/modify/write across test processes.
+# Everything else keeps full parallelism.
 [test-groups]
 sync-profile-files = { max-threads = 1 }
 
 [[profile.default.overrides]]
-filter = 'test(server::sync::tests)'
+filter = 'test(server::sync::tests) | test(account_piercing_preserves_manual_pool_and_fixed_opponent_gates) | test(build_shared_scenario_data_merges_research_import_into_profile) | binary(scenario_research_integration_tests) | binary(cli_dispatch_tests)'
 test-group = 'sync-profile-files'
 
 [profile.ci]

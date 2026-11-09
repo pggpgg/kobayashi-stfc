@@ -392,13 +392,12 @@ pub(super) fn unsupported_crew_health_effects(
 
 fn unsupported_raw_counter_piercing(
     attacker: &crate::combat::CrewConfiguration,
-    defender: &crate::combat::CrewConfiguration,
+    _defender: &crate::combat::CrewConfiguration,
     inbound_raw: bool,
 ) -> bool {
     use crate::combat::AbilityEffect;
     inbound_raw
-        && (attacker.seats.iter().any(|s| matches!(s.ability.effect, AbilityEffect::HostileCounterStatDebuff { reduction, .. } if reduction > 0.0))
-            || defender.seats.iter().any(|s| matches!(s.ability.effect, AbilityEffect::HostileCounterPierceMultiplier { bonus } if bonus > 0.0)))
+        && attacker.seats.iter().any(|s| matches!(s.ability.effect, AbilityEffect::HostileCounterStatDebuff { reduction, .. } if reduction > 0.0))
 }
 
 fn crew_has_unavailable_condition(
@@ -435,6 +434,7 @@ fn unsupported_defender_raw_effects(crew: &crate::combat::CrewConfiguration) -> 
                 | AbilityEffect::UnsupportedOfficerEffect { .. }
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
         )
     })
@@ -452,6 +452,7 @@ fn unsupported_crew_health_effects_for_crew(
         | AbilityEffect::UnsupportedOfficerEffect { .. } => true,
         AbilityEffect::BaseArmorPiercingAdd(value) if value != 0.0 => !has_outbound_raw,
         AbilityEffect::BaseMitigationStatsAdd(value) if value != 0.0 => !has_inbound_raw,
+        AbilityEffect::HostileBasePiercingStatsReduction(value) if value != 0.0 => !has_inbound_raw,
         _ => false,
     })
 }
@@ -1930,8 +1931,12 @@ mod tests {
         assert!(!unsupported_raw_counter_piercing(&crew, &empty, false));
         assert!(!unsupported_raw_counter_piercing(&empty, &crew, true));
         crew.seats[0].ability.effect = AbilityEffect::HostileCounterPierceMultiplier { bonus: 0.2 };
-        assert!(unsupported_raw_counter_piercing(&empty, &crew, true));
+        assert!(!unsupported_raw_counter_piercing(&empty, &crew, true));
         assert!(!unsupported_raw_counter_piercing(&empty, &crew, false));
+        crew.seats[0].ability.effect = AbilityEffect::HostileBasePiercingStatsReduction(0.7);
+        assert!(!unsupported_crew_health_effects_for_crew(&crew, true, true));
+        assert!(unsupported_crew_health_effects_for_crew(&crew, true, false));
+        assert!(unsupported_defender_raw_effects(&crew));
         crew.seats[0].ability.effect = AbilityEffect::HostileCritChanceReduction(0.45);
         assert!(
             unsupported_defender_raw_effects(&crew),

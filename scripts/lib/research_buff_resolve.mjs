@@ -109,6 +109,10 @@ export function coerceStatMapping(inferred) {
 export function resolveBuffStatMappings(ctx, buff, projectLocaId) {
   if (!buff || typeof buff.id !== "number") return [];
   const buffId = buff.id;
+  // Native mod76: KSG1478241687 is self ADD; Immortal1856737936 is
+  // opponent SUB. Both last2 rounds and are owned by research_canonical.json.
+  // A plain profile shield_mitigation row would lose their target or duration.
+  if ([1478241687, 1856737936].includes(buffId)) return [];
   const key = String(buffId);
   if (isVerifiedEclipseDefenseBuff(buffId, ctx.clientBuffSemantics?.[key])) {
     // Its faction predicate is runtime-only and must not enter the static

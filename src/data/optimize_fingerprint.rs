@@ -97,7 +97,11 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   owner-hull and Eclipse Armada gates. Canaries cover compilation, while the
 ///   version also invalidates metrics from scenario callers missing these seats.
 ///   Monaveen's twelve PvP Apex rewards retain each owning crew's Tal gate.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 18;
+/// * 18 → 19 (2026-11): native crew launch HP joins the account percentage pool;
+///   resolved ship/grade/faction HP gates, Monaveen's Texas-only base damage,
+///   and source-joined officer synergy affect scenario construction
+///   outside the synthetic engine canaries.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 19;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -271,7 +275,7 @@ pub fn engine_canary_digest() -> u64 {
 /// One `label:outcome` line per canary fight. Split out so a test can assert the suite is not
 /// degenerate (all fights ending identically would make the digest blind).
 fn canary_fight_summaries() -> Vec<String> {
-    canary_fights()
+    let mut summaries: Vec<String> = canary_fights()
         .into_iter()
         .map(|(label, attacker, defender, config, crew)| {
             let result = simulate_combat(&attacker, &defender, &config, &crew);
@@ -288,7 +292,68 @@ fn canary_fight_summaries() -> Vec<String> {
                 result.total_isolytic_damage,
             )
         })
-        .collect()
+        .collect();
+    // This path requires defender seats, which the historical attacker-only
+    // canary tuple does not carry. Exercise native signed piercing percentages
+    // before the raw incoming curve, including an amplified enemy reduction.
+    let mut attacker = canary_combatant("canary_o_player");
+    attacker.attack = 43.0;
+    attacker.hull_health = 9_000.0;
+    attacker.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 240.0,
+            shield_deflection: 320.0,
+            dodge: 180.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 40.0,
+            shield_piercing: 60.0,
+            accuracy: 100.0,
+        },
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Explorer,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.0,
+        ceiling: 1.0,
+    });
+    let mut defender = canary_combatant("canary_o_hostile");
+    defender.attack = 193.0;
+    defender.hull_health = 4_000.0;
+    let crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileBasePiercingStatsReduction(2.1),
+        )],
+    };
+    let defender_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileCounterPierceMultiplier { bonus: 5.0 },
+        )],
+    };
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &canary_config(5, 61),
+        &crew,
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Battleship,
+        crate::combat::ShipType::Explorer,
+        true,
+        false,
+        &defender_crew,
+    );
+    summaries.push(format!("o_raw_counter_piercing:dmg={:.6};won={};limit={};rounds={};ahull={:.6};dhull={:.6};dshield={:.6};ashield={:.6};iso={:.6};",
+        result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
+        result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
+        result.attacker_shield_remaining,result.total_isolytic_damage));
+    summaries
 }
 
 fn canary_combatant(id: &str) -> Combatant {
@@ -938,12 +1003,12 @@ fn compute_data_catalog_fingerprint(
 
     // LCARS officers are the sole ability source and are built in-process from the canonical
     // catalog + upstream stats + translations, sorted by id — so one digest covers all of them.
-    // No LCARS type contains a HashMap, so this serialization is byte-deterministic.
+    // Include runtime-only source bindings as well as the deterministic serialized catalog.
     match registry.lcars_officers() {
         Some(officers) => {
             canonical.push_str(&format!("lcars_count={};", officers.len()));
-            if let Ok(json) = serde_json::to_string(officers) {
-                canonical.push_str(&format!("lcars={:016x};", stable_text_hash(&json)));
+            if let Ok(digest) = lcars_officer_catalog_digest(officers) {
+                canonical.push_str(&format!("lcars={digest:016x};"));
             }
         }
         None => canonical.push_str("lcars=absent;"),
@@ -1055,11 +1120,27 @@ fn compute_data_catalog_fingerprint(
 /// Officer-catalog digest alone, for `GET /api/data/version`.
 pub fn officer_catalog_digest(registry: &DataRegistry) -> u64 {
     match registry.lcars_officers() {
-        Some(officers) => serde_json::to_string(officers)
-            .map(|json| stable_text_hash(&json))
-            .unwrap_or(0),
+        Some(officers) => lcars_officer_catalog_digest(officers).unwrap_or(0),
         None => 0,
     }
+}
+
+/// Officer resolution also depends on a serde-skipped captain source binding.
+/// Keep bindings in the same order as their serialized officers so presence or
+/// content changes invalidate both optimizer reuse and the public data version.
+/// LCARS contains no HashMaps; this tuple serialization is deterministic.
+fn lcars_officer_catalog_digest(
+    officers: &[crate::lcars::LcarsOfficer],
+) -> Result<u64, serde_json::Error> {
+    let source_bindings: Vec<_> = officers
+        .iter()
+        .map(|o| {
+            o.native_synergy
+                .as_ref()
+                .and_then(|s| s.source_captain_ability.as_ref())
+        })
+        .collect();
+    serde_json::to_string(&(officers, source_bindings)).map(|json| stable_text_hash(&json))
 }
 
 fn push_optional_json_digest(
@@ -1304,6 +1385,48 @@ mod tests {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    #[test]
+    fn lcars_catalog_digest_includes_hidden_captain_source_binding() {
+        let officer: crate::lcars::LcarsOfficer = serde_json::from_value(serde_json::json!({
+            "id":"synthetic", "name":"Synthetic",
+            "captain_ability": {"name":"Captain", "effects":[{
+                "type":"stat_modify", "stat":"weapon_damage", "value":0.1
+            }]},
+            "native_synergy": {"identity":{"group_id":7,"officer_class":1}}
+        }))
+        .unwrap();
+        let mut officers = vec![officer];
+        let serialized = serde_json::to_string(&officers).unwrap();
+        let absent = lcars_officer_catalog_digest(&officers).unwrap();
+        let original = officers[0].captain_ability.clone().unwrap();
+        officers[0]
+            .native_synergy
+            .as_mut()
+            .unwrap()
+            .source_captain_ability = Some(original.clone());
+        let matching = lcars_officer_catalog_digest(&officers).unwrap();
+        assert_eq!(serialized, serde_json::to_string(&officers).unwrap());
+        assert_ne!(
+            absent, matching,
+            "binding presence changes variant eligibility"
+        );
+        let mut edited = original;
+        edited.effects[0].value = Some(0.2);
+        officers[0]
+            .native_synergy
+            .as_mut()
+            .unwrap()
+            .source_captain_ability = Some(edited);
+        let mismatched = lcars_officer_catalog_digest(&officers).unwrap();
+        assert_eq!(serialized, serde_json::to_string(&officers).unwrap());
+        assert_ne!(
+            matching, mismatched,
+            "binding content changes variant eligibility"
+        );
+        assert_ne!(absent, mismatched);
+        assert_eq!(mismatched, lcars_officer_catalog_digest(&officers).unwrap());
+    }
+
     fn sample() -> ReuseFingerprint {
         ReuseFingerprint {
             schema: OPTIMIZE_REUSE_FINGERPRINT_SCHEMA,
@@ -1503,7 +1626,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 14, "expected fourteen canary fights");
+        assert_eq!(summaries.len(), 15, "expected fifteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

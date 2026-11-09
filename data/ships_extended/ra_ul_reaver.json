@@ -863,7 +863,106 @@
       "unlock_level": 55
     }
   ],
-  "abilities": null,
+  "abilities": [
+    {
+      "id": "2267188448",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "390670439",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "2623754590",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "1044961815",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "2731465233",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "623173650",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    },
+    {
+      "id": "977824571",
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_opponent_hostile_tags": null,
+      "round_cap": null
+    }
+  ],
   "officer_bonus": {
     "attack": [
       {

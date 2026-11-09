@@ -791,6 +791,39 @@ pub fn resolve_crew_to_buff_set(
     officers: &HashMap<String, LcarsOfficer>,
     options: &ResolveOptions,
 ) -> BuffSet {
+    let captain = officers.get(captain_id);
+    let selected_captain_ability = captain.and_then(|o| {
+        let base = o.captain_ability.as_ref()?;
+        let Some(native) = &o.native_synergy else {
+            return Some(base);
+        };
+        // Loading validates one source ability. Later caller edits must not be
+        // overwritten by variants cached for that earlier definition.
+        if native.source_captain_ability.as_ref() != Some(base) {
+            return Some(base);
+        }
+        let seat_identity = |index: usize| {
+            let id = bridge.get(index)?;
+            if id == captain_id || (index == 1 && bridge.first() == Some(id)) {
+                return None;
+            }
+            officers
+                .get(id)?
+                .native_synergy
+                .as_ref()
+                .map(|s| s.identity)
+        };
+        let [left, right] = crate::data::synergy::captain_synergy_indices(
+            native.identity,
+            [seat_identity(0), seat_identity(1)],
+        );
+        Some(
+            native
+                .captain_variants
+                .get(left * 3 + right)
+                .unwrap_or(base),
+        )
+    });
     let mut static_buffs: HashMap<String, f64> = HashMap::new();
     let mut pending_officer_stat_contributions: Vec<PendingOfficerStatContribution> = Vec::new();
     let mut dynamic_officer_stat_contributions: Vec<DynamicOfficerStatContribution> = Vec::new();
@@ -968,7 +1001,7 @@ pub fn resolve_crew_to_buff_set(
         // batches make the engine's duplicate-officer policy discard the latter.
         let b = next_batch;
         next_batch = next_batch.saturating_add(1);
-        if let Some(ref a) = o.captain_ability {
+        if let Some(a) = selected_captain_ability {
             add_ability(o, a, CrewSeat::Captain, AbilityClass::CaptainManeuver, b);
         }
         if let Some(ref a) = o.bridge_ability {
@@ -1043,7 +1076,7 @@ pub fn resolve_crew_to_buff_set(
     let mut seen_proc: HashSet<String> = HashSet::new();
     if let Some(o) = officers.get(captain_id) {
         seen_proc.insert(captain_id.to_string());
-        if let Some(ref a) = o.captain_ability {
+        if let Some(a) = selected_captain_ability {
             accumulate_proc(o, a);
         }
         if let Some(ref a) = o.bridge_ability {
@@ -1168,6 +1201,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -1355,6 +1389,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "Motivational".to_string(),
                 effects: vec![lcars_effect_officerstat_tag(
@@ -1417,6 +1452,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "test".to_string(),
                 effects: vec![effect(value)],
@@ -1686,6 +1722,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "Bones".to_string(),
                 effects: vec![effect],
@@ -1914,6 +1951,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "Cap".to_string(),
                 effects: vec![lcars_effect_stat_modify(
@@ -1960,6 +1998,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: Some(bridge),
             below_decks_ability: None,
@@ -1985,6 +2024,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -2112,14 +2152,52 @@ mod tests {
             "Khan's unsupported HullDamageTaken trigger must remain visible in drop diagnostics"
         );
 
-        // Scotty: passive bridge hull_hp multiplier rank 5 from discrete table.
+        // Scotty: native launch MULT rank 5 contributes a fraction of the shared HP pool.
         let scotty = resolve_crew_to_buff_set("scotty-a83cb5", &[], &[], &officers, &options);
         let hull = scotty
             .static_buffs
-            .get("hull_hp")
+            .get("hull_hp_additive_pool")
             .copied()
-            .expect("expected scotty-a83cb5 passive hull_hp from bundled LCARS");
-        assert!((hull - 1.2).abs() < 1e-12);
+            .expect("expected scotty-a83cb5 passive hull HP pool from bundled LCARS");
+        assert!((hull - 0.2).abs() < 1e-12);
+    }
+
+    #[test]
+    fn tendi_rank_four_resolves_native_hp_fraction_into_profile_pool() {
+        let file = super::super::build_officer_model_file_default().expect("canonical model");
+        let officers = index_lcars_officers_by_id(file.officers);
+        let mut buffs = resolve_crew_to_buff_set(
+            "",
+            &[],
+            &["d-vana-tendi-9fabf0".into()],
+            &officers,
+            &ResolveOptions {
+                tier: Some(4),
+                officer_tiers: None,
+                officer_levels: None,
+            },
+        );
+        assert_eq!(buffs.static_buffs.get("hull_hp_additive_pool"), Some(&1.7));
+        assert!(!buffs.static_buffs.contains_key("hull_hp"));
+        let health = crate::data::profile::take_static_health_pool_bonus(&mut buffs.static_buffs);
+        let profile = crate::data::profile::PlayerProfile {
+            bonuses: HashMap::from([("hull_hp".into(), 4.0)]),
+            ..Default::default()
+        };
+        let compiled = crate::data::profile::apply_profile_to_attacker_with_health_pool(
+            Combatant {
+                hull_health: 100.0,
+                ..Default::default()
+            },
+            &profile,
+            None,
+            Default::default(),
+            health,
+        );
+        assert_eq!(compiled.hull_health, 670.0);
+        let final_stats =
+            crate::data::profile::apply_static_buffs_to_combatant(compiled, &buffs.static_buffs);
+        assert_eq!(final_stats.hull_health, 670.0);
     }
 
     #[test]
@@ -2182,6 +2260,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(ability.clone()),
             bridge_ability: None,
             below_decks_ability: None,
@@ -2324,6 +2403,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "scaling".to_string(),
                 effects: vec![scaling_effect],
@@ -2400,6 +2480,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "passive_armor".to_string(),
                 effects: vec![scaling_effect],
@@ -2473,6 +2554,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(LcarsAbility {
                 name: "scaling".to_string(),
                 effects: vec![scaling_effect],
@@ -2505,6 +2587,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -2584,6 +2667,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,

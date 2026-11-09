@@ -127,6 +127,9 @@ test("bundled canonical overrides select snapshots of their referenced upstream 
     [3407808029, [981948123, 70108, 1]],
     [545866536, [810035059, 67626, 1]],
     [2392190200, [1478241687, 35006, 1]],
+    // Native SUB targets the opponent. Its positive source snapshots become
+    // negative additive deltas; target and two-round scope are tested separately.
+    [4147903968, [1856737936, 35012, -1]],
   ]);
   const canonical = readJson("../../data/research_canonical.json");
   assert.equal(canonical.overrides.length, reviewedSources.size);

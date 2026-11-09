@@ -10,7 +10,7 @@
 //! [`borg_operating_table_forbidden_tech_seats`] (not flat `bonuses`). Warp-speed rows remain out of combat scope.
 //! **Quantum Slipstream Drive** ([`QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID`]): opponent cumulative shield-mitigation
 //! debuff is [`AbilityEffect::CumulativeOpponentShieldMitigationDebuff`] via
-//! [`quantum_slipstream_forbidden_tech_round_start_seats`]; catalog `shield_mitigation` is a **cap** source only
+//! [`quantum_slipstream_forbidden_tech_round_start_seats`]; the native `shield_mitigation` curve is a per-round subtraction
 //! (skipped in [`merge_tech_fids_into_profile`] / [`merge_tech_fids_into_profile_with_level_tier`]).
 //! **Ship-class + hostile-gated torpedo family** (S31 Battleship, Control Seeker Probes Explorer, Dual Photon
 //! Warheads Interceptor): combat stats are not merged as unconditional [`PlayerProfile::bonuses`]; see
@@ -400,6 +400,10 @@ pub fn merge_tech_fids_into_profile(
             continue;
         };
         for bonus in &record.bonuses {
+            if forbidden_tech_special::requires_native_rank_curve(fid, &bonus.stat) {
+                // No selected owned level is available in this legacy entry point.
+                continue;
+            }
             if bonus.rank_curve.is_some() {
                 // A ranked buff requires an owned level and tier; never substitute
                 // the catalog's legacy summary value when that context is absent.
@@ -1511,6 +1515,26 @@ pub fn get_bonus_with_owner_faction_research(
     ProfileBonusLookup::new(profile, owner_faction_slug).get(key)
 }
 
+/// Unconditional native launch-time max-HP fractions, distinct from final multipliers.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct StaticHealthPoolBonus {
+    pub hull_fraction: f64,
+    pub shield_fraction: f64,
+}
+
+/// Consume only explicitly identified native MULT fractions. Legacy multipliers
+/// and conditioned/timed effects remain in their existing channels.
+pub fn take_static_health_pool_bonus(
+    static_buffs: &mut HashMap<String, f64>,
+) -> StaticHealthPoolBonus {
+    StaticHealthPoolBonus {
+        hull_fraction: static_buffs.remove("hull_hp_additive_pool").unwrap_or(0.0),
+        shield_fraction: static_buffs
+            .remove("shield_hp_additive_pool")
+            .unwrap_or(0.0),
+    }
+}
+
 /// Apply LCARS/officer static buffs to a Combatant (e.g. from [BuffSet::static_buffs]).
 /// Intended for use when building a Combatant from ship/hostile + crew where crew is resolved via
 /// [crate::lcars::resolve_crew_to_buff_set]. Keys applied: isolytic_damage, isolytic_defense,
@@ -1542,6 +1566,16 @@ pub fn apply_static_buffs_to_combatant(
     let weapon_mult = static_buffs.get("weapon_damage").copied().unwrap_or(1.0);
     let hull_mult = static_buffs.get("hull_hp").copied().unwrap_or(1.0);
     let shield_mult = static_buffs.get("shield_hp").copied().unwrap_or(1.0);
+    // Standalone callers have no profile pool. Scenario construction consumes
+    // these keys before applying the profile so they enter that shared pool once.
+    let hull_pool = static_buffs
+        .get("hull_hp_additive_pool")
+        .copied()
+        .unwrap_or(0.0);
+    let shield_pool = static_buffs
+        .get("shield_hp_additive_pool")
+        .copied()
+        .unwrap_or(0.0);
     let hull_flat = static_buffs.get("hull_hp_flat").copied().unwrap_or(0.0);
     let shield_flat = static_buffs.get("shield_hp_flat").copied().unwrap_or(0.0);
     let pierce_add = static_buffs.get("shield_pierce").copied().unwrap_or(0.0)
@@ -1571,8 +1605,8 @@ pub fn apply_static_buffs_to_combatant(
 
     Combatant {
         attack: combatant.attack * weapon_mult,
-        hull_health: (combatant.hull_health + hull_flat) * hull_mult,
-        shield_health: (combatant.shield_health + shield_flat) * shield_mult,
+        hull_health: (combatant.hull_health + hull_flat) * (1.0 + hull_pool) * hull_mult,
+        shield_health: (combatant.shield_health + shield_flat) * (1.0 + shield_pool) * shield_mult,
         pierce: (combatant.pierce + pierce_add).max(0.0),
         crit_chance: (combatant.crit_chance + crit_chance_add).clamp(0.0, 1.0),
         crit_multiplier: ((combatant.crit_multiplier + crit_damage_flat) * crit_damage_mult)
@@ -2464,16 +2498,35 @@ pub(crate) fn compute_officer_stat_runtime_bonus_from_parts<'a>(
 /// (e.g. `"federation"`); merges [`PlayerProfile::research_owner_faction_bonuses`] for matching
 /// keys into the same stats as `profile.bonuses`.
 pub fn apply_profile_to_attacker(
+    attacker: Combatant,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    officer_stat_runtime: OfficerStatRuntimeBonus,
+) -> Combatant {
+    apply_profile_to_attacker_with_health_pool(
+        attacker,
+        profile,
+        owner_faction_slug,
+        officer_stat_runtime,
+        StaticHealthPoolBonus::default(),
+    )
+}
+
+/// Add verified native officer launch HP fractions to the same MULT pool as
+/// profile research/building fractions and the officer Health breakpoint bonus.
+pub fn apply_profile_to_attacker_with_health_pool(
     mut attacker: Combatant,
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
     officer_stat_runtime: OfficerStatRuntimeBonus,
+    static_health: StaticHealthPoolBonus,
 ) -> Combatant {
     let osr = officer_stat_runtime;
     let osr_is_zero = osr == OfficerStatRuntimeBonus::default();
     if profile.bonuses.is_empty()
         && profile.research_owner_faction_bonuses.is_empty()
         && osr_is_zero
+        && static_health == StaticHealthPoolBonus::default()
     {
         return attacker;
     }
@@ -2482,8 +2535,8 @@ pub fn apply_profile_to_attacker(
     let weapon = 1.0 + gb("weapon_damage");
     // Officer Health contributes to the same native MULT pool as HP research,
     // buildings and technology, rather than multiplying the completed pool again.
-    let hull_hp = 1.0 + gb("hull_hp") + osr.health_bonus;
-    let shield_hp = 1.0 + gb("shield_hp") + osr.health_bonus;
+    let hull_hp = 1.0 + gb("hull_hp") + osr.health_bonus + static_health.hull_fraction;
+    let shield_hp = 1.0 + gb("shield_hp") + osr.health_bonus + static_health.shield_fraction;
     let hull_hp_flat = gb("hull_hp_flat");
     let shield_hp_flat = gb("shield_hp_flat");
     let isolytic_damage_add = gb("isolytic_damage");
@@ -3790,6 +3843,82 @@ mod tests {
     }
 
     #[test]
+    fn native_crew_launch_health_joins_profile_and_officer_percentage_pool_once() {
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("hull_hp".into(), 4.0),
+                ("shield_hp".into(), 3.0),
+                ("hull_hp_flat".into(), 20.0),
+                ("shield_hp_flat".into(), 10.0),
+            ]),
+            ..Default::default()
+        };
+        let mut statics = HashMap::from([
+            ("hull_hp_additive_pool".into(), 1.7 + 0.2),
+            ("shield_hp_additive_pool".into(), 0.4),
+            // A genuine final multiplier retains its separate operation.
+            ("hull_hp".into(), 1.5),
+        ]);
+        let health = take_static_health_pool_bonus(&mut statics);
+        assert_eq!(statics.len(), 1);
+        assert_eq!(
+            take_static_health_pool_bonus(&mut statics),
+            Default::default()
+        );
+        let base = Combatant {
+            hull_health: 100.0,
+            shield_health: 200.0,
+            ..Default::default()
+        };
+        let compiled = apply_profile_to_attacker_with_health_pool(
+            base,
+            &profile,
+            None,
+            OfficerStatRuntimeBonus {
+                health_bonus: 2.0,
+                ..Default::default()
+            },
+            health,
+        );
+        assert!((compiled.hull_health - 120.0 * (1.0 + 4.0 + 2.0 + 1.9)).abs() < 1e-9);
+        assert!((compiled.shield_health - 210.0 * (1.0 + 3.0 + 2.0 + 0.4)).abs() < 1e-9);
+        let final_stats = apply_static_buffs_to_combatant(compiled.clone(), &statics);
+        assert_eq!(final_stats.hull_health, compiled.hull_health * 1.5);
+        assert_eq!(final_stats.shield_health, compiled.shield_health);
+    }
+
+    #[test]
+    fn native_crew_launch_health_applies_with_an_empty_profile() {
+        let base = Combatant {
+            hull_health: 100.0,
+            shield_health: 200.0,
+            ..Default::default()
+        };
+        let health = StaticHealthPoolBonus {
+            hull_fraction: 1.7,
+            shield_fraction: 0.4,
+        };
+        let compiled = apply_profile_to_attacker_with_health_pool(
+            base.clone(),
+            &PlayerProfile::default(),
+            None,
+            Default::default(),
+            health,
+        );
+        assert_eq!(compiled.hull_health, 270.0);
+        assert_eq!(compiled.shield_health, 280.0);
+        let standalone = apply_static_buffs_to_combatant(
+            base,
+            &HashMap::from([
+                ("hull_hp_additive_pool".into(), 1.7),
+                ("shield_hp_additive_pool".into(), 0.4),
+            ]),
+        );
+        assert_eq!(standalone.hull_health, compiled.hull_health);
+        assert_eq!(standalone.shield_health, compiled.shield_health);
+    }
+
+    #[test]
     fn flat_health_research_is_added_before_percentage_pools() {
         let profile = PlayerProfile {
             bonuses: HashMap::from([
@@ -3877,6 +4006,61 @@ mod tests {
             );
             assert!(unequipped.bonuses.is_empty());
         }
+    }
+
+    #[test]
+    fn quantum_slipstream_native_shield_curve_requires_equipment_and_unlocked_tier() {
+        let catalog = crate::data::forbidden_chaos::load_forbidden_chaos(
+            crate::data::forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH,
+        )
+        .unwrap();
+        let fid = 2_439_729_135;
+        for (tier, level, expected) in [
+            (7, 35, 0.0),
+            (8, 36, 5.25),
+            (10, 49, 19.5),
+            (10, 50, 22.0),
+            (12, 0, 0.0),
+            (12, 100, 0.0),
+        ] {
+            let imported = [ForbiddenTechEntry {
+                fid,
+                tier,
+                level,
+                shard_count: 0,
+            }];
+            for legacy_scaling in [false, true] {
+                let mut profile = PlayerProfile::default();
+                merge_tech_fids_into_profile_with_level_tier(
+                    &mut profile,
+                    &[fid],
+                    &imported,
+                    &catalog,
+                    legacy_scaling,
+                );
+                assert_eq!(
+                    get_bonus(&profile, "shield_hp"),
+                    expected,
+                    "tier {tier} level {level}"
+                );
+            }
+            let mut unequipped = PlayerProfile::default();
+            merge_tech_fids_into_profile_with_level_tier(
+                &mut unequipped,
+                &[],
+                &imported,
+                &catalog,
+                false,
+            );
+            assert_eq!(get_bonus(&unequipped, "shield_hp"), 0.0);
+        }
+        let mut no_level = PlayerProfile::default();
+        merge_tech_fids_into_profile(&mut no_level, &[fid], &catalog);
+        assert_eq!(
+            get_bonus(&no_level, "shield_hp"),
+            0.0,
+            "summary cannot substitute for absent rank context"
+        );
     }
 
     #[test]

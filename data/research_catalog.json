@@ -18037,65 +18037,6 @@
       ]
     },
     {
-      "rid": 2392190200,
-      "name": "KSG Shield Mitigation",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.005,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.01,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.015,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.02,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.025,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 2430107450,
       "name": "Interceptor Overdrive",
       "data_version": "stfcspace-upstream",
@@ -32517,65 +32458,6 @@
             {
               "stat": "apex_shred",
               "value": 15,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 4147903968,
-      "name": "Immortal Shield Mitigation Reduction",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.005,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.01,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.015,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.02,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "shield_mitigation",
-              "value": 0.025,
               "operator": "add"
             }
           ]

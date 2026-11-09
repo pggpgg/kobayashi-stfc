@@ -961,6 +961,29 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::HostileBasePiercingStatsReduction => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if spec.target != AbilityTargetSpec::DefenderOpponent
+                || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::HostileBasePiercingStatsReduction(fraction.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::BaseMitigationStatsAdd => {
             if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
                 return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
@@ -1647,6 +1670,23 @@ mod tests {
             category: Some(EffectCategory::Combat),
             confidence: Some(EffectConfidence::Authoritative),
         }
+    }
+
+    #[test]
+    fn raw_enemy_piercing_reduction_preserves_uncapped_source_fraction() {
+        let mut spec = shield_mitigation_spec(AbilityTargetSpec::DefenderOpponent, 2.1);
+        spec.modifier = AbilityModifierSpec::HostileBasePiercingStatsReduction;
+        let (timing, effect, _) = compile_officer_combat_spec(&spec).unwrap();
+        assert_eq!(timing, TimingWindow::CombatBegin);
+        assert_eq!(
+            effect,
+            AbilityEffect::HostileBasePiercingStatsReduction(2.1)
+        );
+        let mut boosted = AbilityEffect::HostileBasePiercingStatsReduction(0.7);
+        crate::combat::abilities::scale_bridge_officer_ability_effect(&mut boosted, 2.0);
+        assert!(
+            matches!(boosted,AbilityEffect::HostileBasePiercingStatsReduction(v) if (v-2.1).abs()<1e-12)
+        );
     }
 
     #[test]

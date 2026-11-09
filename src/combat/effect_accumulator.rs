@@ -1079,6 +1079,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1296,6 +1297,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1475,6 +1477,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -1700,6 +1703,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::DodgeBonus(_)
                 | AbilityEffect::AccuracyBonus(_) => {}
@@ -1843,6 +1847,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -2066,6 +2071,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
@@ -2201,7 +2207,8 @@ fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
     effect.ability_class == AbilityClass::ShipAbility
         && matches!(
             effect.effect,
-            AbilityEffect::BaseMitigationStatsBonus(_)
+            AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::ShieldRegenMaxFraction(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
@@ -2414,6 +2421,11 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => {
             AbilityEffect::BaseMitigationStatsPerCrewHealth(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
+        }
+        AbilityEffect::HostileBasePiercingStatsReduction(v) => {
+            AbilityEffect::HostileBasePiercingStatsReduction(
                 v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             )
         }
