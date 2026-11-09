@@ -594,7 +594,11 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
                 eprintln!("Warning: captain synergy for {} ({}) is unsupported: canonical captain ID/value/chance does not match the upstream captain source; retaining existing resolution", o.name, o.id);
             }
         }
-        crate::lcars::NativeOfficerSynergy { identity: source.identity, captain_variants: variants }
+        crate::lcars::NativeOfficerSynergy {
+            identity: source.identity,
+            source_captain_ability: if variants.is_empty() { None } else { captain_ability.clone() },
+            captain_variants: variants,
+        }
     });
     if captain_ability.is_some() && native_synergy.is_none() {
         eprintln!("Warning: captain synergy for {} ({}) is unsupported: missing byte-bound native officer group/class source; retaining existing resolution", o.name, o.id);
@@ -1933,6 +1937,19 @@ mod build_model_tests {
                 );
             }
         }
+        // Post-load customization invalidates only the cached captain variants,
+        // without requiring callers to know or clear source metadata.
+        let source_captain = officers[captain_id].captain_ability.clone().unwrap();
+        let mut renamed = source_captain.clone();
+        renamed.name = "custom captain".into();
+        officers.get_mut(captain_id).unwrap().captain_ability = Some(renamed);
+        assert!((boost(&officers, &bridge, 4) - 0.4).abs() < 1e-12);
+        let mut same_name_edit = source_captain.clone();
+        same_name_edit.effects[0].value = Some(0.65);
+        officers.get_mut(captain_id).unwrap().captain_ability = Some(same_name_edit);
+        assert!((boost(&officers, &bridge, 4) - 0.65).abs() < 1e-12);
+        officers.get_mut(captain_id).unwrap().captain_ability = Some(source_captain);
+        assert!((boost(&officers, &bridge, 4) - 2.0).abs() < 1e-12);
         // Missing/mismatched source metadata retains existing base resolution.
         officers.get_mut(captain_id).unwrap().native_synergy = None;
         assert!((boost(&officers, &bridge, 4) - 0.4).abs() < 1e-12);

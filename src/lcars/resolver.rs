@@ -797,6 +797,11 @@ pub fn resolve_crew_to_buff_set(
         let Some(native) = &o.native_synergy else {
             return Some(base);
         };
+        // Loading validates one source ability. Later caller edits must not be
+        // overwritten by variants cached for that earlier definition.
+        if native.source_captain_ability.as_ref() != Some(base) {
+            return Some(base);
+        }
         let seat_identity = |index: usize| {
             let id = bridge.get(index)?;
             if id == captain_id || (index == 1 && bridge.first() == Some(id)) {

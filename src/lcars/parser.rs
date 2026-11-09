@@ -46,6 +46,11 @@ pub struct LcarsOfficer {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NativeOfficerSynergy {
     pub identity: crate::data::synergy::OfficerSynergyIdentity,
+    /// Bind cached variants to the exact ability validated by the source
+    /// converter. A caller may replace or edit that ability after loading.
+    /// This runtime binding is not part of serialized LCARS definitions.
+    #[serde(skip)]
+    pub source_captain_ability: Option<LcarsAbility>,
     /// Index = left synergy index * 3 + right synergy index. Only the native
     /// captain source is transformed; bridge rank curves remain independent.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -116,7 +121,7 @@ impl LcarsLevelStats {
 }
 
 /// One ability block (captain, bridge, or below decks) with a name and effects.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsAbility {
     pub name: String,
     #[serde(default)]
@@ -125,7 +130,7 @@ pub struct LcarsAbility {
 
 /// Single effect within an ability. Unknown `type` values are preserved and
 /// skipped at resolve time (graceful degradation).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsEffect {
     #[serde(rename = "type")]
     pub effect_type: String,
@@ -161,7 +166,7 @@ pub struct LcarsEffect {
     pub decay: Option<LcarsDecay>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsAccumulate {
     #[serde(rename = "type", default)]
     pub type_: Option<String>,
@@ -171,7 +176,7 @@ pub struct LcarsAccumulate {
     pub ceiling: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsDecay {
     #[serde(rename = "type", default)]
     pub type_: Option<String>,
@@ -182,7 +187,7 @@ pub struct LcarsDecay {
 }
 
 /// Duration of an effect. In YAML: `permanent` (string) or `rounds: N` (map).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LcarsDuration {
     Permanent(String),
@@ -196,7 +201,7 @@ impl LcarsDuration {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsScaling {
     #[serde(default)]
     pub base: Option<f64>,
@@ -269,7 +274,7 @@ impl LcarsScaling {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcarsCondition {
     #[serde(rename = "type")]
     pub condition_type: String,
