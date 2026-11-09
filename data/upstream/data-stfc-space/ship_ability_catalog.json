@@ -23,10 +23,14 @@
     },
     "49906243": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "component_base_weapon_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": [
+        "texas_class"
+      ],
+      "condition_defender_is_npc_hostile": true
     },
     "78080222": {
       "timing": "combat_begin",
@@ -81,6 +85,13 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
     },
+    "390670439": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
     "393740394": {
       "timing": "combat_begin",
       "effect_type": "pierce_bonus",
@@ -93,6 +104,13 @@
       "effect_type": "attack_multiplier",
       "value_is_percentage": true,
       "ignore_upstream_value_is_percentage": false
+    },
+    "402084217": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "407462527": {
       "timing": "receive_damage",
@@ -135,6 +153,13 @@
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
       "value_is_percentage": true
+    },
+    "623173650": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "644714972": {
       "timing": "combat_begin",
@@ -219,6 +244,13 @@
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0
     },
+    "977824571": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
     "985810609": {
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
@@ -248,6 +280,13 @@
       "value_override": 0
     },
     "1029262994": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
+    "1044961815": {
       "timing": "combat_begin",
       "effect_type": "combat_noop",
       "value_is_percentage": false,
@@ -590,6 +629,13 @@
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0
     },
+    "2267188448": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
     "2289346504": {
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
@@ -611,12 +657,19 @@
       "ignore_upstream_value_is_percentage": true,
       "condition_opponent_faction": "venari_ral"
     },
+    "2377676112": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
     "2425475474": {
       "timing": "combat_begin",
       "effect_type": "conqueror_borg_beam_suppression",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0,
+      "value_override": 0.0,
       "condition_opponent_hostile_tags": [
         "conqueror_borg"
       ]
@@ -705,6 +758,13 @@
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0
     },
+    "2623754590": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
     "2643213631": {
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
@@ -731,11 +791,25 @@
       "ignore_upstream_value_is_percentage": true,
       "condition_opponent_faction": "romulan"
     },
+    "2731465233": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
     "2747851475": {
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
+    },
+    "2748355073": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "2749594341": {
       "timing": "combat_begin",

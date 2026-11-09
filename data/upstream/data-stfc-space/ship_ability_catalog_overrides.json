@@ -1,6 +1,22 @@
 {
   "description": "Optional per-ability catalog rows merged after scripts/generate_full_ship_ability_catalog.py heuristics. Keys are upstream ability ids (string or int); values are full entry objects (timing, effect_type, value_is_percentage, etc.). Use this so hand-tuned mappings survive catalog regeneration. See docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md § Drift control.",
   "entries": {
+    "2748355073": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
+    },
+    "49906243": {
+      "timing": "combat_begin",
+      "effect_type": "component_base_weapon_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": ["texas_class"],
+      "condition_defender_is_npc_hostile": true
+    },
     "2016654425": {
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
@@ -32,12 +48,17 @@
     },
     "509252162": {
       "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "effect_type": "component_base_weapon_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "values_scale_with_ship_level": true,
-      "post_scale": 0.001,
       "condition_opponent_hostile_tags": ["conqueror_borg"]
+    },
+    "987222969": {
+      "timing": "combat_begin",
+      "effect_type": "shield_hp_flat",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "2357321655": {
       "timing": "combat_begin",

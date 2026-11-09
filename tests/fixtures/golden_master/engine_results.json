@@ -994,6 +994,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -1440,6 +1442,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -1886,6 +1890,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -2332,6 +2338,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -2809,6 +2817,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -3255,6 +3265,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -3701,6 +3713,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -4147,6 +4161,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -4624,6 +4640,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -5070,6 +5088,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -5516,6 +5536,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -5962,6 +5984,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -6439,6 +6463,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -6885,6 +6911,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -7331,6 +7359,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0
@@ -7777,6 +7807,8 @@
             "mitigation_additive_bonus": -0.0,
             "multiplier": 0.0,
             "raw_mitigation_stats_applied": false,
+            "raw_piercing_bonus_fraction": -0.0,
+            "raw_piercing_reduction_fraction": -0.0,
             "shield_deflection_component": 140.0
           },
           "weapon_index": 0

@@ -154,6 +154,10 @@ pub enum AbilityEffect {
     /// Raw points added to armor, shield deflection and dodge, after base scaling.
     /// Requires raw-stat context; it is never converted into mitigation probability.
     BaseMitigationStatsAdd(f64),
+    /// Native ModAllPiercing/MultiplySub on the enemy: subtract from the same
+    /// raw AP/SP/accuracy percentage pool as native piercing increases. The
+    /// source coefficient is not capped; resolved raw points clamp at zero.
+    HostileBasePiercingStatsReduction(f64),
     /// Raw armor-piercing points, applied before mitigation is calculated.
     BaseArmorPiercingAdd(f64),
     /// Deferred setup coefficient; scenario construction resolves it to raw points.
@@ -289,10 +293,10 @@ pub enum AbilityEffect {
         reduction: f64,
         duration_rounds: u32,
     },
-    /// Hostile hull ability (Pen of Kahless): multiplies hostile counter-fire pierce by
-    /// `(1 + bonus)` — "increases Shield Piercing, Armor Piercing, and Accuracy stats by X%",
-    /// approximated as a uniform pierce multiplier on the counter path (the increase mirror of
-    /// [`AbilityEffect::HostileCounterStatDebuff`]). Round gating comes from the seat's
+    /// Hostile hull ability (Ravager's Lance, Pen of Kahless): multiplies each
+    /// raw counter-weapon Shield Piercing, Armor Piercing and Accuracy by
+    /// `(1 + bonus)` before mitigation. Missing raw contexts retain the legacy
+    /// damage-through approximation. Round gating comes from the seat's
     /// [`AbilityCondition::RoundRange`] via the standard per-round defender effect filtering.
     HostileCounterPierceMultiplier {
         bonus: f64,
@@ -1082,6 +1086,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsBonus(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
+        AbilityEffect::HostileBasePiercingStatsReduction(v) => *v = scale(*v),
         AbilityEffect::BaseArmorPiercingAdd(v) => *v = scale(*v),
         AbilityEffect::BaseArmorPiercingPerCrewHealth(v)
         | AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => *v = scale(*v),

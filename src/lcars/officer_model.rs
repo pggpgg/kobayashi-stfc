@@ -128,7 +128,7 @@ struct CanonicalOfficer {
     abilities: Vec<CanonicalAbility>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 struct CanonicalAbility {
     #[serde(default)]
     ability_id: Option<String>,
@@ -183,6 +183,27 @@ struct TranslationRow {
 struct UpstreamOfficerStats {
     stats: Vec<LcarsLevelStats>,
     max_level_by_rank: Vec<u32>,
+    synergy: Option<UpstreamOfficerSynergy>,
+}
+
+#[derive(Debug, Clone)]
+struct UpstreamOfficerSynergy {
+    identity: crate::data::synergy::OfficerSynergyIdentity,
+    captain: Option<UpstreamCaptainAbility>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct UpstreamCaptainAbility {
+    id: u64,
+    values: Vec<UpstreamCaptainValue>,
+    #[serde(default)]
+    ranked_is_value_chance: Option<u32>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct UpstreamCaptainValue {
+    value: f64,
+    chance: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -191,6 +212,12 @@ struct UpstreamOfficer {
     stats: Vec<LcarsLevelStats>,
     #[serde(default)]
     ranks: Vec<UpstreamOfficerRank>,
+    #[serde(default)]
+    synergy_id: Option<u64>,
+    #[serde(default)]
+    class: Option<u32>,
+    #[serde(default)]
+    captain_ability: Option<UpstreamCaptainAbility>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -356,6 +383,17 @@ fn load_upstream_officer_stats(
                 UpstreamOfficerStats {
                     stats,
                     max_level_by_rank,
+                    synergy: parsed
+                        .synergy_id
+                        .zip(parsed.class)
+                        .filter(|_| native_source_matches)
+                        .map(|(group_id, officer_class)| UpstreamOfficerSynergy {
+                            identity: crate::data::synergy::OfficerSynergyIdentity {
+                                group_id,
+                                officer_class,
+                            },
+                            captain: parsed.captain_ability,
+                        }),
                 },
             );
         }
@@ -527,6 +565,41 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
         None
     };
 
+    let native_synergy = upstream.and_then(|u| u.synergy.as_ref()).map(|source| {
+        let mut variants = Vec::new();
+        if let (Some(captain), Some(base)) = (&source.captain, &captain_ability) {
+            let admitted = captain_abs.iter().any(|a| captain_source_matches(a, captain));
+            if admitted {
+                for left in 0..3 {
+                    for right in 0..3 {
+                        let effects = captain_abs.iter().filter_map(|a| {
+                            if captain_source_matches(a, captain) {
+                                let mut selected = a.clone();
+                                let sum = |pick: fn(&UpstreamCaptainValue) -> f64| {
+                                    pick(&captain.values[0])
+                                        + if left == 0 { 0.0 } else { pick(&captain.values[left]) }
+                                        + if right == 0 { 0.0 } else { pick(&captain.values[right]) }
+                                };
+                                selected.value_by_rank = vec![sum(|v| v.value)];
+                                selected.chance_by_rank = vec![sum(|v| v.chance).clamp(0.0, 1.0)];
+                                convert_ability_to_effect(&selected, &o.name)
+                            } else {
+                                convert_ability_to_effect(a, &o.name)
+                            }
+                        }).collect();
+                        variants.push(LcarsAbility { name: base.name.clone(), effects });
+                    }
+                }
+            } else {
+                eprintln!("Warning: captain synergy for {} ({}) is unsupported: canonical captain ID/value/chance does not match the upstream captain source; retaining existing resolution", o.name, o.id);
+            }
+        }
+        crate::lcars::NativeOfficerSynergy { identity: source.identity, captain_variants: variants }
+    });
+    if captain_ability.is_some() && native_synergy.is_none() {
+        eprintln!("Warning: captain synergy for {} ({}) is unsupported: missing byte-bound native officer group/class source; retaining existing resolution", o.name, o.id);
+    }
+
     (
         LcarsOfficer {
             id: o.id,
@@ -534,6 +607,7 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
             faction: o.faction,
             rarity: o.rarity,
             group: o.group,
+            native_synergy,
             captain_ability,
             bridge_ability,
             below_decks_ability,
@@ -544,6 +618,33 @@ fn convert_officer(o: CanonicalOfficer, ctx: &NameResolveContext) -> (LcarsOffic
         },
         names_resolved,
     )
+}
+
+/// The captain slot is a native SynergyBuffData source, unlike an officer rank
+/// curve. Require the upstream captain join and all three native-reachable
+/// samples, rather than inferring semantics from length. Canonical sources may
+/// omit unreachable indices 3/4; any additional supplied samples must match.
+fn captain_source_matches(a: &CanonicalAbility, source: &UpstreamCaptainAbility) -> bool {
+    if a.slot != "captain"
+        || a.ability_id.as_deref().and_then(parse_numeric_id) != Some(source.id)
+        || source.ranked_is_value_chance != Some(0)
+        || source.values.len() < 3
+        || a.value_by_rank.len() < 3
+        || a.chance_by_rank.len() < 3
+        || a.value_by_rank.len().max(a.chance_by_rank.len()) > source.values.len()
+    {
+        return false;
+    }
+    let count = a.value_by_rank.len().max(a.chance_by_rank.len());
+    (0..count).all(|i| {
+        let v = source.values.get(i).map(|v| v.value).unwrap_or(0.0);
+        let c = source.values.get(i).map(|v| v.chance).unwrap_or(0.0);
+        v.is_finite()
+            && c.is_finite()
+            && (0.0..=1.0).contains(&c)
+            && a.value_by_rank.get(i).is_none_or(|x| *x == v)
+            && a.chance_by_rank.get(i).is_none_or(|x| *x == c)
+    })
 }
 
 /// Maps one canonical `value_by_rank` sample to the numeric stored in LCARS `value` / `scaling.values`
@@ -921,7 +1022,12 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 .iter()
                 .copied()
                 .map(|v| {
-                    if stat == "unsupported_officer_effect" {
+                    if matches!(
+                        stat.as_str(),
+                        "unsupported_officer_effect"
+                            | "hull_hp_additive_pool"
+                            | "shield_hp_additive_pool"
+                    ) {
                         v
                     } else {
                         transform_canonical_to_lcars_value(modifier, op, v)
@@ -1277,8 +1383,15 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .as_deref()
             .and_then(officer_stat_from_canonical_attributes)
             == Some(OfficerStat::Health);
+    let supported_enemy_piercing_reduction = modifier == "AllPiercing"
+        && op.eq_ignore_ascii_case("MultiplySub")
+        && a.target.as_deref() == Some("EnemyShip")
+        && a.trigger.as_deref() == Some("CombatStart")
+        && !crew_scaled
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
     let unsupported_source_pattern = matches!(modifier, "OfficerStatAttack" | "OfficerStatDefense")
-        || (modifier == "AllPiercing")
+        || (modifier == "AllPiercing" && !supported_enemy_piercing_reduction)
         || (modifier == "AllDefenses" && !supported_ortegas_defense)
         // Existing LCARS self-stat routing does not preserve these seat scopes
         // or flat-add units; applying them crew-wide would alter combat stats.
@@ -1434,8 +1547,31 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             // crew Health, resolved after profile and setup conditions.
             MappedEffect::StatModify("base_armor_piercing_per_crew_health".into(), "add".into(), val)
         }
+        "AllPiercing" if op.eq_ignore_ascii_case("MultiplySub")
+            && a.target.as_deref() == Some("EnemyShip") =>
+        {
+            MappedEffect::StatModify("hostile_base_piercing_stats_reduction".into(), "add".into(), val)
+        }
         "ArmorPiercing" | "AllPiercing" => {
             MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)
+        }
+        "ShieldHPMax" | "HullHPMax"
+            if op.eq_ignore_ascii_case("MultiplyAdd")
+                && a.trigger.as_deref() == Some("ShipLaunched")
+                && a.target.as_deref() == Some("SelfShip")
+                && a.conditions.is_empty()
+                && a.attributes.as_deref().is_none_or(|s| s.trim().is_empty())
+                && a.chance_by_rank.iter().all(|chance| *chance == 1.0) =>
+        {
+            // Native launch-time MULT percentages join research/building/crew
+            // Health in one pool. Retain the fraction separately from genuine
+            // final multipliers and conditional/timed max-HP effects.
+            let stat = if modifier == "HullHPMax" {
+                "hull_hp_additive_pool"
+            } else {
+                "shield_hp_additive_pool"
+            };
+            MappedEffect::StatModify(stat.into(), "add".into(), val)
         }
         "ShieldHPMax" => MappedEffect::StatModify("shield_hp".into(), "multiply".into(), 1.0 + val),
         "Shields" => MappedEffect::StatModify("shield_hp".into(), "multiply".into(), val),
@@ -1668,6 +1804,140 @@ mod build_model_tests {
     use super::*;
     use crate::lcars::LcarsFile;
 
+    #[test]
+    fn native_captain_synergy_requires_upstream_captain_identity_and_complete_values() {
+        let mut canonical: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "slot":"captain", "ability_id":"123", "value_by_rank":[0.4,0.4,0.8],
+            "chance_by_rank":[1,1,1]
+        }))
+        .unwrap();
+        let mut source: UpstreamCaptainAbility = serde_json::from_value(serde_json::json!({
+            "id":123, "ranked_is_value_chance":0,
+            "values":[{"value":0.4,"chance":1},{"value":0.4,"chance":1},
+                {"value":0.8,"chance":1},{"value":0,"chance":0},{"value":0,"chance":0}]
+        }))
+        .unwrap();
+        assert!(captain_source_matches(&canonical, &source));
+        source.values[4].chance = 1.0;
+        assert!(
+            captain_source_matches(&canonical, &source),
+            "unreachable omitted tail chance does not select a rank"
+        );
+        canonical.chance_by_rank.extend([0.0, 0.0]);
+        assert!(
+            !captain_source_matches(&canonical, &source),
+            "explicit extra samples must still match"
+        );
+        canonical.chance_by_rank.truncate(3);
+        canonical.slot = "officer".into();
+        assert!(
+            !captain_source_matches(&canonical, &source),
+            "three rank values are not synergy"
+        );
+        canonical.slot = "captain".into();
+        canonical.ability_id = Some("124".into());
+        assert!(!captain_source_matches(&canonical, &source));
+        canonical.ability_id = Some("123".into());
+        canonical.value_by_rank[2] = 0.9;
+        assert!(!captain_source_matches(&canonical, &source));
+        canonical.value_by_rank[2] = 0.8;
+        canonical.chance_by_rank[1] = 0.5;
+        assert!(!captain_source_matches(&canonical, &source));
+    }
+
+    #[test]
+    fn native_captain_synergy_pike_source_variants_resolve_all_seats_without_rank_curves() {
+        use crate::combat::AbilityEffect;
+        use crate::lcars::{index_lcars_officers_by_id, resolve_crew_to_buff_set, ResolveOptions};
+        let mut officers = index_lcars_officers_by_id(build_officer_model_default().unwrap());
+        let id_for = |name: &str| {
+            officers
+                .values()
+                .find(|o| o.name == name)
+                .unwrap()
+                .id
+                .clone()
+        };
+        let captain_key = id_for("Pike");
+        let left_key = id_for("Moreau");
+        let right_key = id_for("Leslie");
+        let captain_id = captain_key.as_str();
+        let left_id = left_key.as_str();
+        let right_id = right_key.as_str();
+        let pike = &officers[captain_id];
+        let native = pike
+            .native_synergy
+            .as_ref()
+            .expect("byte-bound native identity");
+        assert_eq!(native.identity.group_id, 7);
+        assert_eq!(native.identity.officer_class, 1);
+        assert_eq!(native.captain_variants.len(), 9);
+        let bridge = [left_id.to_string(), right_id.to_string()];
+        let boost = |officers: &HashMap<String, LcarsOfficer>, bridge: &[String], rank| {
+            let buffs = resolve_crew_to_buff_set(
+                captain_id,
+                bridge,
+                &[],
+                officers,
+                &ResolveOptions {
+                    tier: Some(rank),
+                    ..Default::default()
+                },
+            );
+            let boosts: Vec<f64> = buffs
+                .crew
+                .seats
+                .iter()
+                .filter_map(|seat| match seat.ability.effect {
+                    AbilityEffect::BridgeAbilityEffectivenessBonus(v)
+                        if seat.officer_id.as_deref() == Some(captain_id) =>
+                    {
+                        Some(v)
+                    }
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(boosts.len(), 1);
+            boosts[0]
+        };
+        for rank in 1..=5 {
+            assert!((boost(&officers, &bridge, rank) - 2.0).abs() < 1e-12);
+        }
+        assert!((boost(&officers, &[], 4) - 0.4).abs() < 1e-12);
+        assert!((boost(&officers, &[left_id.into(), left_id.into()], 4) - 1.2).abs() < 1e-12);
+        assert!((boost(&officers, &[captain_id.into(), right_id.into()], 4) - 1.2).abs() < 1e-12);
+        for left in 0..3 {
+            for right in 0..3 {
+                for (id, index, different_class) in [(left_id, left, 2), (right_id, right, 3)] {
+                    let identity = &mut officers
+                        .get_mut(id)
+                        .unwrap()
+                        .native_synergy
+                        .as_mut()
+                        .unwrap()
+                        .identity;
+                    identity.group_id = if index == 0 { 8 } else { 7 };
+                    identity.officer_class = if index == 1 { 1 } else { different_class };
+                }
+                let add = |index| {
+                    if index == 0 {
+                        0.0
+                    } else if index == 1 {
+                        0.4
+                    } else {
+                        0.8
+                    }
+                };
+                assert!(
+                    (boost(&officers, &bridge, 4) - (0.4 + add(left) + add(right))).abs() < 1e-12
+                );
+            }
+        }
+        // Missing/mismatched source metadata retains existing base resolution.
+        officers.get_mut(captain_id).unwrap().native_synergy = None;
+        assert!((boost(&officers, &bridge, 4) - 0.4).abs() < 1e-12);
+    }
+
     /// Safety net for retiring the monolith: the in-process officer model must serialize to the
     /// committed `officers.lcars.yaml` byte-for-byte, so building in-process can't change officer
     /// resolution. (Guarded on the file still existing; once retired, this becomes a no-op.)
@@ -1818,6 +2088,84 @@ mod canonical_condition_tests {
         let c = effect_condition_from_canonical(&a, "Test", "AllDamage")
             .expect("malformed gate must fail closed");
         assert_eq!(c.condition_type, "literal_false");
+    }
+
+    #[test]
+    fn native_launch_health_percentages_keep_additive_pool_units() {
+        for (modifier, stat) in [
+            ("HullHPMax", "hull_hp_additive_pool"),
+            ("ShieldHPMax", "shield_hp_additive_pool"),
+        ] {
+            let mut a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+                "slot":"below_decks", "modifier":modifier, "operation":"MultiplyAdd",
+                "trigger":"ShipLaunched", "target":"SelfShip", "attributes":"",
+                "conditions":[], "chance_by_rank":[1.0, 1.0], "value_by_rank":[1.7, 0.2]
+            }))
+            .unwrap();
+            let effect = convert_ability_to_effect(&a, "Test").unwrap();
+            assert_eq!(effect.stat.as_deref(), Some(stat));
+            assert_eq!(effect.operator.as_deref(), Some("add"));
+            assert_eq!(
+                effect.value, None,
+                "varying rank values resolve through the curve"
+            );
+            assert_eq!(
+                effect.scaling.as_ref().unwrap().values.as_ref().unwrap(),
+                &vec![1.7, 0.2]
+            );
+            // Do not broaden conditioned, timed, or different native operations
+            // into the unconditional launch pool.
+            a.conditions = vec!["SelfBattleship".into()];
+            assert_ne!(
+                convert_ability_to_effect(&a, "Test")
+                    .unwrap()
+                    .stat
+                    .as_deref(),
+                Some(stat)
+            );
+            a.conditions.clear();
+            a.trigger = Some("CombatStart".into());
+            assert_ne!(
+                convert_ability_to_effect(&a, "Test")
+                    .unwrap()
+                    .stat
+                    .as_deref(),
+                Some(stat)
+            );
+            a.trigger = Some("ShipLaunched".into());
+            a.operation = Some("MultiplyBaseAdd".into());
+            assert_ne!(
+                convert_ability_to_effect(&a, "Test")
+                    .unwrap()
+                    .stat
+                    .as_deref(),
+                Some(stat)
+            );
+        }
+    }
+
+    #[test]
+    fn enemy_all_piercing_subtraction_uses_raw_fraction_channel() {
+        let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
+            "ability_id":"1471408949", "modifier":"AllPiercing", "operation":"MultiplySub",
+            "trigger":"CombatStart", "target":"EnemyShip", "attributes":"max_level=70",
+            "conditions":["TargetMaxLevel","EnemyHostile","TargetNotArmada"],
+            "value_by_rank":[0.3,0.4,0.5,0.6,0.7], "chance_by_rank":[1,1,1,1,1]
+        }))
+        .unwrap();
+        let effect = convert_ability_to_effect(&a, "Moreau").unwrap();
+        assert_eq!(
+            effect.stat.as_deref(),
+            Some("hostile_base_piercing_stats_reduction")
+        );
+        assert!(
+            effect.condition.is_some(),
+            "native level/hostile/Armada gates must survive"
+        );
+        assert_eq!(
+            transform_canonical_to_lcars_value("AllPiercing", "MultiplySub", 0.7),
+            0.7
+        );
     }
 
     #[test]

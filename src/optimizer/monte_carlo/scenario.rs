@@ -29,7 +29,7 @@ use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
-    apply_profile_piercing_to_attacker_stats, apply_profile_to_attacker,
+    apply_profile_piercing_to_attacker_stats, apply_profile_to_attacker_with_health_pool,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
     forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
@@ -41,8 +41,9 @@ use crate::data::profile::{
     ship_class_gated_torpedo_family_derived_seats,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
-    ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship, PlayerProfile,
-    SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
+    ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
+    take_static_health_pool_bonus, PlayerProfile, SupportBuffResearchGateState,
+    USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -1122,11 +1123,14 @@ fn build_pvp_defender_combatant(
         &cond_ctx,
         attacker_enemy_target_pending,
     );
-    defender = crate::data::profile::apply_profile_to_attacker(
+    let mut dstatic = shared.player_defender_static_buffs.clone();
+    let static_health = take_static_health_pool_bonus(&mut dstatic);
+    defender = apply_profile_to_attacker_with_health_pool(
         defender,
         def_profile,
         def_ship.faction.as_deref(),
         defender_osr,
+        static_health,
     );
     apply_profile_player_apex_barrier_tal_gate(
         &mut defender,
@@ -1135,8 +1139,7 @@ fn build_pvp_defender_combatant(
         attacker_crew_tal_assigned_captain_or_bridge(defender_crew),
     );
     apply_support_defender_static_if_pvp(shared, &mut defender);
-    if !shared.player_defender_static_buffs.is_empty() {
-        let mut dstatic = shared.player_defender_static_buffs.clone();
+    if !dstatic.is_empty() {
         let _ = take_isolytic_cascade_static_bonus(&mut dstatic);
         defender = apply_static_buffs_to_combatant(defender, &dstatic);
     }
@@ -1196,6 +1199,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         );
     }
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
+    let static_health = take_static_health_pool_bonus(&mut merged_static);
     let crew = CrewConfiguration { seats: crew_seats };
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&crew);
@@ -1295,7 +1299,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         };
 
         let cond_ctx = build_officer_stat_condition_context(shared, ship_rec);
-        let mut attacker = apply_profile_to_attacker(
+        let mut attacker = apply_profile_to_attacker_with_health_pool(
             Combatant {
                 id: shared.ship.clone(),
                 attack: ship_rec.attack,
@@ -1367,6 +1371,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                     &[]
                 },
             ),
+            static_health,
         );
         if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
             params.round_native_defense_stats = shared.native_defense_rounding;
@@ -1514,7 +1519,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
     let defender_mitigation = computed_defender_mitigation(&shared.ship, &shared.hostile);
 
-    let mut attacker = apply_profile_to_attacker(
+    let mut attacker = apply_profile_to_attacker_with_health_pool(
         Combatant {
             id: shared.ship.clone(),
             attack: 95.0 + (ship_hash % 70) as f64,
@@ -1544,6 +1549,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         None,
         // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
         crate::data::profile::OfficerStatRuntimeBonus::default(),
+        static_health,
     );
     if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
         params.round_native_defense_stats = shared.native_defense_rounding;
@@ -2270,6 +2276,7 @@ pub(crate) fn scenario_to_combat_input(
         dynamic_officer_stat_contributions,
     ) = build_crew_and_buffs(candidate, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
+    let static_health = take_static_health_pool_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let hostile_ability_catalog = hostile_ability_catalog_for_default_path();
@@ -2286,7 +2293,7 @@ pub(crate) fn scenario_to_combat_input(
         );
         let defender_hull = hostile_rec.hull_health;
         let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level));
-        let mut attacker = apply_profile_to_attacker(
+        let mut attacker = apply_profile_to_attacker_with_health_pool(
             Combatant {
                 id: ship.to_string(),
                 attack: ship_rec.attack,
@@ -2351,6 +2358,7 @@ pub(crate) fn scenario_to_combat_input(
                     &[],
                 )
             },
+            static_health,
         );
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -2446,7 +2454,7 @@ pub(crate) fn scenario_to_combat_input(
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
     let defender_mitigation = computed_defender_mitigation(ship, hostile);
 
-    let mut attacker = apply_profile_to_attacker(
+    let mut attacker = apply_profile_to_attacker_with_health_pool(
         Combatant {
             id: ship.to_string(),
             attack: 95.0 + (ship_hash % 70) as f64,
@@ -2476,6 +2484,7 @@ pub(crate) fn scenario_to_combat_input(
         None,
         // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
         crate::data::profile::OfficerStatRuntimeBonus::default(),
+        static_health,
     );
     if !static_buffs.is_empty() {
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -3052,6 +3061,20 @@ fn merge_native_consumable_bonuses(
         ship.map(|ship| ship.ship_class.as_str()),
         now,
     );
+    if let Some(ship) = ship {
+        for (stat, value) in
+            crate::data::native_consumable_buffs::ship_gated_setup_bonuses_for_imported_buffs(
+                &imported,
+                ship.grade,
+                ship.faction.as_deref(),
+                &ship.id,
+                Some(ship.ship_class.as_str()),
+                now,
+            )
+        {
+            *bonuses.entry(stat).or_default() += value;
+        }
+    }
     for (stat, value) in
         crate::data::native_consumable_buffs::combat_start_piercing_bonuses_for_imported_buffs(
             &imported,

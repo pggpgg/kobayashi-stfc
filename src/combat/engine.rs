@@ -1098,6 +1098,19 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 }
             })
             .sum();
+        let attacker_base_piercing_reduction: f64 = combat_begin_round_level
+            .iter()
+            .map(|effect| scale_active_effect(effect, combat_begin_assimilated_this_round))
+            .chain(
+                full_round_start
+                    .iter()
+                    .map(|effect| scale_active_effect(effect, round_start_assimilated)),
+            )
+            .filter_map(|effect| match effect {
+                AbilityEffect::HostileBasePiercingStatsReduction(value) => Some(value),
+                _ => None,
+            })
+            .sum();
         let attacker_base_armor_piercing_add: f64 = combat_begin_round_level
             .iter()
             .map(|effect| scale_active_effect(effect, combat_begin_assimilated_this_round))
@@ -1497,6 +1510,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                         attacker_mitigation_additive,
                         attacker_base_mitigation_bonus,
                         attacker_base_mitigation_add,
+                        attacker_base_piercing_reduction,
                         defender_faction,
                         defender_ship_type,
                         defender_is_npc_hostile,
@@ -3901,6 +3915,7 @@ struct FireDefenderCounter<'a> {
     attacker_mitigation_additive: f64,
     attacker_base_mitigation_bonus: f64,
     attacker_base_mitigation_add: f64,
+    attacker_base_piercing_reduction: f64,
     defender_faction: OpponentFactionTag,
     defender_ship_type: ShipType,
     defender_is_npc_hostile: bool,
@@ -3955,6 +3970,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_mitigation_additive,
         attacker_base_mitigation_bonus,
         attacker_base_mitigation_add,
+        attacker_base_piercing_reduction,
         defender_faction,
         defender_ship_type,
         defender_is_npc_hostile,
@@ -3985,6 +4001,52 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         def_base_shots,
         def_b_shots.for_weapon(defender.weapon_type(weapon_index)),
     );
+
+    let defender_ctx = CombatContext {
+        round_index,
+        defender_hull_pct: combat_ctx.defender_hull_pct,
+        defender_shield_pct: combat_ctx.defender_shield_pct,
+        attacker_hull_pct: combat_ctx.attacker_hull_pct,
+        attacker_shield_pct: combat_ctx.attacker_shield_pct,
+        attacker_morale_active: false,
+        defender_morale_active: st.defender_morale_rounds_remaining > 0,
+        defender_burning_active: false,
+        defender_hull_breach_active: false,
+        attacker_burning_active: combat_ctx.attacker_burning_active,
+        attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
+        defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
+        defender_faction,
+        attacker_owner_faction: combat_ctx.attacker_owner_faction,
+        defender_hull_faction_id: config.defender_hull_faction_id,
+        defender_ship_type,
+        attacker_ship_type,
+        attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
+        defender_is_npc_hostile,
+        defender_is_player_ship,
+        attacker_tal_assigned_captain_or_bridge: combat_ctx.attacker_tal_assigned_captain_or_bridge,
+        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
+        engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
+        combat_battle_type_id: combat_ctx.combat_battle_type_id,
+        defender_level: combat_ctx.defender_level,
+    };
+    let defender_combat_begin_filtered =
+        filter_effects_by_condition_borrowed(defender_combat_begin_effects, &defender_ctx);
+    let defender_round_start_filtered =
+        filter_effects_by_condition_borrowed(defender_round_start_effects, &defender_ctx);
+    let defender_attack_filtered =
+        filter_effects_by_condition_borrowed(defender_attack_phase_effects, &defender_ctx);
+    let defender_defense_filtered =
+        filter_effects_by_condition_borrowed(defender_defense_phase_effects, &defender_ctx);
+    // ModAllPiercing/MultiplyAdd changes all three native counter-weapon stats
+    // before the nonlinear mitigation curve. It is not damage-through pierce.
+    let counter_pierce_bonus_fraction: f64 = defender_combat_begin_filtered
+        .iter()
+        .chain(defender_round_start_filtered.iter())
+        .filter_map(|e| match e.effect {
+            AbilityEffect::HostileCounterPierceMultiplier { bonus } => Some(bonus),
+            _ => None,
+        })
+        .sum();
 
     // Inbound counter-fire uses the same raw-stat curve before and after a
     // conditional research bonus activates. Combatant defense fields hold
@@ -4031,6 +4093,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 .get(weapon_index)
                 .copied()
                 .unwrap_or(params.base_attacker_stats);
+            let piercing_multiplier =
+                (1.0 + counter_pierce_bonus_fraction - attacker_base_piercing_reduction).max(0.0);
+            let opponent = AttackerStats {
+                armor_piercing: opponent.armor_piercing * piercing_multiplier,
+                shield_piercing: opponent.shield_piercing * piercing_multiplier,
+                accuracy: opponent.accuracy * piercing_multiplier,
+            };
             // Morale increases the three raw piercing stats, before their
             // ratios enter the mitigation curve.
             let opponent = if st.defender_morale_rounds_remaining > 0 {
@@ -4078,42 +4147,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // `Proc*` rolls do not accumulate across hits.
     let mut defender_phase_template = EffectAccumulator::default();
     defender_phase_template.set_trace_contributions(false);
-    let defender_ctx = CombatContext {
-        round_index,
-        defender_hull_pct: combat_ctx.defender_hull_pct,
-        defender_shield_pct: combat_ctx.defender_shield_pct,
-        attacker_hull_pct: combat_ctx.attacker_hull_pct,
-        attacker_shield_pct: combat_ctx.attacker_shield_pct,
-        attacker_morale_active: false,
-        defender_morale_active: st.defender_morale_rounds_remaining > 0,
-        defender_burning_active: false,
-        defender_hull_breach_active: false,
-        attacker_burning_active: combat_ctx.attacker_burning_active,
-        attacker_hull_breach_active: combat_ctx.attacker_hull_breach_active,
-        defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
-        defender_faction,
-        attacker_owner_faction: combat_ctx.attacker_owner_faction,
-        defender_hull_faction_id: config.defender_hull_faction_id,
-        defender_ship_type,
-        attacker_ship_type,
-        attacker_ship_id: std::sync::Arc::clone(attacker_ship_id_arc),
-        defender_is_npc_hostile,
-        defender_is_player_ship,
-        attacker_tal_assigned_captain_or_bridge: combat_ctx.attacker_tal_assigned_captain_or_bridge,
-        defender_hostile_tag_mask: config.defender_hostile_tag_mask,
-        engagement_enemy_types: std::sync::Arc::clone(engagement_enemy_types_arc),
-        combat_battle_type_id: combat_ctx.combat_battle_type_id,
-        defender_level: combat_ctx.defender_level,
-    };
-    let defender_combat_begin_filtered =
-        filter_effects_by_condition_borrowed(defender_combat_begin_effects, &defender_ctx);
-    let defender_round_start_filtered =
-        filter_effects_by_condition_borrowed(defender_round_start_effects, &defender_ctx);
-    let defender_attack_filtered =
-        filter_effects_by_condition_borrowed(defender_attack_phase_effects, &defender_ctx);
-    let defender_defense_filtered =
-        filter_effects_by_condition_borrowed(defender_defense_phase_effects, &defender_ctx);
-
     // Counter-fire batching may precompute crit/proc rolls before applying hit damage. Keep the
     // scalar ordering whenever any seat can observe or mutate per-hit combat state; this makes an
     // untraced Monte Carlo trial agree with its traced replay. Pure counter damage remains eligible
@@ -4304,6 +4337,14 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                         "raw_mitigation_stats_applied".into(),
                         Value::Bool(raw_stat_mitigation.is_some()),
                     );
+                    values.insert(
+                        "raw_piercing_bonus_fraction".into(),
+                        Value::from(counter_pierce_bonus_fraction),
+                    );
+                    values.insert(
+                        "raw_piercing_reduction_fraction".into(),
+                        Value::from(attacker_base_piercing_reduction),
+                    );
                     if let Some((stats, breakdown, mitigation, pierce)) = raw_stat_mitigation {
                         // Replay comparisons can have observational intervals narrower than
                         // the stable six-decimal trace display. Preserve the calculated
@@ -4407,17 +4448,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         {
             counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
         }
-        // Pen of Kahless-style percentage pierce buffs on the hostile's own counter-fire.
-        // Round caps are already applied by the per-round condition filtering above.
-        let counter_pierce_bonus_fraction: f64 = defender_combat_begin_filtered
-            .iter()
-            .chain(defender_round_start_filtered.iter())
-            .filter_map(|e| match e.effect {
-                AbilityEffect::HostileCounterPierceMultiplier { bonus } => Some(bonus),
-                _ => None,
-            })
-            .sum();
-        if counter_pierce_bonus_fraction > 0.0 {
+        // Preserve the legacy scalar approximation only when no raw context is
+        // available. Raw contexts already consumed the bonus in the curve.
+        if raw_stat_mitigation.is_none() && counter_pierce_bonus_fraction > 0.0 {
             counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
         }
         let counter_damage_through = compute_damage_through_factor(
@@ -6230,6 +6263,387 @@ mod reusable_attacker_tests {
             fight(700.0, ShipType::Explorer).attacker_hull_remaining,
             400.0
         );
+    }
+
+    #[test]
+    fn raw_counter_piercing_uses_per_weapon_signed_percentage_pool() {
+        use crate::combat::types::{AttackerStats, DefenderStats, HostileMitigationParams};
+        let defenses = DefenderStats {
+            armor: 240.0,
+            shield_deflection: 320.0,
+            dodge: 180.0,
+        };
+        let weapons = vec![
+            AttackerStats {
+                armor_piercing: 40.0,
+                shield_piercing: 60.0,
+                accuracy: 100.0,
+            },
+            AttackerStats {
+                armor_piercing: 100.0,
+                shield_piercing: 140.0,
+                accuracy: 50.0,
+            },
+        ];
+        let mut attacker = Combatant {
+            id: "player".into(),
+            hull_health: 1e9,
+            weapons: vec![
+                WeaponStats {
+                    attack: 1.0,
+                    ..WeaponStats::default()
+                };
+                2
+            ],
+            hostile_mitigation_params: Some(HostileMitigationParams {
+                round_native_defense_stats: false,
+                defender_stats: defenses,
+                weapon_pierce_defender_stats: None,
+                base_attacker_stats: AttackerStats {
+                    armor_piercing: 1000.0,
+                    shield_piercing: 1000.0,
+                    accuracy: 1000.0,
+                },
+                base_attacker_weapon_stats: weapons.clone(),
+                ship_type: ShipType::Explorer,
+                mystery_mitigation_factor: 0.0,
+                floor: 0.0,
+                ceiling: 1.0,
+            }),
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "npc".into(),
+            hull_health: 1e9,
+            weapons: vec![
+                WeaponStats {
+                    attack: 1000.0,
+                    ..WeaponStats::default()
+                };
+                2
+            ],
+            ..Combatant::default()
+        };
+        let seat = |effect, condition| {
+            CrewSeatContext::legacy(
+                CrewSeat::Ship,
+                Ability {
+                    name: "raw piercing".into(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect,
+                    condition,
+                    weapon_scope: WeaponTypeScope::All,
+                },
+                false,
+            )
+        };
+        let reduction = CrewConfiguration {
+            seats: vec![seat(
+                AbilityEffect::HostileBasePiercingStatsReduction(2.1),
+                None,
+            )],
+        };
+        let boost = CrewConfiguration {
+            seats: vec![seat(
+                AbilityEffect::HostileCounterPierceMultiplier { bonus: 5.0 },
+                None,
+            )],
+        };
+        let config = SimulationConfig {
+            rounds: 2,
+            seed: 71,
+            trace_mode: TraceMode::Events,
+            ..SimulationConfig::default()
+        };
+        let run = |a: &Combatant,
+                   cfg: &SimulationConfig,
+                   crew: &CrewConfiguration,
+                   enemy: &CrewConfiguration| {
+            simulate_combat_with_defender_faction_and_defender_crew(
+                a,
+                &defender,
+                cfg,
+                crew,
+                OpponentFactionTag::Unknown,
+                ShipType::Battleship,
+                ShipType::Explorer,
+                true,
+                false,
+                enemy,
+            )
+        };
+        let got = run(&attacker, &config, &reduction, &boost);
+        let mut seen = 0;
+        for event in got
+            .events
+            .iter()
+            .filter(|e| e.event_type == "mitigation_calc" && e.phase == "counter")
+        {
+            let stats = weapons[event.weapon_index.unwrap() as usize];
+            let factor = 1.0 + 5.0 - 2.1;
+            let expected = mitigation(
+                defenses,
+                AttackerStats {
+                    armor_piercing: stats.armor_piercing * factor,
+                    shield_piercing: stats.shield_piercing * factor,
+                    accuracy: stats.accuracy * factor,
+                },
+                ShipType::Explorer,
+            );
+            assert!(
+                (event.values["base_stat_mitigation_unrounded"]
+                    .as_f64()
+                    .unwrap()
+                    - expected)
+                    .abs()
+                    < 1e-12
+            );
+            assert_eq!(event.values["base_stat_pierce"], 0.0);
+            seen += 1;
+        }
+        assert_eq!(seen, 4, "both weapon baselines must execute in both rounds");
+        for stats in &mut attacker
+            .hostile_mitigation_params
+            .as_mut()
+            .unwrap()
+            .base_attacker_weapon_stats
+        {
+            stats.armor_piercing *= 3.9;
+            stats.shield_piercing *= 3.9;
+            stats.accuracy *= 3.9;
+        }
+        let empty = CrewConfiguration::default();
+        let manual = run(&attacker, &config, &empty, &empty);
+        assert_eq!(got.attacker_hull_remaining, manual.attacker_hull_remaining);
+        assert_eq!(got.total_damage, manual.total_damage);
+        let off = run(
+            &attacker,
+            &SimulationConfig {
+                trace_mode: TraceMode::Off,
+                ..config
+            },
+            &empty,
+            &empty,
+        );
+        assert_eq!(manual.attacker_hull_remaining, off.attacker_hull_remaining);
+        assert_eq!(manual.total_damage, off.total_damage);
+    }
+
+    #[test]
+    fn raw_counter_piercing_keeps_round_gates_and_zero_lower_bound() {
+        use crate::combat::types::{AttackerStats, DefenderStats, HostileMitigationParams};
+        let raw = AttackerStats {
+            armor_piercing: 100.0,
+            shield_piercing: 120.0,
+            accuracy: 80.0,
+        };
+        let defense = DefenderStats {
+            armor: 150.0,
+            shield_deflection: 200.0,
+            dodge: 100.0,
+        };
+        let attacker = Combatant {
+            id: "player".into(),
+            hull_health: 1e8,
+            hostile_mitigation_params: Some(HostileMitigationParams {
+                round_native_defense_stats: false,
+                defender_stats: defense,
+                weapon_pierce_defender_stats: None,
+                base_attacker_stats: raw,
+                base_attacker_weapon_stats: vec![],
+                ship_type: ShipType::Explorer,
+                mystery_mitigation_factor: 0.0,
+                floor: 0.0,
+                ceiling: 1.0,
+            }),
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "npc".into(),
+            hull_health: 1e8,
+            attack: 1000.0,
+            ..Combatant::default()
+        };
+        let seat = |effect, condition| {
+            CrewSeatContext::legacy(
+                CrewSeat::Ship,
+                Ability {
+                    name: "raw scope".into(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect,
+                    condition,
+                    weapon_scope: WeaponTypeScope::All,
+                },
+                false,
+            )
+        };
+        let enemy = CrewConfiguration {
+            seats: vec![seat(
+                AbilityEffect::HostileCounterPierceMultiplier { bonus: 5.0 },
+                Some(AbilityCondition::RoundRange { min: 1, max: 1 }),
+            )],
+        };
+        let crew = CrewConfiguration {
+            seats: vec![seat(
+                AbilityEffect::HostileBasePiercingStatsReduction(2.1),
+                Some(AbilityCondition::RoundRange { min: 2, max: 2 }),
+            )],
+        };
+        let got = simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &SimulationConfig {
+                rounds: 3,
+                seed: 19,
+                trace_mode: TraceMode::Events,
+                ..SimulationConfig::default()
+            },
+            &crew,
+            OpponentFactionTag::Unknown,
+            ShipType::Battleship,
+            ShipType::Explorer,
+            true,
+            false,
+            &enemy,
+        );
+        let mut seen = 0;
+        for e in got
+            .events
+            .iter()
+            .filter(|e| e.event_type == "mitigation_calc" && e.phase == "counter")
+        {
+            let factor = match e.round_index {
+                1 => 6.0,
+                2 => 0.0,
+                _ => 1.0,
+            };
+            let expected = mitigation(
+                defense,
+                AttackerStats {
+                    armor_piercing: raw.armor_piercing * factor,
+                    shield_piercing: raw.shield_piercing * factor,
+                    accuracy: raw.accuracy * factor,
+                },
+                ShipType::Explorer,
+            );
+            assert!(
+                (e.values["base_stat_mitigation_unrounded"].as_f64().unwrap() - expected).abs()
+                    < 1e-12
+            );
+            seen += 1;
+        }
+        assert_eq!(seen, 3, "all intended rounds must execute");
+    }
+
+    #[test]
+    fn compiled_immortal_quantum_and_ksg_keep_opponent_and_own_shield_pools_separate() {
+        use crate::data::import::{ForbiddenTechEntry, ResearchEntry};
+        use crate::data::research::{ResearchCanonicalFile, ResearchCatalog};
+        let canonical: ResearchCanonicalFile =
+            serde_json::from_str(include_str!("../../data/research_canonical.json")).unwrap();
+        let overrides = canonical
+            .overrides
+            .into_iter()
+            .map(|r| (r.rid, r))
+            .collect();
+        let research = [
+            ResearchEntry {
+                rid: 2_392_190_200,
+                level: 5,
+            },
+            ResearchEntry {
+                rid: 4_147_903_968,
+                level: 5,
+            },
+        ];
+        let catalog: ResearchCatalog = serde_json::from_str("{\"items\":[]}").unwrap();
+        let mut crew=CrewConfiguration { seats:crate::data::research_effect_spec_adapter::research_derived_attack_phase_seats_from_spec(
+            &research,&catalog,&overrides) };
+        assert_eq!(
+            crew.seats.len(),
+            1,
+            "KSG uses incoming config while Immortal targets the opponent"
+        );
+        let quantum_catalog: crate::data::forbidden_chaos::ForbiddenChaosList =
+            serde_json::from_str(include_str!("../../data/forbidden_chaos_tech.json")).unwrap();
+        let quantum = crate::data::profile::quantum_slipstream_forbidden_tech_round_start_seats(
+            &[ForbiddenTechEntry {
+                fid: 2_439_729_135,
+                tier: 10,
+                level: 49,
+                shard_count: 0,
+            }],
+            &[2_439_729_135],
+            &quantum_catalog,
+            false,
+        );
+        assert_eq!(quantum.len(), 1);
+        assert!(
+            matches!(quantum[0].ability.effect,AbilityEffect::CumulativeOpponentShieldMitigationDebuff{per_round,..} if (per_round-0.17).abs()<1e-12)
+        );
+        crew.seats.extend(quantum);
+        let (bonus, rounds) =
+            crate::data::research_effect_spec_adapter::incoming_shield_mitigation_for_combat(
+                &research, &overrides,
+            );
+        assert_eq!((bonus, rounds), (0.025, 2));
+        let attacker = Combatant {
+            id: "player".into(),
+            attack: 1000.0,
+            hull_health: 1e7,
+            shield_health: 1e7,
+            shield_mitigation: 0.8,
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "opponent".into(),
+            attack: 2000.0,
+            hull_health: 1e7,
+            shield_health: 1e7,
+            shield_mitigation: 0.8,
+            ..Combatant::default()
+        };
+        let mut prior_hull = attacker.hull_health;
+        let mut prior_shield = attacker.shield_health;
+        for (n, expected_outgoing, expected_incoming) in
+            [(1, 0.605, 0.825), (2, 0.435, 0.825), (3, 0.29, 0.8)]
+        {
+            let result = simulate_combat(
+                &attacker,
+                &defender,
+                &SimulationConfig {
+                    rounds: n,
+                    seed: 517,
+                    trace_mode: TraceMode::Events,
+                    incoming_shield_mitigation_bonus: bonus,
+                    incoming_shield_mitigation_bonus_rounds: rounds,
+                    ..SimulationConfig::default()
+                },
+                &crew,
+            );
+            let hit = result
+                .events
+                .iter()
+                .find(|e| e.round_index == n && e.event_type == "damage_application")
+                .unwrap();
+            assert!(
+                (hit.values["shield_mitigation"].as_f64().unwrap() - expected_outgoing).abs()
+                    < 1e-12,
+                "round{n}: Immortal expires after2, Quantum keeps accumulating"
+            );
+            let hull_removed = prior_hull - result.attacker_hull_remaining;
+            let shield_removed = prior_shield - result.attacker_shield_remaining;
+            assert!(
+                (shield_removed / (hull_removed + shield_removed) - expected_incoming).abs() < 1e-9,
+                "round{n}: opponent debuffs never increase own incoming shield share"
+            );
+            prior_hull = result.attacker_hull_remaining;
+            prior_shield = result.attacker_shield_remaining;
+        }
     }
 
     #[test]

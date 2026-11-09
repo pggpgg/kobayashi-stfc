@@ -153,6 +153,9 @@ pub enum AbilityModifierSpec {
     BaseMitigationStatsBonus,
     /// Raw amount added to each defense component after its fractional bonuses.
     BaseMitigationStatsAdd,
+    /// Fraction subtracted from each opponent raw piercing percentage pool.
+    /// Distinct from legacy synthetic damage-through Pierce.
+    HostileBasePiercingStatsReduction,
     /// Raw points added to armor piercing before the defensive-stat curve.
     BaseArmorPiercingAdd,
     /// Coefficient times the effective crew health at combat setup.

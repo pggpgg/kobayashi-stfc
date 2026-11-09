@@ -34,12 +34,6 @@ pub const CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID: i64 = 2423550592;
 /// Dual Photon Warheads — **Interceptor**-scoped torpedo family (same tier template as S31).
 pub const DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID: i64 = 1364700249;
 
-/// When catalog omits `shield_mitigation` (e.g. CSV regen maps opponent lines to null), cap debuff magnitude.
-const QUANTUM_SLIPSTREAM_OPPONENT_MITIGATION_CAP_DEFAULT: f64 = 0.15;
-
-/// Placeholder spread until in-game cumulative cadence is confirmed (cap reached over this many rounds).
-const QUANTUM_SLIPSTREAM_MITIGATION_DEBUFF_ROUND_SPREAD: f64 = 3.0;
-
 /// Data ship id for U.S.S. Voyager (`data/ships_extended/uss_voyager.json`).
 pub const USS_VOYAGER_SHIP_ID: &str = "uss_voyager";
 
@@ -56,6 +50,11 @@ fn is_borg_operating_table_forbidden_tech_fid(fid: i64) -> bool {
 #[inline]
 fn is_quantum_slipstream_forbidden_tech_fid(fid: i64) -> bool {
     fid == QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID
+}
+
+pub(crate) fn requires_native_rank_curve(fid: i64, stat: &str) -> bool {
+    is_quantum_slipstream_forbidden_tech_fid(fid)
+        && matches!(stat, "crit_chance" | "shield_hp" | "shield_mitigation")
 }
 
 /// Hull-class + hostile-gated "torpedo family" forbidden tech: catalog bonuses apply only when the resolved
@@ -157,6 +156,11 @@ pub(crate) fn forbidden_tech_bonus_value_for_imported_entry(
     imported: Option<&ForbiddenTechEntry>,
     scale_by_level_tier: bool,
 ) -> f64 {
+    if requires_native_rank_curve(record.fid.unwrap_or_default(), &bonus.stat)
+        && bonus.rank_curve.is_none()
+    {
+        return 0.0;
+    }
     if let Some(curve) = &bonus.rank_curve {
         let Some(imported) = imported else {
             return 0.0;
@@ -447,9 +451,10 @@ pub fn borg_operating_table_forbidden_tech_seats(
     out
 }
 
-/// Quantum Slipstream: cumulative debuff to **opponent** shield mitigation (NPC hostiles only).
-/// Catalog `shield_mitigation` supplies the debuff cap when present (scaled like other bonuses); otherwise
-/// a conservative default is used.
+/// Quantum Slipstream: cumulative debuff to **opponent** shield mitigation.
+/// Native BID2885215064 is an opponent SUB at every round start. The rank
+/// coefficient is the per-round subtraction, not a cap or a three-round total.
+/// The simulator's shield-mitigation domain saturates at zero after subtraction.
 pub fn quantum_slipstream_forbidden_tech_round_start_seats(
     imported_ft: &[ForbiddenTechEntry],
     effective_fids: &[i64],
@@ -476,9 +481,16 @@ pub fn quantum_slipstream_forbidden_tech_round_start_seats(
         .get(&QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID)
         .copied();
 
-    let mut cap: Option<f64> = None;
+    let mut per_round: Option<f64> = None;
     for bonus in &record.bonuses {
         if bonus.stat != "shield_mitigation" {
+            continue;
+        }
+        if !bonus
+            .rank_curve
+            .as_ref()
+            .is_some_and(|curve| curve.buff_id == 2_885_215_064 && curve.minimum_tier == 6)
+        {
             continue;
         }
         let v = forbidden_tech_bonus_value_for_imported_entry(
@@ -488,18 +500,13 @@ pub fn quantum_slipstream_forbidden_tech_round_start_seats(
             scale_by_level_tier,
         );
         if v.is_finite() && v > 0.0 {
-            cap = Some(v);
+            per_round = Some(v);
             break;
         }
     }
-    let cap = cap.unwrap_or(QUANTUM_SLIPSTREAM_OPPONENT_MITIGATION_CAP_DEFAULT);
-    if !cap.is_finite() || cap <= 0.0 {
+    let Some(per_round) = per_round else {
         return Vec::new();
-    }
-    let per_round = (cap / QUANTUM_SLIPSTREAM_MITIGATION_DEBUFF_ROUND_SPREAD).max(0.0);
-    if per_round <= 0.0 {
-        return Vec::new();
-    }
+    };
 
     vec![CrewSeatContext {
         seat: CrewSeat::Ship,
@@ -509,8 +516,11 @@ pub fn quantum_slipstream_forbidden_tech_round_start_seats(
             class: AbilityClass::ShipAbility,
             timing: TimingWindow::RoundStart,
             boostable: false,
-            effect: AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap },
-            condition: Some(AbilityCondition::DefenderIsNpcHostile),
+            effect: AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+                per_round,
+                cap: 1.0,
+            },
+            condition: None,
         },
         boosted: false,
         officer_id: None,
@@ -980,9 +990,7 @@ mod tests {
     }
 
     #[test]
-    fn quantum_slipstream_skips_profile_shield_mitigation_and_emits_debuff_seat() {
-        use crate::combat::AbilityEffect;
-
+    fn quantum_slipstream_legacy_summaries_cannot_replace_native_rank_context() {
         let fid = super::QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID;
         let catalog = ForbiddenChaosList {
             source: None,
@@ -1030,18 +1038,60 @@ mod tests {
             &catalog,
             false,
         );
-        assert_eq!(profile.bonuses.get("crit_chance"), Some(&0.16));
-        assert_eq!(profile.bonuses.get("shield_hp"), Some(&0.195));
-        assert!(!profile.bonuses.contains_key("shield_mitigation"));
+        assert!(profile.bonuses.is_empty());
 
         let seats = super::quantum_slipstream_forbidden_tech_round_start_seats(
             &imported, &effective, &catalog, false,
         );
+        assert!(
+            seats.is_empty(),
+            "no invented cap, three-round spread or fallback coefficient"
+        );
+    }
+
+    #[test]
+    fn quantum_slipstream_native_rank_preserves_crit_and_opponent_round_subtraction() {
+        let catalog = crate::data::forbidden_chaos::load_forbidden_chaos(
+            crate::data::forbidden_chaos::DEFAULT_FORBIDDEN_CHAOS_PATH,
+        )
+        .unwrap();
+        let fid = super::QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID;
+        let imported = [ForbiddenTechEntry {
+            fid,
+            tier: 10,
+            level: 49,
+            shard_count: 0,
+        }];
+        let mut profile = PlayerProfile::default();
+        merge_tech_fids_into_profile_with_level_tier(
+            &mut profile,
+            &[fid],
+            &imported,
+            &catalog,
+            false,
+        );
+        assert_eq!(profile.bonuses.get("crit_chance"), Some(&0.18));
+        assert_eq!(profile.bonuses.get("shield_hp"), Some(&19.5));
+        assert!(!profile.bonuses.contains_key("shield_mitigation"));
+        let seats = super::quantum_slipstream_forbidden_tech_round_start_seats(
+            &imported,
+            &[fid],
+            &catalog,
+            false,
+        );
         assert_eq!(seats.len(), 1);
+        assert_eq!(
+            seats[0].ability.timing,
+            crate::combat::TimingWindow::RoundStart
+        );
+        assert!(
+            seats[0].ability.condition.is_none(),
+            "native row has no NPC-only predicate"
+        );
         match &seats[0].ability.effect {
             AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
-                assert!((cap - 0.15).abs() < 1e-12);
-                assert!((per_round - 0.05).abs() < 1e-12);
+                assert_eq!(*per_round, 0.17);
+                assert_eq!(*cap, 1.0, "only engine shield-mitigation domain saturation");
             }
             _ => panic!("expected cumulative opponent shield mitigation debuff"),
         }

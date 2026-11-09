@@ -2,7 +2,15 @@
 
 This is the authoritative inventory of upstream ship abilities that are modeled, intentionally ignored, or still candidates for combat support.
 
-The dated counts below describe the catalog at the time of each audit. An `unsupported_base_weapon_damage` marker now keeps Omicron out of combat calculations until its stacking is verified; the marker is not a modeled damage effect.
+The dated counts below describe the catalog at the time of each audit. Omicron
+now uses the component-base weapon damage family. Its interaction with legacy
+officer/profile pools remains an approximation.
+
+**2026-11 update:** Monaveen `49906243` now uses that component-base family,
+with the native per-level fraction and an exact Texas-class NPC faction gate.
+Kelcie Mae `2748355073` remains a no-op because its Capture Node/Takeover/player
+conditions are unsupported. See [combat corrections](MONAVEEN_ENTERPRISE_D_COMBAT.md)
+for source identities, operation order and validation limits.
 
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
@@ -10,7 +18,7 @@ The dated counts below describe the catalog at the time of each audit. An `unsup
 
 **Reclassification (2026-07-17, backlog item 9):** U.S.S. Vengeance **Advanced Sabotage** (`2432056626`, "ignores {0:#.#%} of Breen Warship [BRN] shields") moved from `pierce_bonus` to `shield_mitigation_bypass` (`AbilityEffect::ShieldMitigationBypassFraction`, Harrison Sabotage outbound path) — a +1.0 pierce additive was the wrong mechanic and ignored the Breen gate. The row now resolves to a 100% bypass (upstream value 1, `{0:#.#%}` placeholder → fraction) gated on the new `breen_warship` hostile tag (Warship/Elite/Primarch, `loca_id` 80600–80602, 8 hostiles). The generator's `ignor`+`shield` branch emits the bypass; the inventory of "Shield/Armor Piercing" **stat** texts (5 ids) legitimately stays `pierce_bonus`. Tests: `tests/vengeance_advanced_sabotage.rs`. No noop-inventory change.
 
-**Inventory drift vs prior audits:** Six ids left the noop list in the earlier audit: `509252162`, `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Omicron `509252162` is now marked `unsupported_base_weapon_damage`: its raw level-10 value is 26,650 (displayed as 2,665,000%), but its combat stacking is not verified. Shard detail: [docs/audit_shards/](audit_shards/).
+**Inventory drift vs prior audits:** Six ids left the noop list in the earlier audit: `509252162`, `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Omicron's raw level-10 value is 26,650 (displayed as 2,665,000%); it now enters the component-base family. Shard detail: [docs/audit_shards/](audit_shards/).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).
 
@@ -18,7 +26,8 @@ Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_des
 
 ## 1. Inventory
 
-All `combat_noop` ability ids (sorted; regen-safe; **65** ids):
+Historical `combat_noop` inventory from the Track E audit (**65** ids; the
+2026-11 Monaveen correction and later catalog additions supersede this list):
 
 `34867572`, `49906243`, `78080222`, `87414807`, `108924704`, `293385368`, `546190599`, `673187302`, `711428193`, `732090900`, `835292335`, `915894112`, `953555085`, `957303751`, `974800413`, `987222969`, `1004533782`, `1027217748`, `1029262994`, `1087128295`, `1090374551`, `1160666017`, `1244824002`, `1307832955`, `1428543762`, `1439253182`, `1492898704`, `1535317053`, `1577508895`, `1738424547`, `1784814733`, `1823660918`, `1839370465`, `1878809713`, `1972093910`, `1982797639`, `2004925834`, `2057434885`, `2254702328`, `2302150828`, `2468986074`, `2474117534`, `2520552521`, `2539194335`, `2623051508`, `2686586954`, `2749594341`, `2797581949`, `2802730028`, `2869476908`, `2919480363`, `2942211100`, `2968519195`, `3014221215`, `3046584086`, `3056258007`, `3057038289`, `3261907549`, `3541570803`, `3602514688`, `3658971555`, `3665388873`, `3694387091`, `4089825668`, `4214885989`
 

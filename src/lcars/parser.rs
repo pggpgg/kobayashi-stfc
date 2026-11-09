@@ -22,6 +22,10 @@ pub struct LcarsOfficer {
     pub rarity: Option<String>,
     #[serde(default)]
     pub group: Option<String>,
+    /// Source-joined native identity and captain variants. Absent for custom or
+    /// mismatched sources; display group labels do not establish native synergy.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_synergy: Option<NativeOfficerSynergy>,
     #[serde(default)]
     pub captain_ability: Option<LcarsAbility>,
     #[serde(default)]
@@ -37,6 +41,15 @@ pub struct LcarsOfficer {
     /// for stat lookups when the caller has not specified one. Empty when unknown.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub max_level_by_rank: Vec<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NativeOfficerSynergy {
+    pub identity: crate::data::synergy::OfficerSynergyIdentity,
+    /// Index = left synergy index * 3 + right synergy index. Only the native
+    /// captain source is transformed; bridge rank curves remain independent.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub captain_variants: Vec<LcarsAbility>,
 }
 
 /// One row of the officer's own per-level stat table.
@@ -389,6 +402,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -454,6 +468,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -471,6 +486,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -489,6 +505,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
@@ -508,6 +525,7 @@ max_rank: 5
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,

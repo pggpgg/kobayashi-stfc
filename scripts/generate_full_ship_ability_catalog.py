@@ -35,7 +35,7 @@ NOOP = {
     "effect_type": "combat_noop",
     "value_is_percentage": False,
     "ignore_upstream_value_is_percentage": True,
-    "value_override": 0.0,
+    "value_override": 0,
 }
 
 

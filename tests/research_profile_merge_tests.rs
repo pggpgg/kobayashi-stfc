@@ -469,6 +469,7 @@ fn canonical_override_takes_priority_over_catalog_for_ns_burning_damage() {
             effects: vec![ResearchCanonicalEffectEntry {
                 id: "test_ns_burning".into(),
                 modifier: AbilityModifierSpec::WeaponDamage,
+                target: None,
                 operation: AbilityOperationSpec::Add,
                 by_level: vec![0.01, 0.0145],
                 conditions: vec![AbilityConditionSpec::DefenderBurning],

@@ -97,7 +97,11 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   owner-hull and Eclipse Armada gates. Canaries cover compilation, while the
 ///   version also invalidates metrics from scenario callers missing these seats.
 ///   Monaveen's twelve PvP Apex rewards retain each owning crew's Tal gate.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 18;
+/// * 18 → 19 (2026-11): native crew launch HP joins the account percentage pool;
+///   resolved ship/grade/faction HP gates, Monaveen's Texas-only base damage,
+///   and source-joined officer synergy affect scenario construction
+///   outside the synthetic engine canaries.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 19;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -271,7 +275,7 @@ pub fn engine_canary_digest() -> u64 {
 /// One `label:outcome` line per canary fight. Split out so a test can assert the suite is not
 /// degenerate (all fights ending identically would make the digest blind).
 fn canary_fight_summaries() -> Vec<String> {
-    canary_fights()
+    let mut summaries: Vec<String> = canary_fights()
         .into_iter()
         .map(|(label, attacker, defender, config, crew)| {
             let result = simulate_combat(&attacker, &defender, &config, &crew);
@@ -288,7 +292,68 @@ fn canary_fight_summaries() -> Vec<String> {
                 result.total_isolytic_damage,
             )
         })
-        .collect()
+        .collect();
+    // This path requires defender seats, which the historical attacker-only
+    // canary tuple does not carry. Exercise native signed piercing percentages
+    // before the raw incoming curve, including an amplified enemy reduction.
+    let mut attacker = canary_combatant("canary_o_player");
+    attacker.attack = 43.0;
+    attacker.hull_health = 9_000.0;
+    attacker.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 240.0,
+            shield_deflection: 320.0,
+            dodge: 180.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 40.0,
+            shield_piercing: 60.0,
+            accuracy: 100.0,
+        },
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Explorer,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.0,
+        ceiling: 1.0,
+    });
+    let mut defender = canary_combatant("canary_o_hostile");
+    defender.attack = 193.0;
+    defender.hull_health = 4_000.0;
+    let crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileBasePiercingStatsReduction(2.1),
+        )],
+    };
+    let defender_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileCounterPierceMultiplier { bonus: 5.0 },
+        )],
+    };
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &canary_config(5, 61),
+        &crew,
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Battleship,
+        crate::combat::ShipType::Explorer,
+        true,
+        false,
+        &defender_crew,
+    );
+    summaries.push(format!("o_raw_counter_piercing:dmg={:.6};won={};limit={};rounds={};ahull={:.6};dhull={:.6};dshield={:.6};ashield={:.6};iso={:.6};",
+        result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
+        result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
+        result.attacker_shield_remaining,result.total_isolytic_damage));
+    summaries
 }
 
 fn canary_combatant(id: &str) -> Combatant {
@@ -1503,7 +1568,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 14, "expected fourteen canary fights");
+        assert_eq!(summaries.len(), 15, "expected fifteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

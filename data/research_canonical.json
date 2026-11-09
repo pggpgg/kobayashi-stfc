@@ -268,6 +268,26 @@
       ]
     },
     {
+      "rid": 4147903968,
+      "name": "Immortal Shield Mitigation Reduction",
+      "source_note": "Native272/273 BID1856737936 SHA256354c156ee73dc535ecf263be84b9ed1e38b9d7efe9e8d403ef0d258ae65a529b: mod76/op2 SUB/target6 opponent/CombatStart25/duration2, rank snapshots0.005..0.025; native locale35012 names opponent first2 rounds. Negative additive scalar preserves raw subtraction; never an own shield bonus.",
+      "effects": [
+        {
+          "id": "research_4147903968_opponent_sm_first_two_rounds",
+          "modifier": "shield_mitigation",
+          "target": "defender_opponent",
+          "operation": "add",
+          "by_level": [-0.005, -0.01, -0.015, -0.02, -0.025],
+          "snapshot_by_level": true,
+          "trigger": "combat_begin",
+          "conditions": [{ "type": "round_range", "min": 1, "max": 2 }],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 4147903968, "buff_id": 1856737936, "loca_id": 35012 }
+        }
+      ]
+    },
+    {
       "rid": 2392190200,
       "name": "KSG Shield Mitigation",
       "source_note": "data.stfc.space + manual — tier total is not cumulative sum of prior tiers; early incoming rounds only",

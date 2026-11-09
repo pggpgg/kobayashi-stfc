@@ -171,7 +171,7 @@ fn compile_canonical_override_seats(
             source_ref: effect.source_ref.clone(),
             text: None,
             trigger,
-            target: AbilityTargetSpec::AttackerSelf,
+            target: effect.target.unwrap_or(AbilityTargetSpec::AttackerSelf),
             modifier: effect.modifier,
             operation: effect.operation,
             value: Some(ValueSpec {
@@ -461,9 +461,42 @@ pub fn research_derived_attack_phase_seats_from_spec(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::combat::{AbilityCondition, AbilityEffect, TimingWindow};
     use crate::data::combat_effect_spec::{AbilityModifierSpec, AbilityOperationSpec};
     use crate::data::import::ResearchEntry;
     use crate::data::research::{ResearchCanonicalEffectEntry, ResearchCanonicalOverride};
+
+    #[test]
+    fn immortal_shield_reduction_targets_opponent_for_two_rounds() {
+        let canonical: crate::data::research::ResearchCanonicalFile =
+            serde_json::from_str(include_str!("../../data/research_canonical.json")).unwrap();
+        let entry = canonical
+            .overrides
+            .into_iter()
+            .find(|r| r.rid == 4_147_903_968)
+            .unwrap();
+        let mut index = 0;
+        let seats = compile_canonical_override_seats(&entry, 5, &mut index);
+        assert_eq!(seats.len(), 1);
+        let ability = &seats[0].ability;
+        assert_eq!(ability.effect, AbilityEffect::ShieldMitigationBonus(-0.025));
+        assert_eq!(ability.timing, TimingWindow::CombatBegin);
+        assert_eq!(
+            ability.condition,
+            Some(AbilityCondition::RoundRange { min: 1, max: 2 })
+        );
+        let rows = HashMap::from([(entry.rid, entry)]);
+        assert_eq!(
+            incoming_shield_mitigation_for_combat(
+                &[ResearchEntry {
+                    rid: 4_147_903_968,
+                    level: 5
+                }],
+                &rows
+            ),
+            (0.0, 0)
+        );
+    }
 
     #[test]
     fn incoming_ksg_sm_is_snapshot_total_and_round_count() {
@@ -478,6 +511,7 @@ mod tests {
                 effects: vec![ResearchCanonicalEffectEntry {
                     id: "test_ksg".into(),
                     modifier: AbilityModifierSpec::ShieldMitigation,
+                    target: None,
                     operation: AbilityOperationSpec::Add,
                     by_level: vec![0.005, 0.01, 0.015, 0.02, 0.025],
                     conditions: vec![],

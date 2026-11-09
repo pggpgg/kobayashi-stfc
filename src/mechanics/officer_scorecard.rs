@@ -496,6 +496,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(crate::lcars::LcarsAbility {
                 name: "C".into(),
                 effects: vec![LcarsEffect {
@@ -535,6 +536,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(crate::lcars::LcarsAbility {
                 name: "C".into(),
                 effects: vec![LcarsEffect {
@@ -573,6 +575,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(crate::lcars::LcarsAbility {
                 name: "C".into(),
                 effects: vec![LcarsEffect {
@@ -615,6 +618,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: Some(crate::lcars::LcarsAbility {
                 name: "Cap".into(),
                 effects: vec![LcarsEffect {
@@ -673,6 +677,7 @@ mod tests {
             faction: None,
             rarity: None,
             group: None,
+            native_synergy: None,
             captain_ability: None,
             bridge_ability: None,
             below_decks_ability: None,
