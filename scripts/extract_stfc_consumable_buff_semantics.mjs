@@ -29,6 +29,9 @@ export function extractConsumableBuffSemantics(bytes) {
 export function extractNativeGlobalBuffSemantics(bytes, sourceGroup) {
   if (![68, 116].includes(sourceGroup)) throw new Error("Unsupported static buff source group");
   const sourceName = sourceGroup === 116 ? "ConsumableBuffs" : "StarbaseBuffs";
+  const selectedModifiers = sourceGroup === 116
+    ? [0, 1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 56, 57, 58, 59, 60, 61, 73, 74, 707, 808, 67001]
+    : [0, 1, 2, 9, 10, 11, 12, 13, 56, 57, 58, 59, 60, 61, 73, 707, 808];
   const excludedGroups = [66, sourceGroup === 116 ? 68 : 116, 141];
   if (!bytes.length || bytes.length > 128 * 1024 * 1024) throw new Error("Invalid cache size");
   const groups = fields(bytes).filter(f => f.number === 1).map(f => {
@@ -54,13 +57,13 @@ export function extractNativeGlobalBuffSemantics(bytes, sourceGroup) {
     if (excluded.has(id)) continue;
     const modifier = r.find(f => f.number === 18);
     const code = modifier ? integer(r, 18) : 0;
-    if (![0, 1, 2, 9, 10, 11, 12, 13, 56, 57, 58, 59, 60, 61, 73, 707, 808].includes(code)) continue;
+    if (!selectedModifiers.includes(code)) continue;
     buffs[id] = extractNativeBuffSpec(payload);
   }
   const manifest = { schema_version: 1, source_group: sourceGroup, excluded_source_groups: excludedGroups,
     provenance: { cache_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
       cache_byte_length: bytes.length, schema_revision: "netniV/stfc-mod@e0b8552bc2e8922423c6cdf3ba00ba0a81bf23c0",
-      selection: `Static ${sourceName}(${sourceGroup}), map field1; modifiers0/1/2/9/10/11/12/13/56/57/58/59/60/61/73/707/808. No player state.`,
+      selection: `Static ${sourceName}(${sourceGroup}), map field1; modifiers${selectedModifiers.join("/")}. No player state.`,
       rank_contract: "GlobalBuffEntry.level is one-based; journal ActiveBuff.Ranks is zero-based and must be converted separately.",
       limitation: "Client configuration does not prove server behavior; unsupported native predicates and attributes remain quarantined." },
     buffs };

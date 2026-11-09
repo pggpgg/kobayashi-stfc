@@ -191,8 +191,8 @@ fn extend_crew_with_research_derived_attack_phase_seats(
     seats.extend(derived.iter().cloned());
 }
 
-/// Building/profile conditional scalar: Apex Barrier only in PvP scenarios and only when Tal is
-/// **not** assigned on Captain/Bridge (DTI Headquarters copy).
+/// Conditional account/building scalar: Apex Barrier only against player ships
+/// when Tal is absent from the owning ship's Captain/Bridge seats.
 fn apply_profile_player_apex_barrier_tal_gate(
     attacker: &mut Combatant,
     profile: &PlayerProfile,
@@ -1085,6 +1085,7 @@ fn build_pvp_defender_combatant(
     attacker_ship_rec: &ShipRecord,
     defender_mitigation: f64,
     attacker_enemy_target_pending: &[crate::lcars::PendingOfficerStatContribution],
+    defender_crew: &CrewConfiguration,
 ) -> Combatant {
     let def_ship = shared
         .defender_ship_rec
@@ -1126,6 +1127,12 @@ fn build_pvp_defender_combatant(
         def_profile,
         def_ship.faction.as_deref(),
         defender_osr,
+    );
+    apply_profile_player_apex_barrier_tal_gate(
+        &mut defender,
+        def_profile,
+        DefenderOpponent::Player,
+        attacker_crew_tal_assigned_captain_or_bridge(defender_crew),
     );
     apply_support_defender_static_if_pvp(shared, &mut defender);
     if !shared.player_defender_static_buffs.is_empty() {
@@ -1263,6 +1270,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 ship_rec,
                 defender_mitigation,
                 &pending_officer_stat_contributions,
+                &defender_crew,
             )
         } else {
             let mut d = cached_defender.clone();
@@ -2795,7 +2803,12 @@ pub(crate) fn build_shared_scenario_data_standalone(
         shared_research_catalog.as_ref(),
         Some(&exclude_canonical_rids),
     );
-    merge_native_consumable_bonuses(&mut profile, &pid, ship_rec.as_ref());
+    merge_native_consumable_bonuses(
+        &mut profile,
+        &pid,
+        ship_rec.as_ref(),
+        is_non_armada_npc(defender_opponent, hostile_rec.as_ref()),
+    );
     let class_gated_tp_hull = forbidden_catalog.as_ref().and_then(|cat| {
         if effective_fids.is_empty() {
             return None;
@@ -2919,7 +2932,12 @@ pub(crate) fn build_shared_scenario_data_standalone(
     );
 
     let (native_defense_derived_seats, native_defense_rounding) =
-        native_combat_start_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
+        native_combat_start_seats_for_profile(
+            &pid,
+            ship_rec.as_ref(),
+            profile.syndicate_level,
+            defender_opponent.defender_is_player_ship(),
+        );
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -3009,21 +3027,49 @@ fn merge_native_research_bonuses(
     }
 }
 
-/// Add reviewed native consumable setup buffs once for the selected hull.
+/// Resolve the immutable opponent domain before compiling combat-start pools.
+/// Missing hostile records never establish the non-Armada condition.
+fn is_non_armada_npc(opponent: DefenderOpponent, hostile: Option<&HostileRecord>) -> bool {
+    opponent.defender_is_npc_hostile()
+        && hostile.is_some_and(|h| h.ship_type_for_combat() != ShipType::Armada)
+}
+
+/// Add reviewed native account buffs to this scenario's in-memory profile once.
+/// Combat-start piercing uses the same additive native percentage pool as launch
+/// piercing, but only after its fixed NPC/non-Armada opponent gate is resolved.
 fn merge_native_consumable_bonuses(
     profile: &mut PlayerProfile,
     pid: &str,
     ship: Option<&ShipRecord>,
+    opponent_is_non_armada_npc: bool,
 ) {
     let imported =
         import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
             .unwrap_or_default();
-    for (stat, value) in crate::data::native_consumable_buffs::bonuses_for_imported_buffs(
+    let now = chrono::Utc::now().timestamp();
+    let mut bonuses = crate::data::native_consumable_buffs::bonuses_for_imported_buffs(
         &imported,
         ship.map(|ship| ship.ship_class.as_str()),
-        chrono::Utc::now().timestamp(),
-    ) {
+        now,
+    );
+    for (stat, value) in
+        crate::data::native_consumable_buffs::combat_start_piercing_bonuses_for_imported_buffs(
+            &imported,
+            opponent_is_non_armada_npc,
+            now,
+        )
+    {
+        *bonuses.entry(stat).or_default() += value;
+    }
+    for (stat, value) in bonuses {
         *profile.bonuses.entry(stat).or_insert(0.0) += value;
+    }
+    for (stat, value) in
+        crate::data::native_consumable_buffs::conditional_apex_bonuses_for_imported_buffs(
+            &imported, now,
+        )
+    {
+        *profile.bonuses.entry(stat).or_default() += value;
     }
 }
 
@@ -3050,6 +3096,7 @@ fn native_combat_start_seats_for_profile(
     pid: &str,
     ship: Option<&ShipRecord>,
     syndicate_level: Option<u32>,
+    opponent_is_player: bool,
 ) -> (Vec<CrewSeatContext>, bool) {
     let imported =
         import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
@@ -3100,6 +3147,14 @@ fn native_combat_start_seats_for_profile(
     seats.extend(
         crate::data::native_consumable_buffs::combat_start_offense_seats_for_imported_buffs(
             &imported, now,
+        ),
+    );
+    seats.extend(
+        crate::data::native_consumable_buffs::combat_start_apex_seats_for_imported_buffs(
+            &imported,
+            ship.map(|ship| ship.id.as_str()),
+            opponent_is_player,
+            now,
         ),
     );
     (seats, rounding)
@@ -3226,6 +3281,7 @@ fn load_defender_profile_for_pvp(
         &mut profile,
         &pid,
         registry.resolve_ship(defender_ship_id).as_ref(),
+        false,
     );
     (
         profile,
@@ -3495,12 +3551,17 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         registry.research_catalog(),
         Some(&exclude_canonical_rids),
     );
-    merge_native_consumable_bonuses(&mut profile, &pid, ship_rec.as_ref());
     let hostile_rec = if pvp.is_some() {
         None
     } else {
         registry.resolve_hostile(hostile)
     };
+    merge_native_consumable_bonuses(
+        &mut profile,
+        &pid,
+        ship_rec.as_ref(),
+        is_non_armada_npc(defender_opponent, hostile_rec.as_ref()),
+    );
     let (
         defender_ship_rec,
         mut defender_profile,
@@ -3734,7 +3795,12 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .unwrap_or_else(|| hostile.to_string());
 
     let (native_defense_derived_seats, native_defense_rounding) =
-        native_combat_start_seats_for_profile(&pid, ship_rec.as_ref(), profile.syndicate_level);
+        native_combat_start_seats_for_profile(
+            &pid,
+            ship_rec.as_ref(),
+            profile.syndicate_level,
+            defender_opponent.defender_is_player_ship(),
+        );
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -3835,6 +3901,200 @@ mod tests {
     use uuid::Uuid;
 
     static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn monaveen_apex_uses_each_pvp_owners_tal_gate() {
+        let registry = DataRegistry::load().unwrap();
+        let mut shared = build_shared_scenario_data_from_registry(
+            registry.as_ref(),
+            "realta",
+            "",
+            None,
+            None,
+            Some(crate::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+            support_buffs::SupportBuffScenarioRequest::default(),
+            DefenderOpponent::Player,
+            None,
+            Some(PvpScenarioParams {
+                defender_ship: "realta".into(),
+                defender_ship_tier: None,
+                defender_ship_level: None,
+                defender_profile_id: "demo".into(),
+            }),
+        );
+        let rows: Vec<_> = [
+            2199227326, 2280947091, 3378417511, 3663693120, 1721910014, 1763915157, 3558267162,
+            487851441, 2328144758, 610243845, 1240186710, 2956393975,
+        ]
+        .into_iter()
+        .map(|bid| import::GlobalBuffEntry {
+            bid,
+            level: 61,
+            expiry_time: None,
+        })
+        .collect();
+        let pool =
+            crate::data::native_consumable_buffs::conditional_apex_bonuses_for_imported_buffs(
+                &rows, 0,
+            );
+        let key = "apex_barrier_vs_player_tal_not_on_bridge";
+        assert_eq!(pool[key], 1500.0);
+        shared.profile = PlayerProfile {
+            bonuses: pool.clone(),
+            ..Default::default()
+        };
+        *shared.profile.bonuses.get_mut(key).unwrap() += 300.0;
+        let mut defender_profile = PlayerProfile {
+            bonuses: pool,
+            ..Default::default()
+        };
+        *defender_profile.bonuses.get_mut(key).unwrap() += 200.0;
+        shared.defender_profile = Some(defender_profile);
+        shared.native_defense_derived_seats.clear();
+        for (attacker_tal, defender_seat) in [
+            (false, None),
+            (true, None),
+            (false, Some(CrewSeat::Captain)),
+            (true, Some(CrewSeat::Bridge)),
+            (false, Some(CrewSeat::BelowDeck)),
+        ] {
+            shared.player_defender_officer_seats.clear();
+            if let Some(seat) = defender_seat {
+                let mut marker = CrewSeatContext::legacy(
+                    seat,
+                    crate::combat::Ability {
+                        name: "Tal identity".into(),
+                        class: AbilityClass::BridgeAbility,
+                        timing: TimingWindow::CombatBegin,
+                        boostable: false,
+                        effect: AbilityEffect::ApexBarrierBonus(0.0),
+                        condition: None,
+                        weapon_scope: Default::default(),
+                    },
+                    false,
+                );
+                marker.officer_id = Some(crate::combat::abilities::TAL_OFFICER_LCARS_ID.into());
+                shared.player_defender_officer_seats.push(marker);
+            }
+            let candidate = CrewCandidate {
+                captain: if attacker_tal {
+                    crate::combat::abilities::TAL_OFFICER_LCARS_ID.into()
+                } else {
+                    "kirk-1323b6".into()
+                },
+                bridge: vec![],
+                below_decks: vec![],
+            };
+            let input = scenario_to_combat_input_from_shared(&shared, &candidate, 77);
+            assert_eq!(
+                attacker_crew_tal_assigned_captain_or_bridge(&input.crew),
+                attacker_tal
+            );
+            assert_eq!(
+                input.attacker.apex_barrier,
+                if attacker_tal { 0.0 } else { 1800.0 }
+            );
+            let defender_tal = matches!(defender_seat, Some(CrewSeat::Captain | CrewSeat::Bridge));
+            assert_eq!(
+                input.defender.apex_barrier,
+                if defender_tal { 0.0 } else { 1700.0 },
+                "defender must use its own crew's Tal gate"
+            );
+        }
+    }
+
+    #[test]
+    fn account_piercing_preserves_manual_pool_and_fixed_opponent_gates() {
+        let _guard = SHARED_SCENARIO_RESEARCH_LOCK.lock().unwrap();
+        let mut index = load_profile_index();
+        let id = format!("account_piercing_{}", Uuid::new_v4().as_simple());
+        let entry = create_profile(&mut index, Some(&id), "Account bonus isolation").unwrap();
+        struct Cleanup(String);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let mut index = load_profile_index();
+                let _ = delete_profile(&mut index, &self.0);
+            }
+        }
+        let _cleanup = Cleanup(entry.id.clone());
+        let saved = r#"{"syndicate_level":45,"bonuses":{"accuracy":0.5,"armor_piercing":0.5,"shield_piercing":0.5}}"#;
+        fs::write(profile_path(&entry.id, PROFILE_JSON), saved).unwrap();
+        let buffs = serde_json::json!({"buffs":[
+            {"bid":1333781883i64,"level":61}, {"bid":1333781883i64,"level":60},
+            {"bid":3809461333i64,"level":61}, {"bid":1085339663i64,"level":61},
+            {"bid":675636702i64,"level":61}, {"bid":609129565i64,"level":61},
+            {"bid":2259348690i64,"level":61},
+            {"bid":1404701608i64,"level":61}, {"bid":1404701608i64,"level":61},
+            {"bid":2886123067i64,"level":61},
+            {"bid":949755120i64,"level":2}, {"bid":995187207i64,"level":61}
+        ]});
+        fs::write(profile_path(&entry.id, BUFFS_IMPORTED), buffs.to_string()).unwrap();
+        let mut hostile = load_hostile_record(Path::new("data/hostiles"), "2918121098").unwrap();
+        hostile.upstream_ship_type = 0;
+        let mut armada = hostile.clone();
+        armada.upstream_ship_type = 1;
+        let ship = ShipRecord {
+            id: "synthetic".into(),
+            ship_class: "explorer".into(),
+            accuracy: 100.0,
+            armor_piercing: 200.0,
+            shield_piercing: 300.0,
+            ..Default::default()
+        };
+        for (opponent, record, extra) in [
+            (DefenderOpponent::Hostile, Some(&hostile), 0.2),
+            (DefenderOpponent::Hostile, Some(&armada), 0.0),
+            (DefenderOpponent::Player, Some(&hostile), 0.0),
+            (DefenderOpponent::Hostile, None, 0.0),
+        ] {
+            let mut profile: PlayerProfile = serde_json::from_str(saved).unwrap();
+            merge_native_consumable_bonuses(
+                &mut profile,
+                &entry.id,
+                Some(&ship),
+                is_non_armada_npc(opponent, record),
+            );
+            for key in ["accuracy", "armor_piercing", "shield_piercing"] {
+                assert!(
+                    (profile.bonuses[key] - (0.5 + 6.4 + extra)).abs() < 1e-10,
+                    "{key}"
+                );
+            }
+            let stats = effective_attacker_stats_for_mitigation(
+                &ship,
+                &profile,
+                &HashMap::new(),
+                ShipType::Explorer,
+            );
+            assert!((stats.accuracy - 100.0 * (1.0 + 0.5 + 6.4 + extra)).abs() < 1e-9);
+            let weapon = crate::data::ship::WeaponRecord {
+                accuracy: Some(400.0),
+                armor_piercing: Some(500.0),
+                shield_piercing: Some(600.0),
+                ..Default::default()
+            };
+            let stats = effective_attacker_stats_for_ship_weapon_row(
+                &ship,
+                Some(&weapon),
+                &profile,
+                &HashMap::new(),
+                ShipType::Explorer,
+            );
+            assert!((stats.armor_piercing - 500.0 * (1.0 + 0.5 + 6.4 + extra)).abs() < 1e-9);
+            assert!((stats.shield_piercing - 600.0 * (1.0 + 0.5 + 6.4 + extra)).abs() < 1e-9);
+        }
+        assert_eq!(
+            fs::read_to_string(profile_path(&entry.id, PROFILE_JSON)).unwrap(),
+            saved
+        );
+        fs::write(profile_path(&entry.id, BUFFS_IMPORTED), r#"{"buffs":[]}"#).unwrap();
+        let mut profile: PlayerProfile = serde_json::from_str(saved).unwrap();
+        merge_native_consumable_bonuses(&mut profile, &entry.id, Some(&ship), true);
+        assert_eq!(
+            profile.bonuses["accuracy"], 0.5,
+            "Syndicate level does not create a second reward total"
+        );
+    }
 
     #[test]
     fn crew_health_deferred_effects_resolve_only_with_known_health() {

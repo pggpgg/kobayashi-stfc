@@ -1,97 +1,87 @@
-//! Print cumulative Syndicate bonuses up to a given Syndicate level, optionally filtered by operations level band.
-//! Usage: cargo run --bin syndicate_bonuses -- <syndicate_level> [ops_level] [--combat-only]
-//! Example: cargo run --bin syndicate_bonuses -- 42 51
-//!   → bonuses at Syndicate 42 for the 51-60 ops band.
-//! Example: cargo run --bin syndicate_bonuses -- 42 51 --combat-only
-//!   → combat stat bonuses only (engine keys: weapon_damage, hull_hp, etc.).
+//! Report native Syndicate reward definitions without reading or changing a profile.
+//! Usage: syndicate_bonuses <syndicate_level> [ops_level] [--combat-only] [--json]
 
-use std::collections::BTreeMap;
+use kobayashi::data::syndicate_rewards::{native_reward_report, RewardStatus};
+
+const USAGE: &str =
+    "Usage: syndicate_bonuses <syndicate_level> [ops_level] [--combat-only] [--json]";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let syndicate_level: u32 = args
-        .first()
-        .and_then(|s| s.parse().ok())
-        .ok_or("Usage: syndicate_bonuses <syndicate_level> [ops_level] [--combat-only]. E.g. 42 51 --combat-only")?;
-    let ops_level: Option<u32> = args.get(1).and_then(|s| s.parse().ok());
-    let combat_only = args.iter().any(|a| a == "--combat-only");
-
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-    let path = std::path::Path::new(&manifest_dir).join("data/syndicate_reputation.json");
-    let path_str = path.to_string_lossy();
-    let data = kobayashi::data::syndicate_reputation::load_syndicate_reputation(&path_str)
-        .ok_or_else(|| {
-            format!(
-                "Load {} (run import_syndicate_reputation first)",
-                path.display()
-            )
-        })?;
-
-    if combat_only {
-        let ops = ops_level.ok_or("--combat-only requires ops_level (e.g. 42 51 --combat-only)")?;
-        let combat = kobayashi::data::syndicate_combat::cumulative_combat_bonuses(
-            &data,
-            syndicate_level,
-            ops,
-        );
-        let sorted: BTreeMap<_, _> = combat.into_iter().collect();
-        println!(
-            "Cumulative combat bonuses at Syndicate {} for ops level {} (band {})",
-            syndicate_level,
-            ops,
-            kobayashi::data::syndicate_combat::ops_level_to_band(ops)
-        );
-        println!();
-        for (key, value) in &sorted {
-            println!("  {}: {:.2}%", key, value * 100.0);
+    let mut positional = Vec::new();
+    let mut combat_only = false;
+    let mut json = false;
+    for arg in std::env::args().skip(1) {
+        match arg.as_str() {
+            "--combat-only" => combat_only = true,
+            "--json" => json = true,
+            "--help" | "-h" => {
+                println!("{USAGE}");
+                println!("Without Ops, values remain unranked. No player profile is read.");
+                return Ok(());
+            }
+            _ if arg.starts_with('-') => {
+                return Err(format!("Unknown option {arg}. {USAGE}").into())
+            }
+            _ => positional.push(arg),
         }
-        println!("\nTotal combat entries: {}", sorted.len());
+    }
+    if positional.is_empty() || positional.len() > 2 {
+        return Err(USAGE.into());
+    }
+    let level = positional[0].parse::<u32>()?;
+    let ops = positional.get(1).map(|s| s.parse::<u32>()).transpose()?;
+    let report = native_reward_report(level, ops)?;
+    if json {
+        // JSON always retains every selected definition and its diagnostic status.
+        println!("{}", serde_json::to_string_pretty(&report)?);
         return Ok(());
     }
-
-    let band =
-        ops_level.map(|o| kobayashi::data::syndicate_combat::ops_level_to_band(o).to_string());
-
-    // Cumulative: sum all bonuses from level 1..=syndicate_level
-    let mut cumulative: BTreeMap<String, f64> = BTreeMap::new();
-    for entry in data
-        .levels
+    println!(
+        "Native Syndicate reward definitions: level {}, Ops {}",
+        level,
+        ops.map_or_else(|| "unknown".to_owned(), |n| n.to_string())
+    );
+    let coverage = &report.complete_source_coverage;
+    println!(
+        "Reviewed source: {} tiers, {} reward references, {} resolved BuffIDs; cache {}",
+        coverage.tier_count,
+        coverage.reward_reference_count,
+        coverage.resolved_buff_count,
+        report.static_cache_sha256
+    );
+    println!("\nUnconditional combat definitions at this Ops snapshot:");
+    if report.unconditional_combat_bonuses.is_empty() {
+        println!("  No ranked unconditional totals available.");
+    }
+    for (stat, value) in &report.unconditional_combat_bonuses {
+        println!("  {stat}: {:.2}%", value * 100.0);
+    }
+    println!("\nSelected reward provenance and diagnostics:");
+    for row in report
+        .rows
         .iter()
-        .filter(|e| e.level >= 1 && e.level <= syndicate_level)
+        .filter(|r| !combat_only || r.status != RewardStatus::Noncombat)
     {
-        for b in &entry.bonuses {
-            let stat = b.stat.as_str();
-            if let Some(ref band_str) = band {
-                if !stat.contains(band_str) {
-                    continue;
-                }
-            }
-            let v = cumulative.get(stat).copied().unwrap_or(0.0);
-            let new_v = if b.operator.eq_ignore_ascii_case("multiply") {
-                (1.0 + v) * (1.0 + b.value) - 1.0
-            } else {
-                v + b.value
-            };
-            cumulative.insert(b.stat.clone(), new_v);
+        let source = row
+            .source_group
+            .map_or_else(|| "unresolved".to_owned(), |g| g.to_string());
+        let value = row
+            .raw_value
+            .map_or_else(|| "unranked".to_owned(), |v| format!("raw={v}"));
+        println!(
+            "  level {} BID {} source {} {:?} {}",
+            row.unlock_level, row.buff_id, source, row.status, value
+        );
+        if !matches!(
+            row.status,
+            RewardStatus::UnconditionalCombat | RewardStatus::Noncombat
+        ) {
+            println!("    {} Conditions: {:?}", row.reason, row.condition_codes);
         }
     }
-
     println!(
-        "Cumulative Syndicate bonuses at level {} (levels 1..={})",
-        syndicate_level, syndicate_level
+        "\n{} selected references, {} distinct BuffIDs. {}",
+        report.selected_reward_references, report.unique_selected_buff_ids, report.limitation
     );
-    if let Some(ops) = ops_level {
-        let band_str = kobayashi::data::syndicate_combat::ops_level_to_band(ops);
-        println!(
-            "Filtered to ops band '{}' (ops level {}). Stats without a band (unlocks, shards, etc.) apply to all.",
-            band_str, ops
-        );
-    }
-    println!();
-
-    for (stat, value) in &cumulative {
-        println!("  {}: {:.2}%", stat, value * 100.0);
-    }
-    println!("\nTotal entries: {}", cumulative.len());
     Ok(())
 }

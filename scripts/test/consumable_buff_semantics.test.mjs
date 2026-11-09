@@ -45,6 +45,80 @@ test("consumable extraction rejects duplicate IDs, wrong groups and malformed se
   assert.throws(() => extractConsumableBuffSemantics(group(116, map(1, 42, concat(integer(1, 42), integer(18, 61))))), /Missing ranked/);
 });
 
+test("global extraction selects piercing axes and all-piercing without changing other source ownership", () => {
+  const codes = [6, 7, 8, 74];
+  const source = group(116, concat(...codes.map(code => map(1, code, buff(code, code)))));
+  const actual = extractConsumableBuffSemantics(source);
+  assert.deepEqual(Object.keys(actual.buffs), ["6", "7", "8", "74"]);
+  for (const [code, expected] of [[6, ["accuracy"]], [7, ["armor_piercing"]],
+    [8, ["shield_piercing"]], [74, ["accuracy", "armor_piercing", "shield_piercing"]]]) {
+    assert.deepEqual(mapClientResearchBuff(actual.buffs[code]).map(row => [row.stat, row.value_unit]),
+      expected.map(stat => [stat, "fraction"]));
+    assert.deepEqual(actual.buffs[code].ranked_values, [0.5, 5, 0]);
+  }
+  const collisions = concat(source, group(66, map(3, 6, buff(6, 6))),
+    group(68, map(1, 7, buff(7, 7))), group(141, map(1, 8, buff(8, 8))));
+  assert.deepEqual(Object.keys(extractConsumableBuffSemantics(collisions).buffs), ["74"]);
+  assert.deepEqual(Object.keys(extractBuildingBuffSemantics(group(68, map(1, 74, buff(74, 74)))).buffs), [],
+    "this scoped change does not broaden the building inventory");
+});
+
+test("tracked global piercing inventory separates six launch and nine opponent-gated CombatStart definitions", () => {
+  const catalog = JSON.parse(fs.readFileSync(new URL("../../data/native_consumable_buff_catalog.json", import.meta.url)));
+  const rows = Object.values(catalog.buffs).filter(row => [6, 7, 8, 74].includes(row.modifier_code));
+  // Same frozen272 cache, broader selection: all fifteen previously omitted rows are modifier74.
+  assert.equal(rows.length, 15);
+  const launch = rows.filter(row => mapClientResearchBuff(row).length);
+  assert.equal(launch.length, 6);
+  for (const row of launch) {
+    assert.equal(row.modifier_code, 74);
+    assert.equal(row.operation_code, 3);
+    assert.equal(row.trigger_code, 24);
+    assert.equal(row.target_code, 1);
+    assert.deepEqual(row.condition_codes, []);
+    assert.deepEqual(row.attribute_fields, []);
+    assert.deepEqual(row.unknown_fields, []);
+    assert.equal(row.ranked_value_count, 99);
+  }
+  for (const row of rows.filter(row => !launch.includes(row))) {
+    assert.equal(row.modifier_code, 74);
+    assert.equal(row.operation_code, 3);
+    assert.equal(row.target_code, 1);
+    assert.equal(row.trigger_code, 25);
+    assert.equal(row.num_rounds ?? 0, 0);
+    assert.deepEqual(row.condition_codes, [27, 131]);
+    assert.deepEqual(row.attribute_fields, []);
+    assert.deepEqual(row.unknown_fields, []);
+    assert.equal(row.ranked_value_type, 0);
+    assert.equal(row.ranked_value_count, 99);
+    assert.equal(row.ranked_chance_count, 99);
+    assert.deepEqual(row.ranked_chances, [1]);
+    assert.ok(row.ranked_values.every(value => Number.isFinite(value) && value > 0));
+    assert.deepEqual(mapClientResearchBuff(row), [], "CombatStart opponent gates cannot enter the launch pool");
+  }
+});
+
+test("global Apex inventory retains raw predicates without broadening generic launch eligibility", () => {
+  const catalog = JSON.parse(fs.readFileSync(new URL("../../data/native_consumable_buff_catalog.json", import.meta.url)));
+  const rows = Object.values(catalog.buffs).filter(row => row.modifier_code === 67001);
+  assert.equal(rows.length, 33, "inventory all Apex sources independently of exact runtime eligibility");
+  assert.ok(rows.every(row => mapClientResearchBuff(row).length === 0));
+  const stella = catalog.buffs[3061559261];
+  assert.equal(stella.sha256, "b6e7cca49475cd554ce866576e725b9ab9f54ee15fa5ef1832f37f5b5cc09262");
+  assert.deepEqual(stella.condition_codes, [129, 150, 17]);
+  assert.deepEqual(stella.attribute_fields, [8]);
+  assert.equal(stella.faction_id, 1750120904);
+  assert.equal(stella.operation_code, 1, "absolute ADD remains distinct from percentage MULT");
+  assert.equal(stella.trigger_code, 25);
+  assert.deepEqual(stella.ranked_values, [100]);
+  assert.equal(stella.ranked_value_count, 99);
+  assert.equal(stella.ranked_chance_count, 99);
+  const source = group(116, map(1, 42, buff(42, 67001)));
+  assert.ok(Object.hasOwn(extractConsumableBuffSemantics(source).buffs, 42));
+  const collision = concat(source, group(66, map(3, 42, buff(42, 67001))));
+  assert.ok(!Object.hasOwn(extractConsumableBuffSemantics(collision).buffs, 42));
+});
+
 test("reviewed consumable catalog agrees with its native predicates and supported coverage", () => {
   const c = JSON.parse(fs.readFileSync(new URL("../../data/native_consumable_buff_catalog.json", import.meta.url)));
   const research = JSON.parse(fs.readFileSync(new URL("../../data/research/client_buff_semantics_2026-10-20.json", import.meta.url)));

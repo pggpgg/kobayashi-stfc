@@ -10,7 +10,7 @@
     "cache_sha256": "b7fcb7a021fa982144702a682e81eb6b7a31406522b0154cc77553a2c0776418",
     "cache_byte_length": 24991479,
     "schema_revision": "netniV/stfc-mod@e0b8552bc2e8922423c6cdf3ba00ba0a81bf23c0",
-    "selection": "Static ConsumableBuffs(116), map field1; modifiers0/1/2/9/10/11/12/13/56/57/58/59/60/61/73/707/808. No player state.",
+    "selection": "Static ConsumableBuffs(116), map field1; modifiers0/1/2/6/7/8/9/10/11/12/13/56/57/58/59/60/61/73/74/707/808/67001. No player state.",
     "rank_contract": "GlobalBuffEntry.level is one-based; journal ActiveBuff.Ranks is zero-based and must be converted separately.",
     "limitation": "Client configuration does not prove server behavior; unsupported native predicates and attributes remain quarantined."
   },
@@ -290,6 +290,35 @@
       "byte_length": 1620,
       "sha256": "07fb532828b0bc72e5d13c93e17267268fd0e0bae22b1fdd873160c03612dc53"
     },
+    "69592781": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        600
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5561305,
+      "byte_length": 1636,
+      "sha256": "ca788a01bf9a0bcdcc0136d578a262ffb36d3796c65193a6a980ba21a0f74413"
+    },
     "80423065": {
       "modifier_code": 60,
       "operation_code": 3,
@@ -535,6 +564,30 @@
       "byte_offset": 5533420,
       "byte_length": 1619,
       "sha256": "707b52d0438d1dba5b7ded1dc9ef6493df8037fc5b32e72974fe28285e51f15c"
+    },
+    "143261594": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        2500
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5520259,
+      "byte_length": 1625,
+      "sha256": "740aa69d0b5a5441594effb7bb6dd3d4372837da2afb81adcb8a54b7e0d4f419"
     },
     "144456117": {
       "modifier_code": 2,
@@ -889,6 +942,31 @@
       "byte_offset": 5480533,
       "byte_length": 1636,
       "sha256": "de7f53a4e315fc630ec171b0d6cdc639d9a0892ca0a7cdd888c2f5f0a1b33fad"
+    },
+    "249883926": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        1000
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5460527,
+      "byte_length": 1626,
+      "sha256": "9b3b5ab37dba208c023d399a8c065d710f37d00aa76fc1112f7ca396a4892c9f"
     },
     "261329787": {
       "modifier_code": 61,
@@ -1263,6 +1341,91 @@
       "byte_offset": 5432629,
       "byte_length": 1626,
       "sha256": "20c2beb84643d472701854e3cd26a316bf6ef313342b1eea852f2546baf0a8af"
+    },
+    "313675470": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        74005,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        400
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5424447,
+      "byte_length": 1629,
+      "sha256": "31e529c5bd5a087a08912a6bcae9d8ebd18232a2b61921e20cee2034a11a708d"
     },
     "353423393": {
       "modifier_code": 2,
@@ -2061,6 +2224,31 @@
       "byte_length": 1620,
       "sha256": "e9b0b102ae139fe090bc876270d2a11f27407d2614301d0d2c1dd077c1c77138"
     },
+    "487851441": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        150
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5333069,
+      "byte_length": 1628,
+      "sha256": "5d1c6c9f5b688bfe3de638cdc8973a80270b672d2f31a5f2eba2429ca08c747d"
+    },
     "488545184": {
       "modifier_code": 58,
       "operation_code": 3,
@@ -2641,6 +2829,31 @@
       "byte_length": 1621,
       "sha256": "6a740bb7328b4433ee4f8192f6087cefe012f26b1735fb759a42be9f999fa451"
     },
+    "539323188": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        600
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5298737,
+      "byte_length": 1627,
+      "sha256": "809787913b70389d6abe1a0f85beccd58296a30ed15e17dba8564a37c0f6fdd9"
+    },
     "542496768": {
       "modifier_code": 73,
       "operation_code": 3,
@@ -2869,6 +3082,206 @@
       "byte_length": 1637,
       "sha256": "81882387414c366f7e18be57c3987698d12d0d9b41e5d80ae826e69daa4dcec6"
     },
+    "609129565": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.08,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.5
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5270487,
+      "byte_length": 1620,
+      "sha256": "162df4b0f7d976e3689a5fcb7d698f4e21b4cce9f19af93bf3dbbf7745c234d1"
+    },
+    "610243845": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        200
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5268847,
+      "byte_length": 1628,
+      "sha256": "c8e101130540c857151d4dc57adbec13a4ef18b8fec2ddb16211822c27dc8f5e"
+    },
+    "625854756": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2550,
+        2700,
+        2850,
+        3000,
+        3150,
+        3300,
+        3450,
+        3600,
+        3750,
+        3900,
+        4050,
+        4200,
+        4350,
+        4500,
+        4650,
+        4800,
+        4950,
+        5100,
+        5250,
+        5400,
+        5550,
+        5700,
+        5850,
+        6000,
+        6300,
+        6600,
+        6900,
+        7200,
+        7500
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5263937,
+      "byte_length": 1628,
+      "sha256": "836cb2c111c89e66a46a7c9b20752c9a503225d80c73ebfbde3ac841aed147e9"
+    },
     "647228213": {
       "modifier_code": 60,
       "operation_code": 3,
@@ -2981,6 +3394,87 @@
       "byte_length": 1621,
       "sha256": "b542752c374d0a92ef1dfba4e4554fe6791e08d3b4f89976107309c63fc70754"
     },
+    "675636702": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1.25
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5242660,
+      "byte_length": 1620,
+      "sha256": "6c006d7c8164af4da14ebe1f21da532c7fa37c6b2f30e63e65c5951cbb7adfaa"
+    },
     "679780173": {
       "modifier_code": 808,
       "operation_code": 1,
@@ -3070,6 +3564,35 @@
       "byte_offset": 5241026,
       "byte_length": 1622,
       "sha256": "5744e826a9f0767abe80f7d7c9738f83849b03f5f922ec6d35a2df140e3855f0"
+    },
+    "680317333": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        1400
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5239377,
+      "byte_length": 1637,
+      "sha256": "a8f1d2a6710badc2ae302c09aad715b63866d0bd58ebfe5e769aa4f2d51bcd13"
     },
     "691994594": {
       "modifier_code": 2,
@@ -4317,6 +4840,31 @@
       "byte_length": 1620,
       "sha256": "79b59f201dfe881cfcb30ab8a6d10a53dcc23ecf6c12defc0307be720e735918"
     },
+    "1027887165": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        700
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5056330,
+      "byte_length": 1627,
+      "sha256": "0ca3253a0df5c501a93b2421444d912c1bffa3c439b8fdceaa08cef430f21bcd"
+    },
     "1028015069": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -4594,6 +5142,87 @@
       "byte_length": 1620,
       "sha256": "e9f08a09b8fbbcffc0b6db2ec78efc6311967d2f0bce2c9dd346ab3743633b02"
     },
+    "1085339663": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.65,
+        0.9
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 5014908,
+      "byte_length": 1620,
+      "sha256": "cbab8bb2f4deffe07220e4a9e48858c4e82ba9dcc7ef891b1ee0e349f259c02d"
+    },
     "1101468727": {
       "modifier_code": 2,
       "operation_code": 3,
@@ -4616,6 +5245,30 @@
       "byte_offset": 5006429,
       "byte_length": 1625,
       "sha256": "5d6ce0d8bad2cd8bac2a7347b7edbe10cd6372eac45dfdea0c830c2c4a811908"
+    },
+    "1157216071": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        1500
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4980070,
+      "byte_length": 1626,
+      "sha256": "af6b071e1bdc23f80f98e4ac573d7aeb9c9b1a88b1ba4653af79fed8a40d012b"
     },
     "1159741962": {
       "modifier_code": 2,
@@ -4826,6 +5479,31 @@
       "byte_length": 1625,
       "sha256": "1470bfc4f5c0e9bc76894d4861d75a81df10813093b33687fe58ca934cd62d42"
     },
+    "1240186710": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        200
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4953428,
+      "byte_length": 1628,
+      "sha256": "c2e69aaef0dc6bdb191ae65c1fe4b4447543b7cd7a043f7d569541f3d8171575"
+    },
     "1251337156": {
       "modifier_code": 2,
       "operation_code": 3,
@@ -4947,6 +5625,30 @@
       "byte_length": 1636,
       "sha256": "9c03fa8d7440d0b6011571670cc986ae7a1ca807dc7c575ccd8ff63549b9ba1d"
     },
+    "1277497908": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.2
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4933477,
+      "byte_length": 1627,
+      "sha256": "b12873185ac86ea9a337f2214024ae0bbf3f183fed919e04d94980305c4c4939"
+    },
     "1277503227": {
       "modifier_code": 2,
       "operation_code": 3,
@@ -5051,6 +5753,87 @@
       "byte_length": 1621,
       "sha256": "8ed53f25f35ec98f203101189e96402c04083ce6aeed8d6b9b7127558acf33c9"
     },
+    "1333781883": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.02,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.15,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.4
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4895718,
+      "byte_length": 1620,
+      "sha256": "3dc4c809b87c2c068a5e9f6aa6df887a13acb1cccee9685ee4a80dc944badc5b"
+    },
     "1368988930": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -5078,6 +5861,90 @@
       "byte_offset": 4879327,
       "byte_length": 1637,
       "sha256": "10750f70ef2846bae752daebaa75442bba1804b591e489397f018ff9551212f4"
+    },
+    "1369297542": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        2500,
+        2500,
+        2500,
+        2500,
+        2500,
+        2500,
+        2500,
+        2500,
+        2500,
+        2500,
+        3000
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4877690,
+      "byte_length": 1625,
+      "sha256": "7293dba768081a5c8497e067a04fd60a8e225fb77989b620867cfdc0000951ef"
     },
     "1369917962": {
       "modifier_code": 2,
@@ -5322,6 +6189,30 @@
       "byte_length": 1621,
       "sha256": "c33f5f61bb7e1852dbf28a68c9a347a841be18af99b302f77b4036d7bb110175"
     },
+    "1404701608": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.1
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4860943,
+      "byte_length": 1627,
+      "sha256": "7f6ec2a4d07dca9cb9a04d21e8745820a71b8c843dd216375e96729cf78fc9cb"
+    },
     "1407318986": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -5415,6 +6306,35 @@
       "byte_offset": 4847790,
       "byte_length": 1627,
       "sha256": "e0af65c1131b37bf168f4bb31770cd1a18fe17e5a5a9e2c0a45d894a609fca74"
+    },
+    "1434397842": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        300
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4831366,
+      "byte_length": 1637,
+      "sha256": "14b3d8abdc2723364e906b45d112d6ddbd250dba5c72930609b9918702a8ed82"
     },
     "1438602603": {
       "modifier_code": 58,
@@ -6032,6 +6952,95 @@
       "byte_length": 1625,
       "sha256": "1e0aecbc50fe4bdfe34b994ec6ee84ceedf2462655dc3c0c4bd57b4ff81a465a"
     },
+    "1542409263": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        170,
+        171
+      ],
+      "attribute_fields": [
+        8,
+        15
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": -1,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1500
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4788754,
+      "byte_length": 1644,
+      "sha256": "ad4043c50ea1ecb9a654f6a431c6d9fbc486d4f4d358a15d0ffa006a9b57683b"
+    },
     "1547190908": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -6479,6 +7488,30 @@
       "byte_length": 1637,
       "sha256": "099aba8f7a9ad0efc92dab3f26c3e187f43f3e5806f056125a0810e5ffa5f679"
     },
+    "1610041024": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.2
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4744279,
+      "byte_length": 1627,
+      "sha256": "c6c12d9893694ad0053ca60fd3fd691f24b3391654c898f2a800eae180218457"
+    },
     "1620417889": {
       "modifier_code": 61,
       "operation_code": 3,
@@ -6723,6 +7756,35 @@
       "byte_offset": 4729537,
       "byte_length": 1620,
       "sha256": "66bf0fe00ce2a0119e4d8f0e0b4271d7e37b35d47f938c1078e6f9cbd6891558"
+    },
+    "1634653380": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        3000
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4726256,
+      "byte_length": 1637,
+      "sha256": "9deeb516c22b5ab06497ead33966c786acfff13281173dacd39591577931304c"
     },
     "1634763384": {
       "modifier_code": 58,
@@ -7192,6 +8254,31 @@
       "byte_length": 1637,
       "sha256": "2af13c984bfd8da83a11f3f3ecf23abe66f62c43fd017bf1e2d61fa0f356b52e"
     },
+    "1721910014": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        100
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4673597,
+      "byte_length": 1628,
+      "sha256": "2676aa79ac5b7ec34a311f50fa0e1763805825d768fd3ed5eb0a2a573c146038"
+    },
     "1730719868": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -7365,6 +8452,31 @@
       "byte_offset": 4668670,
       "byte_length": 1620,
       "sha256": "45f05e37eb96e83d3005ca08f72fd6553bc12a2eaeece7d5024b8633b5931e27"
+    },
+    "1763915157": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        100
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4652238,
+      "byte_length": 1628,
+      "sha256": "9e34286efe49722ec9f2e4c79845bb0df407a970cde5dbdcdaae042612265b0d"
     },
     "1787748910": {
       "modifier_code": 61,
@@ -9265,6 +10377,31 @@
       "byte_length": 1621,
       "sha256": "8fdc8515db0f287a5b242e4329ac49f7bbd46b9a2f8b77577aa8198d7d49ae8a"
     },
+    "2199227326": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        50
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4430658,
+      "byte_length": 1628,
+      "sha256": "18b9a52108e043055db5c83d7510d505b6e2f1b206f55e5369adaaaeed2ba88d"
+    },
     "2205358824": {
       "modifier_code": 2,
       "operation_code": 3,
@@ -9581,6 +10718,87 @@
       "byte_length": 1624,
       "sha256": "b928dc49a7856cd03e1619a63e1873d7d1633550ded407d3d958c723b7c60b06"
     },
+    "2259348690": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.25,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.75
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4386346,
+      "byte_length": 1620,
+      "sha256": "009714681a631949a54a1c4fa7d923841e59776abaeda46f1a98748da84d684b"
+    },
     "2260534365": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -9665,6 +10883,31 @@
       "byte_offset": 4364913,
       "byte_length": 1635,
       "sha256": "f6c39f941ed13a1fcc6b0156d540447010382f5b9a3e8e9badf23aeb231faed1"
+    },
+    "2280947091": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        50
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4363273,
+      "byte_length": 1628,
+      "sha256": "33072990613edc6dd533ab1fd3f101a669da41a6cd98048d41184740c6a5d60b"
     },
     "2283815630": {
       "modifier_code": 707,
@@ -9770,6 +11013,80 @@
       "byte_length": 1624,
       "sha256": "3997ab3216de81e7872bf13258835b711b22dd6e800246968f30d11efc4d7435"
     },
+    "2328144758": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        150
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4341678,
+      "byte_length": 1628,
+      "sha256": "2a65d71bc80beb2f4f4534cba7a75d6737b4c84678ace37e37593024ba048684"
+    },
+    "2352245586": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        800
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4325028,
+      "byte_length": 1627,
+      "sha256": "bc64372e784199c64e7d31f32d3cfd57455534dd0b84a0d9c481d8a324ceafe8"
+    },
+    "2363932725": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.7
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4318433,
+      "byte_length": 1627,
+      "sha256": "f3977339283c83d43c935d431a864199d390e6c9de560d0f7d918f57cc2c83c0"
+    },
     "2364207076": {
       "modifier_code": 2,
       "operation_code": 3,
@@ -9862,6 +11179,35 @@
       "byte_offset": 4316795,
       "byte_length": 1626,
       "sha256": "85e08c42953aadc8f9e7e350ec2fddfff109425a7fe4290d913ac3ec75a0a59d"
+    },
+    "2364811273": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        1800
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4313514,
+      "byte_length": 1637,
+      "sha256": "7e827fb503b6ddd31016a3e765a4624eec9b5b50080f78bcd26126fbbdfe7cb3"
     },
     "2365320826": {
       "modifier_code": 60,
@@ -11217,6 +12563,35 @@
       "byte_length": 1627,
       "sha256": "7d66e1e5c5734649b8665a8e87973c516eeb53a756ff6c73ae9c912fc0c68ccf"
     },
+    "2786341604": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        800
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4113970,
+      "byte_length": 1637,
+      "sha256": "db0e38d6002d9d7c88e56ca4dd8590bb86366ce02fd37b896ce3b584198568e4"
+    },
     "2794746177": {
       "modifier_code": 10,
       "operation_code": 1,
@@ -11579,6 +12954,30 @@
       "byte_length": 1637,
       "sha256": "f42cd65efb989920bade514231c1760395ee5986306def0b217be87e2ce4f429"
     },
+    "2886123067": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.1
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4054256,
+      "byte_length": 1627,
+      "sha256": "ec5e31fe6c66c2861731344156942429b9c7cd2db0f0626557d3221c7731e836"
+    },
     "2898741562": {
       "modifier_code": 60,
       "operation_code": 3,
@@ -11866,6 +13265,29 @@
       "byte_length": 1620,
       "sha256": "7bd87ed52f19589c0543ea08b8f696ab98f2de404440216464db28ae0a5b827d"
     },
+    "2926959017": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        59
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        500
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4031366,
+      "byte_length": 1624,
+      "sha256": "217afb8f15fa2941429d5bdabe5fff33bcbf6c994f4839867b5b1b1e961370a5"
+    },
     "2947039493": {
       "modifier_code": 58,
       "operation_code": 3,
@@ -12058,6 +13480,56 @@
       "byte_offset": 4023177,
       "byte_length": 1621,
       "sha256": "49de66a15c360fc4162467a8f5871f7dd6b006d275b19ccbd62c7de67b32f01c"
+    },
+    "2956393975": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        250
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4019900,
+      "byte_length": 1628,
+      "sha256": "20bf1e8d511f6743fa13be87bef6570d6dbbe90fa038cc2e3dee9ab28ef7e614"
+    },
+    "2972304850": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        1000
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 4013364,
+      "byte_length": 1627,
+      "sha256": "51d5597bb851d8694236199221f018bb12310d528d968baff1b42151c84ee587"
     },
     "3022664928": {
       "modifier_code": 808,
@@ -12399,6 +13871,35 @@
       "byte_length": 1620,
       "sha256": "36ec6b9045bc5e94b4343e35f93203ebed581b3651daa3fdf3bc15ba8d2fae0a"
     },
+    "3061559261": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        100
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3977226,
+      "byte_length": 1637,
+      "sha256": "b6e7cca49475cd554ce866576e725b9ab9f54ee15fa5ef1832f37f5b5cc09262"
+    },
     "3064912112": {
       "modifier_code": 707,
       "operation_code": 1,
@@ -12620,6 +14121,35 @@
       "byte_offset": 3913211,
       "byte_length": 1637,
       "sha256": "d7a30dfd4d23b89745155d78b713857618eaea01233b79f1e9a02570ed5c775a"
+    },
+    "3185285360": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        150,
+        17
+      ],
+      "attribute_fields": [
+        8
+      ],
+      "unknown_fields": [],
+      "num_rounds": 0,
+      "faction_id": 1750120904,
+      "ranked_value_type": 0,
+      "ranked_values": [
+        2000
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3911562,
+      "byte_length": 1637,
+      "sha256": "1d10fc1270a8c53d78bebee23f2932d6296381093d31aad4c8953113f008db27"
     },
     "3187718935": {
       "modifier_code": 707,
@@ -13427,6 +14957,31 @@
       "byte_length": 1637,
       "sha256": "9e81230aad7c87b1fdc448360cebffe9640668e40fb6a3bd2b9055d3914a99ec"
     },
+    "3378417511": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        75
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3781383,
+      "byte_length": 1628,
+      "sha256": "d5d978d54a6185228be830767c510f9569e3881f0be930a86a4c6cb3724401a1"
+    },
     "3397395042": {
       "modifier_code": 56,
       "operation_code": 3,
@@ -13925,6 +15480,30 @@
       "byte_length": 1642,
       "sha256": "62fbc1b35bce067494888e56e1e941c292e84525ad8099750f4907a096da6b20"
     },
+    "3504434200": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.6
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3715023,
+      "byte_length": 1627,
+      "sha256": "9b47c2b6bcb130dae02e45335d971cf50e03186ed6d64aa1e6ee8aa18e6829d5"
+    },
     "3507301498": {
       "modifier_code": 2,
       "operation_code": 3,
@@ -14258,6 +15837,31 @@
       "byte_offset": 3688837,
       "byte_length": 1637,
       "sha256": "b98a82ddbda5a4dcbcbe32bab4e49f6c1a358e938c325797567134bf442fc634"
+    },
+    "3558267162": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        100
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3685558,
+      "byte_length": 1628,
+      "sha256": "99d657af3c783d9d8c5068f12f91b66317e0917789e3434b64d666495e0b3a4c"
     },
     "3568908575": {
       "modifier_code": 73,
@@ -14848,6 +16452,56 @@
       "byte_length": 1620,
       "sha256": "53b6a5b6937818b421d99509e50a50969b01eff6a5f304447605ad2aeec09f32"
     },
+    "3663693120": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        75
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3632550,
+      "byte_length": 1628,
+      "sha256": "a4cc4994975f92fe758bfb661ef8c2b7e0833dfdf038541540f812eae82145bc"
+    },
+    "3664115769": {
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        2000
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3630911,
+      "byte_length": 1627,
+      "sha256": "2c61c90da3eebf4ef8a6a775006c864060708bc0cb8c5c7ae2add7fee3d048d2"
+    },
     "3673947639": {
       "modifier_code": 59,
       "operation_code": 3,
@@ -15179,6 +16833,30 @@
       "byte_offset": 3607983,
       "byte_length": 1636,
       "sha256": "70d30e5c5d6c4b8bb018f25527f345273301b955bb2d34333df69b9c5819cb6a"
+    },
+    "3714771770": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.5
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3602676,
+      "byte_length": 1627,
+      "sha256": "07e99f4e482eba9f273838d6af624ab1bace705e12802cc20294a23842987e4b"
     },
     "3716446006": {
       "modifier_code": 2,
@@ -15610,6 +17288,87 @@
       "byte_length": 1621,
       "sha256": "29e5f822a93123fc7990304b7505cd96d3146349c2a4f4d64e83cd86297196f5"
     },
+    "3809461333": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.03,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.07,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.6
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3556196,
+      "byte_length": 1620,
+      "sha256": "e1b630dd0a3f459a8da0ba14004832c4cf72241ea5d88772030066191e573c5f"
+    },
     "3814086943": {
       "modifier_code": 60,
       "operation_code": 3,
@@ -16010,6 +17769,54 @@
       "byte_offset": 3513587,
       "byte_length": 1622,
       "sha256": "740ffa7365b6e61743312ec55fad5d5b98ffc31be481645c2139563e703038fa"
+    },
+    "3885426739": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.3
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3508676,
+      "byte_length": 1627,
+      "sha256": "a373bf0b752740fe1b2d39cbadbfdeabbc1fb4c7a1e21681188162903486a33b"
+    },
+    "3888142903": {
+      "modifier_code": 74,
+      "operation_code": 3,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "attribute_fields": [],
+      "unknown_fields": [],
+      "ranked_value_type": 0,
+      "ranked_values": [
+        0.3
+      ],
+      "ranked_value_count": 99,
+      "ranked_chances": [
+        1
+      ],
+      "ranked_chance_count": 99,
+      "byte_offset": 3505405,
+      "byte_length": 1627,
+      "sha256": "07132196904e527c95abd7fe2833c4c38f6b4426085b0d0a9e2d61b9a00958aa"
     },
     "3890624945": {
       "modifier_code": 707,
@@ -18071,11 +19878,11 @@
     }
   },
   "coverage": {
-    "selected_buff_count": 341,
-    "supported_buff_count": 170,
-    "quarantined_buff_count": 171,
+    "selected_buff_count": 389,
+    "supported_buff_count": 176,
+    "quarantined_buff_count": 213,
     "quarantine_reasons": {
-      "unsupported_condition": 167,
+      "unsupported_condition": 209,
       "unsupported_target": 3,
       "unsupported_chance": 1
     },
@@ -18091,7 +19898,10 @@
       "officer_defense": 24,
       "officer_attack": 24,
       "isolytic_damage": 12,
-      "crit_damage_flat": 5
+      "crit_damage_flat": 5,
+      "accuracy": 6,
+      "armor_piercing": 6,
+      "shield_piercing": 6
     }
   }
 }
