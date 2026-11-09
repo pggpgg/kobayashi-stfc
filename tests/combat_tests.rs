@@ -9,7 +9,7 @@ use kobayashi::combat::{
     HostileMitigationParams, OpponentFactionTag, ShipType, SimulationConfig, StackContribution,
     StatStacking, TimingWindow, TraceCollector, TraceMode, WeaponStats, EPSILON,
     EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS, HOSTILE_TAG_MASK_CONQUEROR_BORG,
-    NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use serde_json::{Map, Value};
 
@@ -600,7 +600,7 @@ fn golden_values_match_native_offset_reference_for_each_ship_type() {
 }
 
 #[test]
-fn pierce_damage_through_bonus_derived_from_mitigation() {
+fn piercing_is_accounted_in_mitigation_without_an_extra_damage_bonus() {
     let defender = DefenderStats {
         armor: 100.0,
         shield_deflection: 80.0,
@@ -617,10 +617,8 @@ fn pierce_damage_through_bonus_derived_from_mitigation() {
         ShipType::Explorer,
         ShipType::Interceptor,
     ] {
-        let mit = mitigation(defender, attacker, ship_type);
         let pierce = pierce_damage_through_bonus(defender, attacker, ship_type);
-        approx_eq(pierce, PIERCE_CAP * (1.0 - mit), 1e-12);
-        assert!((0.0..=PIERCE_CAP).contains(&pierce));
+        assert_eq!(pierce, 0.0);
     }
 }
 

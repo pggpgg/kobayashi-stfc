@@ -14,7 +14,7 @@ from enum import Enum
 
 EPSILON = 1e-9
 
-# Maximum pierce damage-through bonus (additive to (1 - mitigation)); matches Rust `combat::mitigation::PIERCE_CAP`.
+# Legacy constant for callers constructing explicit bonuses; never automatically granted.
 PIERCE_CAP = 0.25
 
 # Default hostile clamp (game developers use 16% floor, 72% ceiling for most hostiles).
@@ -97,12 +97,11 @@ def mitigation(defender: DefenderStats, attacker: AttackerStats, ship_type: Ship
 def pierce_damage_through_bonus(
     defender: DefenderStats, attacker: AttackerStats, ship_type: ShipType
 ) -> float:
-    """Pierce damage-through bonus: PIERCE_CAP * (1 - mitigation), clamped to [0, PIERCE_CAP].
+    """No additional damage-through bonus is derived from piercing statistics.
 
-    Matches `src/combat/mitigation.rs` `pierce_damage_through_bonus`.
+    Piercing already enters the mitigation ratios. Matches the retained Rust accessor.
     """
-    mit = mitigation(defender, attacker, ship_type)
-    return min(PIERCE_CAP, max(0.0, PIERCE_CAP * (1.0 - mit)))
+    return 0.0
 
 
 def mitigation_for_hostile(

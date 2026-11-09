@@ -341,7 +341,7 @@ fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
     });
 }
 
-/// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
+/// [`AttackerStats`] for hostile mitigation: ship components, profile
 /// piercing-stat multipliers, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
 /// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
 pub(crate) fn effective_attacker_stats_for_mitigation(
@@ -735,10 +735,8 @@ pub fn pvp_scenario_params_from_api_fields(
 /// Defender [`Combatant`] from [`HostileRecord`], including weapons and pierce/crit used on the
 /// engine’s counter-attack path (see `engine.rs` — hostile fire vs player).
 ///
-/// `player_defender` is sourced from [`crate::data::ShipRecord::to_defender_stats`] and feeds
-/// hostile→player pierce-through (per-weapon and scalar). Until upstream ship data fills raw
-/// armor/shield/dodge values these are zero and the formula collapses to the historical constant;
-/// once they are populated, hostile `accuracy` and piercing actually move counter-fire pierce-through.
+/// Raw player defenses and hostile piercing enter the counter-fire mitigation
+/// context. Setup grants no additional scalar or per-weapon pierce bonus.
 fn defender_combatant_from_hostile_record(
     hostile_lookup_id: &str,
     hostile_rec: &HostileRecord,
@@ -4094,7 +4092,8 @@ mod tests {
             None,
         );
         assert!(!d.weapons.is_empty());
-        assert!(d.pierce > 0.0, "counter pierce-through should be positive");
+        assert_eq!(d.pierce, 0.0);
+        assert!(d.weapons.iter().all(|weapon| weapon.pierce == Some(0.0)));
     }
 
     #[test]
