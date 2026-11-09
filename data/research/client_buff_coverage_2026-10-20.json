@@ -3,12 +3,12 @@
   "source_cache_sha256": "b472e4460e3869cc8abb44e456a0873e3c5702ed6f3a9701b18d27938022f3cf",
   "limitation": "Counts cover selected research BuffSpecs only. Quarantine means unsupported scope or semantics, not an absent in-game bonus. Canonical status effects are reviewed separately.",
   "summary": {
-    "selected_buff_count": 1242,
-    "supported_buff_count": 226,
-    "quarantined_buff_count": 1016,
+    "selected_buff_count": 1284,
+    "supported_buff_count": 266,
+    "quarantined_buff_count": 1018,
     "quarantine_reasons": {
-      "unsupported_condition": 936,
-      "unsupported_target": 75,
+      "unsupported_condition": 939,
+      "unsupported_target": 74,
       "unsupported_operation_or_modifier": 1,
       "unsupported_trigger": 2,
       "unsupported_attributes": 2
@@ -17,21 +17,29 @@
       "isolytic_damage": 13,
       "isolytic_defense": 14,
       "weapon_damage": 38,
+      "officer_attack": 24,
       "armor": 18,
       "shield_deflection": 18,
       "dodge": 18,
       "shield_hp": 41,
       "hull_hp": 46,
+      "officer_health": 24,
+      "officer_defense": 25,
       "crit_chance": 3,
       "hull_hp_flat": 1,
+      "officer_attack_below_decks": 1,
       "base_mitigation_stats_bonus": 3,
       "accuracy": 14,
       "armor_piercing": 15,
       "shield_piercing": 15,
       "crit_damage_flat": 10,
-      "officer_attack": 3,
-      "officer_defense": 3,
-      "officer_health": 3,
+      "officer_attack_bridge": 1,
+      "officer_defense_bridge": 1,
+      "officer_health_bridge": 1,
+      "officer_attack_captain": 1,
+      "officer_defense_captain": 1,
+      "officer_health_captain": 1,
+      "officer_health_below_decks": 1,
       "officer_defense_below_decks": 1,
       "shield_hp_flat": 1
     }
@@ -549,6 +557,22 @@
           "name": "Battleship Barrage"
         }
       ]
+    },
+    {
+      "buff_id": 104229770,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
     },
     {
       "buff_id": 104716943,
@@ -1104,6 +1128,22 @@
           "name": "<color=#fac710>Priority 1:</color> Hostile Calibrations"
         }
       ]
+    },
+    {
+      "buff_id": 198403172,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
     },
     {
       "buff_id": 200031576,
@@ -1702,6 +1742,43 @@
         {
           "rid": 2275838407,
           "name": "Prime Structure"
+        }
+      ]
+    },
+    {
+      "buff_id": 297356288,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
+    },
+    {
+      "buff_id": 304385043,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 977982349,
+          "name": "Riker's Parry"
         }
       ]
     },
@@ -2632,6 +2709,22 @@
       ]
     },
     {
+      "buff_id": 476762607,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
+    },
+    {
       "buff_id": 485648435,
       "modifier_code": 707,
       "operation_code": 1,
@@ -3536,7 +3629,13 @@
       "target_code": 11,
       "trigger_code": 24,
       "condition_codes": [],
-      "exclusion_reason": "unsupported_target",
+      "mappings": [
+        {
+          "stat": "officer_attack_below_decks",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
       "projects": [
         {
           "rid": 2848539271,
@@ -3822,6 +3921,23 @@
       ]
     },
     {
+      "buff_id": 693241665,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [
+        83003
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2240638586,
+          "name": "Tapestry"
+        }
+      ]
+    },
+    {
       "buff_id": 699837049,
       "modifier_code": 707,
       "operation_code": 1,
@@ -4069,6 +4185,37 @@
       "projects": []
     },
     {
+      "buff_id": 724497225,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1353584641,
+          "name": "Immortal Tactical Training"
+        }
+      ]
+    },
+    {
       "buff_id": 728089698,
       "modifier_code": 2,
       "operation_code": 3,
@@ -4085,6 +4232,32 @@
           "name": "U.S.S. ENTERPRISE-E CLOAKING"
         }
       ]
+    },
+    {
+      "buff_id": 736453139,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
     },
     {
       "buff_id": 740869143,
@@ -4434,6 +4607,37 @@
       ]
     },
     {
+      "buff_id": 809236561,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 4,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack_bridge",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense_bridge",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health_bridge",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2691631294,
+          "name": "Synchronized Crew"
+        }
+      ]
+    },
+    {
       "buff_id": 809520677,
       "modifier_code": 10,
       "operation_code": 1,
@@ -4479,6 +4683,37 @@
         {
           "rid": 722452923,
           "name": "4★  Ship Defense Formation"
+        }
+      ]
+    },
+    {
+      "buff_id": 822290679,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2580915158,
+          "name": "Officer Conditioning"
         }
       ]
     },
@@ -4539,6 +4774,27 @@
         {
           "rid": 1284885182,
           "name": "Uncommon Critical Damage vs Players"
+        }
+      ]
+    },
+    {
+      "buff_id": 830429766,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 103329622,
+          "name": "Phasers to Stun"
         }
       ]
     },
@@ -4627,6 +4883,37 @@
       ]
     },
     {
+      "buff_id": 835932841,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1645361232,
+          "name": "Advanced Training"
+        }
+      ]
+    },
+    {
       "buff_id": 841394131,
       "modifier_code": 2,
       "operation_code": 3,
@@ -4675,6 +4962,27 @@
         {
           "rid": 3239946264,
           "name": "Evasive Klingons"
+        }
+      ]
+    },
+    {
+      "buff_id": 846031058,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 572051519,
+          "name": "Seasoned Officers"
         }
       ]
     },
@@ -5273,6 +5581,37 @@
       ]
     },
     {
+      "buff_id": 941300209,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 3,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack_captain",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense_captain",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health_captain",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 3756379340,
+          "name": "Charismatic Orders"
+        }
+      ]
+    },
+    {
       "buff_id": 944891156,
       "modifier_code": 61,
       "operation_code": 3,
@@ -5286,6 +5625,37 @@
         {
           "rid": 4154625089,
           "name": "U.S.S. Northcutt Hull Plating"
+        }
+      ]
+    },
+    {
+      "buff_id": 946621441,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 3797380825,
+          "name": "We Do Not Retreat"
         }
       ]
     },
@@ -5573,6 +5943,27 @@
         {
           "rid": 1397858388,
           "name": "Thwarted Battleships"
+        }
+      ]
+    },
+    {
+      "buff_id": 987238170,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 3670192485,
+          "name": "Battle Orders"
         }
       ]
     },
@@ -6349,6 +6740,27 @@
       ]
     },
     {
+      "buff_id": 1133710746,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2571430259,
+          "name": "Spock's Tactics"
+        }
+      ]
+    },
+    {
       "buff_id": 1133995575,
       "modifier_code": 2,
       "operation_code": 3,
@@ -6598,6 +7010,27 @@
       ]
     },
     {
+      "buff_id": 1209705281,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 235176140,
+          "name": "Defense Training"
+        }
+      ]
+    },
+    {
       "buff_id": 1210303106,
       "modifier_code": 2,
       "operation_code": 3,
@@ -6612,6 +7045,27 @@
         {
           "rid": 3052207404,
           "name": "KRENCHA CLOAKING"
+        }
+      ]
+    },
+    {
+      "buff_id": 1216801900,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 3553517040,
+          "name": "Combat Training"
         }
       ]
     },
@@ -7170,6 +7624,27 @@
         {
           "rid": 3499520673,
           "name": "G5+ FKR PvE Damage vs Hostiles and Armadas"
+        }
+      ]
+    },
+    {
+      "buff_id": 1272422825,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1844625587,
+          "name": "Rerouting to Shields"
         }
       ]
     },
@@ -9818,7 +10293,13 @@
       "target_code": 11,
       "trigger_code": 24,
       "condition_codes": [],
-      "exclusion_reason": "unsupported_target",
+      "mappings": [
+        {
+          "stat": "officer_health_below_decks",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
       "projects": [
         {
           "rid": 4159971023,
@@ -10447,6 +10928,37 @@
       ]
     },
     {
+      "buff_id": 1943134841,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2086597452,
+          "name": "Prime Officers"
+        }
+      ]
+    },
+    {
       "buff_id": 1944032209,
       "modifier_code": 73,
       "operation_code": 3,
@@ -11006,6 +11518,27 @@
       ]
     },
     {
+      "buff_id": 2050332806,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 4021387234,
+          "name": "Attack Training"
+        }
+      ]
+    },
+    {
       "buff_id": 2054789888,
       "modifier_code": 10,
       "operation_code": 1,
@@ -11190,6 +11723,27 @@
         {
           "rid": 1953015775,
           "name": "Klingon HoS Som"
+        }
+      ]
+    },
+    {
+      "buff_id": 2092139728,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2579790977,
+          "name": "Riker's Fist"
         }
       ]
     },
@@ -11424,6 +11978,24 @@
       ]
     },
     {
+      "buff_id": 2124922137,
+      "modifier_code": 56,
+      "operation_code": 4,
+      "target_code": 8,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_target",
+      "projects": [
+        {
+          "rid": 1663822914,
+          "name": "Save Your Strength"
+        }
+      ]
+    },
+    {
       "buff_id": 2125436240,
       "modifier_code": 2,
       "operation_code": 3,
@@ -11578,6 +12150,27 @@
         {
           "rid": 573924329,
           "name": "5★ KSG Defensive Maneuvers"
+        }
+      ]
+    },
+    {
+      "buff_id": 2147256134,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2701354891,
+          "name": "Pulaski's Panacea"
         }
       ]
     },
@@ -12933,6 +13526,32 @@
       ]
     },
     {
+      "buff_id": 2391285219,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
+    },
+    {
       "buff_id": 2391638473,
       "modifier_code": 60,
       "operation_code": 3,
@@ -13004,6 +13623,22 @@
       "mappings": [
         {
           "stat": "armor",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": []
+    },
+    {
+      "buff_id": 2420610856,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
           "operator": "add",
           "value_unit": "fraction"
         }
@@ -13603,6 +14238,27 @@
       ]
     },
     {
+      "buff_id": 2560382313,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 132869583,
+          "name": "Live Long"
+        }
+      ]
+    },
+    {
       "buff_id": 2563598462,
       "modifier_code": 2,
       "operation_code": 3,
@@ -13707,6 +14363,27 @@
         {
           "rid": 4133019450,
           "name": "NS Morale Isolytic Damage"
+        }
+      ]
+    },
+    {
+      "buff_id": 2589371721,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1816718001,
+          "name": "Hypospray Technology"
         }
       ]
     },
@@ -14661,6 +15338,27 @@
       ]
     },
     {
+      "buff_id": 2731035835,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 2269284004,
+          "name": "No \"No-Win\" Scenarios"
+        }
+      ]
+    },
+    {
       "buff_id": 2733263811,
       "modifier_code": 61,
       "operation_code": 3,
@@ -15515,6 +16213,37 @@
       ]
     },
     {
+      "buff_id": 2877375148,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 4081647900,
+          "name": "Nero's Trident"
+        }
+      ]
+    },
+    {
       "buff_id": 2880082268,
       "modifier_code": 12,
       "operation_code": 3,
@@ -16346,6 +17075,37 @@
         {
           "rid": 1056538483,
           "name": "U.S.S. Enterprise-E Gold (U.S.S. ENTERPRISE-E)"
+        }
+      ]
+    },
+    {
+      "buff_id": 3025740772,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 3310322472,
+          "name": "Crew Potency"
         }
       ]
     },
@@ -18116,6 +18876,37 @@
       ]
     },
     {
+      "buff_id": 3351370953,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 637153598,
+          "name": "Officer Strengthening"
+        }
+      ]
+    },
+    {
       "buff_id": 3354911773,
       "modifier_code": 2,
       "operation_code": 3,
@@ -18309,6 +19100,37 @@
         {
           "rid": 36997703,
           "name": "4★ Shield Penetration"
+        }
+      ]
+    },
+    {
+      "buff_id": 3394401511,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1259392840,
+          "name": "Infamy and Heroism"
         }
       ]
     },
@@ -19307,6 +20129,27 @@
       ]
     },
     {
+      "buff_id": 3559263849,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 769955454,
+          "name": "Tactical Aggression"
+        }
+      ]
+    },
+    {
       "buff_id": 3561086526,
       "modifier_code": 2,
       "operation_code": 3,
@@ -19647,6 +20490,37 @@
       ]
     },
     {
+      "buff_id": 3613430973,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1369190592,
+          "name": "Prime Survival Skills"
+        }
+      ]
+    },
+    {
       "buff_id": 3613520101,
       "modifier_code": 61,
       "operation_code": 3,
@@ -19737,6 +20611,37 @@
         {
           "rid": 3101631287,
           "name": "Lethal Feint"
+        }
+      ]
+    },
+    {
+      "buff_id": 3621590168,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1703755873,
+          "name": "My Old Friends"
         }
       ]
     },
@@ -20486,6 +21391,27 @@
       ]
     },
     {
+      "buff_id": 3760507179,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 964022887,
+          "name": "Jarok's Stratagem"
+        }
+      ]
+    },
+    {
       "buff_id": 3764189600,
       "modifier_code": 67001,
       "operation_code": 1,
@@ -20894,6 +21820,37 @@
         {
           "rid": 2787198928,
           "name": "6⇵ Offensive Strategies"
+        }
+      ]
+    },
+    {
+      "buff_id": 3836660030,
+      "modifier_code": 59,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_attack",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_defense",
+          "operator": "add",
+          "value_unit": "fraction"
+        },
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 383316226,
+          "name": "Officer Training Drills"
         }
       ]
     },
@@ -21634,6 +22591,27 @@
       ]
     },
     {
+      "buff_id": 3981671475,
+      "modifier_code": 58,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [],
+      "mappings": [
+        {
+          "stat": "officer_health",
+          "operator": "add",
+          "value_unit": "fraction"
+        }
+      ],
+      "projects": [
+        {
+          "rid": 1700067357,
+          "name": "The Bones Boost"
+        }
+      ]
+    },
+    {
       "buff_id": 3983708462,
       "modifier_code": 10,
       "operation_code": 1,
@@ -21647,6 +22625,23 @@
         {
           "rid": 378661017,
           "name": "Combat Ferocity"
+        }
+      ]
+    },
+    {
+      "buff_id": 3988908241,
+      "modifier_code": 56,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [
+        231
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3614597078,
+          "name": "Rally the Resistance"
         }
       ]
     },
@@ -22697,6 +23692,23 @@
         {
           "rid": 1494666770,
           "name": "Explorer Plasma Conduits"
+        }
+      ]
+    },
+    {
+      "buff_id": 4178575394,
+      "modifier_code": 57,
+      "operation_code": 3,
+      "target_code": 5,
+      "trigger_code": 24,
+      "condition_codes": [
+        231
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 192806270,
+          "name": "Bajoran Inspiration"
         }
       ]
     },

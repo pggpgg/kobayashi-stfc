@@ -20,7 +20,7 @@ use serde::Deserialize;
 const EMBEDDED_CATALOG: &str =
     include_str!("../../data/research/client_buff_semantics_2026-10-20.json");
 
-fn embedded_catalog() -> &'static NativeConsumableBuffCatalog {
+pub(crate) fn embedded_catalog() -> &'static NativeConsumableBuffCatalog {
     static CATALOG: OnceLock<NativeConsumableBuffCatalog> = OnceLock::new();
     CATALOG.get_or_init(|| {
         NativeConsumableBuffCatalog::from_json(EMBEDDED_CATALOG)

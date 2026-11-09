@@ -61,22 +61,91 @@ overlap the fresh Jadzia interval under the same channel accounting and budget.
 Both registered Jadzia point predictions miss that older interval. Its cause is
 unresolved and the fresh pair does not remove the counterexample.
 
-## Implementation gap
+## Officer-stat implementation and saved-fight review, 2026-11-09
 
-The current runtime scales Tom's own native base Defense, 421 at level 20, and
-adds the resulting points after ship percentage pools. Its replay prediction is
-about 0.162 for both fresh setups, far below these measurements.
+The runtime now inventories 113 native officer-stat definitions: 109 supported
+setup sources and four quarantined research sources. Each officer retains its
+identity, rank, level and seat. Captain, bridge and below-decks pools apply before
+aggregation. Production breakpoint lookup uses unrounded totals. Per-officer
+rounded values are diagnostic display estimates; these fights do not establish
+the server's rounding rule.
 
-The bundled catalogs do not yet provide the complete native per-officer modifier
-56–59 inventory. Profile channels used for ship officer-bonus breakpoints are
-not a substitute for separately evaluating each officer's applicable modifiers
-and rounding. A faithful implementation needs that source calculation and an
-explicit operation order for flat points before percentage pools. The displayed
-values in this experiment must not become hardcoded account-wide constants.
+This is separate from Tom's combat ability. The canonical model marks that
+ability unsupported. The former own-officer, after-percentage-pools proxy and its
+roughly 0.162 replay are historical diagnostics, not current production behavior.
+Operation 5's server source and placement remain unbound.
 
-The server's combat operation 5 remains unbound. The current client build is
-unknown, and the retained build 272 parser has no independent current-build drift
-proof. No source coefficient, stacking rule, tolerance, or combat code changed.
+Native selector evidence establishes the seat membership independently of the
+fight results. Build 272 `BuffTarget` initialization at `0x181b73870` binds
+SelfCaptain=3, SelfBridge=4 and SelfBelowDeck=11. The selector at `0x181809570`
+includes Captain, FirstOfficer and SecondOfficer for target 4, and excludes all
+three for target 11. Binary SHA-256:
+`a5df6314bd78f15892a232a44e77cdcf2e3d20e9a6192f99120c0f3e52632274`;
+metadata SHA-256:
+`ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04`.
+This establishes client destinations, not the server's operation-5 consumer.
+
+The frozen account's common Defense fraction is 65.87: research 20.55,
+buildings 27.67 and global sources 17.65. Captain and bridge sources each add
+0.35; below decks adds 1.0. Thus the captain factor is 67.57, ordinary bridge
+67.22 and below decks 67.87. These are derived snapshot values, not constants
+in the simulator. Native core Defense is 421 for Tom, 19 for Jadzia and 30 for
+Mirror Troi. The production evaluator yields crew totals 29,857.10 and 30,600.37;
+the sums of individual display estimates are 29,857 and 30,600.
+
+A private harness exercised the production native-source compiler, canonical
+core-stat resolver, scoped evaluator and mitigation function. It used each frozen
+profile at its battle timestamp, with no profile writes. The proposed Tom
+placement remained an explicit retrospective hypothesis, outside production.
+The census covered all 25 retained battlelog files, deduplicated to 12 Tom
+journals, plus three historical CSV fights and 11 tracked evidence projections.
+Three no-Tom profile controls also passed through the evaluator.
+
+| Saved Tom cases | Count | Result for the proposed crew-Defense source before percentage pools |
+|---|---:|---|
+| Minimal Jadzia/Tom Romulan 31 and Exchange 40 | 2 | Compatible; both near saturation, so weak discrimination |
+| Fresh Jadzia/Tom and Mirror/Tom Jem'Hadar 53 | 2 | Both compatible with rounded and unrounded individual sums |
+| Older Jadzia/Tom Jem'Hadar 53 | 1 | Incompatible; retained counterexample |
+| Harry/full-bridge, Tom-only and Pike/Tom cases | 5 | Source totals evaluated; no complete bound event/context model for a comparable formula score |
+| Wrong Tom seat and damaged-target attempts | 2 | Original setup exclusions preserved; command outcomes not inspected |
+| Historical Enterprise-D and Revenant CSV fights | 3 | Unscored: contemporaneous levels, full crew, buffs and weapon identity unavailable |
+
+For unrounded individual sums, the fresh primary predictions are
+0.7059221878164819 and 0.7067060058283989. Both lie inside their unchanged
+intervals above. The older fight receives the same Jadzia prediction and rejects
+it. No observed fixture, accounting budget or calibration band was changed.
+
+## Why the older result still disagrees
+
+The retained cross-date equality proof already establishes that the older and
+fresh Jadzia fights have byte-identical seven-file profiles, identical 531 deployed
+buff signatures, and identical complete recorded player and target ship stat
+maps. Initial/max HP, components, tiers, levels and crew also match. No active
+buff crossed an expiry boundary. The proof SHA-256 is
+`8c79a68f3305e4af6e8161ed4be18e68a0e36fb630ee1375cf66d8e39b1019d8`.
+Changed recorded bonuses therefore cannot explain the residual.
+
+The differing ship attributes -5 and -6 are accrued hull and shield damage.
+Primary metadata binds them to `ClientModifierType.ShipHullDamage` and
+`ShipShieldDamage`; each value independently equals the outgoing damage ledger.
+They are not evidence of a different starting defense pool. Their exact write
+timing has not been independently recovered.
+
+The mismatch survives removal of the old critical hit and the same HP/channel
+accounting. All clean HP losses equal their reported channels; extra channels
+are zero. Aligning the old clean rows with the fresh interval requires roughly
+8.4–13.3 additional denominator damage, exceeding the existing 2.01 budget.
+Float32 and truncation alternatives are too small to bridge the minimum
+0.000006742267 interval separation. Assigning Jadzia an invented higher stat
+would contradict the native core-stat and officer-display evidence.
+
+The remaining candidates are unrecorded server state or static configuration,
+the server's actual operation-5 source/order, and parser/version drift. The old
+fight identifies client build 273; the fresh client's build is unbound, and
+the retained build 272 parser has no independent fresh-build drift proof. The
+saved evidence does not select one cause. Tom remains unsupported rather than
+adding an exception for the older battle.
+
 The fixtures publish only selected numeric observations and provenance hashes;
 they contain no account identifiers, complete journal, or private paths.
 

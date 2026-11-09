@@ -8,8 +8,7 @@ import {
   inferCombatStatFromProjectName,
 } from "./research_stat_inference.mjs";
 import { CLIENT_STAT_FAMILIES, mapClientResearchBuff,
-  isVerifiedEclipseDefenseBuff, mapVerifiedRoundStartMitigationBuff, mapVerifiedOrlopDefenseBuff,
-  isVerifiedOrlopResearchDetail, VERIFIED_ORLOP_DEFENSE_BUFF_ID } from "./research_client_semantics.mjs";
+  isVerifiedEclipseDefenseBuff, mapVerifiedRoundStartMitigationBuff } from "./research_client_semantics.mjs";
 
 export function statEntryFromJsonValue(v, defaultOp) {
   if (v == null) return null;
@@ -111,12 +110,6 @@ export function resolveBuffStatMappings(ctx, buff, projectLocaId) {
   if (!buff || typeof buff.id !== "number") return [];
   const buffId = buff.id;
   const key = String(buffId);
-  if (buffId === VERIFIED_ORLOP_DEFENSE_BUFF_ID) {
-    // Exact native BID/project/source-rank gate. A changed or missing source row
-    // must not fall through to prose-derived crew-wide officer_defense.
-    return isVerifiedOrlopResearchDetail(ctx, buff, projectLocaId)
-      ? mapVerifiedOrlopDefenseBuff(buffId, ctx.clientBuffSemantics?.[key]) : [];
-  }
   if (isVerifiedEclipseDefenseBuff(buffId, ctx.clientBuffSemantics?.[key])) {
     // Its faction predicate is runtime-only and must not enter the static
     // research catalog, where it could lose scope or duplicate the native seat.
@@ -127,7 +120,8 @@ export function resolveBuffStatMappings(ctx, buff, projectLocaId) {
     // turn it into an unconditional bonus by falling through to prose or maps.
     const nativeRow = ctx.clientBuffSemantics[key];
     const verifiedRoundStart = mapVerifiedRoundStartMitigationBuff(buffId, nativeRow);
-    return verifiedRoundStart.length ? verifiedRoundStart : mapClientResearchBuff(nativeRow);
+    return verifiedRoundStart.length ? verifiedRoundStart
+      : mapClientResearchBuff(nativeRow, { allowOfficerSeatScopes: true });
   }
   const allowed = (entries) => ctx.clientBuffSemantics
     ? entries.filter((entry) => !CLIENT_STAT_FAMILIES.has(entry.stat)) : entries;

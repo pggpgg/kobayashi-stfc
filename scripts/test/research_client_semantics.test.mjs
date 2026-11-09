@@ -5,14 +5,15 @@ import test from "node:test";
 import { extractResearchBuffSemantics } from "../extract_stfc_research_buff_semantics.mjs";
 import { buildLevelsFromDetail } from "../import_stfcspace_research.mjs";
 import { resolveBuffStatMappings } from "../lib/research_buff_resolve.mjs";
-import { clientResearchBuffExclusion, mapClientResearchBuff, mapVerifiedOrlopDefenseBuff,
+import { clientResearchBuffExclusion, mapClientResearchBuff,
   isVerifiedEclipseDefenseBuff, isVerifiedEclipseDefenseResearchDetail, researchClientBuffCoverage } from "../lib/research_client_semantics.mjs";
 
 const manifest = JSON.parse(fs.readFileSync(new URL("../../data/research/client_buff_semantics_2026-10-20.json", import.meta.url)));
 const context = { researchBuffById: {}, commonBuffNormalization: {}, locaIdToStat: {}, clientBuffSemantics: manifest.buffs };
 const verified = { modifier_code: 61, operation_code: 3, target_code: 1, trigger_code: 24,
   condition_codes: [], attribute_fields: [], ranked_value_type: 0,
-  ranked_values: [0.5, 5, 0], ranked_chances: [1], unknown_fields: [] };
+  ranked_values: [0.5, 5, 0], ranked_value_count: 3,
+  ranked_chances: [1], ranked_chance_count: 1, unknown_fields: [] };
 
 test("native Apex research retains supported scopes and quarantines unknown predicates", () => {
   const apex = { ...verified, modifier_code: 67001, operation_code: 1, trigger_code: 25,
@@ -273,8 +274,9 @@ test("Orlop Defense preserves its native below-decks target and exact rank-10 fr
   assert.deepEqual(evidence.ranked_values, native.ranked_values);
   assert.deepEqual(native.ranked_values, [0.2, 0.26, 0.33, 0.41, 0.5, 0.59, 0.69, 0.79, 0.89, 1, 0]);
   assert.equal(native.target_code, 11);
-  assert.deepEqual(mapClientResearchBuff(native), [], "modifier 57 is not a general selected family");
-  assert.deepEqual(mapVerifiedOrlopDefenseBuff(id, native).map(m => m.stat), ["officer_defense_below_decks"]);
+  assert.deepEqual(mapClientResearchBuff(native), [], "global/building defaults cannot admit research seat scopes");
+  assert.deepEqual(mapClientResearchBuff(native, { allowOfficerSeatScopes: true }).map(m => m.stat),
+    ["officer_defense_below_decks"]);
   const levels = buildLevelsFromDetail(detail, { rid: detail.id, projectLocaId: detail.loca_id,
     buffResolveCtx: { ...context, researchBuffById: { [id]: "officer_defense" },
       descriptionByLocaId: new Map([[detail.loca_id, "Increases Defense for all officers."]]) } });
@@ -287,22 +289,19 @@ test("Orlop Defense preserves its native below-decks target and exact rank-10 fr
     resolveBuffStatMappings(ctx, buff, loca);
   assert.equal(resolve()[0].value_unit, "fraction");
   for (const delta of [
-    { sha256: "wrong" }, { modifier_code: 59 }, { operation_code: 1 },
-    { target_code: 5 }, { trigger_code: 25 }, { condition_codes: [231] },
-    { ranked_values: [0.2, 0.26, 0.33, 0.41, 0.5, 0.59, 0.69, 0.79, 0.89, 0.01, 0] },
+    { operation_code: 1 }, { target_code: 8 }, { trigger_code: 25 }, { condition_codes: [231] },
     { ranked_chances: [0.5] }, { attribute_fields: [2] }, { unknown_fields: [99] },
   ]) {
     assert.deepEqual(resolve(original, { ...nativeContext,
       clientBuffSemantics: { [id]: { ...native, ...delta } } }), []);
   }
+  // Retained hash/curve assertions above preserve the original Orlop proof.
+  // Generic native family admission no longer depends on display flags or a BID exception.
   for (const buff of [
     { ...original, show_percentage: false }, { ...original, loca_id: 1 },
     { ...original, values: original.values.map((r, i) => i === 9 ? { ...r, value: 0.01 } : r) },
     { ...original, values: original.values.slice(0, 10) },
-  ]) assert.deepEqual(resolve(buff), []);
-  assert.deepEqual(resolve(original, { ...nativeContext, researchProjectId: 1 }), []);
-  assert.deepEqual(resolve(original, { ...nativeContext, researchDetailId: 1 }), []);
-  assert.deepEqual(resolve(original, nativeContext, 1), []);
+  ]) assert.deepEqual(resolve(buff), resolve());
   assert.deepEqual(resolve(original, { ...nativeContext, clientBuffSemantics: {} }), []);
 });
 
@@ -380,17 +379,20 @@ test("research extractor includes isolytic808 with native ADD rank snapshots", (
   assert.equal(mapClientResearchBuff(result.buffs[42])[0].stat, "isolytic_defense");
 });
 
-test("residual research extractor selects exact catalog-mapped BIDs instead of modifier-wide rows", () => {
+test("research extractor inventories all officer stats while preserving the exact penetration selection", () => {
   const officerAttack = concat(integer(1, 1523931286), integer(7, 1), integer(8, 24), integer(12, 3),
     packed(13, [1], 4), integer(18, 56), packed(21, [0.5, 1], 8));
   const allPiercing = concat(integer(1, 949755120), integer(7, 1), integer(8, 24), integer(12, 3),
     packed(13, [1], 4), integer(18, 74), packed(21, [0.8, 1.1], 8));
   const unlistedOfficerAttack = concat(integer(1, 4294000000), integer(7, 1), integer(8, 24), integer(12, 3),
     packed(13, [1], 4), integer(18, 56), packed(21, [0.5, 1], 8));
+  const unlistedPenetration = concat(integer(1, 4294000001), integer(7, 1), integer(8, 24), integer(12, 3),
+    packed(13, [1], 4), integer(18, 74), packed(21, [0.5, 1], 8));
   const result = extractResearchBuffSemantics(cache(concat(
     entry(1523931286, officerAttack), entry(949755120, allPiercing),
-    entry(4294000000, unlistedOfficerAttack))));
-  assert.deepEqual(Object.keys(result.buffs).sort(), ["1523931286", "949755120"]);
+    entry(4294000000, unlistedOfficerAttack), entry(4294000001, unlistedPenetration))));
+  assert.deepEqual(Object.keys(result.buffs).sort(), ["1523931286", "4294000000", "949755120"]);
+  assert.deepEqual(mapClientResearchBuff(result.buffs[4294000000]), [], "unreviewed target is retained for diagnostics");
   assert.equal(result.buffs[1523931286].sha256, crypto.createHash("sha256").update(officerAttack).digest("hex"));
   assert.equal(result.buffs[949755120].sha256, crypto.createHash("sha256").update(allPiercing).digest("hex"));
 });
@@ -433,17 +435,18 @@ test("current residual issue-319 BIDs retain raw mapped ramps and quarantine uns
   const supported = [
     [711650994, 3641613137], [949755120, 2335217665], [1269117837, 3312163487],
     [1380237269, 1496614022], [1523931286, 687490486], [1825424766, 1781205619],
+    [624709978, 2848539271], [1829949531, 4159971023],
     [2014886179, 2510109971], [2640187489, 699378899], [3753882631, 3891541983],
     [3846878234, 4110804153], [3876524125, 4231999], [3941283922, 3525583089],
     [3993587479, 3607839834], [4010211789, 713042947], [4062987421, 3898692756],
   ];
   const excluded = [
     [113240864, 3486647506], [511185366, 2193816350], [618925636, 1149881621],
-    [624709978, 2848539271], [673716117, 3276089606], [1249674165, 51827304],
+    [673716117, 3276089606], [1249674165, 51827304],
     [1284017479, 3732956730], [1290788123, 246419629], [1334510254, 3665418986],
     [1407234564, 648625101], [1458745130, 4254087973], [1464350686, 288128772],
     [1474989967, 2459777993], [1516726105, 3414000040], [1811839815, 56270788],
-    [1829949531, 4159971023], [2198824419, 788182361], [2635530373, 1765649611],
+    [2198824419, 788182361], [2635530373, 1765649611],
     [3035764814, 1715948989], [3058907679, 3044444183], [3282480754, 4036961113],
     [3390416265, 36997703], [3610365465, 2396410066], [3680634033, 4232302261],
   ];
@@ -451,7 +454,7 @@ test("current residual issue-319 BIDs retain raw mapped ramps and quarantine uns
   for (const [id, rid] of supported) {
     const row = manifest.buffs[id];
     assert.ok(row, `the exact source cache must select supported BID ${id}`);
-    const mappings = mapClientResearchBuff(row);
+    const mappings = mapClientResearchBuff(row, { allowOfficerSeatScopes: true });
     assert.ok(mappings.length > 0, `expected a source-supported stat mapping for ${id}`);
     assert.ok(mappings.every(mapping => mapping.value_unit === "fraction"));
     const detail = JSON.parse(fs.readFileSync(new URL(`../../data/upstream/data-stfc-space/research/${details.get(id)}.json`, import.meta.url)));
@@ -531,4 +534,82 @@ test("coverage records every selected definition and retains unsupported conditi
   assert.deepEqual(result.rows[1].condition_codes, [999]);
   assert.deepEqual(result.rows[1].projects, [{ rid: 9, name: "Special Ship Bonus" }]);
   assert.doesNotMatch(JSON.stringify(result), /client_ranked_values/);
+});
+
+test("research extraction inventories officer-stat families independently of historical BID allowlists", () => {
+  const make = (id, code, target = 5) => concat(integer(1, id), integer(7, target), integer(8, 24),
+    integer(12, 3), packed(13, [1], 4), integer(18, code), packed(21, [0.5, 5, 0], 8));
+  const result = extractResearchBuffSemantics(cache(concat(...[56, 57, 58, 59].map(code =>
+    entry(900000 + code, make(900000 + code, code))))));
+  assert.equal(Object.keys(result.buffs).length, 4);
+  for (const row of Object.values(result.buffs)) {
+    assert.deepEqual(row.ranked_values, [0.5, 5, 0]);
+    assert.ok(mapClientResearchBuff(row).length > 0);
+  }
+  const scoped = extractResearchBuffSemantics(cache(entry(42, make(42, 57, 11))));
+  assert.equal(scoped.buffs[42].target_code, 11, "source inventory retains scoped definitions");
+  assert.deepEqual(mapClientResearchBuff(scoped.buffs[42]), [], "inventory selection does not authorize below-deck scope");
+});
+
+test("officer-stat source admission retains launch timing and every unresolved gate", () => {
+  for (const code of [56, 57, 58, 59]) {
+    const row = { ...verified, modifier_code: code, target_code: 5 };
+    assert.ok(mapClientResearchBuff(row).length > 0);
+    for (const replacement of [
+      { target_code: 3 }, { target_code: 4 }, { target_code: 8 }, { target_code: 11 },
+      { operation_code: 1 }, { operation_code: 4 }, { operation_code: 5 },
+      { trigger_code: 25 }, { trigger_code: 18 }, { num_rounds: 1 },
+      { condition_codes: [231] }, { condition_codes: [83003] },
+      { condition_codes: [0] }, { attribute_fields: [2] }, { unknown_fields: [99] },
+      { ranked_chances: [0.5] }, { ranked_value_type: 1 }, { ranked_values: [Infinity] },
+      { ranked_value_count: 0 }, { ranked_value_count: 1 }, { ranked_chance_count: 0 },
+    ]) assert.deepEqual(mapClientResearchBuff({ ...row, ...replacement }), [], JSON.stringify(replacement));
+  }
+});
+
+test("tracked officer-stat research inventory preserves all fifty definitions and quarantined source facts", () => {
+  const rows = Object.entries(manifest.buffs).filter(([, row]) => [56, 57, 58, 59].includes(row.modifier_code));
+  assert.equal(rows.length, 50);
+  assert.equal(rows.filter(([, row]) => mapClientResearchBuff(row).length).length, 41);
+  assert.equal(rows.filter(([, row]) => mapClientResearchBuff(row, { allowOfficerSeatScopes: true }).length).length, 46);
+  for (const [id, conditions, target] of [
+    [4178575394, [231], 5], [3988908241, [231], 5], [693241665, [83003], 5],
+    [2124922137, [28, 137], 8],
+  ]) {
+    const row = manifest.buffs[id];
+    assert.deepEqual(row.condition_codes, conditions);
+    assert.equal(row.target_code, target);
+    assert.ok(clientResearchBuffExclusion(row));
+    assert.deepEqual(mapClientResearchBuff(row), []);
+  }
+});
+
+test("research seat scopes preserve axis, captain membership and below-deck separation", () => {
+  const expected = [[941300209, "_captain", 59], [809236561, "_bridge", 59],
+    [1895868262, "_below_decks", 57], [1829949531, "_below_decks", 58], [624709978, "_below_decks", 56]];
+  for (const [id, suffix, code] of expected) {
+    const row = manifest.buffs[id];
+    const axes = code === 59 ? ["attack", "defense", "health"] : [{ 56: "attack", 57: "defense", 58: "health" }[code]];
+    const mapped = mapClientResearchBuff(row, { allowOfficerSeatScopes: true });
+    assert.deepEqual(mapped.map(m => m.stat), axes.map(axis => `officer_${axis}${suffix}`));
+    assert.ok(mapped.every(m => m.value_unit === "fraction"));
+    assert.deepEqual(mapClientResearchBuff(row), [], "account/building default preserves source scope");
+    for (const delta of [{ trigger_code: 25 }, { operation_code: 4 }, { condition_codes: [231] },
+      { attribute_fields: [2] }, { unknown_fields: [99] }, { ranked_chances: [0.5] }]) {
+      assert.deepEqual(mapClientResearchBuff({ ...row, ...delta }, { allowOfficerSeatScopes: true }), []);
+    }
+    const coverage = researchClientBuffCoverage({ ...manifest, buffs: { [id]: row } });
+    assert.equal(coverage.summary.supported_buff_count, 1, "each definition is counted once");
+    assert.deepEqual(coverage.rows[0].mappings.map(m => m.stat), mapped.map(m => m.stat));
+    for (const source_group of [68, 116]) {
+      const otherSource = researchClientBuffCoverage({ ...manifest, source_group, buffs: { [id]: row } },
+        [], { allowOfficerSeatScopes: true });
+      assert.equal(otherSource.summary.quarantined_buff_count, 1,
+        "a caller option cannot reclassify research seat targets as building/global scope");
+    }
+  }
+  for (const stat of ["officer_defense", "officer_attack_captain", "officer_health_below_decks"]) {
+    assert.deepEqual(resolveBuffStatMappings({ ...context, researchBuffById: { 42: { stat, value_unit: "fraction" } } },
+      { id: 42 }, null), [], "missing native officer-stat definition cannot fall through to a guessed source");
+  }
 });

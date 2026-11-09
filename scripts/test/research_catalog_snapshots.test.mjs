@@ -52,7 +52,9 @@ test("unitless percentage mapping is omitted with an explicit quarantine diagnos
   const levels = buildLevelsFromDetail(detail, {
     rid: 77,
     unmappedByBuffId,
-    buffResolveCtx: { ...context,
+    // Exercise legacy unit validation without an authoritative native manifest;
+    // a present native manifest now blocks missing officer-stat definitions first.
+    buffResolveCtx: { ...context, clientBuffSemantics: undefined,
       researchBuffById: { 777: { stat: "officer_attack" } } },
   });
   assert.deepEqual(levels, [], "a guessed unit must not become a combat catalog bonus");

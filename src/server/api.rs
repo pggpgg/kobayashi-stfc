@@ -1056,6 +1056,13 @@ pub fn simulate_payload(
     {
         warnings.push(message);
     }
+    if let Some(message) =
+        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
+            profile_id,
+        )
+    {
+        warnings.push(message);
+    }
     if let (Some(_), Some(id)) = (
         req.defender_ship.as_ref(),
         req.defender_profile_id.as_deref(),
@@ -1064,6 +1071,13 @@ pub fn simulate_payload(
             crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(Some(
                 id,
             ))
+        {
+            warnings.push(format!("Defender: {message}"));
+        }
+        if let Some(message) =
+            crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
+                Some(id),
+            )
         {
             warnings.push(format!("Defender: {message}"));
         }
@@ -1345,6 +1359,13 @@ pub fn compare_crews_payload(
     {
         warnings.push(message);
     }
+    if let Some(message) =
+        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
+            profile_id,
+        )
+    {
+        warnings.push(message);
+    }
     if let (Some(_), Some(id)) = (
         req.defender_ship.as_ref(),
         req.defender_profile_id.as_deref(),
@@ -1353,6 +1374,13 @@ pub fn compare_crews_payload(
             crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(Some(
                 id,
             ))
+        {
+            warnings.push(format!("Defender: {message}"));
+        }
+        if let Some(message) =
+            crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
+                Some(id),
+            )
         {
             warnings.push(format!("Defender: {message}"));
         }
@@ -1797,6 +1825,13 @@ pub fn replay_optimize_seed_payload(
     }
     if let Some(message) =
         crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(
+            profile_id,
+        )
+    {
+        warnings.push(message);
+    }
+    if let Some(message) =
+        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
             profile_id,
         )
     {

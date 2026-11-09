@@ -15,7 +15,7 @@ use crate::data::native_consumable_buffs::{
 
 const EMBEDDED_CATALOG: &str = include_str!("../../data/native_building_buff_catalog.json");
 
-fn embedded_catalog() -> &'static NativeConsumableBuffCatalog {
+pub(crate) fn embedded_catalog() -> &'static NativeConsumableBuffCatalog {
     static CATALOG: OnceLock<NativeConsumableBuffCatalog> = OnceLock::new();
     CATALOG.get_or_init(|| {
         NativeConsumableBuffCatalog::from_json(EMBEDDED_CATALOG)

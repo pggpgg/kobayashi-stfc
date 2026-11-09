@@ -63,6 +63,8 @@ pub struct BuffSet {
     /// Captain + bridge officer A/D/H (subset of [`Self::officer_stat_totals`]); used for
     /// `EnemyBridge`-scoped opponent debuffs.
     pub bridge_officer_stat_totals: CrewOfficerStatTotals,
+    /// Resolved raw stats retain identity and seat for profile officer-stat scopes.
+    pub officer_stat_rows: Vec<CrewedOfficerStats>,
     /// Officer-rating ability contributions whose effect on the per-side multiplier depends on
     /// fight-setup state that isn't known at resolve time (e.g. `attacker_ship_type_is`,
     /// `defender_is_player_ship`). Evaluated by
@@ -76,6 +78,24 @@ pub struct BuffSet {
     /// Phase 4d: officer-stat rows whose conditions depend on round state (morale, burning, …).
     /// Evaluated each round via [`crate::data::officer_stat_round::OfficerStatRoundContext`].
     pub dynamic_officer_stat_contributions: Vec<DynamicOfficerStatContribution>,
+}
+
+/// Native seat scopes: captain is also a member of the top-three bridge group.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OfficerStatSeat {
+    Captain,
+    Bridge,
+    BelowDecks,
+}
+
+/// One deduplicated officer, using the existing rank/level and base-stat resolver.
+#[derive(Debug, Clone)]
+pub struct CrewedOfficerStats {
+    pub officer_id: String,
+    pub rank: Option<u8>,
+    pub level: u32,
+    pub seat: OfficerStatSeat,
+    pub raw: CrewOfficerStatTotals,
 }
 
 /// Which opponent crewed officers receive a `target: enemy` officer-stat modifier (Phase 4c).
@@ -1061,9 +1081,10 @@ pub fn resolve_crew_to_buff_set(
     // also appears in `bridge` is only counted once.
     let mut officer_stat_totals = CrewOfficerStatTotals::default();
     let mut bridge_officer_stat_totals = CrewOfficerStatTotals::default();
+    let mut officer_stat_rows = Vec::new();
     let mut counted_for_totals: HashSet<String> = HashSet::new();
     let mut counted_for_bridge: HashSet<String> = HashSet::new();
-    let mut add_officer_stats = |officer: &LcarsOfficer, bridge_only: bool| {
+    let mut add_officer_stats = |officer: &LcarsOfficer, seat: OfficerStatSeat| {
         if !counted_for_totals.insert(officer.id.clone()) {
             return;
         }
@@ -1075,26 +1096,37 @@ pub fn resolve_crew_to_buff_set(
         let Some(stats) = officer.stats_at_level(level) else {
             return;
         };
+        officer_stat_rows.push(CrewedOfficerStats {
+            officer_id: officer.id.clone(),
+            rank: officer_tier,
+            level,
+            seat,
+            raw: CrewOfficerStatTotals {
+                attack: stats.attack,
+                defense: stats.defense,
+                health: stats.health,
+            },
+        });
         officer_stat_totals.attack += stats.attack;
         officer_stat_totals.defense += stats.defense;
         officer_stat_totals.health += stats.health;
-        if bridge_only && counted_for_bridge.insert(officer.id.clone()) {
+        if seat != OfficerStatSeat::BelowDecks && counted_for_bridge.insert(officer.id.clone()) {
             bridge_officer_stat_totals.attack += stats.attack;
             bridge_officer_stat_totals.defense += stats.defense;
             bridge_officer_stat_totals.health += stats.health;
         }
     };
     if let Some(o) = officers.get(captain_id) {
-        add_officer_stats(o, true);
+        add_officer_stats(o, OfficerStatSeat::Captain);
     }
     for id in bridge {
         if let Some(o) = officers.get(id.as_str()) {
-            add_officer_stats(o, true);
+            add_officer_stats(o, OfficerStatSeat::Bridge);
         }
     }
     for id in below_decks {
         if let Some(o) = officers.get(id.as_str()) {
-            add_officer_stats(o, false);
+            add_officer_stats(o, OfficerStatSeat::BelowDecks);
         }
     }
 
@@ -1105,6 +1137,7 @@ pub fn resolve_crew_to_buff_set(
         proc_multiplier,
         officer_stat_totals,
         bridge_officer_stat_totals,
+        officer_stat_rows,
         pending_officer_stat_contributions,
         dynamic_officer_stat_contributions,
     }
@@ -1196,6 +1229,12 @@ mod tests {
         assert_eq!(buff.bridge_officer_stat_totals.attack, 1704.0 + 90206.0);
         assert_eq!(buff.bridge_officer_stat_totals.defense, 4320.0 + 92060.0);
         assert_eq!(buff.bridge_officer_stat_totals.health, 824.0 + 90091.0);
+        assert_eq!(buff.officer_stat_rows.len(), 3);
+        assert_eq!(buff.officer_stat_rows[0].seat, OfficerStatSeat::Captain);
+        assert_eq!(buff.officer_stat_rows[1].seat, OfficerStatSeat::Bridge);
+        assert_eq!(buff.officer_stat_rows[2].seat, OfficerStatSeat::BelowDecks);
+        assert_eq!(buff.officer_stat_rows[1].level, 30);
+        assert_eq!(buff.officer_stat_rows[1].raw.defense, 92060.0);
     }
 
     #[test]
@@ -1205,10 +1244,18 @@ mod tests {
         let mut officers = HashMap::new();
         officers.insert("dup".to_string(), cap);
         let opts = ResolveOptions::default();
-        let buff = resolve_crew_to_buff_set("dup", &["dup".to_string()], &[], &officers, &opts);
+        let buff = resolve_crew_to_buff_set(
+            "dup",
+            &["dup".to_string()],
+            &["dup".to_string()],
+            &officers,
+            &opts,
+        );
         assert_eq!(buff.officer_stat_totals.attack, 50.0);
         assert_eq!(buff.officer_stat_totals.defense, 60.0);
         assert_eq!(buff.officer_stat_totals.health, 70.0);
+        assert_eq!(buff.officer_stat_rows.len(), 1);
+        assert_eq!(buff.officer_stat_rows[0].seat, OfficerStatSeat::Captain);
     }
 
     #[test]
@@ -1222,6 +1269,7 @@ mod tests {
         assert_eq!(buff.officer_stat_totals.attack, 0.0);
         assert_eq!(buff.officer_stat_totals.defense, 0.0);
         assert_eq!(buff.officer_stat_totals.health, 0.0);
+        assert!(buff.officer_stat_rows.is_empty());
     }
 
     #[test]

@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fields } from "./inspect_stfc_combat_config.mjs";
 
-const FAMILY_CODES = new Set([0, 1, 2, 9, 10, 11, 12, 13, 60, 61, 73, 707, 808, 67001]);
+const FAMILY_CODES = new Set([0, 1, 2, 9, 10, 11, 12, 13, 56, 57, 58, 59, 60, 61, 73, 707, 808, 67001]);
 // Issue #319 audit: exact residual BIDs from current legacy-mapped catalog rows.
 // Do not select every definition sharing these modifier codes: the selected
 // rows include unsupported predicates that the resolver must quarantine.
@@ -28,12 +28,8 @@ const VERIFIED_PENETRATION_BUFF_IDS = new Set([
   2198824419, 2640187489, 3058907679, 3282480754, 3846878234,
   3876524125, 3941283922, 3993587479, 4062987421, 711650994, 949755120,
 ]);
-// Exact residual rows in the ModOfficerStat* family; never select by modifier
-// alone because other native officer-stat predicates are not reviewed here.
-const VERIFIED_OFFICER_BUFF_IDS = new Set([
-  1895868262, 1523931286, 624709978, 2014886179, 1829949531, 3753882631,
-  1380237269, 4010211789,
-]);
+// Select the complete officer-stat family for source coverage. Selection does
+// not admit a definition: target, timing and predicates remain resolver gates.
 const BUFF_FIELDS = new Set([1, 7, 8, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]);
 const one = (rows, n, wire, required = false) => {
   const found = rows.filter((r) => r.number === n);
@@ -125,8 +121,7 @@ export function extractResearchBuffSemantics(bytes) {
     const r = nested(payload);
     const modifier_code = int(r, 18);
     const id = int(r, 1);
-    if (!FAMILY_CODES.has(modifier_code) && !VERIFIED_OFFICER_BUFF_IDS.has(id) &&
-        !VERIFIED_PENETRATION_BUFF_IDS.has(id)) continue;
+    if (!FAMILY_CODES.has(modifier_code) && !VERIFIED_PENETRATION_BUFF_IDS.has(id)) continue;
     if (id <= 0 || int(map, 1) !== id || Object.hasOwn(buffs, id)) throw new Error("Invalid buff ID");
     buffs[id] = extractNativeBuffSpec(payload);
   }
@@ -136,7 +131,7 @@ export function extractResearchBuffSemantics(bytes) {
     for (const entry of nested(one(group, 2, 2, true)).filter((f) => f.number === 1)) {
       const r = nested(one(nested(entry), 2, 2, true));
       const code = int(r, 1);
-      if (!(groupType === 54 ? [1, 5, 11].includes(code) : [18, 24, 25].includes(code))) continue;
+      if (!(groupType === 54 ? [1, 3, 4, 5, 11].includes(code) : [18, 24, 25].includes(code))) continue;
       const idString = one(r, 3, 2, true);
       static_target_trigger_specs.push({ group: groupType, code, id: int(r, 2),
         name: new TextDecoder("utf-8", { fatal: true }).decode(idString.value),
@@ -149,7 +144,7 @@ export function extractResearchBuffSemantics(bytes) {
     provenance: {
       cache_sha256: crypto.createHash("sha256").update(bytes).digest("hex"), cache_byte_length: bytes.length,
       schema_revision: "netniV/stfc-mod@e0b8552bc2e8922423c6cdf3ba00ba0a81bf23c0",
-      selection: "ResearchSpecs(66).researchEffects(3), modifiers 0/1/2/9/10/11/12/13/60/61/73/707/808/67001 plus exact Orlop Defense BID 1895868262 and exact issue-319 residual mapped BIDs (39 BuffSpecs; supported mappings only after target/condition gates); no player state",
+      selection: "ResearchSpecs(66).researchEffects(3), modifiers 0/1/2/9/10/11/12/13/56/57/58/59/60/61/73/707/808/67001 plus exact issue-319 residual penetration BIDs; all officer-stat definitions retained, including unsupported targets and predicates; supported mappings only after target/condition gates; no player state",
       selected_static_cache_build: 273, consumer_build: 272, encoded_server_build_binding: false,
       metadata_sha256: "ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04",
       game_assembly_sha256: "a5df6314bd78f15892a232a44e77cdcf2e3d20e9a6192f99120c0f3e52632274",

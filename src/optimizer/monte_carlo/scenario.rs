@@ -946,6 +946,7 @@ pub(crate) struct SharedScenarioData {
     pub defender_officer_stat_totals: crate::combat::CrewOfficerStatTotals,
     /// Captain + bridge subset of [`Self::defender_officer_stat_totals`].
     pub defender_bridge_officer_stat_totals: crate::combat::CrewOfficerStatTotals,
+    pub defender_officer_stat_rows: Vec<crate::lcars::resolver::CrewedOfficerStats>,
     /// Conditional / `target: enemy` officer-stat rows from defender crew (Phase 4b/4c).
     pub defender_pending_officer_stat_contributions:
         Vec<crate::lcars::PendingOfficerStatContribution>,
@@ -1108,9 +1109,10 @@ fn build_pvp_defender_combatant(
         &shared.player_defender_static_buffs,
     );
     let cond_ctx = build_officer_stat_condition_context(shared, attacker_ship_rec);
-    let defender_osr = crate::data::profile::compute_officer_stat_runtime_bonus(
+    let defender_osr = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
         shared.defender_officer_stat_totals,
         shared.defender_bridge_officer_stat_totals,
+        &shared.defender_officer_stat_rows,
         def_ship,
         def_profile,
         def_ship.faction.as_deref(),
@@ -1174,6 +1176,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         proc_multiplier,
         officer_stat_totals,
         bridge_officer_stat_totals,
+        officer_stat_rows,
         pending_officer_stat_contributions,
         dynamic_officer_stat_contributions,
     ) = build_crew_and_buffs(candidate, shared.lcars_data.as_ref(), &resolve_opts);
@@ -1340,9 +1343,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             &shared.profile,
             ship_rec.faction.as_deref(),
-            crate::data::profile::compute_officer_stat_runtime_bonus(
+            crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
                 officer_stat_totals,
                 bridge_officer_stat_totals,
+                &officer_stat_rows,
                 ship_rec,
                 &shared.profile,
                 ship_rec.faction.as_deref(),
@@ -1396,6 +1400,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             crate::data::profile::effective_crew_health_at_combat_start(
                 officer_stat_totals,
                 bridge_officer_stat_totals,
+                &officer_stat_rows,
                 &shared.profile,
                 ship_rec.faction.as_deref(),
                 &merged_static,
@@ -1444,12 +1449,13 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             &[]
         };
         let officer_stat_round =
-            crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs(
+            crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs_with_officers(
                 ship_rec,
                 &shared.profile,
                 &merged_static,
                 officer_stat_totals,
                 bridge_officer_stat_totals,
+                &officer_stat_rows,
                 &pending_officer_stat_contributions,
                 opponent_enemy_pending,
                 &dynamic_officer_stat_contributions,
@@ -1932,6 +1938,7 @@ fn build_crew_and_buffs(
     f64,
     crate::combat::CrewOfficerStatTotals,
     crate::combat::CrewOfficerStatTotals,
+    Vec<crate::lcars::resolver::CrewedOfficerStats>,
     Vec<crate::lcars::PendingOfficerStatContribution>,
     Vec<crate::lcars::DynamicOfficerStatContribution>,
 ) {
@@ -1967,6 +1974,7 @@ fn build_crew_and_buffs(
             buff_set.proc_multiplier,
             buff_set.officer_stat_totals,
             buff_set.bridge_officer_stat_totals,
+            buff_set.officer_stat_rows,
             buff_set.pending_officer_stat_contributions,
             buff_set.dynamic_officer_stat_contributions,
         )
@@ -1981,6 +1989,7 @@ fn build_crew_and_buffs(
             1.0,
             crate::combat::CrewOfficerStatTotals::default(),
             crate::combat::CrewOfficerStatTotals::default(),
+            Vec::new(),
             Vec::new(),
             Vec::new(),
         )
@@ -2120,24 +2129,28 @@ fn officer_display_for_index(officers_by_name: &HashMap<String, Officer>, id: &s
         .unwrap_or_else(|| id.to_string())
 }
 
+type PlayerDefenderOfficerBundle = (
+    Vec<CrewSeatContext>,
+    HashMap<String, f64>,
+    crate::combat::CrewOfficerStatTotals,
+    crate::combat::CrewOfficerStatTotals,
+    Vec<crate::lcars::resolver::CrewedOfficerStats>,
+    Vec<crate::lcars::PendingOfficerStatContribution>,
+);
+
 fn resolve_player_defender_officer_bundle(
     o: Option<&PlayerDefenderOfficerCrewOverride>,
     officers_by_name: &HashMap<String, Officer>,
     lcars_data: Option<&LcarsOfficerData>,
     resolve_options: &ResolveOptions,
-) -> (
-    Vec<CrewSeatContext>,
-    HashMap<String, f64>,
-    crate::combat::CrewOfficerStatTotals,
-    crate::combat::CrewOfficerStatTotals,
-    Vec<crate::lcars::PendingOfficerStatContribution>,
-) {
+) -> PlayerDefenderOfficerBundle {
     let Some(o) = o else {
         return (
             Vec::new(),
             HashMap::new(),
             crate::combat::CrewOfficerStatTotals::default(),
             crate::combat::CrewOfficerStatTotals::default(),
+            Vec::new(),
             Vec::new(),
         );
     };
@@ -2152,6 +2165,7 @@ fn resolve_player_defender_officer_bundle(
             HashMap::new(),
             crate::combat::CrewOfficerStatTotals::default(),
             crate::combat::CrewOfficerStatTotals::default(),
+            Vec::new(),
             Vec::new(),
         );
     };
@@ -2200,6 +2214,7 @@ fn resolve_player_defender_officer_bundle(
         _proc_m,
         officer_stat_totals,
         bridge_officer_stat_totals,
+        officer_stat_rows,
         pending_contribs,
         _dynamic_contribs,
     ) = build_crew_and_buffs(&candidate, lcars_data, resolve_options);
@@ -2208,6 +2223,7 @@ fn resolve_player_defender_officer_bundle(
         static_buffs,
         officer_stat_totals,
         bridge_officer_stat_totals,
+        officer_stat_rows,
         pending_contribs,
     )
 }
@@ -2241,6 +2257,7 @@ pub(crate) fn scenario_to_combat_input(
         proc_multiplier,
         officer_stat_totals,
         bridge_officer_stat_totals,
+        officer_stat_rows,
         pending_officer_stat_contributions,
         dynamic_officer_stat_contributions,
     ) = build_crew_and_buffs(candidate, lcars_data, &resolve_opts);
@@ -2313,9 +2330,10 @@ pub(crate) fn scenario_to_combat_input(
                     defender_faction_slug: None,
                     engagement_types: Vec::new(),
                 };
-                crate::data::profile::compute_officer_stat_runtime_bonus(
+                crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
                     officer_stat_totals,
                     bridge_officer_stat_totals,
+                    &officer_stat_rows,
                     &ship_rec,
                     profile,
                     ship_rec.faction.as_deref(),
@@ -2361,12 +2379,13 @@ pub(crate) fn scenario_to_combat_input(
                 .collect(),
         };
         let officer_stat_round =
-            crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs(
+            crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs_with_officers(
                 &ship_rec,
                 profile,
                 &static_buffs,
                 officer_stat_totals,
                 bridge_officer_stat_totals,
+                &officer_stat_rows,
                 &pending_officer_stat_contributions,
                 &[],
                 &dynamic_officer_stat_contributions,
@@ -2890,6 +2909,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         player_defender_static_buffs,
         defender_officer_stat_totals,
         defender_bridge_officer_stat_totals,
+        defender_officer_stat_rows,
         defender_pending_officer_stat_contributions,
     ) = resolve_player_defender_officer_bundle(
         player_defender_officer_crew.as_ref(),
@@ -2947,6 +2967,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         player_defender_static_buffs,
         defender_officer_stat_totals,
         defender_bridge_officer_stat_totals,
+        defender_officer_stat_rows,
         defender_pending_officer_stat_contributions,
         pvp: None,
         defender_ship_rec: None,
@@ -3698,6 +3719,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         player_defender_static_buffs,
         defender_officer_stat_totals,
         defender_bridge_officer_stat_totals,
+        defender_officer_stat_rows,
         defender_pending_officer_stat_contributions,
     ) = resolve_player_defender_officer_bundle(
         player_defender_officer_crew.as_ref(),
@@ -3760,6 +3782,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         player_defender_static_buffs,
         defender_officer_stat_totals,
         defender_bridge_officer_stat_totals,
+        defender_officer_stat_rows,
         defender_pending_officer_stat_contributions,
         pvp,
         defender_ship_rec,
@@ -4836,6 +4859,7 @@ mod tests {
             player_defender_static_buffs: HashMap::new(),
             defender_officer_stat_totals: crate::combat::CrewOfficerStatTotals::default(),
             defender_bridge_officer_stat_totals: crate::combat::CrewOfficerStatTotals::default(),
+            defender_officer_stat_rows: Vec::new(),
             defender_pending_officer_stat_contributions: Vec::new(),
             pvp: None,
             defender_ship_rec: None,
