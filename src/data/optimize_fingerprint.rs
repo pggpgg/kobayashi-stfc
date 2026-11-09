@@ -647,6 +647,29 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
+    // (k) piercing-derived setup must not add a second quarter of the damage
+    // remaining after mitigation, in either direction. Include the setup helper
+    // so restoring the old formula changes the persisted engine fingerprint.
+    let defense = crate::combat::DefenderStats {
+        armor: 110.0,
+        shield_deflection: 80.0,
+        dodge: 60.0,
+    };
+    let piercing = crate::combat::AttackerStats {
+        armor_piercing: 100.0,
+        shield_piercing: 100.0,
+        accuracy: 100.0,
+    };
+    let ship_type = crate::combat::ShipType::Explorer;
+    let mut k_attacker = canary_combatant("canary_k_attacker");
+    k_attacker.attack = 500.0;
+    k_attacker.hull_health = 10_000.0;
+    k_attacker.mitigation = crate::combat::mitigation(defense, piercing, ship_type);
+    k_attacker.pierce = crate::combat::pierce_damage_through_bonus(defense, piercing, ship_type);
+    let mut k_defender = k_attacker.clone();
+    k_defender.id = "canary_k_defender".to_string();
+    k_defender.attack = 250.0;
+
     vec![
         (
             "a_plain",
@@ -719,6 +742,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             j_defender,
             canary_config(7, 41),
             j_crew,
+        ),
+        (
+            "k_piercing_without_extra_bonus",
+            k_attacker,
+            k_defender,
+            canary_config(3, 43),
+            CrewConfiguration::default(),
         ),
     ]
 }
@@ -1295,12 +1325,33 @@ mod tests {
         assert_eq!(engine_fingerprint(), engine_fingerprint());
     }
 
+    #[test]
+    fn piercing_canary_detects_the_removed_automatic_bonus_in_both_directions() {
+        let (_, attacker, defender, config, crew) = canary_fights()
+            .into_iter()
+            .find(|(id, ..)| *id == "k_piercing_without_extra_bonus")
+            .unwrap();
+        assert_eq!((attacker.pierce, defender.pierce), (0.0, 0.0));
+        let corrected = simulate_combat(&attacker, &defender, &config, &crew);
+        let mut legacy_outbound = attacker.clone();
+        legacy_outbound.pierce = 0.25 * (1.0 - defender.mitigation);
+        let outbound = simulate_combat(&legacy_outbound, &defender, &config, &crew);
+        assert_ne!(corrected.total_damage, outbound.total_damage);
+        let mut legacy_counter = defender.clone();
+        legacy_counter.pierce = 0.25 * (1.0 - attacker.mitigation);
+        let counter = simulate_combat(&attacker, &legacy_counter, &config, &crew);
+        assert_ne!(
+            corrected.attacker_hull_remaining,
+            counter.attacker_hull_remaining
+        );
+    }
+
     /// A suite whose fights all end the same way would hash the same after most engine changes.
     /// Every fight must reach a distinct outcome, and none may end instantly.
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 10, "expected ten canary fights");
+        assert_eq!(summaries.len(), 11, "expected eleven canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
