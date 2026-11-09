@@ -56,19 +56,20 @@ pub fn component_mitigation(defense: f64, piercing: f64) -> f64 {
     1.0 / (1.0 + 4.0_f64.powf(NATIVE_DAMAGE_REDUCTION_OFFSET - x))
 }
 
-/// Maximum pierce damage-through bonus (additive to (1 - mitigation)).
+/// Legacy constant for callers constructing explicit pierce bonuses.
+/// This fraction is not automatically granted from piercing statistics.
 pub const PIERCE_CAP: f64 = 0.25;
 
-/// Pierce damage-through bonus derived from defender/attacker stats and ship type.
-/// Uses the same defense/piercing ratios as mitigation (STFC Toolbox). Formula:
-/// `pierce = 0.25 * (1 - mitigation(defender, attacker, ship_type))`, clamped to [0, PIERCE_CAP].
+/// No additional damage-through bonus is derived from piercing statistics.
+/// Piercing already changes the defense/piercing ratios inside [`mitigation`].
+/// Retain this setup accessor for callers; explicit input and ability bonuses
+/// remain separate from the removed automatic quarter-share boost.
 pub fn pierce_damage_through_bonus(
-    defender: DefenderStats,
-    attacker: AttackerStats,
-    ship_type: ShipType,
+    _defender: DefenderStats,
+    _attacker: AttackerStats,
+    _ship_type: ShipType,
 ) -> f64 {
-    let mit = mitigation(defender, attacker, ship_type);
-    (PIERCE_CAP * (1.0 - mit)).clamp(0.0, PIERCE_CAP)
+    0.0
 }
 
 /// Default mitigation floor for hostile fights (game clamp). Some hostiles may override.
@@ -414,13 +415,57 @@ mod tests {
     // ── pierce ──
 
     #[test]
-    fn pierce_bonus_is_quarter_of_unmitigated_share() {
-        let d = def(110.0, 110.0, 110.0);
-        let a = att(100.0, 100.0, 100.0);
-        let mit = mitigation(d, a, ShipType::Survey);
-        let pierce = pierce_damage_through_bonus(d, a, ShipType::Survey);
-        assert!((pierce - PIERCE_CAP * (1.0 - mit)).abs() < 1e-12);
-        assert!((0.0..=PIERCE_CAP).contains(&pierce));
+    fn recorded_jemhadar_clean_hit_has_no_second_piercing_bonus() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/fixtures/recorded_fights/realta_jemhadar_baseline_20261024_observed.json"
+        ))
+        .unwrap();
+        let defense = &fixture["source_derived_defense"]["combat_native_rounded"];
+        let defender = def(
+            defense[0].as_f64().unwrap(),
+            defense[1].as_f64().unwrap(),
+            defense[2].as_f64().unwrap(),
+        );
+        let weapon = &fixture["observation"]["piercing_hypotheses"][0];
+        let attacker = att(
+            weapon["armor_piercing"].as_f64().unwrap(),
+            weapon["shield_piercing"].as_f64().unwrap(),
+            weapon["accuracy"].as_f64().unwrap(),
+        );
+        let component = mitigation(defender, attacker, ShipType::Explorer);
+        let extra = pierce_damage_through_bonus(defender, attacker, ShipType::Explorer);
+        let effective =
+            1.0 - crate::combat::compute_damage_through_factor(1.0 - component, extra, 0.0);
+        // Preserve the independently recorded clean-hit interval. This checks damage
+        // remaining after normal defenses, before Apex; it does not fit a weapon roll.
+        let interval = &fixture["observation"]["primary_clean_mitigation_interval"];
+        assert!(
+            (interval[0].as_f64().unwrap()..=interval[1].as_f64().unwrap()).contains(&effective),
+            "effective mitigation {effective} is outside the recorded clean-hit interval"
+        );
+    }
+
+    #[test]
+    fn piercing_statistics_do_not_grant_a_second_damage_bonus() {
+        for ship_type in [
+            ShipType::Survey,
+            ShipType::Battleship,
+            ShipType::Explorer,
+            ShipType::Interceptor,
+            ShipType::Armada,
+        ] {
+            for scale in [0.0, 1.0, 100.0, 1e7] {
+                let d = def(scale, scale * 2.0, scale * 3.0);
+                let a = att(100.0, 200.0, 300.0);
+                let mit = mitigation(d, a, ship_type);
+                let pierce = pierce_damage_through_bonus(d, a, ship_type);
+                assert_eq!(pierce, 0.0);
+                assert_eq!(
+                    crate::combat::compute_damage_through_factor(1.0 - mit, pierce, 0.0),
+                    1.0 - mit
+                );
+            }
+        }
     }
 
     // ── morale piercing ──
