@@ -58,6 +58,8 @@ main [README](../README.md) is the front page. The documents here give more deta
 
 ## Data pipeline
 
+- [ACCOUNT_COMBAT_BONUSES.md](ACCOUNT_COMBAT_BONUSES.md) — Syndicate and Archive
+  source checks, combat bonus support, and remaining gaps.
 - [SNAPSHOT_REPLAY_VALIDATION.md](SNAPSHOT_REPLAY_VALIDATION.md) — Replay frozen
   capture inputs in an isolated runtime and compare scoped combat observations.
 - [TOM_PARIS_CAPTAIN_SWAP_20261026.md](TOM_PARIS_CAPTAIN_SWAP_20261026.md) — Compare

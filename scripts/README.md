@@ -41,6 +41,17 @@ regenerates the public project-name coverage/exclusion report. See
 [RESEARCH_CLIENT_STAT_MAPPING.md](../docs/RESEARCH_CLIENT_STAT_MAPPING.md) for the
 native proof, supported definitions, limitations and regeneration commands.
 
+## Native Syndicate rewards
+
+`extract_native_syndicate_rewards.mjs --static-cache <cache.bin> --check` verifies
+the complete reviewed `LoyaltySpecs` reward catalog without player data. Omit
+`--check` to regenerate `data/native_syndicate_rewards.json` from the pinned source.
+Global rewards use Ops snapshots; building links retain their own ranks and gates.
+Run `node --test scripts/test/native_syndicate_rewards.test.mjs` for parser tests.
+`cargo run --bin syndicate_bonuses -- 45 61 --combat-only` prints a definition
+report; it does not add another copy of active synced buffs. See the
+[account bonus audit](../docs/ACCOUNT_COMBAT_BONUSES.md) for evidence and limits.
+
 ## Native officer base CoreStats
 
 `extract_native_officer_core_stats.mjs --static-cache <cache.bin>` extracts the

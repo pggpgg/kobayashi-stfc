@@ -129,3 +129,70 @@ fn expired_absent_and_duplicate_sources_do_not_add_offense() {
         "combat-start sources must not enter launch pools too"
     );
 }
+
+#[test]
+fn stella_archive_apex_reduces_only_incoming_eclipse_armada_damage() {
+    let rows = [entry(3_061_559_261, None), entry(3_061_559_261, None)];
+    let attacker = Combatant {
+        attack: 1.0,
+        hull_health: 100_000.0,
+        apex_barrier: 500.0,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        attack: 1_000.0,
+        hull_health: 100_000.0,
+        ..Default::default()
+    };
+    for (owner, opponent, faction, pvp, applies) in [
+        ("stella", ShipType::Armada, 1_750_120_904, false, true),
+        ("realta", ShipType::Armada, 1_750_120_904, false, false),
+        ("stella", ShipType::Battleship, 1_750_120_904, false, false),
+        ("stella", ShipType::Armada, 123, false, false),
+        ("stella", ShipType::Armada, 1_750_120_904, true, false),
+    ] {
+        let crew = CrewConfiguration {
+            seats: native_consumable_buffs::combat_start_apex_seats_for_imported_buffs(
+                &rows,
+                Some(owner),
+                pvp,
+                100,
+            ),
+        };
+        let run = |crew: &CrewConfiguration| {
+            simulate_combat_with_defender_faction_and_defender_crew(
+                &attacker,
+                &defender,
+                &SimulationConfig {
+                    rounds: 3,
+                    seed: 77,
+                    defender_hull_faction_id: faction,
+                    ..Default::default()
+                },
+                crew,
+                OpponentFactionTag::Unknown,
+                opponent,
+                ShipType::Battleship,
+                !pvp,
+                pvp,
+                &CrewConfiguration::default(),
+            )
+        };
+        let baseline = run(&CrewConfiguration::default());
+        let actual = run(&crew);
+        assert_eq!(actual, run(&crew));
+        assert_eq!(
+            actual.total_damage, baseline.total_damage,
+            "Apex does not add outgoing damage"
+        );
+        // Public remaining-HP fields are rounded to six decimals. Check that
+        // exact representation, rather than dividing two rounded HP removals.
+        let barrier = if applies { 600.0 } else { 500.0 };
+        let remaining = attacker.hull_health - 3_000.0 * 10_000.0 / (10_000.0 + barrier);
+        let expected = (remaining * 1e6).round() / 1e6;
+        assert_eq!(
+            actual.attacker_hull_remaining, expected,
+            "{owner} {opponent:?} {faction} pvp={pvp}"
+        );
+    }
+}

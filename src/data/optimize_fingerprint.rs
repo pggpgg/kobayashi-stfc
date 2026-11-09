@@ -92,7 +92,12 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   bridge and below-decks membership through scenario and cached-round paths.
 ///   Canary f covers native source eligibility and scoped breakpoint lookup;
 ///   synthetic fights cannot detect omission of rows by a scenario caller.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 17;
+/// * 17 → 18 (2026-11): active Syndicate launch piercing and archive NPC piercing
+///   enter their respective native pools; exact Stella archive Apex retains its
+///   owner-hull and Eclipse Armada gates. Canaries cover compilation, while the
+///   version also invalidates metrics from scenario callers missing these seats.
+///   Monaveen's twelve PvP Apex rewards retain each owning crew's Tal gate.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 18;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -716,6 +721,86 @@ fn canary_fights() -> Vec<CanaryFight> {
     k_defender.id = "canary_k_defender".to_string();
     k_defender.attack = 250.0;
 
+    // Compile actual account sources into raw piercing, including the existing
+    // pool. A missing source or multiplying the finished stats changes outcomes.
+    let account_piercing = |npc_archive: bool| {
+        let mut profile = crate::data::profile::PlayerProfile::default();
+        profile.bonuses.insert("accuracy".into(), 0.3);
+        profile.bonuses.insert("armor_piercing".into(), 0.6);
+        profile.bonuses.insert("shield_piercing".into(), 0.9);
+        let rows: Vec<_> = if npc_archive {
+            vec![(1_404_701_608, 61)]
+        } else {
+            vec![
+                (1_333_781_883, 61),
+                (3_809_461_333, 61),
+                (1_085_339_663, 61),
+                (675_636_702, 61),
+                (609_129_565, 61),
+                (2_259_348_690, 61),
+            ]
+        }
+        .into_iter()
+        .map(|(bid, level)| GlobalBuffEntry {
+            bid,
+            level,
+            expiry_time: None,
+        })
+        .collect();
+        for pool in [
+            crate::data::native_consumable_buffs::bonuses_for_imported_buffs(&rows, None, 0),
+            crate::data::native_consumable_buffs::combat_start_piercing_bonuses_for_imported_buffs(
+                &rows,
+                npc_archive,
+                0,
+            ),
+        ] {
+            for (key, value) in pool {
+                *profile.bonuses.entry(key).or_default() += value;
+            }
+        }
+        let mut stats = crate::combat::AttackerStats {
+            accuracy: 125.0,
+            armor_piercing: 90.0,
+            shield_piercing: 70.0,
+        };
+        crate::data::profile::apply_profile_piercing_to_attacker_stats(&mut stats, &profile, None);
+        let mut attacker = canary_combatant(if npc_archive { "canary_m" } else { "canary_l" });
+        attacker.attack = if npc_archive { 173.0 } else { 219.0 };
+        attacker.hull_health = 12_000.0;
+        let mut defender = canary_combatant("account_piercing_target");
+        defender.hull_health = 10_000.0;
+        defender.attack = 61.0;
+        defender.mitigation = crate::combat::mitigation(defense, stats, ship_type);
+        (attacker, defender)
+    };
+    let (l_attacker, l_defender) = account_piercing(false);
+    let (m_attacker, m_defender) = account_piercing(true);
+    let monaveen_rows = [
+        2199227326, 2280947091, 3378417511, 3663693120, 1721910014, 1763915157, 3558267162,
+        487851441, 2328144758, 610243845, 1240186710, 2956393975,
+    ]
+    .map(|bid| GlobalBuffEntry {
+        bid,
+        level: 61,
+        expiry_time: None,
+    });
+    let monaveen =
+        crate::data::native_consumable_buffs::conditional_apex_bonuses_for_imported_buffs(
+            &monaveen_rows,
+            0,
+        );
+    let mut n_attacker = canary_combatant("canary_n_monaveen");
+    n_attacker.attack = 113.0;
+    n_attacker.hull_health = 5_000.0;
+    n_attacker.apex_barrier = monaveen
+        .get("apex_barrier_vs_player_tal_not_on_bridge")
+        .copied()
+        .unwrap_or(0.0);
+    let mut n_defender = canary_combatant("canary_n_target");
+    n_defender.hull_health = 12_000.0;
+    n_defender.attack = 437.0;
+
     vec![
         (
             "a_plain",
@@ -794,6 +879,27 @@ fn canary_fights() -> Vec<CanaryFight> {
             k_attacker,
             k_defender,
             canary_config(3, 43),
+            CrewConfiguration::default(),
+        ),
+        (
+            "l_native_syndicate_piercing",
+            l_attacker,
+            l_defender,
+            canary_config(4, 47),
+            CrewConfiguration::default(),
+        ),
+        (
+            "m_native_archive_piercing",
+            m_attacker,
+            m_defender,
+            canary_config(5, 53),
+            CrewConfiguration::default(),
+        ),
+        (
+            "n_native_monaveen_apex",
+            n_attacker,
+            n_defender,
+            canary_config(6, 59),
             CrewConfiguration::default(),
         ),
     ]
@@ -1397,7 +1503,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 11, "expected eleven canary fights");
+        assert_eq!(summaries.len(), 14, "expected fourteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

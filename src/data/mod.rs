@@ -42,6 +42,7 @@ pub mod stfc_cc_effect_spec_adapter;
 pub mod support_buffs;
 pub mod syndicate_combat;
 pub mod syndicate_reputation;
+pub mod syndicate_rewards;
 pub mod synergy;
 pub mod upstream_hostile_ship_type;
 pub mod validate;

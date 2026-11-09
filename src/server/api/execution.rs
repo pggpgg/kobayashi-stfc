@@ -2556,9 +2556,7 @@ fn build_optimize_response(
         warnings.push(message);
     }
     if let Some(message) =
-        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-            profile_id,
-        )
+        crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(profile_id)
     {
         warnings.push(message);
     }
@@ -2574,9 +2572,7 @@ fn build_optimize_response(
             warnings.push(format!("Defender: {message}"));
         }
         if let Some(message) =
-            crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-                Some(id),
-            )
+            crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(Some(id))
         {
             warnings.push(format!("Defender: {message}"));
         }

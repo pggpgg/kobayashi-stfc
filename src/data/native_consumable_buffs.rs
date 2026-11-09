@@ -146,6 +146,73 @@ pub fn quarantined_officer_stat_warning_for_profile(profile_id: Option<&str>) ->
     quarantined_officer_stat_warning(&buffs, chrono::Utc::now().timestamp())
 }
 
+/// Bounded diagnostics for inventoried account combat effects that remain
+/// quarantined. This deliberately excludes economy buffs and does not infer
+/// missing account membership or an effect's scope from an owned buff ID.
+pub fn quarantined_account_combat_warning(
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> Option<String> {
+    let catalog = embedded_catalog();
+    let ids: Vec<_> = active_highest_levels(imported, now_unix_seconds)
+        .into_iter()
+        .filter_map(|(bid, level)| {
+            let spec = catalog.buffs.get(&bid)?;
+            let unsupported_apex = spec.modifier_code == 67001
+                && !is_exact_stella_archive_apex(spec, bid, level)
+                && exact_monaveen_archive_apex_value(spec, bid, level).is_none();
+            let unsupported_flat =
+                bid == 4_041_662_025 && spec.modifier_code == 2 && spec.operation_code == 1;
+            let unsupported_syndicate = matches!(
+                bid,
+                831_877_216 | 2_118_637_918 | 1_369_297_542 | 313_675_470 | 1_464_566_611
+            );
+            (unsupported_apex || unsupported_flat || unsupported_syndicate).then_some(bid)
+        })
+        .collect();
+    if ids.is_empty() {
+        return None;
+    }
+    let examples = ids
+        .iter()
+        .take(4)
+        .map(i64::to_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    Some(format!(
+        "{} active account combat buff(s) are omitted because their native conditions, timing or flat-damage insertion order are unsupported (IDs: {examples}).",
+        ids.len()
+    ))
+}
+
+pub fn quarantined_account_combat_warning_for_profile(profile_id: Option<&str>) -> Option<String> {
+    use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, BUFFS_IMPORTED};
+    let id = resolve_profile_id_for_api(profile_id);
+    let buffs = crate::data::import::load_imported_buffs(
+        &profile_path(&id, BUFFS_IMPORTED).to_string_lossy(),
+    )?;
+    quarantined_account_combat_warning(&buffs, chrono::Utc::now().timestamp())
+}
+
+/// Combine independent native officer-stat and account-combat diagnostics while
+/// reading one frozen imported-buff snapshot for this request.
+pub fn quarantined_combat_warning_for_profile(profile_id: Option<&str>) -> Option<String> {
+    use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, BUFFS_IMPORTED};
+    let id = resolve_profile_id_for_api(profile_id);
+    let buffs = crate::data::import::load_imported_buffs(
+        &profile_path(&id, BUFFS_IMPORTED).to_string_lossy(),
+    )?;
+    let now = chrono::Utc::now().timestamp();
+    let messages: Vec<_> = [
+        quarantined_officer_stat_warning(&buffs, now),
+        quarantined_account_combat_warning(&buffs, now),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    (!messages.is_empty()).then(|| messages.join(" "))
+}
+
 /// Return additive profile-pool contributions at the imported current levels.
 /// `attacker_ship_class` uses native class slugs, including `sentinel`; an absent
 /// or unrecognized class cannot satisfy a class-gated definition. Expiry uses
@@ -186,6 +253,267 @@ pub fn combat_start_offense_seats_for_imported_buffs(
     now_unix_seconds: i64,
 ) -> Vec<CrewSeatContext> {
     combat_start_offense_seats_from_catalog(embedded_catalog(), imported, now_unix_seconds)
+}
+
+/// Native CombatStart all-piercing percentages for an already resolved opponent.
+/// The caller must pass false for unknown opponents, players and Armada targets.
+///
+/// These exact predicates depend only on the fixed opponent category. There is
+/// no duration or officer-controlled condition, so scenario construction can add
+/// them to its in-memory accuracy/AP/SP pools before computing raw weapon stats.
+/// This does not modify the saved profile or multiply completed launch stats.
+pub fn combat_start_piercing_bonuses_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    opponent_is_non_armada_npc: bool,
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
+    combat_start_piercing_bonuses_from_catalog(
+        embedded_catalog(),
+        imported,
+        opponent_is_non_armada_npc,
+        now_unix_seconds,
+    )
+}
+
+fn combat_start_piercing_bonuses_from_catalog(
+    catalog: &NativeConsumableBuffCatalog,
+    imported: &[GlobalBuffEntry],
+    opponent_is_non_armada_npc: bool,
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
+    let mut out = HashMap::new();
+    if catalog.schema_version != 1 || catalog.source_group != 116 || !opponent_is_non_armada_npc {
+        return out;
+    }
+    for (bid, level) in active_highest_levels(imported, now_unix_seconds) {
+        let Some(spec) = catalog.buffs.get(&bid) else {
+            continue;
+        };
+        if spec.modifier_code != 74
+            || spec.operation_code != 3
+            || spec.condition_codes != [27, 131]
+            || spec.num_rounds != 0
+            || combat_start_condition(spec, 116, bid, None).is_none()
+        {
+            continue;
+        }
+        let rank = usize::try_from(level - 1).unwrap_or(usize::MAX);
+        if rank >= spec.ranked_value_count || rank >= spec.ranked_chance_count {
+            continue;
+        }
+        let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
+        if value != 0.0 {
+            for stat in ["accuracy", "armor_piercing", "shield_piercing"] {
+                *out.entry(stat.to_string()).or_default() += value;
+            }
+        }
+    }
+    out
+}
+
+/// Exact source-bound account Apex effects. `owner_ship_id` is the resolved
+/// canonical player hull ID, independent of which side is called the attacker
+/// by the combat loop. The caller supplies ship-vs-ship PvP context explicitly.
+///
+/// Only the first Stella archive Apex milestone is bound here. Raw condition 17
+/// has no general client predicate binding; its Eclipse scope is established by
+/// this exact BuffSpec, native localization 95003 and the observed archive UI.
+/// Other Apex predicates, including PvP/ship-station exclusions, stay unsupported.
+pub fn combat_start_apex_seats_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    owner_ship_id: Option<&str>,
+    opponent_is_player: bool,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    combat_start_apex_seats_from_catalog(
+        embedded_catalog(),
+        imported,
+        owner_ship_id,
+        opponent_is_player,
+        now_unix_seconds,
+    )
+}
+
+fn combat_start_apex_seats_from_catalog(
+    catalog: &NativeConsumableBuffCatalog,
+    imported: &[GlobalBuffEntry],
+    owner_ship_id: Option<&str>,
+    opponent_is_player: bool,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    if catalog.schema_version != 1
+        || catalog.source_group != 116
+        || owner_ship_id != Some("stella")
+        || opponent_is_player
+    {
+        return Vec::new();
+    }
+    active_highest_levels(imported, now_unix_seconds)
+        .into_iter()
+        .filter_map(|(bid, level)| {
+            let spec = catalog.buffs.get(&bid)?;
+            is_exact_stella_archive_apex(spec, bid, level).then(|| CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: format!("native_116_{bid}"),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::ApexBarrierBonus(spec.ranked_values[0]),
+                    condition: Some(AbilityCondition::And(vec![
+                        AbilityCondition::DefenderHullFactionIdIs(1_750_120_904),
+                        AbilityCondition::DefenderShipTypeIs(ShipType::Armada),
+                    ])),
+                    weapon_scope: Default::default(),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            })
+        })
+        .collect()
+}
+
+fn is_exact_stella_archive_apex(spec: &NativeBuffSpec, bid: i64, level: i64) -> bool {
+    bid == 3_061_559_261
+        && spec.sha256 == "b6e7cca49475cd554ce866576e725b9ab9f54ee15fa5ef1832f37f5b5cc09262"
+        && spec.modifier_code == 67001
+        && spec.operation_code == 1
+        && spec.target_code == 1
+        && spec.trigger_code == 25
+        && spec.condition_codes == [129, 150, 17]
+        && spec.attribute_fields == [8]
+        && spec.faction_id == 1_750_120_904
+        && spec.num_rounds == 0
+        && spec.unknown_fields.is_empty()
+        && spec.ranked_value_type == 0
+        && spec.ranked_values == [100.0]
+        && spec.ranked_value_count == 99
+        && spec.ranked_chances == [1.0]
+        && spec.ranked_chance_count == 99
+        && level > 0
+        && usize::try_from(level).is_ok_and(|rank| rank <= spec.ranked_value_count)
+}
+
+// Monaveen's twelve archive milestones, bound by native272/273 group116
+// BuffSpec SHA256, group114 ConsumableSpec localization72023 and the observed
+// mastered archive UI's twelve values [50,50,75,75,100,100,100,150,150,200,200,250].
+// The native description declares all-ships PvP. Raw246 independently binds
+// CondSelfOfficerTalNotOnBridge; raw28/137 retain their exact source context
+// rather than receiving a general predicate interpretation. These are twelve
+// owned sources, not a second inferred1500-point Archive level pool.
+const MONAVEEN_ARCHIVE_APEX_SOURCES: [(i64, &str, f64); 12] = [
+    (
+        487851441,
+        "5d1c6c9f5b688bfe3de638cdc8973a80270b672d2f31a5f2eba2429ca08c747d",
+        150.0,
+    ),
+    (
+        610243845,
+        "c8e101130540c857151d4dc57adbec13a4ef18b8fec2ddb16211822c27dc8f5e",
+        200.0,
+    ),
+    (
+        1240186710,
+        "c2e69aaef0dc6bdb191ae65c1fe4b4447543b7cd7a043f7d569541f3d8171575",
+        200.0,
+    ),
+    (
+        1721910014,
+        "2676aa79ac5b7ec34a311f50fa0e1763805825d768fd3ed5eb0a2a573c146038",
+        100.0,
+    ),
+    (
+        1763915157,
+        "9e34286efe49722ec9f2e4c79845bb0df407a970cde5dbdcdaae042612265b0d",
+        100.0,
+    ),
+    (
+        2199227326,
+        "18b9a52108e043055db5c83d7510d505b6e2f1b206f55e5369adaaaeed2ba88d",
+        50.0,
+    ),
+    (
+        2280947091,
+        "33072990613edc6dd533ab1fd3f101a669da41a6cd98048d41184740c6a5d60b",
+        50.0,
+    ),
+    (
+        2328144758,
+        "2a65d71bc80beb2f4f4534cba7a75d6737b4c84678ace37e37593024ba048684",
+        150.0,
+    ),
+    (
+        2956393975,
+        "20bf1e8d511f6743fa13be87bef6570d6dbbe90fa038cc2e3dee9ab28ef7e614",
+        250.0,
+    ),
+    (
+        3378417511,
+        "d5d978d54a6185228be830767c510f9569e3881f0be930a86a4c6cb3724401a1",
+        75.0,
+    ),
+    (
+        3558267162,
+        "99d657af3c783d9d8c5068f12f91b66317e0917789e3434b64d666495e0b3a4c",
+        100.0,
+    ),
+    (
+        3663693120,
+        "a4cc4994975f92fe758bfb661ef8c2b7e0833dfdf038541540f812eae82145bc",
+        75.0,
+    ),
+];
+
+/// Exact Monaveen archive Apex points, kept under the existing conditional key.
+/// Callers must evaluate ship-vs-ship PvP and the owning crew's Tal bridge gate;
+/// this map must not become an unconditional launch bonus or a percentage.
+pub fn conditional_apex_bonuses_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
+    conditional_apex_bonuses_from_catalog(embedded_catalog(), imported, now_unix_seconds)
+}
+
+fn conditional_apex_bonuses_from_catalog(
+    catalog: &NativeConsumableBuffCatalog,
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> HashMap<String, f64> {
+    let mut out = HashMap::new();
+    if catalog.schema_version != 1 || catalog.source_group != 116 {
+        return out;
+    }
+    for (bid, level) in active_highest_levels(imported, now_unix_seconds) {
+        let Some(spec) = catalog.buffs.get(&bid) else {
+            continue;
+        };
+        if let Some(points) = exact_monaveen_archive_apex_value(spec, bid, level) {
+            *out.entry("apex_barrier_vs_player_tal_not_on_bridge".to_string())
+                .or_default() += points;
+        }
+    }
+    out
+}
+
+fn exact_monaveen_archive_apex_value(spec: &NativeBuffSpec, bid: i64, level: i64) -> Option<f64> {
+    let &(_, expected_hash, points) = MONAVEEN_ARCHIVE_APEX_SOURCES.iter().find(|r| r.0 == bid)?;
+    let exact = spec.sha256 == expected_hash
+        && spec.modifier_code == 67001
+        && spec.operation_code == 1
+        && spec.target_code == 1
+        && spec.trigger_code == 25
+        && spec.condition_codes == [28, 137, 246]
+        && spec.attribute_fields.is_empty()
+        && spec.unknown_fields.is_empty()
+        && spec.num_rounds == 0
+        && spec.ranked_value_type == 0
+        && spec.ranked_values == [points]
+        && spec.ranked_value_count == 99
+        && spec.ranked_chances == [1.0]
+        && spec.ranked_chance_count == 99
+        && (1..=99).contains(&level);
+    exact.then_some(points)
 }
 
 fn combat_start_offense_seats_from_catalog(
@@ -442,8 +770,9 @@ pub(crate) fn bonuses_from_catalog_for_ship(
         };
         let stats = if matches!(spec.modifier_code, 56..=59) {
             supported_officer_stat_sources(spec, expected_group == 66)
-        } else if expected_group == 66 && matches!(spec.modifier_code, 6 | 7 | 8 | 74) {
-            supported_research_stat_sources(spec, attacker_ship_class, ship_grade)
+        } else if matches!(expected_group, 66 | 116) && matches!(spec.modifier_code, 6 | 7 | 8 | 74)
+        {
+            supported_launch_piercing_sources(spec, attacker_ship_class, ship_grade)
         } else {
             supported_stats_with_syndicate(
                 spec,
@@ -523,8 +852,9 @@ fn supported_officer_stat_sources(
     }
 }
 
-/// Selected research-only ship piercing families, distinct from officer stats.
-fn supported_research_stat_sources(
+/// Reviewed research/global launch piercing families, distinct from damage-through
+/// pierce and officer stats. Native source group does not change the stat's units.
+fn supported_launch_piercing_sources(
     spec: &NativeBuffSpec,
     ship_class: Option<&str>,
     ship_grade: Option<u32>,
@@ -690,6 +1020,343 @@ mod tests {
     }
 
     #[test]
+    fn combat_start_piercing_is_a_gated_additive_three_axis_pool() {
+        let imported = [
+            entry(1_404_701_608, 1, None),
+            entry(1_404_701_608, 61, None),
+        ];
+        let out = combat_start_piercing_bonuses_for_imported_buffs(&imported, true, 100);
+        assert_eq!(out.len(), 3);
+        for key in ["accuracy", "armor_piercing", "shield_piercing"] {
+            assert!((out[key] - 0.1).abs() < 1e-12);
+        }
+        assert!(!out.contains_key("pierce"));
+        assert!(
+            combat_start_piercing_bonuses_for_imported_buffs(&imported, false, 100).is_empty(),
+            "players, Armadas and unresolved opponents fail the setup gate"
+        );
+        for class in ["explorer", "interceptor", "battleship", "survey"] {
+            let mut profile = crate::data::profile::PlayerProfile::default();
+            profile.bonuses.extend(bonuses_for_imported_buffs(
+                &[entry(1_333_781_883, 61, None)],
+                Some(class),
+                100,
+            ));
+            for (key, value) in &out {
+                *profile.bonuses.entry(key.clone()).or_default() += value;
+            }
+            let mut raw = crate::combat::AttackerStats {
+                accuracy: 100.0,
+                armor_piercing: 200.0,
+                shield_piercing: 300.0,
+            };
+            crate::data::profile::apply_profile_piercing_to_attacker_stats(
+                &mut raw, &profile, None,
+            );
+            assert!((raw.accuracy - 150.0).abs() < 1e-12);
+            assert!((raw.armor_piercing - 300.0).abs() < 1e-12);
+            assert!((raw.shield_piercing - 450.0).abs() < 1e-12);
+        }
+        assert!(
+            bonuses_for_imported_buffs(&imported, Some("explorer"), 100).is_empty(),
+            "conditional CombatStart sources never become unconditional launch buffs"
+        );
+    }
+
+    #[test]
+    fn combat_start_piercing_preserves_rank_expiry_and_all_nine_verified_rows() {
+        let mut row = spec();
+        row.modifier_code = 74;
+        row.trigger_code = 25;
+        row.condition_codes = vec![27, 131];
+        row.ranked_values = vec![0.1, 0.2, 0.0];
+        let c = catalog(vec![(1, row)]);
+        let out = combat_start_piercing_bonuses_from_catalog(
+            &c,
+            &[entry(1, 1, None), entry(1, 2, None), entry(1, 3, Some(100))],
+            true,
+            100,
+        );
+        assert_eq!(out["accuracy"], 0.2);
+        for imported in [
+            vec![entry(1, 0, None)],
+            vec![entry(1, 4, None)],
+            vec![entry(1, 2, Some(100))],
+        ] {
+            assert!(
+                combat_start_piercing_bonuses_from_catalog(&c, &imported, true, 100).is_empty()
+            );
+        }
+        let rows: Vec<_> = [
+            1277497908, 1404701608, 1610041024, 2363932725, 2886123067, 3504434200, 3714771770,
+            3885426739, 3888142903,
+        ]
+        .into_iter()
+        .map(|id| entry(id, 61, None))
+        .collect();
+        let total = combat_start_piercing_bonuses_for_imported_buffs(&rows, true, 100);
+        for axis in ["accuracy", "armor_piercing", "shield_piercing"] {
+            assert!((total[axis] - 3.0).abs() < 1e-12);
+        }
+    }
+
+    #[test]
+    fn combat_start_piercing_rejects_changed_native_gates_and_units() {
+        let mut base = spec();
+        base.modifier_code = 74;
+        base.trigger_code = 25;
+        base.condition_codes = vec![27, 131];
+        let mut mutants = vec![base.clone(); 14];
+        mutants[0].modifier_code = 7;
+        mutants[1].operation_code = 1;
+        mutants[2].trigger_code = 24;
+        mutants[3].target_code = 5;
+        mutants[4].num_rounds = 1;
+        mutants[5].ranked_chances = vec![0.5];
+        mutants[6].attribute_fields = vec![8];
+        mutants[7].unknown_fields = vec![99];
+        mutants[8].condition_codes = vec![27];
+        mutants[9].condition_codes = vec![27, 131, 246];
+        mutants[10].ranked_value_type = 1;
+        mutants[11].ranked_values = vec![f64::INFINITY];
+        mutants[12].ranked_chances.clear();
+        mutants[13].ranked_chance_count = 0;
+        for row in mutants {
+            let c = catalog(vec![(1, row)]);
+            assert!(combat_start_piercing_bonuses_from_catalog(
+                &c,
+                &[entry(1, 1, None)],
+                true,
+                100
+            )
+            .is_empty());
+        }
+    }
+
+    #[test]
+    fn exact_stella_archive_apex_uses_owner_hull_and_eclipse_armada_scope() {
+        let imported = [
+            entry(3_061_559_261, 1, None),
+            entry(3_061_559_261, 99, None),
+        ];
+        let seats =
+            combat_start_apex_seats_for_imported_buffs(&imported, Some("stella"), false, 100);
+        assert_eq!(seats.len(), 1, "one active BID contributes once");
+        assert_eq!(
+            seats[0].ability.effect,
+            AbilityEffect::ApexBarrierBonus(100.0)
+        );
+        assert_eq!(seats[0].ability.timing, TimingWindow::CombatBegin);
+        assert!(!seats[0].ability.boostable);
+        assert!(!seats[0].boosted);
+        let condition = seats[0].ability.condition.as_ref().unwrap();
+        let mut ctx = combat_context();
+        ctx.defender_hull_faction_id = 1_750_120_904;
+        ctx.defender_ship_type = ShipType::Armada;
+        assert!(condition.evaluate(&ctx));
+        // Owner scope was evaluated by the compiler, not by attacker-relative runtime context.
+        ctx.attacker_ship_id = Arc::from("different_combat_loop_role");
+        assert!(condition.evaluate(&ctx));
+        ctx.defender_ship_type = ShipType::Battleship;
+        assert!(!condition.evaluate(&ctx));
+        ctx.defender_ship_type = ShipType::Armada;
+        ctx.defender_hull_faction_id = 99;
+        assert!(!condition.evaluate(&ctx));
+        for owner in [None, Some("realta"), Some("monaveen")] {
+            assert!(
+                combat_start_apex_seats_for_imported_buffs(&imported, owner, false, 100).is_empty()
+            );
+        }
+        assert!(
+            combat_start_apex_seats_for_imported_buffs(&imported, Some("stella"), true, 100)
+                .is_empty()
+        );
+        for level in [0, -1, 100] {
+            assert!(combat_start_apex_seats_for_imported_buffs(
+                &[entry(3_061_559_261, level, None)],
+                Some("stella"),
+                false,
+                100
+            )
+            .is_empty());
+        }
+        assert!(combat_start_apex_seats_for_imported_buffs(
+            &[entry(3_061_559_261, 1, Some(100))],
+            Some("stella"),
+            false,
+            100
+        )
+        .is_empty());
+        assert!(
+            bonuses_for_imported_buffs(&imported, Some("battleship"), 100).is_empty(),
+            "Apex must not also enter launch pools"
+        );
+    }
+
+    #[test]
+    fn exact_stella_archive_apex_rejects_changed_predicates_hash_rank_or_units() {
+        let base = embedded_catalog().buffs[&3_061_559_261].clone();
+        let mut mutants = vec![base.clone(); 14];
+        mutants[0].sha256 = "unverified".into();
+        mutants[1].condition_codes = vec![129, 150];
+        mutants[2].faction_id = 99;
+        mutants[3].attribute_fields = vec![];
+        mutants[4].num_rounds = 1;
+        mutants[5].unknown_fields = vec![99];
+        mutants[6].operation_code = 3;
+        mutants[7].target_code = 2;
+        mutants[8].trigger_code = 24;
+        mutants[9].ranked_value_type = 1;
+        mutants[10].ranked_chances = vec![0.5];
+        mutants[11].ranked_values = vec![0.1];
+        mutants[12].ranked_value_count = 98;
+        mutants[13].ranked_chance_count = 98;
+        for row in mutants {
+            let c = catalog(vec![(3_061_559_261, row)]);
+            assert!(combat_start_apex_seats_from_catalog(
+                &c,
+                &[entry(3_061_559_261, 1, None)],
+                Some("stella"),
+                false,
+                100
+            )
+            .is_empty());
+        }
+        let c = catalog(vec![(999, base)]);
+        assert!(combat_start_apex_seats_from_catalog(
+            &c,
+            &[entry(999, 1, None)],
+            Some("stella"),
+            false,
+            100
+        )
+        .is_empty());
+        for bid in [1_369_297_542, 143_261_594, 313_675_470, 1_434_397_842] {
+            assert!(
+                combat_start_apex_seats_for_imported_buffs(
+                    &[entry(bid, 1, None)],
+                    Some("stella"),
+                    false,
+                    100
+                )
+                .is_empty(),
+                "other source identities do not inherit this exact binding"
+            );
+        }
+    }
+
+    #[test]
+    fn global_launch_piercing_maps_fractional_axes_without_damage_through_pierce() {
+        let rows = [(6, 0.1), (7, 0.2), (8, 0.3), (74, 0.5)]
+            .into_iter()
+            .map(|(code, value)| {
+                let mut row = spec();
+                row.modifier_code = code;
+                row.ranked_values = vec![value];
+                (code, row)
+            })
+            .collect();
+        let c = catalog(rows);
+        let imported: Vec<_> = [6, 7, 8, 74]
+            .into_iter()
+            .map(|id| entry(id, 1, None))
+            .collect();
+        let out = bonuses_from_catalog(&c, &imported, None, 100);
+        assert_eq!(out.len(), 3);
+        assert!((out["accuracy"] - 0.6).abs() < 1e-12);
+        assert!((out["armor_piercing"] - 0.7).abs() < 1e-12);
+        assert!((out["shield_piercing"] - 0.8).abs() < 1e-12);
+        assert!(!out.contains_key("pierce"));
+    }
+
+    #[test]
+    fn global_launch_piercing_preserves_class_grade_rank_and_expiry_gates() {
+        let mut row = spec();
+        row.modifier_code = 74;
+        row.condition_codes = vec![0];
+        let mut graded = row.clone();
+        graded.condition_codes = vec![123];
+        let c = catalog(vec![(1, row), (2, graded)]);
+        let imported = [entry(1, 1, None), entry(1, 2, None), entry(1, 3, Some(100))];
+        for class in [None, Some("battleship"), Some("unknown")] {
+            assert!(bonuses_from_catalog(&c, &imported, class, 100).is_empty());
+        }
+        let out = bonuses_from_catalog(&c, &imported, Some("explorer"), 100);
+        assert_eq!(
+            out["accuracy"], 5.0,
+            "highest live one-based rank is applied once"
+        );
+        assert!(
+            bonuses_from_catalog(&c, &[entry(1, 2, Some(100))], Some("explorer"), 100).is_empty()
+        );
+        for grade in [None, Some(3)] {
+            assert!(bonuses_from_catalog_for_ship(
+                &c,
+                116,
+                &[entry(2, 2, None)],
+                None,
+                None,
+                grade,
+                100
+            )
+            .is_empty());
+        }
+        let out =
+            bonuses_from_catalog_for_ship(&c, 116, &[entry(2, 2, None)], None, None, Some(4), 100);
+        assert_eq!(out["shield_piercing"], 5.0);
+        assert!(
+            bonuses_from_catalog(&c, &[entry(2, 2, None)], None, 100).is_empty(),
+            "unknown grade cannot turn a minimum-grade source into an unconditional buff"
+        );
+    }
+
+    #[test]
+    fn global_launch_piercing_rejects_combat_start_and_unverified_native_facts() {
+        let mut base = spec();
+        base.modifier_code = 74;
+        let mut rows = vec![base.clone(); 9];
+        rows[0].operation_code = 1;
+        rows[1].trigger_code = 25;
+        rows[2].target_code = 5;
+        rows[3].num_rounds = 2;
+        rows[4].condition_codes = vec![27, 131];
+        rows[5].condition_codes = vec![999];
+        rows[6].attribute_fields = vec![8];
+        rows[7].unknown_fields = vec![99];
+        rows[8].ranked_chances = vec![0.5];
+        let c = catalog(
+            rows.into_iter()
+                .enumerate()
+                .map(|(i, row)| (i as i64 + 1, row))
+                .collect(),
+        );
+        let imported: Vec<_> = (1..=9).map(|id| entry(id, 1, None)).collect();
+        assert!(bonuses_from_catalog(&c, &imported, Some("explorer"), 100).is_empty());
+    }
+
+    #[test]
+    fn embedded_global_piercing_keeps_six_launch_sources_and_nine_combat_start_rows_separate() {
+        let launch = [
+            609129565, 675636702, 1085339663, 1333781883, 2259348690, 3809461333,
+        ];
+        let imported: Vec<_> = launch.into_iter().map(|id| entry(id, 61, None)).collect();
+        let out = bonuses_for_imported_buffs(&imported, Some("explorer"), 100);
+        for axis in ["accuracy", "armor_piercing", "shield_piercing"] {
+            assert!((out[axis] - 6.4).abs() < 1e-12);
+        }
+        assert_eq!(out.len(), 3);
+        let combat_start = [
+            1277497908, 1404701608, 1610041024, 2363932725, 2886123067, 3504434200, 3714771770,
+            3885426739, 3888142903,
+        ];
+        let imported: Vec<_> = combat_start
+            .into_iter()
+            .map(|id| entry(id, 1, None))
+            .collect();
+        assert!(bonuses_for_imported_buffs(&imported, Some("explorer"), 100).is_empty());
+    }
+
+    #[test]
     fn officer_axis_and_all_stats_compose_across_native_source_groups() {
         for group in [66, 68, 116] {
             let mut defense = spec();
@@ -814,6 +1481,135 @@ mod tests {
             quarantined_officer_stat_warning(&[entry(3988908241, 1, Some(100))], 100).is_none()
         );
         assert!(quarantined_officer_stat_warning(&[entry(476178618, 3, None)], 100).is_none());
+    }
+
+    #[test]
+    fn account_combat_warning_is_bounded_deduplicated_and_excludes_supported_effects() {
+        let active = [
+            entry(831_877_216, 1, None),
+            entry(831_877_216, 61, None),
+            entry(2_118_637_918, 61, None),
+            entry(1_369_297_542, 61, None),
+            entry(313_675_470, 61, None),
+            entry(1_464_566_611, 61, None),
+            entry(4_041_662_025, 61, None),
+            entry(3_061_559_261, 99, None),
+        ];
+        let warning = quarantined_account_combat_warning(&active, 100).unwrap();
+        assert!(warning.starts_with("6 active account combat buff(s)"));
+        assert!(warning.contains("313675470, 831877216, 1369297542, 1464566611"));
+        assert!(!warning.contains("2118637918"), "show at most four IDs");
+        assert!(
+            !warning.contains("3061559261"),
+            "exact supported Stella source"
+        );
+        assert!(warning.contains("flat-damage insertion order"));
+        for imported in [
+            vec![entry(831_877_216, 1, Some(100))],
+            vec![entry(831_877_216, 0, None)],
+            vec![entry(3_061_559_261, 99, None)],
+            vec![entry(1_404_701_608, 61, None)],
+            vec![entry(1_333_781_883, 61, None)],
+            vec![entry(476_178_618, 3, None)],
+            vec![entry(1, 1, None)],
+        ] {
+            assert!(quarantined_account_combat_warning(&imported, 100).is_none());
+        }
+        assert!(
+            quarantined_account_combat_warning(&[entry(1_157_216_071, 61, None)], 100).is_some(),
+            "other Apex sources remain quarantined"
+        );
+        assert!(
+            quarantined_account_combat_warning(&[entry(3_061_559_261, 100, None)], 100).is_some(),
+            "a rank beyond the exact supported source remains unsupported"
+        );
+    }
+
+    #[test]
+    fn monaveen_archive_apex_sums_owned_milestones_as_conditional_raw_points() {
+        const KEY: &str = "apex_barrier_vs_player_tal_not_on_bridge";
+        let all: Vec<_> = MONAVEEN_ARCHIVE_APEX_SOURCES
+            .iter()
+            .map(|&(id, _, _)| entry(id, 61, None))
+            .collect();
+        let total = conditional_apex_bonuses_for_imported_buffs(&all, 100);
+        assert_eq!(total.len(), 1);
+        assert_eq!(total[KEY], 1500.0);
+        assert!(quarantined_account_combat_warning(&all, 100).is_none());
+        assert!(
+            bonuses_for_imported_buffs(&all, Some("explorer"), 100).is_empty(),
+            "conditional Apex never enters unconditional launch pools"
+        );
+        let partial = [
+            entry(2_199_227_326, 1, None),
+            entry(2_956_393_975, 99, None),
+        ];
+        assert_eq!(
+            conditional_apex_bonuses_for_imported_buffs(&partial, 100)[KEY],
+            300.0
+        );
+        let duplicated = [
+            entry(2_199_227_326, 1, None),
+            entry(2_199_227_326, 61, None),
+            entry(2_199_227_326, 99, Some(100)),
+            entry(2_956_393_975, 99, Some(100)),
+        ];
+        assert_eq!(
+            conditional_apex_bonuses_for_imported_buffs(&duplicated, 100)[KEY],
+            50.0
+        );
+        for rank in [-1, 0, 100] {
+            assert!(conditional_apex_bonuses_for_imported_buffs(
+                &[entry(2_199_227_326, rank, None)],
+                100
+            )
+            .is_empty());
+        }
+        for id in [
+            1_369_297_542,
+            313_675_470,
+            143_261_594,
+            249_883_926,
+            3_061_559_261,
+        ] {
+            assert!(
+                conditional_apex_bonuses_for_imported_buffs(&[entry(id, 61, None)], 100).is_empty(),
+                "Syndicate, consumables and other archive families remain separate"
+            );
+        }
+    }
+
+    #[test]
+    fn monaveen_archive_apex_rejects_changed_hash_units_or_predicates() {
+        let bid = 2_199_227_326;
+        let base = embedded_catalog().buffs[&bid].clone();
+        let mut mutants = vec![base.clone(); 15];
+        mutants[0].sha256 = "unverified".into();
+        mutants[1].modifier_code = 73;
+        mutants[2].operation_code = 3;
+        mutants[3].target_code = 5;
+        mutants[4].trigger_code = 24;
+        mutants[5].condition_codes = vec![28, 137];
+        mutants[6].condition_codes = vec![28, 137, 246, 17];
+        mutants[7].attribute_fields = vec![8];
+        mutants[8].unknown_fields = vec![99];
+        mutants[9].num_rounds = 1;
+        mutants[10].ranked_value_type = 1;
+        mutants[11].ranked_values = vec![0.5];
+        mutants[12].ranked_value_count = 100;
+        mutants[13].ranked_chances = vec![0.5];
+        mutants[14].ranked_chance_count = 100;
+        for row in mutants {
+            let c = catalog(vec![(bid, row)]);
+            assert!(
+                conditional_apex_bonuses_from_catalog(&c, &[entry(bid, 61, None)], 100).is_empty()
+            );
+        }
+        let unknown = catalog(vec![(1, base)]);
+        assert!(
+            conditional_apex_bonuses_from_catalog(&unknown, &[entry(1, 61, None)], 100).is_empty(),
+            "matching-looking unknown IDs cannot inherit exact source support"
+        );
     }
 
     fn combat_context() -> CombatContext {
@@ -1389,7 +2185,11 @@ mod tests {
         let c = embedded_catalog();
         assert_eq!(c.source_group, 116);
         // Original 285 definitions plus 56 newly inventoried officer-stat sources.
-        assert_eq!(c.buffs.len(), 341);
+        // The original 341 definitions are unchanged; the same frozen cache adds
+        // fifteen ModAllPiercing74 rows and thirty-three inventoried Apex rows.
+        // Apex inventory does not imply generic eligibility: only the exact
+        // source-bound first Stella milestone has an admitted conditional seat.
+        assert_eq!(c.buffs.len(), 389);
         assert_eq!(
             c.buffs
                 .values()

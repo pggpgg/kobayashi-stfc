@@ -1,9 +1,8 @@
-//! Syndicate reputation combat bonuses: resolve (syndicate_level, ops_level) to cumulative
-//! engine stat bonuses. Uses Section > Subsection > Bracket labels from the imported sheet.
+//! Compatibility calculator for explicitly imported legacy spreadsheet columns.
 //!
-//! **Source of truth:** The mapping from spreadsheet columns to engine stat keys must match
-//! the **"Syndicate bonuses Descriptions"** sheet in the Syndicate Progression workbook.
-//! Each column maps to exactly one engine stat to avoid double-counting or wrong conflations.
+//! This is not a native Syndicate coverage catalog and is not merged into runtime
+//! profiles. The bundled two-level sample lacks the expected column/band labels.
+//! Use [`crate::data::syndicate_rewards`] for native reward provenance and CLI reports.
 //!
 //! | Sheet column (section)           | Engine key              |
 //! |---------------------------------|-------------------------|
@@ -12,17 +11,14 @@
 //! | Officer_Stats > Officer_Health | officer_health          |
 //! | Ship_Stats > HHP (Hull Health) | hull_hp                 |
 //! | Ship_Stats > SHP (Shield Health)| shield_hp               |
-//! | Ship_Stats > Piercing           | armor_piercing, shield_piercing |
-//! | Ship_Stats > Mitigation        | shield_mitigation       |
+//! | Ship_Stats > Piercing           | accuracy, armor_piercing, shield_piercing |
+//! | Ship_Stats > Mitigation        | armor, shield_deflection, dodge |
 //! | Combat > Damage (main)         | weapon_damage           |
 //! | Combat > Defense_Platform_Damage| defense_platform_damage |
 //! | Combat > Damage_to_Stations    | damage_to_stations      |
 //!
-//! **Profile merge:** `officer_attack` / `officer_defense` / `officer_health` are stored as their own
-//! keys in [`crate::data::profile::PlayerProfile::bonuses`] (not aliased onto ship `weapon_damage` /
-//! `shield_mitigation` / `hull_hp`). [`crate::data::profile::apply_profile_to_attacker`] compounds
-//! officer buckets with ship-level bonuses (multiply attack and hull health; add `officer_defense`
-//! into shield mitigation alongside `shield_mitigation`).
+//! These text mappings do not establish unknown conditions or units. Officer
+//! stats, ship defense stats and raw mitigation are separate quantities.
 
 use std::collections::HashMap;
 
@@ -56,10 +52,10 @@ fn syndicate_stat_to_engine_keys(stat: &str) -> Option<&'static [&'static str]> 
         return Some(&["officer_health"]);
     }
     if s.contains("Ship_Stats_>_Piercing") {
-        return Some(&["armor_piercing", "shield_piercing"]);
+        return Some(&["accuracy", "armor_piercing", "shield_piercing"]);
     }
     if s.contains("Ship_Stats_>_Mitigation") {
-        return Some(&["shield_mitigation"]);
+        return Some(&["armor", "shield_deflection", "dodge"]);
     }
     if s.contains("Ship_Stats_>_HHP_") || s.contains("HHP_(Hull_Health_Points)") {
         return Some(&["hull_hp"]);
@@ -99,7 +95,7 @@ fn syndicate_stat_to_engine_keys(stat: &str) -> Option<&'static [&'static str]> 
     None
 }
 
-/// Returns cumulative combat stat bonuses from syndicate reputation for the given levels.
+/// Calculate legacy imported columns, not actual native account coverage.
 /// - `syndicate_level`: max syndicate level (levels 1..=syndicate_level are summed).
 /// - `ops_level`: player operations level; used to select the bracket (10-19, ..., 51-60, 61-70).
 ///
@@ -209,7 +205,10 @@ mod tests {
         let out = cumulative_combat_bonuses(&data, 1, 40);
         assert_eq!(out.get("officer_attack"), Some(&0.10));
         assert_eq!(out.get("officer_defense"), Some(&0.02));
-        assert_eq!(out.get("shield_mitigation"), Some(&0.05));
+        assert_eq!(out.get("armor"), Some(&0.05));
+        assert_eq!(out.get("shield_deflection"), Some(&0.05));
+        assert_eq!(out.get("dodge"), Some(&0.05));
+        assert!(!out.contains_key("shield_mitigation"));
         assert_eq!(out.get("weapon_damage"), Some(&0.20));
         assert_eq!(out.get("defense_platform_damage"), Some(&0.30));
         assert_eq!(out.get("damage_to_stations"), Some(&0.40));
@@ -254,5 +253,26 @@ mod tests {
             (actual - expected).abs() < 1e-12,
             "expected weapon_damage {expected}, got {actual}"
         );
+    }
+
+    #[test]
+    fn legacy_piercing_column_preserves_all_three_base_stats() {
+        let data = SyndicateReputationList {
+            source: None,
+            last_updated: None,
+            levels: vec![SyndicateLevelEntry {
+                level: 4,
+                bonuses: vec![SyndicateBonusEntry {
+                    stat: "40-50_Ship_Stats_>_Piercing".into(),
+                    value: 0.15,
+                    operator: "add".into(),
+                }],
+            }],
+        };
+        let out = cumulative_combat_bonuses(&data, 4, 45);
+        assert_eq!(out.len(), 3);
+        for key in ["accuracy", "armor_piercing", "shield_piercing"] {
+            assert_eq!(out.get(key), Some(&0.15));
+        }
     }
 }

@@ -4,26 +4,40 @@
 buffs from static native group 116, `ConsumableBuffs`. This group contains permanent
 account bonuses as well as timed boosts; its name does not imply a temporary item.
 
-The source catalog is `data/native_consumable_buff_catalog.json`. Its 285 selected
-BuffSpecs cover HP, weapon damage, critical, isolytic and launch defense stats. Of these, 114 support the
-current deterministic setup contract: 28 hull, 31 shield, 22 weapon, five
-additive critical-damage, 12 isolytic-damage, ten isolytic-defense and six
-all-defense definitions.
-The remaining 171 are quarantined by the setup compiler: 167 have
-unsupported conditions, three have unsupported targets, and one has a chance
-that is not always one. Research (66), building (68) and forbidden-tech (141)
+The source catalog is `data/native_consumable_buff_catalog.json`. Its 389 selected
+BuffSpecs preserve HP, weapon damage, critical, isolytic, defense, officer,
+piercing and Apex definitions. Inventory does not mean runtime support: unknown
+conditions, targets, timing and chance remain quarantined. The setup compiler
+accepts 176 reviewed definitions, including six Syndicate launch-piercing rewards.
+Research (66), building (68) and forbidden-tech (141)
 IDs are explicitly excluded during extraction so they cannot enter both their
 existing profile path and this global-buff path.
 
 The CombatStart compiler also accepts 21 offensive definitions with the exact
 NPC/non-Armada predicates 27/131: nine modifier-2 MULT weapon bonuses and twelve
-modifier-10 ADD critical bonuses. These remain outside the 114 setup definitions.
+modifier-10 ADD critical bonuses. These remain outside the setup definitions.
 Only active, nonexpired imported IDs contribute, at their current ranks. The
 weapon additions share the base percentage pool. Critical additions enter the
 base critical factor before timed critical multipliers. They are unboostable
 ship seats and do not receive officer-only Assimilation scaling. Armada and PvP
 contexts exclude them. This extends the reviewed predicate/compiler coverage;
 it does not prove that all 21 definitions are active in a particular account.
+
+A separate scenario compiler accepts nine modifier-74 MULT piercing definitions
+with the exact same NPC/non-Armada conditions. Their unlimited duration and fixed
+opponent domain allow compilation into the in-memory combat profile after the
+opponent is resolved. These fractions add to the existing accuracy, armor-piercing
+and shield-piercing pools before raw aggregate and per-weapon stats are calculated.
+They never enter launch membership, saved profiles, or damage-through `pierce`.
+Missing hostile records, Armada targets and player opponents exclude them.
+
+The exact first Stella Archive Apex reward is separately bound to its source
+hash, owning hull and Eclipse Armada opponent. Twelve exact Monaveen milestones
+add raw Apex points to a conditional PvP pool. Each player's own crew controls
+the native Tal exclusion; Tal below decks does not trigger that exclusion.
+Other inventoried Apex rows remain unsupported. Active unsupported account effects produce API warnings. See
+[the account bonus audit](ACCOUNT_COMBAT_BONUSES.md) for source comparisons,
+the controlled NX-01 upgrade and remaining limitations.
 
 The setup compiler accepts only self-targeting scalar buffs at launch or combat start,
 without attributes or unknown fields, and with no predicate or one verified

@@ -1057,9 +1057,7 @@ pub fn simulate_payload(
         warnings.push(message);
     }
     if let Some(message) =
-        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-            profile_id,
-        )
+        crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(profile_id)
     {
         warnings.push(message);
     }
@@ -1075,9 +1073,7 @@ pub fn simulate_payload(
             warnings.push(format!("Defender: {message}"));
         }
         if let Some(message) =
-            crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-                Some(id),
-            )
+            crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(Some(id))
         {
             warnings.push(format!("Defender: {message}"));
         }
@@ -1360,9 +1356,7 @@ pub fn compare_crews_payload(
         warnings.push(message);
     }
     if let Some(message) =
-        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-            profile_id,
-        )
+        crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(profile_id)
     {
         warnings.push(message);
     }
@@ -1378,9 +1372,7 @@ pub fn compare_crews_payload(
             warnings.push(format!("Defender: {message}"));
         }
         if let Some(message) =
-            crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-                Some(id),
-            )
+            crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(Some(id))
         {
             warnings.push(format!("Defender: {message}"));
         }
@@ -1831,9 +1823,7 @@ pub fn replay_optimize_seed_payload(
         warnings.push(message);
     }
     if let Some(message) =
-        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
-            profile_id,
-        )
+        crate::data::native_consumable_buffs::quarantined_combat_warning_for_profile(profile_id)
     {
         warnings.push(message);
     }
