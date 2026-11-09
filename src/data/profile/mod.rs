@@ -561,6 +561,14 @@ pub(crate) fn normalize_profile_combat_stat(stat: &str) -> Option<&'static str> 
         "officer_attack" => Some("officer_attack"),
         "officer_defense" => Some("officer_defense"),
         "officer_defense_below_decks" => Some("officer_defense_below_decks"),
+        "officer_attack_below_decks" => Some("officer_attack_below_decks"),
+        "officer_health_below_decks" => Some("officer_health_below_decks"),
+        "officer_attack_captain" => Some("officer_attack_captain"),
+        "officer_attack_bridge" => Some("officer_attack_bridge"),
+        "officer_defense_captain" => Some("officer_defense_captain"),
+        "officer_defense_bridge" => Some("officer_defense_bridge"),
+        "officer_health_captain" => Some("officer_health_captain"),
+        "officer_health_bridge" => Some("officer_health_bridge"),
         "officer_health" => Some("officer_health"),
         "weapon_damage" => Some("weapon_damage"),
         "hull_hp" => Some("hull_hp"),
@@ -701,6 +709,18 @@ pub fn merge_building_bonuses_with_native_snapshot(
                     | "armor"
                     | "shield_deflection"
                     | "dodge"
+                    | "officer_attack"
+                    | "officer_defense"
+                    | "officer_health"
+                    | "officer_defense_below_decks"
+                    | "officer_attack_below_decks"
+                    | "officer_health_below_decks"
+                    | "officer_attack_captain"
+                    | "officer_defense_captain"
+                    | "officer_health_captain"
+                    | "officer_attack_bridge"
+                    | "officer_defense_bridge"
+                    | "officer_health_bridge"
             )
         });
         for (stat, value) in native {
@@ -1235,6 +1255,14 @@ pub fn replace_research_setup_bonuses_with_native_snapshot(
                 | "officer_defense"
                 | "officer_health"
                 | "officer_defense_below_decks"
+                | "officer_attack_below_decks"
+                | "officer_health_below_decks"
+                | "officer_attack_captain"
+                | "officer_attack_bridge"
+                | "officer_defense_captain"
+                | "officer_defense_bridge"
+                | "officer_health_captain"
+                | "officer_health_bridge"
                 | "armor"
                 | "shield_deflection"
                 | "dodge"
@@ -1982,6 +2010,161 @@ fn axis_rating_from_parts(
         + below_raw * (1.0 + profile_mult + crew_mult + below_only_mult)
 }
 
+/// An officer's effective stats before ship breakpoint lookup. Display rounding is
+/// a diagnostic estimate; it is not a recovered server combat rounding rule.
+#[derive(Debug, Clone)]
+pub struct EvaluatedOfficerStatRow {
+    pub officer: crate::lcars::resolver::CrewedOfficerStats,
+    pub effective: crate::combat::CrewOfficerStatTotals,
+    pub displayed_estimate: crate::combat::CrewOfficerStatTotals,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct EvaluatedOfficerStats {
+    pub rows: Vec<EvaluatedOfficerStatRow>,
+    pub effective_totals: crate::combat::CrewOfficerStatTotals,
+    pub displayed_totals: crate::combat::CrewOfficerStatTotals,
+}
+
+/// Apply reviewed profile seat pools to raw officer stats. Captain also receives
+/// bridge pools. This does not interpret pending/dynamic LCARS conditions or Tom's
+/// unsupported combat effect. Production breakpoint lookup uses unrounded totals.
+pub fn evaluate_officer_stats(
+    rows: &[crate::lcars::resolver::CrewedOfficerStats],
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+) -> EvaluatedOfficerStats {
+    evaluate_officer_stats_with_mults(
+        rows,
+        profile,
+        owner_faction_slug,
+        &OfficerStatAxisMults {
+            crew_wide_attack: static_buffs.get("officer_attack").copied().unwrap_or(0.0)
+                + static_buffs.get("officer_stat_all").copied().unwrap_or(0.0),
+            crew_wide_defense: static_buffs.get("officer_defense").copied().unwrap_or(0.0)
+                + static_buffs.get("officer_stat_all").copied().unwrap_or(0.0),
+            crew_wide_health: static_buffs.get("officer_health").copied().unwrap_or(0.0)
+                + static_buffs.get("officer_stat_all").copied().unwrap_or(0.0),
+            ..OfficerStatAxisMults::default()
+        },
+    )
+}
+
+fn evaluate_officer_stats_with_mults(
+    rows: &[crate::lcars::resolver::CrewedOfficerStats],
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    mults: &OfficerStatAxisMults,
+) -> EvaluatedOfficerStats {
+    let lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
+    let mut result = EvaluatedOfficerStats::default();
+    let mut seen = std::collections::HashSet::new();
+    for officer in rows {
+        if !seen.insert(&officer.officer_id) {
+            continue;
+        }
+        let effective = effective_officer_stat_row(officer, &lookup, mults);
+        let displayed_estimate = crate::combat::CrewOfficerStatTotals {
+            attack: effective.attack.round(),
+            defense: effective.defense.round(),
+            health: effective.health.round(),
+        };
+        result.effective_totals.attack += effective.attack;
+        result.effective_totals.defense += effective.defense;
+        result.effective_totals.health += effective.health;
+        result.displayed_totals.attack += displayed_estimate.attack;
+        result.displayed_totals.defense += displayed_estimate.defense;
+        result.displayed_totals.health += displayed_estimate.health;
+        result.rows.push(EvaluatedOfficerStatRow {
+            officer: officer.clone(),
+            effective,
+            displayed_estimate,
+        });
+    }
+    result
+}
+
+fn effective_officer_stat_row(
+    officer: &crate::lcars::resolver::CrewedOfficerStats,
+    lookup: &ProfileBonusLookup<'_>,
+    mults: &OfficerStatAxisMults,
+) -> crate::combat::CrewOfficerStatTotals {
+    use crate::lcars::resolver::OfficerStatSeat;
+    let bridge = officer.seat != OfficerStatSeat::BelowDecks;
+    let rating = |raw, keys: [&str; 4], crew, bridge_only| {
+        let mut bonus = lookup.get(keys[0]) + crew;
+        if bridge {
+            bonus += lookup.get(keys[2]) + bridge_only;
+        } else {
+            bonus += lookup.get(keys[3]);
+        }
+        if officer.seat == OfficerStatSeat::Captain {
+            bonus += lookup.get(keys[1]);
+        }
+        raw * (1.0 + bonus)
+    };
+    crate::combat::CrewOfficerStatTotals {
+        attack: rating(
+            officer.raw.attack,
+            [
+                "officer_attack",
+                "officer_attack_captain",
+                "officer_attack_bridge",
+                "officer_attack_below_decks",
+            ],
+            mults.crew_wide_attack,
+            mults.bridge_only_attack,
+        ),
+        defense: rating(
+            officer.raw.defense,
+            [
+                "officer_defense",
+                "officer_defense_captain",
+                "officer_defense_bridge",
+                "officer_defense_below_decks",
+            ],
+            mults.crew_wide_defense,
+            mults.bridge_only_defense,
+        ),
+        health: rating(
+            officer.raw.health,
+            [
+                "officer_health",
+                "officer_health_captain",
+                "officer_health_bridge",
+                "officer_health_below_decks",
+            ],
+            mults.crew_wide_health,
+            mults.bridge_only_health,
+        ),
+    }
+}
+
+// The round path sums borrowed rows without materializing diagnostic display rows.
+fn effective_officer_stat_totals(
+    rows: &[crate::lcars::resolver::CrewedOfficerStats],
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    mults: &OfficerStatAxisMults,
+) -> crate::combat::CrewOfficerStatTotals {
+    let lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
+    let mut totals = crate::combat::CrewOfficerStatTotals::default();
+    for (i, row) in rows.iter().enumerate() {
+        if rows[..i]
+            .iter()
+            .any(|prior| prior.officer_id == row.officer_id)
+        {
+            continue;
+        }
+        let effective = effective_officer_stat_row(row, &lookup, mults);
+        totals.attack += effective.attack;
+        totals.defense += effective.defense;
+        totals.health += effective.health;
+    }
+    totals
+}
+
 /// Effective Health of all crewed officers at combat setup. This is distinct
 /// from the ship's breakpoint bonus and remains available when no breakpoint
 /// table exists. LCARS officer-stat sources can be scoped to individual seats;
@@ -1991,6 +2174,7 @@ fn axis_rating_from_parts(
 pub(crate) fn effective_crew_health_at_combat_start(
     totals: crate::combat::CrewOfficerStatTotals,
     bridge_totals: crate::combat::CrewOfficerStatTotals,
+    officer_rows: &[crate::lcars::resolver::CrewedOfficerStats],
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
     static_buffs: &HashMap<String, f64>,
@@ -2026,7 +2210,20 @@ pub(crate) fn effective_crew_health_at_combat_start(
     }
     let below = (totals.health - bridge_totals.health).max(0.0);
     let profile_health = ProfileBonusLookup::new(profile, owner_faction_slug).get("officer_health");
-    let health = axis_rating_from_parts(bridge_totals.health, below, profile_health, 0.0, 0.0, 0.0);
+    let health = if officer_rows.is_empty() {
+        axis_rating_from_parts(
+            bridge_totals.health,
+            below,
+            profile_health,
+            0.0,
+            0.0,
+            ProfileBonusLookup::new(profile, owner_faction_slug).get("officer_health_below_decks"),
+        )
+    } else {
+        evaluate_officer_stats(officer_rows, profile, owner_faction_slug, static_buffs)
+            .effective_totals
+            .health
+    };
     health.is_finite().then_some(health)
 }
 
@@ -2068,6 +2265,37 @@ pub fn compute_officer_stat_runtime_bonus(
     )
 }
 
+/// Seat-aware setup path. Aggregate-only callers retain the legacy wrapper;
+/// resolved crews supply rows so captain, bridge and below-decks pools stay distinct.
+#[allow(clippy::too_many_arguments)]
+pub fn compute_officer_stat_runtime_bonus_with_officers(
+    totals: crate::combat::CrewOfficerStatTotals,
+    bridge_totals: crate::combat::CrewOfficerStatTotals,
+    officer_rows: &[crate::lcars::resolver::CrewedOfficerStats],
+    ship: &crate::data::ship::ShipRecord,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+    self_pending_contributions: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
+    opponent_enemy_target_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+) -> OfficerStatRuntimeBonus {
+    compute_officer_stat_runtime_bonus_from_parts(
+        totals,
+        bridge_totals,
+        (!officer_rows.is_empty()).then_some(officer_rows),
+        ship.into(),
+        profile,
+        owner_faction_slug,
+        static_buffs,
+        self_pending_contributions,
+        cond_ctx,
+        opponent_enemy_target_pending,
+        std::iter::empty(),
+        std::iter::empty(),
+    )
+}
+
 /// Full officer-stat runtime path including Phase 4d per-round active rows.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
@@ -2087,6 +2315,7 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
     compute_officer_stat_runtime_bonus_from_parts(
         totals,
         bridge_totals,
+        None,
         ship.into(),
         profile,
         owner_faction_slug,
@@ -2109,6 +2338,7 @@ pub(crate) fn compute_officer_stat_runtime_bonus_with_round(
 pub(crate) fn compute_officer_stat_runtime_bonus_from_parts<'a>(
     totals: crate::combat::CrewOfficerStatTotals,
     bridge_totals: crate::combat::CrewOfficerStatTotals,
+    officer_rows: Option<&[crate::lcars::resolver::CrewedOfficerStats]>,
     ship: OfficerStatShipView<'_>,
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
@@ -2186,6 +2416,12 @@ pub(crate) fn compute_officer_stat_runtime_bonus_from_parts<'a>(
         0.0,
     );
 
+    let (attack_rating, defense_rating, health_rating) = if let Some(rows) = officer_rows {
+        let effective = effective_officer_stat_totals(rows, profile, owner_faction_slug, &mults);
+        (effective.attack, effective.defense, effective.health)
+    } else {
+        (attack_rating, defense_rating, health_rating)
+    };
     let attack_bonus = ship.officer_bonus.attack_bonus(attack_rating);
     let defense_bonus = ship.officer_bonus.defense_bonus(defense_rating);
     let health_bonus = ship.officer_bonus.health_bonus(health_rating);
@@ -2359,6 +2595,204 @@ mod tests {
 
     use super::*;
 
+    fn scoped_test_officers(raw: f64) -> Vec<crate::lcars::resolver::CrewedOfficerStats> {
+        use crate::lcars::resolver::{CrewedOfficerStats, OfficerStatSeat};
+        [
+            OfficerStatSeat::Captain,
+            OfficerStatSeat::Bridge,
+            OfficerStatSeat::BelowDecks,
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(i, seat)| CrewedOfficerStats {
+            officer_id: format!("officer-{i}"),
+            rank: Some(1),
+            level: 1,
+            seat,
+            raw: crate::combat::CrewOfficerStatTotals {
+                attack: raw,
+                defense: raw,
+                health: raw,
+            },
+        })
+        .collect()
+    }
+
+    #[test]
+    fn scoped_officer_pools_include_captain_in_bridge_and_keep_axes_separate() {
+        let mut profile = PlayerProfile::default();
+        for (axis, factor) in [("attack", 1.0), ("defense", 2.0), ("health", 3.0)] {
+            for (suffix, bonus) in [
+                ("", 0.1),
+                ("_captain", 0.2),
+                ("_bridge", 0.3),
+                ("_below_decks", 0.4),
+            ] {
+                let key = format!("officer_{axis}{suffix}");
+                assert!(normalize_profile_combat_stat(&key).is_some());
+                profile.bonuses.insert(key, bonus * factor);
+            }
+        }
+        let mut rows = scoped_test_officers(10.0);
+        // Duplicate identity cannot add another seat's stats.
+        let mut duplicate = rows[0].clone();
+        duplicate.seat = crate::lcars::resolver::OfficerStatSeat::BelowDecks;
+        rows.push(duplicate);
+        let evaluated = evaluate_officer_stats(&rows, &profile, None, &HashMap::new());
+        assert_eq!(evaluated.rows.len(), 3);
+        assert!((evaluated.effective_totals.attack - 45.0).abs() < 1e-9);
+        assert!((evaluated.effective_totals.defense - 60.0).abs() < 1e-9);
+        assert!((evaluated.effective_totals.health - 75.0).abs() < 1e-9);
+        assert!((evaluated.rows[0].effective.attack - 16.0).abs() < 1e-9);
+        assert!((evaluated.rows[1].effective.attack - 14.0).abs() < 1e-9);
+        assert!((evaluated.rows[2].effective.attack - 15.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn scoped_officer_display_estimates_do_not_round_breakpoint_inputs() {
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+        let rows = scoped_test_officers(1.0);
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([("officer_attack".into(), 0.24)]),
+            ..Default::default()
+        };
+        let evaluated = evaluate_officer_stats(&rows, &profile, None, &HashMap::new());
+        assert!((evaluated.effective_totals.attack - 3.72).abs() < 1e-9);
+        assert_eq!(evaluated.displayed_totals.attack, 3.0);
+        let ship = ShipRecord {
+            officer_bonus: OfficerBonusTable {
+                attack: vec![OfficerBonusBreakpoint {
+                    value: 3.5,
+                    bonus: 0.5,
+                }],
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let runtime = compute_officer_stat_runtime_bonus_with_officers(
+            Default::default(),
+            Default::default(),
+            &rows,
+            &ship,
+            &profile,
+            None,
+            &HashMap::new(),
+            &[],
+            &OfficerStatConditionContext::default(),
+            &[],
+        );
+        assert_eq!(runtime.attack_bonus, 0.5);
+    }
+
+    #[test]
+    fn scoped_officer_runtime_health_and_enemy_bridge_debuff_preserve_seats() {
+        use crate::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
+        use crate::lcars::resolver::{OfficerStatOpponentScope, PendingOfficerStatContribution};
+        let rows = scoped_test_officers(20.0);
+        let totals = crate::combat::CrewOfficerStatTotals {
+            attack: 60.0,
+            defense: 60.0,
+            health: 60.0,
+        };
+        let bridge = crate::combat::CrewOfficerStatTotals {
+            attack: 40.0,
+            defense: 40.0,
+            health: 40.0,
+        };
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([
+                ("officer_defense_captain".into(), 1.0),
+                ("officer_health_captain".into(), 1.0),
+            ]),
+            ..Default::default()
+        };
+        let ship = ShipRecord {
+            ship_class: "explorer".into(),
+            shield_deflection: 100.0,
+            officer_bonus: OfficerBonusTable {
+                defense: vec![OfficerBonusBreakpoint {
+                    value: 75.0,
+                    bonus: 0.5,
+                }],
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let ctx = OfficerStatConditionContext::default();
+        let static_buffs = HashMap::new();
+        let runtime = compute_officer_stat_runtime_bonus_with_officers(
+            totals,
+            bridge,
+            &rows,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &[],
+            &ctx,
+            &[],
+        );
+        assert_eq!(runtime.defense_shield_deflection_add, 50.0);
+        assert_eq!(
+            effective_crew_health_at_combat_start(
+                totals,
+                bridge,
+                &rows,
+                &profile,
+                None,
+                &static_buffs,
+                &[],
+                &ctx,
+                &[],
+                &[]
+            ),
+            Some(80.0)
+        );
+        let unresolved_health = PendingOfficerStatContribution {
+            stat_key: "officer_health".into(),
+            value: 0.5,
+            target_attacker: true,
+            conditions: vec![],
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+        };
+        assert_eq!(
+            effective_crew_health_at_combat_start(
+                totals,
+                bridge,
+                &rows,
+                &profile,
+                None,
+                &static_buffs,
+                &[unresolved_health],
+                &ctx,
+                &[],
+                &[],
+            ),
+            None,
+            "known profile seat pools must not erase the unsupported LCARS Health scope guard"
+        );
+        let debuff = PendingOfficerStatContribution {
+            stat_key: "officer_defense".into(),
+            value: 0.5,
+            target_attacker: false,
+            conditions: vec![],
+            opponent_scope: OfficerStatOpponentScope::BridgeOfficers,
+        };
+        let debuffed = compute_officer_stat_runtime_bonus_with_officers(
+            totals,
+            bridge,
+            &rows,
+            &ship,
+            &profile,
+            None,
+            &static_buffs,
+            &[],
+            &ctx,
+            &[debuff],
+        );
+        assert_eq!(debuffed.defense_shield_deflection_add, 0.0);
+    }
+
     #[test]
     fn crew_health_uses_profile_and_setup_buffs_and_rejects_unknown_conditions() {
         use crate::combat::{CrewOfficerStatTotals, TimingWindow};
@@ -2393,6 +2827,7 @@ mod tests {
             effective_crew_health_at_combat_start(
                 totals,
                 bridge,
+                &[],
                 &profile,
                 None,
                 &static_buffs,
@@ -2417,6 +2852,7 @@ mod tests {
             effective_crew_health_at_combat_start(
                 totals,
                 bridge,
+                &[],
                 &profile,
                 None,
                 &scoped,

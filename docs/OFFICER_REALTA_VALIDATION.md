@@ -85,7 +85,7 @@ defaulted to AttackPhase. Ranked additive fractions are unchanged. The
 runtime regression establishes Burning before RoundStart, so it verifies
 the phase and gate without asserting unproved same-phase ordering.
 
-Tom's verified BuffSpec now uses raw points added to armor, shield
+An earlier Tom diagnostic used raw points added to armor, shield
 deflection and dodge after each stat's multiplicative pool. It does not
 add a percentage to final mitigation, and its native coefficient is not
 divided by 100. A controlled `420.6` Defense input at rank 4 therefore adds
@@ -94,7 +94,7 @@ does not establish that `420.6` is the game's effective combat input.
 When the required officer stat is missing, the effect is omitted rather
 than using the dimensionless coefficient as a number of defense points.
 
-The correction is restricted to the verified Tom Paris BuffSpec. Other
+That diagnostic was restricted to the Tom Paris BuffSpec. Other
 officer-stat-based all-defense rows retain their existing mapping pending
 source verification. Raw additions require the raw defense/piercing combat
 context; inputs that lack it do not reinterpret the value as a probability.
@@ -104,10 +104,13 @@ context; inputs that lack it do not reinterpret the value as a probability.
 The game client's inspected preview modifier evaluator does not implement
 operation 5, so it does not settle whether Tom's source is his own effective
 Defense, total effective officer Defense, or a differently buffed value.
-The current compiler preserves its existing own-officer source while fixing
-the known units and destination. The incoming damage discrepancy remains
-unresolved until that source and missing profile buffs are verified. No
-coefficient was fitted to the recorded mitigation.
+The current canonical compiler marks Tom's effect unsupported. It does not use
+the earlier own-officer proxy. Native officer-stat setup bonuses are now compiled
+separately for captain, bridge and below-decks membership. The resulting crew
+Defense hypothesis fits both fresh captain-swap fights but misses the older
+Jadzia/Tom fight despite equal recorded source pools. See the
+[complete saved-fight review](TOM_PARIS_CAPTAIN_SWAP_20261026.md#officer-stat-implementation-and-saved-fight-review-2026-11-09).
+No coefficient was fitted to the recorded mitigation.
 
 Harry Kim's corrected state is Burning, not the initial replay's Morale.
 The original one-round report cannot validate subsequent repairs or three/four-round

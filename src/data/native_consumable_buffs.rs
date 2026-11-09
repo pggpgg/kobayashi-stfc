@@ -57,6 +57,22 @@ impl NativeConsumableBuffCatalog {
         self.buffs.contains_key(&bid)
     }
 
+    pub(crate) fn unsupported_officer_stat_ids(
+        &self,
+        imported: &[GlobalBuffEntry],
+        now_unix_seconds: i64,
+    ) -> Vec<i64> {
+        active_highest_levels(imported, now_unix_seconds)
+            .into_iter()
+            .filter_map(|(bid, _)| {
+                let spec = self.buffs.get(&bid)?;
+                (matches!(spec.modifier_code, 56..=59)
+                    && supported_officer_stat_sources(spec, self.source_group == 66).is_none())
+                .then_some(bid)
+            })
+            .collect()
+    }
+
     /// Apex Barrier rows were added for scope auditing, not for the native
     /// setup-family replacement. Their presence must not suppress fallback
     /// contributions for unrelated stats.
@@ -88,6 +104,46 @@ fn embedded_catalog() -> &'static NativeConsumableBuffCatalog {
         NativeConsumableBuffCatalog::from_json(EMBEDDED_CATALOG)
             .expect("reviewed embedded native consumable catalog must parse")
     })
+}
+
+/// Active officer-stat sources whose native predicates or targets cannot be evaluated.
+/// Ownership alone never enables these effects.
+pub fn quarantined_officer_stat_warning(
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> Option<String> {
+    let mut ids: Vec<i64> = [
+        embedded_catalog(),
+        crate::data::native_building_buffs::embedded_catalog(),
+        crate::data::native_research_buffs::embedded_catalog(),
+    ]
+    .into_iter()
+    .flat_map(|catalog| catalog.unsupported_officer_stat_ids(imported, now_unix_seconds))
+    .collect();
+    ids.sort_unstable();
+    ids.dedup();
+    if ids.is_empty() {
+        return None;
+    }
+    let examples = ids
+        .iter()
+        .take(4)
+        .map(i64::to_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    Some(format!(
+        "{} active officer-stat buff(s) are omitted because their native conditions, timing or targets are unsupported (IDs: {examples}).",
+        ids.len()
+    ))
+}
+
+pub fn quarantined_officer_stat_warning_for_profile(profile_id: Option<&str>) -> Option<String> {
+    use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, BUFFS_IMPORTED};
+    let id = resolve_profile_id_for_api(profile_id);
+    let buffs = crate::data::import::load_imported_buffs(
+        &profile_path(&id, BUFFS_IMPORTED).to_string_lossy(),
+    )?;
+    quarantined_officer_stat_warning(&buffs, chrono::Utc::now().timestamp())
 }
 
 /// Return additive profile-pool contributions at the imported current levels.
@@ -384,17 +440,18 @@ pub(crate) fn bonuses_from_catalog_for_ship(
         let Some(spec) = catalog.buffs.get(&bid) else {
             continue;
         };
-        let stats =
-            if expected_group == 66 && matches!(spec.modifier_code, 6 | 7 | 8 | 74 | 56..=59) {
-                supported_research_stat_sources(spec, bid, attacker_ship_class, ship_grade)
-            } else {
-                supported_stats_with_syndicate(
-                    spec,
-                    attacker_ship_class,
-                    syndicate_level,
-                    expected_group == 68,
-                )
-            };
+        let stats = if matches!(spec.modifier_code, 56..=59) {
+            supported_officer_stat_sources(spec, expected_group == 66)
+        } else if expected_group == 66 && matches!(spec.modifier_code, 6 | 7 | 8 | 74) {
+            supported_research_stat_sources(spec, attacker_ship_class, ship_grade)
+        } else {
+            supported_stats_with_syndicate(
+                spec,
+                attacker_ship_class,
+                syndicate_level,
+                expected_group == 68,
+            )
+        };
         let Some(stats) = stats else {
             continue;
         };
@@ -409,11 +466,66 @@ pub(crate) fn bonuses_from_catalog_for_ship(
     out
 }
 
-/// Same reviewed launch families as the native research importer. Target 5 is
-/// crew-wide; target 11 is admitted only for the hash-bound Orlop Defense row.
+/// Deterministic launch multipliers on officer base stats. Research's native
+/// selector binds Captain to slot 0, Bridge to slots 0/1/2, and BelowDeck to
+/// every other crewed officer. Global/building inventories establish target 5.
+fn supported_officer_stat_sources(
+    spec: &NativeBuffSpec,
+    allow_seat_scopes: bool,
+) -> Option<&'static [&'static str]> {
+    if spec.operation_code != 3
+        || spec.trigger_code != 24
+        || spec.num_rounds != 0
+        || !spec.condition_codes.is_empty()
+        || !spec.attribute_fields.is_empty()
+        || !spec.unknown_fields.is_empty()
+        || spec.ranked_value_type != 0
+        || spec.ranked_values.is_empty()
+        || spec.ranked_values.len() > spec.ranked_value_count
+        || spec.ranked_values.iter().any(|value| !value.is_finite())
+        || spec.ranked_chances.is_empty()
+        || spec.ranked_chances.len() > spec.ranked_chance_count
+        || spec.ranked_chances.iter().any(|chance| *chance != 1.0)
+        || (spec.target_code != 5 && !allow_seat_scopes)
+    {
+        return None;
+    }
+    match (spec.target_code, spec.modifier_code) {
+        (5, 56) => Some(&["officer_attack"]),
+        (5, 57) => Some(&["officer_defense"]),
+        (5, 58) => Some(&["officer_health"]),
+        (5, 59) => Some(&["officer_attack", "officer_defense", "officer_health"]),
+        (3, 56) => Some(&["officer_attack_captain"]),
+        (3, 57) => Some(&["officer_defense_captain"]),
+        (3, 58) => Some(&["officer_health_captain"]),
+        (3, 59) => Some(&[
+            "officer_attack_captain",
+            "officer_defense_captain",
+            "officer_health_captain",
+        ]),
+        (4, 56) => Some(&["officer_attack_bridge"]),
+        (4, 57) => Some(&["officer_defense_bridge"]),
+        (4, 58) => Some(&["officer_health_bridge"]),
+        (4, 59) => Some(&[
+            "officer_attack_bridge",
+            "officer_defense_bridge",
+            "officer_health_bridge",
+        ]),
+        (11, 56) => Some(&["officer_attack_below_decks"]),
+        (11, 57) => Some(&["officer_defense_below_decks"]),
+        (11, 58) => Some(&["officer_health_below_decks"]),
+        (11, 59) => Some(&[
+            "officer_attack_below_decks",
+            "officer_defense_below_decks",
+            "officer_health_below_decks",
+        ]),
+        _ => None,
+    }
+}
+
+/// Selected research-only ship piercing families, distinct from officer stats.
 fn supported_research_stat_sources(
     spec: &NativeBuffSpec,
-    bid: i64,
     ship_class: Option<&str>,
     ship_grade: Option<u32>,
 ) -> Option<&'static [&'static str]> {
@@ -431,30 +543,6 @@ fn supported_research_stat_sources(
         || !spec.unknown_fields.is_empty()
     {
         return None;
-    }
-    if spec.target_code == 11 {
-        return (bid == 1895868262
-            && spec.modifier_code == 57
-            && spec.sha256 == "90eb257edcaceff8659184bcf2cdf1b41d4ce616dded4db5487b3ad806ec11ac"
-            && spec.condition_codes.is_empty()
-            && spec.ranked_values
-                == [0.2, 0.26, 0.33, 0.41, 0.5, 0.59, 0.69, 0.79, 0.89, 1.0, 0.0]
-            && spec.ranked_value_count == 99
-            && spec.ranked_chances == [1.0]
-            && spec.ranked_chance_count == 99)
-            .then_some(&["officer_defense_below_decks"]);
-    }
-    if matches!(spec.modifier_code, 56..=59) {
-        if spec.target_code != 5 || !spec.condition_codes.is_empty() {
-            return None;
-        }
-        return match spec.modifier_code {
-            56 => Some(&["officer_attack"]),
-            57 => Some(&["officer_defense"]),
-            58 => Some(&["officer_health"]),
-            59 => Some(&["officer_attack", "officer_defense", "officer_health"]),
-            _ => None,
-        };
     }
     if spec.target_code != 1 {
         return None;
@@ -599,6 +687,133 @@ mod tests {
             source_group: 116,
             buffs: rows.into_iter().collect(),
         }
+    }
+
+    #[test]
+    fn officer_axis_and_all_stats_compose_across_native_source_groups() {
+        for group in [66, 68, 116] {
+            let mut defense = spec();
+            defense.modifier_code = 57;
+            defense.target_code = 5;
+            defense.ranked_values = vec![0.25, 0.5];
+            let mut all = defense.clone();
+            all.modifier_code = 59;
+            all.ranked_values = vec![0.1, 0.2];
+            let mut c = catalog(vec![(101, defense), (102, all)]);
+            c.source_group = group;
+            let result = bonuses_from_catalog_for_group(
+                &c,
+                group,
+                &[
+                    entry(101, 1, None),
+                    entry(101, 2, None),
+                    entry(102, 2, None),
+                ],
+                None,
+                None,
+                100,
+            );
+            assert_eq!(result.len(), 3);
+            assert!((result["officer_defense"] - 0.7).abs() < 1e-12);
+            assert!((result["officer_attack"] - 0.2).abs() < 1e-12);
+            assert!((result["officer_health"] - 0.2).abs() < 1e-12);
+            assert!(!result.contains_key("armor"));
+            assert!(!result.contains_key("pierce"));
+        }
+    }
+
+    #[test]
+    fn research_officer_seat_sources_keep_their_native_scope() {
+        let mut rows = Vec::new();
+        for target in [3, 4, 11] {
+            let mut row = spec();
+            row.modifier_code = 59;
+            row.target_code = target;
+            rows.push((i64::from(target), row));
+        }
+        let mut c = catalog(rows);
+        c.source_group = 66;
+        let active = [entry(3, 1, None), entry(4, 1, None), entry(11, 1, None)];
+        let result = bonuses_from_catalog_for_group(&c, 66, &active, None, None, 100);
+        assert_eq!(result.len(), 9);
+        for scope in ["captain", "bridge", "below_decks"] {
+            for axis in ["attack", "defense", "health"] {
+                assert_eq!(result[&format!("officer_{axis}_{scope}")], 0.5);
+            }
+        }
+        assert!(!result.contains_key("officer_defense"));
+        // The building/global audit establishes only crew-wide officer targets.
+        for group in [68, 116] {
+            c.source_group = group;
+            assert!(bonuses_from_catalog_for_group(&c, group, &active, None, None, 100).is_empty());
+            assert_eq!(c.unsupported_officer_stat_ids(&active, 100), vec![3, 4, 11]);
+        }
+    }
+
+    #[test]
+    fn officer_stat_unknown_gates_and_expired_sources_are_not_applied() {
+        let mut base = spec();
+        base.modifier_code = 57;
+        base.target_code = 5;
+        let mut mutants = vec![base.clone(); 8];
+        mutants[0].operation_code = 5;
+        mutants[1].trigger_code = 25;
+        mutants[2].num_rounds = 2;
+        mutants[3].condition_codes = vec![231];
+        mutants[4].attribute_fields = vec![9];
+        mutants[5].unknown_fields = vec![99];
+        mutants[6].ranked_chances = vec![0.5];
+        mutants[7].target_code = 7;
+        let mut rows = vec![(100, base)];
+        rows.extend(
+            mutants
+                .into_iter()
+                .enumerate()
+                .map(|(i, row)| (i as i64 + 1, row)),
+        );
+        let c = catalog(rows);
+        let mut active: Vec<_> = (1..=8).map(|bid| entry(bid, 1, None)).collect();
+        active.push(entry(100, 1, Some(100)));
+        assert!(bonuses_from_catalog(&c, &active, None, 100).is_empty());
+        assert_eq!(
+            c.unsupported_officer_stat_ids(&active, 100),
+            (1..=8).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn newly_inventoried_real_sources_preserve_rank_values_and_units() {
+        let global = bonuses_for_imported_buffs(&[entry(476178618, 3, None)], None, 100);
+        assert_eq!(global["officer_defense"], 0.15);
+        let building = crate::data::native_building_buffs::bonuses_for_imported_buffs(
+            &[entry(334143899, 2, None)],
+            None,
+            None,
+            100,
+        );
+        for axis in ["attack", "defense", "health"] {
+            assert_eq!(building[&format!("officer_{axis}")], 0.02);
+        }
+        let research = crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+            &[entry(104229770, 1, None), entry(304385043, 2, None)],
+            None,
+            100,
+        )
+        .unwrap();
+        assert_eq!(research["officer_attack"], 0.4);
+        assert_eq!(research["officer_defense"], 0.19);
+    }
+
+    #[test]
+    fn active_quarantined_officer_sources_are_reported_and_expired_ones_are_not() {
+        let active = [entry(3988908241, 1, None), entry(4178575394, 1, None)];
+        let warning = quarantined_officer_stat_warning(&active, 100).unwrap();
+        assert!(warning.starts_with("2 active officer-stat buff(s)"));
+        assert!(warning.contains("3988908241, 4178575394"));
+        assert!(
+            quarantined_officer_stat_warning(&[entry(3988908241, 1, Some(100))], 100).is_none()
+        );
+        assert!(quarantined_officer_stat_warning(&[entry(476178618, 3, None)], 100).is_none());
     }
 
     fn combat_context() -> CombatContext {
@@ -1173,7 +1388,15 @@ mod tests {
         assert!(out.is_empty());
         let c = embedded_catalog();
         assert_eq!(c.source_group, 116);
-        assert_eq!(c.buffs.len(), 285);
+        // Original 285 definitions plus 56 newly inventoried officer-stat sources.
+        assert_eq!(c.buffs.len(), 341);
+        assert_eq!(
+            c.buffs
+                .values()
+                .filter(|spec| matches!(spec.modifier_code, 56..=59))
+                .count(),
+            56
+        );
         let classes = [
             None,
             Some("explorer"),

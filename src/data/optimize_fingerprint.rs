@@ -88,7 +88,11 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   research sources are compiled; Hull Breach isolytic research uses RoundStart.
 ///   Survival metrics use actual attacker HP, including conditional maximum HP.
 ///   Profile-free canaries cannot observe source membership or optimizer metrics.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 16;
+/// * 16 → 17 (2026-11): complete native officer-stat setup pools retain captain,
+///   bridge and below-decks membership through scenario and cached-round paths.
+///   Canary f covers native source eligibility and scoped breakpoint lookup;
+///   synthetic fights cannot detect omission of rows by a scenario caller.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 17;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -524,24 +528,65 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
-    // (f) below-decks-only research crosses an officer Defense breakpoint.
+    // (f) each native source group and seat scope is needed to cross a breakpoint.
     let mut f_profile = crate::data::profile::PlayerProfile::default();
-    f_profile
-        .bonuses
-        .insert("officer_defense_below_decks".into(), 1.0);
+    let f_buffs = [
+        (476178618, 3),   // global Defense +15%
+        (334143899, 2),   // building all officer stats +2%
+        (941300209, 5),   // captain all stats +35%
+        (809236561, 5),   // bridge (including captain) all stats +35%
+        (1895868262, 10), // below-decks Defense +100%
+    ]
+    .map(|(bid, level)| GlobalBuffEntry {
+        bid,
+        level,
+        expiry_time: None,
+    });
+    f_profile.bonuses.extend(
+        crate::data::native_consumable_buffs::bonuses_for_imported_buffs(&f_buffs, None, 0),
+    );
+    for (key, value) in
+        crate::data::native_building_buffs::bonuses_for_imported_buffs(&f_buffs, None, None, 0)
+    {
+        *f_profile.bonuses.entry(key).or_default() += value;
+    }
+    // Catalog groups are disjoint; officer pools add across the three sources.
+    for (key, value) in
+        crate::data::native_research_buffs::research_bonuses_for_imported_buffs(&f_buffs, None, 0)
+            .unwrap_or_default()
+    {
+        *f_profile.bonuses.entry(key).or_default() += value;
+    }
+    let f_rows = [
+        crate::lcars::resolver::OfficerStatSeat::Captain,
+        crate::lcars::resolver::OfficerStatSeat::BelowDecks,
+    ]
+    .into_iter()
+    .enumerate()
+    .map(|(i, seat)| crate::lcars::resolver::CrewedOfficerStats {
+        officer_id: format!("canary_f_{i}"),
+        rank: Some(1),
+        level: 1,
+        seat,
+        raw: crate::combat::CrewOfficerStatTotals {
+            defense: 50.0,
+            ..Default::default()
+        },
+    })
+    .collect::<Vec<_>>();
     let f_ship = crate::data::ship::ShipRecord {
         ship_class: "battleship".into(),
         armor: 20.0,
         officer_bonus: crate::data::ship::OfficerBonusTable {
             defense: vec![crate::data::ship::OfficerBonusBreakpoint {
-                value: 150.0,
+                value: 200.5,
                 bonus: 0.5,
             }],
             ..Default::default()
         },
         ..Default::default()
     };
-    let f_runtime = crate::data::profile::compute_officer_stat_runtime_bonus(
+    let f_runtime = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
         crate::combat::CrewOfficerStatTotals {
             defense: 100.0,
             ..Default::default()
@@ -550,6 +595,7 @@ fn canary_fights() -> Vec<CanaryFight> {
             defense: 50.0,
             ..Default::default()
         },
+        &f_rows,
         &f_ship,
         &f_profile,
         None,

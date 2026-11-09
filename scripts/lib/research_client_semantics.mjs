@@ -7,6 +7,8 @@ export const CLIENT_STAT_FAMILIES = new Set([
   "hull_hp", "shield_hp", "hull_hp_flat", "shield_hp_flat", "weapon_damage", "weapon_damage_flat",
   "crit_chance", "crit_damage", "crit_damage_flat", "isolytic_damage", "isolytic_defense",
   "armor", "shield_deflection", "dodge", "officer_defense_below_decks", "apex_barrier",
+  ...["attack", "defense", "health"].flatMap(axis => ["", "_captain", "_bridge", "_below_decks"]
+    .map(scope => `officer_${axis}${scope}`)),
 ]);
 const CLASSES = new Map([[0, "explorer"], [1, "interceptor"], [2, "battleship"], [3, "survey"], [116, "sentinel"]]);
 const MIN_SYNDICATE = new Map([[203, 30], [204, 33], [205, 35]]);
@@ -19,8 +21,6 @@ const VERIFIED_ROUND_START_MITIGATION = new Map([
   [4033066544, { condition_code: 37, gate: "requires_defender_hull_breach",
     sha256: "1c83ac6da9de0cbf275cdfb29675602249855c08e8bd14b7e20b3dbed4832aa6" }],
 ]);
-export const VERIFIED_ORLOP_DEFENSE_BUFF_ID = 1895868262;
-const VERIFIED_ORLOP_DEFENSE_RANKS = [0.2, 0.26, 0.33, 0.41, 0.5, 0.59, 0.69, 0.79, 0.89, 1, 0];
 const VERIFIED_ECLIPSE_DEFENSE_RANKS = [0.5, 1, 1.6, 2.1, 2.8, 3.6, 4.4, 5.2, 6, 7, 0];
 
 /** Exact native group-66 Eclipse hull defense source; runtime-only because its predicate is unresolved generically. */
@@ -44,37 +44,6 @@ export function isVerifiedEclipseDefenseResearchDetail(detail, row) {
     buff.values.length === 99 && buff.values.every((rank, i) => rank?.chance === 1 &&
       rank.value === VERIFIED_ECLIPSE_DEFENSE_RANKS[Math.min(i, VERIFIED_ECLIPSE_DEFENSE_RANKS.length - 1)]) &&
     isVerifiedEclipseDefenseBuff(buff.id, row);
-}
-
-/** Exact native modifier 57 / SelfBelowDeck row. This does not select modifier 57 generally. */
-export function mapVerifiedOrlopDefenseBuff(buffId, row) {
-  if (Number(buffId) !== VERIFIED_ORLOP_DEFENSE_BUFF_ID || !row ||
-      row.sha256 !== "90eb257edcaceff8659184bcf2cdf1b41d4ce616dded4db5487b3ad806ec11ac" ||
-      row.modifier_code !== 57 || row.operation_code !== 3 ||
-      row.target_code !== 11 || row.trigger_code !== 24 ||
-      row.ranked_value_type !== 0 || row.ranked_value_count !== 99 ||
-      !Array.isArray(row.condition_codes) || row.condition_codes.length !== 0 ||
-      !Array.isArray(row.attribute_fields) || row.attribute_fields.length !== 0 ||
-      !Array.isArray(row.unknown_fields) || row.unknown_fields.length !== 0 ||
-      !Array.isArray(row.ranked_values) ||
-      row.ranked_values.length !== VERIFIED_ORLOP_DEFENSE_RANKS.length ||
-      row.ranked_values.some((value, i) => value !== VERIFIED_ORLOP_DEFENSE_RANKS[i]) ||
-      !Array.isArray(row.ranked_chances) || row.ranked_chances.length !== 1 ||
-      row.ranked_chances[0] !== 1 || row.ranked_chance_count !== 99) return [];
-  return [{ stat: "officer_defense_below_decks", operator: "add", value_unit: "fraction",
-    client_verified: true, client_ranked_values: row.ranked_values }];
-}
-
-/** Upstream project identity and rank curve must agree with the selected native row. */
-export function isVerifiedOrlopResearchDetail(ctx, buff, projectLocaId) {
-  if (ctx.researchProjectId !== 282179003 || ctx.researchDetailId !== 282179003 ||
-      projectLocaId !== 43049 || buff?.id !== VERIFIED_ORLOP_DEFENSE_BUFF_ID ||
-      buff.loca_id !== 43049 || buff.value_is_percentage !== true ||
-      buff.show_percentage !== true || buff.value_type !== 0 ||
-      buff.ranked_is_value_chance !== 0 || buff.index !== null ||
-      !Array.isArray(buff.values) || buff.values.length !== 99) return false;
-  return buff.values.every((rank, i) => rank?.chance === 1 &&
-    rank.value === VERIFIED_ORLOP_DEFENSE_RANKS[Math.min(i, VERIFIED_ORLOP_DEFENSE_RANKS.length - 1)]);
 }
 
 /** Three separately reviewed one-round status effects retain their catalog fallback. */
@@ -102,13 +71,19 @@ export function mapVerifiedRoundStartMitigationBuff(buffId, row) {
 export function clientResearchBuffExclusion(row, options = {}) {
   if (!row) return "missing_definition";
   const officerStatModifier = [56, 57, 58, 59].includes(row.modifier_code);
-  if (row.target_code !== 1 && !(officerStatModifier && row.target_code === 5)) return "unsupported_target";
+  const officerTargets = options.allowOfficerSeatScopes ? [3, 4, 5, 11] : [5];
+  if (officerStatModifier ? !officerTargets.includes(row.target_code) : row.target_code !== 1) return "unsupported_target";
   if (row.ranked_value_type !== 0) return "unsupported_ranked_value_type";
   if (!Array.isArray(row.ranked_values) || !row.ranked_values.length ||
       row.ranked_values.some((v) => !Number.isFinite(v))) return "invalid_ranked_values";
+  if (officerStatModifier && (!Number.isSafeInteger(row.ranked_value_count) ||
+      row.ranked_value_count < row.ranked_values.length)) return "invalid_ranked_values";
   if (!Array.isArray(row.ranked_chances) || !row.ranked_chances.length ||
       row.ranked_chances.some((v) => v !== 1)) return "unsupported_chance";
+  if (officerStatModifier && (!Number.isSafeInteger(row.ranked_chance_count) ||
+      row.ranked_chance_count < row.ranked_chances.length)) return "unsupported_chance";
   if (!Array.isArray(row.attribute_fields) || (row.unknown_fields?.length ?? 0)) return "unknown_fields";
+  if (officerStatModifier && (row.trigger_code !== 24 || (row.num_rounds ?? 0) !== 0)) return "unsupported_trigger";
   const codes = row.condition_codes;
   const directHitGradeGate = row.modifier_code === 74 && codes?.length === 1 && codes[0] === 123;
   const simpleClassGate = codes?.length === 1 && CLASSES.has(codes[0]);
@@ -161,10 +136,14 @@ export function mapClientResearchBuff(row, options = {}) {
       client_verified: true, client_ranked_values: row.ranked_values,
     }));
   }
-  if ([56, 57, 58, 59].includes(row.modifier_code) && row.operation_code === 3 && row.target_code === 5) {
+  if ([56, 57, 58, 59].includes(row.modifier_code) && row.operation_code === 3) {
     const stats = row.modifier_code === 59 ? ["officer_attack", "officer_defense", "officer_health"]
       : [{ 56: "officer_attack", 57: "officer_defense", 58: "officer_health" }[row.modifier_code]];
-    return stats.map(stat => ({ stat, operator: "add", value_unit: "fraction",
+    // FleetService.PopulateContainers (272:181809570) selects captain alone
+    // for3, captain+first+second officer for4, and excludes those three for11.
+    // Only the research caller opts into these separately preserved seat scopes.
+    const suffix = { 3: "_captain", 4: "_bridge", 5: "", 11: "_below_decks" }[row.target_code];
+    return stats.map(stat => ({ stat: stat + suffix, operator: "add", value_unit: "fraction",
       client_verified: true, client_ranked_values: row.ranked_values }));
   }
   let stat, value_unit = "fraction";
@@ -185,6 +164,7 @@ export function mapClientResearchBuff(row, options = {}) {
 
 /** Static coverage only. References are public research project IDs and names. */
 export function researchClientBuffCoverage(manifest, references = [], options = {}) {
+  const scopeOptions = { ...options, allowOfficerSeatScopes: manifest.source_group === 66 };
   const byBuff = new Map();
   for (const { buff_id, rid, name } of references) {
     if (!byBuff.has(buff_id)) byBuff.set(buff_id, []);
@@ -193,11 +173,10 @@ export function researchClientBuffCoverage(manifest, references = [], options = 
   const reasons = {}, stats = {};
   const rows = Object.entries(manifest.buffs).map(([id, row]) => {
     const verifiedRoundStart = mapVerifiedRoundStartMitigationBuff(id, row);
-    const verifiedOrlop = mapVerifiedOrlopDefenseBuff(id, row);
-    const exclusion = verifiedRoundStart.length || verifiedOrlop.length ? undefined
-      : clientResearchBuffExclusion(row, options);
+    const exclusion = verifiedRoundStart.length ? undefined
+      : clientResearchBuffExclusion(row, scopeOptions);
     const mappings = verifiedRoundStart.length ? verifiedRoundStart
-      : verifiedOrlop.length ? verifiedOrlop : mapClientResearchBuff(row, options);
+      : mapClientResearchBuff(row, scopeOptions);
     if (exclusion) reasons[exclusion] = (reasons[exclusion] ?? 0) + 1;
     for (const mapping of mappings) stats[mapping.stat] = (stats[mapping.stat] ?? 0) + 1;
     return { buff_id: Number(id), modifier_code: row.modifier_code, operation_code: row.operation_code,

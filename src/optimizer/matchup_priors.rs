@@ -488,6 +488,7 @@ mod tests {
             player_defender_static_buffs: Default::default(),
             defender_officer_stat_totals: crate::combat::CrewOfficerStatTotals::default(),
             defender_bridge_officer_stat_totals: crate::combat::CrewOfficerStatTotals::default(),
+            defender_officer_stat_rows: Vec::new(),
             defender_pending_officer_stat_contributions: Vec::new(),
             pvp: None,
             defender_ship_rec: None,

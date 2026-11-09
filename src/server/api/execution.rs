@@ -2555,6 +2555,13 @@ fn build_optimize_response(
     {
         warnings.push(message);
     }
+    if let Some(message) =
+        crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
+            profile_id,
+        )
+    {
+        warnings.push(message);
+    }
     if let (Some(_), Some(id)) = (
         request.defender_ship.as_ref(),
         request.defender_profile_id.as_deref(),
@@ -2563,6 +2570,13 @@ fn build_optimize_response(
             crate::data::native_research_buffs::quarantined_apex_research_warning_for_profile(Some(
                 id,
             ))
+        {
+            warnings.push(format!("Defender: {message}"));
+        }
+        if let Some(message) =
+            crate::data::native_consumable_buffs::quarantined_officer_stat_warning_for_profile(
+                Some(id),
+            )
         {
             warnings.push(format!("Defender: {message}"));
         }

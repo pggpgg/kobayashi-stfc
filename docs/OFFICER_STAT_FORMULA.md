@@ -2,7 +2,7 @@
 
 Canonical reference for how per-officer Attack / Defense / Health stats sum across a crew and feed into a ship's effective combat stats. Authored by the maintainer; consumed by the engine extension that adds first-class officer A/D/H runtime support (see `/Users/pgagnong/.claude/plans/what-should-we-work-recursive-lobster.md`).
 
-Status: **breakpoint routing implemented; stat-source validation incomplete**. The breakpoint model below is informed by in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates including attack, defense, and health). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs), [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs), [`tests/officer_round_start_stat.rs`](../tests/officer_round_start_stat.rs), and the unit tests in [`src/data/profile.rs`](../src/data/profile.rs). Remaining gaps include native seat-scoped source completeness, Tom Paris’s combat-time Defense source and operator placement, and the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
+Status: **breakpoint routing implemented; stat-source validation incomplete**. The breakpoint model below is informed by in-game observation (Cerritos / Realta+Ghrush experiments), and the engine path is live: Phases 1–4 have shipped (per-side accumulators, breakpoint wiring, `officerstat*` ability modifiers, and Phase 4d dynamic 3-axis per-round gates including attack, defense, and health). The LCARS→engine routing is covered by [`tests/officer_stat_calibration_anchors.rs`](../tests/officer_stat_calibration_anchors.rs), [`tests/officer_kirk_morale_stat.rs`](../tests/officer_kirk_morale_stat.rs), [`tests/officer_round_start_stat.rs`](../tests/officer_round_start_stat.rs), and the unit tests in [`src/data/profile/mod.rs`](../src/data/profile/mod.rs). Remaining gaps include four quarantined native officer-stat sources, Tom Paris’s combat-time Defense source and operator placement, and the **in-game expected damage deltas** for the three anchor cases in the "Examples to validate" section below (still `_TBD_` — they need observed numbers to convert the anchor tests from direction/routing checks into exact-magnitude calibration).
 
 ---
 
@@ -146,7 +146,7 @@ Empirical confirmation (Cerritos, both observations):
 
 Both rows imply identical `shield_per_bonus = 13,338` for the Cerritos. **Confirmed:** `mitigation_added = ship.mit_per_bonus[channel] × defense_bonus`. `defense_rating` itself only feeds the breakpoint lookup.
 
-**Critical:** `defense_rating` (and its bonus) **do not** influence `shield_mitigation` (the multiplicative damage-after-shield knob). An earlier `shield_mitigation += officer_defense` line in [src/data/profile.rs](../src/data/profile.rs) was incorrect per this spec and has been removed (see the §2c comment in `apply_profile_to_attacker`); officer Defense now routes exclusively through the breakpoint + ship-class-mitigation pathway.
+**Critical:** `defense_rating` (and its bonus) **do not** influence `shield_mitigation` (the multiplicative damage-after-shield knob). An earlier `shield_mitigation += officer_defense` line in [src/data/profile.rs](../src/data/profile/mod.rs) was incorrect per this spec and has been removed (see the §2c comment in `apply_profile_to_attacker`); officer Defense now routes exclusively through the breakpoint + ship-class-mitigation pathway.
 
 ### 2d. Health — bonus × per-ship hull/shield constants
 
@@ -198,6 +198,28 @@ is native fraction `1.0` (+100%), not `0.01`. The source-bound project and buff
 are retained in `data/research/verified_orlop_defense_2026-10-23.json`.
 It does not directly modify ship shield mitigation or Tom's independently
 unresolved combat ability source.
+
+The native modifier 56–59 inventory now includes 50 research, seven building and
+56 global definitions. Of these, 109 deterministic setup definitions are admitted;
+four research definitions with unresolved conditions, targets or timing remain
+quarantined. Active unsupported sources produce API warnings. Imported membership,
+one-based rank selection and expiry still determine which sources contribute.
+Native fractions are not divided by 100 again. Native building/research pools
+replace their corresponding legacy mappings to prevent double counting.
+
+`BuffSet::officer_stat_rows` retains each crewed officer's identity, rank, level,
+seat and raw A/D/H. Profile pools use `officer_{axis}` for the entire crew and
+`officer_{axis}_{captain,bridge,below_decks}` for native seat groups. Captain is
+also in the native bridge group. For each axis, the effective stat is
+`raw × (1 + crew pool + applicable seat pools + supported ability contributions)`.
+The attacker, PvP defender, crew-health context and cached round computation
+retain these rows. Existing aggregate-only APIs remain compatibility wrappers.
+
+Production rating sums stay unrounded. `evaluate_officer_stats` also exposes
+rounded display estimates for diagnostics; these estimates are not proof of
+server combat rounding. This source work does not enable Tom's unsupported
+operation-5 combat effect. See the
+[saved Tom review](TOM_PARIS_CAPTAIN_SWAP_20261026.md#officer-stat-implementation-and-saved-fight-review-2026-11-09).
 
 ### 2f. Things that are explicitly NOT affected
 
@@ -266,9 +288,9 @@ health_rating  = Σ officer.effective_health    // then feeds the §2d channels
 
 - Syndicate Reputation ([src/data/syndicate_combat.rs:50-56](../src/data/syndicate_combat.rs))
 - Research ([src/data/research.rs:668-685](../src/data/research.rs))
-- Buildings ([src/data/profile.rs:1287](../src/data/profile.rs))
+- Buildings ([src/data/profile.rs:1287](../src/data/profile/mod.rs))
 
-**Removed:** the `shield_mitigation += officer_defense` line at [src/data/profile.rs:1945](../src/data/profile.rs). Officer Defense never had any business there.
+**Removed:** the `shield_mitigation += officer_defense` line at [src/data/profile.rs:1945](../src/data/profile/mod.rs). Officer Defense never had any business there.
 
 ---
 
@@ -312,7 +334,7 @@ Officer-stat rows whose LCARS `trigger` is **`on_round_start`**, or whose `condi
 
 **Resolver path** ([`collect_dynamic_officer_stat_contributions`](../src/lcars/resolver.rs)): per-round `officerstat*` rows are stored on [`BuffSet::dynamic_officer_stat_contributions`](../src/lcars/resolver.rs) with a compiled runtime [`AbilityCondition`](../src/combat/abilities.rs) when present (including duration `RoundRange` when present). **`on_combat_start`** rows with fight-setup-only gates (Dezoc armada+faction, Kras PvP, …) stay in [`PendingOfficerStatContribution`](../src/lcars/resolver.rs).
 
-**Combat path** ([`OfficerStatRoundContext`](../src/data/officer_stat_round.rs)): each round after morale/state gates refresh, active per-round rows are merged into [`compute_officer_stat_runtime_bonus_with_round`](../src/data/profile.rs) and the delta vs fight-setup baseline is applied:
+**Combat path** ([`OfficerStatRoundContext`](../src/data/officer_stat_round.rs)): each round after morale/state gates refresh, active per-round rows are merged into [`compute_officer_stat_runtime_bonus_with_round`](../src/data/profile/mod.rs) and the delta vs fight-setup baseline is applied:
 
 - [x] **Attack:** `attack_pre_mult_add` → outbound `pre_attack_multiplier` (proper breakpoint lookup, not a flat `weapon_damage` proxy).
 - [x] **Defense:** additive armor / shield_deflection / dodge on inbound counter-fire mitigation.
@@ -322,10 +344,10 @@ Officer-stat rows whose LCARS `trigger` is **`on_round_start`**, or whose `condi
 
 | Officer | Row | Path |
 |---|---|---|
-| [`kirk-1323b6`](../data/officers/officers.lcars.yaml) captain "Leader" | `officerstatall` +40%, `morale_active`, `on_round_start`, 1R | Per-round dynamic (morale gate) |
-| [`kumak-c5b0db`](../data/officers/officers.lcars.yaml) captain "Discipline" | `officerstatall` +5%, unconditional `on_round_start` | Per-round dynamic |
-| [`strike-team-una-5ec6f6`](../data/officers/officers.lcars.yaml) captain "Team Profiling" | `officerstatall`, `on_round_start`, PvP + defender Explorer | Per-round dynamic (static gates compiled to runtime) |
-| [`dezoc-381416`](../data/officers/officers.lcars.yaml) bridge "Chokepoint" | `officerstatall`, `on_combat_start`, solo_armadas + defender hull faction | Pending at fight setup (not Phase 4d) |
+| [`kirk-1323b6`](../data/officers/officers.canonical.json) captain "Leader" | `officerstatall` +40%, `morale_active`, `on_round_start`, 1R | Per-round dynamic (morale gate) |
+| [`kumak-c5b0db`](../data/officers/officers.canonical.json) captain "Discipline" | `officerstatall` +5%, unconditional `on_round_start` | Per-round dynamic |
+| [`strike-team-una-5ec6f6`](../data/officers/officers.canonical.json) captain "Team Profiling" | `officerstatall`, `on_round_start`, PvP + defender Explorer | Per-round dynamic (static gates compiled to runtime) |
+| [`dezoc-381416`](../data/officers/officers.canonical.json) bridge "Chokepoint" | `officerstatall`, `on_combat_start`, solo_armadas + defender hull faction | Pending at fight setup (not Phase 4d) |
 
 Kirk bridge "Inspirational" morale proc is separate (standard `Morale` seat).
 

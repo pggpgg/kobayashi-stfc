@@ -75,6 +75,7 @@ pub struct OfficerStatRoundContext {
     pub base_dodge: f64,
     pub totals: CrewOfficerStatTotals,
     pub bridge_totals: CrewOfficerStatTotals,
+    pub officer_rows: Vec<crate::lcars::resolver::CrewedOfficerStats>,
     pub owner_faction: Option<String>,
     pub profile: PlayerProfile,
     pub static_buffs: HashMap<String, f64>,
@@ -99,12 +100,41 @@ impl OfficerStatRoundContext {
         dynamic_contributions: &[DynamicOfficerStatContribution],
         static_cond_ctx: OfficerStatConditionContext,
     ) -> Option<Self> {
+        Self::try_from_ship_and_buffs_with_officers(
+            ship,
+            profile,
+            static_buffs,
+            totals,
+            bridge_totals,
+            &[],
+            static_pending,
+            opponent_enemy_pending,
+            dynamic_contributions,
+            static_cond_ctx,
+        )
+    }
+
+    /// Preserve individual seats when rebuilding officer ratings each round.
+    #[allow(clippy::too_many_arguments)]
+    pub fn try_from_ship_and_buffs_with_officers(
+        ship: &ShipRecord,
+        profile: &PlayerProfile,
+        static_buffs: &HashMap<String, f64>,
+        totals: CrewOfficerStatTotals,
+        bridge_totals: CrewOfficerStatTotals,
+        officer_rows: &[crate::lcars::resolver::CrewedOfficerStats],
+        static_pending: &[PendingOfficerStatContribution],
+        opponent_enemy_pending: &[PendingOfficerStatContribution],
+        dynamic_contributions: &[DynamicOfficerStatContribution],
+        static_cond_ctx: OfficerStatConditionContext,
+    ) -> Option<Self> {
         if ship.officer_bonus.is_empty() || dynamic_contributions.is_empty() {
             return None;
         }
-        let baseline_osr = crate::data::profile::compute_officer_stat_runtime_bonus_with_round(
+        let baseline_osr = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
             totals,
             bridge_totals,
+            officer_rows,
             ship,
             profile,
             ship.faction.as_deref(),
@@ -112,9 +142,6 @@ impl OfficerStatRoundContext {
             static_pending,
             &static_cond_ctx,
             opponent_enemy_pending,
-            &[],
-            None,
-            None,
         );
         Some(Self {
             officer_bonus: ship.officer_bonus.clone(),
@@ -124,6 +151,7 @@ impl OfficerStatRoundContext {
             base_dodge: ship.dodge,
             totals,
             bridge_totals,
+            officer_rows: officer_rows.to_vec(),
             owner_faction: ship.faction.clone(),
             profile: profile.clone(),
             static_buffs: static_buffs.clone(),
@@ -171,6 +199,7 @@ impl OfficerStatRoundContext {
         crate::data::profile::compute_officer_stat_runtime_bonus_from_parts(
             self.totals,
             self.bridge_totals,
+            (!self.officer_rows.is_empty()).then_some(self.officer_rows.as_slice()),
             ship,
             &self.profile,
             self.owner_faction.as_deref(),
@@ -304,6 +333,92 @@ mod tests {
             combat_battle_type_id: None,
             defender_level: Some(50),
         }
+    }
+
+    #[test]
+    fn scoped_rows_survive_cached_round_recomputation() {
+        use crate::lcars::resolver::{CrewedOfficerStats, OfficerStatSeat};
+        let rows: Vec<_> = [
+            OfficerStatSeat::Captain,
+            OfficerStatSeat::Bridge,
+            OfficerStatSeat::BelowDecks,
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(i, seat)| CrewedOfficerStats {
+            officer_id: format!("scope-{i}"),
+            rank: Some(1),
+            level: 1,
+            seat,
+            raw: CrewOfficerStatTotals {
+                attack: 20.0,
+                ..Default::default()
+            },
+        })
+        .collect();
+        let mut ship = test_ship();
+        ship.officer_bonus.attack = vec![
+            OfficerBonusBreakpoint {
+                value: 75.0,
+                bonus: 0.5,
+            },
+            OfficerBonusBreakpoint {
+                value: 100.0,
+                bonus: 1.0,
+            },
+        ];
+        let profile = PlayerProfile {
+            bonuses: HashMap::from([("officer_attack_captain".into(), 1.0)]),
+            ..Default::default()
+        };
+        let dynamic = [DynamicOfficerStatContribution {
+            stat_key: "officer_attack".into(),
+            value: 0.5,
+            target_attacker: true,
+            opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            runtime_condition: Some(AbilityCondition::MoraleActive),
+            timing: TimingWindow::RoundStart,
+        }];
+        let context = OfficerStatRoundContext::try_from_ship_and_buffs_with_officers(
+            &ship,
+            &profile,
+            &HashMap::new(),
+            CrewOfficerStatTotals {
+                attack: 60.0,
+                ..Default::default()
+            },
+            CrewOfficerStatTotals {
+                attack: 40.0,
+                ..Default::default()
+            },
+            &rows,
+            &[],
+            &[],
+            &dynamic,
+            OfficerStatConditionContext::default(),
+        )
+        .unwrap();
+        assert_eq!(context.baseline_osr.attack_bonus, 0.5);
+        let mut combat = test_combat_context();
+        assert!(context
+            .delta_for_timing(&combat, TimingWindow::RoundStart)
+            .is_effectively_zero());
+        combat.attacker_morale_active = true;
+        assert_eq!(
+            context
+                .runtime_bonus_for_timing(&combat, TimingWindow::RoundStart)
+                .attack_bonus,
+            1.0
+        );
+        let expected = 2.0 / 1.5 - 1.0;
+        assert!(
+            (context
+                .delta_for_timing(&combat, TimingWindow::RoundStart)
+                .attack_pre_mult_add
+                - expected)
+                .abs()
+                < 1e-12
+        );
     }
 
     #[test]

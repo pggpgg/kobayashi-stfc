@@ -85,6 +85,8 @@ const ALLOWED_COMBAT_STATS = new Set([
   "officer_defense",
   "officer_defense_below_decks",
   "officer_health",
+  ...["attack", "defense", "health"].flatMap(axis => ["captain", "bridge", "below_decks"]
+    .map(scope => `officer_${axis}_${scope}`)),
   "hull_hp",
   "shield_hp",
   "hull_hp_flat",

@@ -19,7 +19,7 @@ const doubles = (field, values) => {
   return bytes(field, data);
 };
 const chance = () => { const data = Buffer.alloc(4); data.writeFloatLE(1); return bytes(13, data); };
-const buff = (id, modifier = 61) => concat(integer(1, id), integer(7, 1), integer(8, 24),
+const buff = (id, modifier = 61, target = 1) => concat(integer(1, id), integer(7, target), integer(8, 24),
   integer(12, 3), chance(), integer(18, modifier), doubles(21, [0.5, 5, 0]));
 const map = (field, id, spec) => bytes(field, concat(integer(1, id), bytes(2, spec)));
 const group = (type, payload) => bytes(1, concat(integer(1, type), bytes(2, payload)));
@@ -120,4 +120,41 @@ test("native defense catalogs retain launch-only all-axis and individual sources
   assert.deepEqual(mapClientResearchBuff(building.buffs[1400315411]).map(r => r.stat), ["dodge"]);
   assert.deepEqual(mapClientResearchBuff(consumable.buffs[2413654195]).map(r => r.stat),
     ["armor", "shield_deflection", "dodge"]);
+});
+
+test("global and building extraction retain every officer-stat axis without changing units or source ownership", () => {
+  for (const [source, extract] of [[116, extractConsumableBuffSemantics], [68, extractBuildingBuffSemantics]]) {
+    const input = group(source, concat(...[56, 57, 58, 59].map(code => map(1, code, buff(code, code, 5)))));
+    const actual = extract(input);
+    assert.deepEqual(Object.keys(actual.buffs), ["56", "57", "58", "59"]);
+    for (const [code, stats] of [[56, ["officer_attack"]], [57, ["officer_defense"]],
+      [58, ["officer_health"]], [59, ["officer_attack", "officer_defense", "officer_health"]]]) {
+      const row = actual.buffs[code];
+      assert.deepEqual(row.ranked_values, [0.5, 5, 0]);
+      assert.deepEqual(mapClientResearchBuff(row).map(mapping => [mapping.stat, mapping.value_unit]),
+        stats.map(stat => [stat, "fraction"]));
+    }
+    assert.equal(actual.coverage.supported_buff_count, 4);
+    const collision = concat(input, group(source === 116 ? 68 : 116, map(1, 56, buff(56, 56, 5))));
+    assert.equal(Object.hasOwn(extract(collision).buffs, 56), false);
+  }
+});
+
+test("tracked global and building officer-stat definitions retain complete source ranks", () => {
+  for (const [file, expected] of [["native_consumable_buff_catalog.json", 56], ["native_building_buff_catalog.json", 7]]) {
+    const catalog = JSON.parse(fs.readFileSync(new URL(`../../data/${file}`, import.meta.url)));
+    const rows = Object.values(catalog.buffs).filter(row => [56, 57, 58, 59].includes(row.modifier_code));
+    assert.equal(rows.length, expected);
+    for (const row of rows) {
+      assert.equal(row.operation_code, 3);
+      assert.equal(row.target_code, 5);
+      assert.equal(row.trigger_code, 24);
+      assert.deepEqual(row.condition_codes, []);
+      assert.deepEqual(row.attribute_fields, []);
+      assert.deepEqual(row.unknown_fields, []);
+      assert.ok(row.ranked_value_count >= row.ranked_values.length);
+      assert.ok(row.ranked_chance_count >= row.ranked_chances.length);
+      assert.ok(mapClientResearchBuff(row).length > 0);
+    }
+  }
 });

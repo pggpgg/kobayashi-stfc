@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-10-28",
+  "last_updated": "2026-11-09",
   "items": [
     {
       "rid": 2999437,
@@ -828,6 +828,165 @@
       ]
     },
     {
+      "rid": 103329622,
+      "name": "Phasers to Stun",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.55,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.85,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 2.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 2.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 112448723,
       "name": "Khan's Glove",
       "data_version": "stfcspace-upstream",
@@ -969,6 +1128,165 @@
             {
               "stat": "isolytic_defense",
               "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 132869583,
+      "name": "Live Long",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.24,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.44,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.64,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.74,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.89,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.24,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.49,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.75,
               "operator": "add"
             }
           ]
@@ -1406,6 +1724,115 @@
               "value": 0.15,
               "operator": "add",
               "attacker_ship_class": "interceptor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 235176140,
+      "name": "Defense Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.27,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.4,
+              "operator": "add"
             }
           ]
         }
@@ -2626,6 +3053,115 @@
               "value": 5,
               "operator": "add",
               "attacker_ship_class": "explorer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 383316226,
+      "name": "Officer Training Drills",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.25,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.25,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
             }
           ]
         }
@@ -3929,6 +4465,165 @@
       ]
     },
     {
+      "rid": 572051519,
+      "name": "Seasoned Officers",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.55,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.85,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 596446780,
       "name": "Prime Ω Critical Damage Floor",
       "data_version": "stfcspace-upstream",
@@ -4050,6 +4745,215 @@
             {
               "stat": "hull_hp",
               "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 637153598,
+      "name": "Officer Strengthening",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 10,
               "operator": "add"
             }
           ]
@@ -5230,6 +6134,65 @@
               "value": 5,
               "operator": "add",
               "attacker_ship_class": "survey"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 769955454,
+      "name": "Tactical Aggression",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.45,
+              "operator": "add"
             }
           ]
         }
@@ -6563,6 +7526,224 @@
               "value": 13,
               "operator": "add",
               "attacker_ship_class": "interceptor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 964022887,
+      "name": "Jarok's Stratagem",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.36,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 977982349,
+      "name": "Riker's Parry",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.31,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.52,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.67,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.75,
+              "operator": "add"
             }
           ]
         }
@@ -8047,6 +9228,115 @@
       ]
     },
     {
+      "rid": 1259392840,
+      "name": "Infamy and Heroism",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1284956278,
       "name": "Battleship Shields",
       "data_version": "stfcspace-upstream",
@@ -8742,6 +10032,115 @@
       ]
     },
     {
+      "rid": 1353584641,
+      "name": "Immortal Tactical Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.45,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.45,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.75,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.75,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1362520750,
       "name": "Prime Critical Hit Damage",
       "data_version": "stfcspace-upstream",
@@ -8754,6 +10153,35 @@
             {
               "stat": "crit_damage_flat",
               "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1369190592,
+      "name": "Prime Survival Skills",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
               "operator": "add"
             }
           ]
@@ -10492,6 +11920,215 @@
       ]
     },
     {
+      "rid": 1645361232,
+      "name": "Advanced Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.04,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.04,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.06,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.06,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.14,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.18,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.18,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.22,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.22,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.27,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.27,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.27,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.32,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.32,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 1686731505,
       "name": "Enhanced Protection",
       "data_version": "stfcspace-upstream",
@@ -10694,6 +12331,424 @@
             {
               "stat": "dodge",
               "value": 4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1700067357,
+      "name": "The Bones Boost",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.36,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1703755873,
+      "name": "My Old Friends",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.75,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2.75,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3.25,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3.25,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 10,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 12.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 12.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 12.5,
               "operator": "add"
             }
           ]
@@ -11980,6 +14035,124 @@
               "value": 2,
               "operator": "add",
               "attacker_ship_class": "sentinel"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1816718001,
+      "name": "Hypospray Technology",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 1844625587,
+      "name": "Rerouting to Shields",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.13,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.45,
+              "operator": "add"
             }
           ]
         }
@@ -13897,6 +16070,35 @@
       ]
     },
     {
+      "rid": 2086597452,
+      "name": "Prime Officers",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2088154452,
       "name": "Enhanced Defenses",
       "data_version": "stfcspace-upstream",
@@ -14992,6 +17194,165 @@
               "value": 1.7,
               "operator": "add",
               "attacker_ship_class": "survey"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2269284004,
+      "name": "No \"No-Win\" Scenarios",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 0.9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_defense",
+              "value": 1.5,
+              "operator": "add"
             }
           ]
         }
@@ -16444,6 +18805,115 @@
       ]
     },
     {
+      "rid": 2571430259,
+      "name": "Spock's Tactics",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.31,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.52,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.67,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2576852433,
       "name": "Explorer Weaponry",
       "data_version": "stfcspace-upstream",
@@ -16535,6 +19005,424 @@
               "value": 0.4,
               "operator": "add",
               "attacker_ship_class": "explorer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2579790977,
+      "name": "Riker's Fist",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.36,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.42,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.48,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.54,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2580915158,
+      "name": "Officer Conditioning",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.08,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.11,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.19,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.19,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.28,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.28,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.28,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.33,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.33,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.38,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.38,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.43,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.43,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.43,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.57,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.57,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.57,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.64,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.64,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.64,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.72,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.72,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.72,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 0.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 0.8,
+              "operator": "add"
             }
           ]
         }
@@ -17106,6 +19994,115 @@
       ]
     },
     {
+      "rid": 2691631294,
+      "name": "Synchronized Crew",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack_bridge",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_bridge",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_bridge",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack_bridge",
+              "value": 0.09,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_bridge",
+              "value": 0.09,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_bridge",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack_bridge",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_bridge",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_bridge",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack_bridge",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_bridge",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_bridge",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack_bridge",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_bridge",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_bridge",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 2696485627,
       "name": "Eloquent Structural Design",
       "data_version": "stfcspace-upstream",
@@ -17274,6 +20271,115 @@
               "value": 10,
               "operator": "add",
               "attacker_ship_class": "sentinel"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2701354891,
+      "name": "Pulaski's Panacea",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.19,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.25,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.31,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.38,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.52,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.67,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.75,
+              "operator": "add"
             }
           ]
         }
@@ -17917,6 +21023,115 @@
           "bonuses": [
             {
               "stat": "hull_hp",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 2848539271,
+      "name": "Orlop Attack",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.41,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.69,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.79,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
+              "value": 0.89,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack_below_decks",
               "value": 1,
               "operator": "add"
             }
@@ -20912,6 +24127,315 @@
       ]
     },
     {
+      "rid": 3310322472,
+      "name": "Crew Potency",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3.3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3.8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3.8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4.4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4.4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 6.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 6.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 6.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 7.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 7.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 7.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 8.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 8.7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 8.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 10,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3312163487,
       "name": "Piercing Intelligence",
       "data_version": "stfcspace-upstream",
@@ -22795,6 +26319,165 @@
       ]
     },
     {
+      "rid": 3553517040,
+      "name": "Combat Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.55,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 0.85,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 2.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 2.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_health",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3554913622,
       "name": "Battleship Barrage",
       "data_version": "stfcspace-upstream",
@@ -23882,6 +27565,165 @@
       ]
     },
     {
+      "rid": 3670192485,
+      "name": "Battle Orders",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.55,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.75,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.85,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.45,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.65,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3671898209,
       "name": "Positron Phaser",
       "data_version": "stfcspace-upstream",
@@ -24895,6 +28737,115 @@
       ]
     },
     {
+      "rid": 3756379340,
+      "name": "Charismatic Orders",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack_captain",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_captain",
+              "value": 0.05,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_captain",
+              "value": 0.05,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack_captain",
+              "value": 0.09,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_captain",
+              "value": 0.09,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_captain",
+              "value": 0.09,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack_captain",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_captain",
+              "value": 0.15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_captain",
+              "value": 0.15,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack_captain",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_captain",
+              "value": 0.23,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_captain",
+              "value": 0.23,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack_captain",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense_captain",
+              "value": 0.35,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health_captain",
+              "value": 0.35,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 3788468531,
       "name": "Taurean Spear",
       "data_version": "stfcspace-upstream",
@@ -25118,6 +29069,315 @@
               "value": 0.5,
               "operator": "add",
               "attacker_ship_class": "interceptor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 3797380825,
+      "name": "We Do Not Retreat",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 6.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 6.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 6.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 8.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 8.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 8.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 9,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 9,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 12,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 12,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 15,
+              "operator": "add"
             }
           ]
         }
@@ -27141,6 +31401,115 @@
       ]
     },
     {
+      "rid": 4021387234,
+      "name": "Attack Training",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.04,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.06,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.08,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.11,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.14,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.18,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.22,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.27,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.32,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 0.4,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "rid": 4055439002,
       "name": "Hull Density",
       "data_version": "stfcspace-upstream",
@@ -27402,6 +31771,255 @@
             {
               "stat": "hull_hp",
               "value": 7.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4081647900,
+      "name": "Nero's Trident",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 1.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 1.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 2.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 2.5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 2.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 3,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 3,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 4,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 4,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 5,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 6,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 6,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 7,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 7,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 8,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 8,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 10,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 10,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 12,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 12,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 12,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "bonuses": [
+            {
+              "stat": "officer_attack",
+              "value": 15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_defense",
+              "value": 15,
+              "operator": "add"
+            },
+            {
+              "stat": "officer_health",
+              "value": 15,
               "operator": "add"
             }
           ]
@@ -28017,6 +32635,115 @@
             {
               "stat": "apex_shred",
               "value": 1.5,
+              "operator": "add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rid": 4159971023,
+      "name": "Orlop Health",
+      "data_version": "stfcspace-upstream",
+      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
+      "level_value_mode": "snapshot",
+      "levels": [
+        {
+          "level": 1,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.2,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.26,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.33,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.41,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.5,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.59,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.69,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.79,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 0.89,
+              "operator": "add"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "bonuses": [
+            {
+              "stat": "officer_health_below_decks",
+              "value": 1,
               "operator": "add"
             }
           ]
