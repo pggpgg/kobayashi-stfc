@@ -102,6 +102,9 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
         "ship":"uss_saladin", "hostile":"1127817100", "sims":10, "seed":11,
         "max_candidates":1, "strategy":"tiered", "tiered_scout_sims":5,
         "tiered_top_k":1, "below_decks_slots":0,
+        // Exercise warning propagation independently of combat scores. A warm
+        // start alone does not guarantee that this crew wins the final ranking.
+        "constraints":{"captain_must_be":"Spock", "bridge_must_include":["Kirk","Tasha Yar"]},
         "warm_start_crews":[
             {"captain":"Spock", "bridge":["Kirk","Tasha Yar"], "below_decks":[]}
         ]
@@ -123,7 +126,7 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
                     .is_some_and(|s| s.to_lowercase().contains("tasha") || s.contains("tasha-yar"))
             })
         })
-        .expect("Tasha crew was not returned")
+        .unwrap_or_else(|| panic!("constrained Tasha crew was not returned: {response}"))
         + 1;
     let warning = response["warnings"]
         .as_array()
