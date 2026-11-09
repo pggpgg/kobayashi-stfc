@@ -4688,7 +4688,7 @@ mod tests {
     }
 
     #[test]
-    fn officer_accuracy_buff_lowers_hostile_mitigation_and_raises_pierce() {
+    fn officer_accuracy_buff_lowers_mitigation_without_a_second_pierce_bonus() {
         // Moderate defender stats so mitigation is not stuck at the hostile ceiling (high-tier
         // bundled hostiles often clamp, hiding the dodge/accuracy leg).
         let hostile_rec: HostileRecord = serde_json::from_value(serde_json::json!({
@@ -4738,9 +4738,10 @@ mod tests {
         let (m1, p1) =
             mitigation_and_pierce_for_player_vs_hostile(&ship_rec, &hostile_rec, &profile, &buffs);
         assert!(
-            p1 > p0 && m1 < m0,
-            "expected more pierce and less mitigation with accuracy; m0={m0} m1={m1} p0={p0} p1={p1}"
+            m1 < m0,
+            "accuracy must still lower mitigation; m0={m0} m1={m1}"
         );
+        assert_eq!((p0, p1), (0.0, 0.0));
     }
 
     #[test]
