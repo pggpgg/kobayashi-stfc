@@ -223,6 +223,53 @@ const MAX_SENSITIVITY_JOBS_RETAINED: usize = 64;
 
 static REGISTRY: JobRegistry<SensitivityJobState> = JobRegistry::new();
 
+fn mark_sensitivity_worker_panicked(state: &mut SensitivityJobState) {
+    state.status = SensitivityJobStatus::Error;
+    state.phase = None;
+    state.result = None;
+    state.error = Some("Sensitivity worker failed unexpectedly".to_string());
+}
+
+#[cfg(test)]
+mod worker_panic_tests {
+    use super::*;
+
+    #[test]
+    fn sensitivity_panic_becomes_terminal_error_and_removes_cancel_flag() {
+        let registry = JobRegistry::new();
+        let id = "sensitivity-panic";
+        registry.insert(
+            id.to_string(),
+            SensitivityJobState {
+                status: SensitivityJobStatus::Running,
+                kind: SensitivityJobKind::Oat,
+                progress: 42,
+                sims_done: 42,
+                total_sims: 100,
+                phase: Some("running".to_string()),
+                result: None,
+                error: None,
+                started_at_ms: 1,
+            },
+            Arc::new(AtomicBool::new(false)),
+            10,
+        );
+        assert!(!registry.run_worker(
+            id,
+            || panic!("injected failure"),
+            mark_sensitivity_worker_panicked
+        ));
+        let state = registry.get(id).unwrap();
+        assert!(matches!(state.status, SensitivityJobStatus::Error));
+        assert_eq!(
+            state.error.as_deref(),
+            Some("Sensitivity worker failed unexpectedly")
+        );
+        assert!(state.phase.is_none());
+        assert!(!registry.cancel(id));
+    }
+}
+
 fn now_ms() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -358,59 +405,67 @@ pub fn start_sensitivity_job(
 
     let job_id_thread = job_id.clone();
     std::thread::spawn(move || {
-        let job_span = info_span!(
-            "sensitivity_job_run",
-            job_id = %job_id_thread,
-            method = kind.as_str(),
-        );
-        let _job_span = job_span.enter();
         let _cpu_permit = cpu_permit;
-        let start = Instant::now();
+        let completed = REGISTRY.run_worker(
+            &job_id_thread,
+            || {
+                let job_span = info_span!(
+                    "sensitivity_job_run",
+                    job_id = %job_id_thread,
+                    method = kind.as_str(),
+                );
+                let _job_span = job_span.enter();
+                let start = Instant::now();
 
-        let outcome: Result<SensitivityJobResult, String> = match request {
-            SensitivityJobRequest::Oat(req) => {
-                run_sensitivity_with_progress(registry.as_ref(), &req, &progress)
-                    .map(SensitivityJobResult::Oat)
-                    .map_err(|e| e.to_string())
-            }
-            SensitivityJobRequest::Morris(req) => {
-                run_morris_with_progress(registry.as_ref(), &req, &progress)
-                    .map(SensitivityJobResult::Morris)
-            }
-            SensitivityJobRequest::Sobol(req) => {
-                run_sobol_with_progress(registry.as_ref(), &req, &progress)
-                    .map(SensitivityJobResult::Sobol)
-            }
-        };
+                let outcome: Result<SensitivityJobResult, String> = match request {
+                    SensitivityJobRequest::Oat(req) => {
+                        run_sensitivity_with_progress(registry.as_ref(), &req, &progress)
+                            .map(SensitivityJobResult::Oat)
+                            .map_err(|e| e.to_string())
+                    }
+                    SensitivityJobRequest::Morris(req) => {
+                        run_morris_with_progress(registry.as_ref(), &req, &progress)
+                            .map(SensitivityJobResult::Morris)
+                    }
+                    SensitivityJobRequest::Sobol(req) => {
+                        run_sobol_with_progress(registry.as_ref(), &req, &progress)
+                            .map(SensitivityJobResult::Sobol)
+                    }
+                };
 
-        let duration_ms = start.elapsed().as_millis() as u64;
-        match outcome {
-            Ok(result) if progress.cancelled() => {
-                warn!(job_id = %job_id_thread, duration_ms, "sensitivity_job_cancelled");
-                drop(result);
-                REGISTRY.with_state_mut(&job_id_thread, |state| {
-                    state.status = SensitivityJobStatus::Error;
-                    state.error = Some("Cancelled".to_string());
-                });
-            }
-            Ok(result) => {
-                info!(job_id = %job_id_thread, duration_ms, "sensitivity_job_completed");
-                REGISTRY.with_state_mut(&job_id_thread, |state| {
-                    state.status = SensitivityJobStatus::Done;
-                    state.progress = 100;
-                    state.phase = None;
-                    state.result = Some(result);
-                });
-            }
-            Err(err) => {
-                warn!(job_id = %job_id_thread, error = %err, duration_ms, "sensitivity_job_failed");
-                REGISTRY.with_state_mut(&job_id_thread, |state| {
-                    state.status = SensitivityJobStatus::Error;
-                    state.error = Some(err);
-                });
-            }
+                let duration_ms = start.elapsed().as_millis() as u64;
+                match outcome {
+                    Ok(result) if progress.cancelled() => {
+                        warn!(job_id = %job_id_thread, duration_ms, "sensitivity_job_cancelled");
+                        drop(result);
+                        REGISTRY.with_state_mut(&job_id_thread, |state| {
+                            state.status = SensitivityJobStatus::Error;
+                            state.error = Some("Cancelled".to_string());
+                        });
+                    }
+                    Ok(result) => {
+                        info!(job_id = %job_id_thread, duration_ms, "sensitivity_job_completed");
+                        REGISTRY.with_state_mut(&job_id_thread, |state| {
+                            state.status = SensitivityJobStatus::Done;
+                            state.progress = 100;
+                            state.phase = None;
+                            state.result = Some(result);
+                        });
+                    }
+                    Err(err) => {
+                        warn!(job_id = %job_id_thread, error = %err, duration_ms, "sensitivity_job_failed");
+                        REGISTRY.with_state_mut(&job_id_thread, |state| {
+                            state.status = SensitivityJobStatus::Error;
+                            state.error = Some(err);
+                        });
+                    }
+                }
+            },
+            mark_sensitivity_worker_panicked,
+        );
+        if !completed {
+            warn!(job_id = %job_id_thread, "sensitivity_job_worker_panicked");
         }
-        REGISTRY.remove_cancel(&job_id_thread);
     });
 
     SensitivityStartResponse { job_id }

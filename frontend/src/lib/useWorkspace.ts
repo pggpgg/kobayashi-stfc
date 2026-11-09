@@ -310,6 +310,22 @@ export function useWorkspace() {
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentOptimizeJobIdRef = useRef<string | null>(null);
+  const optimizeInputKey = JSON.stringify([
+    activeProfileId,
+    shipId,
+    scenarioId,
+    shipTier,
+    shipLevel,
+    enemyType,
+    belowDeckUnlockLevels,
+    simsPerCrew,
+    optimizerSettings,
+    selectedSupportBuffs,
+  ]);
+  const previousOptimizeInputRef = useRef(optimizeInputKey);
+  const optimizeGenerationRef = useRef(0);
+  const simGenerationRef = useRef(0);
+  const optimizeStartAbortRef = useRef<AbortController | null>(null);
   const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -381,9 +397,29 @@ export function useWorkspace() {
     }
   }, [activeProfileId, loopRunContext]);
 
-  // Close SSE, reconnect timers, and polling on unmount
+  // Invalidate work when its inputs change or the workspace is left.
   useEffect(() => {
+    if (previousOptimizeInputRef.current !== optimizeInputKey) {
+      previousOptimizeInputRef.current = optimizeInputKey;
+      setLoadingOptimize(false);
+      setOptimizeStreamMode(null);
+      setOptimizeProgress(null);
+      setOptimizePreview(null);
+      setSimResult(null);
+      setRecommendations([]);
+      setResultWarnings([]);
+      setUnresolvedOfficers([]);
+    }
     return () => {
+      optimizeGenerationRef.current += 1;
+      optimizeStartAbortRef.current?.abort();
+      optimizeStartAbortRef.current = null;
+      const jobId = currentOptimizeJobIdRef.current;
+      currentOptimizeJobIdRef.current = null;
+      if (jobId) {
+        clearPersistedOptimizeJob();
+        cancelOptimizeJob(jobId).catch(() => {});
+      }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -397,11 +433,35 @@ export function useWorkspace() {
         pollIntervalRef.current = null;
       }
     };
-  }, []);
+  }, [optimizeInputKey]);
+
+  const simInputKey = JSON.stringify([
+    activeProfileId,
+    shipId,
+    scenarioId,
+    shipTier,
+    shipLevel,
+    enemyType,
+    crew,
+    simsPerCrew,
+    selectedSupportBuffs,
+  ]);
+  const previousSimInputRef = useRef(simInputKey);
+  useEffect(() => {
+    if (previousSimInputRef.current !== simInputKey) {
+      previousSimInputRef.current = simInputKey;
+      setLoadingSim(false);
+      setSimResult(null);
+    }
+    return () => {
+      simGenerationRef.current += 1;
+    };
+  }, [simInputKey]);
 
   // Fetch optimize estimate when parameters change (debounced 350ms to avoid
   // firing on every keystroke while typing sims/tier values).
   useEffect(() => {
+    let cancelled = false;
     const ship = shipId || "Saladin";
     const hostile = scenarioId || "2918121098";
     if (!ship || !hostile) {
@@ -431,11 +491,16 @@ export function useWorkspace() {
         },
         activeProfileId,
       )
-        .then((data) => setEstimate(data))
-        .catch(() => setEstimate(null));
+        .then((data) => {
+          if (!cancelled) setEstimate(data);
+        })
+        .catch(() => {
+          if (!cancelled) setEstimate(null);
+        });
     }, 350);
 
     return () => {
+      cancelled = true;
       if (estimateDebounceRef.current) {
         clearTimeout(estimateDebounceRef.current);
         estimateDebounceRef.current = null;
@@ -639,6 +704,10 @@ export function useWorkspace() {
       setError("Select a captain first");
       return;
     }
+    if (currentOptimizeJobIdRef.current || optimizeStartAbortRef.current) {
+      handleCancelOptimize();
+    }
+    const generation = ++simGenerationRef.current;
     setError(null);
     setWorkspaceInfo(null);
     setResultWarnings([]);
@@ -646,14 +715,16 @@ export function useWorkspace() {
     setLoadingSim(true);
     try {
       const res = await simulate(simParams, activeProfileId);
+      if (generation !== simGenerationRef.current) return;
       setSimResult(res.stats);
       setRecommendations([]);
       setResultWarnings(res.warnings ?? []);
       setUnresolvedOfficers(res.unresolved_officers ?? []);
     } catch (e) {
+      if (generation !== simGenerationRef.current) return;
       setErrorFromApiException(e);
     } finally {
-      setLoadingSim(false);
+      if (generation === simGenerationRef.current) setLoadingSim(false);
     }
   };
 
@@ -787,17 +858,20 @@ export function useWorkspace() {
       eventSourceRef.current = null;
     }
 
+    let pollInFlight = false;
     const poll = () => {
+      if (pollInFlight || currentOptimizeJobIdRef.current !== jobId) return;
+      pollInFlight = true;
       getOptimizeStatus(jobId)
         .then((status) => {
+          if (currentOptimizeJobIdRef.current !== jobId) return;
           applyRunningOptimizeStatus(status);
           if (status.status === "done" || status.status === "error") {
             applyOptimizeDone(status);
           }
         })
         .catch((e) => {
-          clearPersistedOptimizeJob();
-          currentOptimizeJobIdRef.current = null;
+          if (currentOptimizeJobIdRef.current !== jobId) return;
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
@@ -824,6 +898,9 @@ export function useWorkspace() {
           setOptimizeEtaSeconds(null);
           setOptimizeThroughput(null);
           setOptimizePreview(null);
+        })
+        .finally(() => {
+          pollInFlight = false;
         });
     };
 
@@ -853,6 +930,11 @@ export function useWorkspace() {
       const es = new EventSource(streamUrl);
       eventSourceRef.current = es;
       es.onmessage = (event) => {
+        if (
+          currentOptimizeJobIdRef.current !== jobId ||
+          eventSourceRef.current !== es
+        )
+          return;
         sseAttemptRef.current = 0;
         setOptimizeStreamMode("sse");
         try {
@@ -869,6 +951,7 @@ export function useWorkspace() {
       };
       es.onerror = () => {
         es.close();
+        if (eventSourceRef.current !== es) return;
         eventSourceRef.current = null;
         if (
           usePollingOnlyRef.current ||
@@ -910,15 +993,19 @@ export function useWorkspace() {
     ) {
       return;
     }
+    // Restore the loop handoff before consuming a completed job response, so
+    // its result is attributed to the original target.
+    if (!loopRunContext && loadPendingLoopRun(activeProfileId)) return;
     if (currentOptimizeJobIdRef.current === persisted.jobId) {
       return;
     }
 
     let cancelled = false;
+    const generation = optimizeGenerationRef.current;
     (async () => {
       try {
         const status = await getOptimizeStatus(persisted.jobId);
-        if (cancelled) return;
+        if (cancelled || generation !== optimizeGenerationRef.current) return;
         if (status.status === "done" || status.status === "error") {
           clearPersistedOptimizeJob();
           applyRunningOptimizeStatus(status);
@@ -929,15 +1016,16 @@ export function useWorkspace() {
         applyRunningOptimizeStatus(status);
         beginOptimizeTracking(persisted.jobId);
       } catch {
-        if (!cancelled) clearPersistedOptimizeJob();
+        if (!cancelled && generation === optimizeGenerationRef.current)
+          clearPersistedOptimizeJob();
       }
     })();
 
     return () => {
       cancelled = true;
     };
-    // Re-check when profile id stabilizes after load (persisted job is per-profile).
-  }, [activeProfileId]);
+    // Route state can restore the scenario after the profile loads.
+  }, [activeProfileId, optimizeInputKey, loopRunContext]);
 
   // Handle running optimization
   const handleRunOptimize = async () => {
@@ -946,6 +1034,18 @@ export function useWorkspace() {
       setError(preflightError);
       return;
     }
+    simGenerationRef.current += 1;
+    setLoadingSim(false);
+    const previousJobId = currentOptimizeJobIdRef.current;
+    if (previousJobId) {
+      currentOptimizeJobIdRef.current = null;
+      clearPersistedOptimizeJob();
+      cancelOptimizeJob(previousJobId).catch(() => {});
+    }
+    const generation = ++optimizeGenerationRef.current;
+    optimizeStartAbortRef.current?.abort();
+    const startAbort = new AbortController();
+    optimizeStartAbortRef.current = startAbort;
     setError(null);
     setWorkspaceInfo(null);
     setCachedWarmStartBadge(false);
@@ -1022,7 +1122,9 @@ export function useWorkspace() {
         }),
         activeProfileId,
         {
+          signal: startAbort.signal,
           onCpuBusyWait: ({ waitMs, attempt }) => {
+            if (generation !== optimizeGenerationRef.current) return;
             const sec = Math.max(1, Math.round(waitMs / 1000));
             setWorkspaceInfo(
               `Server CPU is busy (another simulation or optimization is running). Automatically retrying in ~${sec}s (attempt ${attempt})…`,
@@ -1030,9 +1132,16 @@ export function useWorkspace() {
           },
         },
       );
+      if (generation !== optimizeGenerationRef.current) {
+        cancelOptimizeJob(job_id).catch(() => {});
+        return;
+      }
+      optimizeStartAbortRef.current = null;
       setWorkspaceInfo(null);
       beginOptimizeTracking(job_id);
     } catch (e) {
+      if (generation !== optimizeGenerationRef.current) return;
+      optimizeStartAbortRef.current = null;
       clearPersistedOptimizeJob();
       setWorkspaceInfo(null);
       setErrorFromApiException(e);
@@ -1049,6 +1158,9 @@ export function useWorkspace() {
   };
 
   const handleCancelOptimize = () => {
+    optimizeGenerationRef.current += 1;
+    optimizeStartAbortRef.current?.abort();
+    optimizeStartAbortRef.current = null;
     setCachedWarmStartBadge(false);
     setStaleCacheRefusedReason(null);
     const jobId = currentOptimizeJobIdRef.current;

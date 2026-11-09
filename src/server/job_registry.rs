@@ -124,6 +124,22 @@ impl<S: JobState> JobRegistry<S> {
     pub fn remove_cancel(&self, id: &str) {
         self.cancel_lock().remove(id);
     }
+
+    /// Complete a worker even if its computation or terminal-state update unwinds.
+    /// In abort-on-panic builds the process still exits; this only handles unwinding.
+    pub fn run_worker(
+        &self,
+        id: &str,
+        worker: impl FnOnce(),
+        on_panic: impl FnOnce(&mut S),
+    ) -> bool {
+        let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(worker));
+        if outcome.is_err() {
+            self.with_state_mut(id, on_panic);
+        }
+        self.remove_cancel(id);
+        outcome.is_ok()
+    }
 }
 
 fn now_ms() -> u128 {
@@ -221,6 +237,49 @@ mod tests {
     fn cancel_unknown_returns_false() {
         let reg: JobRegistry<TestState> = JobRegistry::new();
         assert!(!reg.cancel("does-not-exist"));
+    }
+
+    #[test]
+    fn worker_panic_marks_terminal_and_removes_cancel_flag() {
+        let reg: JobRegistry<TestState> = JobRegistry::new();
+        let id = reg.next_id("panic");
+        reg.insert(
+            id.clone(),
+            TestState {
+                started: 1,
+                terminal: false,
+            },
+            Arc::new(AtomicBool::new(false)),
+            10,
+        );
+        let succeeded = reg.run_worker(
+            &id,
+            || panic!("injected failure"),
+            |state| {
+                state.terminal = true;
+            },
+        );
+        assert!(!succeeded);
+        assert!(reg.get(&id).unwrap().terminal);
+        assert!(!reg.cancel(&id));
+    }
+
+    #[test]
+    fn worker_success_removes_cancel_flag_without_marking_failure() {
+        let reg: JobRegistry<TestState> = JobRegistry::new();
+        let id = reg.next_id("success");
+        reg.insert(
+            id.clone(),
+            TestState {
+                started: 1,
+                terminal: false,
+            },
+            Arc::new(AtomicBool::new(false)),
+            10,
+        );
+        assert!(reg.run_worker(&id, || {}, |_| panic!("unexpected panic callback")));
+        assert!(!reg.get(&id).unwrap().terminal);
+        assert!(!reg.cancel(&id));
     }
 
     #[test]

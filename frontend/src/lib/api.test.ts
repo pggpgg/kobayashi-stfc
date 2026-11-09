@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   API_ERROR_CPU_BUSY,
   ApiError,
+  fetchWithCpuBusyRetries,
   formatApiError,
   getOptimizeEstimate,
   getOptimizeStatus,
@@ -188,6 +189,40 @@ describe("simulate cpu_busy retry", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
+  });
+
+  it("stops retrying when a pending CPU wait is cancelled", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: "cpu_busy",
+          message: "busy",
+          retry_after_ms: 10000,
+        }),
+        { status: 503 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    let waiting!: () => void;
+    const reachedWait = new Promise<void>((resolve) => {
+      waiting = resolve;
+    });
+    const request = fetchWithCpuBusyRetries(
+      "/api/optimize/start",
+      {},
+      {
+        signal: controller.signal,
+        onCpuBusyWait: waiting,
+      },
+    );
+    const rejected = expect(request).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    await reachedWait;
+    controller.abort();
+    await rejected;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("waits once and retries after cpu_busy", async () => {
