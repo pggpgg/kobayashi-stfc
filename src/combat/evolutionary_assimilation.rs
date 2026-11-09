@@ -5,8 +5,9 @@
 //! canonical officer ids below match Help Center / in-game “forbidden” captains for this family
 //! (Janeway, Enterprise‑E Picard, Pike) until upstream provides an explicit machine-readable list.
 //!
-//! Borg Sphere **Quantum Nullification Pulse** is modeled as [`crate::combat::abilities::AbilityEffect::ConquerorBorgBeamSuppression`]
-//! at combat begin vs tagged Conqueror Borg defenders; when active, this instant loss does not apply.
+//! Quantum Nullification Pulse suppresses resonance beams, not Evolutionary Assimilation.
+//! Scopely's Sphere help page explicitly states that these officers cause an instant hull loss:
+//! <https://scopely.helpshift.com/hc/en/19-star-trek-fleet-command/faq/8763-the-borg-sphere/>
 
 use crate::combat::hostile_tags::HOSTILE_TAG_MASK_CONQUEROR_BORG;
 
@@ -29,7 +30,7 @@ pub fn officer_triggers_evolutionary_assimilation(officer_id: &str) -> bool {
 pub fn evolutionary_assimilation_instant_loss(
     defender_is_npc_hostile: bool,
     defender_hostile_tag_mask: u32,
-    conqueror_borg_beam_suppression: bool,
+    _conqueror_borg_beam_suppression: bool,
     attacker_roster_officer_ids: &[String],
 ) -> bool {
     if !defender_is_npc_hostile {
@@ -38,10 +39,45 @@ pub fn evolutionary_assimilation_instant_loss(
     if defender_hostile_tag_mask & HOSTILE_TAG_MASK_CONQUEROR_BORG == 0 {
         return false;
     }
-    if conqueror_borg_beam_suppression {
-        return false;
-    }
     attacker_roster_officer_ids
         .iter()
         .any(|id| officer_triggers_evolutionary_assimilation(id))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn forbidden_officers_trigger_independently_of_beam_suppression() {
+        for officer in EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS {
+            let roster = vec![officer.to_string()];
+            for suppression in [false, true] {
+                assert!(evolutionary_assimilation_instant_loss(
+                    true,
+                    HOSTILE_TAG_MASK_CONQUEROR_BORG,
+                    suppression,
+                    &roster
+                ));
+                assert!(!evolutionary_assimilation_instant_loss(
+                    false,
+                    HOSTILE_TAG_MASK_CONQUEROR_BORG,
+                    suppression,
+                    &roster
+                ));
+                assert!(!evolutionary_assimilation_instant_loss(
+                    true,
+                    0,
+                    suppression,
+                    &roster
+                ));
+            }
+        }
+        assert!(!evolutionary_assimilation_instant_loss(
+            true,
+            HOSTILE_TAG_MASK_CONQUEROR_BORG,
+            true,
+            &["charvanek".to_string()]
+        ));
+    }
 }

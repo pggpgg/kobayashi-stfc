@@ -49,7 +49,7 @@ struct AbilityCatalogEntry {
     /// the ship's max level).
     #[serde(default)]
     values_scale_with_ship_level: bool,
-    /// Multiply normalized numeric `value` / curve entries after the usual `value_is_percentage` scaling (e.g. Borg Omicron uses `0.001` on upstream “percent × 100” rows).
+    /// Multiply normalized numeric `value` / curve entries after the usual `value_is_percentage` scaling.
     #[serde(default)]
     post_scale: Option<f64>,
 }

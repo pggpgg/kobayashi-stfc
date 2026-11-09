@@ -2,13 +2,15 @@
 
 This is the authoritative inventory of upstream ship abilities that are modeled, intentionally ignored, or still candidates for combat support.
 
+The dated counts below describe the catalog at the time of each audit. An `unsupported_base_weapon_damage` marker now keeps Omicron out of combat calculations until its stacking is verified; the marker is not a modeled damage effect.
+
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
 **Track E update (2026-06-07):** The two breach-gated cumulative crit proc chains — Hegh'ta "Open the Wound" (`3432906971`) and Rotarran "Bird of Prey" (`2195955652`) — are now **modeled** (see §6.5), dropping the noop inventory from **67 → 65**. An earlier revision of §6.2 mislabeled these proc chains with the ids `2520552521` / `3014221215`; those two ids are in fact economy abilities (transogen loot / tritanium mining) and remain `combat_noop`.
 
 **Reclassification (2026-07-17, backlog item 9):** U.S.S. Vengeance **Advanced Sabotage** (`2432056626`, "ignores {0:#.#%} of Breen Warship [BRN] shields") moved from `pierce_bonus` to `shield_mitigation_bypass` (`AbilityEffect::ShieldMitigationBypassFraction`, Harrison Sabotage outbound path) — a +1.0 pierce additive was the wrong mechanic and ignored the Breen gate. The row now resolves to a 100% bypass (upstream value 1, `{0:#.#%}` placeholder → fraction) gated on the new `breen_warship` hostile tag (Warship/Elite/Primarch, `loca_id` 80600–80602, 8 hostiles). The generator's `ignor`+`shield` branch emits the bypass; the inventory of "Shield/Armor Piercing" **stat** texts (5 ids) legitimately stays `pierce_bonus`. Tests: `tests/vengeance_advanced_sabotage.rs`. No noop-inventory change.
 
-**Inventory drift vs prior audits:** Six ids left the noop list: `509252162` (`attack_multiplier`), `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Shard detail: [docs/audit_shards/](audit_shards/).
+**Inventory drift vs prior audits:** Six ids left the noop list in the earlier audit: `509252162`, `2425475474` (`conqueror_borg_beam_suppression`), and Track D2 `701705952`, `1379978713`, `2441576367`, `1463338054` (see §6.1). Omicron `509252162` is now marked `unsupported_base_weapon_damage`: its raw level-10 value is 26,650 (displayed as 2,665,000%), but its combat stacking is not verified. Shard detail: [docs/audit_shards/](audit_shards/).
 
 Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_desc`, `id` = per-row or ship `loca_id` from `ships/*.json`).
 
@@ -148,13 +150,14 @@ ids and ships:
 - Confirm B’Rel `2441576367` debuff stat (pierce vs accuracy vs damage) and round-1-only scope.
 - Confirm Sanctus `1379978713` shield drain is % of max shield per round and round cap from ability tier.
 - Intrepid `1463338054`: whether dodge/deflection stack with officer buffs in hostile fights.
-- Reclassified ids `509252162`, `2425475474`: spot-check optimizer scenarios that use those ships still pick up hull abilities.
+- For `509252162`, verify how the server combines the base damage bonus with profile and officer effects before enabling it. The current resolver reports the effect as unsupported.
+- For `2425475474`, spot-check optimizer scenarios that use those ships still pick up beam suppression.
 
 ### 6.4 Reclassified (remove from noop inventory)
 
 | id | Current `effect_type` |
 | --- | --- |
-| `509252162` | `attack_multiplier` |
+| `509252162` | `unsupported_base_weapon_damage` |
 | `2425475474` | `conqueror_borg_beam_suppression` |
 
 ### 6.5 Track E — breach-gated cumulative crit proc chains (2026-06-07)

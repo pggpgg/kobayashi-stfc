@@ -14,6 +14,9 @@ pub struct RankingScore {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RankedCrewResult {
+    /// Internal diagnostic; not persisted in historical wire rows.
+    #[serde(skip)]
+    pub unsupported_crew_health_effects: Option<bool>,
     pub captain: String,
     pub bridge: Vec<String>,
     pub below_decks: Vec<String>,
@@ -58,6 +61,7 @@ pub fn rank_results_by_expected_damage(scored: Vec<(CrewCandidate, f64)>) -> Vec
     scored
         .into_iter()
         .map(|(candidate, damage)| RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: candidate.captain,
             bridge: candidate.bridge,
             below_decks: candidate.below_decks,
@@ -100,6 +104,7 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
                 (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32
             };
             RankedCrewResult {
+                unsupported_crew_health_effects: result.unsupported_crew_health_effects,
                 captain: result.candidate.captain,
                 bridge: result.candidate.bridge.clone(),
                 below_decks: result.candidate.below_decks.clone(),
@@ -297,6 +302,7 @@ mod novelty_tests {
 
     fn dummy(captain: &str, bridge: [&str; 2], below: &[&str], win_rate: f64) -> RankedCrewResult {
         RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: captain.to_string(),
             bridge: bridge.iter().map(|s| (*s).to_string()).collect(),
             below_decks: below.iter().map(|s| (*s).to_string()).collect(),

@@ -88,7 +88,7 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   research sources are compiled; Hull Breach isolytic research uses RoundStart.
 ///   Survival metrics use actual attacker HP, including conditional maximum HP.
 ///   Profile-free canaries cannot observe source membership or optimizer metrics.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 13;
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 16;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -441,6 +441,7 @@ fn canary_fights() -> Vec<CanaryFight> {
             shield_deflection: 40.0,
             dodge: 70.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: crate::combat::AttackerStats {
             armor_piercing: 100.0,
             shield_piercing: 160.0,
@@ -592,6 +593,83 @@ fn canary_fights() -> Vec<CanaryFight> {
         ],
     };
 
+    // (h) conditional launch-time maximum hull with pre-existing damage.
+    let mut h_attacker = canary_combatant("canary_h_attacker");
+    h_attacker.attack = 25.0;
+    let mut h_defender = canary_combatant("canary_h_defender");
+    h_defender.hull_health = 5_000.0;
+    h_defender.attack = 25.0;
+    let mut h_ability = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::HullHpMultiplier(0.5),
+    );
+    h_ability.ability.condition = Some(crate::combat::AbilityCondition::AttackerShipTypeIs(
+        crate::combat::ShipType::Battleship,
+    ));
+    let mut h_config = canary_config(3, 31);
+    h_config.initial_attacker_hull_damage = 1_100.0;
+
+    // (i) an enemy critical-chance reduction applies to incoming fire.
+    let mut i_attacker = canary_combatant("canary_i_attacker");
+    i_attacker.attack = 75.0;
+    i_attacker.hull_health = 2_000.0;
+    let mut i_defender = canary_combatant("canary_i_defender");
+    i_defender.attack = 150.0;
+    i_defender.crit_chance = 1.0;
+    i_defender.crit_multiplier = 3.0;
+    i_defender.hull_health = 3_000.0;
+    let i_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostileCritChanceReduction(1.0),
+        )],
+    };
+
+    // (j) base-component damage is distinct from already buffed weapon attack.
+    let mut j_attacker = canary_combatant("canary_j_attacker");
+    j_attacker.weapons = vec![crate::combat::WeaponStats {
+        attack: 250.0,
+        component_base_attack: Some(40.0),
+        ..Default::default()
+    }];
+    let mut j_defender = canary_combatant("canary_j_defender");
+    j_defender.hull_health = 8_000.0;
+    let j_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::ComponentBaseWeaponDamageBonus(3.0),
+        )],
+    };
+
+    // (k) piercing-derived setup must not add a second quarter of the damage
+    // remaining after mitigation, in either direction. Include the setup helper
+    // so restoring the old formula changes the persisted engine fingerprint.
+    let defense = crate::combat::DefenderStats {
+        armor: 110.0,
+        shield_deflection: 80.0,
+        dodge: 60.0,
+    };
+    let piercing = crate::combat::AttackerStats {
+        armor_piercing: 100.0,
+        shield_piercing: 100.0,
+        accuracy: 100.0,
+    };
+    let ship_type = crate::combat::ShipType::Explorer;
+    let mut k_attacker = canary_combatant("canary_k_attacker");
+    k_attacker.attack = 500.0;
+    k_attacker.hull_health = 10_000.0;
+    k_attacker.mitigation = crate::combat::mitigation(defense, piercing, ship_type);
+    k_attacker.pierce = crate::combat::pierce_damage_through_bonus(defense, piercing, ship_type);
+    let mut k_defender = k_attacker.clone();
+    k_defender.id = "canary_k_defender".to_string();
+    k_defender.attack = 250.0;
+
     vec![
         (
             "a_plain",
@@ -641,6 +719,36 @@ fn canary_fights() -> Vec<CanaryFight> {
             canary_combatant("canary_g_defender"),
             canary_config(8, 29),
             g_crew,
+        ),
+        (
+            "h_conditional_max_hull",
+            h_attacker,
+            h_defender,
+            h_config,
+            CrewConfiguration {
+                seats: vec![h_ability],
+            },
+        ),
+        (
+            "i_hostile_crit_reduction",
+            i_attacker,
+            i_defender,
+            canary_config(5, 37),
+            i_crew,
+        ),
+        (
+            "j_component_base_damage",
+            j_attacker,
+            j_defender,
+            canary_config(7, 41),
+            j_crew,
+        ),
+        (
+            "k_piercing_without_extra_bonus",
+            k_attacker,
+            k_defender,
+            canary_config(3, 43),
+            CrewConfiguration::default(),
         ),
     ]
 }
@@ -1217,12 +1325,33 @@ mod tests {
         assert_eq!(engine_fingerprint(), engine_fingerprint());
     }
 
+    #[test]
+    fn piercing_canary_detects_the_removed_automatic_bonus_in_both_directions() {
+        let (_, attacker, defender, config, crew) = canary_fights()
+            .into_iter()
+            .find(|(id, ..)| *id == "k_piercing_without_extra_bonus")
+            .unwrap();
+        assert_eq!((attacker.pierce, defender.pierce), (0.0, 0.0));
+        let corrected = simulate_combat(&attacker, &defender, &config, &crew);
+        let mut legacy_outbound = attacker.clone();
+        legacy_outbound.pierce = 0.25 * (1.0 - defender.mitigation);
+        let outbound = simulate_combat(&legacy_outbound, &defender, &config, &crew);
+        assert_ne!(corrected.total_damage, outbound.total_damage);
+        let mut legacy_counter = defender.clone();
+        legacy_counter.pierce = 0.25 * (1.0 - attacker.mitigation);
+        let counter = simulate_combat(&attacker, &legacy_counter, &config, &crew);
+        assert_ne!(
+            corrected.attacker_hull_remaining,
+            counter.attacker_hull_remaining
+        );
+    }
+
     /// A suite whose fights all end the same way would hash the same after most engine changes.
     /// Every fight must reach a distinct outcome, and none may end instantly.
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 7, "expected seven canary fights");
+        assert_eq!(summaries.len(), 11, "expected eleven canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

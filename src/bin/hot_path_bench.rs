@@ -201,6 +201,7 @@ fn raw_context(ship_type: ShipType, weapon_count: usize) -> HostileMitigationPar
             shield_deflection: 1_780.7,
             dodge: 920.1,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 1_100.0,
             shield_piercing: 1_600.0,
@@ -224,6 +225,7 @@ fn weapons(count: usize) -> Vec<WeaponStats> {
     (0..count)
         .map(|index| WeaponStats {
             attack: 800.0 + index as f64 * 180.0,
+            component_base_attack: None,
             shots: Some([3, 2, 4, 1, 3, 2][index % 6]),
             pierce: Some(0.04 + index as f64 * 0.01),
             crit_chance: Some(0.25 + index as f64 * 0.05),
@@ -610,6 +612,7 @@ fn catalog_case() -> Result<Case, String> {
         hostile_mitigation_params: Some(HostileMitigationParams {
             round_native_defense_stats: false,
             defender_stats: ship.to_defender_stats(),
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: hostile.to_attacker_stats(),
             base_attacker_weapon_stats: hostile.counter_weapon_attacker_stats(),
             ship_type: case.attacker_type,
@@ -643,6 +646,7 @@ fn catalog_case() -> Result<Case, String> {
         hostile_mitigation_params: Some(HostileMitigationParams {
             round_native_defense_stats: false,
             defender_stats: hostile.to_defender_stats(),
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: ship.to_attacker_stats(),
             base_attacker_weapon_stats: Vec::new(),
             ship_type: case.defender_type,

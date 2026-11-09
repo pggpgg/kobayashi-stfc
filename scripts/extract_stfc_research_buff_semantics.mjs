@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Extract only research BuffSpec facts for HP, weapon, critical, isolytic,
- * launch defense, penetration and selected officer-stat setup families.
+ * Apex Barrier, launch defense, penetration and selected officer-stat setup families.
  * Input is an explicitly selected ServiceResponse cache; player groups are ignored.
  * Wire schema: netniV/stfc-mod e0b8552, BuffSpec and StaticSyncResearchTreeSpecsResponse.
  * Values are complete rank snapshots, never display percentages. Repeated identical
@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fields } from "./inspect_stfc_combat_config.mjs";
 
-const FAMILY_CODES = new Set([0, 1, 2, 9, 10, 11, 12, 13, 60, 61, 73, 707, 808]);
+const FAMILY_CODES = new Set([0, 1, 2, 9, 10, 11, 12, 13, 60, 61, 73, 707, 808, 67001]);
 // Issue #319 audit: exact residual BIDs from current legacy-mapped catalog rows.
 // Do not select every definition sharing these modifier codes: the selected
 // rows include unsupported predicates that the resolver must quarantine.
@@ -149,7 +149,7 @@ export function extractResearchBuffSemantics(bytes) {
     provenance: {
       cache_sha256: crypto.createHash("sha256").update(bytes).digest("hex"), cache_byte_length: bytes.length,
       schema_revision: "netniV/stfc-mod@e0b8552bc2e8922423c6cdf3ba00ba0a81bf23c0",
-      selection: "ResearchSpecs(66).researchEffects(3), modifiers 0/1/2/9/10/11/12/13/60/61/73/707/808 plus exact Orlop Defense BID 1895868262 and exact issue-319 residual mapped BIDs (39 BuffSpecs; supported mappings only after target/condition gates); no player state",
+      selection: "ResearchSpecs(66).researchEffects(3), modifiers 0/1/2/9/10/11/12/13/60/61/73/707/808/67001 plus exact Orlop Defense BID 1895868262 and exact issue-319 residual mapped BIDs (39 BuffSpecs; supported mappings only after target/condition gates); no player state",
       selected_static_cache_build: 273, consumer_build: 272, encoded_server_build_binding: false,
       metadata_sha256: "ab0ccdc3e9e09e59d16a13431e2a0722255a71d5ff373cc09d95a47cd130ca04",
       game_assembly_sha256: "a5df6314bd78f15892a232a44e77cdcf2e3d20e9a6192f99120c0f3e52632274",

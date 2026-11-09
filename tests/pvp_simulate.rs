@@ -44,6 +44,41 @@ fn simulate_validates_defender_seats_using_the_defender_ship_schedule() {
     );
 }
 
+#[test]
+fn simulate_warns_when_defender_phlox_crit_debuff_is_unmodeled() {
+    use kobayashi::optimizer::crew_generator::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS;
+    use kobayashi::server::api::simulate_payload;
+
+    let registry = DataRegistry::load().expect("registry");
+    let request = serde_json::json!({
+        "ship":"realta", "ship_tier":4, "ship_level":20, "hostile":"",
+        "crew":{"captain":"718-0-2509d7","bridge":["kirk-1323b6","spock-c04738"]},
+        "defender_ship":"stella", "defender_ship_tier":4,"defender_ship_level":25,
+        "defender_profile_id":"demo",
+        "defender_crew":{"captain":"718-0-2509d7","bridge":["phlox-72c07b","spock-c04738"]},
+        "num_sims":1,"seed":42
+    });
+    let response = simulate_payload(
+        &registry,
+        &request.to_string(),
+        Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+    )
+    .expect("valid PvP request");
+    let response: serde_json::Value = serde_json::from_str(&response).unwrap();
+    assert!(
+        response["warnings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|warning| {
+                warning.as_str().is_some_and(|text| {
+                    text.contains("combat ability") && text.contains("cannot be evaluated")
+                })
+            }),
+        "defender Phlox is silently ignored: {response}"
+    );
+}
+
 fn second_profile_id() -> Option<String> {
     let index = load_profile_index();
     index

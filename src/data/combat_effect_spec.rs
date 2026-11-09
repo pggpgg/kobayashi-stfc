@@ -129,6 +129,10 @@ pub enum AbilityModifierSpec {
     HullHp,
     ShieldHp,
     CritChance,
+    /// Absolute critical-hit probability reduction for the opponent's weapons.
+    HostileCritChanceReduction,
+    /// Source coefficient and proc are retained, but the combat mechanic is unverified.
+    UnsupportedOfficerEffect,
     CritDamage,
     Pierce,
     /// Additive shield-mitigation bonus. `target=AttackerSelf` buffs the attacker's own mitigation
@@ -149,6 +153,12 @@ pub enum AbilityModifierSpec {
     BaseMitigationStatsBonus,
     /// Raw amount added to each defense component after its fractional bonuses.
     BaseMitigationStatsAdd,
+    /// Raw points added to armor piercing before the defensive-stat curve.
+    BaseArmorPiercingAdd,
+    /// Coefficient times the effective crew health at combat setup.
+    BaseArmorPiercingPerCrewHealth,
+    /// Coefficient times the effective crew health at combat setup, for all defenses.
+    BaseMitigationStatsPerCrewHealth,
     /// Research/catalog `shield_deflection`; compiles identically to [`MitigationAdditive`](AbilityModifierSpec::MitigationAdditive).
     ShieldDeflection,
     Dodge,

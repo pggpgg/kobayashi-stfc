@@ -19,6 +19,19 @@ pub fn attacker_hull_is_borg_sphere(ship_id: &str) -> bool {
     ship_id.trim().eq_ignore_ascii_case("borg_sphere")
 }
 
+/// A captured Sphere-versus-Obliterator fight showed an instant hull loss that the
+/// current suppression model cannot explain. Native hull data contains a separate 80% decay
+/// buff, but interactions with stabilizers and suppression are not modeled.
+pub fn sphere_obliterator_instant_loss_unresolved(
+    ship_id: &str,
+    defender_is_npc_hostile: bool,
+    defender_hostile_tag_mask: u32,
+) -> bool {
+    defender_is_npc_hostile
+        && attacker_hull_is_borg_sphere(ship_id)
+        && defender_hostile_tag_mask & HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR != 0
+}
+
 /// Beam suppression from [`AbilityEffect::ConquerorBorgBeamSuppression`], or implicit from Borg Sphere hull.
 #[inline]
 pub fn effective_conqueror_borg_beam_suppression(
@@ -72,6 +85,30 @@ pub fn hyperthermic_resonance_beam_instant_loss(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unresolved_instant_loss_diagnostic_is_scenario_scoped() {
+        assert!(sphere_obliterator_instant_loss_unresolved(
+            "borg_sphere",
+            true,
+            HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR
+        ));
+        assert!(!sphere_obliterator_instant_loss_unresolved(
+            "borg_sphere",
+            true,
+            HOSTILE_TAG_MASK_CONQUEROR_BORG_SUPPRESSOR
+        ));
+        assert!(!sphere_obliterator_instant_loss_unresolved(
+            "borg_sphere",
+            false,
+            HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR
+        ));
+        assert!(!sphere_obliterator_instant_loss_unresolved(
+            "voyager",
+            true,
+            HOSTILE_TAG_MASK_CONQUEROR_BORG_OBLITERATOR
+        ));
+    }
 
     #[test]
     fn quantum_resonance_kills_non_sphere_vs_suppressor_when_unsuppressed() {

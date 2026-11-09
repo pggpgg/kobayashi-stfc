@@ -341,7 +341,7 @@ fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
     });
 }
 
-/// [`AttackerStats`] for hostile mitigation and player pierce-through: ship components, profile
+/// [`AttackerStats`] for hostile mitigation: ship components, profile
 /// piercing-stat multipliers, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
 /// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
 pub(crate) fn effective_attacker_stats_for_mitigation(
@@ -517,6 +517,7 @@ fn player_inbound_mitigation_params(
     HostileMitigationParams {
         round_native_defense_stats: false,
         defender_stats: ship_rec.to_defender_stats(),
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: hostile_rec.to_attacker_stats(),
         base_attacker_weapon_stats: hostile_rec.counter_weapon_attacker_stats(),
         ship_type: ship_rec.ship_type(),
@@ -559,6 +560,7 @@ fn player_inbound_mitigation_params_from_shared(
     Some(HostileMitigationParams {
         round_native_defense_stats: false,
         defender_stats: ship_rec.to_defender_stats(),
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: stats,
         base_attacker_weapon_stats: weapons,
         ship_type: ship_rec.ship_type(),
@@ -733,10 +735,8 @@ pub fn pvp_scenario_params_from_api_fields(
 /// Defender [`Combatant`] from [`HostileRecord`], including weapons and pierce/crit used on the
 /// engine’s counter-attack path (see `engine.rs` — hostile fire vs player).
 ///
-/// `player_defender` is sourced from [`crate::data::ShipRecord::to_defender_stats`] and feeds
-/// hostile→player pierce-through (per-weapon and scalar). Until upstream ship data fills raw
-/// armor/shield/dodge values these are zero and the formula collapses to the historical constant;
-/// once they are populated, hostile `accuracy` and piercing actually move counter-fire pierce-through.
+/// Raw player defenses and hostile piercing enter the counter-fire mitigation
+/// context. Setup grants no additional scalar or per-weapon pierce bonus.
 fn defender_combatant_from_hostile_record(
     hostile_lookup_id: &str,
     hostile_rec: &HostileRecord,
@@ -1390,6 +1390,25 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
         }
         let mut seats = crew_seats;
+        let crew_health = if !shared.is_pvp()
+            && candidate_health_stats_complete(candidate, shared.lcars_data.as_ref(), &resolve_opts)
+        {
+            crate::data::profile::effective_crew_health_at_combat_start(
+                officer_stat_totals,
+                bridge_officer_stat_totals,
+                &shared.profile,
+                ship_rec.faction.as_deref(),
+                &merged_static,
+                &pending_officer_stat_contributions,
+                &cond_ctx,
+                &[],
+                &dynamic_officer_stat_contributions,
+            )
+        } else {
+            // Opponent dynamic crew-stat effects are not bound here for PvP.
+            None
+        };
+        resolve_crew_health_effects(&mut seats, crew_health);
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
@@ -1769,6 +1788,30 @@ fn enrich_hostile_defender_for_scenario(
         static_buffs,
         hostile_rec.ship_type_for_combat(),
     );
+    // Preserve the same per-weapon profile-adjusted piercing inputs used when
+    // the weapon's damage-through bonus was built. Runtime raw piercing changes
+    // must compare against that weapon's baseline, not the aggregate ship row.
+    let base_attacker_weapon_stats = ship_rec
+        .to_weapons()
+        .iter()
+        .enumerate()
+        .map(|(i, _)| {
+            let row = ship_rec.weapons.as_ref().and_then(|rows| rows.get(i));
+            if row.is_some_and(|r| {
+                r.armor_piercing.is_some() || r.shield_piercing.is_some() || r.accuracy.is_some()
+            }) {
+                effective_attacker_stats_for_ship_weapon_row(
+                    ship_rec,
+                    row,
+                    profile,
+                    static_buffs,
+                    hostile_rec.ship_type_for_combat(),
+                )
+            } else {
+                base_attacker_stats
+            }
+        })
+        .collect();
     let defender_mitigation = mitigation_for_hostile(
         scaled_stats,
         base_attacker_stats,
@@ -1781,8 +1824,9 @@ fn enrich_hostile_defender_for_scenario(
     defender.hostile_mitigation_params = Some(HostileMitigationParams {
         round_native_defense_stats: false,
         defender_stats: scaled_stats,
+        weapon_pierce_defender_stats: Some(hostile_rec.to_defender_stats()),
         base_attacker_stats,
-        base_attacker_weapon_stats: Vec::new(),
+        base_attacker_weapon_stats,
         ship_type: hostile_rec.ship_type_for_combat(),
         mystery_mitigation_factor: hostile_rec.mystery_mitigation_factor.unwrap_or(0.0),
         floor: hostile_rec.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
@@ -1804,20 +1848,19 @@ fn resolve_options_with_candidate_tiers<'a>(
         return Cow::Borrowed(base);
     };
 
-    // Preserve the existing LCARS path's level reset and empty-map normalization. The
-    // common case can borrow the roster map until a resolved tier override is found.
-    let mut resolved = if base.officer_levels.is_some()
-        || base.officer_tiers.as_ref().is_some_and(HashMap::is_empty)
-    {
+    // Preserve imported levels. An explicit hypothetical tier that differs
+    // from the imported tier invalidates only that officer's saved level.
+    let mut resolved = if base.officer_tiers.as_ref().is_some_and(HashMap::is_empty) {
         Cow::Owned(ResolveOptions {
             tier: base.tier,
             officer_tiers: base.officer_tiers.clone().filter(|tiers| !tiers.is_empty()),
-            officer_levels: None,
+            officer_levels: base.officer_levels.clone(),
         })
     } else {
         Cow::Borrowed(base)
     };
 
+    let mut overrides = HashMap::new();
     let mut apply_slot = |slot: &str| {
         let (name, tier_opt) = split_name_and_tier(slot);
         let Some(tier) = tier_opt else {
@@ -1826,11 +1869,7 @@ fn resolve_options_with_candidate_tiers<'a>(
         let Some(id) = lcars.name_to_id.get(&normalize_lookup_key(&name)) else {
             return;
         };
-        resolved
-            .to_mut()
-            .officer_tiers
-            .get_or_insert_with(HashMap::new)
-            .insert(id.clone(), tier);
+        overrides.insert(id.clone(), tier);
     };
 
     apply_slot(&candidate.captain);
@@ -1841,7 +1880,40 @@ fn resolve_options_with_candidate_tiers<'a>(
         apply_slot(s);
     }
 
+    for (id, tier) in overrides {
+        if base.tier_for(&id) != Some(tier) {
+            if let Some(levels) = resolved.to_mut().officer_levels.as_mut() {
+                levels.remove(&id);
+            }
+        }
+        resolved
+            .to_mut()
+            .officer_tiers
+            .get_or_insert_with(HashMap::new)
+            .insert(id, tier);
+    }
+
     resolved
+}
+
+fn resolve_options_from_roster(entries: &[crate::data::import::RosterEntry]) -> ResolveOptions {
+    let officer_tiers: HashMap<String, u8> = entries
+        .iter()
+        .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id.clone(), t)))
+        .collect();
+    let officer_levels: HashMap<String, u32> = entries
+        .iter()
+        .filter_map(|e| {
+            e.level
+                .filter(|level| *level > 0)
+                .map(|level| (e.canonical_officer_id.clone(), u32::from(level)))
+        })
+        .collect();
+    ResolveOptions {
+        tier: None,
+        officer_tiers: (!officer_tiers.is_empty()).then_some(officer_tiers),
+        officer_levels: (!officer_levels.is_empty()).then_some(officer_levels),
+    }
 }
 
 /// Build (crew_seats, static_buffs, proc_chance, proc_multiplier, officer_stat_totals) from
@@ -1912,6 +1984,64 @@ fn build_crew_and_buffs(
             Vec::new(),
             Vec::new(),
         )
+    }
+}
+
+/// A crew-health-scaled coefficient cannot be resolved from a partial crew.
+fn candidate_health_stats_complete(
+    candidate: &CrewCandidate,
+    lcars_data: Option<&LcarsOfficerData>,
+    options: &ResolveOptions,
+) -> bool {
+    let Some(lcars) = lcars_data else {
+        return false;
+    };
+    std::iter::once(&candidate.captain)
+        .chain(candidate.bridge.iter())
+        .chain(candidate.below_decks.iter())
+        .filter(|name| !name.trim().is_empty())
+        .all(|name| {
+            let Some(id) = resolve_officer_name(&lcars.name_to_id, name) else {
+                return false;
+            };
+            let Some(officer) = lcars.by_id.get(&id) else {
+                return false;
+            };
+            // A rank ceiling is not evidence of the selected officer's actual
+            // level. Without a saved/explicit level the crew total is unknown.
+            let Some(level) = options.level_for(&id) else {
+                return false;
+            };
+            officer
+                .stats_at_level(level)
+                .is_some_and(|s| s.health.is_finite() && s.health >= 0.0)
+        })
+}
+
+/// Resolve crew-health coefficients after setup modifiers, preserving each
+/// ability's own condition and timing. Unsupported health contexts stay inert.
+fn resolve_crew_health_effects(seats: &mut [CrewSeatContext], health: Option<f64>) {
+    use crate::combat::AbilityEffect;
+    let mut missing = false;
+    for seat in seats {
+        let resolved = match seat.ability.effect {
+            AbilityEffect::BaseArmorPiercingPerCrewHealth(coefficient) => {
+                health.map(|h| AbilityEffect::BaseArmorPiercingAdd(coefficient * h))
+            }
+            AbilityEffect::BaseMitigationStatsPerCrewHealth(coefficient) => {
+                health.map(|h| AbilityEffect::BaseMitigationStatsAdd(coefficient * h))
+            }
+            _ => continue,
+        };
+        if let Some(effect) = resolved {
+            seat.ability.effect = effect;
+        } else {
+            missing = true;
+        }
+    }
+    if missing {
+        static WARN_ONCE: std::sync::Once = std::sync::Once::new();
+        WARN_ONCE.call_once(|| tracing::warn!("Crew-health-scaled officer effects are unsupported when crew stats or combat-start health conditions are unknown"));
     }
 }
 
@@ -2620,21 +2750,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .to_string_lossy()
         .to_string();
     let resolve_options = import::load_imported_roster(&roster_path)
-        .map(|entries| {
-            let officer_tiers: HashMap<String, u8> = entries
-                .into_iter()
-                .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id, t)))
-                .collect();
-            ResolveOptions {
-                tier: None,
-                officer_tiers: if officer_tiers.is_empty() {
-                    None
-                } else {
-                    Some(officer_tiers)
-                },
-                officer_levels: None,
-            }
-        })
+        .map(|entries| resolve_options_from_roster(&entries))
         .unwrap_or_default();
 
     let ship_rec = resolve_ship(ship);
@@ -3328,21 +3444,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .map(|officers| lcars_officer_data_from_officers(officers.to_vec()));
 
     let resolve_options = import::load_imported_roster(&roster_path)
-        .map(|entries| {
-            let officer_tiers: HashMap<String, u8> = entries
-                .into_iter()
-                .filter_map(|e| e.tier.map(|t| (e.canonical_officer_id, t)))
-                .collect();
-            ResolveOptions {
-                tier: None,
-                officer_tiers: if officer_tiers.is_empty() {
-                    None
-                } else {
-                    Some(officer_tiers)
-                },
-                officer_levels: None,
-            }
-        })
+        .map(|entries| resolve_options_from_roster(&entries))
         .unwrap_or_default();
 
     let imported_ships = import::load_imported_ships(&ships_path).unwrap_or_default();
@@ -3712,7 +3814,104 @@ mod tests {
     static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
-    fn candidate_tier_options_preserve_level_reset_and_override_order() {
+    fn crew_health_deferred_effects_resolve_only_with_known_health() {
+        let officers = crate::lcars::index_lcars_officers_by_id(
+            crate::lcars::build_officer_model_file_default()
+                .unwrap()
+                .officers,
+        );
+        let opts = ResolveOptions {
+            tier: Some(5),
+            ..Default::default()
+        };
+        let buff = crate::lcars::resolve_crew_to_buff_set(
+            "charvanek-0f1b5c",
+            &["snw-ortegas-7c79fe".into()],
+            &[],
+            &officers,
+            &opts,
+        );
+        let mut seats = buff.crew.seats;
+        let ortegas_condition = seats
+            .iter()
+            .find(|s| {
+                matches!(
+                    s.ability.effect,
+                    AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                )
+            })
+            .unwrap()
+            .ability
+            .condition
+            .clone();
+        let unchanged = seats.clone();
+        resolve_crew_health_effects(&mut seats, None);
+        assert_eq!(
+            seats, unchanged,
+            "unknown health must not substitute a guessed value"
+        );
+        resolve_crew_health_effects(&mut seats, Some(100.0));
+        assert!(seats
+            .iter()
+            .any(|s| s.ability.effect == AbilityEffect::BaseArmorPiercingAdd(1600.0)));
+        let ortegas = seats
+            .iter()
+            .find(|s| s.ability.effect == AbilityEffect::BaseMitigationStatsAdd(1800.0))
+            .unwrap();
+        assert_eq!(ortegas.ability.condition, ortegas_condition);
+    }
+
+    #[test]
+    fn roster_resolve_options_keep_actual_levels_and_clear_only_changed_tiers() {
+        let rows = vec![
+            crate::data::import::RosterEntry {
+                canonical_officer_id: "alpha-id".into(),
+                canonical_name: "Alpha".into(),
+                source_oid: None,
+                rank: None,
+                tier: Some(3),
+                level: Some(24),
+            },
+            crate::data::import::RosterEntry {
+                canonical_officer_id: "beta-id".into(),
+                canonical_name: "Beta".into(),
+                source_oid: None,
+                rank: None,
+                tier: Some(2),
+                level: Some(13),
+            },
+        ];
+        let base = resolve_options_from_roster(&rows);
+        let lcars = LcarsOfficerData {
+            by_id: HashMap::new(),
+            name_to_id: HashMap::from([
+                ("alpha".into(), "alpha-id".into()),
+                ("beta".into(), "beta-id".into()),
+            ]),
+        };
+        let candidate = |captain: &str| CrewCandidate {
+            captain: captain.into(),
+            bridge: vec!["Beta".into()],
+            below_decks: vec![],
+        };
+        let saved = resolve_options_with_candidate_tiers(&base, &candidate("Alpha"), Some(&lcars))
+            .into_owned();
+        assert_eq!(saved.level_for("alpha-id"), Some(24));
+        assert_eq!(saved.level_for("beta-id"), Some(13));
+        let same =
+            resolve_options_with_candidate_tiers(&base, &candidate("Alpha (T3)"), Some(&lcars))
+                .into_owned();
+        assert_eq!(same.level_for("alpha-id"), Some(24));
+        let changed =
+            resolve_options_with_candidate_tiers(&base, &candidate("Alpha (T4)"), Some(&lcars))
+                .into_owned();
+        assert_eq!(changed.level_for("alpha-id"), None);
+        assert_eq!(changed.level_for("beta-id"), Some(13));
+        assert_eq!(changed.tier_for("alpha-id"), Some(4));
+    }
+
+    #[test]
+    fn candidate_tier_options_preserve_roster_levels_and_apply_override_order() {
         let lcars = LcarsOfficerData {
             by_id: HashMap::new(),
             name_to_id: HashMap::from([
@@ -3752,9 +3951,10 @@ mod tests {
                     officer_levels,
                 };
                 for candidate in &candidates {
-                    // Reference the previous owned implementation, including level reset,
-                    // normalization of Some(empty), and last occupied-slot override wins.
+                    // Last occupied-slot override wins. A different explicit tier
+                    // invalidates that officer's imported level, not other levels.
                     let mut expected_tiers = base.officer_tiers.clone().unwrap_or_default();
+                    let mut overrides = HashMap::new();
                     for slot in std::iter::once(&candidate.captain)
                         .chain(&candidate.bridge)
                         .chain(&candidate.below_decks)
@@ -3763,19 +3963,27 @@ mod tests {
                         if let (Some(tier), Some(id)) =
                             (tier, lcars.name_to_id.get(&normalize_lookup_key(&name)))
                         {
-                            expected_tiers.insert(id.clone(), tier);
+                            overrides.insert(id.clone(), tier);
                         }
+                    }
+                    let mut expected_levels = base.officer_levels.clone();
+                    for (id, tier) in overrides {
+                        if base.tier_for(&id) != Some(tier) {
+                            if let Some(levels) = expected_levels.as_mut() {
+                                levels.remove(&id);
+                            }
+                        }
+                        expected_tiers.insert(id, tier);
                     }
                     let actual =
                         resolve_options_with_candidate_tiers(&base, candidate, Some(&lcars));
                     assert_eq!(actual.tier, base.tier);
-                    assert_eq!(actual.officer_levels, None);
+                    assert_eq!(actual.officer_levels, expected_levels);
                     assert_eq!(
                         actual.officer_tiers,
                         (!expected_tiers.is_empty()).then_some(expected_tiers)
                     );
                     if candidate.captain == "Alpha"
-                        && base.officer_levels.is_none()
                         && !base.officer_tiers.as_ref().is_some_and(HashMap::is_empty)
                     {
                         assert!(matches!(actual, Cow::Borrowed(_)));
@@ -3884,7 +4092,8 @@ mod tests {
             None,
         );
         assert!(!d.weapons.is_empty());
-        assert!(d.pierce > 0.0, "counter pierce-through should be positive");
+        assert_eq!(d.pierce, 0.0);
+        assert!(d.weapons.iter().all(|weapon| weapon.pierce == Some(0.0)));
     }
 
     #[test]
@@ -4479,7 +4688,7 @@ mod tests {
     }
 
     #[test]
-    fn officer_accuracy_buff_lowers_hostile_mitigation_and_raises_pierce() {
+    fn officer_accuracy_buff_lowers_mitigation_without_a_second_pierce_bonus() {
         // Moderate defender stats so mitigation is not stuck at the hostile ceiling (high-tier
         // bundled hostiles often clamp, hiding the dodge/accuracy leg).
         let hostile_rec: HostileRecord = serde_json::from_value(serde_json::json!({
@@ -4529,9 +4738,10 @@ mod tests {
         let (m1, p1) =
             mitigation_and_pierce_for_player_vs_hostile(&ship_rec, &hostile_rec, &profile, &buffs);
         assert!(
-            p1 > p0 && m1 < m0,
-            "expected more pierce and less mitigation with accuracy; m0={m0} m1={m1} p0={p0} p1={p1}"
+            m1 < m0,
+            "accuracy must still lower mitigation; m0={m0} m1={m1}"
         );
+        assert_eq!((p0, p1), (0.0, 0.0));
     }
 
     #[test]

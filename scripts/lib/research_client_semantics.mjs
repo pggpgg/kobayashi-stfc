@@ -6,7 +6,7 @@
 export const CLIENT_STAT_FAMILIES = new Set([
   "hull_hp", "shield_hp", "hull_hp_flat", "shield_hp_flat", "weapon_damage", "weapon_damage_flat",
   "crit_chance", "crit_damage", "crit_damage_flat", "isolytic_damage", "isolytic_defense",
-  "armor", "shield_deflection", "dodge", "officer_defense_below_decks",
+  "armor", "shield_deflection", "dodge", "officer_defense_below_decks", "apex_barrier",
 ]);
 const CLASSES = new Map([[0, "explorer"], [1, "interceptor"], [2, "battleship"], [3, "survey"], [116, "sentinel"]]);
 const MIN_SYNDICATE = new Map([[203, 30], [204, 33], [205, 35]]);
@@ -124,7 +124,7 @@ export function clientResearchBuffExclusion(row, options = {}) {
   if ([0, 1].includes(row.modifier_code)) return "unsupported_weapon_subtype";
   const validOperation = [60, 61].includes(row.modifier_code) ? [1, 3].includes(row.operation_code)
     : row.modifier_code === 2 ? row.operation_code === 3
-      : [707, 808].includes(row.modifier_code) ? row.operation_code === 1
+      : [707, 808, 67001].includes(row.modifier_code) ? row.operation_code === 1
       : [6, 7, 8, 11, 12, 13, 56, 57, 58, 59, 73, 74].includes(row.modifier_code) ? row.operation_code === 3
       : [9, 10].includes(row.modifier_code) && row.operation_code === 1;
   if (!validOperation) return "unsupported_operation_or_modifier";
@@ -139,6 +139,10 @@ export function mapClientResearchBuff(row, options = {}) {
     if (code === 123 && row.modifier_code === 74) condition.attacker_min_grade = 4;
     else if (CLASSES.has(code)) condition.attacker_ship_class = CLASSES.get(code);
     else condition.attacker_min_syndicate_level = MIN_SYNDICATE.get(code);
+  }
+  if (row.modifier_code === 67001) {
+    return [{ stat: "apex_barrier", operator: "add", value_unit: "absolute", ...condition,
+      client_verified: true, client_ranked_values: row.ranked_values }];
   }
   if ([11, 12, 13, 73].includes(row.modifier_code)) {
     const stats = row.modifier_code === 73 ? ["armor", "shield_deflection", "dodge"]

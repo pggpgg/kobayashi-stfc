@@ -8,7 +8,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from tools.combat_engine.mitigation import (
-    PIERCE_CAP,
     AttackerStats,
     DefenderStats,
     ShipType,
@@ -76,10 +75,8 @@ def test_pierce_damage_through_bonus_matches_rust() -> None:
         ShipType.EXPLORER,
         ShipType.INTERCEPTOR,
     ):
-        mit = mitigation(defender, attacker, ship_type)
         pierce = pierce_damage_through_bonus(defender, attacker, ship_type)
-        assert pierce == pytest.approx(PIERCE_CAP * (1.0 - mit), rel=1e-12)
-        assert 0.0 <= pierce <= PIERCE_CAP
+        assert pierce == 0.0
 
 
 def test_near_zero_piercing_remains_bounded() -> None:

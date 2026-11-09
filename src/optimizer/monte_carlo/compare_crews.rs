@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use rayon::prelude::*;
 
-use super::simulation::surviving_hull_fraction;
+use super::simulation::{surviving_hull_fraction, unsupported_crew_health_effects};
 use crate::combat::engine::simulate_combat_from_setup_reusing_attacker;
 use crate::combat::{
     build_combat_setup_with_officer_stat, OpponentFactionTag, SimulationConfig,
@@ -51,6 +51,8 @@ pub struct CompareCrewDistribution {
 pub struct CompareCrewsOutcome {
     pub crews: Vec<CompareCrewDistribution>,
     pub using_placeholder_combatants: bool,
+    #[serde(skip)]
+    pub unsupported_crew_health_effects: bool,
 }
 
 fn simulate_trial(
@@ -154,8 +156,9 @@ fn distribution_for_crew(
     iterations: usize,
     base_seed: u64,
     proc_sample_trials: u32,
-) -> CompareCrewDistribution {
+) -> (CompareCrewDistribution, bool) {
     let input_template = scenario_to_combat_input_from_shared(shared, candidate, base_seed);
+    let unsupported = unsupported_crew_health_effects(&input_template);
     let mut wins = 0u32;
     let mut stalls = 0u32;
     let mut losses = 0u32;
@@ -194,16 +197,19 @@ fn distribution_for_crew(
         None
     };
 
-    CompareCrewDistribution {
-        captain: candidate.captain.clone(),
-        trials: iterations as u32,
-        wins,
-        stalls,
-        losses,
-        rounds_histogram: rounds_vec,
-        hull_remaining_bins: hull_bins,
-        proc_rates,
-    }
+    (
+        CompareCrewDistribution {
+            captain: candidate.captain.clone(),
+            trials: iterations as u32,
+            wins,
+            stalls,
+            losses,
+            rounds_histogram: rounds_vec,
+            hull_remaining_bins: hull_bins,
+            proc_rates,
+        },
+        unsupported,
+    )
 }
 
 /// Run Monte Carlo for 2–5 crews and return histograms for rounds (clean wins), hull remaining (clean wins), and optional proc rates from traced subsample.
@@ -236,7 +242,7 @@ pub fn compare_crews_monte_carlo_with_registry(
         pvp,
     );
     let placeholder = shared.using_placeholder_combatants;
-    let crews: Vec<CompareCrewDistribution> = candidates
+    let distributions: Vec<(CompareCrewDistribution, bool)> = candidates
         .par_iter()
         .enumerate()
         .map(|(i, c)| {
@@ -245,8 +251,14 @@ pub fn compare_crews_monte_carlo_with_registry(
         })
         .collect();
 
+    let unsupported_crew_health_effects = distributions.iter().any(|(_, unsupported)| *unsupported);
+    let crews = distributions
+        .into_iter()
+        .map(|(distribution, _)| distribution)
+        .collect();
     CompareCrewsOutcome {
         crews,
         using_placeholder_combatants: placeholder,
+        unsupported_crew_health_effects,
     }
 }

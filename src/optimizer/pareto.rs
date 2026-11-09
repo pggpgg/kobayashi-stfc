@@ -407,6 +407,7 @@ mod tests {
 
     fn row(captain: &str, win: f64, hull: f64, r1: f64, loss: f64) -> RankedCrewResult {
         RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: captain.to_string(),
             bridge: vec!["B1".into(), "B2".into()],
             below_decks: vec!["D1".into(), "D2".into(), "D3".into()],

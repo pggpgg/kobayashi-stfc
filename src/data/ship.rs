@@ -1022,6 +1022,7 @@ impl ShipRecord {
                 w.iter()
                     .map(|r| WeaponStats {
                         attack: r.attack,
+                        component_base_attack: Some(r.attack),
                         shots: r.shots,
                         pierce: r.pierce,
                         crit_chance: r.crit_chance,

@@ -56,6 +56,30 @@ impl NativeConsumableBuffCatalog {
     pub(crate) fn contains_buff(&self, bid: i64) -> bool {
         self.buffs.contains_key(&bid)
     }
+
+    /// Apex Barrier rows were added for scope auditing, not for the native
+    /// setup-family replacement. Their presence must not suppress fallback
+    /// contributions for unrelated stats.
+    pub(crate) fn contains_setup_family_buff(&self, bid: i64) -> bool {
+        self.buffs
+            .get(&bid)
+            .is_some_and(|spec| spec.modifier_code != 67001)
+    }
+
+    /// Source rank value for an Apex research buff, before unknown gates.
+    pub(crate) fn raw_apex_rank_value(&self, bid: i64, level: i64) -> Option<f64> {
+        let spec = self.buffs.get(&bid)?;
+        if spec.modifier_code != 67001
+            || level <= 0
+            || usize::try_from(level).ok()? > spec.ranked_value_count
+            || spec.ranked_values.is_empty()
+        {
+            return None;
+        }
+        let rank = usize::try_from(level - 1).ok()?;
+        let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
+        value.is_finite().then_some(value)
+    }
 }
 
 fn embedded_catalog() -> &'static NativeConsumableBuffCatalog {

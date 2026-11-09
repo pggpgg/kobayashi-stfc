@@ -3,12 +3,12 @@
   "source_cache_sha256": "b472e4460e3869cc8abb44e456a0873e3c5702ed6f3a9701b18d27938022f3cf",
   "limitation": "Counts cover selected research BuffSpecs only. Quarantine means unsupported scope or semantics, not an absent in-game bonus. Canonical status effects are reviewed separately.",
   "summary": {
-    "selected_buff_count": 1177,
+    "selected_buff_count": 1242,
     "supported_buff_count": 226,
-    "quarantined_buff_count": 951,
+    "quarantined_buff_count": 1016,
     "quarantine_reasons": {
-      "unsupported_condition": 872,
-      "unsupported_target": 74,
+      "unsupported_condition": 936,
+      "unsupported_target": 75,
       "unsupported_operation_or_modifier": 1,
       "unsupported_trigger": 2,
       "unsupported_attributes": 2
@@ -127,6 +127,25 @@
       ]
     },
     {
+      "buff_id": 11214279,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        1,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2708500806,
+          "name": "Premium Interceptor Apex Barrier vs Players"
+        }
+      ]
+    },
+    {
       "buff_id": 11799831,
       "modifier_code": 10,
       "operation_code": 1,
@@ -160,6 +179,24 @@
         {
           "rid": 1655243807,
           "name": "5★ Shield Reinforcement"
+        }
+      ]
+    },
+    {
+      "buff_id": 29725734,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        137,
+        17
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 879183877,
+          "name": "Common Apex Barrier vs Mirror Hostiles"
         }
       ]
     },
@@ -356,6 +393,44 @@
         {
           "rid": 1663343658,
           "name": "Hijacked TOS Bird of Prey (PILUM)"
+        }
+      ]
+    },
+    {
+      "buff_id": 79281386,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        74005,
+        137,
+        38
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2237159583,
+          "name": "Emperor Georgiou’s Sword"
+        }
+      ]
+    },
+    {
+      "buff_id": 79611817,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        186,
+        27,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2153043589,
+          "name": "Apex Korinar (KORINAR)"
         }
       ]
     },
@@ -959,6 +1034,29 @@
       ]
     },
     {
+      "buff_id": 195546909,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        240,
+        28,
+        176,
+        194,
+        131,
+        27,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 875100251,
+          "name": "G5+ FKR PvP Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 195547355,
       "modifier_code": 61,
       "operation_code": 3,
@@ -969,6 +1067,26 @@
       ],
       "exclusion_reason": "unsupported_condition",
       "projects": []
+    },
+    {
+      "buff_id": 196905435,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        28,
+        33,
+        246,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 4162702769,
+          "name": "Complex Morality"
+        }
+      ]
     },
     {
       "buff_id": 197969115,
@@ -1057,6 +1175,45 @@
       ]
     },
     {
+      "buff_id": 208726898,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        2,
+        131,
+        83003,
+        69002
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3407330379,
+          "name": "Optimized Barrier: Battleship"
+        }
+      ]
+    },
+    {
+      "buff_id": 210268112,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        131,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3245532047,
+          "name": "Apex Spike"
+        }
+      ]
+    },
+    {
       "buff_id": 213134604,
       "modifier_code": 2,
       "operation_code": 3,
@@ -1138,6 +1295,26 @@
         {
           "rid": 565391326,
           "name": "Emissary"
+        }
+      ]
+    },
+    {
+      "buff_id": 241500334,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        240,
+        28,
+        137,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3551355003,
+          "name": "Ω Faction Warfare Apex Barrier"
         }
       ]
     },
@@ -1269,6 +1446,25 @@
         {
           "rid": 882518551,
           "name": "Unstoppable Interceptors"
+        }
+      ]
+    },
+    {
+      "buff_id": 263649030,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        0,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3177240373,
+          "name": "Common Explorer Apex Barrier vs Players"
         }
       ]
     },
@@ -1548,6 +1744,25 @@
         {
           "rid": 1284956278,
           "name": "Battleship Shields"
+        }
+      ]
+    },
+    {
+      "buff_id": 311383552,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        2,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3070482252,
+          "name": "Uncommon Battleship Apex Barrier vs Players"
         }
       ]
     },
@@ -2060,6 +2275,24 @@
       ]
     },
     {
+      "buff_id": 418687764,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        300,
+        91002
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 832680092,
+          "name": "Simulation Hack - Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 418750416,
       "modifier_code": 2,
       "operation_code": 3,
@@ -2261,6 +2494,27 @@
         {
           "rid": 1153125481,
           "name": "Pilum Hull Plating"
+        }
+      ]
+    },
+    {
+      "buff_id": 447445770,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        1,
+        6,
+        83003,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1151041570,
+          "name": "Opportunist Interceptors"
         }
       ]
     },
@@ -2641,7 +2895,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 2157980489,
+          "name": "SNW Refit (U.S.S. ENTERPRISE M414)"
+        }
+      ]
     },
     {
       "buff_id": 516354948,
@@ -2822,6 +3081,25 @@
         {
           "rid": 3547316780,
           "name": "U.S.S. ENTERPRISE-D CLOAKING"
+        }
+      ]
+    },
+    {
+      "buff_id": 543059165,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        17,
+        27,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 816547130,
+          "name": "TC PvE Apex Barrier"
         }
       ]
     },
@@ -3474,6 +3752,25 @@
       ]
     },
     {
+      "buff_id": 680920729,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3902178320,
+          "name": "Emperor Georgiou's Crown"
+        }
+      ]
+    },
+    {
       "buff_id": 687745254,
       "modifier_code": 74,
       "operation_code": 3,
@@ -3570,6 +3867,25 @@
         {
           "rid": 1763754095,
           "name": "Stubborn Defense"
+        }
+      ]
+    },
+    {
+      "buff_id": 707027611,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        280,
+        137,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1943045577,
+          "name": "Ω NSEA Protector Apex Barrier"
         }
       ]
     },
@@ -4080,6 +4396,26 @@
       ]
     },
     {
+      "buff_id": 793369997,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        83001,
+        27,
+        131,
+        83002
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1588808462,
+          "name": "Active Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 793645538,
       "modifier_code": 73,
       "operation_code": 3,
@@ -4115,6 +4451,20 @@
       ]
     },
     {
+      "buff_id": 812561902,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        171
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": []
+    },
+    {
       "buff_id": 819443833,
       "modifier_code": 2,
       "operation_code": 3,
@@ -4129,6 +4479,25 @@
         {
           "rid": 722452923,
           "name": "4★  Ship Defense Formation"
+        }
+      ]
+    },
+    {
+      "buff_id": 822331895,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        246,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1531502196,
+          "name": "Tactical Prowess"
         }
       ]
     },
@@ -5061,6 +5430,25 @@
       ]
     },
     {
+      "buff_id": 956772462,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        171,
+        28,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 309215217,
+          "name": "PvP Takeover Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 958126792,
       "modifier_code": 2,
       "operation_code": 3,
@@ -5077,6 +5465,24 @@
         {
           "rid": 3861242947,
           "name": "5★ Battleship Armaments"
+        }
+      ]
+    },
+    {
+      "buff_id": 961889663,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        28,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3893287491,
+          "name": "To the Last"
         }
       ]
     },
@@ -5413,7 +5819,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 4234555347,
+          "name": "SNW Bird of Prey (SCIMITAR)"
+        }
+      ]
     },
     {
       "buff_id": 1035953530,
@@ -5471,6 +5882,21 @@
           "name": "5★ Siege Warfare"
         }
       ]
+    },
+    {
+      "buff_id": 1040815332,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131,
+        246,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": []
     },
     {
       "buff_id": 1043601998,
@@ -5652,7 +6078,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 1359994021,
+          "name": "Chargh Class (D4 CLASS)"
+        }
+      ]
     },
     {
       "buff_id": 1082531994,
@@ -6205,6 +6636,25 @@
       ]
     },
     {
+      "buff_id": 1217842325,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        0,
+        28,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1974319136,
+          "name": "PvP Apex Barrier on Explorers"
+        }
+      ]
+    },
+    {
       "buff_id": 1222179375,
       "modifier_code": 2,
       "operation_code": 3,
@@ -6356,6 +6806,24 @@
         {
           "rid": 3260398513,
           "name": "Eclipse Defenses"
+        }
+      ]
+    },
+    {
+      "buff_id": 1238401736,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        74005,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 263993849,
+          "name": "Annorax's Datapad"
         }
       ]
     },
@@ -6528,7 +6996,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3921682734,
+          "name": "SNW Refit (U.S.S. ENTERPRISE-A)"
+        }
+      ]
     },
     {
       "buff_id": 1263666495,
@@ -7232,7 +7705,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 722680721,
+          "name": "SNW Refit (U.S.S. ENTERPRISE-E)"
+        }
+      ]
     },
     {
       "buff_id": 1388648570,
@@ -7450,7 +7928,33 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3783750055,
+          "name": "SNW Bird of Prey (D'DERIDEX)"
+        }
+      ]
+    },
+    {
+      "buff_id": 1413568059,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        1,
+        131,
+        83003,
+        69002
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 482115735,
+          "name": "Optimized Barrier: Interceptor"
+        }
+      ]
     },
     {
       "buff_id": 1416840619,
@@ -7719,6 +8223,25 @@
         {
           "rid": 2026794319,
           "name": "Hijacked D7 Class (KOS'KARII)"
+        }
+      ]
+    },
+    {
+      "buff_id": 1488759194,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        2,
+        28,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 619544596,
+          "name": "PvP Apex Barrier on Battleships"
         }
       ]
     },
@@ -8014,6 +8537,24 @@
         {
           "rid": 1848813183,
           "name": "Romulan Firepower"
+        }
+      ]
+    },
+    {
+      "buff_id": 1537890345,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        137,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1840875942,
+          "name": "Prime Apex Barrier"
         }
       ]
     },
@@ -8582,6 +9123,19 @@
       ]
     },
     {
+      "buff_id": 1627298836,
+      "modifier_code": 67001,
+      "operation_code": 2,
+      "target_code": 6,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131
+      ],
+      "exclusion_reason": "unsupported_target",
+      "projects": []
+    },
+    {
       "buff_id": 1627841442,
       "modifier_code": 2,
       "operation_code": 3,
@@ -8902,6 +9456,25 @@
         {
           "rid": 3077255220,
           "name": "DTI Plaque"
+        }
+      ]
+    },
+    {
+      "buff_id": 1738516670,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        1,
+        28,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1588968148,
+          "name": "PvP Apex Barrier on Interceptors"
         }
       ]
     },
@@ -9426,6 +9999,27 @@
       ]
     },
     {
+      "buff_id": 1857928039,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        0,
+        131,
+        83003,
+        69002
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3505595848,
+          "name": "Optimized Barrier: Explorer"
+        }
+      ]
+    },
+    {
       "buff_id": 1858281892,
       "modifier_code": 12,
       "operation_code": 3,
@@ -9481,6 +10075,24 @@
         {
           "rid": 2821531177,
           "name": "Operation Zenith"
+        }
+      ]
+    },
+    {
+      "buff_id": 1859894783,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2863610018,
+          "name": "Apex Pulse"
         }
       ]
     },
@@ -9547,6 +10159,26 @@
         {
           "rid": 995454242,
           "name": "Isolytic Damage Boost"
+        }
+      ]
+    },
+    {
+      "buff_id": 1882909077,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        74004,
+        28,
+        137,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2665366976,
+          "name": "Gravitational Reinforcement"
         }
       ]
     },
@@ -9659,7 +10291,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 2387120691,
+          "name": "Chargh Class (ROTARRAN)"
+        }
+      ]
     },
     {
       "buff_id": 1914715660,
@@ -10228,6 +10865,24 @@
       ]
     },
     {
+      "buff_id": 2017706284,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        129,
+        17
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2820514009,
+          "name": "Mark III (SS REVENANT)"
+        }
+      ]
+    },
+    {
       "buff_id": 2026294074,
       "modifier_code": 10,
       "operation_code": 1,
@@ -10241,6 +10896,25 @@
         {
           "rid": 1284866097,
           "name": "Inspiring Leader"
+        }
+      ]
+    },
+    {
+      "buff_id": 2035560738,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        1,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3689941157,
+          "name": "Uncommon Interceptor Apex Barrier vs Players"
         }
       ]
     },
@@ -10495,7 +11169,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3700950123,
+          "name": "Chargh Class (HEGH'TA)"
+        }
+      ]
     },
     {
       "buff_id": 2085746527,
@@ -10994,6 +11673,25 @@
       ]
     },
     {
+      "buff_id": 2161312662,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        74005,
+        137,
+        37
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1913310609,
+          "name": "Classic Phaser"
+        }
+      ]
+    },
+    {
       "buff_id": 2161387943,
       "modifier_code": 707,
       "operation_code": 1,
@@ -11156,6 +11854,25 @@
         {
           "rid": 2448831923,
           "name": "Titan Force"
+        }
+      ]
+    },
+    {
+      "buff_id": 2186239308,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        2,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1816979936,
+          "name": "Premium Battleship Apex Barrier vs Players"
         }
       ]
     },
@@ -11704,6 +12421,28 @@
       ]
     },
     {
+      "buff_id": 2288548339,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        44,
+        27,
+        131,
+        240,
+        176,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1975553728,
+          "name": "Destiny Catches Up"
+        }
+      ]
+    },
+    {
       "buff_id": 2288699440,
       "modifier_code": 2,
       "operation_code": 3,
@@ -12186,7 +12925,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 2303565538,
+          "name": "SNW Bird of Prey (ADMONITION)"
+        }
+      ]
     },
     {
       "buff_id": 2391638473,
@@ -12324,7 +13068,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3833990173,
+          "name": "Chargh Class (KRENCHA)"
+        }
+      ]
     },
     {
       "buff_id": 2444202626,
@@ -12592,6 +13341,26 @@
       ]
     },
     {
+      "buff_id": 2491948221,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        28,
+        38,
+        246,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1727414483,
+          "name": "Protective Father"
+        }
+      ]
+    },
+    {
       "buff_id": 2505846117,
       "modifier_code": 2,
       "operation_code": 3,
@@ -12605,6 +13374,25 @@
         {
           "rid": 3213223873,
           "name": "Hijacked TOS Enterprise (U.S.S. ENTERPRISE-D)"
+        }
+      ]
+    },
+    {
+      "buff_id": 2515924664,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        74005,
+        137,
+        33
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 292902554,
+          "name": "Sarek’s Vulcan Necklace"
         }
       ]
     },
@@ -12700,7 +13488,12 @@
         17
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 2851639029,
+          "name": "Biosuperiority (U.S.S. VOYAGER)"
+        }
+      ]
     },
     {
       "buff_id": 2541835632,
@@ -12717,6 +13510,25 @@
         {
           "rid": 2254266180,
           "name": "PvP Isolytic Defense on Battleships"
+        }
+      ]
+    },
+    {
+      "buff_id": 2542706198,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        0,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1912321885,
+          "name": "Uncommon Explorer Apex Barrier vs Players"
         }
       ]
     },
@@ -12917,6 +13729,26 @@
       ]
     },
     {
+      "buff_id": 2600848580,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        81001,
+        14,
+        137,
+        17
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2659367229,
+          "name": "Serene Squall Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 2602968422,
       "modifier_code": 808,
       "operation_code": 1,
@@ -13112,6 +13944,25 @@
         {
           "rid": 3364315519,
           "name": "Station Destruction"
+        }
+      ]
+    },
+    {
+      "buff_id": 2633519941,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        221,
+        27,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 4168663044,
+          "name": "Apex U.S.S. Newton (U.S.S. NEWTON)"
         }
       ]
     },
@@ -13362,7 +14213,12 @@
         17
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3414849968,
+          "name": "Isolytic Replica (U.S.S. EXCELSIOR)"
+        }
+      ]
     },
     {
       "buff_id": 2657391652,
@@ -13487,7 +14343,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 1124877505,
+          "name": "SNW Bird of Prey (AUGUR)"
+        }
+      ]
     },
     {
       "buff_id": 2676570824,
@@ -14035,7 +14896,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 1206231245,
+          "name": "SNW Refit (U.S.S. ENTERPRISE)"
+        }
+      ]
     },
     {
       "buff_id": 2780769926,
@@ -14087,6 +14953,26 @@
         {
           "rid": 1242679440,
           "name": "Contra Federation Stealth"
+        }
+      ]
+    },
+    {
+      "buff_id": 2783351736,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        28,
+        37,
+        246,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2143114209,
+          "name": "Resilient"
         }
       ]
     },
@@ -14194,6 +15080,46 @@
         {
           "rid": 3563418914,
           "name": "Crafty Engineering"
+        }
+      ]
+    },
+    {
+      "buff_id": 2802537100,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        1,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 702307897,
+          "name": "Common Interceptor Apex Barrier vs Players"
+        }
+      ]
+    },
+    {
+      "buff_id": 2803904542,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        0,
+        5,
+        83003,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2132083337,
+          "name": "Opportunist Explorers"
         }
       ]
     },
@@ -14602,6 +15528,25 @@
         {
           "rid": 3545711618,
           "name": "4★ Reinforced Bulkheads"
+        }
+      ]
+    },
+    {
+      "buff_id": 2882880331,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        187,
+        27,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2236914016,
+          "name": "Apex Pilum (PILUM)"
         }
       ]
     },
@@ -15260,7 +16205,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3208242281,
+          "name": "SNW Refit (U.S.S. ENTERPRISE-D)"
+        }
+      ]
     },
     {
       "buff_id": 3000227562,
@@ -15450,6 +16400,21 @@
           "name": "Surge Critical Hit Damage"
         }
       ]
+    },
+    {
+      "buff_id": 3042070987,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        170,
+        240,
+        246,
+        131
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": []
     },
     {
       "buff_id": 3042211017,
@@ -16382,6 +17347,25 @@
       ]
     },
     {
+      "buff_id": 3196593455,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        131,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 251065635,
+          "name": "Let Them Eat Static!"
+        }
+      ]
+    },
+    {
       "buff_id": 3196614696,
       "modifier_code": 2,
       "operation_code": 1,
@@ -16471,6 +17455,26 @@
         {
           "rid": 3008735683,
           "name": "Quv'Sompek Hull Plating"
+        }
+      ]
+    },
+    {
+      "buff_id": 3217769440,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 18,
+      "condition_codes": [
+        28,
+        137,
+        246,
+        247
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2194414210,
+          "name": "Vengeful Defense"
         }
       ]
     },
@@ -16983,6 +17987,26 @@
       ]
     },
     {
+      "buff_id": 3338805594,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        86004,
+        28,
+        137,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2205418379,
+          "name": "▷ Enhanced PvP Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 3342225309,
       "modifier_code": 9,
       "operation_code": 1,
@@ -17370,6 +18394,26 @@
       ]
     },
     {
+      "buff_id": 3411999518,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        86004,
+        131,
+        27,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 122161790,
+          "name": "▷ Enhanced PvE Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 3413857953,
       "modifier_code": 11,
       "operation_code": 3,
@@ -17564,6 +18608,26 @@
       ]
     },
     {
+      "buff_id": 3440541396,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        137,
+        131,
+        69002,
+        251
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3309837460,
+          "name": "Surge Apex Barrier"
+        }
+      ]
+    },
+    {
       "buff_id": 3441296677,
       "modifier_code": 2,
       "operation_code": 3,
@@ -17690,6 +18754,28 @@
         {
           "rid": 1711715675,
           "name": "Fortified Platforms"
+        }
+      ]
+    },
+    {
+      "buff_id": 3467267177,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        2,
+        4,
+        83003,
+        137,
+        69002
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2833528263,
+          "name": "Opportunist Battleships"
         }
       ]
     },
@@ -17983,6 +19069,24 @@
       ]
     },
     {
+      "buff_id": 3511506584,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 692120260,
+          "name": "Rare Apex Barrier vs Players"
+        }
+      ]
+    },
+    {
       "buff_id": 3511580583,
       "modifier_code": 73,
       "operation_code": 3,
@@ -18090,6 +19194,25 @@
         {
           "rid": 861306512,
           "name": "Uncommon Isolytic Damage"
+        }
+      ]
+    },
+    {
+      "buff_id": 3539049959,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        74005,
+        137,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2162562510,
+          "name": "PvE Temporal Apex Barrier"
         }
       ]
     },
@@ -18230,7 +19353,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 3002799598,
+          "name": "Chargh Class (IKS GRE'THOR)"
+        }
+      ]
     },
     {
       "buff_id": 3561346155,
@@ -18340,6 +19468,26 @@
       ]
     },
     {
+      "buff_id": 3585960987,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        27,
+        83003,
+        131,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 363020130,
+          "name": "Cochrane's Telescope"
+        }
+      ]
+    },
+    {
       "buff_id": 3590437302,
       "modifier_code": 808,
       "operation_code": 1,
@@ -18441,6 +19589,25 @@
         {
           "rid": 2443213467,
           "name": "4★ Explorer Pillager"
+        }
+      ]
+    },
+    {
+      "buff_id": 3611224086,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        69001,
+        17,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1178899856,
+          "name": "Krenim Invading Entity Apex Barrier"
         }
       ]
     },
@@ -18681,6 +19848,23 @@
         {
           "rid": 2056767148,
           "name": "Strategic Defenses: Battleship"
+        }
+      ]
+    },
+    {
+      "buff_id": 3663216413,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        17
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 4196545326,
+          "name": "Apex Barrier vs Aggregation"
         }
       ]
     },
@@ -19298,6 +20482,23 @@
         {
           "rid": 3317441973,
           "name": "Janeway's Pocket Watch"
+        }
+      ]
+    },
+    {
+      "buff_id": 3764189600,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        170
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2625688064,
+          "name": "Kirk's Spectacles"
         }
       ]
     },
@@ -20222,6 +21423,24 @@
       ]
     },
     {
+      "buff_id": 3939270564,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        86004,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 3118218900,
+          "name": "U.S.S. Enterprise-B (U.S.S. EXCELSIOR)"
+        }
+      ]
+    },
+    {
       "buff_id": 3941283922,
       "modifier_code": 74,
       "operation_code": 3,
@@ -20497,7 +21716,12 @@
         131
       ],
       "exclusion_reason": "unsupported_condition",
-      "projects": []
+      "projects": [
+        {
+          "rid": 858742056,
+          "name": "SNW Bird of Prey (TRIBUNE)"
+        }
+      ]
     },
     {
       "buff_id": 4007314572,
@@ -20959,6 +22183,25 @@
         {
           "rid": 3898692756,
           "name": "Explorer Stopping Power"
+        }
+      ]
+    },
+    {
+      "buff_id": 4066317163,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 2717561056,
+          "name": "Spock's Ritual Gong"
         }
       ]
     },
@@ -21517,6 +22760,25 @@
       ]
     },
     {
+      "buff_id": 4188820087,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        0,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 1432563327,
+          "name": "Premium Explorer Apex Barrier vs Players"
+        }
+      ]
+    },
+    {
       "buff_id": 4188856433,
       "modifier_code": 808,
       "operation_code": 1,
@@ -21762,6 +23024,25 @@
       ]
     },
     {
+      "buff_id": 4233007825,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        2,
+        28,
+        137
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 228717894,
+          "name": "Common Battleship Apex Barrier vs Players"
+        }
+      ]
+    },
+    {
       "buff_id": 4242981504,
       "modifier_code": 2,
       "operation_code": 3,
@@ -21793,6 +23074,25 @@
         {
           "rid": 400173571,
           "name": "Simulation Hack - Critical Damage"
+        }
+      ]
+    },
+    {
+      "buff_id": 4251386795,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        71900,
+        28,
+        246
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": [
+        {
+          "rid": 531674540,
+          "name": "Hardened Veteran"
         }
       ]
     },
@@ -22010,6 +23310,21 @@
           "name": "Strengthened Defensive Sensors"
         }
       ]
+    },
+    {
+      "buff_id": 4292863958,
+      "modifier_code": 67001,
+      "operation_code": 1,
+      "target_code": 1,
+      "trigger_code": 25,
+      "condition_codes": [
+        28,
+        137,
+        246,
+        240
+      ],
+      "exclusion_reason": "unsupported_condition",
+      "projects": []
     }
   ]
 }

@@ -9,7 +9,7 @@ use kobayashi::combat::{
     HostileMitigationParams, OpponentFactionTag, ShipType, SimulationConfig, StackContribution,
     StatStacking, TimingWindow, TraceCollector, TraceMode, WeaponStats, EPSILON,
     EVOLUTIONARY_ASSIMILATION_FORBIDDEN_OFFICER_IDS, HOSTILE_TAG_MASK_CONQUEROR_BORG,
-    NO_EXPLICIT_CONTRIBUTION_BATCH, PIERCE_CAP,
+    NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use serde_json::{Map, Value};
 
@@ -600,7 +600,7 @@ fn golden_values_match_native_offset_reference_for_each_ship_type() {
 }
 
 #[test]
-fn pierce_damage_through_bonus_derived_from_mitigation() {
+fn piercing_is_accounted_in_mitigation_without_an_extra_damage_bonus() {
     let defender = DefenderStats {
         armor: 100.0,
         shield_deflection: 80.0,
@@ -617,10 +617,8 @@ fn pierce_damage_through_bonus_derived_from_mitigation() {
         ShipType::Explorer,
         ShipType::Interceptor,
     ] {
-        let mit = mitigation(defender, attacker, ship_type);
         let pierce = pierce_damage_through_bonus(defender, attacker, ship_type);
-        approx_eq(pierce, PIERCE_CAP * (1.0 - mit), 1e-12);
-        assert!((0.0..=PIERCE_CAP).contains(&pierce));
+        assert_eq!(pierce, 0.0);
     }
 }
 
@@ -2270,7 +2268,7 @@ fn conqueror_borg_beam_suppression_flag_follows_combat_begin_gate() {
 }
 
 #[test]
-fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppression() {
+fn evolutionary_assimilation_instant_loss_is_not_blocked_by_beam_suppression() {
     let attacker = Combatant {
         id: "attacker".to_string(),
         attack: 50.0,
@@ -2394,8 +2392,9 @@ fn evolutionary_assimilation_instant_loss_vs_conqueror_borg_respects_beam_suppre
         false,
         &CrewConfiguration::default(),
     );
-    assert!(r_ok.rounds_simulated > 0);
-    assert!(r_ok.attacker_hull_remaining > 0.0);
+    assert_eq!(r_ok.rounds_simulated, 0);
+    assert_eq!(r_ok.attacker_hull_remaining, 0.0);
+    approx_eq(r_ok.attacker_shield_remaining, 500.0, 1e-9);
 }
 
 #[test]
@@ -3586,6 +3585,7 @@ fn morale_boosts_all_piercing_stats_in_per_shot_dynamic_mitigation() {
             round_native_defense_stats: false,
             base_attacker_weapon_stats: Vec::new(),
             defender_stats,
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: base_stats,
             ship_type: ShipType::Battleship,
             mystery_mitigation_factor: 0.0,
@@ -4670,6 +4670,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
             shield_deflection: 140.0,
             dodge: 110.0,
         },
+        weapon_pierce_defender_stats: None,
         base_attacker_stats: AttackerStats {
             armor_piercing: 80.0,
             shield_piercing: 60.0,

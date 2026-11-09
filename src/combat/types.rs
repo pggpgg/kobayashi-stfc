@@ -410,6 +410,10 @@ impl WeaponType {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct WeaponStats {
     pub attack: f64,
+    /// Unbuffed native component damage, before profile and officer scaling.
+    /// Absent for sources that do not expose component base damage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub component_base_attack: Option<f64>,
     /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = [`effective_shots_for_weapon`] with the round's `B_shots` sum.
     #[serde(default)]
     pub shots: Option<u32>,
@@ -443,6 +447,10 @@ pub struct HostileMitigationParams {
     /// Synthetic raw-stat contexts can retain fractional arithmetic with false.
     pub round_native_defense_stats: bool,
     pub defender_stats: DefenderStats,
+    /// Defender raw stats used for the precomputed per-weapon pierce baseline.
+    /// Hostile mitigation abilities can scale `defender_stats` separately; None
+    /// uses that same context for callers constructing combatants directly.
+    pub weapon_pierce_defender_stats: Option<DefenderStats>,
     pub base_attacker_stats: AttackerStats,
     /// Opponent piercing/accuracy in weapon order. Empty/missing rows use aggregate stats.
     pub base_attacker_weapon_stats: Vec<AttackerStats>,
@@ -579,6 +587,11 @@ impl Combatant {
         } else {
             self.weapons.get(weapon_index).map(|w| w.attack)
         }
+    }
+
+    /// Component damage before profile and officer multipliers, if available.
+    pub fn weapon_component_base_attack(&self, weapon_index: usize) -> Option<f64> {
+        self.weapons.get(weapon_index)?.component_base_attack
     }
 
     fn weapon_row(&self, weapon_index: usize) -> Option<&WeaponStats> {

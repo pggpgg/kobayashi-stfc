@@ -12,11 +12,12 @@ use kobayashi::lcars::{
 };
 
 #[test]
-fn tom_paris_rank_four_uses_raw_defense_points_without_dividing_by_100() {
+fn tom_paris_rank_four_is_quarantined_until_crew_defense_source_is_verified() {
     let mut officers =
         index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
-    // A controlled stat row isolates the verified coefficient and units from the
-    // still-unverified choice of effective own versus total officer Defense.
+    // The captain-swap observations reject treating Tom's own raw Defense as
+    // the established crew stat source; preserve rank metadata but do not apply
+    // the unsupported source as actual raw ship defense points.
     let tom = officers.get_mut("tom-paris-3640cc").unwrap();
     tom.stats = vec![LcarsLevelStats {
         level: 20,
@@ -43,12 +44,15 @@ fn tom_paris_rank_four_uses_raw_defense_points_without_dividing_by_100() {
     assert_eq!(crew.seats[0].ability.timing, TimingWindow::CombatBegin);
     assert_eq!(
         crew.seats[0].ability.effect,
-        AbilityEffect::BaseMitigationStatsAdd(4.0 * 420.6)
+        AbilityEffect::UnsupportedOfficerEffect {
+            coefficient: 4.0,
+            chance: 1.0
+        }
     );
 }
 
 #[test]
-fn tom_paris_missing_officer_stat_does_not_treat_coefficient_as_raw_points() {
+fn tom_paris_missing_officer_stat_remains_explicitly_unsupported() {
     let mut officers =
         index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
     officers.get_mut("tom-paris-3640cc").unwrap().stats.clear();
@@ -64,7 +68,9 @@ fn tom_paris_missing_officer_stat_does_not_treat_coefficient_as_raw_points() {
         },
     )
     .crew;
-    assert!(crew.seats.is_empty());
+    assert!(
+        matches!(crew.seats.as_slice(), [seat] if matches!(seat.ability.effect, AbilityEffect::UnsupportedOfficerEffect { .. }))
+    );
 }
 
 #[test]
@@ -94,6 +100,7 @@ fn mitigation_event(raw_context: bool, bonus: f64) -> serde_json::Map<String, se
                 shield_deflection: 677.0,
                 dodge: 29.0,
             },
+            weapon_pierce_defender_stats: None,
             base_attacker_stats: AttackerStats {
                 armor_piercing: 750.0,
                 shield_piercing: 750.0,

@@ -612,3 +612,41 @@ as an explanation of her displayed stat, but do not bind the server combat
 getter. Kobayashi now compiles integer CoreStats only for exact hash-bound
 upstream officer files; refreshed/custom files and hand-authored LCARS retain
 their source behavior. See [the validation and freshness limits](RESEARCH_COMBAT_VALIDATION.md#native-integer-officer-inputs-compiler-correction).
+
+## Removal of the automatic quarter damage boost (2026-11-09)
+
+Piercing already changes the defense/piercing ratios in the mitigation curve.
+The setup helper previously added `0.25 * (1 - mitigation)` again as direct
+damage-through. With no separate effects, that made post-mitigation damage
+25% higher. The retained helper now returns zero in Rust and the Python
+reference. Explicit damage-through inputs and ability effects remain separate.
+
+Fresh build-274 `GetRemainingDamage` native code returns the product of the
+three remaining-damage components, with no separate quarter term. The current
+[STFC Toolbox implementation](https://stfc-toolbox.vercel.app/game-mechanics)
+also places piercing inside mitigation, rather than adding that term afterward.
+These client and public-source observations corroborate the saved battle
+checks; they do not independently prove the complete server combat formula.
+
+The tracked no-Tom Jem'Hadar observation supplies an unchanged clean-hit
+interval of `0.16170428083163155..=0.16170522158252099`. Using its native-rounded
+defenses and observed weapon's piercing, the old extra term produces effective
+mitigation `-0.047869098381093655`, outside that interval. Removing it gives
+`0.16170472129512503`, inside the interval. The regression uses this recorded
+interval directly, before Apex, without fitting raw damage or changing an
+observed fixture. See
+[`realta_jemhadar_baseline_20261024_observed.json`](../tests/fixtures/recorded_fights/realta_jemhadar_baseline_20261024_observed.json).
+
+The earlier isolated saved-battle comparison improved eight of ten ordinary
+hostile direction-level mitigation residuals. Realta/Takret outgoing and Gorn
+incoming became worse, and full-fight duration results were mixed. Tom Paris
+still had a large discrepancy. That experiment used a different working-copy
+revision, fixed capture-time evaluation, and declared equipment overlays;
+its aggregate results are not an accuracy guarantee for this revision.
+The current native-stat counter-fire path already omits the automatic term;
+this correction also removes it from setup-derived outbound and fallback values.
+
+A dedicated bidirectional canary includes the setup helper and detects the
+removed boost in both outbound damage and incoming hull loss. Adding that
+canary invalidates persisted optimizer results through the engine fingerprint.
+No RNG draw, observation interval, golden fixture, or acceptance band changes.

@@ -167,11 +167,13 @@ fn zeph_bridge_compiles_random_defender_state_with_weights_and_rank_chance() {
         other => panic!("expected RandomDefenderState, got {other:?}"),
     }
     assert!(
-        matches!(
-            &cond,
-            Some(AbilityCondition::And(parts))
-                if parts.iter().any(|c| matches!(c, AbilityCondition::DefenderIsNpcHostile))
-        ),
+        match &cond {
+            Some(AbilityCondition::DefenderIsNpcHostile) => true,
+            Some(AbilityCondition::And(parts)) => parts
+                .iter()
+                .any(|c| matches!(c, AbilityCondition::DefenderIsNpcHostile)),
+            _ => false,
+        },
         "Zeph gate should include DefenderIsNpcHostile, got {cond:?}"
     );
 }

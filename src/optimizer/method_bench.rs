@@ -844,6 +844,7 @@ mod tests {
     fn ranked_row(captain: &str, win_rate: f64) -> RankedCrewResult {
         let crew = crew(captain);
         RankedCrewResult {
+            unsupported_crew_health_effects: None,
             captain: crew.captain,
             bridge: crew.bridge,
             below_decks: crew.below_decks,

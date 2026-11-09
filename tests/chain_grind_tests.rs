@@ -86,6 +86,7 @@ fn simulation_result_chain(
     avg_hull_remaining: f64,
 ) -> SimulationResult {
     SimulationResult {
+        unsupported_crew_health_effects: None,
         candidate: CrewCandidate {
             captain: captain.to_string(),
             bridge: vec![],
