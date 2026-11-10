@@ -8901,7 +8901,7 @@
     "1029835177": {
       "bucket": "override_only",
       "source_scope": "override_only",
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "source_note": "The hostile piercing bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
       "loca_id": null,
       "hostile_count": 0,
       "sample_hostile_id": null,
@@ -8913,7 +8913,7 @@
     "1844469045": {
       "bucket": "override_only",
       "source_scope": "override_only",
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "source_note": "An additional Counter-Intel modifier is omitted because its combat behavior is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
       "loca_id": null,
       "hostile_count": 0,
       "sample_hostile_id": null,
@@ -8937,7 +8937,7 @@
     "4194583694": {
       "bucket": "override_only",
       "source_scope": "override_only",
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "source_note": "The hostile Isolytic Defense bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
       "loca_id": null,
       "hostile_count": 0,
       "sample_hostile_id": null,
@@ -8949,7 +8949,7 @@
     "2026725568": {
       "bucket": "override_only",
       "source_scope": "override_only",
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "source_note": "The hostile Apex Barrier bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
       "loca_id": null,
       "hostile_count": 0,
       "sample_hostile_id": null,
@@ -8961,7 +8961,7 @@
     "1421423212": {
       "bucket": "override_only",
       "source_scope": "override_only",
-      "source_note": "Conditional Apex source requires native predicate86001 and exact officer presence scope; not applied unconditionally. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "source_note": "The extra Apex Barrier against specific SNW officers is omitted because its crew-seat requirements are not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
       "loca_id": null,
       "hostile_count": 0,
       "sample_hostile_id": null,

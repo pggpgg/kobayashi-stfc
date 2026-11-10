@@ -1860,7 +1860,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0,
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+      "source_note": "The hostile piercing bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "1030495842": {
       "timing": "combat_begin",
@@ -2616,7 +2616,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0,
-      "source_note": "Conditional Apex source requires native predicate86001 and exact officer presence scope; not applied unconditionally. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+      "source_note": "The extra Apex Barrier against specific SNW officers is omitted because its crew-seat requirements are not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "1421713322": {
       "timing": "combat_begin",
@@ -3365,7 +3365,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0,
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+      "source_note": "An additional Counter-Intel modifier is omitted because its combat behavior is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "1852892615": {
       "timing": "combat_begin",
@@ -3670,7 +3670,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0,
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+      "source_note": "The hostile Apex Barrier bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "2029619706": {
       "timing": "combat_begin",
@@ -7668,7 +7668,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0,
-      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+      "source_note": "The hostile Isolytic Defense bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "4196040311": {
       "timing": "combat_begin",

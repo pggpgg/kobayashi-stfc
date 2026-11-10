@@ -367,7 +367,7 @@
         }
       ],
       "modeling_status": "unsupported",
-      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "unsupported_reason": "The hostile piercing bonus is omitted because its combat value is not verified.",
       "native_source": {
         "source_group": 51,
         "spec_sha256": "3c7a1180e975192732bdd5004199bd26562f6518e1d3d24c10f4616f19e2b97e",
@@ -390,7 +390,7 @@
         }
       ],
       "modeling_status": "unsupported",
-      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "unsupported_reason": "An additional Counter-Intel modifier is omitted because its combat behavior is not verified.",
       "native_source": {
         "source_group": 51,
         "spec_sha256": "0672f2de433d9410b7a7327a0d643e6ba4874df9e9a0daf8f49a09a8dff04f46",
@@ -436,7 +436,7 @@
         }
       ],
       "modeling_status": "unsupported",
-      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "unsupported_reason": "The hostile Isolytic Defense bonus is omitted because its combat value is not verified.",
       "native_source": {
         "source_group": 51,
         "spec_sha256": "2825ff7de7123ef2302159baaed2433062edcebf3f136821119ccf2ce2354082",
@@ -459,7 +459,7 @@
         }
       ],
       "modeling_status": "unsupported",
-      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "unsupported_reason": "The hostile Apex Barrier bonus is omitted because its combat value is not verified.",
       "native_source": {
         "source_group": 51,
         "spec_sha256": "02c5a6bfde95ee9c9da2106864f0e3ad0a2958936c182fcf94866dddfaf70b79",
@@ -482,7 +482,7 @@
         }
       ],
       "modeling_status": "unsupported",
-      "unsupported_reason": "Conditional Apex source requires native predicate86001 and exact officer presence scope; not applied unconditionally.",
+      "unsupported_reason": "The extra Apex Barrier against specific SNW officers is omitted because its crew-seat requirements are not verified.",
       "native_source": {
         "source_group": 51,
         "spec_sha256": "881d898f796730ea5dd2545b188a7906724d882861aaaa0c3eadc089f0e5a07a",
