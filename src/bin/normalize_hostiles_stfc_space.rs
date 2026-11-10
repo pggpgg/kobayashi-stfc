@@ -405,6 +405,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     merge_registry_entry(&repo, "hostiles", &data_version, "hostiles/index.json")?;
 
+    // Reviewed native cache records are a separate source, never fabricated
+    // data.stfc.space responses. Reapply their supplement after the bulk API
+    // catalog so a refresh cannot silently remove those exact hostile ids.
+    let native_supplement_applied = repo
+        .join("data/native_hostile_static_snapshot.json")
+        .is_file();
+    if native_supplement_applied {
+        let node = std::env::var_os("NODE").unwrap_or_else(|| "node".into());
+        let status = std::process::Command::new(&node)
+            .arg(repo.join("scripts/import_native_hostile_snapshot.mjs"))
+            .arg("--root")
+            .arg(&repo)
+            .arg("--write")
+            .current_dir(&repo)
+            .status()
+            .map_err(|error| {
+                format!("Failed to run native hostile supplement with {node:?}: {error}")
+            })?;
+        if !status.success() {
+            return Err(format!(
+                "Native hostile supplement failed with status {:?}; hostile refresh is incomplete",
+                status.code()
+            )
+            .into());
+        }
+    }
+
     // Re-load validation (same as normalize_stfc_data)
     let hostile_index_path = out_dir.join("index.json");
     let re_index =
@@ -416,14 +443,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!(
-        "Normalized {} hostiles from data.stfc.space cache. kobayashi_fixtures_merged={} unknown_hull_types={} parse_errors={} data_version={:?}",
+        "Normalized {} hostiles from data.stfc.space cache. kobayashi_fixtures_merged={} native_supplement_applied={} unknown_hull_types={} parse_errors={} data_version={:?}",
         records.len(),
         fixtures_merged,
+        native_supplement_applied,
         unknown_hull,
         parse_errors,
-        data_version
+        re_index.data_version
     );
-    println!("source_note={:?}", source_note);
+    println!("source_note={:?}", re_index.source_note);
     println!("Registry hostiles entry updated (merge).");
     Ok(())
 }

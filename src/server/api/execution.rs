@@ -2333,6 +2333,7 @@ mod unsupported_rank_warning_tests {
 }
 
 fn build_optimize_response(
+    registry: &DataRegistry,
     request: &OptimizeRequest,
     all_results: Vec<SimulationResult>,
     duration_ms: u64,
@@ -2534,6 +2535,11 @@ fn build_optimize_response(
     append_optimize_observations(request, meta, &ranked_results, profile_id, sims, seed);
 
     let mut warnings = Vec::new();
+    warnings.extend(super::hostile_modeling_warnings(
+        registry,
+        &request.hostile,
+        request.defender_opponent.defender_is_npc_hostile() && request.defender_ship.is_none(),
+    ));
     if let Some(warning) = super::sphere_obliterator_warning(
         &request.ship,
         &request.hostile,
@@ -2723,7 +2729,14 @@ pub fn run_optimize(
             }
         };
     let duration_ms = start.elapsed().as_millis() as u64;
-    let response = build_optimize_response(request, all_results, duration_ms, &meta, profile_id);
+    let response = build_optimize_response(
+        registry,
+        request,
+        all_results,
+        duration_ms,
+        &meta,
+        profile_id,
+    );
     info!(
         duration_ms,
         recommendations = response.recommendations.len() as u64,
@@ -2958,6 +2971,7 @@ pub fn start_optimize_job(
             Ok((all_results, meta)) => {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 let response = build_optimize_response(
+                    registry.as_ref(),
                     &request,
                     all_results,
                     duration_ms,

@@ -542,6 +542,35 @@ fn enemy_type_label(e: crate::combat::EnemyType) -> &'static str {
     }
 }
 
+/// Keep source-declared hostile modeling gaps visible in every result surface.
+fn hostile_modeling_warnings(registry: &DataRegistry, hostile: &str, is_npc: bool) -> Vec<String> {
+    if !is_npc {
+        return Vec::new();
+    }
+    let Some(record) = registry.resolve_hostile(hostile) else {
+        return Vec::new();
+    };
+    let reasons: std::collections::BTreeSet<&str> = record
+        .ability
+        .iter()
+        .filter(|row| {
+            row.get("modeling_status")
+                .and_then(serde_json::Value::as_str)
+                == Some("unsupported")
+        })
+        .filter_map(|row| {
+            row.get("unsupported_reason")
+                .and_then(serde_json::Value::as_str)
+        })
+        .map(str::trim)
+        .filter(|reason| !reason.is_empty())
+        .collect();
+    reasons
+        .into_iter()
+        .map(|reason| format!("{} combat model is partial: {reason}", record.hostile_name))
+        .collect()
+}
+
 /// Resolve one crew member's eligibility for `slot` against `enemy`; when the verdict is
 /// `conditional` or `does_not_work`, append a structured note and a human-readable warning.
 /// A `works` verdict (or an officer/ability absent from the matrix) produces nothing.
@@ -1035,6 +1064,11 @@ pub fn simulate_payload(
     let ci = binomial_95_ci(wins, num_sims);
 
     let mut warnings = Vec::new();
+    warnings.extend(hostile_modeling_warnings(
+        registry,
+        &scenario_hostile,
+        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+    ));
     if let Some(warning) = sphere_obliterator_warning(
         &req.ship,
         &scenario_hostile,
@@ -1334,6 +1368,11 @@ pub fn compare_crews_payload(
     );
 
     let mut warnings = Vec::new();
+    warnings.extend(hostile_modeling_warnings(
+        registry,
+        &scenario_hostile,
+        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+    ));
     if let Some(warning) = sphere_obliterator_warning(
         &req.ship,
         &scenario_hostile,
@@ -1801,6 +1840,11 @@ pub fn replay_optimize_seed_payload(
     );
 
     let mut warnings = Vec::new();
+    warnings.extend(hostile_modeling_warnings(
+        registry,
+        &req.hostile,
+        req.defender_opponent.defender_is_npc_hostile(),
+    ));
     if let Some(warning) = sphere_obliterator_warning(
         &req.ship,
         &req.hostile,

@@ -198,6 +198,94 @@
           "value_override": 1.5
         }
       ]
+    },
+    "3215268814": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Presentation damage stub; a dummy +1% damage boost is not modeled. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "1761765323": {
+      "timing": "combat_begin",
+      "effect_type": "hostile_isolytic_vulnerability",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Exact Counter-Intel locale86112 supplies physical-only immunity semantics. Its dummy .01 AllDamage value is not applied. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "4196543321": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 14.91,
+      "source_note": "Fixed L62 Isolytic Damage coefficient corroborated independently by recorded damage channels; no general level-to-rank rule. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "1029835177": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "The hostile piercing bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "1844469045": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "An additional Counter-Intel modifier is omitted because its combat behavior is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "4173861882": {
+      "timing": "round_start",
+      "effect_type": "hostile_cumulative_opponent_shield_mitigation_debuff",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.01,
+      "source_note": "Opponent Shield Mitigation SUB at each round start; value .01 is constant across all source ranks. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "4194583694": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "The hostile Isolytic Defense bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "2026725568": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "The hostile Apex Barrier bonus is omitted because its combat value is not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "1421423212": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "The extra Apex Barrier against specific SNW officers is omitted because its crew-seat requirements are not verified. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "2678416666": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native CUTTING_BEAM_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
+    "1955293070": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native CHAIN_SHOT_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     }
   }
 }

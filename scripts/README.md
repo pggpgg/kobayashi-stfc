@@ -152,6 +152,20 @@ identity and tier unlocks, and retains native units. The CSV importer preserves
 these verified curves. Combat requires the equipped item and owned rank; a
 catalog summary value cannot replace missing equipment or rank context.
 
+Reviewed native hostile records use a separate source supplement. Run
+`node scripts/import_native_hostile_snapshot.mjs --cache <static-cache.bin> --write`
+to extract the selected static hull, components and ability rows into
+`data/native_hostile_static_snapshot.json`. The allowlist admits only the
+verified level-62 V'ger Gorn Hunter. It does not read player groups or battle logs.
+Raw component values, duplicate weapon slots, source hashes and unresolved buffs
+remain explicit. This does not create a data.stfc.space API response.
+
+Run `node scripts/import_native_hostile_snapshot.mjs --write` to regenerate the
+normalized supplement from its public snapshot, or use `--check` for a read-only
+drift check. The bulk hostile normalizer reapplies the supplement automatically;
+`cargo xtask check-generated` checks it. `NODE` selects the Node executable when
+it is unavailable on the default path.
+
 Related docs: [data/README.md](../data/README.md), [docs/STFC_SPACE_DATA_STRATEGY.md](../docs/STFC_SPACE_DATA_STRATEGY.md), [data/import/README.md](../data/import/README.md).
 
 ---

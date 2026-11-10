@@ -332,8 +332,10 @@ pub enum AbilityEffect {
     /// Player ship hull ability (U.S.S. Intrepid): additive armor / deflection / dodge proxy — same
     /// fraction applied to counter-fire mitigation and dodge bonus sums at combat begin.
     HostileEngagementDefensiveBonus(f64),
-    /// Reduces the **defender's** shield-mitigation fraction cumulatively each round (Slipstream-style).
-    /// Engine applies `min(per_round * round_index, cap)` as a negative add to defender shield mitigation.
+    /// Reduces the **opponent's** shield-mitigation fraction cumulatively each round (Slipstream-style).
+    /// Engine applies `min(per_round * round_index, cap)` as a negative add to the other side's
+    /// shield pool. Attacker-owned effects target the defender; defender-owned effects target
+    /// the attacker, composed with own shield bonuses before the final domain clamp.
     CumulativeOpponentShieldMitigationDebuff {
         per_round: f64,
         cap: f64,

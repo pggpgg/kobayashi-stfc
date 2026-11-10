@@ -303,6 +303,28 @@ pub(crate) fn hostile_ability_effect_from_catalog(
             }
             Some(AbilityEffect::HostileAttackerShieldMitigationZero)
         }
+        "hostile_cumulative_opponent_shield_mitigation_debuff" => {
+            // Native RoundStart SUB fractions accumulate from round one. Proc
+            // gates and finite durations need their own stateful model; never
+            // turn them into an unconditional permanent subtraction.
+            if timing != TimingWindow::RoundStart
+                || !chance.is_finite()
+                || normalize_probability(chance) != 1.0
+                || !value.is_finite()
+                || value <= 0.0
+                || duration_rounds.is_some_and(|rounds| rounds > 0)
+                || round_interval.is_some_and(|interval| interval != 1)
+            {
+                return None;
+            }
+            Some(AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+                per_round: value,
+                // No source-strength cap is declared. Final shield mitigation
+                // is clamped only after own bonuses and this subtraction are
+                // composed, including raw pools that initially exceed one.
+                cap: f64::MAX,
+            })
+        }
         "hostile_crit_damage_reduction" | "reduce_hostile_crit_damage" => {
             if timing != TimingWindow::CombatBegin && timing != TimingWindow::RoundStart {
                 return None;
@@ -723,6 +745,30 @@ pub fn hostile_abilities_to_defender_crew_via_spec(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hostile_cumulative_opponent_shield_subtraction_rejects_nonfinite_source_values() {
+        let compile = |chance, value| {
+            hostile_ability_effect_from_catalog(
+                "hostile_cumulative_opponent_shield_mitigation_debuff",
+                TimingWindow::RoundStart,
+                chance,
+                value,
+                None,
+                None,
+                None,
+                None,
+                &[],
+                &[],
+            )
+        };
+        for invalid in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            assert!(compile(invalid, 0.01).is_none());
+            assert!(compile(1.0, invalid).is_none());
+        }
+        assert!(matches!(compile(1.0,0.01),
+            Some(AbilityEffect::CumulativeOpponentShieldMitigationDebuff{cap,..}) if cap==f64::MAX));
+    }
 
     #[test]
     fn parse_one_upstream_ability_reads_id_values_and_flags() {
