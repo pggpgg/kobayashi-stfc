@@ -1854,6 +1854,14 @@
       "negate_value": true,
       "condition_attacker_ship_type": "battleship"
     },
+    "1029835177": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "1030495842": {
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
@@ -2602,6 +2610,14 @@
       "ignore_upstream_value_is_percentage": true,
       "round_cap": 5
     },
+    "1421423212": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Conditional Apex source requires native predicate86001 and exact officer presence scope; not applied unconditionally. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "1421713322": {
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
@@ -3175,6 +3191,14 @@
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 1
     },
+    "1761765323": {
+      "timing": "combat_begin",
+      "effect_type": "hostile_isolytic_vulnerability",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Exact Counter-Intel locale86112 supplies physical-only immunity semantics. Its dummy .01 AllDamage value is not applied. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "1762762543": {
       "timing": "combat_begin",
       "effect_type": "combat_noop",
@@ -3334,6 +3358,14 @@
       "ignore_upstream_value_is_percentage": true,
       "round_cap": 5,
       "condition_attacker_ship_type": "explorer"
+    },
+    "1844469045": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "1852892615": {
       "timing": "combat_begin",
@@ -3517,6 +3549,14 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
     },
+    "1955293070": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native CHAIN_SHOT_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "1963739289": {
       "timing": "combat_begin",
       "effect_type": "defender_on_hit_shield_mitigation_reduction",
@@ -3623,6 +3663,14 @@
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
+    },
+    "2026725568": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "2029619706": {
       "timing": "combat_begin",
@@ -4988,6 +5036,14 @@
         }
       ]
     },
+    "2678416666": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native CUTTING_BEAM_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "2680695759": {
       "timing": "round_end",
       "effect_type": "shield_regen_max_fraction",
@@ -5841,6 +5897,14 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "value_override": 0
+    },
+    "3215268814": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Presentation damage stub; a dummy +1% damage boost is not modeled. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "3215408872": {
       "timing": "combat_begin",
@@ -7575,6 +7639,14 @@
       "ignore_upstream_value_is_percentage": true,
       "round_cap": 5
     },
+    "4173861882": {
+      "timing": "round_start",
+      "effect_type": "hostile_cumulative_opponent_shield_mitigation_debuff",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0.01,
+      "source_note": "Opponent Shield Mitigation SUB at each round start; value .01 is constant across all source ranks. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "4178048713": {
       "timing": "combat_begin",
       "effect_type": "combat_noop",
@@ -7590,11 +7662,27 @@
       "round_cap": 5,
       "condition_attacker_ship_type": "battleship"
     },
+    "4194583694": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0,
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only."
+    },
     "4196040311": {
       "timing": "combat_begin",
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true
+    },
+    "4196543321": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 14.91,
+      "source_note": "Fixed L62 Isolytic Damage coefficient corroborated independently by recorded damage channels; no general level-to-rank rule. See docs/native-vger-gorn-hunter.md; native L62 identity only."
     },
     "4198911978": {
       "timing": "combat_begin",

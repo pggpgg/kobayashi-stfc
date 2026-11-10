@@ -1,6 +1,9 @@
 {
   "generated_from": "scripts/generate_full_hostile_ability_catalog.py",
-  "unique_ability_ids": 983,
+  "audit_scope": "Catalog ids: upstream abilities classified from API records and override-only ids labeled separately without upstream classification.",
+  "unique_ability_ids": 994,
+  "upstream_unique_ability_ids": 983,
+  "override_only_ability_ids": 11,
   "hostiles_with_abilities_scanned": 3000,
   "entries": {
     "1636824": {
@@ -8858,6 +8861,138 @@
       "sample_level": 41,
       "text_snippet": "collective thinking\nthe borg's strength lies in their singlemindedness. research the translink disruptor in the combat research tree to bring down borg communications and increase your combat power against borg solo armadas.\n\nbut watch out!",
       "effect_type": "combat_noop"
+    },
+    "3215268814": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Presentation damage stub; a dummy +1% damage boost is not modeled. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "1761765323": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Exact Counter-Intel locale86112 supplies physical-only immunity semantics. Its dummy .01 AllDamage value is not applied. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "hostile_isolytic_vulnerability",
+      "overridden": true
+    },
+    "4196543321": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Fixed L62 Isolytic Damage coefficient corroborated independently by recorded damage channels; no general level-to-rank rule. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "isolytic_damage",
+      "overridden": true
+    },
+    "1029835177": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "1844469045": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "4173861882": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Opponent Shield Mitigation SUB at each round start; value .01 is constant across all source ranks. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "hostile_cumulative_opponent_shield_mitigation_debuff",
+      "overridden": true
+    },
+    "4194583694": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "2026725568": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Native value/rank or modifier behavior has not been established for this combat consumer. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "1421423212": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Conditional Apex source requires native predicate86001 and exact officer presence scope; not applied unconditionally. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "2678416666": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Native CUTTING_BEAM_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
+    },
+    "1955293070": {
+      "bucket": "override_only",
+      "source_scope": "override_only",
+      "source_note": "Native CHAIN_SHOT_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting. See docs/native-vger-gorn-hunter.md; native L62 identity only.",
+      "loca_id": null,
+      "hostile_count": 0,
+      "sample_hostile_id": null,
+      "sample_level": null,
+      "text_snippet": "",
+      "effect_type": "combat_noop",
+      "overridden": true
     }
   }
 }

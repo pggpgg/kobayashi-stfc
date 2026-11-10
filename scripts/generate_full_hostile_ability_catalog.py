@@ -1138,6 +1138,23 @@ def main() -> None:
         if oid in audit_meta:
             audit_meta[oid]["effect_type"] = row.get("effect_type")
             audit_meta[oid]["overridden"] = True
+        else:
+            # These ids have no upstream API record to classify or count. Keep
+            # their independently reviewed override provenance explicit rather
+            # than attributing them to the localization classifier above.
+            audit_meta[oid] = {
+                "bucket": "override_only",
+                "source_scope": "override_only",
+                "source_note": row.get("source_note")
+                or "Catalog override with no scanned upstream hostile ability row.",
+                "loca_id": None,
+                "hostile_count": 0,
+                "sample_hostile_id": None,
+                "sample_level": None,
+                "text_snippet": "",
+                "effect_type": row.get("effect_type"),
+                "overridden": True,
+            }
 
     root = {
         "description": (
@@ -1157,7 +1174,13 @@ def main() -> None:
         json.dump(
             {
                 "generated_from": "scripts/generate_full_hostile_ability_catalog.py",
+                "audit_scope": (
+                    "Catalog ids: upstream abilities classified from API records and "
+                    "override-only ids labeled separately without upstream classification."
+                ),
                 "unique_ability_ids": len(entries),
+                "upstream_unique_ability_ids": len(upstream),
+                "override_only_ability_ids": len(entries.keys() - upstream.keys()),
                 "hostiles_with_abilities_scanned": sum(
                     1 for p in HOSTILES_DIR.glob("*.json") if json.loads(p.read_text()).get("ability")
                 ),

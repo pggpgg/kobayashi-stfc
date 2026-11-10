@@ -1,6 +1,6 @@
 {
-  "data_version": "stfcspace-hostiles-2026-10-19",
-  "source_note": "data.stfc.space hostile detail (cached under data/upstream/data-stfc-space/hostiles)",
+  "data_version": "stfcspace-hostiles-2026-10-19+native-vger-gorn-l62-2026-11-10",
+  "source_note": "data.stfc.space hostile detail (cached under data/upstream/data-stfc-space/hostiles) Includes reviewed native-static L62 V'ger Gorn Hunter supplement; no data.stfc.space detail record is claimed.",
   "hostiles": [
     {
       "id": "kobayashi_theoretical_damage_sponge",
@@ -49681,6 +49681,19 @@
       "rarity": 1,
       "upstream_ship_type": 5,
       "loca_id": 10020
+    },
+    {
+      "id": "2978535446",
+      "hostile_name": "V'ger Gorn Hunter",
+      "level": 62,
+      "ship_class": "explorer",
+      "rarity": 1,
+      "upstream_ship_type": 0,
+      "loca_id": 86111,
+      "source": "native-static-supplement"
     }
+  ],
+  "native_supplements": [
+    "data/native_hostile_static_snapshot.json"
   ]
 }

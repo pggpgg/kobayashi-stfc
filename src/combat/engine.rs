@@ -4033,6 +4033,21 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         filter_effects_by_condition_borrowed(defender_combat_begin_effects, &defender_ctx);
     let defender_round_start_filtered =
         filter_effects_by_condition_borrowed(defender_round_start_effects, &defender_ctx);
+    // The same owner-relative RoundStart effect used by attacker-owned
+    // Slipstream targets the player when carried by the defender. Resolve it
+    // before the first counter shot, without scaling the completed own/KSG
+    // pool or accumulating again per hit. Other shield-effect families retain
+    // their existing direction and timing.
+    let defender_opponent_shield_mitigation_bonus: f64 = defender_round_start_filtered
+        .iter()
+        .filter_map(|effect| match effect.effect {
+            AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
+                let reduction = (per_round * f64::from(round_index)).min(cap);
+                (reduction.is_finite() && reduction > 0.0).then_some(-reduction)
+            }
+            _ => None,
+        })
+        .sum();
     let defender_attack_filtered =
         filter_effects_by_condition_borrowed(defender_attack_phase_effects, &defender_ctx);
     let defender_defense_filtered =
@@ -4552,7 +4567,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 attacker.shield_mitigation,
                 config,
                 round_index,
-                phase_effects.composed_attacker_shield_mitigation_bonus(),
+                phase_effects.composed_attacker_shield_mitigation_bonus()
+                    + defender_opponent_shield_mitigation_bonus,
                 on_hit_shield_mitigation_sum,
                 defender_phase_effects.composed_shield_mitigation_bypass(),
                 attacker_shield_mitigation_forced_zero,
@@ -4837,7 +4853,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 attacker.shield_mitigation,
                 config,
                 round_index,
-                phase_effects.composed_attacker_shield_mitigation_bonus(),
+                phase_effects.composed_attacker_shield_mitigation_bonus()
+                    + defender_opponent_shield_mitigation_bonus,
                 on_hit_shield_mitigation_sum,
                 defender_phase_effects.composed_shield_mitigation_bypass(),
                 attacker_shield_mitigation_forced_zero,

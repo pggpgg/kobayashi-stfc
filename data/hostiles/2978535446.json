@@ -1,0 +1,527 @@
+{
+  "id": "2978535446",
+  "hostile_name": "V'ger Gorn Hunter",
+  "level": 62,
+  "ship_class": "explorer",
+  "armor": 516380,
+  "shield_deflection": 1824542,
+  "dodge": 206552,
+  "hull_health": 12048861184,
+  "shield_health": 22032201728,
+  "shield_mitigation": 0.800000011920929,
+  "apex_barrier": 0,
+  "isolytic_defense": 0,
+  "loca_id": 86111,
+  "faction": {
+    "id": 2334280262
+  },
+  "upstream_ship_type": 0,
+  "hull_type_raw": 2,
+  "rarity": 1,
+  "xp_amount": 14400,
+  "accuracy": 1404552,
+  "armor_piercing": 351138,
+  "shield_piercing": 2457966,
+  "crit_chance": 0.009999999776482582,
+  "crit_damage": 1.5,
+  "crit_damage_is_bonus": true,
+  "hostile_tags": [
+    "vger_gorn_hunter"
+  ],
+  "components": [
+    {
+      "id": 635429245,
+      "order": 0,
+      "native_type": 7,
+      "data": {
+        "tag": "NativeNonCombatComponent"
+      },
+      "native_source": {
+        "sha256": "3c13abc911d9e62d23860a56cf570fa938ec3ad8b1a2150ee72e19f88ba644ad",
+        "byte_offset": 24071223,
+        "byte_length": 94
+      }
+    },
+    {
+      "id": 161618765,
+      "order": 1,
+      "native_type": 3,
+      "data": {
+        "tag": "Impulse",
+        "dodge": 206552,
+        "impulse": 80
+      },
+      "native_source": {
+        "sha256": "808f69fba83b37605902bb686d5dfaee18e49e9d79d79d8c294ec5cb30beb7e7",
+        "byte_offset": 24603114,
+        "byte_length": 94
+      }
+    },
+    {
+      "id": 1545451774,
+      "order": 2,
+      "native_type": 5,
+      "data": {
+        "tag": "Shield",
+        "absorption": 1824542,
+        "hp": 22032201728,
+        "regeneration_time_seconds": 20,
+        "mitigation": 0.800000011920929
+      },
+      "native_source": {
+        "sha256": "57c5c6b7a26af82d727fa895cf77b7ea5f7e8c8c1602ac7f662e80fc363714de",
+        "byte_offset": 23054855,
+        "byte_length": 104
+      }
+    },
+    {
+      "id": 2760464701,
+      "order": 3,
+      "native_type": 0,
+      "data": {
+        "tag": "Armor",
+        "hp": 12048861184,
+        "plating": 516380
+      },
+      "native_source": {
+        "sha256": "37ff30f7110fac5608168aeaf685b7be8a486aa3445492c44c05c31cca0181d6",
+        "byte_offset": 21716644,
+        "byte_length": 93
+      }
+    },
+    {
+      "id": 2821665303,
+      "order": 4,
+      "native_type": 4,
+      "data": {
+        "tag": "NativeNonCombatComponent"
+      },
+      "native_source": {
+        "sha256": "8bad1b086561fca8681b563d11294f443e242de7ad3b99b51cde156bf46f765c",
+        "byte_offset": 21654841,
+        "byte_length": 74
+      }
+    },
+    {
+      "id": 409142410,
+      "order": 5,
+      "native_type": 2,
+      "data": {
+        "tag": "NativeNonCombatComponent"
+      },
+      "native_source": {
+        "sha256": "d45ae25b174bdf8384fc2cd52c83d6f2d96618b18b007870a981eb333c78e776",
+        "byte_offset": 24324230,
+        "byte_length": 77
+      }
+    },
+    {
+      "id": 2534309121,
+      "order": 6,
+      "native_type": 1,
+      "data": {
+        "tag": "NativeNonCombatComponent"
+      },
+      "native_source": {
+        "sha256": "1b9b7978b9650a0ed0a9da2bc50bc38d461d42c9b131b4aac020c057cdb7e563",
+        "byte_offset": 21976436,
+        "byte_length": 87
+      }
+    },
+    {
+      "id": 3804869128,
+      "order": 7,
+      "native_type": 8,
+      "data": {
+        "tag": "Weapon",
+        "weapon_type": 2,
+        "crit_chance": 0.009999999776482582,
+        "warm_up": 1,
+        "modulation": 585230,
+        "cool_down": 1,
+        "crit_modifier": 1.5,
+        "minimum_damage": 14458633,
+        "penetration": 58523,
+        "shots": 2,
+        "maximum_damage": 15491392,
+        "accuracy": 58523
+      },
+      "native_source": {
+        "sha256": "b8cd950ea1c73cff9d6db692f6f08ab86d26d83bd80e0b0d0b307f7a50f6ad27",
+        "byte_offset": 20549288,
+        "byte_length": 138
+      }
+    },
+    {
+      "id": 3804869128,
+      "order": 8,
+      "native_type": 8,
+      "data": {
+        "tag": "Weapon",
+        "weapon_type": 2,
+        "crit_chance": 0.009999999776482582,
+        "warm_up": 1,
+        "modulation": 585230,
+        "cool_down": 1,
+        "crit_modifier": 1.5,
+        "minimum_damage": 14458633,
+        "penetration": 58523,
+        "shots": 2,
+        "maximum_damage": 15491392,
+        "accuracy": 58523
+      },
+      "native_source": {
+        "sha256": "b8cd950ea1c73cff9d6db692f6f08ab86d26d83bd80e0b0d0b307f7a50f6ad27",
+        "byte_offset": 20549288,
+        "byte_length": 138
+      }
+    },
+    {
+      "id": 3804869128,
+      "order": 9,
+      "native_type": 8,
+      "data": {
+        "tag": "Weapon",
+        "weapon_type": 2,
+        "crit_chance": 0.009999999776482582,
+        "warm_up": 1,
+        "modulation": 585230,
+        "cool_down": 1,
+        "crit_modifier": 1.5,
+        "minimum_damage": 14458633,
+        "penetration": 58523,
+        "shots": 2,
+        "maximum_damage": 15491392,
+        "accuracy": 58523
+      },
+      "native_source": {
+        "sha256": "b8cd950ea1c73cff9d6db692f6f08ab86d26d83bd80e0b0d0b307f7a50f6ad27",
+        "byte_offset": 20549288,
+        "byte_length": 138
+      }
+    },
+    {
+      "id": 3804869128,
+      "order": 10,
+      "native_type": 8,
+      "data": {
+        "tag": "Weapon",
+        "weapon_type": 2,
+        "crit_chance": 0.009999999776482582,
+        "warm_up": 1,
+        "modulation": 585230,
+        "cool_down": 1,
+        "crit_modifier": 1.5,
+        "minimum_damage": 14458633,
+        "penetration": 58523,
+        "shots": 2,
+        "maximum_damage": 15491392,
+        "accuracy": 58523
+      },
+      "native_source": {
+        "sha256": "b8cd950ea1c73cff9d6db692f6f08ab86d26d83bd80e0b0d0b307f7a50f6ad27",
+        "byte_offset": 20549288,
+        "byte_length": 138
+      }
+    },
+    {
+      "id": 404883461,
+      "order": 11,
+      "native_type": 8,
+      "data": {
+        "tag": "Weapon",
+        "weapon_type": 1,
+        "crit_chance": 0.009999999776482582,
+        "warm_up": 1,
+        "modulation": 58523,
+        "cool_down": 1,
+        "crit_modifier": 1.5,
+        "minimum_damage": 6196557,
+        "penetration": 58523,
+        "shots": 2,
+        "maximum_damage": 6885063,
+        "accuracy": 585230
+      },
+      "native_source": {
+        "sha256": "cd58beecce44b72f1d9263f525007dccac234bc3344cbddb07998c44203df098",
+        "byte_offset": 24332005,
+        "byte_length": 137
+      }
+    },
+    {
+      "id": 404883461,
+      "order": 12,
+      "native_type": 8,
+      "data": {
+        "tag": "Weapon",
+        "weapon_type": 1,
+        "crit_chance": 0.009999999776482582,
+        "warm_up": 1,
+        "modulation": 58523,
+        "cool_down": 1,
+        "crit_modifier": 1.5,
+        "minimum_damage": 6196557,
+        "penetration": 58523,
+        "shots": 2,
+        "maximum_damage": 6885063,
+        "accuracy": 585230
+      },
+      "native_source": {
+        "sha256": "cd58beecce44b72f1d9263f525007dccac234bc3344cbddb07998c44203df098",
+        "byte_offset": 24332005,
+        "byte_length": 137
+      }
+    },
+    {
+      "id": 2498741777,
+      "order": 13,
+      "native_type": 6,
+      "data": {
+        "tag": "NativeNonCombatComponent"
+      },
+      "native_source": {
+        "sha256": "6cf51427c9f5912aefb399e8084c5104fbf6757cf82b56bb9b96f945d585738a",
+        "byte_offset": 22015888,
+        "byte_length": 80
+      }
+    }
+  ],
+  "ability": [
+    {
+      "id": 3215268814,
+      "loca_id": 86111,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Presentation damage stub; a dummy +1% damage boost is not modeled.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "e72e439cfd3ebf9d4c49db2232459635f6f39812b5b3e571bcaeb6c6e4002b72",
+        "modifier_code": 2,
+        "operation_code": 3,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 1761765323,
+      "loca_id": 86112,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "modeled",
+      "modeling_note": "Exact Counter-Intel locale86112 supplies physical-only immunity semantics. Its dummy .01 AllDamage value is not applied.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "c4fdc0a501a815aa75be56e366ea76f22d0f7798f6e3c8536b975d602961a9dc",
+        "modifier_code": 2,
+        "operation_code": 3,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 4196543321,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 14.91,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "modeled",
+      "modeling_note": "Fixed L62 Isolytic Damage coefficient corroborated independently by recorded damage channels; no general level-to-rank rule.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "22048a6d1ff5cf29074bd79c257b8b731331b10541db29815a8b2e41c942c377",
+        "modifier_code": 707,
+        "operation_code": 1,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 1029835177,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "3c7a1180e975192732bdd5004199bd26562f6518e1d3d24c10f4616f19e2b97e",
+        "modifier_code": 74,
+        "operation_code": 3,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 1844469045,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "0672f2de433d9410b7a7327a0d643e6ba4874df9e9a0daf8f49a09a8dff04f46",
+        "modifier_code": 65002,
+        "operation_code": 3,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 4173861882,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0.01,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "modeled",
+      "modeling_note": "Opponent Shield Mitigation SUB at each round start; value .01 is constant across all source ranks.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "67cdc8230c111a5fd609d292711cabf086004902396a584a74812049f66ab556",
+        "modifier_code": 76,
+        "operation_code": 2,
+        "target_code": 6,
+        "trigger_code": 18,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 4194583694,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "2825ff7de7123ef2302159baaed2433062edcebf3f136821119ccf2ce2354082",
+        "modifier_code": 808,
+        "operation_code": 1,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 2026725568,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Native value/rank or modifier behavior has not been established for this combat consumer.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "02c5a6bfde95ee9c9da2106864f0e3ad0a2958936c182fcf94866dddfaf70b79",
+        "modifier_code": 67001,
+        "operation_code": 1,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 1421423212,
+      "loca_id": 9999,
+      "value_is_percentage": false,
+      "values": [
+        {
+          "value": 0,
+          "chance": 1
+        }
+      ],
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Conditional Apex source requires native predicate86001 and exact officer presence scope; not applied unconditionally.",
+      "native_source": {
+        "source_group": 51,
+        "spec_sha256": "881d898f796730ea5dd2545b188a7906724d882861aaaa0c3eadc089f0e5a07a",
+        "modifier_code": 67001,
+        "operation_code": 1,
+        "target_code": 1,
+        "trigger_code": 25,
+        "condition_codes": [
+          86001
+        ],
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 2678416666,
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Native CUTTING_BEAM_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting.",
+      "native_source": {
+        "source_group": 128,
+        "spec_sha256": "85e04f7786651eef147a37f2eee2d15d33fc2addb4b6a4c29d8b9fb45ad9157e",
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    },
+    {
+      "id": 1955293070,
+      "modeling_status": "unsupported",
+      "unsupported_reason": "Native CHAIN_SHOT_IMMUNITY immunity hook is retained; this simulator does not execute Cutting Beam/Chain Shot targeting.",
+      "native_source": {
+        "source_group": 128,
+        "spec_sha256": "433cf1c84a3cc2e5d30d673e907930751b7ef9a2bba7998d5f4dedb7af351c53",
+        "source_snapshot": "data/native_hostile_static_snapshot.json"
+      }
+    }
+  ],
+  "native_source": {
+    "kind": "native-static-supplement",
+    "snapshot": "data/native_hostile_static_snapshot.json",
+    "revision": "native-vger-gorn-l62-2026-11-10",
+    "hull_payload_sha256": "3fa46293f393ea412aa1f117715476bc34c7f617457a1a913791dea14f201b85",
+    "base_stats_note": "Raw component stats, before passive buffs, research or any player profile. Repeated weapon slots are preserved. upstream_ship_type0 denotes unavailable API category, not native hull class."
+  }
+}

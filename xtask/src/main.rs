@@ -403,6 +403,16 @@ fn cargo_run_bin_with_env(repo: &std::path::Path, bin: &str, env: &[(&str, Strin
 /// Officer output is deliberately not checked: `officers.lcars.yaml` is gitignored, and the
 /// in-process officer model has its own parity test.
 fn check_generated(repo: &std::path::Path) -> Result<()> {
+    if repo
+        .join("data/native_hostile_static_snapshot.json")
+        .is_file()
+    {
+        node(
+            repo,
+            "scripts/import_native_hostile_snapshot.mjs",
+            &["--check".into()],
+        )?;
+    }
     let index_path = repo.join("data/ships_extended/index.json");
     let committed = std::fs::read_to_string(&index_path)
         .with_context(|| format!("failed to read {}", index_path.display()))?;
@@ -456,7 +466,8 @@ fn check_no_drift(repo: &std::path::Path, paths: &[&str]) -> Result<()> {
 fn node(repo: &std::path::Path, script: &str, args: &[String]) -> Result<()> {
     let mut v = vec![script.into()];
     v.extend_from_slice(args);
-    run(repo, "node", &v)
+    let executable = std::env::var("NODE").unwrap_or_else(|_| "node".into());
+    run(repo, &executable, &v)
 }
 
 fn npm(repo: &std::path::Path, script: &str, trailing: &[String]) -> Result<()> {

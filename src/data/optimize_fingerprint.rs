@@ -353,6 +353,61 @@ fn canary_fight_summaries() -> Vec<String> {
         result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
         result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
         result.attacker_shield_remaining,result.total_isolytic_damage));
+    // Defender-owned RoundStart subtraction composes with a timed own bonus
+    // before the final clamp. Synthetic .6 strengths expose an invented source
+    // cap even in a short fight; attacker-owned subtraction checks direction.
+    let mut attacker = canary_combatant("canary_p_player");
+    attacker.attack = 83.0;
+    attacker.hull_health = 100_000.0;
+    attacker.shield_health = 100_000.0;
+    attacker.shield_mitigation = 0.99;
+    let mut defender = canary_combatant("canary_p_hostile");
+    defender.attack = 211.0;
+    defender.hull_health = 100_000.0;
+    defender.shield_health = 100_000.0;
+    let crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::RoundStart,
+            AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+                per_round: 0.17,
+                cap: 1.0,
+            },
+        )],
+    };
+    let defender_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::RoundStart,
+            AbilityEffect::CumulativeOpponentShieldMitigationDebuff {
+                per_round: 0.6,
+                cap: f64::MAX,
+            },
+        )],
+    };
+    let config = SimulationConfig {
+        incoming_shield_mitigation_bonus: 0.6,
+        incoming_shield_mitigation_bonus_rounds: 2,
+        ..canary_config(3, 67)
+    };
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &config,
+        &crew,
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    summaries.push(format!("p_hostile_round_start_shield_subtraction:dmg={:.6};won={};limit={};rounds={};ahull={:.6};dhull={:.6};dshield={:.6};ashield={:.6};iso={:.6};",
+        result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
+        result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
+        result.attacker_shield_remaining,result.total_isolytic_damage));
     summaries
 }
 
@@ -1626,7 +1681,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 15, "expected fifteen canary fights");
+        assert_eq!(summaries.len(), 16, "expected sixteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
