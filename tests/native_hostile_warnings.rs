@@ -30,7 +30,9 @@ fn native_hostile_gaps_reach_simulate_compare_replay_and_optimize() {
     let simulate = simulate_payload(&registry, &request.to_string(), Some(&profile)).unwrap();
     let expected = gaps(&simulate);
     assert!(!expected.is_empty());
-    assert!(expected.iter().any(|s| s.contains("crew-seat requirements")));
+    assert!(expected
+        .iter()
+        .any(|s| s.contains("crew-seat requirements")));
     assert!(expected.iter().any(|s| s.contains("Isolytic Defense")));
     let mut compare = request.clone();
     compare["crews"] = json!([crew, crew]);
