@@ -1,0 +1,14 @@
+{
+  "started": "2026-11-17T21:20:01.263Z",
+  "source": "https://data.stfc.space",
+  "segment": "hostile",
+  "mode": "missing-only",
+  "total": 6437,
+  "fetched": 924,
+  "skipped": 5513,
+  "failed": 0,
+  "stale_cache_used": 0,
+  "uncovered_failures": 0,
+  "failures": [],
+  "finished": "2026-11-17T21:23:52.401Z"
+}

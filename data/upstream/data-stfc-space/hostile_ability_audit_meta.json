@@ -1,10 +1,10 @@
 {
   "generated_from": "scripts/generate_full_hostile_ability_catalog.py",
   "audit_scope": "Catalog ids: upstream abilities classified from API records and override-only ids labeled separately without upstream classification.",
-  "unique_ability_ids": 994,
-  "upstream_unique_ability_ids": 983,
+  "unique_ability_ids": 1000,
+  "upstream_unique_ability_ids": 989,
   "override_only_ability_ids": 11,
-  "hostiles_with_abilities_scanned": 3000,
+  "hostiles_with_abilities_scanned": 3924,
   "entries": {
     "1636824": {
       "bucket": "isolytic_combat",
@@ -104,6 +104,15 @@
       "sample_level": 48,
       "text_snippet": "shield disruptors\nevery time this ship hits a target with a weapon attack it reduces the target ships shield mitigation by 10% for 1 round.\n\n ship abilities are always active. ",
       "effect_type": "defender_on_hit_shield_mitigation_reduction"
+    },
+    "49117123": {
+      "bucket": "apex_combat",
+      "loca_id": 96502,
+      "hostile_count": 324,
+      "sample_hostile_id": "1001270436",
+      "sample_level": 68,
+      "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
+      "effect_type": "apex_barrier"
     },
     "56799195": {
       "bucket": "hyperthermic_decay_combat",
@@ -627,6 +636,15 @@
       "text_snippet": "explorer exploitation\nincreases damage against explorers by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
       "effect_type": "attack_multiplier"
     },
+    "323291059": {
+      "bucket": "apex_combat",
+      "loca_id": 96500,
+      "hostile_count": 324,
+      "sample_hostile_id": "1020392011",
+      "sample_level": 75,
+      "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
+      "effect_type": "apex_barrier"
+    },
     "324656870": {
       "bucket": "armada_scope",
       "loca_id": 73053,
@@ -941,6 +959,15 @@
       "sample_level": 63,
       "text_snippet": "psionic assault\non combat start, this ship targets one of your ships and deals {0:#.#%} hyperthermic decay to its hull health every round for the duration of combat.\n\nhyperthermic decay decreases the opponent ship's hull health by a percent",
       "effect_type": "hostile_hyperthermic_decay"
+    },
+    "444688865": {
+      "bucket": "hyperthermic_review",
+      "loca_id": 96506,
+      "hostile_count": 6,
+      "sample_hostile_id": "1086833165",
+      "sample_level": 51,
+      "text_snippet": "beam amplifier vulnerability\nacquiring overheating beam amplifiers will apply hyperthermic decay to this polaron war stronghold on combat start for 1 round. \n\nacquire overheating beam amplifiers by defeating hostiles in the systems surround",
+      "effect_type": "combat_noop"
     },
     "446260266": {
       "bucket": "apex_combat",
@@ -1771,6 +1798,15 @@
       "sample_level": 70,
       "text_snippet": "increases isolytic damage by {0:0.#%} and shreds the apex barrier of its target by 180% at the start of combat.",
       "effect_type": "isolytic_damage"
+    },
+    "817894448": {
+      "bucket": "apex_combat",
+      "loca_id": 96503,
+      "hostile_count": 270,
+      "sample_hostile_id": "1001051223",
+      "sample_level": 52,
+      "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
+      "effect_type": "apex_barrier"
     },
     "825965675": {
       "bucket": "pierce_combat",
@@ -4916,6 +4952,15 @@
       "text_snippet": "transogen charged\nincreases its apex barrier by {0:#} at the start of combat.",
       "effect_type": "apex_barrier"
     },
+    "2343275730": {
+      "bucket": "armada_scope",
+      "loca_id": 96507,
+      "hostile_count": 6,
+      "sample_hostile_id": "1086833165",
+      "sample_level": 51,
+      "text_snippet": "polaron arsenal\nthis armada target is equipped with all of the abilities of polaron prototype hostiles.\n\npolaron weaponry\nthis armada is equipped with experimental polaron weapons, which completely bypass standard mitigation, apex barrier, ",
+      "effect_type": "combat_noop"
+    },
     "2345379113": {
       "bucket": "post_combat_flavor",
       "loca_id": 47001,
@@ -6132,6 +6177,15 @@
       "sample_level": 62,
       "text_snippet": "revolutionary spirit\nincreases critical hit damage by {0:#.#%} for the first 5 rounds of combat.\n\nship abilities are always active.",
       "effect_type": "crit_damage"
+    },
+    "2920844674": {
+      "bucket": "isolytic_combat",
+      "loca_id": 96501,
+      "hostile_count": 918,
+      "sample_hostile_id": "1001051223",
+      "sample_level": 52,
+      "text_snippet": "experimental defense array\n\ninertial diverters\nthis standard hostile negates all standard damage dealt to it.\n\nshield sweep\nincreases this standard hostile's max shield drastically at the start of combat, increases base shield mitigation fl",
+      "effect_type": "isolytic_defense"
     },
     "2922610677": {
       "bucket": "shield_regen_combat",
