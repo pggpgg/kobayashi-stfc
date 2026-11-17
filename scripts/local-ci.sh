@@ -39,7 +39,7 @@ echo "=== frontend (npm ci, audit, lint, typecheck, test, build) ==="
 (
   cd frontend
   npm ci
-  npm audit --audit-level=high
+  node ../scripts/audit-frontend.mjs
   npm run lint
   npm run typecheck
   npm run test
