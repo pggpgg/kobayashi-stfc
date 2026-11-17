@@ -54,7 +54,7 @@ the workflow is **CI**. It contains these jobs:
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **Rust**                   | Formatting, Clippy, nextest, doctests, research and script tests, calibration, generated-data checks, and the data report. |
 | **Rust release build + audit** | `cargo build --release` and `cargo audit`. |
-| **Frontend**               | `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run build` (in `frontend/`). |
+| **Frontend**               | `npm ci`, `node ../scripts/audit-frontend.mjs`, `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run build` (in `frontend/`). |
 | **Combat engine (Python)** | `pytest` under `tools/combat_engine/tests/`                                                                                     |
 | **E2E smoke (Playwright)** | The release build, the frontend build, and `npm run test:e2e` (health plus the workspace simulate, optimize, preset, and results flows). A failed run uploads the `playwright-report` and `test-results` artifacts. |
 
