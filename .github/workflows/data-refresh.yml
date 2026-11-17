@@ -110,7 +110,7 @@ jobs:
         run: npm run data:refresh -- --stfcspace
 
       - name: cargo test
-        run: cargo test
+        run: cargo test --no-fail-fast
 
       - name: Strict data validation
         run: cargo run --bin validate_data
@@ -141,7 +141,7 @@ jobs:
             echo "- Catalog: \`python3 scripts/fetch_stfcspace_page_upstream.py\`"
             echo "- Detail fetch: \`fetch_stfcspace_ships.mjs\` (scheduled: **--full**), hostiles + research (missing-only unless manual **full_fetch**)"
             echo "- Normalize: \`npm run data:refresh -- --stfcspace\`"
-            echo "- Verify: \`cargo test\` + \`cargo run --bin validate_data\`"
+            echo "- Verify: \`cargo test --no-fail-fast\` + \`cargo run --bin validate_data\`"
             echo ""
             echo "Please review large \`data/\` diffs before merge."
           } > /tmp/pr_body.md

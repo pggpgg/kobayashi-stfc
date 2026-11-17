@@ -71,9 +71,13 @@ fn native_hostile_critical_bonus_converts_scalar_and_components() {
         .iter()
         .all(|weapon| weapon.crit_multiplier == Some(2.5)));
 
-    let mut manual: HostileRecord =
+    let mut raw: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string("data/hostiles/898210950.json").unwrap())
             .unwrap();
+    // Refreshed catalogs store explicit native units. Exercise legacy input
+    // with the unit annotation absent regardless of the catalog version.
+    raw.as_object_mut().unwrap().remove("crit_damage_is_bonus");
+    let mut manual: HostileRecord = serde_json::from_value(raw).unwrap();
     assert_eq!(
         manual.crit_damage_is_bonus, None,
         "bare serde has no source inference"
