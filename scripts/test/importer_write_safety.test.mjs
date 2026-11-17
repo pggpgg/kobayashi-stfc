@@ -108,15 +108,20 @@ for (const summary of [[], [{ id: 1, max_level: 1, buffs: [] }]]) {
   });
 }
 
-test("complete building import still emits records and updates its index", async t => {
+test("complete building import replaces indexed records and preserves independent evidence", async t => {
   const f=await fixture(t,"import_stfcspace_buildings.mjs");
   await f.put("data/upstream/data-stfc-space/summary-building.json",[{id:1,max_level:1,buffs:[]}]);
+  await f.put("data/buildings/index.json", { buildings: [{ id: "legacy", bid: 1, file: "1_legacy" }] });
+  await f.put("data/buildings/1_legacy.json", "obsolete record");
+  await f.put("data/buildings/client_critical_semantics_2026-10-20.json", "independent evidence");
   const result=f.run("--from-upstream");
   assert.equal(result.status,0,result.stderr);
   const index=JSON.parse(await f.read("data/buildings/index.json"));
   assert.equal(index.buildings.length,1);
   assert.equal(index.buildings[0].bid,1);
   assert.equal(JSON.parse(await f.read(`data/buildings/${index.buildings[0].file}.json`)).levels.length,1);
+  await assert.rejects(f.read("data/buildings/1_legacy.json"), { code: "ENOENT" });
+  assert.equal(await f.read("data/buildings/client_critical_semantics_2026-10-20.json"), "independent evidence");
 });
 
 test("allowlist seeder preserves hand-written reasons and entries outside its proposals", async t => {

@@ -33,6 +33,10 @@
       "category": "economy_meta",
       "reason": "Tritanium Vault: The amount of Σ-Tritanium that cannot be stolen when your station get…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
     },
+    "buff_1086284298": {
+      "category": "economy_meta",
+      "reason": "Polaron Research Center: Increases Federation Plaudits earned from hostiles with eligible FKR ships or Vengeance."
+    },
     "buff_1088903989": {
       "category": "unlock_meta",
       "reason": "Command Center: Additional Fleet Commander slots are unlocked. Slot 1: Command Center…; unlock/meta; intentionally unmapped for ship-vs-hostile sim"
@@ -116,6 +120,10 @@
     "buff_1361889997": {
       "category": "economy_meta",
       "reason": "Parsteel Generator B: The base Parsteel Production Rate Per Hour of this Generator is incre…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_1362879928": {
+      "category": "economy_meta",
+      "reason": "Polaron Research Center: Increases Klingon Plaudits earned from hostiles with eligible FKR ships or Vengeance."
     },
     "buff_1384123882": {
       "category": "economy_meta",
@@ -249,6 +257,10 @@
       "category": "economy_meta",
       "reason": "Parsteel Generator F: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
     },
+    "buff_1934225428": {
+      "category": "economy_meta",
+      "reason": "Polaron Research Center: Increases Polaron Ions earned from hostiles with eligible FKR ships or Vengeance."
+    },
     "buff_1961479139": {
       "category": "economy_meta",
       "reason": "Parsteel Generator D: The Parsteel Storage indicates how much Parsteel this Generator can h…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
@@ -276,6 +288,10 @@
     "buff_2105146395": {
       "category": "economy_meta",
       "reason": "Recon Locus: Increases base speed of constructing Ships; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_2124914417": {
+      "category": "economy_meta",
+      "reason": "Polaron Research Center: Increases G7 Ship Parts payouts from the Ship Parts Refinery."
     },
     "buff_2132727674": {
       "category": "economy_meta",
@@ -748,6 +764,10 @@
     "buff_3914539627": {
       "category": "economy_meta",
       "reason": "Drydock E: The Repair Speed for the ship that is affiliated to this Drydock is i…; economy/meta; intentionally unmapped for ship-vs-hostile sim"
+    },
+    "buff_391704391": {
+      "category": "economy_meta",
+      "reason": "Polaron Research Center: Increases Romulan Plaudits earned from hostiles with eligible FKR ships or Vengeance."
     },
     "buff_3940777734": {
       "category": "economy_meta",
