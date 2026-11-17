@@ -79,7 +79,7 @@ try {
 
   // --- Frontend (matches ci.yml `frontend` job order) ---
   run("npm ci", { cwd: FRONTEND });
-  run("npm audit --audit-level=high", { cwd: FRONTEND });
+  run("node ../scripts/audit-frontend.mjs", { cwd: FRONTEND });
   run("npm run lint", { cwd: FRONTEND });
   run("npm run typecheck", { cwd: FRONTEND });
   run("npm run test", { cwd: FRONTEND });
