@@ -110,7 +110,7 @@ jobs:
         run: npm run data:refresh -- --stfcspace
 
       - name: cargo test
-        run: cargo test
+        run: cargo test --no-fail-fast
 
       - name: Strict data validation
         run: cargo run --bin validate_data
@@ -141,7 +141,7 @@ jobs:
             echo "- Catalog: \`python3 scripts/fetch_stfcspace_page_upstream.py\`"
             echo "- Detail fetch: \`fetch_stfcspace_ships.mjs\` (scheduled: **--full**), hostiles + research (missing-only unless manual **full_fetch**)"
             echo "- Normalize: \`npm run data:refresh -- --stfcspace\`"
-            echo "- Verify: \`cargo test\` + \`cargo run --bin validate_data\`"
+            echo "- Verify: \`cargo test --no-fail-fast\` + \`cargo run --bin validate_data\`"
             echo ""
             echo "Please review large \`data/\` diffs before merge."
           } > /tmp/pr_body.md
@@ -165,7 +165,7 @@ jobs:
   publish_refresh:
     name: Open data refresh PR
     needs: refresh
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+    if: ${{ github.ref_type == 'branch' && (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -192,6 +192,7 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
+          base: ${{ github.ref_name }}
           commit-message: "chore(data): automated stfc.space refresh"
           title: "chore(data): automated stfc.space refresh"
           body-path: ${{ runner.temp }}/refresh-output/pr_body.md
@@ -212,10 +213,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_PR: ${{ steps.cpr.outputs.pull-request-number }}
           NEW_PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
+          TARGET_BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
 
-          superseded=$(gh pr list --state open --limit 100 --json number,headRefName \
+          superseded=$(gh pr list --base "$TARGET_BRANCH" --state open --limit 100 --json number,headRefName \
             | jq -r --argjson new "${NEW_PR}" '
                 .[]
                 | select(.headRefName | startswith("automated/data-refresh-"))

@@ -476,17 +476,14 @@ async function main() {
   };
 
   const validFileStems = new Set(fileStems);
-  validFileStems.add("index");
-  validFileStems.add("buff_id_to_stat");
-  validFileStems.add("buff_id_to_semantics");
-  validFileStems.add("hull_id_registry");
-  validFileStems.add("opaque_buff_allowlist");
-  validFileStems.add("mapping_gaps_baseline");
+  // Only prune records owned by the previous catalog. This directory also
+  // contains maintained combat evidence and mapping files.
+  const previousFileStems = new Set(previousIndex?.buildings.map((entry) => entry.file));
   const dirEntries = await fs.readdir(OUT_DIR, { withFileTypes: true });
   for (const dirent of dirEntries) {
     if (!dirent.isFile() || !dirent.name.endsWith(".json")) continue;
     const stem = dirent.name.slice(0, -5);
-    if (validFileStems.has(stem)) continue;
+    if (!previousFileStems.has(stem) || validFileStems.has(stem)) continue;
     const removePath = path.join(OUT_DIR, dirent.name);
     await fs.unlink(removePath);
     console.log(`Removed obsolete ${dirent.name}`);
