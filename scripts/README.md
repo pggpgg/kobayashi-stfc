@@ -246,7 +246,7 @@ This mirrors [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) in order:
 | Stage | Commands |
 |-------|----------|
 | **Rust** | `cargo fmt --all -- --check` → `cargo test` → `cargo build --release` → `cargo clippy --all-targets -- -D warnings` → `cargo audit` |
-| **Frontend** | `npm ci` → `npm audit --audit-level=high` → `npm run lint` → `npm run typecheck` → `npm run test` → `npm run build` (all in `frontend/`) |
+| **Frontend** | `npm ci` → `node ../scripts/audit-frontend.mjs` → `npm run lint` → `npm run typecheck` → `npm run test` → `npm run build` (all in `frontend/`) |
 | **Python** | `python -m pip install -r tools/combat_engine/requirements-test.txt` → `python -m pytest tools/combat_engine/tests/ -v` |
 
 **Prerequisites:** stable Rust with `rustfmt` and `clippy` (same as CI), [`cargo-audit`](https://github.com/rustsec/rustsec) on your PATH (`cargo install cargo-audit`), Node.js **20** (see CI), and Python **3.12** with `pip`. The script picks the first working interpreter among `python`, `python3`, and on Windows `py -3.12` / `py -3`, or use **`PYTHON`** to point at an executable (e.g. `PYTHON=C:\\Python312\\python.exe`). Test data: `data/officers/officers.canonical.json` and (recommended) `data/ships_extended/`, `data/hostiles/` indices.
