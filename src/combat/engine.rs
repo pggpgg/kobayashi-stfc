@@ -4165,6 +4165,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             _ => None,
         })
         .sum();
+    let (hostile_counter_debuff, duration) =
+        hostile_counter_stat_debuff_from_crew(attacker_crew, combat_ctx);
+    let hostile_counter_piercing_factor = if round_in_inclusive_first_n(round_index, duration) {
+        1.0 - hostile_counter_debuff
+    } else {
+        1.0
+    };
 
     // Inbound counter-fire uses the same raw-stat curve before and after a
     // conditional research bonus activates. Combatant defense fields hold
@@ -4212,7 +4219,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 .copied()
                 .unwrap_or(params.base_attacker_stats);
             let piercing_multiplier =
-                (1.0 + counter_pierce_bonus_fraction - attacker_base_piercing_reduction).max(0.0);
+                (1.0 + counter_pierce_bonus_fraction - attacker_base_piercing_reduction).max(0.0)
+                    * hostile_counter_piercing_factor;
             let opponent = AttackerStats {
                 armor_piercing: opponent.armor_piercing * piercing_multiplier,
                 shield_piercing: opponent.shield_piercing * piercing_multiplier,
@@ -4304,9 +4312,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             }
         })
         .sum();
-    let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
-        hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
-
     defender_phase_template.add_effects(
         TimingWindow::CombatBegin,
         &defender_combat_begin_filtered,
@@ -4565,15 +4570,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 + defender_phase_effects.pre_attack_pierce_bonus(),
             st.defender_morale_rounds_remaining > 0,
         );
-        if hostile_counter_debuff > 0.0
-            && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
-        {
-            counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
-        }
-        // Preserve the legacy scalar approximation only when no raw context is
-        // available. Raw contexts already consumed the bonus in the curve.
-        if raw_stat_mitigation.is_none() && counter_pierce_bonus_fraction > 0.0 {
-            counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
+        // Raw contexts apply the ship debuff and hostile bonus in the mitigation curve.
+        if raw_stat_mitigation.is_none() {
+            counter_pierce *= hostile_counter_piercing_factor;
+            if counter_pierce_bonus_fraction > 0.0 {
+                counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
+            }
         }
         let counter_damage_through = compute_damage_through_factor(
             counter_mitigation_mult,
