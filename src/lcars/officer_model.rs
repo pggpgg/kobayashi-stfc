@@ -873,7 +873,16 @@ fn effect_condition_from_canonical(
     .filter_map(|(enabled, tok)| enabled.then_some(tok))
     {
         match hull_health_condition_from_canonical_attributes(token, attrs, a.target.as_deref()) {
-            Some(c) => conditions.push(c),
+            Some(mut condition) => {
+                // Powered Armor has a fight-start hull sample at round start.
+                // Keep the established hull basis for all other abilities.
+                if token == "HullHealthBelowStartOfCombat"
+                    && a.ability_id.as_deref() == Some(POWERED_ARMOR)
+                {
+                    condition.stat = Some("attacker_hull_pct_of_fight_start".into());
+                }
+                conditions.push(condition);
+            }
             None => {
                 failed_gate = true;
                 eprintln!(
@@ -1255,10 +1264,9 @@ fn hull_health_condition_from_canonical_attributes(
     // the ability target is the recipient of the effect, not the condition's
     // subject. Chang and Marcus target SelfShip while checking enemy hull,
     // while Dezoc targets EnemyShip with the same native condition.
-    let stat = if token.eq_ignore_ascii_case("HullHealthBelowStartOfCombat") {
-        "attacker_hull_pct_of_fight_start"
-    } else if token.eq_ignore_ascii_case("HullHealthBelow")
-        || target.is_some_and(|t| t.to_ascii_lowercase().contains("enemy"))
+    let stat = if token.eq_ignore_ascii_case("HullHealthBelow")
+        || (!token.eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
+            && target.is_some_and(|t| t.to_ascii_lowercase().contains("enemy")))
     {
         "hull_hp"
     } else {
@@ -2654,10 +2662,7 @@ mod canonical_condition_tests {
         assert_eq!(kids[1].stat.as_deref(), Some("hull_hp"));
         assert_eq!(kids[1].threshold_pct, Some(0.3));
         assert_eq!(kids[2].condition_type, "stat_below");
-        assert_eq!(
-            kids[2].stat.as_deref(),
-            Some("attacker_hull_pct_of_fight_start")
-        );
+        assert_eq!(kids[2].stat.as_deref(), Some("attacker_hull_hp"));
         assert_eq!(kids[2].threshold_pct, Some(0.3));
     }
 
