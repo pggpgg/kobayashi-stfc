@@ -25,8 +25,8 @@ use std::path::Path;
 use std::sync::OnceLock;
 
 use crate::combat::{
-    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
-    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
+    simulate_combat, Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant,
+    CrewConfiguration, CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::{GlobalBuffEntry, ShipEntry};
@@ -101,7 +101,10 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   resolved ship/grade/faction HP gates, Monaveen's Texas-only base damage,
 ///   and source-joined officer synergy affect scenario construction
 ///   outside the synthetic engine canaries.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 19;
+/// * 19 → 20 (2026-11): 0718's crew-wide Defense changes the scenario's rating
+///   before ship breakpoints. The engine canaries do not load the officer catalog.
+///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 20;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -921,6 +924,46 @@ fn canary_fights() -> Vec<CanaryFight> {
     n_defender.hull_health = 12_000.0;
     n_defender.attack = 437.0;
 
+    // Begin at 50% of max hull. Raw Armor must stay unbuffed until the
+    // remaining hull drops below 70% of the carried 500 HP.
+    let mut arix_attacker = canary_combatant("arix_player");
+    arix_attacker.attack = 17.0;
+    arix_attacker.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: true,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 100.0,
+            shield_deflection: 40.0,
+            dodge: 40.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 100.0,
+            shield_piercing: 100.0,
+            accuracy: 100.0,
+        },
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Battleship,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.16,
+        ceiling: 0.72,
+    });
+    let mut arix_defender = canary_combatant("arix_hostile");
+    arix_defender.attack = 110.0;
+    let mut arix_armor = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        TimingWindow::RoundStart,
+        AbilityEffect::BaseArmorBonus(0.5),
+    );
+    arix_armor.ability.condition = Some(AbilityCondition::StatBelow {
+        stat: "attacker_hull_pct_of_fight_start".into(),
+        threshold_pct: 0.7,
+    });
+    let arix_config = SimulationConfig {
+        initial_attacker_hull_damage: 500.0,
+        ..canary_config(5, 71)
+    };
+
     vec![
         (
             "a_plain",
@@ -1021,6 +1064,15 @@ fn canary_fights() -> Vec<CanaryFight> {
             n_defender,
             canary_config(6, 59),
             CrewConfiguration::default(),
+        ),
+        (
+            "q_powered_armor",
+            arix_attacker,
+            arix_defender,
+            arix_config,
+            CrewConfiguration {
+                seats: vec![arix_armor],
+            },
         ),
     ]
 }
@@ -1681,7 +1733,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 16, "expected sixteen canary fights");
+        assert_eq!(summaries.len(), 17, "expected seventeen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

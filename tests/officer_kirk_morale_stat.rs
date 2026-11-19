@@ -327,6 +327,7 @@ fn kirk_leader_duration_round_range_gates_bonus_to_first_round() {
         defender_hull_pct: 1.0,
         defender_shield_pct: 1.0,
         attacker_hull_pct: 1.0,
+        attacker_hull_pct_of_fight_start: None,
         attacker_shield_pct: 1.0,
         attacker_morale_active: true,
         defender_morale_active: false,

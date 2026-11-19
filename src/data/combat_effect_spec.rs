@@ -151,6 +151,8 @@ pub enum AbilityModifierSpec {
     /// Fraction added to each raw base armor, shield-deflection and dodge multiplier.
     /// Eligibility is sampled at round start and retained for that round.
     BaseMitigationStatsBonus,
+    /// Fraction added only to the raw base Armor percentage pool at round start.
+    BaseArmorBonus,
     /// Raw amount added to each defense component after its fractional bonuses.
     BaseMitigationStatsAdd,
     /// Fraction subtracted from each opponent raw piercing percentage pool.

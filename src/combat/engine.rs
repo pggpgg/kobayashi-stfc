@@ -303,6 +303,7 @@ pub fn build_combat_setup_with_officer_stat(
         defender_hull_pct: 1.0,
         defender_shield_pct: 1.0,
         attacker_hull_pct: 1.0,
+        attacker_hull_pct_of_fight_start: None,
         attacker_shield_pct: 1.0,
         attacker_morale_active: false,
         defender_morale_active: false,
@@ -836,6 +837,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         .defender_shield_damage_routing_regen
         .map(|_| (1.0 - setup.shield_routing_counter_bypass).clamp(0.0, 1.0));
 
+    let attacker_fight_start_hull = (attacker.hull_health - st.total_attacker_hull_damage).max(0.0);
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
 
@@ -908,6 +910,12 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 defender_assimilated_active: st.defender_assimilated_rounds_remaining > 0,
             },
         );
+
+        if attacker_fight_start_hull > 0.0 {
+            let hull_now = (attacker.hull_health - st.total_attacker_hull_damage).max(0.0);
+            combat_ctx.attacker_hull_pct_of_fight_start =
+                Some(hull_now / attacker_fight_start_hull);
+        }
 
         // Attacker-outbound Xindi crit debuff: defender crew seats subtract percentage points from
         // crit bonus (Doomed Species / Be Like Water). Player crit_damage_floor clamps after debuff.
@@ -1069,7 +1077,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         // BattleBuffSchema round-start effects last one round. Sample eligibility
         // once after round-start state rolls; a later hit must not enable this
         // bonus retroactively, nor can it accumulate into the following round.
-        let attacker_base_mitigation_bonus: f64 = combat_begin_round_level
+        let (attacker_base_mitigation_bonus, attacker_base_armor_bonus) = combat_begin_round_level
             .iter()
             .map(|effect| scale_active_effect(effect, combat_begin_assimilated_this_round))
             .chain(
@@ -1077,11 +1085,11 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                     .iter()
                     .map(|effect| scale_active_effect(effect, round_start_assimilated)),
             )
-            .filter_map(|effect| match effect {
-                AbilityEffect::BaseMitigationStatsBonus(value) => Some(value),
-                _ => None,
-            })
-            .sum();
+            .fold((0.0, 0.0), |(all, armor), effect| match effect {
+                AbilityEffect::BaseMitigationStatsBonus(value) => (all + value, armor),
+                AbilityEffect::BaseArmorBonus(value) => (all, armor + value),
+                _ => (all, armor),
+            });
         let attacker_base_mitigation_add: f64 = combat_begin_round_level
             .iter()
             .map(|e| scale_active_effect(e, combat_begin_assimilated_this_round))
@@ -1509,6 +1517,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                         attacker_dodge_bonus,
                         attacker_mitigation_additive,
                         attacker_base_mitigation_bonus,
+                        attacker_base_armor_bonus,
                         attacker_base_mitigation_add,
                         attacker_base_piercing_reduction,
                         defender_faction,
@@ -1715,6 +1724,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 },
                 attacker_hull_pct: 1.0
                     - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+                attacker_hull_pct_of_fight_start: None,
                 attacker_shield_pct: if attacker.shield_health > 0.0 {
                     st.attacker_shield_remaining / attacker.shield_health
                 } else {
@@ -1862,6 +1872,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 },
                 attacker_hull_pct: 1.0
                     - (st.total_attacker_hull_damage / attacker.hull_health.max(0.0)).min(1.0),
+                attacker_hull_pct_of_fight_start: None,
                 attacker_shield_pct: if attacker.shield_health > 0.0 {
                     st.attacker_shield_remaining / attacker.shield_health
                 } else {
@@ -3914,6 +3925,7 @@ struct FireDefenderCounter<'a> {
     attacker_dodge_bonus: f64,
     attacker_mitigation_additive: f64,
     attacker_base_mitigation_bonus: f64,
+    attacker_base_armor_bonus: f64,
     attacker_base_mitigation_add: f64,
     attacker_base_piercing_reduction: f64,
     defender_faction: OpponentFactionTag,
@@ -3969,6 +3981,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_dodge_bonus,
         attacker_mitigation_additive,
         attacker_base_mitigation_bonus,
+        attacker_base_armor_bonus,
         attacker_base_mitigation_add,
         attacker_base_piercing_reduction,
         defender_faction,
@@ -4007,6 +4020,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         defender_hull_pct: combat_ctx.defender_hull_pct,
         defender_shield_pct: combat_ctx.defender_shield_pct,
         attacker_hull_pct: combat_ctx.attacker_hull_pct,
+        attacker_hull_pct_of_fight_start: None,
         attacker_shield_pct: combat_ctx.attacker_shield_pct,
         attacker_morale_active: false,
         defender_morale_active: st.defender_morale_rounds_remaining > 0,
@@ -4080,7 +4094,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             let mut stats = crate::combat::mitigation::apply_base_mitigation_stat_bonuses(
                 params.defender_stats,
                 DefenderStats {
-                    armor: attacker.armor,
+                    armor: attacker.armor + attacker_base_armor_bonus,
                     shield_deflection: attacker.shield_deflection,
                     dodge: attacker.dodge,
                 },
@@ -5369,6 +5383,7 @@ impl CombatCtxTemplate {
             defender_hull_pct: vitals.defender_hull_pct,
             defender_shield_pct: vitals.defender_shield_pct,
             attacker_hull_pct: vitals.attacker_hull_pct,
+            attacker_hull_pct_of_fight_start: None,
             attacker_shield_pct: vitals.attacker_shield_pct,
             attacker_morale_active: flags.attacker_morale_active,
             defender_morale_active: flags.defender_morale_active,
