@@ -5,7 +5,7 @@
 use super::LcarsCondition;
 use crate::combat::ShipType;
 
-fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
+pub(super) fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
     LcarsCondition {
         weapon_scope: Default::default(),
         condition_type: ty.into(),
@@ -33,7 +33,7 @@ fn lcars_defender_ship_type_is(slug: &str) -> LcarsCondition {
 }
 
 /// LCARS `not` with exactly one child (see [`crate::lcars::lcars_condition_to_spec`]).
-fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
+pub(super) fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
     LcarsCondition {
         weapon_scope: Default::default(),
         condition_type: "not".to_string(),

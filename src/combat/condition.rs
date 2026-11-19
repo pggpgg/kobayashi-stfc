@@ -29,6 +29,7 @@ pub fn stat_pct_for_condition(stat: &str, ctx: &CombatContext) -> Option<f64> {
         "hull_hp" | "hull" => Some(ctx.defender_hull_pct),
         "attacker_shield_hp" => Some(ctx.attacker_shield_pct),
         "attacker_hull_hp" => Some(ctx.attacker_hull_pct),
+        "attacker_hull_pct_of_fight_start" => ctx.attacker_hull_pct_of_fight_start,
         _ => None,
     }
 }
@@ -117,6 +118,11 @@ pub fn condition_input_unavailable(cond: &AbilityCondition, ctx: &CombatContext)
             ids.is_empty() || ctx.combat_battle_type_id.is_none()
         }
         AbilityCondition::DefenderLevelAtMost(_) => ctx.defender_level.is_none(),
+        AbilityCondition::StatBelow { stat, .. } | AbilityCondition::StatAbove { stat, .. }
+            if stat == "attacker_hull_pct_of_fight_start" =>
+        {
+            ctx.attacker_hull_pct_of_fight_start.is_none()
+        }
         AbilityCondition::Not(inner) => condition_input_unavailable(inner, ctx),
         AbilityCondition::And(parts) | AbilityCondition::Or(parts) => parts
             .iter()
@@ -242,6 +248,7 @@ mod tests {
             defender_hull_pct: 0.4,
             defender_shield_pct: 0.8,
             attacker_hull_pct: 0.9,
+            attacker_hull_pct_of_fight_start: None,
             attacker_shield_pct: 0.1,
             attacker_morale_active: true,
             defender_morale_active: false,

@@ -31,6 +31,7 @@ use std::path::Path;
 use serde::Deserialize;
 
 use crate::data::combat_effect_spec::OfficerStat;
+use crate::lcars::canonical_conditions::{lcars_cond_base, lcars_not};
 use crate::lcars::{
     canonical_conditions_to_lcars, map_canonical_condition_token, LcarsAbility, LcarsCondition,
     LcarsDuration, LcarsEffect, LcarsFile, LcarsLevelStats, LcarsOfficer, LcarsScaling,
@@ -42,6 +43,10 @@ pub const DEFAULT_SUMMARY: &str = "data/upstream/data-stfc-space/summary-officer
 pub const DEFAULT_TRANSLATIONS: &str =
     "data/upstream/data-stfc-space/translations-officer_buffs.json";
 pub const DEFAULT_OFFICER_DATA_DIR: &str = "data/upstream/data-stfc-space/officers";
+
+const COMPUTER_PRECISION: &str = "4283269593";
+const POWERED_ARMOR: &str = "193818243";
+const ECLIPSE_HULL_FACTION_ID: i64 = 1750120904;
 
 type BuildResult = Result<Vec<LcarsOfficer>, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -751,6 +756,17 @@ fn effect_condition_from_canonical(
         canonical_conditions_to_lcars(&filtered, officer_name, ability_label)
             .into_iter()
             .collect();
+    // Limit the enabled effects to NPC ship fights outside Eclipse without
+    // changing the source conditions recorded in the canonical catalog.
+    if matches!(
+        a.ability_id.as_deref(),
+        Some(COMPUTER_PRECISION | POWERED_ARMOR)
+    ) {
+        conditions.push(lcars_cond_base("defender_is_npc_hostile"));
+        let mut eclipse = lcars_cond_base("defender_hull_faction_id");
+        eclipse.faction_id = Some(ECLIPSE_HULL_FACTION_ID);
+        conditions.push(lcars_not(eclipse));
+    }
     let mut failed_gate = filtered
         .iter()
         .any(|token| map_canonical_condition_token(token).is_none());
@@ -857,7 +873,16 @@ fn effect_condition_from_canonical(
     .filter_map(|(enabled, tok)| enabled.then_some(tok))
     {
         match hull_health_condition_from_canonical_attributes(token, attrs, a.target.as_deref()) {
-            Some(c) => conditions.push(c),
+            Some(mut condition) => {
+                // Powered Armor has a fight-start hull sample at round start.
+                // Keep the established hull basis for all other abilities.
+                if token == "HullHealthBelowStartOfCombat"
+                    && a.ability_id.as_deref() == Some(POWERED_ARMOR)
+                {
+                    condition.stat = Some("attacker_hull_pct_of_fight_start".into());
+                }
+                conditions.push(condition);
+            }
             None => {
                 failed_gate = true;
                 eprintln!(
@@ -1241,9 +1266,7 @@ fn hull_health_condition_from_canonical_attributes(
     // while Dezoc targets EnemyShip with the same native condition.
     let stat = if token.eq_ignore_ascii_case("HullHealthBelow")
         || (!token.eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
-            && target
-                .map(|t| t.to_ascii_lowercase().contains("enemy"))
-                .unwrap_or(false))
+            && target.is_some_and(|t| t.to_ascii_lowercase().contains("enemy")))
     {
         "hull_hp"
     } else {
@@ -1394,7 +1417,29 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         && !crew_scaled
         && !a.chance_by_rank.is_empty()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
-    let unsupported_source_pattern = matches!(modifier, "OfficerStatAttack" | "OfficerStatDefense")
+    let supported_computer_precision = modifier == "OfficerStatDefense"
+        && a.ability_id.as_deref() == Some(COMPUTER_PRECISION)
+        && a.target.as_deref() == Some("SelfAll")
+        && a.trigger.as_deref() == Some("ShipLaunched")
+        && op.eq_ignore_ascii_case("MultiplyAdd")
+        && a.conditions.is_empty()
+        && a.attributes
+            .as_deref()
+            .is_none_or(|attrs| attrs.trim().is_empty())
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_powered_armor = modifier == "ShipArmor"
+        && a.ability_id.as_deref() == Some(POWERED_ARMOR)
+        && a.target.as_deref() == Some("SelfShip")
+        && a.trigger.as_deref() == Some("RoundStart")
+        && op.eq_ignore_ascii_case("MultiplyAdd")
+        && a.conditions.as_slice() == ["HullHealthBelowStartOfCombat"]
+        && a.attributes
+            .as_deref()
+            .and_then(percentage_from_canonical_attributes)
+            .is_some()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let unsupported_source_pattern = modifier == "OfficerStatAttack"
+        || (modifier == "OfficerStatDefense" && !supported_computer_precision)
         || (modifier == "AllPiercing" && !supported_enemy_piercing_reduction)
         || (modifier == "AllDefenses" && !supported_ortegas_defense)
         // Existing LCARS self-stat routing does not preserve these seat scopes
@@ -1404,11 +1449,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 || op.eq_ignore_ascii_case("Add")))
         || (crew_scaled && op.eq_ignore_ascii_case("MultiplyBaseAdd")
             && matches!(modifier, "AllDamage" | "ShieldPiercing" | "Shields"))
-        // Condition 44 compares against the hull at the beginning of each
-        // fight, including pre-existing damage. The engine currently tracks
-        // only percent of maximum hull, so a chain cannot evaluate it safely.
-        || a.conditions.iter().any(|condition|
-            condition.trim().eq_ignore_ascii_case("HullHealthBelowStartOfCombat"))
+        // The start-relative hull condition is bound only for Powered Armor's round-start path.
+        || (!supported_powered_armor && a.conditions.iter().any(|condition|
+            condition.trim().eq_ignore_ascii_case("HullHealthBelowStartOfCombat")))
         // Enemy hull drains are neither attacker healing nor flat self damage.
         // Their cumulative timing is not yet represented by this effect path.
         || (matches!(modifier, "HullHPRepair" | "HullRegen")
@@ -1425,6 +1468,8 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                     | "4289717791"
                     | "2633638696"
                     | "2281926825"
+                    // Plasma Backlash needs a confirmed energy-hit event for multi-shot weapons.
+                    | "2603504550"
                     // Mudd's source rank values conflict with the advertised
                     // fixed mitigation and their rank encoding is unknown.
                     | "2186472721"
@@ -1483,9 +1528,13 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 MappedEffect::StatModify("accuracy".into(), "multiply".into(), 1.0 + val)
             }
         }
-        "ShipArmor" | "OfficerStatDefense" => {
-            MappedEffect::StatModify("armor".into(), "add".into(), val)
+        "OfficerStatDefense" if supported_computer_precision => {
+            MappedEffect::StatModify("officer_defense".into(), "add".into(), val)
         }
+        "ShipArmor" if supported_powered_armor => {
+            MappedEffect::StatModify("base_armor_bonus".into(), "add".into(), val)
+        }
+        "ShipArmor" => MappedEffect::StatModify("armor".into(), "add".into(), val),
         "OfficerStatHealth" => {
             if op.eq_ignore_ascii_case("MultiplyAdd") {
                 MappedEffect::StatModify("officer_health".into(), "add".into(), val)

@@ -151,6 +151,8 @@ pub enum AbilityEffect {
     /// Additive fraction on all three raw base defensive stats, not mitigation probability.
     /// Only round-start effects are supported; their eligibility lasts for that round.
     BaseMitigationStatsBonus(f64),
+    /// Additive fraction on raw base Armor, sampled at round start.
+    BaseArmorBonus(f64),
     /// Raw points added to armor, shield deflection and dodge, after base scaling.
     /// Requires raw-stat context; it is never converted into mitigation probability.
     BaseMitigationStatsAdd(f64),
@@ -566,6 +568,9 @@ pub struct CombatContext {
     pub defender_hull_pct: f64,
     pub defender_shield_pct: f64,
     pub attacker_hull_pct: f64,
+    /// Attacker's remaining hull relative to its actual hull at fight start.
+    /// Available when sampling attacker round-start effects.
+    pub attacker_hull_pct_of_fight_start: Option<f64>,
     pub attacker_shield_pct: f64,
     /// True after the round-start Morale proc succeeds for this combat round (attacker).
     pub attacker_morale_active: bool,
@@ -1086,7 +1091,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
-        AbilityEffect::BaseMitigationStatsBonus(v) => *v = scale(*v),
+        AbilityEffect::BaseMitigationStatsBonus(v) | AbilityEffect::BaseArmorBonus(v) => {
+            *v = scale(*v)
+        }
         AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
         AbilityEffect::HostileBasePiercingStatsReduction(v) => *v = scale(*v),
         AbilityEffect::BaseArmorPiercingAdd(v) => *v = scale(*v),
@@ -1793,6 +1800,7 @@ mod tests {
             defender_hull_pct: 1.0,
             defender_shield_pct: 1.0,
             attacker_hull_pct: 1.0,
+            attacker_hull_pct_of_fight_start: None,
             attacker_shield_pct: 1.0,
             attacker_morale_active: false,
             defender_morale_active: false,

@@ -1009,7 +1009,7 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
-        AbilityModifierSpec::BaseMitigationStatsBonus => {
+        AbilityModifierSpec::BaseMitigationStatsBonus | AbilityModifierSpec::BaseArmorBonus => {
             if timing != TimingWindow::RoundStart {
                 return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
             }
@@ -1030,7 +1030,11 @@ fn compile_officer_combat_spec_impl(
             )?;
             Ok((
                 timing,
-                AbilityEffect::BaseMitigationStatsBonus(fraction),
+                if spec.modifier == AbilityModifierSpec::BaseArmorBonus {
+                    AbilityEffect::BaseArmorBonus(fraction)
+                } else {
+                    AbilityEffect::BaseMitigationStatsBonus(fraction)
+                },
                 compiled_condition.clone(),
             ))
         }

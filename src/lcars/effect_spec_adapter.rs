@@ -493,6 +493,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
         "armor" => Some(AbilityModifierSpec::MitigationAdditive),
+        "base_armor_bonus" => Some(AbilityModifierSpec::BaseArmorBonus),
         "base_mitigation_stats_add" => Some(AbilityModifierSpec::BaseMitigationStatsAdd),
         "hostile_base_piercing_stats_reduction" => {
             Some(AbilityModifierSpec::HostileBasePiercingStatsReduction)
