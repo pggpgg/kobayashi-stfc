@@ -80,7 +80,8 @@ Counts are approximate because a few lines span multiple themes (e.g. Trellium m
 `scripts/generate_full_ship_ability_catalog.py` now maps (and `ship_ability_catalog.json` matches):
 
 - **True Aim** — combat start accuracy vs hostiles → `combat_begin` + `accuracy` (summed in scenario; not a crew seat).
-- **Mirror / Borg / Swarm / Actian / Xindi-Aquatic** — “damage increased … against …” without the literal phrase “weapon damage” → `attack_multiplier` + `condition_opponent_faction` where slugs exist.
+- **Mirror / Borg / Swarm / Actian** — “damage increased … against …” without the literal phrase “weapon damage” → `attack_multiplier` + `condition_opponent_faction` where slugs exist.
+- **Enterprise NX-01** — Learning The Hard Way (`2289346504`) adds its per-level fraction of raw component damage to the already scaled weapon attack. Polarized Hull deflects nine shots from each hostile weapon before counter-fire rolls. Both require the native Aquatic faction (`2745774076`) on an NPC hostile. The upstream ship row carries the Learning The Hard Way curve. The catalog override adds Polarized Hull from the separate ship description (`loca_id 63002`). [Scopely ability documentation](https://scopely.helpshift.com/hc/en/19-star-trek-fleet-command/faq/7830-enterprise-nx-01/)
 - **Opponent hull class** — text ties bonuses to Explorer / Battleship / Interceptor (e.g. “if the opponent’s ship is…”, “against interceptors”) → appropriate `effect_type` + `condition_opponent_ship_class`.
 - **Round cap** — phrases like “first 5 rounds of combat” set catalog `round_cap` (and `AbilityCondition::RoundRange` in the resolver). Omitted when `duration_rounds` is set on the row (e.g. Crozier hostile crit reduction uses effect duration only).
 

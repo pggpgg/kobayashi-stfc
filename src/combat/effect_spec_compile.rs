@@ -336,6 +336,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
             | AbilityEffect::HostileCritDamageFloorBonus(_)
             | AbilityEffect::DefenderFireDelay { .. }
+            | AbilityEffect::IncomingShotDeflection(_)
             | AbilityEffect::RandomDefenderState { .. }
             | AbilityEffect::DecayingAttackMultiplier { .. }
             | AbilityEffect::AccumulatingAttackMultiplier { .. }

@@ -1170,15 +1170,18 @@
     {
       "id": "2289346504",
       "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
+      "effect_type": "component_base_weapon_damage",
       "value": 160000.0,
       "duration_rounds": null,
       "condition_morale": false,
       "condition_defender_burning": false,
       "condition_defender_hull_breach": false,
-      "condition_opponent_faction": "xindi",
+      "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
-      "condition_opponent_hostile_tags": null,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_hostile_tags": [
+        "xindi_aquatic"
+      ],
       "round_cap": null,
       "level_scaled_values": [
         160000.0,
@@ -1242,6 +1245,23 @@
         3640000.0,
         3700000.0
       ]
+    },
+    {
+      "id": "polarized_hull",
+      "timing": "combat_begin",
+      "effect_type": "incoming_shot_deflection",
+      "value": 9.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_hostile_tags": [
+        "xindi_aquatic"
+      ],
+      "round_cap": null
     }
   ],
   "officer_bonus": {

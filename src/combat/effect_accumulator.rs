@@ -1107,6 +1107,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1326,6 +1327,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1507,6 +1509,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1683,6 +1686,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1879,6 +1883,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -2104,6 +2109,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -2472,7 +2478,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::CaptainManeuverMultiplier(_) => effect,
         AbilityEffect::BridgeAbilityEffectivenessBonus(_) => effect,
         AbilityEffect::AccuracyBonus(_) => effect,
-        AbilityEffect::DodgeBonus(_) => effect,
+        AbilityEffect::DodgeBonus(_) | AbilityEffect::IncomingShotDeflection(_) => effect,
     }
 }
 

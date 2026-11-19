@@ -60,6 +60,8 @@ pub enum AbilityEffect {
     /// Fraction of the unbuffed weapon component's damage, added to the shot.
     /// Kept separate from legacy, already profile-scaled attack pools.
     ComponentBaseWeaponDamageBonus(f64),
+    /// Flat number of shots deflected from each opposing weapon volley.
+    IncomingShotDeflection(u32),
     /// Additive max-hull fraction from conditional research/LCARS (`0.12` ⇒ ×1.12 max hull when the seat's conditions pass).
     HullHpMultiplier(f64),
     /// Additive max-shield fraction from conditional research/LCARS (`0.08` ⇒ ×1.08 max shield when conditions pass).
@@ -1189,6 +1191,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
         | AbilityEffect::CaptainManeuverMultiplier(_)
         | AbilityEffect::DefenderFireDelay { .. }
+        | AbilityEffect::IncomingShotDeflection(_)
         | AbilityEffect::RandomDefenderState { .. }
         | AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
