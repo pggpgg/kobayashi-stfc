@@ -41,6 +41,7 @@
   "shield_piercing": 19302.0,
   "crit_chance": 0.05000000000000001,
   "crit_damage": 1.75,
+  "crit_damage_is_bonus": true,
   "hostile_tags": [],
   "engagement_enemy_types": null,
   "components": [

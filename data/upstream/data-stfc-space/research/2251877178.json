@@ -1,0 +1,39 @@
+{
+  "id": 2251877178,
+  "loca_id": 96302,
+  "art_id": 688,
+  "view_level": 73,
+  "research_tree": {
+    "id": 2880499238,
+    "loca_id": 8,
+    "type": 1
+  },
+  "buffs": [],
+  "levels": [
+    {
+      "id": 1,
+      "strength": 0,
+      "strength_increase": 0,
+      "research_time_in_seconds": 0,
+      "costs": [
+        {
+          "resource_id": 604078710,
+          "amount": 120
+        }
+      ],
+      "hard_currency_cost": -1,
+      "requirements": [],
+      "rewards": [
+        {
+          "amount": 1,
+          "type": 12,
+          "resource_id": 3991097322,
+          "loca_id": 96302
+        }
+      ]
+    }
+  ],
+  "row": 2,
+  "column": 136,
+  "generation": 0
+}

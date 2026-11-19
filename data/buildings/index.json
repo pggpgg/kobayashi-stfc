@@ -1,5 +1,5 @@
 {
-  "data_version": "stfcspace-2026-10-19",
+  "data_version": "stfcspace-2026-11-17",
   "source_note": "stfc.space backend API (data.stfc.space building summary/buffs)",
   "buildings": [
     {
@@ -487,6 +487,12 @@
       "building_name": "Iconian Hub",
       "file": "95_iconian_hub",
       "bid": 95
+    },
+    {
+      "id": "building_96",
+      "building_name": "Polaron Research Center",
+      "file": "96_polaron_research_center",
+      "bid": 96
     },
     {
       "id": "building_1000",
