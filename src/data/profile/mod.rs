@@ -693,8 +693,12 @@ pub fn merge_building_bonuses_with_native_snapshot(
         return;
     }
 
+    let context = BuildingBonusContext {
+        syndicate_level: profile.syndicate_level,
+        ..*context
+    };
     let mut bonuses =
-        building::cumulative_building_bonuses_with_context(&records, &levels_by_id, context);
+        building::cumulative_building_bonuses_with_context(&records, &levels_by_id, &context);
 
     if let Some(native) = native_bonuses {
         bonuses.retain(|stat, _| {
@@ -3139,6 +3143,71 @@ mod tests {
             ]
         );
         assert_eq!(reloaded.bonuses.get("weapon_damage"), Some(&0.1));
+    }
+
+    #[test]
+    fn owned_generator_bonuses_require_their_syndicate_unlocks() {
+        let index = building::load_building_index(building::DEFAULT_BUILDINGS_INDEX_PATH)
+            .expect("checked building fixture index");
+        let bid_to_id = crate::data::building_bid_resolver::load_bid_to_building_id(
+            crate::data::building_bid_resolver::DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
+            &index,
+        )
+        .expect("checked building fixture translations");
+        let owned = [
+            BuildingEntry { bid: 0, level: 40 },
+            BuildingEntry { bid: 1, level: 40 },
+            BuildingEntry { bid: 2, level: 1 },
+            BuildingEntry { bid: 3, level: 40 },
+            BuildingEntry { bid: 5, level: 40 },
+            BuildingEntry { bid: 6, level: 1 },
+            BuildingEntry { bid: 7, level: 40 },
+            BuildingEntry { bid: 9, level: 40 },
+            BuildingEntry { bid: 10, level: 1 },
+            BuildingEntry { bid: 11, level: 40 },
+        ];
+        for opponent in [
+            BuildingDefenderOpponent::NpcHostile,
+            BuildingDefenderOpponent::PlayerShip,
+        ] {
+            for (syndicate_level, expected) in [
+                (None, [0.4, 0.0, 0.0]),
+                (Some(29), [0.4, 0.0, 0.0]),
+                (Some(30), [0.4, 1.26, 0.0]),
+                (Some(32), [0.4, 1.26, 0.0]),
+                (Some(33), [0.4, 1.26, 1.51]),
+                (Some(34), [0.4, 1.26, 1.51]),
+                (Some(35), [1.91, 1.26, 1.51]),
+            ] {
+                let mut profile = PlayerProfile {
+                    syndicate_level,
+                    ..Default::default()
+                };
+                merge_building_bonuses_into_profile(
+                    &mut profile,
+                    &owned,
+                    &bid_to_id,
+                    &index,
+                    Path::new("data/buildings"),
+                    &BuildingBonusContext {
+                        ops_level: Some(40),
+                        mode: BuildingMode::ShipCombat,
+                        defender_opponent: opponent,
+                        ..Default::default()
+                    },
+                );
+                for (stat, expected) in ["weapon_damage", "hull_hp", "shield_hp"]
+                    .into_iter()
+                    .zip(expected)
+                {
+                    let actual = profile.bonuses.get(stat).copied().unwrap_or_default();
+                    assert!(
+                        (actual - expected).abs() < 1e-12,
+                        "{opponent:?} Syndicate {syndicate_level:?}: {stat} was {actual}, expected {expected}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

@@ -6,7 +6,9 @@ use std::path::Path;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::data::building::{infer_building_bid, DEFAULT_BUILDINGS_INDEX_PATH};
+use crate::data::building::{
+    infer_building_bid, syndicate_minimum_for_condition, DEFAULT_BUILDINGS_INDEX_PATH,
+};
 use crate::data::forbidden_chaos::{forbidden_chaos_sync_readiness_issues, load_forbidden_chaos};
 use crate::data::hostile::{HostileIndex, HostileRecord, DEFAULT_HOSTILES_INDEX_PATH};
 use crate::data::mapping_gap_report::{
@@ -834,32 +836,34 @@ fn normalize_building_condition(raw: &str) -> String {
 /// Other strings may still flow through [`crate::data::building`] mode matching; this allowlist is for
 /// validation triage and maintainer reports.
 pub fn is_known_building_condition(raw: &str) -> bool {
-    matches!(
-        normalize_building_condition(raw).as_str(),
-        "ship_combat"
-            | "ship_combat_only"
-            | "ships_only"
-            | "space_combat_only"
-            | "station_defense"
-            | "station_defense_only"
-            | "starbase_defense"
-            | "defense_platform"
-            | "defense_platform_only"
-            | "platform_only"
-            | "base_defense"
-            | "defender_is_npc_hostile"
-            | "defender_is_player_ship"
-            | "defender_is_non_armada_hostile"
-            | "attacker_ship_grade_at_least_5"
-            | "native_condition_57_unverified"
-            | "attacker_officer_tal_not_on_bridge"
-            | "attacker_ship_faction_any_fed_klg_rom"
-            | "attacker_ship_type_battleship"
-            | "attacker_ship_type_explorer"
-            | "attacker_ship_type_interceptor"
-            | "attacker_ship_type_survey"
-            | "attacker_ship_type_armada"
-    )
+    let normalized = normalize_building_condition(raw);
+    syndicate_minimum_for_condition(&normalized).is_some()
+        || matches!(
+            normalized.as_str(),
+            "ship_combat"
+                | "ship_combat_only"
+                | "ships_only"
+                | "space_combat_only"
+                | "station_defense"
+                | "station_defense_only"
+                | "starbase_defense"
+                | "defense_platform"
+                | "defense_platform_only"
+                | "platform_only"
+                | "base_defense"
+                | "defender_is_npc_hostile"
+                | "defender_is_player_ship"
+                | "defender_is_non_armada_hostile"
+                | "attacker_ship_grade_at_least_5"
+                | "native_condition_57_unverified"
+                | "attacker_officer_tal_not_on_bridge"
+                | "attacker_ship_faction_any_fed_klg_rom"
+                | "attacker_ship_type_battleship"
+                | "attacker_ship_type_explorer"
+                | "attacker_ship_type_interceptor"
+                | "attacker_ship_type_survey"
+                | "attacker_ship_type_armada"
+        )
 }
 
 /// Validate ship index + all per-ship record files for basic structure and plausible stats.

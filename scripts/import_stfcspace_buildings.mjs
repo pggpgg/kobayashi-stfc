@@ -125,27 +125,6 @@ const BUFF_MAPPING = {
     conditions: [],
     notes: null,
   },
-  // Parsteel Generator A (and others): Hull Health Bonus
-  995187207: {
-    stat: "hull_hp",
-    operator: "add",
-    conditions: [],
-    notes: null,
-  },
-  // Tritanium Generator A (and others): Shield Health Bonus
-  1974652540: {
-    stat: "shield_hp",
-    operator: "add",
-    conditions: [],
-    notes: null,
-  },
-  // Dilithium Generator A (and others): Damage / Weapon Damage Bonus
-  560958387: {
-    stat: "weapon_damage",
-    operator: "add",
-    conditions: [],
-    notes: null,
-  },
 };
 
 // Buff id → engine stat name for common combat buffs not in BUFF_MAPPING.
