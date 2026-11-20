@@ -106,7 +106,10 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
 /// * 20 → 21 (2026-11): owned generator bonuses require the saved Syndicate
 ///   level during profile setup. Canary r exercises the gate with synthetic data.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 22;
+/// * 22 → 23 (2026-11): unsupported officer crit triggers and opponent crit
+///   damage reductions stop compiling as friendly bonuses. The pre-resolved
+///   engine canaries do not exercise the canonical officer converter.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 23;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
