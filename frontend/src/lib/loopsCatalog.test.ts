@@ -53,7 +53,8 @@ describe("loops catalog", () => {
       ["jem-hadar", "Jem'Hadar Fighter"],
       ["swarm", "SWARM CLUSTER"],
       ["freebooter", "Freebooter Battleship"],
-      ["xindi-aquatic", "Xindi-Aquatic Enhanced Cruiser"],
+      ["xindi-aquatic", "Xindi-Aquatic Cruiser"],
+      ["xindi-aquatic-enhanced", "Xindi-Aquatic Enhanced Cruiser"],
       ["silent-enemies", "SILENT ENEMY"],
     ] as const;
 
@@ -61,6 +62,27 @@ describe("loops catalog", () => {
       const loop = findLoop(loopId);
       expect(hostileMatchesLoop(hostile("1", name, 50), loop)).toBe(true);
     }
+  });
+
+  it("keeps overlapping Xindi-Aquatic levels on separate climb ladders", () => {
+    const hostiles = [
+      hostile("enhanced-41", "Xindi-Aquatic Enhanced Cruiser", 41),
+      hostile("cruiser-42", "Xindi-Aquatic Cruiser", 42),
+      hostile("scout-34", "Xindi-Aquatic Scout", 34),
+      hostile("cruiser-40", "Xindi-Aquatic Cruiser", 40),
+    ];
+
+    expect(
+      resolveLoopHostilesAscending(hostiles, findLoop("xindi-aquatic")).map(
+        ({ id }) => id,
+      ),
+    ).toEqual(["scout-34", "cruiser-40", "cruiser-42"]);
+    expect(
+      resolveLoopHostilesAscending(
+        hostiles,
+        findLoop("xindi-aquatic-enhanced"),
+      ).map(({ id }) => id),
+    ).toEqual(["enhanced-41"]);
   });
 
   it("sorts the ladder high-to-low and deduplicates equivalent upstream rows", () => {
