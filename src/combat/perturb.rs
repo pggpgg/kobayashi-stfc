@@ -296,6 +296,7 @@ mod tests {
             weapon_type: Default::default(),
             attack: 50.0,
             component_base_attack: None,
+            firing_schedule: None,
             shots: Some(1),
             pierce: None,
             crit_chance: None,

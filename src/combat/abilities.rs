@@ -199,6 +199,12 @@ pub enum AbilityEffect {
         cascade_damage: f64,
         duration_rounds: u32,
     },
+    /// One additive crit modifier per damaging incoming weapon volley, after the sub-round.
+    DamageTakenCritStack {
+        amount: f64,
+        duration_rounds: u32,
+        reduce_opponent: bool,
+    },
     /// On-hit crit-damage stack (Seska "each time you score a hit (Once per weapon)"): each
     /// attacker weapon's hit (re)arms one stack of `+bonus` (additive fraction on the crit-damage
     /// product channel) lasting `duration_rounds`; at most one active stack per weapon, refreshed
@@ -1086,10 +1092,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *crit_chance = cap_one(*crit_chance);
             *cascade_damage = scale(*cascade_damage);
         }
-        AbilityEffect::OnHitCritDamageStack {
-            bonus,
-            duration_rounds: _,
-        } => *bonus = scale(*bonus),
+        AbilityEffect::OnHitCritDamageStack { bonus, .. }
+        | AbilityEffect::DamageTakenCritStack { amount: bonus, .. } => *bonus = scale(*bonus),
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
