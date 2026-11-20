@@ -997,6 +997,16 @@ fn canary_fights() -> Vec<CanaryFight> {
         initial_attacker_hull_damage: 500.0,
         ..canary_config(5, 71)
     };
+    let mut counter_piercing = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::HostileCounterStatDebuff {
+            reduction: 0.35,
+            duration_rounds: 1,
+        },
+    );
+    counter_piercing.ability.condition = Some(AbilityCondition::DefenderIsNpcHostile);
 
     // An owned generator supplies a weapon bonus only when its Syndicate gate passes.
     use crate::data::building::{
@@ -1136,6 +1146,15 @@ fn canary_fights() -> Vec<CanaryFight> {
             n_defender,
             canary_config(6, 59),
             CrewConfiguration::default(),
+        ),
+        (
+            "npc_counter_piercing",
+            arix_attacker.clone(),
+            arix_defender.clone(),
+            canary_config(2, 73),
+            CrewConfiguration {
+                seats: vec![counter_piercing],
+            },
         ),
         (
             "q_powered_armor",
@@ -1812,7 +1831,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 18, "expected eighteen canary fights");
+        assert_eq!(summaries.len(), 19, "expected nineteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

@@ -125,9 +125,9 @@ Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, 
 
 | id | Ship | Catalog `effect_type` | Engine effect | Assumption | Value |
 | --- | --- | --- | --- | --- | --- |
-| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Uniform pierce multiplier on counter-fire (proxy for armor/shield pierce + accuracy debuff). | 0.12 |
+| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Reduces NPC Armor Piercing, Shield Piercing, and Accuracy on the counter-firing weapon. | 0.12 |
 | `1379978713` | Sanctus | `defender_shield_drain_per_round` | [`DefenderShieldDrainPerRound`](../src/combat/abilities.rs) — `round_start`, 5 rounds | Drains `fraction × max_shield` at round start. | 0.10 |
-| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | First-round-only pierce debuff (same proxy as Quv’Sompek). | 0.15 |
+| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | Reduces the same three NPC weapon stats in round one. | 0.15 |
 | `1463338054` | U.S.S. Intrepid | `hostile_engagement_defensive` | [`HostileEngagementDefensiveBonus`](../src/combat/abilities.rs) | Same % added to counter-fire mitigation + dodge sums. | 0.40 |
 
 > **Data activation fix (2026-06-07).** Track D2 mapped the catalog/overrides in 2026-05-19 but the
@@ -137,11 +137,14 @@ Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, 
 > 15%), so a regeneration alone would have baked them **100× too small** (`0.0015`). Both are fixed:
 > the rows now carry `value_is_percentage: false` + `ignore_upstream_value_is_percentage: true` (the
 > documented "upstream marks small decimals as %" case — see [`normalize_data_stfc_space.rs`](../src/bin/normalize_data_stfc_space.rs)),
-> and `ships_extended` is regenerated. The **Value** column shows the resolved per-ability fraction
-> (first-tier `values[]` entry; these rows are not level-scaled). Re-run after catalog edits:
+> and `ships_extended` is regenerated. The **Value** column shows the fraction at level 1.
+> The resolver uses the ship-level curve when the values vary. Re-run after catalog edits:
 > `cargo run --bin normalize_data_stfc_space`.
 
-Tests: [`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_debuff.rs). Regenerate `ships_extended` after catalog change: `cargo run --bin normalize_data_stfc_space` (or full data refresh).
+The raw-counter path applies the debuff before the mitigation curve. The legacy scalar
+pierce path uses the same debuff when raw stats are unavailable. Both paths retain
+the existing 95% cap. Source-backed tests exercise the NPC gate, level and round
+boundaries, and both counter-fire paths. [Catalog and raw-stat tests](../tests/ship_ability_track_d2_data.rs) · [Legacy scalar tests](../tests/ship_ability_hostile_debuff.rs)
 
 ### 6.2 Proc chains (modeled in Track E — see §6.5)
 
@@ -157,7 +160,7 @@ ids and ships:
 
 ### 6.3 In-game verification (HiggsBozo)
 
-- Confirm B’Rel `2441576367` debuff stat (pierce vs accuracy vs damage) and round-1-only scope.
+- Compare B’Rel `2441576367` and Quv’Sompek `701705952` against frozen inbound traces. A target with a known piercing bonus can distinguish stacking order, and a high-level Quv’Sompek can distinguish the existing 95% cap from a native zero floor.
 - Confirm Sanctus `1379978713` shield drain is % of max shield per round and round cap from ability tier.
 - Intrepid `1463338054`: whether dodge/deflection stack with officer buffs in hostile fights.
 - For `509252162`, verify how the server combines the base damage bonus with profile and officer effects before enabling it. The current resolver reports the effect as unsupported.

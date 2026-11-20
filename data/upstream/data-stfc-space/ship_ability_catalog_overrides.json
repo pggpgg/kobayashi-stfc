@@ -97,6 +97,7 @@
       "effect_type": "hostile_counter_stat_debuff",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
       "duration_rounds": 5
     },
     "1379978713": {
@@ -117,6 +118,7 @@
       "effect_type": "hostile_counter_stat_debuff",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
       "duration_rounds": 1
     },
     "2195955652": {
