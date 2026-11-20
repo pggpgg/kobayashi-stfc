@@ -6,12 +6,11 @@ use std::collections::{HashMap, HashSet};
 use crate::combat::{
     attacker_crew_tal_assigned_captain_or_bridge, hostile_apex_barrier_bonus_from_defender_crew,
     hostile_crit_damage_floor_bonus_from_defender_crew,
-    hostile_defender_mitigation_additive_factor_from_defender_crew,
-    hostile_hyperthermic_decay_fraction_from_defender_crew, mitigation, mitigation_for_hostile,
-    pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, EnemyTypes,
-    HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow, MITIGATION_CEILING,
-    MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    hostile_defender_mitigation_additive_factor_from_defender_crew, mitigation,
+    mitigation_for_hostile, pierce_damage_through_bonus, Ability, AbilityClass, AbilityEffect,
+    AttackerStats, Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats,
+    EnemyTypes, HostileMitigationParams, OpponentFactionTag, ShipType, TimingWindow,
+    MITIGATION_CEILING, MITIGATION_FLOOR, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::building::{
     self, BuildingAttackerFaction, BuildingBonusContext, BuildingDefenderOpponent, BuildingMode,
@@ -1071,8 +1070,6 @@ pub(crate) struct CombatSimulationInput {
     pub attacker_roster_officer_ids: Vec<String>,
     pub incoming_shield_mitigation_bonus: f64,
     pub incoming_shield_mitigation_bonus_rounds: u32,
-    /// Net hostile hyperthermic decay fraction (after stabilizer) for round-start hull melt.
-    pub attacker_hyperthermic_decay_fraction: f64,
     /// Copied into [`crate::combat::SimulationConfig::attacker_owner_faction`].
     pub attacker_owner_faction: OpponentFactionTag,
     /// Phase 4d: per-round officer-stat breakpoint context for the attacker crew.
@@ -1205,9 +1202,6 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         attacker_crew_tal_assigned_captain_or_bridge(&crew);
     let crew_seats = crew.seats;
 
-    // Use the process-wide cached catalog instead of re-reading + re-parsing the JSON file
-    // on every candidate. Source of the `__open` hotspot in earlier profiling.
-    let hostile_ability_catalog = hostile_ability_catalog_for_default_path();
     let mut defender_crew = if shared.is_pvp() {
         let mut seats = Vec::new();
         extend_crew_with_ship_abilities(&mut seats, shared.defender_ship_rec.as_ref());
@@ -1216,10 +1210,8 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         shared
             .hostile_rec
             .as_ref()
-            .map(|h| {
-                hostile_abilities_to_defender_crew(&h.ability, hostile_ability_catalog, h.level)
-            })
-            .unwrap_or_else(|| CrewConfiguration { seats: Vec::new() })
+            .map(|h| hostile_defender_crew_for_scenario(h, &shared.profile))
+            .unwrap_or_default()
     };
     defender_crew
         .seats
@@ -1474,17 +1466,6 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 &dynamic_officer_stat_contributions,
                 cond_ctx,
             );
-        let hyperthermic = shared
-            .hostile_rec
-            .as_ref()
-            .map(|h| {
-                net_attacker_hyperthermic_decay_fraction(
-                    &defender_crew,
-                    &shared.profile,
-                    h.is_aggregation_hostile(),
-                )
-            })
-            .unwrap_or(0.0);
         return CombatSimulationInput {
             attacker,
             defender,
@@ -1508,7 +1489,6 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             } else {
                 shared.incoming_shield_mitigation_bonus_rounds
             },
-            attacker_hyperthermic_decay_fraction: hyperthermic,
             attacker_owner_faction: shared.attacker_owner_faction,
             officer_stat_round,
         };
@@ -1614,17 +1594,6 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         defender_is_outpost_for_scenario(shared),
         defender_is_armada_hostile_for_scenario(shared),
     );
-    let hyperthermic = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| {
-            net_attacker_hyperthermic_decay_fraction(
-                &defender_crew,
-                &shared.profile,
-                h.is_aggregation_hostile(),
-            )
-        })
-        .unwrap_or(0.0);
     let mut defender = Combatant {
         id: shared.hostile.clone(),
         attack: 0.0,
@@ -1671,7 +1640,6 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         attacker_roster_officer_ids,
         incoming_shield_mitigation_bonus: shared.incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
-        attacker_hyperthermic_decay_fraction: hyperthermic,
         attacker_owner_faction: shared.attacker_owner_faction,
         officer_stat_round: None,
     }
@@ -1767,28 +1735,33 @@ fn apply_hostile_ability_combatant_bonuses(
     defender
 }
 
-/// Net round-start hyperthermic decay on the player after Recon Locus stabilizer (percentage points).
-fn net_attacker_hyperthermic_decay_fraction(
-    defender_crew: &CrewConfiguration,
+/// Compile hostile effects and subtract the Recon Locus stabilizer from Aggregation decay.
+fn hostile_defender_crew_for_scenario(
+    hostile: &HostileRecord,
     profile: &PlayerProfile,
-    hostile_is_aggregation: bool,
-) -> f64 {
-    let raw = hostile_hyperthermic_decay_fraction_from_defender_crew(defender_crew);
-    if raw <= 0.0 {
-        return 0.0;
-    }
-    let mut net = raw;
-    if hostile_is_aggregation {
+) -> CrewConfiguration {
+    let mut crew = hostile_abilities_to_defender_crew(
+        &hostile.ability,
+        hostile_ability_catalog_for_default_path(),
+        hostile.level,
+    );
+    if hostile.is_aggregation_hostile() {
         let stabilizer = profile
             .bonuses
             .get("hyperthermic_stabilizer_vs_aggregation_hostile")
             .copied()
             .unwrap_or(0.0);
         if stabilizer.is_finite() && stabilizer > 0.0 {
-            net = (net - stabilizer).max(0.0);
+            for seat in &mut crew.seats {
+                if let AbilityEffect::HostileHyperthermicDecay { fraction } =
+                    &mut seat.ability.effect
+                {
+                    *fraction = (*fraction - stabilizer).max(0.0);
+                }
+            }
         }
     }
-    net
+    crew
 }
 
 fn enrich_hostile_defender_for_scenario(
@@ -2279,12 +2252,7 @@ pub(crate) fn scenario_to_combat_input(
     let static_health = take_static_health_pool_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
-        let hostile_ability_catalog = hostile_ability_catalog_for_default_path();
-        let defender_crew = hostile_abilities_to_defender_crew(
-            &hostile_rec.ability,
-            hostile_ability_catalog,
-            hostile_rec.level,
-        );
+        let defender_crew = hostile_defender_crew_for_scenario(&hostile_rec, profile);
         let (defender_mitigation, pierce) = mitigation_and_pierce_for_player_vs_hostile(
             &ship_rec,
             &hostile_rec,
@@ -2407,11 +2375,6 @@ pub(crate) fn scenario_to_combat_input(
                 &dynamic_officer_stat_contributions,
                 cond_ctx,
             );
-        let hyperthermic = net_attacker_hyperthermic_decay_fraction(
-            &defender_crew,
-            profile,
-            hostile_rec.is_aggregation_hostile(),
-        );
         let mut defender = defender_combatant_from_hostile_record(
             hostile,
             &hostile_rec,
@@ -2443,7 +2406,6 @@ pub(crate) fn scenario_to_combat_input(
             attacker_roster_officer_ids,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
-            attacker_hyperthermic_decay_fraction: hyperthermic,
             attacker_owner_faction: attacker_owner_faction_from_ship(Some(&ship_rec)),
             officer_stat_round,
         };
@@ -2537,7 +2499,6 @@ pub(crate) fn scenario_to_combat_input(
         attacker_roster_officer_ids,
         incoming_shield_mitigation_bonus: 0.0,
         incoming_shield_mitigation_bonus_rounds: 0,
-        attacker_hyperthermic_decay_fraction: 0.0,
         attacker_owner_faction: attacker_owner_faction_from_ship(resolve_ship(ship).as_ref()),
         officer_stat_round: None,
     }
@@ -3924,6 +3885,96 @@ mod tests {
     use uuid::Uuid;
 
     static SHARED_SCENARIO_RESEARCH_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn hostile_hyperthermic_decay_respects_source_rounds() {
+        use crate::combat::{
+            simulate_combat_with_defender_faction_and_defender_crew, SimulationConfig, TraceMode,
+        };
+
+        let candidate = CrewCandidate {
+            captain: String::new(),
+            bridge: vec![],
+            below_decks: vec![],
+        };
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert(
+            "hyperthermic_stabilizer_vs_aggregation_hostile".into(),
+            0.15,
+        );
+        let registry = DataRegistry::load().unwrap();
+        for (hostile, expected) in [
+            ("109780618", [9_200.0, 9_200.0]),  // Academy: 8% for one round
+            ("1121103437", [9_000.0, 9_000.0]), // Programmable Matter: 10% for one round
+            ("1010471584", [7_500.0, 5_000.0]), // Programmable Matter: 25% each round
+            ("1006581066", [5_000.0, 0.0]),     // Programmable Matter: 50% each round
+            ("1176324587", [5_000.0, 0.0]),     // Central Entity variant: 50% each round
+            ("18551664", [8_400.0, 6_800.0]),   // Psionic Assault: 16% each round
+            ("21007889", [10_000.0, 10_000.0]), // Academy variant without Hull Decay
+            ("6694946", [6_500.0, 3_000.0]),    // Aggregation: 50% less 15 points each round
+        ] {
+            let input = scenario_to_combat_input(
+                "realta",
+                hostile,
+                &candidate,
+                7,
+                &HashMap::new(),
+                &profile,
+                None,
+            );
+            let attacker = Combatant {
+                hull_health: 10_000.0,
+                shield_health: 2_000.0,
+                ..Default::default()
+            };
+            let mut shared = build_shared_scenario_data_from_registry(
+                registry.as_ref(),
+                "realta",
+                hostile,
+                Some(1),
+                Some(1),
+                None,
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            );
+            shared.profile = profile.clone();
+            let registered = scenario_to_combat_input_from_shared(&shared, &candidate, 7);
+            for (entry, input) in [("standalone", input), ("registry", registered)] {
+                let mut defender = input.defender;
+                defender.weapons.clear();
+                defender.attack = 0.0;
+                for (rounds, expected_hull) in (1..=2).zip(expected) {
+                    for trace_mode in [TraceMode::Off, TraceMode::Events] {
+                        let config = SimulationConfig {
+                            rounds,
+                            seed: 7,
+                            trace_mode,
+                            ..Default::default()
+                        };
+                        let result = simulate_combat_with_defender_faction_and_defender_crew(
+                            &attacker,
+                            &defender,
+                            &config,
+                            &CrewConfiguration::default(),
+                            OpponentFactionTag::Unknown,
+                            ShipType::Explorer,
+                            ShipType::Survey,
+                            true,
+                            false,
+                            &input.defender_crew,
+                        );
+                        assert_eq!(
+                            result.attacker_hull_remaining, expected_hull,
+                            "{hostile}, {entry}, round {rounds}, {trace_mode:?}"
+                        );
+                        assert_eq!(result.attacker_shield_remaining, attacker.shield_health);
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn monaveen_apex_uses_each_pvp_owners_tal_gate() {

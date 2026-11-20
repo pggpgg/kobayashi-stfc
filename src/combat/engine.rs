@@ -871,6 +871,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
             attacker_shield_pct_round,
             defender_hull_pct_round,
             defender_shield_pct_round,
+            hyperthermic_decay_fraction,
         } = apply_defender_round_start(
             &mut trace,
             &mut rng,
@@ -1211,12 +1212,15 @@ fn simulate_combat_from_setup_with_attacker_scratch(
             st.attacker_shield_gross_damage_last_round,
         );
 
-        if config.attacker_hyperthermic_decay_fraction > 0.0 {
-            let decay = config.attacker_hyperthermic_decay_fraction * attacker.hull_health.max(0.0);
-            if decay > 0.0 {
-                st.total_attacker_hull_damage += decay;
-                st.attacker_hull_gross_damage_this_round += decay;
-            }
+        let decay_fraction = if config.attacker_hyperthermic_decay_fraction > 0.0 {
+            config.attacker_hyperthermic_decay_fraction
+        } else {
+            hyperthermic_decay_fraction
+        };
+        let decay = decay_fraction * attacker.hull_health.max(0.0);
+        if decay > 0.0 {
+            st.total_attacker_hull_damage += decay;
+            st.attacker_hull_gross_damage_this_round += decay;
         }
 
         // Prune expired shots bonuses and compute per-scope B_shots(r) sums for this round.
@@ -5409,14 +5413,14 @@ impl CombatCtxTemplate {
     }
 }
 
-/// The vitals percentages flowing out of [`apply_defender_round_start`] into the attacker
-/// round-start context: attacker percentages are sampled *before* defender regen/drain, defender
-/// percentages *after* — preserving the original in-loop sampling points exactly.
+/// Defender round-start results used by the attacker phase. Attacker vitals are sampled before
+/// defender regen/drain, defender vitals afterward. Decay applies after attacker regeneration.
 pub(crate) struct DefenderRoundStartVitals {
     pub attacker_hull_pct_round: f64,
     pub attacker_shield_pct_round: f64,
     pub defender_hull_pct_round: f64,
     pub defender_shield_pct_round: f64,
+    pub hyperthermic_decay_fraction: f64,
 }
 
 /// Defender round-start phase: assimilation-extension rolls, defender round-start regen, and
@@ -5482,6 +5486,13 @@ fn apply_defender_round_start(
     );
     let defender_rs_for_assim =
         filter_effects_by_condition_borrowed(defender_round_start_effects, &ctx_def_round_start);
+    let hyperthermic_decay_fraction = defender_rs_for_assim
+        .iter()
+        .filter_map(|entry| match entry.effect {
+            AbilityEffect::HostileHyperthermicDecay { fraction } => Some(fraction),
+            _ => None,
+        })
+        .fold(0.0_f64, f64::max);
     let def_rs_assim_active = *defender_assimilated_rounds_remaining > 0;
     roll_assimilated_extensions_from_effects(
         &mut RoundPhaseCtx {
@@ -5571,6 +5582,7 @@ fn apply_defender_round_start(
         attacker_shield_pct_round,
         defender_hull_pct_round,
         defender_shield_pct_round,
+        hyperthermic_decay_fraction,
     }
 }
 

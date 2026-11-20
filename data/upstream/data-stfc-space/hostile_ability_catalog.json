@@ -2516,8 +2516,7 @@
           "effect_type": "hostile_hyperthermic_decay",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 0.5,
-          "round_cap": 1
+          "value_override": 0.5
         }
       ]
     },
@@ -4417,8 +4416,7 @@
           "effect_type": "hostile_hyperthermic_decay",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 0.5,
-          "round_cap": 1
+          "value_override": 0.5
         }
       ]
     },
@@ -7194,8 +7192,7 @@
           "effect_type": "hostile_hyperthermic_decay",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 0.25,
-          "round_cap": 1
+          "value_override": 0.25
         }
       ]
     },
