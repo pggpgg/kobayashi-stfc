@@ -316,6 +316,22 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     if "outpost abilities" in p or "outpost ability" in p:
         return dict(NOOP), "outpost_scope"
 
+    # The FKR Armada pair is a passive launch bonus on the target itself.
+    # It applies in the existing single-ship combat path.
+    armada_isolytic = re.fullmatch(
+        r"at the start of combat this armada increases? its isolytic (damage|defen[cs]e) by (\d+(?:\.\d+)?)%\.?",
+        p,
+    )
+    if armada_isolytic:
+        stat, percent = armada_isolytic.groups()
+        effect = "isolytic_damage" if stat == "damage" else "isolytic_defense"
+        return m(
+            "combat_begin",
+            effect,
+            value_override=float(percent) / 100.0,
+            _bucket="isolytic_combat",
+        )
+
     # Armada / wave defense
     if "armada" in p or "wave defense" in p:
         return dict(NOOP), "armada_scope"

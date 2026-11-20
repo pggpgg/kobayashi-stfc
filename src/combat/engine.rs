@@ -185,6 +185,7 @@ pub struct PreCombatSetup {
     pub combat_end_effects: Vec<ActiveAbilityEffect>,
     // Precomputed defender effects by timing window
     pub defender_combat_begin_effects: Vec<ActiveAbilityEffect>,
+    hostile_combat_begin_isolytic_defense: Vec<ActiveAbilityEffect>,
     pub defender_round_start_effects: Vec<ActiveAbilityEffect>,
     pub defender_attack_phase_effects: Vec<ActiveAbilityEffect>,
     pub defender_defense_phase_effects: Vec<ActiveAbilityEffect>,
@@ -397,8 +398,18 @@ pub fn build_combat_setup_with_officer_stat(
         active_effects_for_timing(&attacker_crew, TimingWindow::ReceiveDamage);
     let combat_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatEnd);
 
-    let defender_combat_begin_effects =
+    let mut defender_combat_begin_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::CombatBegin);
+    // A hostile's combat-start Isolytic Defense protects it from player fire.
+    let hostile_combat_begin_isolytic_defense = if defender_is_npc_hostile {
+        defender_combat_begin_effects
+            .extract_if(.., |effect| {
+                matches!(effect.effect, AbilityEffect::IsolyticDefenseBonus(_))
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
     let defender_round_start_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::RoundStart);
     let defender_attack_phase_effects =
@@ -488,6 +499,7 @@ pub fn build_combat_setup_with_officer_stat(
         receive_damage_effects,
         combat_end_effects,
         defender_combat_begin_effects,
+        hostile_combat_begin_isolytic_defense,
         defender_round_start_effects,
         defender_attack_phase_effects,
         defender_defense_phase_effects,
@@ -1297,6 +1309,21 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
         let defender_inbound_defense_filtered =
             filter_effects_by_condition_borrowed(defender_defense_phase_effects, &combat_ctx);
+        let hostile_combat_begin_isolytic_defense = setup
+            .hostile_combat_begin_isolytic_defense
+            .iter()
+            .filter_map(|effect| match effect.effect {
+                AbilityEffect::IsolyticDefenseBonus(value)
+                    if effect
+                        .condition
+                        .as_ref()
+                        .is_none_or(|gate| gate.evaluate(&combat_ctx)) =>
+                {
+                    Some(value)
+                }
+                _ => None,
+            })
+            .sum::<f64>();
         record_ability_activations(
             &mut trace,
             round_index,
@@ -1656,6 +1683,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 phase_effects: &mut phase_effects,
                 hull_breach_effects,
                 defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
+                hostile_combat_begin_isolytic_defense,
                 defender_receive_damage_effects,
                 defender_isolytic_vulnerability: setup.defender_isolytic_vulnerability,
                 shield_routing_mitigation_override,
@@ -3093,6 +3121,7 @@ struct FireAttackerWeapon<'a> {
     phase_effects: &'a mut EffectAccumulator,
     hull_breach_effects: &'a [ActiveAbilityEffect],
     defender_inbound_defense_filtered: &'a [ActiveAbilityEffect],
+    hostile_combat_begin_isolytic_defense: f64,
     defender_receive_damage_effects: &'a [ActiveAbilityEffect],
     defender_isolytic_vulnerability: bool,
     /// `Some(effective mitigation)` while Breen shield-damage routing is active: replaces the
@@ -3139,6 +3168,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         phase_effects,
         hull_breach_effects,
         defender_inbound_defense_filtered,
+        hostile_combat_begin_isolytic_defense,
         defender_receive_damage_effects,
         defender_isolytic_vulnerability,
         shield_routing_mitigation_override,
@@ -3709,6 +3739,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 + phase_effects.composed_isolytic_damage_bonus())
             .max(0.0);
             let effective_isolytic_defense = (defender.isolytic_defense
+                + hostile_combat_begin_isolytic_defense
                 + phase_effects.composed_isolytic_defense_bonus()
                 + inbound_defender_effects.composed_isolytic_defense_bonus())
             .max(0.0);

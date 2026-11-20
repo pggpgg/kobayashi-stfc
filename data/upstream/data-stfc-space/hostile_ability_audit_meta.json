@@ -3286,13 +3286,13 @@
       "effect_type": "combat_noop"
     },
     "1539285779": {
-      "bucket": "armada_scope",
+      "bucket": "isolytic_combat",
       "loca_id": 69067,
       "hostile_count": 30,
       "sample_hostile_id": "1105005893",
       "sample_level": 67,
       "text_snippet": "at the start of combat this armada increase its isolytic defense by 50%",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_defense"
     },
     "1550812445": {
       "bucket": "pierce_combat",
@@ -5936,13 +5936,13 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "2794125774": {
-      "bucket": "armada_scope",
+      "bucket": "isolytic_combat",
       "loca_id": 69066,
       "hostile_count": 30,
       "sample_hostile_id": "1105005893",
       "sample_level": 67,
       "text_snippet": "at the start of combat this armada increases its isolytic damage by 150%",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_damage"
     },
     "2796606611": {
       "bucket": "isolytic_combat",
