@@ -411,6 +411,39 @@ fn canary_fight_summaries() -> Vec<String> {
         result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
         result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
         result.attacker_shield_remaining,result.total_isolytic_damage));
+    // Ship passives such as Secret Weapon use the opponent category at combat begin.
+    let mut attacker = canary_combatant("canary_r_attacker");
+    attacker.attack = 731.0;
+    let mut defender = canary_combatant("canary_r_defender");
+    defender.hull_health = 10_000.0;
+    let mut passive = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::AttackMultiplier(0.35),
+    );
+    passive.ability.condition = Some(AbilityCondition::DefenderIsNpcHostile);
+    let crew = CrewConfiguration {
+        seats: vec![passive],
+    };
+    for (label, npc) in [("r_hostile_damage", true), ("s_player_control", false)] {
+        let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &canary_config(1, 71),
+            &crew,
+            crate::combat::OpponentFactionTag::Unknown,
+            crate::combat::ShipType::Battleship,
+            crate::combat::ShipType::Explorer,
+            npc,
+            !npc,
+            &CrewConfiguration::default(),
+        );
+        summaries.push(format!(
+            "{label}:dmg={:.6};rounds={};dhull={:.6};",
+            result.total_damage, result.rounds_simulated, result.defender_hull_remaining,
+        ));
+    }
     summaries
 }
 
@@ -1733,7 +1766,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 17, "expected seventeen canary fights");
+        assert_eq!(summaries.len(), 19, "expected nineteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
