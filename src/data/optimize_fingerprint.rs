@@ -112,7 +112,10 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 23 → 24 (2026-11): crew-wide launch Attack now contributes to ship breakpoints.
 ///   Canary f covers the crew rating pool. The source mapping itself is outside
 ///   the synthetic canaries.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 24;
+/// * 24 → 25 (2026-11): active native building buffs reach combat setup without
+///   an owned-building import. Canary f covers the shared merge; the canary
+///   fights do not exercise profile file discovery or scenario routing.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 25;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -720,11 +723,17 @@ fn canary_fights() -> Vec<CanaryFight> {
     f_profile.bonuses.extend(
         crate::data::native_consumable_buffs::bonuses_for_imported_buffs(&f_buffs, None, 0),
     );
-    for (key, value) in
-        crate::data::native_building_buffs::bonuses_for_imported_buffs(&f_buffs, None, None, 0)
-    {
-        *f_profile.bonuses.entry(key).or_default() += value;
-    }
+    let building_bonuses = crate::data::native_building_buffs::building_bonuses_for_imported_buffs(
+        &f_buffs, None, None, 0,
+    );
+    crate::data::profile::merge_building_bonuses_from_sources(
+        &mut f_profile,
+        &[],
+        &std::collections::HashMap::new(),
+        Path::new("data/buildings"),
+        &crate::data::building::BuildingBonusContext::default(),
+        building_bonuses.as_ref(),
+    );
     // Catalog groups are disjoint; officer pools add across the three sources.
     for (key, value) in
         crate::data::native_research_buffs::research_bonuses_for_imported_buffs(&f_buffs, None, 0)
