@@ -638,10 +638,26 @@
     },
     "2289346504": {
       "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
+      "effect_type": "component_base_weapon_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "condition_opponent_faction": "xindi"
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": [
+        "xindi_aquatic"
+      ],
+      "condition_defender_is_npc_hostile": true,
+      "additional_effects": [
+        {
+          "id": "polarized_hull",
+          "timing": "combat_begin",
+          "effect_type": "incoming_shot_deflection",
+          "value": 9,
+          "condition_opponent_hostile_tags": [
+            "xindi_aquatic"
+          ],
+          "condition_defender_is_npc_hostile": true
+        }
+      ]
     },
     "2302150828": {
       "timing": "combat_begin",

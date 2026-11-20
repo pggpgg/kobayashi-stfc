@@ -805,7 +805,7 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
-    // (j) base-component damage is distinct from already buffed weapon attack.
+    // (j) base-component damage and incoming flat shot deflection against Aquatics.
     let mut j_attacker = canary_combatant("canary_j_attacker");
     j_attacker.weapons = vec![crate::combat::WeaponStats {
         attack: 250.0,
@@ -814,13 +814,26 @@ fn canary_fights() -> Vec<CanaryFight> {
     }];
     let mut j_defender = canary_combatant("canary_j_defender");
     j_defender.hull_health = 8_000.0;
+    j_defender.weapons = vec![crate::combat::WeaponStats {
+        attack: 12.0,
+        shots: Some(10),
+        ..Default::default()
+    }];
     let j_crew = CrewConfiguration {
-        seats: vec![canary_seat(
-            CrewSeat::Ship,
-            AbilityClass::ShipAbility,
-            TimingWindow::CombatBegin,
-            AbilityEffect::ComponentBaseWeaponDamageBonus(3.0),
-        )],
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::ComponentBaseWeaponDamageBonus(3.0),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IncomingShotDeflection(9),
+            ),
+        ],
     };
 
     // (k) piercing-derived setup must not add a second quarter of the damage
@@ -1071,7 +1084,7 @@ fn canary_fights() -> Vec<CanaryFight> {
             i_crew,
         ),
         (
-            "j_component_base_damage",
+            "j_component_base_damage_and_shot_deflection",
             j_attacker,
             j_defender,
             canary_config(7, 41),

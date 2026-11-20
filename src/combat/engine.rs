@@ -196,6 +196,7 @@ pub struct PreCombatSetup {
     // Combat begin state (initial round 0, all precomputable)
     pub combat_begin_ctx: CombatContext,
     pub combat_begin_filtered: Vec<ActiveAbilityEffect>,
+    incoming_shot_deflection: u32,
     pub attacker_mitigation_additive: f64,
     pub attacker_accuracy_bonus: f64,
     pub attacker_dodge_bonus: f64,
@@ -340,6 +341,13 @@ pub fn build_combat_setup_with_officer_stat(
     let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
+    let incoming_shot_deflection =
+        combat_begin_filtered
+            .iter()
+            .fold(0u32, |total, effect| match effect.effect {
+                AbilityEffect::IncomingShotDeflection(shots) => total.saturating_add(shots),
+                _ => total,
+            });
     let conqueror_borg_beam_suppression = combat_begin_filtered
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
@@ -452,6 +460,7 @@ pub fn build_combat_setup_with_officer_stat(
         combat_begin_effects,
         combat_begin_ctx,
         combat_begin_filtered,
+        incoming_shot_deflection,
         attacker_mitigation_additive,
         attacker_accuracy_bonus,
         attacker_dodge_bonus,
@@ -1510,6 +1519,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                         weapon_index,
                         defender_weapon_attack,
                         def_b_shots,
+                        incoming_shot_deflection: setup.incoming_shot_deflection,
                         weapon_base,
                         attack_phase_assimilated,
                         use_experimental_simd_damage_after_apex_base,
@@ -3918,6 +3928,7 @@ struct FireDefenderCounter<'a> {
     weapon_index: usize,
     defender_weapon_attack: f64,
     def_b_shots: ShotsBonusSums,
+    incoming_shot_deflection: u32,
     weapon_base: f64,
     attack_phase_assimilated: bool,
     use_experimental_simd_damage_after_apex_base: bool,
@@ -3974,6 +3985,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         weapon_index,
         defender_weapon_attack,
         def_b_shots,
+        incoming_shot_deflection,
         weapon_base,
         attack_phase_assimilated,
         use_experimental_simd_damage_after_apex_base,
@@ -4010,10 +4022,33 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // so the two paths stay in sync. Shot count mirrors outbound: `effective_shots_for_weapon`
     // on `defender.weapon_base_shots` with defender crew `ShotsBonus`.
     let def_base_shots = defender.weapon_base_shots(weapon_index);
-    let def_effective_shots = effective_shots_for_weapon(
+    let shots_before_deflection = effective_shots_for_weapon(
         def_base_shots,
         def_b_shots.for_weapon(defender.weapon_type(weapon_index)),
     );
+    let def_effective_shots = shots_before_deflection.saturating_sub(incoming_shot_deflection);
+    if def_effective_shots < shots_before_deflection {
+        trace.record_if(|| CombatEvent {
+            event_type: "incoming_shot_deflection".to_string(),
+            round_index,
+            phase: "counter".to_string(),
+            source: EventSource {
+                officer_id: Some(attacker.id.clone()),
+                ..EventSource::default()
+            },
+            weapon_index: Some(weapon_index as u32),
+            values: Map::from_iter([
+                (
+                    "shots_before".to_string(),
+                    Value::from(shots_before_deflection),
+                ),
+                ("shots_after".to_string(), Value::from(def_effective_shots)),
+            ]),
+        });
+        if def_effective_shots == 0 {
+            return;
+        }
+    }
 
     let defender_ctx = CombatContext {
         round_index,

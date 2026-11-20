@@ -52,6 +52,9 @@ struct AbilityCatalogEntry {
     /// Multiply normalized numeric `value` / curve entries after the usual `value_is_percentage` scaling.
     #[serde(default)]
     post_scale: Option<f64>,
+    /// Documented effects of the same hull that have no separate upstream ability row.
+    #[serde(default)]
+    additional_effects: Vec<ShipAbility>,
 }
 
 use kobayashi::data::registry::merge_registry_entry;
@@ -448,6 +451,7 @@ fn raw_to_extended(
                 round_cap: entry.round_cap,
                 level_scaled_values,
             });
+            out.extend(entry.additional_effects.iter().cloned());
         }
         if out.is_empty() {
             None
