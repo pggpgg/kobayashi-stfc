@@ -1,5 +1,9 @@
 import type { CrewRecommendation } from "./api";
-import type { LoopGoalId } from "./loopsCatalog";
+import {
+  type LoopGoalId,
+  loopIdForSavedTarget,
+  XINDI_AQUATIC_LOOP_ID,
+} from "./loopsCatalog";
 
 /**
  * Schema 2 adds confidence intervals, the run settings that produced a record, and
@@ -166,6 +170,36 @@ function migrateV1Record(v1: LoopBestRecordV1): LoopBestRecord {
   };
 }
 
+/** Re-key records from the former mixed ladder without changing their metrics or timestamps. */
+function moveEnhancedCruiserRecords(
+  workspace: LoopsWorkspaceFile,
+): LoopsWorkspaceFile {
+  let records: LoopsWorkspaceFile["records"] | undefined;
+  for (const [key, saved] of Object.entries(workspace.records)) {
+    if (!key.startsWith(`${XINDI_AQUATIC_LOOP_ID}|`) || !Array.isArray(saved))
+      continue;
+    const regular: LoopBestRecord[] = [];
+    for (const result of saved) {
+      const loopId = loopIdForSavedTarget(result.loopId, result.targetName);
+      if (loopId === result.loopId) {
+        regular.push(result);
+        continue;
+      }
+      records ??= { ...workspace.records };
+      const destination = recordKey(loopId, result.targetId, result.goalId);
+      const existing = records[destination] ?? [];
+      if (!existing.some((record) => record.id === result.id)) {
+        records[destination] = [...existing, { ...result, loopId }];
+      }
+    }
+    if (records && regular.length < saved.length) {
+      if (regular.length) records[key] = regular;
+      else delete records[key];
+    }
+  }
+  return records ? { ...workspace, records } : workspace;
+}
+
 function readWorkspace(
   profileId: string | null,
   requireValid = false,
@@ -181,33 +215,34 @@ function readWorkspace(
     ) {
       throw new Error("Saved ladder results could not be read.");
     }
-    if (parsed.version === STORAGE_VERSION) return parsed;
-    if (parsed.version === 1) {
-      // These are crews the player earned by running optimizations; dropping them
-      // on a schema bump (the previous behaviour) is real data loss, not cache
-      // invalidation.
-      const migrated: LoopsWorkspaceFile = {
-        version: STORAGE_VERSION,
-        records: Object.fromEntries(
-          Object.entries(parsed.records).map(([key, list]) => [
-            key,
-            (list as unknown as LoopBestRecordV1[]).map(migrateV1Record),
-          ]),
-        ),
-      };
+    if (parsed.version !== 1 && parsed.version !== STORAGE_VERSION) {
+      throw new Error("Saved ladder results use an unsupported format.");
+    }
+    const upgraded =
+      parsed.version === 1
+        ? {
+            ...parsed,
+            version: STORAGE_VERSION,
+            records: Object.fromEntries(
+              Object.entries(parsed.records).map(([key, list]) => [
+                key,
+                (list as unknown as LoopBestRecordV1[]).map(migrateV1Record),
+              ]),
+            ),
+          }
+        : parsed;
+    const migrated = moveEnhancedCruiserRecords(upgraded);
+    if (migrated !== parsed) {
       try {
         localStorage.setItem(
           loopWorkspaceStorageKey(profileId),
           JSON.stringify(migrated),
         );
       } catch {
-        // Migration is still usable in memory even if it cannot be persisted.
+        // The updated view is still usable when migration cannot be persisted.
       }
-      return migrated;
     }
-    // An unrecognised version is more likely corruption than a downgrade; stay
-    // empty rather than risk interpreting foreign data as records.
-    throw new Error("Saved ladder results use an unsupported format.");
+    return migrated;
   } catch (cause) {
     if (requireValid) throw cause;
     return emptyWorkspace();
@@ -465,6 +500,7 @@ export function getLoopBestRecord(
 export type LoopSaveRejection =
   | "no_recommendation"
   | "ladder_reset"
+  | "target_moved"
   | "off_policy_ship"
   | "not_improved"
   | "storage_failed";
@@ -515,6 +551,18 @@ export function saveLoopOptimizationResult(args: {
       improved: false,
       record: null,
       reason: "off_policy_ship",
+    };
+  }
+
+  if (
+    loopIdForSavedTarget(args.context.loopId, args.context.targetName) !==
+    args.context.loopId
+  ) {
+    return {
+      saved: false,
+      improved: false,
+      record: null,
+      reason: "target_moved",
     };
   }
 
@@ -650,6 +698,13 @@ export function loadPendingLoopRun(
     const raw = sessionStorage.getItem(pendingKey(profileId));
     if (!raw) return null;
     const context = JSON.parse(raw) as LoopRunContext;
+    if (
+      loopIdForSavedTarget(context.loopId, context.targetName) !==
+      context.loopId
+    ) {
+      clearPendingLoopRun(profileId);
+      return null;
+    }
     if (
       (context.ladderRevision ?? 0) !==
       getLoopLadderRevision(profileId, context.loopId)

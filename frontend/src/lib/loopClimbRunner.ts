@@ -463,6 +463,15 @@ async function awaitRung(
       maxCandidates: plan.settings.maxCandidates,
     });
 
+    if (saved.reason === "target_moved") {
+      return {
+        ...base,
+        outcome: "interrupted",
+        record: null,
+        error:
+          "This target moved to the Enhanced Cruiser ladder. Start a new climb from that loop.",
+      };
+    }
     if (saved.reason === "ladder_reset") {
       return { ...base, outcome: "interrupted", record: null };
     }
