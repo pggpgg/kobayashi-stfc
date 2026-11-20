@@ -51,10 +51,11 @@ pub use forbidden_tech_special::{
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
-    ForbiddenTechBonusCombatRoute, BORG_ALCOVE_FORBIDDEN_TECH_FID,
-    BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID, CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID,
-    DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID, QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID,
-    S31_TORPEDO_PODS_FORBIDDEN_TECH_FID, USS_VOYAGER_SHIP_ID,
+    temporal_conduit_chaos_tech_seats, ForbiddenTechBonusCombatRoute,
+    BORG_ALCOVE_FORBIDDEN_TECH_FID, BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID,
+    CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID, DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID,
+    QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID, S31_TORPEDO_PODS_FORBIDDEN_TECH_FID,
+    USS_VOYAGER_SHIP_ID,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

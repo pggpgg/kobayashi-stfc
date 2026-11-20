@@ -127,6 +127,7 @@ Quantum Slipstream Drive,forbidden,12,2439729135,shield_hp,0.195,add
 Interplexing Beacon,forbidden,12,2527878020,shield_mitigation,0.11,add
 Q Cannon,chaos,12,704754072,weapon_damage,0.07,add
 Temporal Conduit,chaos,12,258464522,apex_barrier,23000,add
+Temporal Conduit,chaos,12,258464522,hull_breach_chance,0.85,add
 Thought Maker,chaos,4,1024185972,apex_barrier,100,add
 Electromagnetic Lute,chaos,12,1212779022,isolytic_damage,0.07,add
 Electromagnetic Lute,chaos,12,1212779022,apex_barrier,4600,add

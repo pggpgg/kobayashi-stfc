@@ -325,6 +325,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::ShotsBonus { .. }
             | AbilityEffect::OnHitCritDamageStack { .. }
             | AbilityEffect::OnHitTimedBonus { .. }
+            | AbilityEffect::DamageTakenCritStack { .. }
             | AbilityEffect::DefenderOnHitStack { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
@@ -385,7 +386,10 @@ pub fn compile_officer_combat_spec_full(
         // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
         || matches!(
             effect,
-            AbilityEffect::OnHitCritDamageStack { .. } | AbilityEffect::OnHitTimedBonus { .. } | AbilityEffect::DefenderOnHitStack { .. }
+            AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. }
         );
     let condition = if skip_round_gate {
         condition
@@ -627,6 +631,30 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
+            if timing == TimingWindow::DefensePhase {
+                if let Some(DurationSpec::Rounds { rounds }) = spec.duration.as_ref() {
+                    let reduce_opponent = spec.target == AbilityTargetSpec::DefenderOpponent;
+                    if matches!(
+                        (op, spec.target),
+                        (
+                            "add",
+                            AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+                        ) | ("sub", AbilityTargetSpec::DefenderOpponent)
+                    ) && v.is_finite()
+                        && v > 0.0
+                    {
+                        return Ok((
+                            timing,
+                            AbilityEffect::DamageTakenCritStack {
+                                amount: v,
+                                duration_rounds: *rounds,
+                                reduce_opponent,
+                            },
+                            compiled_condition.clone(),
+                        ));
+                    }
+                }
+            }
             // On-hit crit-damage buff with a finite duration (Seska "Rules Are for Fools"):
             // per-weapon stacking with engine-managed expiry, not a flat round-gated multiplier.
             // Additive ops only — the stack bonus is an additive fraction per hit.

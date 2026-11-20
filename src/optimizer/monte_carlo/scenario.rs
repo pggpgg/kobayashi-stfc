@@ -42,8 +42,8 @@ use crate::data::profile::{
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
-    take_static_health_pool_bonus, PlayerProfile, SupportBuffResearchGateState,
-    USS_VOYAGER_SHIP_ID,
+    take_static_health_pool_bonus, temporal_conduit_chaos_tech_seats, PlayerProfile,
+    SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -2676,6 +2676,11 @@ pub(crate) fn build_shared_scenario_data_standalone(
                     scale_by_level_tier,
                 ),
             );
+            forbidden_tech_derived_seats.extend(temporal_conduit_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,
@@ -3385,6 +3390,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                     scale_by_level_tier,
                 ),
             );
+            forbidden_tech_derived_seats.extend(temporal_conduit_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,

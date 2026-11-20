@@ -7615,7 +7615,7 @@
         },
         {
           "ability_id": "1001707675",
-          "attributes": "num_rounds=2",
+          "attributes": "num_rounds=2,stack_on_damage_taken=1",
           "chance_by_rank": [
             1.0,
             1.0,
@@ -18274,7 +18274,7 @@
       "abilities": [
         {
           "ability_id": "1036449255",
-          "attributes": "num_rounds=2",
+          "attributes": "num_rounds=2,stack_on_damage_taken=1",
           "chance_by_rank": [
             1.0,
             1.0,

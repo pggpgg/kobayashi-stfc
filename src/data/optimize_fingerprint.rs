@@ -106,7 +106,7 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
 /// * 20 → 21 (2026-11): owned generator bonuses require the saved Syndicate
 ///   level during profile setup. Canary r exercises the gate with synthetic data.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 21;
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 22;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -805,11 +805,16 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
-    // (j) base-component damage and incoming flat shot deflection against Aquatics.
+    // (j) Aquatic base-component damage, flat shot deflection, weapon schedules and reactive crit.
     let mut j_attacker = canary_combatant("canary_j_attacker");
     j_attacker.weapons = vec![crate::combat::WeaponStats {
         attack: 250.0,
         component_base_attack: Some(40.0),
+        firing_schedule: Some(crate::combat::WeaponFiringSchedule {
+            first_round: 2,
+            interval_rounds: 2,
+        }),
+        crit_chance: Some(1.0),
         ..Default::default()
     }];
     let mut j_defender = canary_combatant("canary_j_defender");
@@ -817,6 +822,10 @@ fn canary_fights() -> Vec<CanaryFight> {
     j_defender.weapons = vec![crate::combat::WeaponStats {
         attack: 12.0,
         shots: Some(10),
+        firing_schedule: Some(crate::combat::WeaponFiringSchedule {
+            first_round: 1,
+            interval_rounds: 100,
+        }),
         ..Default::default()
     }];
     let j_crew = CrewConfiguration {
@@ -832,6 +841,16 @@ fn canary_fights() -> Vec<CanaryFight> {
                 AbilityClass::ShipAbility,
                 TimingWindow::CombatBegin,
                 AbilityEffect::IncomingShotDeflection(9),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::DefensePhase,
+                AbilityEffect::DamageTakenCritStack {
+                    amount: 0.3,
+                    duration_rounds: 2,
+                    reduce_opponent: false,
+                },
             ),
         ],
     };
