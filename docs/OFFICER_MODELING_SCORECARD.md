@@ -97,7 +97,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | worf-c55d58 | Worf | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | zhou-5d4d4b | Zhou | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | b-elanna-torres-75cf02 | B'Elanna Torres | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | Bridge crew-Attack-based cumulative piercing after being hit is unsupported and diagnosed; below-deck hull breach has source-declared one-round state duration. |
-| beckett-mariner-d93865 | Beckett Mariner | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
 | mirror-uhura-0a7168 | Mirror Uhura | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 1 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
 | odo-04a97d | Odo | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
 | sam-rutherford-927c93 | Sam Rutherford | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
@@ -134,7 +133,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | bones-ddc8a9 | Bones | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Cap OffAbilityEffect at combat start vs hostiles ≤70; bridge on_hit armor same gate. Inactive in default optimize vs high-level hostiles. |
 | cadet-sulu-784421 | Cadet Sulu | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | data-d20ef8 | Data | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
-| eight-of-eleven-cb5f3c | Eight Of Eleven | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | gowron-27ac30 | Gowron | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Bridge crew-Health-based Shield Deflection is unsupported and diagnosed, rather than modeled as shield regeneration. |
 | instr-spock-bba5d7 | Instr. Spock | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | kumak-c5b0db | Kumak | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Cap OfficerStatAll on_round_start via Phase 4d per-round path; bridge armor on_round_start when defender burning. |
@@ -170,6 +168,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | arkady-94c81b | Arkady | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | azetbur-7eff22 | Azetbur | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ba-el-91d122 | Ba'el | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| beckett-mariner-d93865 | Beckett Mariner | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Get It Together! adds 5–30% to every crewed officer's Attack pool before ship breakpoints. The below-deck ability separately increases weapon damage. |
 | black-ops-chapel-814fe8 | Black Ops Chapel | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | black-ops-m-benga-e23e3a | Black Ops M'Benga | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | byr-ch-kelrer-090eff | Byr Ch'Kelrer | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
@@ -193,6 +192,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | dezoc-381416 | Dezoc | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Bridge OfficerStatAll at combat start (AND: solo_armadas + defender hull faction) via pending; BD assimilated on_round_start when defender hull <95%. |
 | dixon-hill-b7ea10 | Dixon Hill | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 50 | mixed | — |
 | doctor-t-ana-b98f82 | Doctor T'Ana | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | AddRandomState vs player defenders only (PvP); same weighted states and rank proc as Zeph; inactive in default hostile optimize. |
+| eight-of-eleven-cb5f3c | Eight Of Eleven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cybernetic Enhancements adds 45–85% to every crewed officer's Attack pool before ship breakpoints. |
 | ent-e-data-871245 | Ent-E Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Bridge isolytic_cascade_damage at combat start vs NPC hostiles only, excluding Armada (EnemyHostile + TargetNotArmada → defender_is_npc_hostile AND NOT defender_ship_type_is armada). |
 | ent-e-picard-556227 | Ent-E Picard | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | ent-e-riker-516b8d | Ent-E Riker | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |

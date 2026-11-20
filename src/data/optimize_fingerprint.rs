@@ -109,7 +109,10 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 22 → 23 (2026-11): unsupported officer crit triggers and opponent crit
 ///   damage reductions stop compiling as friendly bonuses. The pre-resolved
 ///   engine canaries do not exercise the canonical officer converter.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 23;
+/// * 23 → 24 (2026-11): crew-wide launch Attack now contributes to ship breakpoints.
+///   Canary f covers the crew rating pool. The source mapping itself is outside
+///   the synthetic canaries.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 24;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -741,15 +744,29 @@ fn canary_fights() -> Vec<CanaryFight> {
         level: 1,
         seat,
         raw: crate::combat::CrewOfficerStatTotals {
+            attack: 50.0,
             defense: 50.0,
             ..Default::default()
         },
     })
     .collect::<Vec<_>>();
+    let f_base_attack_rating = crate::data::profile::evaluate_officer_stats(
+        &f_rows,
+        &f_profile,
+        None,
+        &Default::default(),
+    )
+    .effective_totals
+    .attack;
     let f_ship = crate::data::ship::ShipRecord {
         ship_class: "battleship".into(),
         armor: 20.0,
         officer_bonus: crate::data::ship::OfficerBonusTable {
+            // +30% to both seats crosses this threshold. Captain only does not.
+            attack: vec![crate::data::ship::OfficerBonusBreakpoint {
+                value: f_base_attack_rating + 22.5,
+                bonus: 0.25,
+            }],
             defense: vec![crate::data::ship::OfficerBonusBreakpoint {
                 value: 200.5,
                 bonus: 0.5,
@@ -760,10 +777,12 @@ fn canary_fights() -> Vec<CanaryFight> {
     };
     let f_runtime = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
         crate::combat::CrewOfficerStatTotals {
+            attack: 100.0,
             defense: 100.0,
             ..Default::default()
         },
         crate::combat::CrewOfficerStatTotals {
+            attack: 50.0,
             defense: 50.0,
             ..Default::default()
         },
@@ -771,7 +790,7 @@ fn canary_fights() -> Vec<CanaryFight> {
         &f_ship,
         &f_profile,
         None,
-        &std::collections::HashMap::new(),
+        &[("officer_attack".into(), 0.30)].into(),
         &[],
         &crate::data::profile::OfficerStatConditionContext::default(),
         &[],
