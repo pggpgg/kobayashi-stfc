@@ -1442,6 +1442,12 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         || (modifier == "OfficerStatDefense" && !supported_computer_precision)
         || (modifier == "AllPiercing" && !supported_enemy_piercing_reduction)
         || (modifier == "AllDefenses" && !supported_ortegas_defense)
+        // Enemy weapon damage reductions need an opponent-side weapon pool.
+        // The self weapon damage path would add these positive coefficients
+        // to the owner's attack and cannot bind the opponent's weapon type.
+        || (modifier == "AllDamage"
+            && op.eq_ignore_ascii_case("MultiplySub")
+            && matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips")))
         // Existing LCARS self-stat routing does not preserve these seat scopes
         // or flat-add units; applying them crew-wide would alter combat stats.
         || (matches!(modifier, "OfficerStatAll" | "OfficerStatHealth")

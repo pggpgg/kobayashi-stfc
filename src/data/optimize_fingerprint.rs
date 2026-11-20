@@ -104,7 +104,9 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 19 → 20 (2026-11): 0718's crew-wide Defense changes the scenario's rating
 ///   before ship breakpoints. The engine canaries do not load the officer catalog.
 ///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 20;
+/// * 20 → 21 (2026-11): canonical opponent weapon damage reductions no longer
+///   compile as friendly attack bonuses. The canaries use pre-resolved seats.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 21;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
