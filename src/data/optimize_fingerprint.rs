@@ -413,6 +413,45 @@ fn canary_fight_summaries() -> Vec<String> {
         result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
         result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
         result.attacker_shield_remaining,result.total_isolytic_damage));
+    // Fire Isolytic Damage in both directions to detect which hull the Armada's
+    // combat-start Isolytic Defense protects.
+    let mut attacker = canary_combatant("canary_s_attacker");
+    attacker.attack = 510.0;
+    attacker.isolytic_damage = 1.0;
+    let mut defender = canary_combatant("canary_s_armada");
+    defender.attack = 200.0;
+    let defender_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(1.5),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDefenseBonus(0.5),
+            ),
+        ],
+    };
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &canary_config(2, 71),
+        &CrewConfiguration::default(),
+        crate::combat::OpponentFactionTag::Romulan,
+        crate::combat::ShipType::Armada,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    summaries.push(format!("s_hostile_combat_begin_isolytic_defense:dmg={:.6};won={};limit={};rounds={};ahull={:.6};dhull={:.6};dshield={:.6};ashield={:.6};iso={:.6};",
+        result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
+        result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
+        result.attacker_shield_remaining,result.total_isolytic_damage));
     summaries
 }
 
@@ -1831,7 +1870,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 19, "expected nineteen canary fights");
+        assert_eq!(summaries.len(), 20, "expected twenty canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

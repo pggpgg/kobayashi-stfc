@@ -267,7 +267,8 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — dampener defense 10.0 + `hostile_final_damage_reduction` 0.5 + SM→0 + round-1 hyperthermic (2026-07-16) |
 | `3196612078` | 39 | hostile_shield_bypass | `shield_mitigation_bypass` | Strength of the Ibix — 100% bypass (10 shots are weapon components, not this seat) |
 | `1088929105` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | S31 Elite — Klingon/Romulan designed ships only |
-| `1539285779` | 30 | armada_scope | `combat_noop` | Armada isolytic defense |
+| `1539285779` | 30 | isolytic_combat | `isolytic_defense` | Faction Armada combat start, +50% Isolytic Defense against player fire |
+| `2794125774` | 30 | isolytic_combat | `isolytic_damage` | Faction Armada combat start, +150% Isolytic Damage on counter-fire |
 | `1651219904` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | Mo'Kai Elite — Fed/Romulan designed ships only |
 
 ---
