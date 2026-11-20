@@ -162,6 +162,11 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         bucket = kwargs.pop("_bucket", "modeled_combat")
         return modeled(timing, effect_type, **kwargs), bucket
 
+    # Polaron weapons need their own damage channel. The Apex Barrier text
+    # describes a layer they bypass, and the raw 0.25 matches Known Weakness.
+    if "polaron weaponry" in p and "polaron mitigation" in p:
+        return dict(NOOP), "polaron_weaponry_review"
+
     # Temporal Dreadnought phase alignment. Charged variants fully restore shields + hull each
     # round; Static variants fully restore shields while retaining their existing isolytic-damage
     # seat. Both mechanics are disabled by the U.S.S. Relativity's always-active anti-shift hull
@@ -616,9 +621,11 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         # reading it from `value` would apply the apex magnitude as an isolytic multiplier.
         if re.search(r"increases its apex barrier and its isolytic damage", p):
             return m("combat_begin", "apex_barrier", _bucket="isolytic_combat")
-        # Isolytic Dampeners bundles (ACAD wave-defense drones / Programmable Matter):
-        # hardcoded "increases its Isolytic Defense by 1000%" + per-variant extras.
-        damp_m = re.search(r"increases its isolytic defen[cs]e by (\d+(?:\.\d+)?)%", p)
+        # The translated Isolytic Dampeners percentage is fixed across levels.
+        damp_m = re.search(
+            r"increases (?:this standard hostile's base|its) isolytic defen[cs]e by (\d+(?:\.\d+)?)%",
+            p,
+        )
         if damp_m:
             extras = []
             if "can only be damaged by isolytic damage" in p:
@@ -655,7 +662,7 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 "isolytic_defense",
                 value_override=float(damp_m.group(1)) / 100.0,
                 extra_seats=extras or None,
-                _bucket="isolytic_combat",
+                _bucket="experimental_defense_array_partial" if "experimental defense array" in p else "isolytic_combat",
             )
         # Conditional self-debuffs: "this hostile's Isolytic Defense is reduced/lowered by X"
         # when fighting a specific player hull class (Mutually Assured Destruction, Burned in a
