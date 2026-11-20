@@ -104,7 +104,9 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 19 → 20 (2026-11): 0718's crew-wide Defense changes the scenario's rating
 ///   before ship breakpoints. The engine canaries do not load the officer catalog.
 ///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 20;
+/// * 20 → 21 (2026-11): owned generator bonuses require the saved Syndicate
+///   level during profile setup. Canary r exercises the gate with synthetic data.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 21;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -964,6 +966,44 @@ fn canary_fights() -> Vec<CanaryFight> {
         ..canary_config(5, 71)
     };
 
+    // An owned generator supplies a weapon bonus only when its Syndicate gate passes.
+    use crate::data::building::{
+        cumulative_building_level_bonuses, BonusEntry, BuildingLevel, BuildingRecord,
+    };
+    use crate::data::profile::{apply_profile_to_attacker, OfficerStatRuntimeBonus, PlayerProfile};
+    let generator = BuildingRecord {
+        id: "canary_generator".into(),
+        building_name: "Generator".into(),
+        data_version: None,
+        source_note: None,
+        levels: vec![BuildingLevel {
+            level: 1,
+            ops_min: None,
+            ops_max: None,
+            bonuses: vec![BonusEntry {
+                stat: "weapon_damage".into(),
+                value: 0.5,
+                operator: "add".into(),
+                conditions: vec!["syndicate_level_at_least_35".into()],
+                notes: None,
+            }],
+        }],
+    };
+    let building_profile = PlayerProfile {
+        bonuses: cumulative_building_level_bonuses(&generator, 1),
+        ..Default::default()
+    };
+    let mut building_attacker = canary_combatant("generator_player");
+    building_attacker.attack = 131.0;
+    let building_attacker = apply_profile_to_attacker(
+        building_attacker,
+        &building_profile,
+        None,
+        OfficerStatRuntimeBonus::default(),
+    );
+    let mut building_defender = canary_combatant("generator_hostile");
+    building_defender.attack = 83.0;
+
     vec![
         (
             "a_plain",
@@ -1073,6 +1113,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             CrewConfiguration {
                 seats: vec![arix_armor],
             },
+        ),
+        (
+            "r_locked_building_weapon_damage",
+            building_attacker,
+            building_defender,
+            canary_config(4, 73),
+            CrewConfiguration::default(),
         ),
     ]
 }
@@ -1733,7 +1780,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 17, "expected seventeen canary fights");
+        assert_eq!(summaries.len(), 18, "expected eighteen canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),

@@ -3244,6 +3244,7 @@ fn load_defender_profile_for_pvp(
                             .map(|s| ship_class_to_type(&s.ship_class)),
                         attacker_ship_grade: resolve_ship(defender_ship_id).and_then(|s| s.grade),
                         defender_ship_type: None,
+                        ..Default::default()
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
@@ -3443,6 +3444,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                         } else {
                             None
                         },
+                        ..Default::default()
                     };
                     let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
                         .parent()
