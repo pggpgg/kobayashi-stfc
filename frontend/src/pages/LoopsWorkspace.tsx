@@ -112,6 +112,7 @@ function ClimbControls({
   onStart,
   nextTargetId,
   totalRungs,
+  ready,
   loopId,
   ladderRevision,
   onReset,
@@ -121,6 +122,7 @@ function ClimbControls({
   onStart: () => void;
   nextTargetId: string | null;
   totalRungs: number;
+  ready: boolean;
   loopId: string;
   ladderRevision: number;
   onReset: () => void;
@@ -134,14 +136,17 @@ function ClimbControls({
       : null;
   const done = plan?.results.length ?? 0;
   const current = plan?.rungs[plan.cursor];
+  const last = plan?.results[done - 1];
 
   if (isClimbing) {
     return (
       <div className="loop-climb loop-climb--running">
-        <span>
+        <span role="status">
           Climbing {current ? `level ${current.targetLevel}` : "…"} · rung{" "}
           {(plan?.cursor ?? 0) + 1} of {plan?.rungs.length ?? totalRungs}
-          {progress?.progress ? ` · ${Math.round(progress.progress)}%` : ""}
+          {progress && progress.targetId === current?.targetId
+            ? ` · ${Math.round(progress.progress)}%`
+            : " · Starting optimizer…"}
         </span>
         <button type="button" onClick={climb.cancel}>
           Cancel climb
@@ -162,14 +167,18 @@ function ClimbControls({
       <button
         type="button"
         onClick={onStart}
-        disabled={totalRungs === 0 || !nextTargetId}
+        disabled={!ready || totalRungs === 0 || !nextTargetId}
         title={
-          nextTargetId
-            ? "Run each rung in turn from your frontier upward, warm-starting from the rung below"
-            : "Every rung on this ladder is already cleared"
+          !ready
+            ? "Waiting for the selected profile’s ship data"
+            : nextTargetId
+              ? "Run each rung in turn from your frontier upward, warm-starting from the rung below"
+              : "Every rung on this ladder is already cleared"
         }
       >
-        {nextTargetId ? "Climb this loop" : "Ladder cleared"}
+        {nextTargetId || totalRungs === 0
+          ? "Climb this loop"
+          : "Ladder cleared"}
       </button>
       <button
         type="button"
@@ -179,6 +188,16 @@ function ClimbControls({
         Reset ladder
       </button>
       {summary && <small>{summary}</small>}
+      {last?.error && (
+        <small role="alert">
+          Stopped at level {last.targetLevel}. {last.error}
+        </small>
+      )}
+      {last?.outcome === "contested" && !last.error && (
+        <small role="status">
+          Level {last.targetLevel} missed the clearance threshold.
+        </small>
+      )}
     </div>
   );
 }
@@ -192,6 +211,9 @@ export default function LoopsWorkspace() {
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedProfileId, setLoadedProfileId] = useState<string | null>(null);
+  const climbReady =
+    activeProfileId !== null && loadedProfileId === activeProfileId && !loading;
   const [error, setError] = useState<string | null>(null);
   const [recordsRevision, setRecordsRevision] = useState(0);
   const [resetNotice, setResetNotice] = useState<string | null>(null);
@@ -202,6 +224,7 @@ export default function LoopsWorkspace() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadedProfileId(null);
     setError(null);
     setResetNotice(null);
     Promise.all([
@@ -212,6 +235,7 @@ export default function LoopsWorkspace() {
       .then(([hostileList, allShips, ownedShips]) => {
         if (cancelled) return;
         setHostiles(hostileList);
+        setLoadedProfileId(activeProfileId);
         if (ownedShips.length === 0) {
           setShips(allShips);
           return;
@@ -354,6 +378,7 @@ export default function LoopsWorkspace() {
   };
 
   const startClimb = () => {
+    if (!climbReady) return;
     const shipId = selectedShipId;
     if (!shipId) {
       setError("Choose a ship before climbing this loop.");
@@ -561,6 +586,7 @@ export default function LoopsWorkspace() {
                 onStart={startClimb}
                 nextTargetId={frontier.nextTargetId}
                 totalRungs={loopHostiles.length}
+                ready={climbReady}
                 loopId={selectedLoop.id}
                 ladderRevision={ladderRevision}
                 onReset={resetLadder}

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
+import { fetchProfiles, optimizeStart } from "../lib/api";
 import { loopWorkspaceStorageKey } from "../lib/loopsWorkspaceStorage";
 import LoopsWorkspace from "./LoopsWorkspace";
 
@@ -171,6 +172,51 @@ describe("LoopsWorkspace", () => {
     }
   });
 
+  it("keeps the climb disabled until the active profile resolves", async () => {
+    vi.mocked(fetchProfiles).mockImplementationOnce(
+      () => new Promise(() => {}),
+    );
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <LoopsWorkspace />
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Actian" }));
+    await screen.findByText("Actian Apex");
+    expect(
+      screen
+        .getByRole("button", { name: "Climb this loop" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("explains an optimizer start failure beside the ladder controls", async () => {
+    vi.mocked(optimizeStart).mockRejectedValueOnce(
+      new Error("No legal crews for this profile"),
+    );
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <LoopsWorkspace />
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Actian" }));
+    const climbButton = await screen.findByRole("button", {
+      name: "Climb this loop",
+    });
+    await waitFor(() =>
+      expect(climbButton.hasAttribute("disabled")).toBe(false),
+    );
+    fireEvent.click(climbButton);
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Stopped at level 40. No legal crews for this profile",
+    );
+  });
+
   it("offers a whole-ladder climb and locks manual runs while it is in flight", async () => {
     render(
       <MemoryRouter initialEntries={["/loops"]}>
@@ -187,7 +233,13 @@ describe("LoopsWorkspace", () => {
     await screen.findByText("Actian Apex");
 
     const climbButton = screen.getByRole("button", { name: "Climb this loop" });
+    await waitFor(() =>
+      expect(climbButton.hasAttribute("disabled")).toBe(false),
+    );
     fireEvent.click(climbButton);
+    expect(screen.getByRole("status").textContent).toContain(
+      "Starting optimizer",
+    );
 
     // The server holds a single CPU permit for a running job, so a manual run
     // started mid-climb would hang rather than queue.

@@ -1,5 +1,6 @@
 import {
   cancelOptimizeJob,
+  formatApiError,
   getOptimizeStatus,
   type OptimizerStrategyType,
   optimizeStart,
@@ -310,7 +311,7 @@ export async function runLoopClimb(
             targetLevel: rung.targetLevel,
             outcome: "error",
             record: null,
-            error: cause instanceof Error ? cause.message : String(cause),
+            error: formatApiError(cause),
           },
         ],
       };
@@ -398,7 +399,7 @@ async function awaitRung(
         ...base,
         outcome: "interrupted",
         record: null,
-        error: cause instanceof Error ? cause.message : String(cause),
+        error: formatApiError(cause),
       };
     }
 
@@ -427,6 +428,17 @@ async function awaitRung(
       };
     }
 
+    const recommendations = status.result.recommendations ?? [];
+    if (recommendations.length === 0) {
+      return {
+        ...base,
+        outcome: "error",
+        record: null,
+        error:
+          "The optimizer found no eligible crews. Check the selected profile’s roster.",
+      };
+    }
+
     const context: LoopRunContext = {
       loopId: plan.loopId,
       ladderRevision: plan.ladderRevision,
@@ -445,7 +457,7 @@ async function awaitRung(
       shipId: plan.shipId,
       shipTier: plan.shipTier,
       shipLevel: plan.shipLevel,
-      recommendations: status.result.recommendations ?? [],
+      recommendations,
       simsPerCrew: plan.settings.simsPerCrew,
       strategy: plan.settings.strategy,
       maxCandidates: plan.settings.maxCandidates,

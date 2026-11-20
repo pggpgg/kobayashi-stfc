@@ -242,6 +242,31 @@ describe("runLoopClimb", () => {
     expect(final.status).toBe("done");
   });
 
+  it("reports an empty optimizer result as a profile roster error", async () => {
+    optimizeStart.mockResolvedValue({ job_id: "job" });
+    getOptimizeStatus.mockResolvedValue(
+      doneStatus({ result: { recommendations: [] } }),
+    );
+    const base = plan();
+    const final = await runLoopClimb(
+      {
+        ...base,
+        settings: {
+          ...base.settings,
+          stopCondition: { type: "first_failure" },
+        },
+      },
+      { onPlan: () => {} },
+      () => false,
+      deps,
+    );
+    expect(final.results).toHaveLength(1);
+    expect(final.results[0]).toMatchObject({
+      outcome: "error",
+      error: expect.stringContaining("no eligible crews"),
+    });
+  });
+
   it("continues past a contested rung under full_ladder", async () => {
     optimizeStart.mockResolvedValue({ job_id: "job" });
     getOptimizeStatus.mockResolvedValue(
