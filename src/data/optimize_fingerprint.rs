@@ -104,7 +104,10 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 19 → 20 (2026-11): 0718's crew-wide Defense changes the scenario's rating
 ///   before ship breakpoints. The engine canaries do not load the officer catalog.
 ///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 20;
+/// * 20 → 21 (2026-11): standalone scenarios load building pools before
+///   research and support effects. Canary f exercises building pool application.
+///   The synthetic fights cannot detect omissions in profile loading.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 21;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -656,11 +659,13 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
-    // (f) each native source group and seat scope is needed to cross a breakpoint.
+    // (f) native account pools affect officer breakpoints, base weapon damage, and hull.
     let mut f_profile = crate::data::profile::PlayerProfile::default();
     let f_buffs = [
         (476178618, 3),   // global Defense +15%
         (334143899, 2),   // building all officer stats +2%
+        (1474824297, 2),  // Armory hull health +10%
+        (1030529782, 2),  // Shuttle Bay weapon damage +2%
         (941300209, 5),   // captain all stats +35%
         (809236561, 5),   // bridge (including captain) all stats +35%
         (1895868262, 10), // below-decks Defense +100%

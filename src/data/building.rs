@@ -5,9 +5,12 @@
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::path::Path;
+use std::num::NonZeroUsize;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use crate::combat::types::ShipType;
+use lru::LruCache;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -220,6 +223,51 @@ pub fn load_building_record(data_dir: &Path, id: &str) -> Option<BuildingRecord>
     let path = data_dir.join(format!("{}.json", file_stem));
     let data = fs::read_to_string(path).ok()?;
     serde_json::from_str(&data).ok()
+}
+
+pub(crate) fn load_building_record_for_combat(
+    absolute_data_dir: &Path,
+    id: &str,
+    index: Option<&BuildingIndex>,
+) -> Option<Arc<BuildingRecord>> {
+    // Preserve the legacy filename preference and reuse the index already loaded
+    // for this scenario when resolving the normalized filename.
+    let legacy = absolute_data_dir.join(format!("{id}.json"));
+    read_cached_building_record(&legacy).or_else(|| {
+        let entry = index?.buildings.iter().find(|entry| entry.id == id)?;
+        let file = entry.file.as_deref().filter(|file| *file != id)?;
+        read_cached_building_record(&absolute_data_dir.join(format!("{file}.json")))
+    })
+}
+
+struct CachedBuildingRecord {
+    bytes: Vec<u8>,
+    record: Arc<BuildingRecord>,
+}
+
+fn read_cached_building_record(path: &Path) -> Option<Arc<BuildingRecord>> {
+    // Re-read the small catalog files so revisions take effect immediately.
+    // Comparing the bytes also handles same-size rewrites with unchanged timestamps.
+    static RECORDS: OnceLock<Mutex<LruCache<PathBuf, CachedBuildingRecord>>> = OnceLock::new();
+    let bytes = fs::read(path).ok()?;
+    let cache = RECORDS.get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(256).unwrap())));
+    if let Some(hit) = cache
+        .lock()
+        .expect("building record cache poisoned")
+        .get(path)
+        .filter(|hit| hit.bytes == bytes)
+    {
+        return Some(Arc::clone(&hit.record));
+    }
+    let record = Arc::new(serde_json::from_slice(&bytes).ok()?);
+    cache.lock().expect("building record cache poisoned").put(
+        path.to_path_buf(),
+        CachedBuildingRecord {
+            bytes,
+            record: Arc::clone(&record),
+        },
+    );
+    Some(record)
 }
 
 fn accumulate_bonus(out: &mut HashMap<String, f64>, stat: &str, operator: &str, value: f64) {
@@ -527,9 +575,17 @@ pub fn cumulative_building_bonuses_with_context(
     levels_by_id: &HashMap<String, u32>,
     context: &BuildingBonusContext,
 ) -> HashMap<String, f64> {
+    cumulative_building_bonuses_from_records(records, levels_by_id, context)
+}
+
+pub(crate) fn cumulative_building_bonuses_from_records<'a>(
+    records: impl IntoIterator<Item = &'a BuildingRecord>,
+    levels_by_id: &HashMap<String, u32>,
+    context: &BuildingBonusContext,
+) -> HashMap<String, f64> {
     let mut out: HashMap<String, f64> = HashMap::new();
     let index: HashMap<&str, &BuildingRecord> =
-        records.iter().map(|r| (r.id.as_str(), r)).collect();
+        records.into_iter().map(|r| (r.id.as_str(), r)).collect();
 
     // Building IDs are collected in a HashMap. Sum them in a stable order so
     // the same inputs cannot differ through floating-point addition order.
@@ -554,6 +610,53 @@ mod tests {
     use std::path::Path;
 
     use super::*;
+
+    #[test]
+    fn combat_record_cache_observes_catalog_edits_and_legacy_filename() {
+        let dir = std::path::absolute(
+            Path::new("target").join(format!("building-cache-{}", uuid::Uuid::new_v4())),
+        )
+        .unwrap();
+        fs::create_dir_all(&dir).unwrap();
+        struct Cleanup(PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = fs::remove_file(self.0.join("0_operations.json"));
+                let _ = fs::remove_file(self.0.join("ops_center.json"));
+                let _ = fs::remove_dir(&self.0);
+            }
+        }
+        let _cleanup = Cleanup(dir.clone());
+        let index = BuildingIndex {
+            data_version: None,
+            source_note: None,
+            buildings: vec![BuildingIndexEntry {
+                id: "ops_center".into(),
+                building_name: "Operations".into(),
+                file: Some("0_operations".into()),
+                bid: Some(0),
+            }],
+        };
+        let source = r#"{"id":"ops_center","building_name":"Operations","levels":[
+            {"level":1,"bonuses":[{"stat":"weapon_damage","value":0.05}]}]}"#;
+        let indexed_path = dir.join("0_operations.json");
+        fs::write(&indexed_path, source).unwrap();
+        let original = load_building_record_for_combat(&dir, "ops_center", Some(&index)).unwrap();
+        let repeated = load_building_record_for_combat(&dir, "ops_center", Some(&index)).unwrap();
+        assert!(Arc::ptr_eq(&original, &repeated));
+
+        fs::write(&indexed_path, source.replace("0.05", "0.08")).unwrap();
+        let updated = load_building_record_for_combat(&dir, "ops_center", Some(&index)).unwrap();
+        assert_eq!(updated.levels[0].bonuses[0].value, 0.08);
+
+        let legacy_path = dir.join("ops_center.json");
+        fs::write(&legacy_path, source).unwrap();
+        let legacy = load_building_record_for_combat(&dir, "ops_center", Some(&index)).unwrap();
+        assert_eq!(legacy.levels[0].bonuses[0].value, 0.05);
+        fs::remove_file(legacy_path).unwrap();
+        let fallback = load_building_record_for_combat(&dir, "ops_center", Some(&index)).unwrap();
+        assert!(Arc::ptr_eq(&updated, &fallback));
+    }
 
     fn test_record() -> BuildingRecord {
         BuildingRecord {

@@ -666,6 +666,34 @@ pub fn merge_building_bonuses_with_native_snapshot(
     if imported_buildings.is_empty() || bid_to_id.is_empty() {
         return;
     }
+    // Callers can pass a synthetic index or a partial BID map. The on-disk
+    // index still defines the filenames for records in their chosen directory.
+    let disk_index = fs::read(data_dir.join("index.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok());
+    merge_building_bonuses_from_index(
+        profile,
+        imported_buildings,
+        bid_to_id,
+        disk_index.as_ref(),
+        data_dir,
+        context,
+        native_bonuses,
+    );
+}
+
+pub(crate) fn merge_building_bonuses_from_index(
+    profile: &mut PlayerProfile,
+    imported_buildings: &[BuildingEntry],
+    bid_to_id: &HashMap<i64, String>,
+    building_index: Option<&BuildingIndex>,
+    data_dir: &Path,
+    context: &BuildingBonusContext,
+    native_bonuses: Option<&HashMap<String, f64>>,
+) {
+    if imported_buildings.is_empty() || bid_to_id.is_empty() {
+        return;
+    }
 
     let mut levels_by_id: HashMap<String, u32> = HashMap::new();
     for entry in imported_buildings {
@@ -683,18 +711,22 @@ pub fn merge_building_bonuses_with_native_snapshot(
         return;
     }
 
-    let mut records: Vec<building::BuildingRecord> = Vec::new();
-    for id in levels_by_id.keys() {
-        if let Some(rec) = building::load_building_record(data_dir, id) {
-            records.push(rec);
-        }
-    }
+    let Ok(data_dir) = std::path::absolute(data_dir) else {
+        return;
+    };
+    let records: Vec<_> = levels_by_id
+        .keys()
+        .filter_map(|id| building::load_building_record_for_combat(&data_dir, id, building_index))
+        .collect();
     if records.is_empty() {
         return;
     }
 
-    let mut bonuses =
-        building::cumulative_building_bonuses_with_context(&records, &levels_by_id, context);
+    let mut bonuses = building::cumulative_building_bonuses_from_records(
+        records.iter().map(|record| record.as_ref()),
+        &levels_by_id,
+        context,
+    );
 
     if let Some(native) = native_bonuses {
         bonuses.retain(|stat, _| {
