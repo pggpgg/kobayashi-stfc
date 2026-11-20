@@ -3,11 +3,16 @@ import type { CrewRecommendation } from "./api";
 import type { LoopGoalId } from "./loopsCatalog";
 import {
   getLoopBestRecord,
+  getLoopLadderRevision,
   isGenuineImprovement,
   type LoopBestRecord,
   type LoopRunContext,
+  listLoopRecords,
+  loadPendingLoopRun,
   primaryMetricForGoal,
+  resetLoopLadder,
   saveLoopOptimizationResult,
+  savePendingLoopRun,
 } from "./loopsWorkspaceStorage";
 
 const context: LoopRunContext = {
@@ -101,6 +106,52 @@ describe("loops workspace persistence", () => {
     expect(
       getLoopBestRecord("p2", "actian", "apex-49", "one_round"),
     ).toBeNull();
+  });
+
+  it("clears every goal for one loop and rejects results from before the reset", () => {
+    const result = {
+      profileId: "p1",
+      context,
+      shipId: "mantis",
+      shipTier: 5,
+      shipLevel: 25,
+      recommendations: [recommendation({})],
+    };
+    saveLoopOptimizationResult(result);
+    saveLoopOptimizationResult({
+      ...result,
+      recommendations: [recommendation({ captain: "Khan", r1_kill_rate: 0.8 })],
+    });
+    saveLoopOptimizationResult({
+      ...result,
+      context: { ...context, goalId: "no_hits" },
+    });
+    const otherLoop = saveLoopOptimizationResult({
+      ...result,
+      context: { ...context, loopId: "actian-variant" },
+    }).record;
+    const otherProfile = saveLoopOptimizationResult({
+      ...result,
+      profileId: "p2",
+    }).record;
+    savePendingLoopRun("p1", context);
+
+    resetLoopLadder("p1", "actian");
+
+    expect(listLoopRecords("p1")).toEqual([otherLoop]);
+    expect(listLoopRecords("p2")).toEqual([otherProfile]);
+    expect(loadPendingLoopRun("p1")).toBeNull();
+    expect(saveLoopOptimizationResult(result)).toMatchObject({
+      saved: false,
+      reason: "ladder_reset",
+    });
+    const ladderRevision = getLoopLadderRevision("p1", "actian");
+    expect(
+      saveLoopOptimizationResult({
+        ...result,
+        context: { ...context, ladderRevision },
+      }).saved,
+    ).toBe(true);
   });
 
   it("does not record a best set on a ship the loop requires you not to use", () => {

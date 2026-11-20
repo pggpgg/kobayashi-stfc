@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileProvider } from "../contexts/ProfileContext";
+import { loopWorkspaceStorageKey } from "../lib/loopsWorkspaceStorage";
 import LoopsWorkspace from "./LoopsWorkspace";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -104,6 +105,70 @@ describe("LoopsWorkspace", () => {
     expect(screen.getAllByText("🔒 locked")).toHaveLength(1);
     expect(screen.getByLabelText("Next rung to attack")).toBeTruthy();
     expect(screen.getByText(/0 cleared/)).toBeTruthy();
+  });
+
+  it("asks before resetting the selected ladder and returns it to the first rung", async () => {
+    localStorage.setItem(
+      loopWorkspaceStorageKey("p1"),
+      JSON.stringify({
+        version: 1,
+        records: {
+          "actian|actian-40|kills_per_hull": [
+            {
+              id: "result",
+              loopId: "actian",
+              targetId: "actian-40",
+              targetName: "Actian Instigator",
+              targetLevel: 40,
+              goalId: "kills_per_hull",
+              shipId: "mantis",
+              shipTier: 5,
+              shipLevel: 25,
+              crew: { captain: "Khan", bridge: [], belowDecks: [] },
+              winRate: 1,
+              chainSuccessRate: 1,
+              chainKillsTarget: 5,
+              roundOneKillRate: 1,
+              averageHullRemaining: 0.9,
+              averageDefenderHullRemaining: 0,
+              recordedAt: "2026-11-20T00:00:00Z",
+            },
+          ],
+        },
+      }),
+    );
+    const confirm = vi
+      .spyOn(window, "confirm")
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
+    try {
+      render(
+        <MemoryRouter initialEntries={["/loops"]}>
+          <ProfileProvider>
+            <LoopsWorkspace />
+          </ProfileProvider>
+        </MemoryRouter>,
+      );
+
+      await screen.findByRole("button", { name: /Actian.*1 saved/ });
+      fireEvent.click(screen.getByRole("button", { name: /Actian.*1 saved/ }));
+      await screen.findByText("Saved best");
+      const reset = screen.getByRole("button", { name: "Reset ladder" });
+      fireEvent.click(reset);
+      expect(confirm).toHaveBeenCalledWith(
+        expect.stringContaining("Reset the Actian ladder"),
+      );
+      expect(screen.getByText("Saved best")).toBeTruthy();
+
+      fireEvent.click(reset);
+      expect(screen.queryByText("Saved best")).toBeNull();
+      expect(screen.getByText("Actian ladder reset.")).toBeTruthy();
+      expect(screen.getByText("0 cleared · 0 / 2 recorded")).toBeTruthy();
+      expect(screen.getByLabelText("Next rung to attack")).toBeTruthy();
+      expect((reset as HTMLButtonElement).disabled).toBe(true);
+    } finally {
+      confirm.mockRestore();
+    }
   });
 
   it("offers a whole-ladder climb and locks manual runs while it is in flight", async () => {

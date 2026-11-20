@@ -24,6 +24,8 @@ const OVERLAP_TRUST_RATIO = 0.5;
 
 export interface LoopRunContext {
   loopId: string;
+  /** Snapshot taken at handoff, so an older run cannot repopulate a reset ladder. */
+  ladderRevision?: number;
   loopName: string;
   targetId: string;
   targetName: string;
@@ -108,13 +110,14 @@ type LoopBestRecordV1 = Omit<
 interface LoopsWorkspaceFile {
   version: number;
   records: Record<string, LoopBestRecord[]>;
+  ladderRevisions?: Record<string, number>;
 }
 
 function profileKey(profileId: string | null): string {
   return profileId?.trim() || "default";
 }
 
-function storageKey(profileId: string | null): string {
+export function loopWorkspaceStorageKey(profileId: string | null): string {
   return `${STORAGE_PREFIX}:${profileKey(profileId)}`;
 }
 
@@ -163,12 +166,21 @@ function migrateV1Record(v1: LoopBestRecordV1): LoopBestRecord {
   };
 }
 
-function readWorkspace(profileId: string | null): LoopsWorkspaceFile {
+function readWorkspace(
+  profileId: string | null,
+  requireValid = false,
+): LoopsWorkspaceFile {
   try {
-    const raw = localStorage.getItem(storageKey(profileId));
+    const raw = localStorage.getItem(loopWorkspaceStorageKey(profileId));
     if (!raw) return emptyWorkspace();
     const parsed = JSON.parse(raw) as LoopsWorkspaceFile;
-    if (!parsed.records) return emptyWorkspace();
+    if (
+      !parsed.records ||
+      typeof parsed.records !== "object" ||
+      Array.isArray(parsed.records)
+    ) {
+      throw new Error("Saved ladder results could not be read.");
+    }
     if (parsed.version === STORAGE_VERSION) return parsed;
     if (parsed.version === 1) {
       // These are crews the player earned by running optimizations; dropping them
@@ -184,7 +196,10 @@ function readWorkspace(profileId: string | null): LoopsWorkspaceFile {
         ),
       };
       try {
-        localStorage.setItem(storageKey(profileId), JSON.stringify(migrated));
+        localStorage.setItem(
+          loopWorkspaceStorageKey(profileId),
+          JSON.stringify(migrated),
+        );
       } catch {
         // Migration is still usable in memory even if it cannot be persisted.
       }
@@ -192,10 +207,38 @@ function readWorkspace(profileId: string | null): LoopsWorkspaceFile {
     }
     // An unrecognised version is more likely corruption than a downgrade; stay
     // empty rather than risk interpreting foreign data as records.
-    return emptyWorkspace();
-  } catch {
+    throw new Error("Saved ladder results use an unsupported format.");
+  } catch (cause) {
+    if (requireValid) throw cause;
     return emptyWorkspace();
   }
+}
+
+export function getLoopLadderRevision(
+  profileId: string | null,
+  loopId: string,
+): number {
+  return readWorkspace(profileId).ladderRevisions?.[loopId] ?? 0;
+}
+
+export function resetLoopLadder(
+  profileId: string | null,
+  loopId: string,
+): void {
+  const workspace = readWorkspace(profileId, true);
+  const records = Object.fromEntries(
+    Object.entries(workspace.records).filter(
+      ([key]) => !key.startsWith(`${loopId}|`),
+    ),
+  );
+  const ladderRevisions = {
+    ...workspace.ladderRevisions,
+    [loopId]: (workspace.ladderRevisions?.[loopId] ?? 0) + 1,
+  };
+  localStorage.setItem(
+    loopWorkspaceStorageKey(profileId),
+    JSON.stringify({ ...workspace, records, ladderRevisions }),
+  );
 }
 
 function recordKey(
@@ -421,6 +464,7 @@ export function getLoopBestRecord(
 /** Why a result was not recorded, so callers can say something true about it. */
 export type LoopSaveRejection =
   | "no_recommendation"
+  | "ladder_reset"
   | "off_policy_ship"
   | "not_improved"
   | "storage_failed";
@@ -475,6 +519,17 @@ export function saveLoopOptimizationResult(args: {
   }
 
   const workspace = readWorkspace(args.profileId);
+  if (
+    (workspace.ladderRevisions?.[args.context.loopId] ?? 0) !==
+    (args.context.ladderRevision ?? 0)
+  ) {
+    return {
+      saved: false,
+      improved: false,
+      record: null,
+      reason: "ladder_reset",
+    };
+  }
   const key = recordKey(
     args.context.loopId,
     args.context.targetId,
@@ -561,7 +616,10 @@ export function saveLoopOptimizationResult(args: {
   });
   workspace.records[key] = deduped.slice(0, MAX_PRIOR_BESTS);
   try {
-    localStorage.setItem(storageKey(args.profileId), JSON.stringify(workspace));
+    localStorage.setItem(
+      loopWorkspaceStorageKey(args.profileId),
+      JSON.stringify(workspace),
+    );
     return { saved: true, improved: true, record };
   } catch {
     // The crew *was* an improvement; only persistence failed (quota, private
@@ -591,7 +649,15 @@ export function loadPendingLoopRun(
   try {
     const raw = sessionStorage.getItem(pendingKey(profileId));
     if (!raw) return null;
-    return JSON.parse(raw) as LoopRunContext;
+    const context = JSON.parse(raw) as LoopRunContext;
+    if (
+      (context.ladderRevision ?? 0) !==
+      getLoopLadderRevision(profileId, context.loopId)
+    ) {
+      clearPendingLoopRun(profileId);
+      return null;
+    }
+    return context;
   } catch {
     return null;
   }

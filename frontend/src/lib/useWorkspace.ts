@@ -785,6 +785,10 @@ export function useWorkspace() {
           setWorkspaceInfo(
             `New ${activeLoopRun.loopName} best saved for Level ${activeLoopRun.targetLevel} (${activeLoopRun.targetName}). Return to Loops workspace to see the updated ladder.`,
           );
+        } else if (saved.reason === "ladder_reset") {
+          setWorkspaceInfo(
+            `The ${activeLoopRun.loopName} ladder was reset while this run was pending. Open the rung again to record a new result.`,
+          );
         } else if (saved.record) {
           setWorkspaceInfo(
             `Optimization finished, but the saved ${activeLoopRun.loopName} best for this goal is still stronger.`,

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LoopClimbPlan } from "./loopClimbRunner";
+import { listLoopRecords, resetLoopLadder } from "./loopsWorkspaceStorage";
 
 const optimizeStart = vi.fn();
 const getOptimizeStatus = vi.fn();
@@ -162,6 +163,26 @@ describe("runLoopClimb", () => {
       "running:job-3",
       "done:job-3",
     ]);
+  });
+
+  it("discards a result that arrives after the ladder was reset", async () => {
+    optimizeStart.mockResolvedValue({ job_id: "job-1" });
+    getOptimizeStatus.mockImplementation(async () => {
+      resetLoopLadder("p1", "actian");
+      return doneStatus();
+    });
+
+    const result = await runLoopClimb(
+      plan(),
+      { onPlan: () => {} },
+      () => false,
+      deps,
+    );
+
+    expect(result.status).toBe("cancelled");
+    expect(result.results[0]?.outcome).toBe("interrupted");
+    expect(optimizeStart).toHaveBeenCalledTimes(1);
+    expect(listLoopRecords("p1")).toEqual([]);
   });
 
   it("warm-starts each rung from the rung below's saved crew", async () => {
