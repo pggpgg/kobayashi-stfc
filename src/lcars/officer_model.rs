@@ -1457,7 +1457,19 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .and_then(percentage_from_canonical_attributes)
             .is_some()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    // The generic crit modifiers run before the roll. They cannot grant a
+    // stack after a qualifying critical weapon, or reduce an opponent's
+    // crit damage outside the verified damage-taken stack path.
+    let unsupported_critical_shot_modifier = matches!(modifier, "CritChance" | "CritDamage")
+        && a.trigger.as_deref() == Some("CriticalShotFired");
+    let unsupported_enemy_crit_damage = modifier == "CritDamage"
+        && a.target
+            .as_deref()
+            .is_some_and(|target| target.starts_with("Enemy"))
+        && !(stacks_on_damage_taken(a) && op == "Sub");
     let unsupported_source_pattern = modifier == "OfficerStatAttack"
+        || unsupported_critical_shot_modifier
+        || unsupported_enemy_crit_damage
         || (modifier == "OfficerStatDefense" && !supported_computer_precision)
         || (modifier == "AllPiercing" && !supported_enemy_piercing_reduction)
         || (modifier == "AllDefenses" && !supported_ortegas_defense)
