@@ -757,11 +757,23 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         # Covers Black Market Armaments / Krenim Temporal Core / Static Displacer-style
         # multi-stat texts whose per-stat values cannot be read off the text; unvalidated.
         if "defense" in p or "defence" in p:
+            # The Warship variants state an explicit fight limit in a separate sentence.
+            # Dreadnought cores omit that sentence and keep the normal round budget.
+            limit = re.search(
+                r"battles vs (?:charged|static) krenim invading entities only last ([1-9]\d*) rounds\b",
+                p,
+            )
+            extras = []
+            if limit:
+                extras.append(
+                    modeled("combat_begin", "hostile_engagement_round_limit", value_override=int(limit[1]))
+                )
             return m(
                 "combat_begin",
                 "isolytic_defense",
                 value_is_percentage=True,
                 ignore_upstream_value_is_percentage=False,
+                extra_seats=extras,
                 _bucket="isolytic_combat",
             )
         return m(

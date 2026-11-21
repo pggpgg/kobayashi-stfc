@@ -119,6 +119,79 @@ fn one_v_one_variant_resolves_no_engagement_limit_seat() {
     assert_eq!(hostile_engagement_round_limit(&crew), None);
 }
 
+fn check_krenim_round_limit(hostile_id: &str, limit: u32) {
+    let rec = resolve_hostile(hostile_id).expect("Krenim warship");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
+    let attacker = combatant(
+        "att",
+        1_000_000.0,
+        WeaponStats {
+            attack: 100_000.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let mut defender = combatant(hostile_id, 10_000_000.0, WeaponStats::default());
+    let damage_per_round = run(&attacker, &defender, &pve_config(1, 42), &crew).total_damage;
+    assert!(damage_per_round > 0.0);
+    let cfg = pve_config(100, 42);
+
+    // The same shot would kill on round limit + 1 without the engagement limit.
+    defender.hull_health = (f64::from(limit) + 0.5) * damage_per_round;
+    let timed_out = run(&attacker, &defender, &cfg, &crew);
+    assert_eq!(timed_out.rounds_simulated, limit, "hostile {hostile_id}");
+    assert!(!timed_out.attacker_won);
+    assert!(timed_out.winner_by_round_limit);
+    assert!(timed_out.defender_hull_remaining > 0.0);
+    assert_eq!(hostile_engagement_round_limit(&crew), Some(limit));
+
+    let traced = run(
+        &attacker,
+        &defender,
+        &SimulationConfig {
+            trace_mode: TraceMode::Events,
+            ..cfg.clone()
+        },
+        &crew,
+    );
+    assert_eq!(traced.rounds_simulated, timed_out.rounds_simulated);
+    assert_eq!(traced.attacker_won, timed_out.attacker_won);
+    assert_eq!(
+        traced.winner_by_round_limit,
+        timed_out.winner_by_round_limit
+    );
+    assert_eq!(traced.total_damage, timed_out.total_damage);
+    assert_eq!(
+        traced.defender_hull_remaining,
+        timed_out.defender_hull_remaining
+    );
+
+    defender.hull_health = (f64::from(limit) - 0.5) * damage_per_round;
+    let killed = run(&attacker, &defender, &cfg, &crew);
+    assert_eq!(killed.rounds_simulated, limit);
+    assert!(killed.attacker_won, "a kill in the final round counts");
+    assert!(!killed.winner_by_round_limit);
+}
+
+#[test]
+fn charged_krenim_warships_stop_after_thirty_rounds() {
+    check_krenim_round_limit("10483733", 30);
+}
+
+#[test]
+fn static_krenim_warships_stop_after_fifty_rounds() {
+    check_krenim_round_limit("35075000", 50);
+}
+
+#[test]
+fn static_temporal_dreadnought_has_no_krenim_round_limit() {
+    let rec = resolve_hostile("1337474913").expect("Static Temporal Dreadnought");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
+    assert_eq!(hostile_engagement_round_limit(&crew), None);
+}
+
 /// An attacker that would destroy the hostile after round 20 now times out at round 20 and
 /// loses; without the seat the same fight is a win past round 20.
 #[test]
