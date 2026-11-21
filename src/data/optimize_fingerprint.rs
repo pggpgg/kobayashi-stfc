@@ -128,7 +128,9 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Canary w checks combat expiry. The canaries do not load the officer catalog.
 /// * 28 → 29 (2026-11): standalone scenarios load the building pools before
 ///   research. Canary f exercises building pools without profile file loading.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 29;
+/// * 29 → 30 (2026-11): Enterprise-D firing cadence and eligible-round Galaxy
+///   Class stacks. The canaries do not load normalized ship records.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 30;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -1374,6 +1376,66 @@ fn canary_fights() -> Vec<CanaryFight> {
     let mut commander_defender = canary_combatant("commander_target");
     commander_defender.hull_health = 20_000.0;
 
+    // Morale can lapse between cumulative Galaxy Class grants.
+    let mut galaxy_attacker = canary_combatant("canary_galaxy_attacker");
+    galaxy_attacker.attack = 90.0;
+    galaxy_attacker.hull_health = 3_000.0;
+    let mut galaxy_defender = canary_combatant("canary_galaxy_defender");
+    galaxy_defender.hull_health = 9_000.0;
+    let mut growth = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::RoundStart,
+        AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+            growth_per_round: 0.85,
+            ceiling: 100.0,
+        },
+    );
+    growth.ability.condition = Some(crate::combat::AbilityCondition::MoraleActive);
+    let galaxy_crew = CrewConfiguration {
+        seats: vec![
+            growth,
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::RoundStart,
+                AbilityEffect::Morale(0.5),
+            ),
+        ],
+    };
+
+    // Alternating phasers and a slower torpedo must honor their schedules.
+    let mut scheduled_attacker = canary_combatant("canary_scheduled_attacker");
+    scheduled_attacker.hull_health = 4_000.0;
+    scheduled_attacker.weapons = [(6, 1, 2, 20.0), (6, 2, 2, 20.0), (2, 2, 3, 90.0)]
+        .into_iter()
+        .map(
+            |(shots, first_round, interval_rounds, attack)| crate::combat::WeaponStats {
+                attack,
+                shots: Some(shots),
+                firing_schedule: Some(crate::combat::WeaponFiringSchedule {
+                    first_round,
+                    interval_rounds,
+                }),
+                ..Default::default()
+            },
+        )
+        .collect();
+    let mut scheduled_defender = canary_combatant("canary_scheduled_defender");
+    scheduled_defender.hull_health = 9_000.0;
+    let scheduled_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Bridge,
+            AbilityClass::BridgeAbility,
+            TimingWindow::AttackPhase,
+            AbilityEffect::OnHitTimedBonus {
+                crit_chance: 0.0,
+                cascade_damage: 0.1,
+                duration_rounds: 3,
+            },
+        )],
+    };
+
     vec![
         (
             "a_plain",
@@ -1529,6 +1591,20 @@ fn canary_fights() -> Vec<CanaryFight> {
             commander_defender,
             canary_config(3, 73),
             CrewConfiguration::default(),
+        ),
+        (
+            "enterprise_d_morale_growth",
+            galaxy_attacker,
+            galaxy_defender,
+            canary_config(12, 7),
+            galaxy_crew,
+        ),
+        (
+            "enterprise_d_scheduled_volleys",
+            scheduled_attacker,
+            scheduled_defender,
+            canary_config(8, 43),
+            scheduled_crew,
         ),
     ]
 }
@@ -2208,7 +2284,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 28, "expected twenty-eight canary fights");
+        assert_eq!(summaries.len(), 30, "expected thirty canary fights");
         let decay = summaries
             .iter()
             .find(|summary| summary.starts_with("y_hostile_hyperthermic_decay:"))

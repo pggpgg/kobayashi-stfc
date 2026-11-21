@@ -239,7 +239,8 @@ pub enum AbilityEffect {
         growth_per_round: f64,
         ceiling: f64,
     },
-    /// Galaxy-class hull growth (e.g. U.S.S. Enterprise-D): cumulative fraction `g` (same units as
+    /// Galaxy-class hull growth (e.g. U.S.S. Enterprise-D) adds one stack on each eligible
+    /// round and retains earned stacks for the fight. The cumulative fraction `g` (same units as
     /// profile `weapon_damage` bonus `p`) applied as `×(1 + g/(1+p))` on outgoing weapon damage so it
     /// stacks **additively** with research weapon_damage (`∝ 1+p+g`) instead of as another factor in
     /// `pre_attack_multiplier` (`∝ (1+p)(1+g)` when alone).

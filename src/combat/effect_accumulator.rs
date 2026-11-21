@@ -1161,28 +1161,8 @@ impl EffectAccumulator {
                         }
                     }
                 }
-                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
-                    growth_per_round,
-                    ceiling,
-                } => {
-                    if matches!(timing, TimingWindow::RoundStart) {
-                        let r = round_index as f64;
-                        let g = (r * growth_per_round).min(ceiling);
-                        if g.is_finite() && g > 0.0 {
-                            self.galaxy_additive_weapon_frac += g;
-                            if let Some((ab, oid)) = source {
-                                self.push_contribution_line(
-                                    ab,
-                                    oid,
-                                    timing,
-                                    "GalaxyAdditiveWeaponDamageGrowth",
-                                    "galaxy_additive_weapon_frac",
-                                    g,
-                                );
-                            }
-                        }
-                    }
-                }
+                // The fight loop applies the earned stacks to the additive weapon pool.
+                AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. } => {}
                 AbilityEffect::AccuracyBonus(_) => {}
             },
             TimingWindow::AttackPhase => match effect {
@@ -2228,7 +2208,8 @@ fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
     effect.ability_class == AbilityClass::ShipAbility
         && matches!(
             effect.effect,
-            AbilityEffect::HostileBasePiercingStatsReduction(_)
+            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
+                | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::ShieldRegenMaxFraction(_)
@@ -3411,9 +3392,8 @@ mod tests {
     // ── GalaxyAdditiveWeaponDamageGrowth at RoundStart ──
 
     #[test]
-    fn galaxy_additive_weapon_damage_growth_at_round_start() {
+    fn galaxy_growth_marker_is_applied_by_the_fight_loop() {
         let mut acc = EffectAccumulator::default();
-        // round 4: growth = 4 * 0.02 = 0.08, ceiling 0.5 → g = 0.08
         acc.add_effect(
             TimingWindow::RoundStart,
             AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
@@ -3424,7 +3404,7 @@ mod tests {
             4,
             None,
         );
-        assert!((acc.galaxy_additive_weapon_frac() - 0.08).abs() < 1e-12);
+        assert_eq!(acc.galaxy_additive_weapon_frac(), 0.0);
     }
 
     // ── set_pre_attack_damage_base ──

@@ -48,6 +48,81 @@ Descriptions are keyed by `translations-ship_buffs.json` (`key: ship_ability_des
 
 ---
 
+## Enterprise-D weapon firing schedule
+
+The Enterprise-D's native component data specifies two six-shot phasers and a
+two-shot torpedo. The phasers first fire in rounds 1 and 2, respectively, and
+each fires every two rounds. The torpedo first fires in round 2 and then every
+three rounds. The upstream component sequence places the active phaser before
+the torpedo; its numeric display-order fields place the torpedo between the two
+phasers and do not match the retained round-2 firing order.
+
+In the retained 23-round Enterprise-D versus Hurak export, the player fired six
+shots in round 1, eight in round 2, and six in round 3. The full sequence is
+154 player shots, matching those component schedules. The former simulator
+fired all three weapons in every round, producing 322 simulated shots over the
+same 23 rounds. The [STFC.space firing-pattern chart](https://stfc.space/ships/448699234)
+shows the same per-round shot counts. Round-2 noncritical damage in the export
+also separates the six phaser hits
+from the following two larger torpedo hits. This comparison verifies the
+recorded player firing pattern, not the player's complete damage or profile.
+
+The engine reads the first firing round and repeating interval from the
+Enterprise-D and NX-01 ship records. Synced Enterprise-D component overrides
+retain source order and schedules. Invalid Enterprise-D timing disables the
+affected weapon with a diagnostic. Reload-modifying abilities, the Hurak's
+firing schedule, and server-side volley interleaving remain unverified.
+
+The upstream [ship record](../data/upstream/data-stfc-space/ships/448699234.json)
+has Git blob ID `606bd225cf578063eb53e3b54ed7824bf093cb38`.
+The fight export SHA-256 is
+`fd2e7021f0c8faa84a8e4904e01f41055607ed7256d2d5ecd89a326008d92d73`.
+Regression tests compare all 23 recorded shot counts, round-2 weapon order,
+synced component overrides, independent attacker and defender schedules, and
+Picard's post-volley triggers in a full Enterprise-D crew.
+
+---
+
+## Enterprise-D Galaxy Class and Morale
+
+The Enterprise-D ability `448699234` states that weapon damage increases
+cumulatively each round while the ship has Morale. Its reviewed native
+group-51 BuffSpec uses modifier 2 (`ModAllDamage`), operation 3
+(`MULTIPLYADD`), target 1 (`self`), trigger 18 (`trig_round_start`), condition
+33 (Morale), guaranteed chance, and no additional attributes. Its raw level-1
+value is `0.85`; level 20 is `1.19`. These values share the native additive
+weapon-damage pool with profile bonuses.
+
+The former model used `round_index × value` whenever Morale was active, and
+removed the whole bonus in an inactive round. The model now earns one stack
+for each eligible round and keeps earlier stacks through later Morale gaps.
+This retention is an interpretation of the cumulative text and the absence of
+a duration attribute; the current server's stack lifetime and the exact order
+of simultaneous round-start effects are not independently established. The
+ship ability is not reduced by officer-only Assimilation.
+This path models Enterprise-D as the attacking ship; its defender-side PvP
+application is not yet supported.
+
+The static cache SHA-256 is
+`b472e4460e3869cc8abb44e456a0873e3c5702ed6f3a9701b18d27938022f3cf`, and the
+exact group-51 BuffSpec SHA-256 is
+`0345f4e6fd669ed0d4f38649ee3b0fa96fc1dd0321d8cd1e8196091fc8cf3875`.
+The retained static snapshot is build 273, with a build-272 parser reference.
+The upstream [ship record](../data/upstream/data-stfc-space/ships/448699234.json)
+SHA-256 is `eab23297cc03d18f274f2bce87db0cddb085776ae3f98ae978798890da624dcd`;
+the [ship ability translations](../data/upstream/data-stfc-space/translations-ship_buffs.json)
+SHA-256 is `751ffee52394b4c7ea5723b9da296072c18bbf43e050b3c85c1b8814c6ccfdc9`.
+
+The retained Enterprise-D versus Hurak export contains 23 rounds and 16
+Morale activations, including inactive rounds between activations. Its SHA-256
+is `fd2e7021f0c8faa84a8e4904e01f41055607ed7256d2d5ecd89a326008d92d73`.
+That fight has no matched complete profile snapshot or direct Galaxy Class
+stack trace, so it does not calibrate the simulation's damage or prove stack
+retention. Synthetic regressions exercise consecutive and intermittent Morale,
+both weapon-pool configurations, weapon scope, and traced/untraced parity.
+
+---
+
 ## 1. Inventory
 
 Historical `combat_noop` inventory from the Track E audit (**65** ids; the

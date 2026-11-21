@@ -625,6 +625,18 @@ fn simulate_combat_from_setup_with_attacker_scratch(
     let round_end_effects = &setup.round_end_effects;
     let after_subround_effects = &setup.after_subround_effects;
 
+    // One fight-long counter per source; most crews have no such effect.
+    let mut galaxy_growth_by_source = if round_start_effects.iter().any(|effect| {
+        matches!(
+            effect.effect,
+            AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
+        )
+    }) {
+        vec![0.0; round_start_effects.len()]
+    } else {
+        Vec::new()
+    };
+
     // Weapon-type-scoped rows (ModuleKinetic / ModuleEnergy, CombatBegin / RoundStart scalars):
     // excluded from the shared round-level accumulation below and re-added per weapon in the
     // sub-round loop for weapons matching the scope. Attacker-side only — the defender counter
@@ -1195,6 +1207,38 @@ fn simulate_combat_from_setup_with_attacker_scratch(
             }
         }
 
+        // Galaxy Class earns one additive stack only when its round-start
+        // condition succeeds. Previously earned stacks survive later gaps.
+        for (effect, accumulated) in round_start_effects
+            .iter()
+            .zip(galaxy_growth_by_source.iter_mut())
+        {
+            let AbilityEffect::GalaxyAdditiveWeaponDamageGrowth {
+                growth_per_round,
+                ceiling,
+            } = scale_active_effect(effect, round_start_assimilated)
+            else {
+                continue;
+            };
+            if full_round_start.contains(effect)
+                && growth_per_round.is_finite()
+                && growth_per_round > 0.0
+                && ceiling.is_finite()
+                && ceiling > 0.0
+            {
+                *accumulated = (*accumulated + growth_per_round).min(ceiling.max(*accumulated));
+            }
+            if *accumulated > 0.0 && effect.weapon_scope == WeaponTypeScope::All {
+                phase_effects.add_effect(
+                    TimingWindow::RoundStart,
+                    AbilityEffect::BaseWeaponDamageBonus(*accumulated),
+                    attacker.attack,
+                    round_index,
+                    Some((effect.ability_name.as_str(), effect.officer_id.as_deref())),
+                );
+            }
+        }
+
         let osr_round_delta = setup
             .officer_stat_round
             .as_ref()
@@ -1476,6 +1520,25 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                         round_index,
                         Some((effect.ability_name.as_str(), effect.officer_id.as_deref())),
                     );
+                }
+                // Scoped growth also persists when its source is not eligible
+                // this round, but applies only to matching weapons.
+                for (effect, accumulated) in round_start_effects
+                    .iter()
+                    .zip(galaxy_growth_by_source.iter())
+                {
+                    if *accumulated > 0.0
+                        && effect.weapon_scope != WeaponTypeScope::All
+                        && effect.weapon_scope.matches(weapon_type)
+                    {
+                        phase_effects.add_effect(
+                            TimingWindow::RoundStart,
+                            AbilityEffect::BaseWeaponDamageBonus(*accumulated),
+                            weapon_base,
+                            round_index,
+                            Some((effect.ability_name.as_str(), effect.officer_id.as_deref())),
+                        );
+                    }
                 }
             }
 
@@ -1805,7 +1868,11 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 );
             }
 
-            if skip_defender_weapon {
+            if skip_defender_weapon
+                || (!attacker_weapon_fires
+                    && attacker.weapon_attack(weapon_index).is_some()
+                    && defender_weapon.is_none())
+            {
                 continue;
             }
 

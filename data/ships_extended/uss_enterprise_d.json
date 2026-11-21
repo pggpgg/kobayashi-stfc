@@ -23,6 +23,27 @@
       "weapons": [
         {
           "attack": 133742.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 56333.0,
+          "shield_piercing": 56333.0,
+          "accuracy": 563354.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 133742.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 56333.0,
@@ -36,6 +57,10 @@
         },
         {
           "attack": 601848.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 56333.0,
@@ -46,19 +71,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 133742.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 56333.0,
-          "shield_piercing": 56333.0,
-          "accuracy": 563354.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -79,6 +91,27 @@
       "weapons": [
         {
           "attack": 142433.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 59995.0,
+          "shield_piercing": 59995.0,
+          "accuracy": 599968.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 142433.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 59995.0,
@@ -92,6 +125,10 @@
         },
         {
           "attack": 640964.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 59995.0,
@@ -102,19 +139,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 142433.5,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 59995.0,
-          "shield_piercing": 59995.0,
-          "accuracy": 599968.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -135,6 +159,27 @@
       "weapons": [
         {
           "attack": 153115.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 64495.0,
+          "shield_piercing": 64495.0,
+          "accuracy": 644966.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 153115.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 64495.0,
@@ -148,6 +193,10 @@
         },
         {
           "attack": 689039.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 64495.0,
@@ -158,19 +207,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 153115.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 64495.0,
-          "shield_piercing": 64495.0,
-          "accuracy": 644966.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -191,6 +227,27 @@
       "weapons": [
         {
           "attack": 166128.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 69976.0,
+          "shield_piercing": 69976.0,
+          "accuracy": 699780.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 166128.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 69976.0,
@@ -204,6 +261,10 @@
         },
         {
           "attack": 747597.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 69976.0,
@@ -214,19 +275,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 166128.5,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 69976.0,
-          "shield_piercing": 69976.0,
-          "accuracy": 699780.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -247,6 +295,27 @@
       "weapons": [
         {
           "attack": 181908.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 76622.0,
+          "shield_piercing": 76622.0,
+          "accuracy": 766247.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 181908.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 76622.0,
@@ -260,6 +329,10 @@
         },
         {
           "attack": 818607.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 76622.0,
@@ -270,19 +343,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 181908.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 76622.0,
-          "shield_piercing": 76622.0,
-          "accuracy": 766247.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -303,6 +363,27 @@
       "weapons": [
         {
           "attack": 201009.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 84670.0,
+          "shield_piercing": 84670.0,
+          "accuracy": 846704.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 201009.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 84670.0,
@@ -316,6 +397,10 @@
         },
         {
           "attack": 904561.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 84670.0,
@@ -326,19 +411,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 201009.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 84670.0,
-          "shield_piercing": 84670.0,
-          "accuracy": 846704.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -359,6 +431,27 @@
       "weapons": [
         {
           "attack": 223117.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 93980.0,
+          "shield_piercing": 93980.0,
+          "accuracy": 939836.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 223117.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 93980.0,
@@ -372,6 +465,10 @@
         },
         {
           "attack": 1004057.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 93980.0,
@@ -382,19 +479,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 223117.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 93980.0,
-          "shield_piercing": 93980.0,
-          "accuracy": 939836.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -415,6 +499,27 @@
       "weapons": [
         {
           "attack": 246542.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 103847.0,
+          "shield_piercing": 103847.0,
+          "accuracy": 1038511.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 246542.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 103847.0,
@@ -428,6 +533,10 @@
         },
         {
           "attack": 1109474.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 103847.0,
@@ -438,19 +547,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 246542.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 103847.0,
-          "shield_piercing": 103847.0,
-          "accuracy": 1038511.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -471,6 +567,27 @@
       "weapons": [
         {
           "attack": 268731.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 113192.0,
+          "shield_piercing": 113192.0,
+          "accuracy": 1131976.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 268731.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 113192.0,
@@ -484,6 +601,10 @@
         },
         {
           "attack": 1209326.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 113192.0,
@@ -494,19 +615,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 268731.5,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 113192.0,
-          "shield_piercing": 113192.0,
-          "accuracy": 1131976.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -527,6 +635,27 @@
       "weapons": [
         {
           "attack": 288888.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 121686.0,
+          "shield_piercing": 121686.0,
+          "accuracy": 1216879.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 288888.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 121686.0,
@@ -540,6 +669,10 @@
         },
         {
           "attack": 1300031.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 121686.0,
@@ -550,19 +683,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 288888.0,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 121686.0,
-          "shield_piercing": 121686.0,
-          "accuracy": 1216879.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -583,6 +703,27 @@
       "weapons": [
         {
           "attack": 306221.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 128986.0,
+          "shield_piercing": 128986.0,
+          "accuracy": 1289892.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 306221.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 128986.0,
@@ -596,6 +737,10 @@
         },
         {
           "attack": 1378032.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 128986.0,
@@ -606,19 +751,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 306221.5,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 128986.0,
-          "shield_piercing": 128986.0,
-          "accuracy": 1289892.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     },
@@ -639,6 +771,27 @@
       "weapons": [
         {
           "attack": 323060.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 2
+          },
+          "shots": 6,
+          "pierce": null,
+          "armor_piercing": 136079.0,
+          "shield_piercing": 136079.0,
+          "accuracy": 1360828.0,
+          "crit_chance": 0.1,
+          "crit_multiplier": 1.5,
+          "proc_chance": null,
+          "proc_multiplier": null,
+          "weapon_type": "energy"
+        },
+        {
+          "attack": 323060.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 2
+          },
           "shots": 6,
           "pierce": null,
           "armor_piercing": 136079.0,
@@ -652,6 +805,10 @@
         },
         {
           "attack": 1453815.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 136079.0,
@@ -662,19 +819,6 @@
           "proc_chance": null,
           "proc_multiplier": null,
           "weapon_type": "kinetic"
-        },
-        {
-          "attack": 323060.5,
-          "shots": 6,
-          "pierce": null,
-          "armor_piercing": 136079.0,
-          "shield_piercing": 136079.0,
-          "accuracy": 1360828.0,
-          "crit_chance": 0.1,
-          "crit_multiplier": 1.5,
-          "proc_chance": null,
-          "proc_multiplier": null,
-          "weapon_type": "energy"
         }
       ]
     }
