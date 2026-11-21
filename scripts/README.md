@@ -94,7 +94,15 @@ provenance, client analysis, and unresolved combat questions.
 
 ## Automated refresh (CI)
 
-A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the same high-level sequence as a local refresh: snapshot summaries → catalog fetch → ship/hostile/research detail fetches (scheduled: ships `--full`, hostiles/research missing-only) → `npm run data:refresh -- --stfcspace` → `cargo test` + `validate_data`, and opens a PR when files change (body includes summary drift report).
+A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/workflows/data-refresh.yml)) runs the v2 data pipeline with `Swatinem/rust-cache` and `cargo nextest`:
+
+1. Snapshot all 6 combat-relevant summaries (`ship`, `hostile`, `research`, `officer`, `building`, `forbidden_tech`) and `data/pipeline_manifest.json`.
+2. Fetch catalog summaries & translations concurrently (`node scripts/fetch_stfcspace_page_upstream.mjs --no-sample-ship --concurrency 6`) with retries, timeouts, conditional ETag caching, and atomic writes.
+3. Compute content-aware summary drift (`node scripts/check_stfcspace_summary_drift.mjs --all-domains --compare-dir /tmp/before --json-out /tmp/drift.json --markdown-out /tmp/summary_drift.md`) — detecting added, removed, and **in-place stat-rebalanced** IDs.
+4. Fetch entity details concurrently (`--concurrency 6`, ETag conditional cache): ships use `--full` on schedule (`--since-drift` otherwise), hostiles/research use missing-only + `--since-drift` (or `--full` on manual `full_fetch`), and officers/forbidden_tech use `--missing-only` so existing committed officer SHA-256 bindings stay untouched.
+5. Normalize via the declarative DAG (`npm run data:refresh -- --stfcspace --write-manifest --continue-on-coverage-gap`) and update deterministic `data/pipeline_manifest.json`.
+6. **Hard gate:** `cargo nextest run --profile ci` (core combat/schema tests) + `cargo run --bin validate_data` must pass or PR publication is blocked.
+7. **Soft triage gate:** upstream coverage-baseline checks (`building_opaque_buff_baseline`, `hostile_ability_catalog_parity`, `validate_stfcspace_mapping.mjs`) are classified by `scripts/generate_refresh_triage.mjs`. When new upstream content introduces unmodeled buffs/abilities, the workflow opens a **Draft `[Needs Triage]` PR** with an actionable checklist, drift table, pipeline timings, and manifest digest diff instead of failing silently in Actions logs.
 
 **One open refresh at a time:** each run opens its own `automated/data-refresh-<run_id>` branch, so a run that produces a PR also comments on and closes any older still-open refresh PR (and deletes its branch). An older refresh is strictly superseded — same pipeline, older upstream snapshot — and leaving it open is misleading: its `Upstream summary drift` check compares *that* branch against live upstream, so it stays red purely for being stale, which reads as the refresh failing. A run that changes nothing closes nothing, since the existing PR is then still the valid pending refresh.
 
@@ -105,27 +113,40 @@ A **weekly** GitHub Action ([`.github/workflows/data-refresh.yml`](../.github/wo
 ```bash
 cargo xtask check-upstream-drift
 # or: node scripts/check_stfcspace_summary_drift.mjs --check
+# all 6 combat domains with content-hash diff:
+node scripts/check_stfcspace_summary_drift.mjs --check --all-domains --include-modified
 ```
 
 **Manual run:** Actions → **Data refresh (stfc.space)** → *Run workflow*. Inputs:
 
 | Input | Effect |
 |-------|--------|
-| `full_fetch` | Pass `--full` to all three `fetch_stfcspace_*.mjs` scripts (long; re-downloads all cached ids). |
+| `full_fetch` | Pass `--full` to ship, hostile, and research detail fetchers (uses ETag conditional cache). |
+| `concurrency` | Bounded parallel HTTP workers (`1`–`16`, default `6`). |
 | `dry_run` | Run fetch + normalize + tests but **skip** opening a PR. |
 
-Scheduled runs use ships `--full` automatically; hostiles/research stay missing-only unless **full_fetch** is enabled on manual dispatch.
+Scheduled runs use ships `--full` (with ETag `304 Not Modified` reuse) automatically; hostiles/research use missing-only + `--since-drift` unless **full_fetch** is enabled on manual dispatch.
 
-## Single data-refresh entrypoint (audit task 19)
+## Single data-refresh entrypoint (v2 DAG + manifest)
 
-From the **repo root**, run importers and normalizers in a **fixed order**:
+From the **repo root**, run importers and normalizers in deterministic topological order:
 
 ```bash
 # Default: CSV-based importers only (forbidden tech, syndicate if CSV present)
 npm run data:refresh
 
 # data.stfc.space pipeline (needs cache under data/upstream/data-stfc-space/ — see below)
-npm run data:refresh -- --stfcspace
+npm run data:refresh -- --stfcspace --write-manifest
+
+# Preview the resolved DAG plan without mutating disk
+npm run data:refresh -- --stfcspace --dry-run
+
+# Run a single subset of DAG stages (see --list-stages)
+npm run data:refresh -- --stages stfcspace:buildings,verify:manifest --write-manifest
+
+# Check or regenerate deterministic provenance manifest (data/pipeline_manifest.json)
+cargo xtask pipeline-manifest --check
+cargo xtask pipeline-manifest --write
 
 # STFCcommunity baseline: fetch zip + normalize_stfc_data
 npm run data:refresh -- --stfccommunity
@@ -134,7 +155,7 @@ npm run data:refresh -- --stfccommunity
 npm run data:refresh -- --all
 ```
 
-Implementation: `scripts/data-refresh.mjs`. **Canonical order** (do not reorder without updating the script and this doc):
+Implementation: `scripts/data-refresh.mjs` (backed by `scripts/lib/pipeline_dag.mjs`, `scripts/lib/pipeline_manifest.mjs`, and `scripts/lib/stfcspace_http.mjs`). `cargo xtask check-generated` verifies both `data/ships_extended/` and `data/pipeline_manifest.json`. **Canonical order** (do not reorder without updating the DAG and this doc):
 
 | Phase | Steps |
 |-------|--------|

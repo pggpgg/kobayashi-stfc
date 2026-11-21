@@ -1,16 +1,19 @@
 #!/usr/bin/env node
 /**
- * Refresh data.stfc.space JSON caches used when loading the SPA (e.g. /ships/2251018025).
+ * Refresh data.stfc.space catalog JSON caches (summaries + en static translations).
  *
  * Derived from stfc.space production bundle (VITE_API_URL = https://data.stfc.space):
  * - yukiData.fetchData: GET /{entity}/summary.json for catalogs
  * - yukiTranslations.fetchStaticTranslations: GET /translations/{lang}/{category}.json
- * - ItemLoadingWrapper (ship): GET /ship/{id}.json (no snapshot prop on ship route)
+ * - ItemLoadingWrapper (ship): GET /ship/{id}.json (optional sample ship)
  *
  * Usage (repo root):
  *   node scripts/fetch_stfcspace_page_upstream.mjs
+ *   node scripts/fetch_stfcspace_page_upstream.mjs --concurrency 6
  *   node scripts/fetch_stfcspace_page_upstream.mjs --ship-id 2251018025
+ *   node scripts/fetch_stfcspace_page_upstream.mjs --no-sample-ship
  *   node scripts/fetch_stfcspace_page_upstream.mjs --summaries-only
+ *   node scripts/fetch_stfcspace_page_upstream.mjs --json-out /tmp/catalog_fetch.json
  *
  * Output: data/upstream/data-stfc-space/ (summary-*.json, translations-*.json, ships/{id}.json)
  */
@@ -18,20 +21,23 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import url from "node:url";
+import {
+  atomicWriteJson,
+  clampConcurrency,
+  DEFAULT_CONCURRENCY,
+  DEFAULT_PACING_MS,
+  fetchJsonResilient,
+  loadHttpCacheMeta,
+  runConcurrentPool,
+  saveHttpCacheMeta,
+} from "./lib/stfcspace_http.mjs";
 
 const ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
 const OUT = path.join(ROOT, "data", "upstream", "data-stfc-space");
 const BASE = "https://data.stfc.space";
-const DELAY_MS = 150;
-
-const args = process.argv.slice(2);
-const summariesOnly = args.includes("--summaries-only");
-const shipIdx = args.indexOf("--ship-id");
-const shipId =
-  shipIdx !== -1 && args[shipIdx + 1] ? String(args[shipIdx + 1]).trim() : "2251018025";
 
 /** App `fetchData` summary paths (minified client passes "/ship", etc.; URL is /ship/summary.json). */
-const SUMMARY_SEGMENTS = [
+export const SUMMARY_SEGMENTS = [
   ["ship", "summary-ship.json"],
   ["officer", "summary-officer.json"],
   ["building", "summary-building.json"],
@@ -48,7 +54,7 @@ const SUMMARY_SEGMENTS = [
 ];
 
 /** `Ht` static translation paths (en); duplicates removed. */
-const TRANSLATION_PATHS = [
+export const TRANSLATION_PATHS = [
   "materials",
   "ships",
   "officers",
@@ -73,61 +79,193 @@ const TRANSLATION_PATHS = [
   "hud",
 ];
 
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
+function parseArgs(argv) {
+  const summariesOnly = argv.includes("--summaries-only");
+  const noSampleShip = argv.includes("--no-sample-ship");
+  const noConditional = argv.includes("--no-conditional");
+  const shipIdx = argv.indexOf("--ship-id");
+  const shipId =
+    shipIdx !== -1 && argv[shipIdx + 1] ? String(argv[shipIdx + 1]).trim() : "2251018025";
+  const concIdx = argv.indexOf("--concurrency");
+  const parsedConc = concIdx !== -1 ? Number.parseInt(argv[concIdx + 1], 10) : DEFAULT_CONCURRENCY;
+  const concurrency = clampConcurrency(Number.isFinite(parsedConc) ? parsedConc : DEFAULT_CONCURRENCY);
+  const jsonOutIdx = argv.indexOf("--json-out");
+  const jsonOut =
+    jsonOutIdx !== -1 && argv[jsonOutIdx + 1] ? path.resolve(argv[jsonOutIdx + 1]) : null;
+  return {
+    help: argv.includes("--help") || argv.includes("-h"),
+    summariesOnly,
+    noSampleShip,
+    noConditional,
+    shipId,
+    concurrency,
+    jsonOut,
+  };
 }
 
-async function fetchJson(url) {
-  const res = await fetch(url, {
-    headers: { Accept: "application/json", "User-Agent": "Kobayashi-upstream-fetch/1.0" },
-  });
-  if (!res.ok) {
-    throw new Error(`${url} -> HTTP ${res.status}`);
+function printHelp() {
+  console.log(`Usage: node scripts/fetch_stfcspace_page_upstream.mjs [options]
+
+Fetch data.stfc.space summaries + English static translations concurrently with
+retries, timeouts, conditional ETag support, and atomic writes.
+
+Options:
+  --summaries-only   Fetch summary-*.json files only (skip translations & sample ship)
+  --no-sample-ship   Skip fetching sample ships/{shipId}.json
+  --ship-id ID       Sample ship id when sample ship fetch is enabled (default: 2251018025)
+  --concurrency N    Bounded parallel workers (1..16, default: ${DEFAULT_CONCURRENCY})
+  --no-conditional   Bypass ETag / If-None-Match cache headers
+  --json-out PATH    Write structured fetch summary JSON
+`);
+}
+
+async function fileUsableJson(dest) {
+  try {
+    const raw = await fs.readFile(dest, "utf8");
+    JSON.parse(raw);
+    return true;
+  } catch {
+    return false;
   }
-  return res.json();
-}
-
-async function writeJson(relPath, data) {
-  const dest = path.join(OUT, relPath);
-  await fs.mkdir(path.dirname(dest), { recursive: true });
-  await fs.writeFile(dest, `${JSON.stringify(data)}\n`, "utf8");
 }
 
 async function main() {
-  const jobs = [];
-
-  for (const [seg, filename] of SUMMARY_SEGMENTS) {
-    const u = `${BASE}/${seg}/summary.json`;
-    jobs.push({ url: u, write: () => fetchJson(u).then((j) => writeJson(filename, j)) });
+  const args = parseArgs(process.argv.slice(2));
+  if (args.help) {
+    printHelp();
+    process.exit(0);
   }
 
-  if (!summariesOnly) {
-    const lang = "en";
-    for (const p of TRANSLATION_PATHS) {
-      const u = `${BASE}/translations/${lang}/${p}.json`;
-      const filename = `translations-${p}.json`;
-      jobs.push({ url: u, write: () => fetchJson(u).then((j) => writeJson(filename, j)) });
-    }
-
-    const shipUrl = `${BASE}/ship/${shipId}.json`;
+  const startedMs = Date.now();
+  const jobs = [];
+  for (const [seg, filename] of SUMMARY_SEGMENTS) {
     jobs.push({
-      url: shipUrl,
-      write: () => fetchJson(shipUrl).then((j) => writeJson(path.join("ships", `${shipId}.json`), j)),
+      url: `${BASE}/${seg}/summary.json`,
+      relPath: filename,
+      kind: "summary",
     });
   }
 
-  console.log(`Fetching ${jobs.length} JSON resources from ${BASE} …`);
-  for (let i = 0; i < jobs.length; i++) {
-    const { url, write } = jobs[i];
-    process.stdout.write(`[${i + 1}/${jobs.length}] ${url}\n`);
-    await write();
-    if (i < jobs.length - 1) await sleep(DELAY_MS);
+  if (!args.summariesOnly) {
+    const lang = "en";
+    for (const p of TRANSLATION_PATHS) {
+      jobs.push({
+        url: `${BASE}/translations/${lang}/${p}.json`,
+        relPath: `translations-${p}.json`,
+        kind: "translation",
+      });
+    }
+    if (!args.noSampleShip) {
+      jobs.push({
+        url: `${BASE}/ship/${args.shipId}.json`,
+        relPath: path.join("ships", `${args.shipId}.json`),
+        kind: "sample_ship",
+      });
+    }
   }
 
-  console.log(`Done. Wrote under ${path.relative(ROOT, OUT)}`);
+  const logDir = path.join(ROOT, "data", "import_logs");
+  await fs.mkdir(logDir, { recursive: true });
+  const metaPath = path.join(logDir, "stfcspace-http-cache.json");
+  const httpCache = args.noConditional
+    ? { schema_version: 1, entries: {} }
+    : await loadHttpCacheMeta(metaPath);
+  let httpCacheDirty = false;
+
+  const summary = {
+    started: new Date(startedMs).toISOString(),
+    source: BASE,
+    concurrency: args.concurrency,
+    total: jobs.length,
+    fetched: 0,
+    not_modified: 0,
+    failed: 0,
+    failures: [],
+  };
+
+  console.log(
+    `Fetching ${jobs.length} catalog resources from ${BASE} (concurrency=${args.concurrency}) …`,
+  );
+
+  let completed = 0;
+  await runConcurrentPool(
+    jobs,
+    args.concurrency,
+    async (job) => {
+      const dest = path.join(OUT, job.relPath);
+      const hasLocal = await fileUsableJson(dest);
+      const cachedMeta = !args.noConditional && hasLocal ? httpCache.entries[job.url] : null;
+      try {
+        const res = await fetchJsonResilient(job.url, {
+          userAgent: "Kobayashi-upstream-fetch/2.0",
+          etag: cachedMeta?.etag ?? null,
+          lastModified: cachedMeta?.lastModified ?? null,
+          onRetry: ({ attempt, delayMs, error }) => {
+            console.warn(
+              `  [${job.relPath}] attempt ${attempt} failed (${error.message}), retrying in ${delayMs}ms…`,
+            );
+          },
+        });
+        if (res.notModified && hasLocal) {
+          summary.not_modified++;
+          completed++;
+          process.stdout.write(`[${completed}/${jobs.length}] ${job.relPath} (304 not modified)\n`);
+          return;
+        }
+        // Summaries & translations stay compact (indent=0) matching existing upstream convention.
+        const indent = job.kind === "sample_ship" ? 2 : 0;
+        await atomicWriteJson(dest, res.data, indent);
+        if (!args.noConditional && (res.etag || res.lastModified)) {
+          const prev = httpCache.entries[job.url];
+          const nextEtag = res.etag ?? null;
+          const nextLastMod = res.lastModified ?? null;
+          if (!prev || prev.etag !== nextEtag || prev.lastModified !== nextLastMod) {
+            httpCache.entries[job.url] = {
+              etag: nextEtag,
+              lastModified: nextLastMod,
+            };
+            httpCacheDirty = true;
+          }
+        }
+        summary.fetched++;
+        completed++;
+        process.stdout.write(`[${completed}/${jobs.length}] ${job.relPath}\n`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        summary.failed++;
+        summary.failures.push({ url: job.url, relPath: job.relPath, error: message });
+        completed++;
+        console.error(`[${completed}/${jobs.length}] ${job.relPath} FAILED: ${message}`);
+      }
+    },
+    { pacingMs: DEFAULT_PACING_MS },
+  );
+
+  if (httpCacheDirty) {
+    await saveHttpCacheMeta(metaPath, httpCache);
+  }
+
+  summary.finished = new Date().toISOString();
+  summary.duration_ms = Date.now() - startedMs;
+
+  if (args.jsonOut) {
+    await atomicWriteJson(args.jsonOut, summary, 2);
+  }
+
+  console.log(
+    `Done in ${summary.duration_ms}ms. fetched=${summary.fetched} not_modified=${summary.not_modified} failed=${summary.failed} → ${path.relative(ROOT, OUT)}`,
+  );
+
+  if (summary.failed > 0) {
+    process.exit(1);
+  }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === path.resolve(url.fileURLToPath(import.meta.url));
+if (isMain) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
