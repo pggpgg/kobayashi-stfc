@@ -51,7 +51,14 @@ pub struct WeaponRecord {
 
 /// Only opt reviewed native ship schedules into combat.
 pub fn has_reviewed_weapon_schedule(raw_ship: &Value) -> bool {
-    raw_ship.get("id").and_then(Value::as_u64) == Some(2_289_346_504)
+    uses_native_weapon_sequence(raw_ship)
+        || raw_ship.get("id").and_then(Value::as_u64) == Some(2_289_346_504)
+}
+
+/// The Enterprise-D's recorded phaser/torpedo sequence follows the component
+/// array. Its numeric order is the order shown in the firing-pattern table.
+pub fn uses_native_weapon_sequence(raw_ship: &Value) -> bool {
+    raw_ship.get("id").and_then(Value::as_u64) == Some(448_699_234)
 }
 
 pub fn weapon_schedule_from_upstream(data: &Value) -> Option<WeaponFiringSchedule> {
@@ -60,6 +67,27 @@ pub fn weapon_schedule_from_upstream(data: &Value) -> Option<WeaponFiringSchedul
     (first_round > 0 && interval_rounds > 0).then_some(WeaponFiringSchedule {
         first_round,
         interval_rounds,
+    })
+}
+
+/// Read a reviewed schedule. Enterprise-D requires valid native timing for
+/// every weapon, so malformed timing disables the weapon with a diagnostic.
+pub fn component_firing_schedule(
+    data: &Value,
+    use_schedule: bool,
+    require_schedule: bool,
+) -> Option<WeaponFiringSchedule> {
+    if !use_schedule {
+        return None;
+    }
+    weapon_schedule_from_upstream(data).or_else(|| {
+        require_schedule.then(|| {
+            tracing::warn!("invalid reviewed ship firing schedule; weapon disabled");
+            WeaponFiringSchedule {
+                first_round: 0,
+                interval_rounds: 0,
+            }
+        })
     })
 }
 
@@ -401,13 +429,14 @@ fn patched_components_for_ids(
 /// keeps cumulative offensive piercing/accuracy across tiers; component overrides apply a delta
 /// from this current-tier extraction onto the already-resolved base ship record.
 pub fn extract_component_tier_stats(components: &[Value], tier: u32) -> TierStats {
-    extract_component_tier_stats_with_schedule(components, tier, false)
+    extract_component_tier_stats_with_schedule(components, tier, false, false)
 }
 
 fn extract_component_tier_stats_with_schedule(
     components: &[Value],
     tier: u32,
     use_schedule: bool,
+    preserve_sequence: bool,
 ) -> TierStats {
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
@@ -454,7 +483,9 @@ fn extract_component_tier_stats_with_schedule(
         }
     }
 
-    weapon_components.sort_by_key(|(order, _)| *order);
+    if !preserve_sequence {
+        weapon_components.sort_by_key(|(order, _)| *order);
+    }
 
     let mut armor_piercing = 0.0;
     let mut shield_piercing = 0.0;
@@ -520,9 +551,7 @@ fn extract_component_tier_stats_with_schedule(
 
         weapons.push(WeaponRecord {
             attack: avg_damage,
-            firing_schedule: use_schedule
-                .then(|| weapon_schedule_from_upstream(data))
-                .flatten(),
+            firing_schedule: component_firing_schedule(data, use_schedule, preserve_sequence),
             shots: Some(shots),
             armor_piercing: Some(penetration),
             shield_piercing: Some(modulation),
@@ -640,11 +669,19 @@ pub fn apply_component_overrides_to_ship_record(
     let patched_components =
         patched_components_for_ids(&expected_components, raw_ship, component_ids)?;
 
-    let expected = extract_component_tier_stats(&expected_components, tier);
+    let use_schedule = has_reviewed_weapon_schedule(raw_ship);
+    let preserve_sequence = uses_native_weapon_sequence(raw_ship);
+    let expected = extract_component_tier_stats_with_schedule(
+        &expected_components,
+        tier,
+        use_schedule,
+        preserve_sequence,
+    );
     let patched = extract_component_tier_stats_with_schedule(
         &patched_components,
         tier,
-        has_reviewed_weapon_schedule(raw_ship),
+        use_schedule,
+        preserve_sequence,
     );
 
     let summary = ComponentOverrideSummary {

@@ -62,10 +62,10 @@ struct AbilityCatalogEntry {
 
 use kobayashi::data::registry::merge_registry_entry;
 use kobayashi::data::ship::{
-    has_reviewed_weapon_schedule, weapon_schedule_from_upstream, weapon_type_slug_from_upstream,
-    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, OfficerBonusBreakpoint, OfficerBonusTable,
-    ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
-    DEFAULT_SHIP_ID_REGISTRY_PATH,
+    component_firing_schedule, has_reviewed_weapon_schedule, uses_native_weapon_sequence,
+    weapon_type_slug_from_upstream, CrewSlotUnlock, ExtendedShipRecord, LevelBonus,
+    OfficerBonusBreakpoint, OfficerBonusTable, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry,
+    TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -278,7 +278,11 @@ fn raw_to_extended(
             shield_deflection,
             dodge,
             weapons,
-        ) = extract_tier_combat(components, has_reviewed_weapon_schedule(raw))?;
+        ) = extract_tier_combat(
+            components,
+            has_reviewed_weapon_schedule(raw),
+            uses_native_weapon_sequence(raw),
+        )?;
         parsed_tiers.push(TierStats {
             tier: tier_num,
             armor_piercing,
@@ -521,6 +525,7 @@ const WEAPON_ORDER_LAST: i64 = 999;
 fn extract_tier_combat(
     components: &[Value],
     use_schedule: bool,
+    preserve_sequence: bool,
 ) -> Result<
     (
         f64,
@@ -604,8 +609,9 @@ fn extract_tier_combat(
         }
     }
 
-    // Sort by order so primary weapon (order 1) is first; same order fires in same sequence.
-    weapon_components.sort_by_key(|(order, _)| *order);
+    if !preserve_sequence {
+        weapon_components.sort_by_key(|(order, _)| *order);
+    }
 
     let mut armor_piercing_sum = 0.0;
     let mut shield_piercing_sum = 0.0;
@@ -668,9 +674,7 @@ fn extract_tier_combat(
         }
 
         weapons_out.push(WeaponRecord {
-            firing_schedule: use_schedule
-                .then(|| weapon_schedule_from_upstream(data))
-                .flatten(),
+            firing_schedule: component_firing_schedule(data, use_schedule, preserve_sequence),
             attack: avg_damage,
             shots: Some(shots),
             armor_piercing: Some(penetration),

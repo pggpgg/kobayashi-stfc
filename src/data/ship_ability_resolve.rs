@@ -200,8 +200,8 @@ pub fn ship_ability_effect_from_catalog(
             })
         }
 
-        // Galaxy-class hull (e.g. U.S.S. Enterprise-D): same round-index growth as accumulating,
-        // but applied in the engine as additive with profile weapon_damage (see ability enum doc).
+        // Galaxy-class hull growth is earned on eligible rounds and enters the
+        // same additive pool as profile weapon damage.
         "additive_weapon_damage_growth"
         | "galaxy_additive_weapon_damage_growth"
         | "galaxy_class_weapon_damage_growth" => {
