@@ -177,6 +177,24 @@
       "ignore_upstream_value_is_percentage": true,
       "condition_opponent_ship_class_not": "armada",
       "condition_defender_is_npc_hostile": true
+    },
+    "394860549": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Disintegrator hits against a Hull Breached opponent stack base Energy Weapon Damage."
+    },
+    "407462527": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Incinerator hits against a Burning opponent stack base Weapon Damage."
+    },
+    "4132047263": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Decimator hits while Morale is active stack base Kinetic Weapon Damage."
     }
   }
 }
