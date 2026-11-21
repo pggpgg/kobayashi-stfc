@@ -33,10 +33,10 @@ use kobayashi::optimizer::crew_generator::{
 use kobayashi::optimizer::genetic::{run_genetic_optimizer_ranked_with_stats, GeneticConfig};
 use kobayashi::optimizer::method_bench::{
     aggregate_stability, confirmation_seed, plan_flat_equal_trials, plan_genetic_equal_trials,
-    plan_tiered_equal_trials, run_reference_sweep, score_against_reference,
-    score_analytical_prefilter, trial_budget_for_wall_clock, trial_budget_from_two_probes,
-    BudgetMode, PrefilterFalseNegativeScore, ReferenceCrew, ReferenceScore, ReferenceSweep,
-    ReferenceSweepParams, StabilityAggregate, StabilitySample,
+    plan_portfolio_equal_trials, plan_tiered_equal_trials, run_reference_sweep,
+    score_against_reference, score_analytical_prefilter, trial_budget_for_wall_clock,
+    trial_budget_from_two_probes, BudgetMode, PrefilterFalseNegativeScore, ReferenceCrew,
+    ReferenceScore, ReferenceSweep, ReferenceSweepParams, StabilityAggregate, StabilitySample,
 };
 use kobayashi::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_parallel_with_registry, DefenderOpponent,
@@ -83,7 +83,7 @@ struct Args {
     /// Optional comma-separated seed panel. Omit to use each built-in case's default seed.
     #[arg(long, value_delimiter = ',')]
     seed_panel: Vec<u64>,
-    /// Comma-separated methods: tiered,genetic,linear_eval,warm_start_tiered,random_stratified,all.
+    /// Comma-separated methods: tiered,genetic,linear_eval,warm_start_tiered,random_stratified,portfolio,all.
     #[arg(
         long,
         value_delimiter = ',',
@@ -265,15 +265,17 @@ enum Lane {
     LinearEval,
     WarmStartTiered,
     RandomStratified,
+    Portfolio,
 }
 
 impl Lane {
-    const ALL: [Lane; 5] = [
+    const ALL: [Lane; 6] = [
         Lane::Tiered,
         Lane::Genetic,
         Lane::LinearEval,
         Lane::WarmStartTiered,
         Lane::RandomStratified,
+        Lane::Portfolio,
     ];
 
     fn label(self) -> &'static str {
@@ -283,6 +285,7 @@ impl Lane {
             Lane::LinearEval => "linear_eval",
             Lane::WarmStartTiered => "warm_start_tiered",
             Lane::RandomStratified => "random_stratified",
+            Lane::Portfolio => "portfolio",
         }
     }
 
@@ -306,6 +309,7 @@ struct LaneBudget {
     ga_generations: usize,
     ga_sims_per_eval: usize,
     random_sims: usize,
+    portfolio_racing_trial_budget: Option<u64>,
 }
 
 impl LaneBudget {
@@ -320,6 +324,7 @@ impl LaneBudget {
             ga_generations: args.ga_generations,
             ga_sims_per_eval: args.ga_sims_per_eval,
             random_sims: args.random_sims,
+            portfolio_racing_trial_budget: None,
         }
     }
 }
@@ -554,6 +559,7 @@ fn scenario<'a>(
         learned_officer_scores: None,
 
         local_refinement: None,
+        portfolio_racing_trial_budget: budget.portfolio_racing_trial_budget,
     }
 }
 
@@ -1044,6 +1050,18 @@ fn run_lane(
             plan,
             args.diversity_top_k,
         ),
+        Lane::Portfolio => run_optimizer_lane(
+            registry,
+            case,
+            profile,
+            lane.label(),
+            OptimizerStrategy::Portfolio,
+            below_decks_slots,
+            Vec::new(),
+            budget,
+            plan,
+            args.diversity_top_k,
+        ),
     }
 }
 
@@ -1090,6 +1108,16 @@ fn equal_trial_budget(args: &Args, lane: Lane, trial_budget: u64) -> (LaneBudget
         Lane::RandomStratified => {
             budget.random_candidates = plan_flat_equal_trials(trial_budget, args.random_sims);
             plan.projected_trials = Some(budget.random_candidates as u64 * args.random_sims as u64);
+        }
+        Lane::Portfolio => {
+            let p =
+                plan_portfolio_equal_trials(trial_budget, args.scout_sims, args.sims, args.top_k);
+            budget.candidates = p.candidates;
+            budget.scout_sims = p.scout_cap;
+            budget.confirm_sims = p.confirm_sims;
+            budget.top_k = p.top_k;
+            budget.portfolio_racing_trial_budget = Some(p.racing_trial_budget);
+            plan.projected_trials = Some(p.projected_trials);
         }
         Lane::LinearEval => {
             plan.applied = false;

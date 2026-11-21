@@ -943,6 +943,467 @@ pub(crate) fn filter_effects_by_condition_borrowed<'a>(
     Cow::Owned(out)
 }
 
+/// Fold scenario-invariant conditions once during [`crate::combat::PreCombatSetup`] construction.
+///
+/// Drops rows whose static gate is guaranteed false across every round, clears `condition` to
+/// `None` when guaranteed true, and simplifies remaining dynamic gates. Order of surviving rows
+/// is preserved verbatim.
+pub(crate) fn fold_active_effects_for_setup(
+    effects: Vec<ActiveAbilityEffect>,
+    ctx: &CombatContext,
+) -> Vec<ActiveAbilityEffect> {
+    use crate::combat::condition::{fold_static_condition, FoldedCondition};
+
+    if effects.is_empty() {
+        return effects;
+    }
+    let mut out = Vec::with_capacity(effects.len());
+    for mut effect in effects {
+        match effect.condition.as_ref() {
+            None => out.push(effect),
+            Some(cond) => match fold_static_condition(cond, ctx) {
+                FoldedCondition::AlwaysFalse => {}
+                FoldedCondition::AlwaysTrue => {
+                    effect.condition = None;
+                    out.push(effect);
+                }
+                FoldedCondition::Dynamic(simplified) => {
+                    effect.condition = Some(simplified);
+                    out.push(effect);
+                }
+            },
+        }
+    }
+    out
+}
+
+/// Zero-clone, stack-resident subset view over a slice of [`ActiveAbilityEffect`]s.
+///
+/// For the common case (`effects.len() <= 64`), stores a single `u64` bitmask in a register with
+/// zero heap allocation and zero `ActiveAbilityEffect`/`String`/`AbilityCondition` clones.
+/// Falls back to an index `Vec<usize>` (still zero effect clones) only when a timing window has
+/// more than 64 rows and at least one dynamic condition rejects.
+#[derive(Debug, Clone)]
+pub(crate) enum ActiveMask<'a> {
+    All(&'a [ActiveAbilityEffect]),
+    Bitmask {
+        effects: &'a [ActiveAbilityEffect],
+        bits: u64,
+    },
+    Indices {
+        effects: &'a [ActiveAbilityEffect],
+        indices: Vec<usize>,
+    },
+}
+
+impl<'a> ActiveMask<'a> {
+    #[inline]
+    pub(crate) fn empty() -> Self {
+        Self::All(&[])
+    }
+
+    #[inline]
+    pub(crate) fn is_empty(&self) -> bool {
+        match self {
+            Self::All(s) => s.is_empty(),
+            Self::Bitmask { bits, .. } => *bits == 0,
+            Self::Indices { indices, .. } => indices.is_empty(),
+        }
+    }
+
+    #[inline]
+    pub(crate) fn contains_index(&self, idx: usize) -> bool {
+        match self {
+            Self::All(s) => idx < s.len(),
+            Self::Bitmask { bits, .. } => idx < 64 && (*bits & (1u64 << idx)) != 0,
+            Self::Indices { indices, .. } => indices.binary_search(&idx).is_ok(),
+        }
+    }
+
+    #[inline]
+    pub(crate) fn iter(&self) -> ActiveMaskIter<'a, '_> {
+        match self {
+            Self::All(s) => ActiveMaskIter::All(s.iter()),
+            Self::Bitmask { effects, bits } => ActiveMaskIter::Bitmask {
+                effects,
+                bits: *bits,
+            },
+            Self::Indices { effects, indices } => ActiveMaskIter::Indices {
+                effects,
+                indices: indices.iter(),
+            },
+        }
+    }
+
+    #[inline]
+    pub(crate) fn iter_indexed(&self) -> ActiveMaskIndexedIter<'a, '_> {
+        match self {
+            Self::All(s) => ActiveMaskIndexedIter::All { effects: s, pos: 0 },
+            Self::Bitmask { effects, bits } => ActiveMaskIndexedIter::Bitmask {
+                effects,
+                bits: *bits,
+            },
+            Self::Indices { effects, indices } => ActiveMaskIndexedIter::Indices {
+                effects,
+                indices: indices.iter(),
+            },
+        }
+    }
+
+    /// Subset of `self` restricted by weapon scope (`want_scoped == false` keeps `WeaponTypeScope::All`,
+    /// `want_scoped == true` keeps non-`All`). Zero heap allocations for `effects.len() <= 64`.
+    #[inline]
+    pub(crate) fn filter_scope(&self, want_scoped: bool) -> Self {
+        let matches_scope = |e: &ActiveAbilityEffect| {
+            if want_scoped {
+                e.weapon_scope != WeaponTypeScope::All
+            } else {
+                e.weapon_scope == WeaponTypeScope::All
+            }
+        };
+        match self {
+            Self::All(effects) => {
+                if effects.is_empty() {
+                    return Self::All(&[]);
+                }
+                if effects.len() <= 64 {
+                    let mut bits = 0u64;
+                    for (i, e) in effects.iter().enumerate() {
+                        if matches_scope(e) {
+                            bits |= 1u64 << i;
+                        }
+                    }
+                    Self::Bitmask { effects, bits }
+                } else {
+                    let indices = effects
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(i, e)| matches_scope(e).then_some(i))
+                        .collect();
+                    Self::Indices { effects, indices }
+                }
+            }
+            Self::Bitmask { effects, bits } => {
+                let mut rem = *bits;
+                let mut out = 0u64;
+                while rem != 0 {
+                    let idx = rem.trailing_zeros() as usize;
+                    rem &= rem - 1;
+                    if matches_scope(&effects[idx]) {
+                        out |= 1u64 << idx;
+                    }
+                }
+                Self::Bitmask { effects, bits: out }
+            }
+            Self::Indices { effects, indices } => {
+                let kept = indices
+                    .iter()
+                    .copied()
+                    .filter(|&i| matches_scope(&effects[i]))
+                    .collect();
+                Self::Indices {
+                    effects,
+                    indices: kept,
+                }
+            }
+        }
+    }
+
+    /// Elements present in `self` that were NOT present in `earlier` (both must derive from the
+    /// same underlying slice, e.g. `full_round_start` vs `bench`).
+    #[inline]
+    pub(crate) fn difference_from(&self, earlier: &ActiveMask<'a>) -> Self {
+        match (self, earlier) {
+            (_, Self::All(_)) => Self::empty(),
+            (
+                Self::All(effects),
+                Self::Bitmask {
+                    bits: earlier_bits, ..
+                },
+            ) => {
+                debug_assert!(effects.len() <= 64);
+                let full_bits = if effects.len() == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << effects.len()) - 1
+                };
+                Self::Bitmask {
+                    effects,
+                    bits: full_bits & !earlier_bits,
+                }
+            }
+            (
+                Self::Bitmask {
+                    effects,
+                    bits: self_bits,
+                },
+                Self::Bitmask {
+                    bits: earlier_bits, ..
+                },
+            ) => Self::Bitmask {
+                effects,
+                bits: self_bits & !earlier_bits,
+            },
+            (
+                Self::All(effects),
+                Self::Indices {
+                    indices: earlier_idx,
+                    ..
+                },
+            ) => {
+                // Both index lists are strictly increasing.
+                let mut out = Vec::new();
+                let mut ep = 0usize;
+                for i in 0..effects.len() {
+                    while ep < earlier_idx.len() && earlier_idx[ep] < i {
+                        ep += 1;
+                    }
+                    if ep >= earlier_idx.len() || earlier_idx[ep] != i {
+                        out.push(i);
+                    }
+                }
+                Self::Indices {
+                    effects,
+                    indices: out,
+                }
+            }
+            (
+                Self::Indices {
+                    effects,
+                    indices: self_idx,
+                },
+                Self::Indices {
+                    indices: earlier_idx,
+                    ..
+                },
+            ) => {
+                let mut out = Vec::new();
+                let mut ep = 0usize;
+                for &i in self_idx {
+                    while ep < earlier_idx.len() && earlier_idx[ep] < i {
+                        ep += 1;
+                    }
+                    if ep >= earlier_idx.len() || earlier_idx[ep] != i {
+                        out.push(i);
+                    }
+                }
+                Self::Indices {
+                    effects,
+                    indices: out,
+                }
+            }
+            // Cross-variant fallback (cannot arise for same-length slices, kept total).
+            (Self::Bitmask { effects, bits }, Self::Indices { indices, .. }) => {
+                let mut out = 0u64;
+                let mut rem = *bits;
+                while rem != 0 {
+                    let idx = rem.trailing_zeros() as usize;
+                    rem &= rem - 1;
+                    if indices.binary_search(&idx).is_err() {
+                        out |= 1u64 << idx;
+                    }
+                }
+                Self::Bitmask { effects, bits: out }
+            }
+            (Self::Indices { effects, indices }, Self::Bitmask { bits, .. }) => {
+                let out = indices
+                    .iter()
+                    .copied()
+                    .filter(|&idx| idx >= 64 || (bits & (1u64 << idx)) == 0)
+                    .collect();
+                Self::Indices {
+                    effects,
+                    indices: out,
+                }
+            }
+        }
+    }
+
+    /// Union of two masks over the same underlying slice (used to combine weapon-scoped rows from
+    /// `bench` and `round_start_extra`).
+    #[inline]
+    pub(crate) fn union_with(&self, other: &ActiveMask<'a>) -> Self {
+        if other.is_empty() {
+            return self.clone();
+        }
+        if self.is_empty() {
+            return other.clone();
+        }
+        match (self, other) {
+            (Self::Bitmask { effects, bits: a }, Self::Bitmask { bits: b, .. }) => Self::Bitmask {
+                effects,
+                bits: a | b,
+            },
+            (Self::All(effects), _) | (_, Self::All(effects)) => Self::All(effects),
+            (
+                Self::Indices {
+                    effects,
+                    indices: a,
+                },
+                Self::Indices { indices: b, .. },
+            ) => {
+                let mut merged = Vec::with_capacity(a.len() + b.len());
+                let (mut i, mut j) = (0, 0);
+                while i < a.len() && j < b.len() {
+                    match a[i].cmp(&b[j]) {
+                        std::cmp::Ordering::Less => {
+                            merged.push(a[i]);
+                            i += 1;
+                        }
+                        std::cmp::Ordering::Greater => {
+                            merged.push(b[j]);
+                            j += 1;
+                        }
+                        std::cmp::Ordering::Equal => {
+                            merged.push(a[i]);
+                            i += 1;
+                            j += 1;
+                        }
+                    }
+                }
+                merged.extend_from_slice(&a[i..]);
+                merged.extend_from_slice(&b[j..]);
+                Self::Indices {
+                    effects,
+                    indices: merged,
+                }
+            }
+            (Self::Bitmask { effects, bits }, Self::Indices { indices, .. })
+            | (Self::Indices { effects, indices }, Self::Bitmask { bits, .. }) => {
+                let mut merged = Vec::with_capacity(indices.len() + bits.count_ones() as usize);
+                let mut rem = *bits;
+                while rem != 0 {
+                    let idx = rem.trailing_zeros() as usize;
+                    rem &= rem - 1;
+                    merged.push(idx);
+                }
+                merged.extend_from_slice(indices);
+                merged.sort_unstable();
+                merged.dedup();
+                Self::Indices {
+                    effects,
+                    indices: merged,
+                }
+            }
+        }
+    }
+}
+
+pub(crate) enum ActiveMaskIter<'a, 'b> {
+    All(std::slice::Iter<'a, ActiveAbilityEffect>),
+    Bitmask {
+        effects: &'a [ActiveAbilityEffect],
+        bits: u64,
+    },
+    Indices {
+        effects: &'a [ActiveAbilityEffect],
+        indices: std::slice::Iter<'b, usize>,
+    },
+}
+
+impl<'a> Iterator for ActiveMaskIter<'a, '_> {
+    type Item = &'a ActiveAbilityEffect;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::All(it) => it.next(),
+            Self::Bitmask { effects, bits } => {
+                if *bits == 0 {
+                    return None;
+                }
+                let idx = bits.trailing_zeros() as usize;
+                *bits &= *bits - 1;
+                Some(&effects[idx])
+            }
+            Self::Indices { effects, indices } => indices.next().map(|&idx| &effects[idx]),
+        }
+    }
+}
+
+pub(crate) enum ActiveMaskIndexedIter<'a, 'b> {
+    All {
+        effects: &'a [ActiveAbilityEffect],
+        pos: usize,
+    },
+    Bitmask {
+        effects: &'a [ActiveAbilityEffect],
+        bits: u64,
+    },
+    Indices {
+        effects: &'a [ActiveAbilityEffect],
+        indices: std::slice::Iter<'b, usize>,
+    },
+}
+
+impl<'a> Iterator for ActiveMaskIndexedIter<'a, '_> {
+    type Item = (usize, &'a ActiveAbilityEffect);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::All { effects, pos } => {
+                let i = *pos;
+                if i < effects.len() {
+                    *pos = i + 1;
+                    Some((i, &effects[i]))
+                } else {
+                    None
+                }
+            }
+            Self::Bitmask { effects, bits } => {
+                if *bits == 0 {
+                    return None;
+                }
+                let idx = bits.trailing_zeros() as usize;
+                *bits &= *bits - 1;
+                Some((idx, &effects[idx]))
+            }
+            Self::Indices { effects, indices } => indices.next().map(|&idx| (idx, &effects[idx])),
+        }
+    }
+}
+
+/// Evaluate conditions on `effects` without cloning any [`ActiveAbilityEffect`] (zero heap
+/// allocation for all slices with `len <= 64`, and zero heap allocation whenever all pass).
+#[inline]
+pub(crate) fn filter_effects_mask<'a>(
+    effects: &'a [ActiveAbilityEffect],
+    ctx: &CombatContext,
+) -> ActiveMask<'a> {
+    if effects.is_empty() {
+        return ActiveMask::All(&[]);
+    }
+    let Some(first_rejected) = effects
+        .iter()
+        .position(|e| e.condition.as_ref().is_some_and(|c| !c.evaluate(ctx)))
+    else {
+        return ActiveMask::All(effects);
+    };
+    if effects.len() <= 64 {
+        let mut bits = if first_rejected == 0 {
+            0u64
+        } else {
+            (1u64 << first_rejected) - 1
+        };
+        for (offset, effect) in effects[first_rejected + 1..].iter().enumerate() {
+            if effect.condition.as_ref().is_none_or(|c| c.evaluate(ctx)) {
+                bits |= 1u64 << (first_rejected + 1 + offset);
+            }
+        }
+        ActiveMask::Bitmask { effects, bits }
+    } else {
+        let mut indices = Vec::with_capacity(effects.len());
+        indices.extend(0..first_rejected);
+        for (offset, effect) in effects[first_rejected + 1..].iter().enumerate() {
+            if effect.condition.as_ref().is_none_or(|c| c.evaluate(ctx)) {
+                indices.push(first_rejected + 1 + offset);
+            }
+        }
+        ActiveMask::Indices { effects, indices }
+    }
+}
+
 /// Sum [`AbilityEffect::MitigationAdditive`] from combat-begin (or similar) filtered rows.
 /// Applied on hostile return fire so gated “defense vs survey / …” armor rows affect damage taken.
 pub fn sum_mitigation_additive(effects: &[ActiveAbilityEffect]) -> f64 {

@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "combined_sha256": "3e356659bfc1004117c24e9c822f9ba5d7a1aed33d43f62ebeb9f7ac1a6cff1d",
+  "upstream": {
+    "details_forbidden_tech": {
+      "path": "data/upstream/data-stfc-space/forbidden_tech",
+      "present": true,
+      "file_count": 71,
+      "sha256": "3cc190028f9ee6d90246eed2dfc35dcf83a0d325fd01e93693235613ab7c506f"
+    },
+    "details_hostiles": {
+      "path": "data/upstream/data-stfc-space/hostiles",
+      "present": true,
+      "file_count": 6443,
+      "sha256": "a81427af95e4a62d3108dfcb82aa724125c30f3c6799859663efee7b90201e35"
+    },
+    "details_officers": {
+      "path": "data/upstream/data-stfc-space/officers",
+      "present": true,
+      "file_count": 290,
+      "sha256": "75d94dfb03b1f5e0c5a1326b9d4d490a824154c68e15c5a27f47b89196a679d2"
+    },
+    "details_research": {
+      "path": "data/upstream/data-stfc-space/research",
+      "present": true,
+      "file_count": 2662,
+      "sha256": "0a5fcdf9be1810acff16235560d90cb6d671bd7379dede364f710873d5a8727c"
+    },
+    "details_ships": {
+      "path": "data/upstream/data-stfc-space/ships",
+      "present": true,
+      "file_count": 116,
+      "sha256": "871eea28689d231e674acdd6c196a4508b51037cb7a533237572b47408deb983"
+    },
+    "summary_building": {
+      "path": "data/upstream/data-stfc-space/summary-building.json",
+      "present": true,
+      "sha256": "838efe773afa554a3b8a86b023c2672b810be65a03e4bc9ae0e1ed446962f1a2",
+      "records": 111
+    },
+    "summary_forbidden_tech": {
+      "path": "data/upstream/data-stfc-space/summary-forbidden_tech.json",
+      "present": true,
+      "sha256": "5b4225d59076f3a414b9331a04ab0c1908799777d714c549919c4ea4e8b72461",
+      "records": 74
+    },
+    "summary_hostile": {
+      "path": "data/upstream/data-stfc-space/summary-hostile.json",
+      "present": true,
+      "sha256": "85bdf55cbfd1b5eab0c46248f697822772f83150822c8d59ade7cc4f97ff6cbf",
+      "records": 6437
+    },
+    "summary_officer": {
+      "path": "data/upstream/data-stfc-space/summary-officer.json",
+      "present": true,
+      "sha256": "1e828042103428c476e60b5afec06ec082b8a6148d923838973858f8e93ebc7d",
+      "records": 297
+    },
+    "summary_research": {
+      "path": "data/upstream/data-stfc-space/summary-research.json",
+      "present": true,
+      "sha256": "3d9d3e67cecc49662995ada8625392229dc0ba17c2d3b188461ac5e5e4c83bb5",
+      "records": 2662
+    },
+    "summary_ship": {
+      "path": "data/upstream/data-stfc-space/summary-ship.json",
+      "present": true,
+      "sha256": "e1daa095f9129f188696ae67875c46b6042280c421f0b2032cf7039bb00e767f",
+      "records": 116
+    },
+    "translations_factions": {
+      "path": "data/upstream/data-stfc-space/translations-factions.json",
+      "present": true,
+      "sha256": "21c2bb366ec8f62bb6ce81303f84a56080d571f698a9fa7af2a5de329397660f",
+      "records": 641
+    },
+    "translations_forbidden_tech": {
+      "path": "data/upstream/data-stfc-space/translations-forbidden_tech.json",
+      "present": true,
+      "sha256": "5ec118bf45880fe24386bcd0af69c228bfa32364efb6f68aa487c4a5d90bafaf",
+      "records": 1100
+    },
+    "translations_officer_buffs": {
+      "path": "data/upstream/data-stfc-space/translations-officer_buffs.json",
+      "present": true,
+      "sha256": "72252059ee459b380f3f3b2882a6e3f8f9e9cf28276a4f2ad42949aa1d3452cb",
+      "records": 2126
+    },
+    "translations_officers": {
+      "path": "data/upstream/data-stfc-space/translations-officers.json",
+      "present": true,
+      "sha256": "ae8947b93678c87a1b9500699614a953d3ee88f3ec585994002107baf9207c86",
+      "records": 1594
+    },
+    "translations_research": {
+      "path": "data/upstream/data-stfc-space/translations-research.json",
+      "present": true,
+      "sha256": "ca67469105f7b2e663126ee549c803c331fc846d138bec6f3633ca8adc0718d5",
+      "records": 5533
+    },
+    "translations_ships": {
+      "path": "data/upstream/data-stfc-space/translations-ships.json",
+      "present": true,
+      "sha256": "9366472292e2866f0cad6db36524b0bd27b5221e6fdc4b18174b241671bf1cc5",
+      "records": 1241
+    },
+    "translations_starbase_modules": {
+      "path": "data/upstream/data-stfc-space/translations-starbase_modules.json",
+      "present": true,
+      "sha256": "56b65f13623a777f47f96ab2e917876e46531907d6273d49a4b1d80741492e61",
+      "records": 931
+    }
+  },
+  "normalized": {
+    "buildings": {
+      "path": "data/buildings",
+      "present": true,
+      "file_count": 118,
+      "sha256": "cfbdd5fe6b980e9f6e52df9dcd20e1e2af07dbd9c2a010afa22f498e2350e3ed",
+      "data_version": "stfcspace-2026-11-17"
+    },
+    "forbidden_chaos_tech": {
+      "path": "data/forbidden_chaos_tech.json",
+      "present": true,
+      "sha256": "33280e98f4396f58c2d39ad0ad7736c6578cc669fd075ba4439f550fd914be59",
+      "records": 71
+    },
+    "hostile_ability_catalog": {
+      "path": "data/upstream/data-stfc-space/hostile_ability_catalog.json",
+      "present": true,
+      "sha256": "74adc8b6c3534a6d8c633e492bf4887b5dc5ee0d3527b72264acac61aa656882",
+      "records": 2
+    },
+    "hostiles": {
+      "path": "data/hostiles",
+      "present": true,
+      "file_count": 6446,
+      "sha256": "db167baffda40f8a78b2baa6301b232d906f24dced2670fa4c98c7ab8f102d89",
+      "data_version": "stfcspace-hostiles-2026-11-17+native-vger-gorn-l62-2026-11-10"
+    },
+    "hull_id_registry": {
+      "path": "data/hull_id_registry.json",
+      "present": true,
+      "sha256": "24efd2265e61ec467a23481a75c02df19ad894aaf9e1580c9b7977c1e220e214",
+      "records": 2
+    },
+    "officers_canonical": {
+      "path": "data/officers/officers.canonical.json",
+      "present": true,
+      "sha256": "38565d7be18ceb62b19db867241e619095fee902544ff9643f856700b0e63252",
+      "records": 290,
+      "data_version": "m86-04763f1697f5+vger-ilia"
+    },
+    "research_catalog": {
+      "path": "data/research_catalog.json",
+      "present": true,
+      "sha256": "1335452a01dea34581e12e2012ab8570e095cdd838f35142bcfb2c855945cd14",
+      "records": 243
+    },
+    "ship_ability_catalog": {
+      "path": "data/upstream/data-stfc-space/ship_ability_catalog.json",
+      "present": true,
+      "sha256": "4a754a430fc5ae44bc392e16d9ca17277e2577fa9e4761770e7254de4b868146",
+      "records": 2
+    },
+    "ship_id_registry": {
+      "path": "data/upstream/data-stfc-space/ship_id_registry.json",
+      "present": true,
+      "sha256": "93bd22be71c318da44e88d04fe6f31de562103f75be5d45d5bd17ef71e9f1f01",
+      "records": 116,
+      "data_version": "data-stfc-space"
+    },
+    "ships_extended": {
+      "path": "data/ships_extended",
+      "present": true,
+      "file_count": 117,
+      "sha256": "4ce61142cad3b3b851ec1c46fbf46ca9e544d0d828f272711599b318f98092df",
+      "data_version": "stfcspace-ships-2026-11-17"
+    },
+    "support_buffs": {
+      "path": "data/support_buffs.json",
+      "present": true,
+      "sha256": "d9951a777276beb50f18a00328fd082b3c274af48b0124c99a74d5846850f1a9",
+      "records": 1
+    },
+    "syndicate_reputation": {
+      "path": "data/syndicate_reputation.json",
+      "present": true,
+      "sha256": "d88136551cd0fdbf8dfb24ed616fe87c406326426cd51484883ab80c8cbcfad7",
+      "records": 2
+    }
+  }
+}

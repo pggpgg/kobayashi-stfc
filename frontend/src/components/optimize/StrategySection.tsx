@@ -40,7 +40,7 @@ export default function StrategySection({ settings, onChange }: Props) {
       <div style={{ fontSize: "0.85rem" }}>
         <FieldLabelWithHint
           hint={
-            "Exhaustive: generate candidate crews from officer pools (respecting Max crews when set), then run your full Sims per crew on each. Genetic: evolve populations of crews for very large spaces; ignores the Max crews cap. Tiered: a fast scouting pass with fewer sims per crew ranks candidates, then your full sim count runs only on the best Top K crews. Random stratified: baseline control — random legal crews stratified across captain faction/rarity and below-decks families, then scout → confirm."
+            "Portfolio: multi-lane discovery combining 6-beam LCARS diversity beam search, stratified random exploration, multi-fidelity Hyperband CRN racing, a quality-diversity archive, 1-slot elite neighborhood expansion, and independent-seed confirmation. Exhaustive: generate candidate crews from officer pools (respecting Max crews when set), then run your full Sims per crew on each. Genetic: evolve populations of crews for very large spaces; ignores the Max crews cap. Tiered: a fast scouting pass with fewer sims per crew ranks candidates, then your full sim count runs only on the best Top K crews. Random stratified: baseline control — random legal crews stratified across captain faction/rarity and below-decks families, then scout → confirm."
           }
         >
           <span>Search method</span>
@@ -54,12 +54,29 @@ export default function StrategySection({ settings, onChange }: Props) {
           }
           style={selectStyle}
         >
+          <option value="portfolio">
+            Multi-lane discovery portfolio (recommended)
+          </option>
+          <option value="tiered">Scout, then verify finalists</option>
           <option value="exhaustive">Try every candidate</option>
           <option value="genetic">Evolve promising crews</option>
-          <option value="tiered">Scout, then verify finalists</option>
           <option value="linear_eval">Estimate expected damage</option>
           <option value="random_stratified">Sample varied crews</option>
         </select>
+        {optimizerStrategy === "portfolio" && (
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: "0.72rem",
+              color: "var(--text-muted)",
+            }}
+          >
+            Default strategy: combines 6-beam LCARS search, stratified random
+            exploration, multi-fidelity CRN racing, 1-slot elite neighborhood
+            expansion, and a quality-diversity archive before independent
+            confirmation.
+          </p>
+        )}
         {optimizerStrategy === "random_stratified" && (
           <p
             style={{
@@ -84,23 +101,28 @@ export default function StrategySection({ settings, onChange }: Props) {
           </p>
         )}
       </div>
-      {optimizerStrategy !== "linear_eval" && (
-        <label style={checkboxLabelStyle}>
-          <input
-            type="checkbox"
-            checked={enableLearnedPairPrior}
-            onChange={(e) => update("enableLearnedPairPrior")(e.target.checked)}
-            style={{ margin: 0 }}
-          />
-          <span
-            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-          >
-            Favor officer pairs that worked before
-            <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
-          </span>
-        </label>
-      )}
-      {(optimizerStrategy === "tiered" || optimizerStrategy === "genetic") && (
+      {optimizerStrategy !== "linear_eval" &&
+        optimizerStrategy !== "portfolio" && (
+          <label style={checkboxLabelStyle}>
+            <input
+              type="checkbox"
+              checked={enableLearnedPairPrior}
+              onChange={(e) =>
+                update("enableLearnedPairPrior")(e.target.checked)
+              }
+              style={{ margin: 0 }}
+            />
+            <span
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+            >
+              Favor officer pairs that worked before
+              <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
+            </span>
+          </label>
+        )}
+      {(optimizerStrategy === "tiered" ||
+        optimizerStrategy === "genetic" ||
+        optimizerStrategy === "portfolio") && (
         <label style={checkboxLabelStyle}>
           <input
             type="checkbox"
@@ -117,12 +139,15 @@ export default function StrategySection({ settings, onChange }: Props) {
         </label>
       )}
 
-      {optimizerStrategy === "tiered" && (
+      {(optimizerStrategy === "tiered" ||
+        optimizerStrategy === "portfolio") && (
         <>
           <div style={{ fontSize: "0.85rem" }}>
             <FieldLabelWithHint
               hint={
-                "Number of Monte Carlo trials per crew during the tiered scouting phase (always fewer than your main Sims per crew). Lower is faster but ranks candidates more noisily. Leave blank for the server default (typically 500)."
+                optimizerStrategy === "portfolio"
+                  ? "Deepest Hyperband racing bracket trial cap per crew (always fewer than your main Sims per crew). Leave blank for the server default (144)."
+                  : "Number of Monte Carlo trials per crew during the tiered scouting phase (always fewer than your main Sims per crew). Lower is faster but ranks candidates more noisily. Leave blank for the server default (typically 500)."
               }
             >
               <span>Quick trials per crew (optional)</span>
@@ -132,7 +157,11 @@ export default function StrategySection({ settings, onChange }: Props) {
               min={1}
               max={MAX_TIERED_SCOUT_SIMS_UI}
               step={1}
-              placeholder="500 (default)"
+              placeholder={
+                optimizerStrategy === "portfolio"
+                  ? "144 (default)"
+                  : "500 (default)"
+              }
               value={tieredScoutSims ?? ""}
               onChange={(e) => {
                 const raw = e.target.value.trim();
@@ -179,39 +208,41 @@ export default function StrategySection({ settings, onChange }: Props) {
               style={selectStyle}
             />
           </div>
-          <div style={{ fontSize: "0.85rem" }}>
-            <FieldLabelWithHint
-              hint={
-                "Fraction of scout candidates (0–50%) swapped for random legal crews stratified by captain faction/rarity and below-decks family. These bypass the analytical prefilter, so surprising crews the proxy would discard still get scouted. Rows they produce are labeled random_stratified. Leave blank to disable."
-              }
-            >
-              <span>Random exploration % (optional)</span>
-            </FieldLabelWithHint>
-            <input
-              type="number"
-              min={0}
-              max={50}
-              step={1}
-              placeholder="off (default)"
-              value={
-                tieredRandomExplorationPct != null
-                  ? Math.round(tieredRandomExplorationPct * 100)
-                  : ""
-              }
-              onChange={(e) => {
-                const raw = e.target.value.trim();
-                if (raw === "") {
-                  update("tieredRandomExplorationPct")(null);
-                  return;
+          {optimizerStrategy === "tiered" && (
+            <div style={{ fontSize: "0.85rem" }}>
+              <FieldLabelWithHint
+                hint={
+                  "Fraction of scout candidates (0–50%) swapped for random legal crews stratified by captain faction/rarity and below-decks family. These bypass the analytical prefilter, so surprising crews the proxy would discard still get scouted. Rows they produce are labeled random_stratified. Leave blank to disable."
                 }
-                const n = parseInt(raw, 10);
-                if (!Number.isNaN(n) && n >= 0) {
-                  update("tieredRandomExplorationPct")(Math.min(n, 50) / 100);
+              >
+                <span>Random exploration % (optional)</span>
+              </FieldLabelWithHint>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                step={1}
+                placeholder="off (default)"
+                value={
+                  tieredRandomExplorationPct != null
+                    ? Math.round(tieredRandomExplorationPct * 100)
+                    : ""
                 }
-              }}
-              style={selectStyle}
-            />
-          </div>
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  if (raw === "") {
+                    update("tieredRandomExplorationPct")(null);
+                    return;
+                  }
+                  const n = parseInt(raw, 10);
+                  if (!Number.isNaN(n) && n >= 0) {
+                    update("tieredRandomExplorationPct")(Math.min(n, 50) / 100);
+                  }
+                }}
+                style={selectStyle}
+              />
+            </div>
+          )}
           <p
             style={{
               margin: "4px 0 0",
@@ -219,9 +250,9 @@ export default function StrategySection({ settings, onChange }: Props) {
               color: "var(--text-muted)",
             }}
           >
-            Leave blank for server defaults (500 scout sims, top 20, no random
-            exploration). Max {MAX_TIERED_SCOUT_SIMS_UI.toLocaleString()} /{" "}
-            {MAX_TIERED_TOP_K_UI}.
+            {optimizerStrategy === "portfolio"
+              ? `Leave blank for server defaults (144 max racing trials, top 20). Max ${MAX_TIERED_SCOUT_SIMS_UI.toLocaleString()} / ${MAX_TIERED_TOP_K_UI}.`
+              : `Leave blank for server defaults (500 scout sims, top 20, no random exploration). Max ${MAX_TIERED_SCOUT_SIMS_UI.toLocaleString()} / ${MAX_TIERED_TOP_K_UI}.`}
           </p>
         </>
       )}

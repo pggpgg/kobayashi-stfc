@@ -6,6 +6,7 @@
 
 ## Provenance
 
+- **Pipeline manifest:** [`data/pipeline_manifest.json`](pipeline_manifest.json) records deterministic, LF-normalized SHA-256 digests and record/file counts for every upstream summary/translation/detail directory and normalized combat catalog. Verify with `cargo xtask pipeline-manifest --check` (also checked in `cargo xtask check-generated`) and regenerate with `cargo xtask pipeline-manifest --write` or `npm run data:refresh -- --stfcspace --write-manifest`.
 - **Index files** include optional `data_version` and `source_note` (e.g. `"data_version": "stfccommunity-main"`, `"source_note": "STFCcommunity baseline (outdated ~3y)"`). These document where the data came from and help detect drift.
 - **Source:** Data is typically produced by the normalizer from STFCcommunity or other community sources. See the normalizer and `data_version` / `source_note` in each index for the current baseline.
 - **Validation:** Run the test suite; `data_provenance_and_validation` (or similar) tests that indexes load and optional version fields are present. For manual checks, compare a subset of ship/hostile stats to a known source (e.g. toolbox or game).

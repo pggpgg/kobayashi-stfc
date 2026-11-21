@@ -80,3 +80,81 @@ test("a failed fetch with corrupt cache still blocks downstream processing", asy
     await fs.rm(fixture, { recursive: true, force: true });
   }
 });
+
+test("drift-targeted refresh re-fetches modified ids and honors 304 Not Modified on ETag match", async () => {
+  const scratchRoot = path.join(repoRoot, "target/test-tmp");
+  await fs.mkdir(scratchRoot, { recursive: true });
+  const fixture = await fs.mkdtemp(path.join(scratchRoot, "detail-fetch-v2-"));
+  try {
+    const cacheDir = path.join(fixture, "cache");
+    await fs.mkdir(cacheDir);
+    await fs.writeFile(path.join(cacheDir, "201.json"), '{"id":201,"ver":1}\n');
+    await fs.writeFile(path.join(cacheDir, "202.json"), '{"id":202,"ver":1}\n');
+    const driftPath = path.join(fixture, "drift.json");
+    await fs.writeFile(
+      driftPath,
+      JSON.stringify({
+        domains: [{ name: "ship", added: ["203"], modified: ["202"], changedNumericIds: [202, 203] }],
+      }),
+    );
+
+    const script = `
+      import { loadChangedIdsFromDriftFile, runDetailFetch } from ${JSON.stringify(helperUrl.href)};
+      const changed = await loadChangedIdsFromDriftFile(${JSON.stringify(driftPath)}, "ship");
+      const fetchedUrls = [];
+      globalThis.fetch = async (url, init) => {
+        fetchedUrls.push({ url, ifNoneMatch: init?.headers?.["If-None-Match"] ?? null });
+        if (url.endsWith("/202.json") && init?.headers?.["If-None-Match"] === '"etag-202"') {
+          return { ok: false, status: 304, statusText: "Not Modified", headers: new Headers({ etag: '"etag-202"' }) };
+        }
+        if (url.endsWith("/202.json")) {
+          return { ok: true, status: 200, headers: new Headers({ etag: '"etag-202"' }), json: async () => ({ id: 202, ver: 2 }) };
+        }
+        return { ok: true, status: 200, headers: new Headers({ etag: '"etag-203"' }), json: async () => ({ id: 203, ver: 1 }) };
+      };
+      const first = await runDetailFetch({
+        repoRoot: ${JSON.stringify(fixture)},
+        cacheDir: ${JSON.stringify(cacheDir)},
+        segment: "ship",
+        logStem: "ships",
+        ids: [201, 202, 203],
+        full: false,
+        forceRefreshIds: changed,
+        concurrency: 3,
+        pacingMs: 0,
+        retryBaseMs: 1,
+      });
+      const second = await runDetailFetch({
+        repoRoot: ${JSON.stringify(fixture)},
+        cacheDir: ${JSON.stringify(cacheDir)},
+        segment: "ship",
+        logStem: "ships",
+        ids: [202],
+        full: true,
+        concurrency: 2,
+        pacingMs: 0,
+        retryBaseMs: 1,
+      });
+      console.log(JSON.stringify({ first, second, fetchedUrls }));
+    `;
+    const run = spawnSync(process.execPath, ["--input-type=module", "-e", script], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      timeout: 20_000,
+    });
+    assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
+    const lastLine = run.stdout.trim().split("\n").pop();
+    const out = JSON.parse(lastLine);
+    assert.equal(out.first.skipped, 1, "201 should be skipped");
+    assert.equal(out.first.fetched, 2, "202 (modified) and 203 (missing) should be fetched");
+    assert.equal(out.second.not_modified, 1, "second full fetch of 202 should hit 304 via ETag");
+    assert.equal(out.second.fetched, 0);
+    assert.deepEqual(JSON.parse(await fs.readFile(path.join(cacheDir, "202.json"), "utf8")), {
+      id: 202,
+      ver: 2,
+    });
+  } finally {
+    assert.ok(fixture.startsWith(`${scratchRoot}${path.sep}`));
+    await fs.rm(fixture, { recursive: true, force: true });
+  }
+});

@@ -142,6 +142,7 @@ function formatExpectedHullDamage(value: number | undefined): string {
 
 function formatMethodProvenance(value: string | undefined): string {
   const map: Record<string, string> = {
+    beam_diversity: "Beam",
     curated_warm_start: "Curated",
     exhaustive_mc: "Exhaustive MC",
     exhaustive_two_phase: "Two-phase MC",
@@ -153,11 +154,89 @@ function formatMethodProvenance(value: string | undefined): string {
     local_captain_swap: "Captain swap",
     local_swap: "Seat swap",
     monte_carlo: "Monte Carlo",
+    portfolio: "Portfolio",
+    portfolio_neighbor: "Neighbor swap",
+    qd_archive: "Archive",
+    random_stratified: "Stratified random",
     seeded_genetic: "Seeded GA",
     tiered_confirmed: "Tiered",
     warm_start: "Warm start",
   };
   return value != null ? (map[value] ?? value.replace(/_/g, " ")) : "";
+}
+
+function fidelityBadgeStyle(grade: string): CSSProperties {
+  const palette: Record<string, { border: string; color: string }> = {
+    A: { border: "rgba(67,181,129,0.5)", color: "#43b581" },
+    B: { border: "rgba(99,179,237,0.5)", color: "#63b3ed" },
+    C: { border: "rgba(232,149,46,0.55)", color: "#e8952e" },
+    D: { border: "rgba(240,71,71,0.55)", color: "#f04747" },
+  };
+  const colors = palette[grade] ?? {
+    border: "var(--border)",
+    color: "var(--text-muted)",
+  };
+  return {
+    display: "inline-block",
+    padding: "1px var(--space-4)",
+    border: `1px solid ${colors.border}`,
+    borderRadius: "var(--radius-1)",
+    color: colors.color,
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    lineHeight: 1.5,
+    fontVariantNumeric: "tabular-nums",
+  };
+}
+
+function formatFidelityTooltip(r: CrewRecommendation): string | undefined {
+  const parts: string[] = [];
+  if (r.fidelity) {
+    const f = r.fidelity;
+    parts.push(
+      `Modeling fidelity ${f.grade} (${f.coverage_pct.toFixed(1)}%): ${f.implemented} implemented, ${f.partial} partial, ${f.ignored} ignored across ${f.total_combat_effects} active combat effect(s).`,
+    );
+    if (f.caveats && f.caveats.length > 0) {
+      parts.push(`Caveats:\n- ${f.caveats.join("\n- ")}`);
+    }
+  }
+  if (r.uncertainty_reason) {
+    parts.push(`Uncertainty: ${r.uncertainty_reason}`);
+  }
+  return parts.length > 0 ? parts.join("\n") : undefined;
+}
+
+function formatMethodTooltip(r: CrewRecommendation): string {
+  const parts: string[] = [];
+  if (r.refinement) {
+    parts.push(formatRefinementChanges(r.refinement));
+  } else if (r.method_provenance) {
+    parts.push(
+      `Primary source: ${formatMethodProvenance(r.method_provenance)}`,
+    );
+  }
+  if (r.proposing_methods && r.proposing_methods.length > 1) {
+    parts.push(
+      `Proposed by: ${r.proposing_methods.map(formatMethodProvenance).join(", ")}`,
+    );
+  }
+  if (r.qd_cell) {
+    parts.push(`Archive cell: ${r.qd_cell}`);
+  }
+  return parts.join("\n");
+}
+
+function formatTrialsTooltip(r: CrewRecommendation): string {
+  const parts: string[] = [
+    `${r.trials_run} Monte Carlo trials backed this row`,
+  ];
+  if (r.evidence_level) {
+    parts.push(`Evidence: ${r.evidence_level.replace(/_/g, " ")}`);
+  }
+  if (r.uncertainty_reason) {
+    parts.push(r.uncertainty_reason);
+  }
+  return parts.join(" · ");
 }
 
 /** Display order for recommendation badges: named views first, front membership last. */
@@ -420,6 +499,7 @@ export default memo(function SimResults({
   const showMethodProvenance = recommendations.some(
     (r) => r.method_provenance != null && r.method_provenance.trim() !== "",
   );
+  const showFidelity = recommendations.some((r) => r.fidelity != null);
   // Runs the tagging pass declines (linear eval, single result) return no tags at all — no column.
   const showWhy = useMemo(
     () =>
@@ -943,6 +1023,14 @@ export default memo(function SimResults({
                   {showMethodProvenance && (
                     <th style={styles.thText}>Method</th>
                   )}
+                  {showFidelity && (
+                    <th
+                      style={styles.thText}
+                      title="Active-seat combat modeling coverage grade (A–D) for this crew. Hover a badge for caveats."
+                    >
+                      Fidelity
+                    </th>
+                  )}
                   {showTrialsRun && (
                     <th
                       style={styles.thNumeric}
@@ -1028,11 +1116,7 @@ export default memo(function SimResults({
                       {showMethodProvenance && (
                         <td
                           style={styles.tdMethod}
-                          title={
-                            r.refinement
-                              ? formatRefinementChanges(r.refinement)
-                              : (r.method_provenance ?? "")
-                          }
+                          title={formatMethodTooltip(r)}
                         >
                           {formatMethodProvenance(r.method_provenance)}
                           {r.refinement && (
@@ -1047,10 +1131,24 @@ export default memo(function SimResults({
                           )}
                         </td>
                       )}
+                      {showFidelity && (
+                        <td
+                          style={styles.tdWhy}
+                          title={formatFidelityTooltip(r)}
+                        >
+                          {r.fidelity ? (
+                            <span style={fidelityBadgeStyle(r.fidelity.grade)}>
+                              {`${r.fidelity.grade} ${Math.round(r.fidelity.coverage_pct)}%`}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      )}
                       {showTrialsRun && (
                         <td
                           style={styles.tdNumeric}
-                          title={`${r.trials_run} Monte Carlo trials backed this row`}
+                          title={formatTrialsTooltip(r)}
                         >
                           {formatTrialsRun(r.trials_run) ?? "—"}
                         </td>

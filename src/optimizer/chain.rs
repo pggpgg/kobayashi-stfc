@@ -1,6 +1,8 @@
 //! Sequential chain-grind trials: attacker HHP carries over, SHP full each link (see DESIGN.md).
 
-use crate::combat::engine::{build_combat_setup, simulate_combat_from_setup_reusing_attacker};
+use crate::combat::engine::{
+    build_combat_setup, simulate_combat_from_setup_with_scratch, CombatTrialScratch,
+};
 use crate::combat::{OpponentFactionTag, SimulationConfig, TraceMode};
 use serde::{Deserialize, Serialize};
 
@@ -110,9 +112,10 @@ pub(crate) fn run_chain_trial(
             shared.defender_opponent.defender_is_player_ship(),
             &input.defender_crew,
         );
-        let mut attacker = setup.attacker.clone();
-        let result = simulate_combat_from_setup_reusing_attacker(&setup, fight_seed, &mut attacker);
-        let effective_max_hull = attacker.hull_health.max(1.0);
+        let mut trial_scratch = CombatTrialScratch::for_setup(&setup);
+        let result =
+            simulate_combat_from_setup_with_scratch(&setup, fight_seed, &mut trial_scratch);
+        let effective_max_hull = trial_scratch.attacker_hull_health(&setup).max(1.0);
 
         last_def_frac = (result.defender_hull_remaining / def_max).clamp(0.0, 1.0);
 

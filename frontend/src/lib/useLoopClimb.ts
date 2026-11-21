@@ -37,8 +37,8 @@ export interface StartClimbArgs {
 
 const DEFAULT_SETTINGS: LoopClimbSettings = {
   simsPerCrew: 1000,
-  maxCandidates: 200,
-  strategy: "tiered",
+  maxCandidates: 256,
+  strategy: "portfolio",
   stopCondition: { type: "first_failure" },
   perRungTimeoutMs: DEFAULT_PER_RUNG_TIMEOUT_MS,
 };

@@ -124,6 +124,18 @@ enum Commands {
         #[arg(long)]
         quiet: bool,
     },
+    /// Verify or regenerate deterministic `data/pipeline_manifest.json`
+    PipelineManifest {
+        /// Verify `data/pipeline_manifest.json` matches on-disk catalogs (default)
+        #[arg(long, conflicts_with = "write")]
+        check: bool,
+        /// Recompute and atomically write `data/pipeline_manifest.json` instead of checking
+        #[arg(long)]
+        write: bool,
+        /// Emit machine-readable JSON output
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -295,6 +307,21 @@ fn main() -> Result<()> {
                 );
             }
         }
+        Commands::PipelineManifest {
+            check: _,
+            write,
+            json,
+        } => {
+            let mut args = vec![if write {
+                "--write".to_string()
+            } else {
+                "--check".to_string()
+            }];
+            if json {
+                args.push("--json".to_string());
+            }
+            node(&repo, "scripts/pipeline_manifest.mjs", &args)?;
+        }
     }
     Ok(())
 }
@@ -430,7 +457,11 @@ fn check_generated(repo: &std::path::Path) -> Result<()> {
         &[("STFCSPACE_SHIPS_VERSION", data_version)],
     )?;
 
-    check_no_drift(repo, &["data/ships_extended"])
+    check_no_drift(repo, &["data/ships_extended"])?;
+    if repo.join("data/pipeline_manifest.json").is_file() {
+        node(repo, "scripts/pipeline_manifest.mjs", &["--check".into()])?;
+    }
+    Ok(())
 }
 
 /// Fail if any of `paths` has uncommitted changes per `git status --porcelain` — i.e. a generator

@@ -181,6 +181,7 @@ mod tests {
             enable_learned_pair_prior: false,
             learned_officer_scores: None,
             local_refinement: None,
+            portfolio_racing_trial_budget: None,
         }
     }
 

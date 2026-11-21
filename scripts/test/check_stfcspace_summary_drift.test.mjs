@@ -4,11 +4,14 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
+  anyContentOrKeyChange,
   anyDrift,
   compareSummaryDirs,
+  EXTENDED_DOMAINS,
   formatMarkdownReport,
   formatTextReport,
   loadDomainKeys,
+  resolveDomains,
 } from "../lib/check_stfcspace_summary_drift.mjs";
 
 const SHIP_DOMAIN = {
@@ -87,4 +90,42 @@ test("compareSummaryDirs reports no drift when key sets match", () => {
   assert.match(formatTextReport(reports), /no drift/);
   fs.rmSync(before, { recursive: true, force: true });
   fs.rmSync(after, { recursive: true, force: true });
+});
+
+test("compareSummaryDirs detects in-place row modifications and extracts changedNumericIds", () => {
+  const before = fs.mkdtempSync(path.join(os.tmpdir(), "drift-mod-before-"));
+  const after = fs.mkdtempSync(path.join(os.tmpdir(), "drift-mod-after-"));
+  writeJson(before, "summary-ship.json", [{ id: 10, max_tier: 9 }]);
+  writeJson(after, "summary-ship.json", [{ id: 10, max_tier: 12 }]);
+  writeJson(before, "summary-hostile.json", [{ id: 500, level: 40, strength: 1000 }]);
+  writeJson(after, "summary-hostile.json", [{ id: 500, level: 40, strength: 1250 }]);
+  writeJson(before, "summary-research.json", [{ id: 7 }]);
+  writeJson(after, "summary-research.json", [{ id: 7 }]);
+
+  // Default mode: count/keys unchanged -> anyDrift is false, but modified & changedNumericIds are populated!
+  const reports = compareSummaryDirs(before, after);
+  assert.equal(anyDrift(reports), false);
+  assert.equal(anyContentOrKeyChange(reports), true);
+  assert.deepEqual(reports.find((r) => r.name === "ship").modified, ["10"]);
+  assert.deepEqual(reports.find((r) => r.name === "ship").changedNumericIds, [10]);
+  assert.deepEqual(reports.find((r) => r.name === "hostile").modified, ["500:40"]);
+  assert.deepEqual(reports.find((r) => r.name === "hostile").changedNumericIds, [500]);
+
+  // Opt-in includeModifiedInDrifted promotes in-place changes to drift.
+  const strictReports = compareSummaryDirs(before, after, { includeModifiedInDrifted: true });
+  assert.equal(anyDrift(strictReports), true);
+  assert.match(formatMarkdownReport(strictReports), /Modified in-place/);
+
+  fs.rmSync(before, { recursive: true, force: true });
+  fs.rmSync(after, { recursive: true, force: true });
+});
+
+test("resolveDomains supports --all-domains across all 6 combat domains", () => {
+  const all = resolveDomains({ allDomains: true });
+  assert.equal(all.length, EXTENDED_DOMAINS.length);
+  assert.deepEqual(
+    all.map((d) => d.name),
+    ["ship", "hostile", "research", "officer", "building", "forbidden_tech"],
+  );
+  assert.throws(() => resolveDomains({ domainNames: ["unknown_domain"] }), /Unknown drift domain/);
 });

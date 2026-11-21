@@ -6,8 +6,8 @@ describe("#301 grouped optimizer settings", () => {
   it("preserves existing workspace defaults", () => {
     const { result } = renderHook(useOptimizerSettings);
     expect(result.current.settings).toMatchObject({
-      maxCandidates: 100,
-      optimizerStrategy: "tiered",
+      maxCandidates: 256,
+      optimizerStrategy: "portfolio",
       belowDecksPoolMode: "strict",
       enableLearnedPairPrior: true,
       tieredScoutSims: null,
@@ -48,7 +48,7 @@ describe("#301 grouped optimizer settings", () => {
       noveltyLambdaText: "0.6",
       noveltyHistoryAnchors: true,
       optimizeGroupsJson: '[{"officers":["A","B"],"min_count":2}]',
-      maxCandidates: 100,
+      maxCandidates: 256,
     });
     expect(result.current.update).toBe(update);
   });

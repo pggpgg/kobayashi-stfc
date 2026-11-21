@@ -388,7 +388,7 @@ describe("buildWorkspaceOptimizeStartBody", () => {
   });
 
   it("sends local_refinement on the lanes that run the pass", () => {
-    for (const strategy of ["tiered", "genetic"] as const) {
+    for (const strategy of ["tiered", "genetic", "portfolio"] as const) {
       const body = buildWorkspaceOptimizeStartBody({
         shipId: "S",
         scenarioId: "H",
