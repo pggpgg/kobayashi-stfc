@@ -317,8 +317,8 @@ pub struct SimulationConfig {
     /// (round 1 = first combat round).
     #[serde(default)]
     pub incoming_shield_mitigation_bonus_rounds: u32,
-    /// Net hyperthermic decay fraction applied to player max hull at each round start (after regen).
-    /// Scenario sets `max(0, hostile_decay - stabilizer)` for Aggregation fights.
+    /// Optional positive override for decay applied to player max hull at round start after regen.
+    /// Zero selects the active defender crew's hyperthermic decay effects.
     #[serde(default)]
     pub attacker_hyperthermic_decay_fraction: f64,
     /// When `true` and [`Self::trace_mode`] is [`TraceMode::Events`], emit `state_snapshot` trace rows

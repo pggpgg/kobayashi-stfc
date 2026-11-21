@@ -318,8 +318,7 @@ pub enum AbilityEffect {
         duration_rounds: u32,
     },
     /// Aggregation / psionic-style hostile ability: at round start, melt `fraction` of the **player
-    /// ship's max hull** (0.50 = 50% of max HHP). Resolved out of band; see
-    /// [`hostile_hyperthermic_decay_fraction_from_defender_crew`].
+    /// ship's max hull** (0.50 = 50% of max HHP). Seat conditions control which rounds it applies.
     HostileHyperthermicDecay {
         fraction: f64,
     },
@@ -1687,7 +1686,7 @@ pub fn defender_shield_drain_per_round_from_crew(
     (fraction.clamp(0.0, 0.95), rounds)
 }
 
-/// Aggregation-style hyperthermic decay on the player hull from hostile defender crew (round start).
+/// Largest configured round-start hyperthermic decay fraction before evaluating seat conditions.
 pub fn hostile_hyperthermic_decay_fraction_from_defender_crew(crew: &CrewConfiguration) -> f64 {
     let mut fraction = 0.0_f64;
     for s in &crew.seats {

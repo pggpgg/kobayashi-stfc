@@ -669,15 +669,17 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                     )
                 )
             hyper_m = re.search(
-                r"applies (\d+(?:\.\d+)?)% hyperthermic decay to the player'?s hull", p
+                r"applies (\d+(?:\.\d+)?)% hyperthermic decay to the player'?s hull"
+                r"(?: on combat start)? (on the first round|for 1 round|every round)\b",
+                p,
             )
-            if hyper_m and ("first round" in p or "for 1 round" in p):
+            if hyper_m:
                 extras.append(
                     modeled(
                         "round_start",
                         "hostile_hyperthermic_decay",
                         value_override=float(hyper_m.group(1)) / 100.0,
-                        round_cap=1,
+                        round_cap=None if hyper_m.group(2) == "every round" else 1,
                     )
                 )
             return m(

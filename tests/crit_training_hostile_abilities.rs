@@ -184,7 +184,8 @@ fn hostile_crit_damage_floor_bonus_sums_defender_crew() {
 fn critical_training_increases_counter_damage_vs_empty_catalog() {
     let rec = resolve_hostile("1006581066").expect("critical training hostile");
     let catalog = hostile_ability_catalog_for_default_path();
-    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
+    let mut crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
+    crew.seats.retain(|seat| seat.ability.name == "2291206649");
     let empty_catalog = HostileAbilityCatalog {
         description: Some("empty".into()),
         entries: Default::default(),

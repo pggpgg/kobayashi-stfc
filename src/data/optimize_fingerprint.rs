@@ -527,6 +527,43 @@ fn canary_fight_summaries() -> Vec<String> {
         result.attacker_hull_remaining,
         result.total_isolytic_damage,
     ));
+
+    // The stronger decay ends after round one. The weaker seat still applies in round two.
+    let mut attacker = canary_combatant("canary_y_player");
+    attacker.hull_health = 10_000.0;
+    attacker.attack = 100.0;
+    let defender = canary_combatant("canary_y_hostile");
+    let sustained = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::RoundStart,
+        AbilityEffect::HostileHyperthermicDecay { fraction: 0.10 },
+    );
+    let mut timed = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::RoundStart,
+        AbilityEffect::HostileHyperthermicDecay { fraction: 0.25 },
+    );
+    timed.ability.condition = Some(crate::combat::AbilityCondition::RoundRange { min: 1, max: 1 });
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &canary_config(2, 71),
+        &CrewConfiguration::default(),
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration {
+            seats: vec![sustained, timed],
+        },
+    );
+    summaries.push(format!(
+        "y_hostile_hyperthermic_decay:dmg={:.6};rounds={};ahull={:.6};",
+        result.total_damage, result.rounds_simulated, result.attacker_hull_remaining,
+    ));
     summaries
 }
 
@@ -2132,7 +2169,15 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 25, "expected twenty-five canary fights");
+        assert_eq!(summaries.len(), 26, "expected twenty-six canary fights");
+        let decay = summaries
+            .iter()
+            .find(|summary| summary.starts_with("y_hostile_hyperthermic_decay:"))
+            .expect("decay canary");
+        assert!(
+            decay.contains("rounds=2;ahull=6500.000000;"),
+            "expected 25% then 10% max-hull decay: {decay}"
+        );
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
