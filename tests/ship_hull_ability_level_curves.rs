@@ -187,3 +187,26 @@ fn constant_ability_stays_scalar() {
     assert_eq!(l1, 50000.0);
     assert_eq!(l1, high);
 }
+
+#[test]
+fn orion_corvette_enhanced_hull_adds_flat_health_at_each_level() {
+    let detail: Value = serde_json::from_str(include_str!(
+        "../data/upstream/data-stfc-space/ships/34867572.json"
+    ))
+    .unwrap();
+    let ability = &detail["ability"][0];
+    assert_eq!(ability["id"], 34867572);
+    assert_eq!(ability["value_is_percentage"], false);
+
+    for level in 1_u32..=20 {
+        let expected_bonus = ability["values"][level as usize - 1]["value"]
+            .as_f64()
+            .unwrap();
+        let ship =
+            resolve_ship_with_tier_level("orion_corvette", Some(level.div_ceil(5)), Some(level))
+                .expect("Orion Corvette at a supported tier and level");
+        let (hull, shield) = ship.health_with_launch_bonuses();
+        assert_eq!(hull, ship.hull_health + expected_bonus, "level {level}");
+        assert_eq!(shield, ship.shield_health, "level {level}");
+    }
+}
