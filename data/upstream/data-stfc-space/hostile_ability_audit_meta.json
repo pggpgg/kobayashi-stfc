@@ -7692,13 +7692,13 @@
       "effect_type": "attack_multiplier"
     },
     "3679636736": {
-      "bucket": "armada_scope",
+      "bucket": "isolytic_combat",
       "loca_id": 92210,
       "hostile_count": 3,
       "sample_hostile_id": "3507276863",
       "sample_level": 70,
       "text_snippet": "cascade nullification \nincreases isolytic defense by {0:#.#%} at the start of combat. \n\nthis armada's critical damage cannot drop below 300%.\n\nthis armada's battle have a maximum of 20 rounds.",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_defense"
     },
     "3684108364": {
       "bucket": "apex_combat",

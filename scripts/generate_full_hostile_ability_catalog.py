@@ -337,6 +337,29 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
             _bucket="isolytic_combat",
         )
 
+    # Cascade Nullification uses a per-level defense fraction and two fixed text values.
+    cascade_nullification = re.fullmatch(
+        r"cascade nullification increases isolytic defense by \{0[^}]*%\} at the start of combat\. "
+        r"this armada's critical damage cannot drop below (\d+(?:\.\d+)?)%\. "
+        r"this armada's battle (?:have|has) a maximum of ([1-9]\d*) rounds\.",
+        " ".join(p.split()),
+    )
+    if cascade_nullification:
+        crit_floor, round_limit = cascade_nullification.groups()
+        return m(
+            "combat_begin",
+            "isolytic_defense",
+            extra_seats=[
+                modeled(
+                    "combat_begin", "hostile_crit_damage_floor", value_override=float(crit_floor) / 100.0
+                ),
+                modeled(
+                    "combat_begin", "hostile_engagement_round_limit", value_override=int(round_limit)
+                ),
+            ],
+            _bucket="isolytic_combat",
+        )
+
     # Armada / wave defense
     if "armada" in p or "wave defense" in p:
         return dict(NOOP), "armada_scope"

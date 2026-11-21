@@ -469,38 +469,59 @@ fn canary_fight_summaries() -> Vec<String> {
         result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
         result.attacker_shield_remaining,result.total_isolytic_damage));
 
-    // The defender's engagement limit stops a fight the attacker could win
-    // within the caller's round budget.
+    // The hostile engagement limit stops a potential win. Cascade Nullification
+    // also exercises separate outbound Isolytic Defense and counter critical damage.
     let mut attacker = canary_combatant("canary_t_player");
     attacker.attack = 230.0;
-    let defender = canary_combatant("canary_t_hostile");
+    attacker.isolytic_damage = 0.25;
+    let mut defender = canary_combatant("canary_t_hostile");
+    defender.attack = 10.0;
+    defender.crit_chance = 1.0;
     let defender_crew = CrewConfiguration {
-        seats: vec![canary_seat(
-            CrewSeat::Ship,
-            AbilityClass::ShipAbility,
-            TimingWindow::CombatBegin,
-            AbilityEffect::HostileEngagementRoundLimit { rounds: 3 },
-        )],
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileEngagementRoundLimit { rounds: 3 },
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDefenseBonus(2.5),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageFloorBonus(3.0),
+            ),
+        ],
     };
+    defender.crit_damage_floor =
+        crate::combat::hostile_crit_damage_floor_bonus_from_defender_crew(&defender_crew);
     let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
         &attacker,
         &defender,
         &canary_config(8, 73),
         &CrewConfiguration { seats: vec![] },
         crate::combat::OpponentFactionTag::Unknown,
-        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Armada,
         crate::combat::ShipType::Battleship,
         true,
         false,
         &defender_crew,
     );
     summaries.push(format!(
-        "t_hostile_engagement_limit:dmg={:.6};won={};limit={};rounds={};dhull={:.6};",
+        "t_hostile_engagement_limit:dmg={:.6};won={};limit={};rounds={};dhull={:.6};ahull={:.6};iso={:.6};",
         result.total_damage,
         result.attacker_won,
         result.winner_by_round_limit,
         result.rounds_simulated,
         result.defender_hull_remaining,
+        result.attacker_hull_remaining,
+        result.total_isolytic_damage,
     ));
     summaries
 }
