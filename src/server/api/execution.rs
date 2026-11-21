@@ -3167,6 +3167,9 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
                 | "tiered_confirm"
                 | "exhaustive_scout"
                 | "exhaustive_confirm"
+                | "portfolio_race_coarse"
+                | "portfolio_race_refine"
+                | "portfolio_confirm"
         )
     });
     let (throughput_crews_per_sec, eta_seconds) =

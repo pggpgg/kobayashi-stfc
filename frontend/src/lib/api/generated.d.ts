@@ -1065,6 +1065,8 @@ export interface paths {
                     below_decks_slots?: number;
                     /** @description Consecutive kills per trial when the run this estimates will use chain grind (`chain.kills_target` on the optimize body). A chain trial simulates up to this many fights instead of one, so the estimate scales by it; omit for a single-fight run. Clamped to 1..=50 like the request body. */
                     chain_kills_target?: number;
+                    /** @description Optional optimizer strategy (`portfolio`, `tiered`, `exhaustive`, `genetic`, `linear_eval`, `random_stratified`) so multi-fidelity lanes estimate racing and confirmation trials accurately. Omit for the legacy exhaustive upper-bound estimate. */
+                    strategy?: "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | "portfolio";
                     /** @description Profile id (alternative to X-Profile-Id) */
                     profile?: components["parameters"]["QueryProfile"];
                 };

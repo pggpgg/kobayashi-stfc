@@ -267,6 +267,17 @@ function TieredBudgetMiniDiagram() {
 
 const IMPLEMENTED_METHODS: MethodEntry[] = [
   {
+    id: "portfolio",
+    title: "Multi-lane discovery portfolio",
+    status: "implemented",
+    apiLabel: 'strategy: "portfolio"',
+    what: "The default discovery strategy in Kobayashi: combines 6-beam LCARS diversity beam search, stratified random exploration, Hyperband-style CRN racing, a MAP-Elites quality-diversity archive, 1-slot elite neighborhood expansion, and independent-seed confirmation in one deterministic pipeline.",
+    detail:
+      "Every lane operates over the full legal officer pool rather than truncating early with a single scalar proxy. Paired common-random-number (CRN) racing concentrates trials on statistical survivors while protecting diverse captain archetypes, and final win rates are always verified on a decorrelated confirmation seed so selection noise never biases rankings. This is the SPA default.",
+    when: "Recommended default for PvE, PvP, and loop climbs — beats tiered and genetic on regret while surfacing diverse backup crews.",
+    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
+  },
+  {
     id: "exact-filters",
     title: "Exact pruning & eligibility filters",
     status: "implemented",
@@ -304,8 +315,8 @@ const IMPLEMENTED_METHODS: MethodEntry[] = [
     apiLabel: 'strategy: "tiered"',
     what: "Two-pass search: a cheap scouting pass (a few hundred trials per crew) ranks all candidates, then only the top K receive your full simulation depth with confidence intervals.",
     detail:
-      "The scout phase is adaptive — a coarse pass first, then refinement where rankings are uncertain (Wilson interval widths decide who needs more trials). An optional priority-queue scheduler promotes promising crews sooner and abandons hopeless ones early. This is the SPA default.",
-    when: "The default for medium and large searches; near-exhaustive quality at a fraction of the cost.",
+      "The scout phase is adaptive — a coarse pass first, then refinement where rankings are uncertain (Wilson interval widths decide who needs more trials). An optional priority-queue scheduler promotes promising crews sooner and abandons hopeless ones early.",
+    when: "A solid two-phase alternative when you want classic prefilter + scout → confirm behavior.",
     docHref: `${DOCS_BASE}/OPTIMIZATION_SPECIAL_HEURISTICS.md`,
     extra: <TieredBudgetMiniDiagram />,
   },
@@ -369,52 +380,62 @@ const IMPLEMENTED_METHODS: MethodEntry[] = [
     what: "Omit the strategy entirely and the server counts effective candidates (after warm start and constraints) and picks tiered for large searches or exhaustive for small ones.",
     detail:
       "The response reports effective_strategy and strategy_auto so you always know what actually ran.",
-    when: "The sensible default when you don't want to think about strategy at all.",
+    when: "The sensible default when calling the API without an explicit strategy.",
     docHref: `${DOCS_BASE}/OPTIMIZATION_SPECIAL_HEURISTICS.md`,
-  },
-];
-
-const ROADMAP_METHODS: MethodEntry[] = [
-  {
-    id: "local-refine",
-    title: "Local refinement & large-neighborhood repair",
-    status: "roadmap",
-    what: "After tiered or genetic finalists are known, search their neighborhoods: one-slot bridge and below-decks swaps, captain swaps, and destroy-repair moves that rebuild 2–3 seats from compatible pools.",
-    detail:
-      "Only improvements and diverse near-ties get confirmed. The payoff is explainable: “this recommendation improved the genetic winner by replacing X with Y.”",
-    when: "Next planned quality jump — squeezes extra value out of every strong crew.",
-    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
-  },
-  {
-    id: "pareto",
-    title: "Pareto frontier recommendations",
-    status: "roadmap",
-    what: "Instead of one scalar score, compute the frontier over win rate, speed, hull remaining, variance, chain efficiency, and roster accessibility — then expose preset views: safest, fastest farming, lowest variance, best substitute.",
-    detail:
-      "The scalar score stays as the default sort; rows gain pareto_tags and a recommendation_reason.",
-    when: "For choosing between speed, safety, and accessibility instead of trusting one number.",
-    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
   },
   {
     id: "beam",
     title: "Beam search with diversity lanes",
-    status: "roadmap",
-    what: "Builds crews seat by seat, keeping only the most promising partial crews at each step — with separate beams for damage, survivability, and round-1 kill so one meta archetype cannot consume the whole search.",
+    status: "implemented",
+    what: "Builds crews seat by seat across 6 complementary LCARS objective beams (damage, survivability, mitigation, crit/proc, round-1 kill, and balanced) so one meta archetype cannot consume the whole search.",
     detail:
-      "Planned as an explicit discovery lane alongside tiered and genetic.",
-    when: "Fast good-enough answers over billions of legal tuples.",
+      "Runs automatically inside the multi-lane discovery portfolio (rows tagged beam_diversity).",
+    when: "Fast, structured discovery across large officer pools without single-proxy tunnel vision.",
+    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
+  },
+  {
+    id: "racing",
+    title: "Hyperband-style racing",
+    status: "implemented",
+    what: "Successive-halving brackets simulate everyone shallowly on paired common random numbers (CRN), then repeatedly prune weak candidates while deepening trials on statistical survivors.",
+    detail:
+      "Confidence-interval overlap retention and captain-stratum protection prevent lucky early streaks from crowding out real contenders. Runs inside the portfolio lane.",
+    when: "Stochastic combat objectives where equal trials per crew waste most of the budget.",
     docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
   },
   {
     id: "quality-diversity",
     title: "Quality-diversity archive (MAP-Elites)",
-    status: "roadmap",
-    what: "Keeps the best crew per behavior cell (archetype × faction × trigger package) rather than a single global winner, illuminating the whole space of viable crew families.",
+    status: "implemented",
+    what: "Keeps the best crew per behavioral cell (captain group × fight speed × survival tier) rather than a single global winner, illuminating multiple viable crew families in one run.",
     detail:
-      "Feeds substitute recommendations: when you lack a key officer, the archive already knows the best crew in the nearest cell.",
-    when: "Diverse recommendations and “what else works?” exploration.",
+      "Promotes diverse archive elites alongside global leaders into confirmation (rows tagged qd_archive with a qd_cell coordinate).",
+    when: "Finding substitute crews and alternative archetypes when a key officer is busy elsewhere.",
     docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
   },
+  {
+    id: "local-refine",
+    title: "Local refinement & large-neighborhood repair",
+    status: "implemented",
+    what: "Hill-climbs around top finalists via one-slot bridge and below-decks swaps, captain swaps that preserve supports, and 2-seat destroy-repair rebuilds.",
+    detail:
+      "Available as an opt-in pass ('Refine finalists') on portfolio, tiered, and genetic runs — plus Stage-3 paired-CRN 1-slot elite neighborhood expansion built directly into portfolio. Only improvements confirmed at full depth are kept.",
+    when: "Squeezes extra win rate and hull preservation out of every strong lineup.",
+    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
+  },
+  {
+    id: "pareto",
+    title: "Pareto frontier recommendations",
+    status: "implemented",
+    what: "Computes the non-dominated frontier over win rate, speed, hull remaining, variance, and chain efficiency — exposing tags for safest, fastest farming, best chain, and most different.",
+    detail:
+      "The scalar score stays as the default sort while result rows carry pareto_tags and a plain-language recommendation_reason.",
+    when: "Always active on multi-crew Monte Carlo runs so you can trade speed against safety.",
+    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
+  },
+];
+
+const ROADMAP_METHODS: MethodEntry[] = [
   {
     id: "cross-entropy",
     title: "Cross-entropy sampler",
@@ -423,16 +444,6 @@ const ROADMAP_METHODS: MethodEntry[] = [
     detail:
       "An estimation-of-distribution lane in the planned search portfolio.",
     when: "Large spaces where strong officer combinations repeat across winners.",
-    docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
-  },
-  {
-    id: "racing",
-    title: "Hyperband-style racing",
-    status: "roadmap",
-    what: "Generalizes the tiered scout into successive-halving brackets: simulate everyone shallowly, repeatedly halve the field while deepening trials, so budget concentrates on statistical survivors.",
-    detail:
-      "Confidence bounds keep early lucky streaks from over-promoting weak crews.",
-    when: "Stochastic objectives where equal budget per crew wastes most of it.",
     docHref: `${DOCS_BASE}/OPTIMIZER_AMBITIOUS_ROADMAP.md`,
   },
   {

@@ -17,34 +17,41 @@ describe("Learn", () => {
   it("lists implemented methods with In Kobayashi badges", () => {
     render(<Learn />);
     for (const title of [
+      "Multi-lane discovery portfolio",
       "Tiered scout → confirm",
       "Genetic algorithm",
       "Stratified random baseline",
       "Heuristics seeds & warm start",
+      "Beam search with diversity lanes",
+      "Hyperband-style racing",
+      "Quality-diversity archive (MAP-Elites)",
+      "Local refinement & large-neighborhood repair",
+      "Pareto frontier recommendations",
     ]) {
       expect(screen.getByRole("heading", { name: title })).toBeTruthy();
     }
     expect(screen.getAllByText("In Kobayashi").length).toBeGreaterThanOrEqual(
-      8,
+      14,
     );
   });
 
   it("lists roadmap methods with Roadmap badges", () => {
     render(<Learn />);
     for (const title of [
-      "Local refinement & large-neighborhood repair",
-      "Pareto frontier recommendations",
-      "Beam search with diversity lanes",
+      "Cross-entropy sampler",
+      "Surrogate ranker & active learning",
+      "Robust multi-scenario optimization",
       "Meta-optimizer",
     ]) {
       expect(screen.getByRole("heading", { name: title })).toBeTruthy();
     }
-    expect(screen.getAllByText("Roadmap").length).toBeGreaterThanOrEqual(8);
+    expect(screen.getAllByText("Roadmap").length).toBeGreaterThanOrEqual(4);
   });
 
   it("shows strategy chips for API-selectable methods", () => {
     render(<Learn />);
     for (const chip of [
+      'strategy: "portfolio"',
       'strategy: "tiered"',
       'strategy: "genetic"',
       'strategy: "random_stratified"',

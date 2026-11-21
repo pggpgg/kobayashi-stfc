@@ -54,7 +54,9 @@ export default function StrategySection({ settings, onChange }: Props) {
           }
           style={selectStyle}
         >
-          <option value="portfolio">Multi-lane discovery portfolio</option>
+          <option value="portfolio">
+            Multi-lane discovery portfolio (recommended)
+          </option>
           <option value="tiered">Scout, then verify finalists</option>
           <option value="exhaustive">Try every candidate</option>
           <option value="genetic">Evolve promising crews</option>
@@ -69,9 +71,10 @@ export default function StrategySection({ settings, onChange }: Props) {
               color: "var(--text-muted)",
             }}
           >
-            Combines 6-beam LCARS search, stratified random exploration,
-            multi-fidelity CRN racing, and a quality-diversity archive before
-            independent confirmation.
+            Default strategy: combines 6-beam LCARS search, stratified random
+            exploration, multi-fidelity CRN racing, 1-slot elite neighborhood
+            expansion, and a quality-diversity archive before independent
+            confirmation.
           </p>
         )}
         {optimizerStrategy === "random_stratified" && (
@@ -98,22 +101,25 @@ export default function StrategySection({ settings, onChange }: Props) {
           </p>
         )}
       </div>
-      {optimizerStrategy !== "linear_eval" && (
-        <label style={checkboxLabelStyle}>
-          <input
-            type="checkbox"
-            checked={enableLearnedPairPrior}
-            onChange={(e) => update("enableLearnedPairPrior")(e.target.checked)}
-            style={{ margin: 0 }}
-          />
-          <span
-            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-          >
-            Favor officer pairs that worked before
-            <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
-          </span>
-        </label>
-      )}
+      {optimizerStrategy !== "linear_eval" &&
+        optimizerStrategy !== "portfolio" && (
+          <label style={checkboxLabelStyle}>
+            <input
+              type="checkbox"
+              checked={enableLearnedPairPrior}
+              onChange={(e) =>
+                update("enableLearnedPairPrior")(e.target.checked)
+              }
+              style={{ margin: 0 }}
+            />
+            <span
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+            >
+              Favor officer pairs that worked before
+              <HelpHint text="Analytical prefilter only: gives a small boost to crews whose officer pairs frequently co-occur in warm-start/history reference crews. Turn off to remove this learned tie-breaker while keeping other priors." />
+            </span>
+          </label>
+        )}
       {(optimizerStrategy === "tiered" ||
         optimizerStrategy === "genetic" ||
         optimizerStrategy === "portfolio") && (

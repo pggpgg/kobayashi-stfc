@@ -488,6 +488,7 @@ export function useWorkspace() {
           // A chain trial runs consecutive fights, so the estimate has to charge for all of them;
           // without this a 10-kill chain reads as costing what a single fight does.
           chain_kills_target: chainGrindEnabled ? chainKillsTarget : undefined,
+          strategy: optimizerStrategy,
         },
         activeProfileId,
       )
@@ -517,6 +518,7 @@ export function useWorkspace() {
     activeProfileId,
     chainGrindEnabled,
     chainKillsTarget,
+    optimizerStrategy,
   ]);
 
   // Fetch available heuristic seeds

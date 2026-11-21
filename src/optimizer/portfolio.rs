@@ -68,6 +68,37 @@ pub const DEFAULT_PORTFOLIO_SCOUT_CAP: usize = 144;
 /// Maximum behavioral cells retained in the MAP-Elites archive.
 const DEFAULT_ARCHIVE_MAX_CELLS: usize = 128;
 
+/// Workload-scaled deepest racing bracket cap when `tiered_scout_sims` is omitted.
+/// Always stays below `confirm_sims` (at most half when `confirm_sims > 16`) so small smoke runs
+/// never spend more trials racing than confirming.
+pub fn default_portfolio_scout_cap(n_initial: usize, confirm_sims: usize) -> usize {
+    let base = if n_initial <= 32 {
+        64
+    } else if n_initial <= 128 {
+        96
+    } else {
+        DEFAULT_PORTFOLIO_SCOUT_CAP
+    };
+    if confirm_sims <= 16 {
+        confirm_sims.max(1)
+    } else {
+        base.min((confirm_sims / 2).max(16))
+    }
+}
+
+/// Workload-scaled confirmation finalist count when `tiered_top_k` is omitted.
+/// Honors small candidate caps (`n_initial < 20`) instead of confirming beyond the requested scope.
+pub fn default_portfolio_top_k(n_initial: usize) -> usize {
+    tiered_top_k_for_workload(n_initial).min(n_initial.max(1))
+}
+
+/// Default Stage-3 1-slot elite neighborhood budget when no explicit racing trial cap is active.
+/// Scales proportionally with `target_total` so tiny smoke runs stay fast while default UI (`256`)
+/// and full (`512`) searches get deep local refinement around their top diverse elites.
+pub fn default_portfolio_neighbor_budget(target_total: usize) -> usize {
+    ((target_total.saturating_mul(3)) / 8).clamp(6, 180)
+}
+
 /// Decorrelated confirmation seed for portfolio finalists so selection noise from racing
 /// never biases reported confirmation win rates or rankings.
 #[inline]
@@ -404,11 +435,11 @@ where
     let n_initial = initial_candidates.len();
     let scout_cap = scenario
         .tiered_scout_sims
-        .unwrap_or(DEFAULT_PORTFOLIO_SCOUT_CAP)
+        .unwrap_or_else(|| default_portfolio_scout_cap(n_initial, scenario.simulation_count))
         .max(1);
     let top_k = scenario
         .tiered_top_k
-        .unwrap_or_else(|| tiered_top_k_for_workload(n_initial))
+        .unwrap_or_else(|| default_portfolio_top_k(n_initial))
         .max(1);
 
     if n_initial == 0 || !eval_should_continue() {
@@ -516,10 +547,12 @@ where
     let mut neighbor_count = 0usize;
     if can_expand_neighbors {
         let sorted_stage2 = sort_simulation_results_by_rank(all_raced.clone());
-        let seed_elites = select_neighborhood_seed_elites(&sorted_stage2, &group_lookup, 4);
+        let max_elites = if target_total <= 24 { 2 } else { 4 };
+        let seed_elites =
+            select_neighborhood_seed_elites(&sorted_stage2, &group_lookup, max_elites);
         let max_neighbors = match remaining_racing_budget {
             Some(rem) => ((rem / 28).clamp(24, 240)) as usize,
-            None => 180,
+            None => default_portfolio_neighbor_budget(target_total),
         };
         let neighbors = generate_elite_neighbors(
             &seed_elites,
@@ -820,5 +853,42 @@ mod tests {
                 .chain(row.below_decks.iter())
                 .all(|o| normalize_officer_name(o) != "spock"));
         }
+    }
+
+    #[test]
+    fn portfolio_workload_defaults_scale_for_small_interactive_runs() {
+        assert_eq!(default_portfolio_scout_cap(12, 1_000), 64);
+        assert_eq!(default_portfolio_scout_cap(12, 80), 40);
+        assert_eq!(default_portfolio_scout_cap(100, 5_000), 96);
+        assert_eq!(default_portfolio_scout_cap(256, 5_000), 144);
+        assert_eq!(default_portfolio_top_k(12), 12);
+        assert_eq!(default_portfolio_top_k(256), 20);
+        assert_eq!(default_portfolio_neighbor_budget(12), 6);
+        assert_eq!(default_portfolio_neighbor_budget(256), 96);
+        assert_eq!(default_portfolio_neighbor_budget(512), 180);
+
+        let registry = DataRegistry::load().expect("registry loads");
+        let mut scenario = sample_scenario(12, None);
+        scenario.tiered_scout_sims = None;
+        scenario.tiered_top_k = None;
+        scenario.simulation_count = 100;
+
+        let out =
+            run_portfolio_with_registry_with_progress(&registry, &scenario, |_| true, || true);
+        assert!(
+            out.ranked.len() >= 2 && out.ranked.len() <= 12,
+            "small interactive portfolio run must return 2..=12 rows, got {}",
+            out.ranked.len()
+        );
+        assert!(
+            out.resolved_params.0 <= 24,
+            "small max_candidates=12 should bound total screened crews (got {})",
+            out.resolved_params.0
+        );
+        assert!(
+            out.resolved_params.1 <= 50,
+            "default scout_cap should stay <= confirm_sims/2 (got {})",
+            out.resolved_params.1
+        );
     }
 }

@@ -277,20 +277,34 @@ describe("OptimizePanel", () => {
     expect(screen.getByPlaceholderText("500 (default)")).toBeTruthy();
     expect(screen.getByPlaceholderText("20 (default)")).toBeTruthy();
   });
-  it("hides scouting fields when strategy is not tiered", () => {
+  it("shows portfolio racing fields by default", () => {
+    renderPanel();
+    expect(screen.getByPlaceholderText("144 (default)")).toBeTruthy();
+    expect(screen.getByPlaceholderText("20 (default)")).toBeTruthy();
+  });
+  it("hides scouting fields when strategy is exhaustive", () => {
     renderPanel({ optimizerStrategy: "exhaustive" });
     expect(screen.queryByPlaceholderText("500 (default)")).toBeNull();
+    expect(screen.queryByPlaceholderText("144 (default)")).toBeNull();
     expect(screen.queryByPlaceholderText("20 (default)")).toBeNull();
   });
-  it("toggles the successful-pairs preference", () => {
+  it("toggles the successful-pairs preference on prefilter lanes", () => {
     const fn = vi.fn();
-    renderPanel({}, { onChange: fn });
+    renderPanel({ optimizerStrategy: "tiered" }, { onChange: fn });
     fireEvent.click(
       screen.getByRole("checkbox", {
         name: /Favor officer pairs that worked before/i,
       }),
     );
     expect(fn).toHaveBeenCalledWith({ enableLearnedPairPrior: false });
+  });
+  it("hides the prefilter-only pair preference on portfolio", () => {
+    renderPanel({ optimizerStrategy: "portfolio" });
+    expect(
+      screen.queryByRole("checkbox", {
+        name: /Favor officer pairs that worked before/i,
+      }),
+    ).toBeNull();
   });
   it("offers the refine-finalists toggle on the lanes that support it", () => {
     for (const optimizerStrategy of [
@@ -334,7 +348,7 @@ describe("OptimizePanel", () => {
   it("clears scout sims when input emptied", () => {
     const fn = vi.fn();
     renderPanel({ tieredScoutSims: 100 }, { onChange: fn });
-    fireEvent.change(screen.getByPlaceholderText("500 (default)"), {
+    fireEvent.change(screen.getByPlaceholderText("144 (default)"), {
       target: { value: "" },
     });
     expect(fn).toHaveBeenCalledWith({ tieredScoutSims: null });

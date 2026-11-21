@@ -528,6 +528,15 @@ paths:
             type: integer
             minimum: 1
             maximum: 50
+        - name: strategy
+          in: query
+          description: >
+            Optional optimizer strategy (`portfolio`, `tiered`, `exhaustive`, `genetic`,
+            `linear_eval`, `random_stratified`) so multi-fidelity lanes estimate racing and
+            confirmation trials accurately. Omit for the legacy exhaustive upper-bound estimate.
+          schema:
+            type: string
+            enum: [exhaustive, genetic, tiered, linear_eval, random_stratified, portfolio]
         - $ref: "#/components/parameters/QueryProfile"
         - $ref: "#/components/parameters/HeaderProfileId"
       responses:

@@ -2787,6 +2787,7 @@ pub fn optimize_estimate_payload(
         ship_level,
         below_decks_slots: bd_explicit,
         chain_kills_target,
+        strategy,
     } = requests::parse_optimize_estimate_query(query)?;
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
@@ -2818,16 +2819,59 @@ pub fn optimize_estimate_payload(
         ..CandidateStrategy::default()
     });
     // Estimates must count the bounded run without allocating every CrewCandidate.
-    let estimated_candidates = generator
+    let raw_candidates = generator
         .effective_run_candidate_count_from_registry(registry, &ship, &hostile, 0, profile_id);
+    let (estimated_candidates, effective_trial_equivalents) = match strategy {
+        Some(crate::optimizer::OptimizerStrategy::Portfolio) => {
+            if raw_candidates == 0 {
+                (0usize, 0.0f64)
+            } else {
+                let target = max_candidates
+                    .map(|cap| cap as usize)
+                    .unwrap_or(crate::optimizer::portfolio::DEFAULT_PORTFOLIO_CANDIDATES);
+                let n_initial = raw_candidates.min(target).max(1);
+                let n_neighbors = if raw_candidates > 1 {
+                    crate::optimizer::portfolio::default_portfolio_neighbor_budget(n_initial)
+                } else {
+                    0
+                };
+                let screened = n_initial + n_neighbors;
+                let scout_cap = crate::optimizer::portfolio::default_portfolio_scout_cap(
+                    n_initial,
+                    sims as usize,
+                );
+                let avg_race_trials = ((scout_cap as f64) * 0.28).clamp(1.0, sims as f64);
+                let top_k =
+                    crate::optimizer::portfolio::default_portfolio_top_k(n_initial).min(screened);
+                let trials = (screened as f64) * avg_race_trials + (top_k as f64) * (sims as f64);
+                (screened, trials)
+            }
+        }
+        Some(crate::optimizer::OptimizerStrategy::Tiered) => {
+            let scout_sims = 500usize.min(sims as usize);
+            let top_k = crate::optimizer::tiered::tiered_top_k_for_workload(raw_candidates)
+                .min(raw_candidates);
+            let trials = (raw_candidates as f64) * (scout_sims as f64) * 0.45
+                + (top_k as f64) * (sims as f64);
+            (raw_candidates, trials)
+        }
+        Some(crate::optimizer::OptimizerStrategy::LinearEval) => {
+            (raw_candidates, (raw_candidates as f64) * 0.05)
+        }
+        None
+        | Some(
+            crate::optimizer::OptimizerStrategy::Exhaustive
+            | crate::optimizer::OptimizerStrategy::Genetic
+            | crate::optimizer::OptimizerStrategy::RandomStratified,
+        ) => (raw_candidates, (raw_candidates as f64) * (sims as f64)),
+    };
     // A chain-grind trial simulates consecutive fights against the same target until one is lost,
     // so it costs up to `kills_target` fights where the default estimate assumes one. Scaling by
     // the target is the upper bound rather than the mean — chains that fail early are cheaper — but
     // an estimate that assumed one fight understated a 10-kill chain by an order of magnitude,
     // which is the failure mode that matters when the number is there to warn about runtime.
     let chain_fights_per_trial = chain_kills_target.unwrap_or(1).max(1);
-    let estimated_seconds = (estimated_candidates as f64)
-        * (sims as f64)
+    let estimated_seconds = effective_trial_equivalents
         * f64::from(chain_fights_per_trial)
         * ESTIMATE_SEC_PER_CANDIDATE_SIM;
     let estimated_seconds = estimated_seconds.clamp(0.1, 3600.0); // clamp to 0.1s–1h for display
