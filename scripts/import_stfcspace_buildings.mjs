@@ -154,7 +154,7 @@ function bMetaOrNull(buildingId) {
   return meta;
 }
 
-const ABS_MAX_LEVEL = 80;
+const LEGACY_LEVEL_LIMIT = 80;
 
 /** @returns {Array<{stat: string, operator: string, conditions: string[], notes: string}>} */
 function resolveBuffMapping(buff) {
@@ -224,30 +224,27 @@ function resolveBuffMapping(buff) {
 function buildLevelsFromSummaryEntry(entry) {
   const buffs = Array.isArray(entry.buffs) ? entry.buffs : [];
 
-  // Determine max level from explicit field or longest buff track (values are 1-based: values[0] = level 1).
-  // Don't use unlock_level here — it's when the building becomes buildable (ops level), not the building's level range.
-  let maxLevel =
-    typeof entry.max_level === "number" && entry.max_level > 0
-      ? entry.max_level
-      : 0;
+  const declaredMaxLevel =
+    Number.isSafeInteger(entry.max_level) && entry.max_level > 0 ? entry.max_level : 0;
+  let longestBuffTrack = 0;
   for (const buff of buffs) {
     if (!Array.isArray(buff.values)) continue;
-    if (buff.values.length > maxLevel) {
-      maxLevel = buff.values.length;
-    }
+    longestBuffTrack = Math.max(longestBuffTrack, buff.values.length);
   }
 
-  if (maxLevel === 0) {
-    return [];
-  }
+  // Retain the historical output for padded curves. Above rank 80, require
+  // both a published maximum and source values (e.g. Mess Hall ranks 81–99).
+  const legacyMaxLevel = Math.min(Math.max(declaredMaxLevel, longestBuffTrack), LEGACY_LEVEL_LIMIT);
+  const maxLevel = Math.max(legacyMaxLevel, Math.min(declaredMaxLevel, longestBuffTrack));
 
-  maxLevel = Math.min(maxLevel, ABS_MAX_LEVEL);
-
-  // unlock_level: ops level when this building becomes buildable; use as ops_min so level rows apply only when player ops >= unlock_level.
-  const opsMin =
-    typeof entry.unlock_level === "number" && entry.unlock_level >= 0
-      ? entry.unlock_level
-      : null;
+  // The summary's unlock_level can describe a different prerequisite, such
+  // as total officer levels. Prefer the explicit requirement on Operations (BID 0).
+  const requirements = Array.isArray(entry.first_level_requirements) ? entry.first_level_requirements : [];
+  const operations = requirements.find((requirement) =>
+    requirement?.requirement_type === "BuildingLevel" && requirement.requirement_id === 0 &&
+    Number.isSafeInteger(requirement.requirement_level) && requirement.requirement_level >= 0);
+  const unlockLevel = operations?.requirement_level ?? entry.unlock_level;
+  const opsMin = Number.isSafeInteger(unlockLevel) && unlockLevel >= 0 ? unlockLevel : null;
 
   const levels = [];
   // values[] in the summary is indexed by building level (1-based): values[0] = level 1, values[1] = level 2, ...
