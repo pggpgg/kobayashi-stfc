@@ -4,8 +4,8 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, ShipType,
-    TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, EnemyType,
+    ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::ForbiddenTechEntry;
@@ -23,6 +23,10 @@ pub const BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID: i64 = 3042210440;
 /// Quantum Slipstream Drive — opponent mitigation debuff is modeled in combat, not as additive player
 /// [`PlayerProfile::bonuses`] `shield_mitigation`.
 pub const QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID: i64 = 2439729135;
+
+const TEMPORAL_CONDUIT_FID: i64 = 258_464_522;
+const TEMPORAL_CONDUIT_HULL_BREACH: u64 = 1_202_092_082;
+const TEMPORAL_CONDUIT_APEX_BARRIER: u64 = 3_438_063_136;
 
 /// S31 Torpedo Pods — upstream copy is **Battleship**-scoped; hostile-only lines use [`AbilityCondition`]
 /// with [`AbilityCondition::DefenderIsNpcHostile`].
@@ -80,6 +84,7 @@ pub(crate) fn skips_entire_flat_merge(fid: i64) -> bool {
     is_borg_alcove_forbidden_tech_fid(fid)
         || is_borg_operating_table_forbidden_tech_fid(fid)
         || is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid)
+        || fid == TEMPORAL_CONDUIT_FID
 }
 
 /// Bonuses that exist in the catalog for sync/scaling but must not become unconditional profile modifiers.
@@ -106,6 +111,12 @@ pub fn forbidden_tech_bonus_combat_route(
     fid: i64,
     stat: &str,
 ) -> Option<ForbiddenTechBonusCombatRoute> {
+    if fid == TEMPORAL_CONDUIT_FID {
+        return match stat {
+            "apex_barrier" | "hull_breach_chance" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
+            _ => None,
+        };
+    }
     if is_borg_alcove_forbidden_tech_fid(fid) {
         return match stat {
             "crit_chance" | "crit_damage" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
@@ -526,6 +537,85 @@ pub fn quantum_slipstream_forbidden_tech_round_start_seats(
         officer_id: None,
         contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
     }]
+}
+
+/// Temporal Conduit deals with rank-selected combat effects. The loot bonus has its own economy route.
+pub fn temporal_conduit_chaos_tech_seats(
+    imported: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+) -> Vec<CrewSeatContext> {
+    if !effective_fids.contains(&TEMPORAL_CONDUIT_FID) {
+        return Vec::new();
+    }
+    let Some(record) = catalog
+        .items
+        .iter()
+        .find(|row| row.fid == Some(TEMPORAL_CONDUIT_FID))
+    else {
+        return Vec::new();
+    };
+    let equipped = imported
+        .iter()
+        .rev()
+        .find(|row| row.fid == TEMPORAL_CONDUIT_FID);
+    record
+        .bonuses
+        .iter()
+        .filter_map(|bonus| {
+            let curve = bonus.rank_curve.as_ref()?;
+            let value =
+                forbidden_tech_bonus_value_for_imported_entry(bonus, record, equipped, false);
+            if value <= 0.0 {
+                return None;
+            }
+            let (name, timing, effect, condition) = match (bonus.stat.as_str(), curve.buff_id) {
+                ("apex_barrier", TEMPORAL_CONDUIT_APEX_BARRIER) => (
+                    "Temporal Conduit: Apex Barrier",
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::ApexBarrierBonus(value),
+                    AbilityCondition::And(vec![
+                        AbilityCondition::DefenderIsNpcHostile,
+                        AbilityCondition::Or(vec![
+                            AbilityCondition::DefenderHullFactionIdIs(2_745_774_076),
+                            AbilityCondition::DefenderHullFactionIdIs(2_352_723_133),
+                        ]),
+                    ]),
+                ),
+                ("hull_breach_chance", TEMPORAL_CONDUIT_HULL_BREACH) if value <= 1.0 => (
+                    "Temporal Conduit: Hull Breach",
+                    TimingWindow::RoundStart,
+                    AbilityEffect::HullBreach {
+                        chance: value,
+                        duration_rounds: 2,
+                        requires_critical: false,
+                    },
+                    AbilityCondition::Or(vec![
+                        AbilityCondition::DefenderIsNpcHostile,
+                        AbilityCondition::EngagementIncludes(EnemyType::GroupArmadas),
+                        AbilityCondition::EngagementIncludes(EnemyType::SoloArmadas),
+                        AbilityCondition::EngagementIncludes(EnemyType::OutpostArmadas),
+                    ]),
+                ),
+                _ => return None,
+            };
+            Some(CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    weapon_scope: Default::default(),
+                    name: name.to_owned(),
+                    class: AbilityClass::ShipAbility,
+                    timing,
+                    boostable: false,
+                    effect,
+                    condition: Some(condition),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            })
+        })
+        .collect()
 }
 
 fn torpedo_family_hostile_accuracy_fraction_for_record(

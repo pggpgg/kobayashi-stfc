@@ -93,6 +93,20 @@ export interface LoopDefinition {
   sourceUrl?: string;
 }
 
+export const XINDI_AQUATIC_LOOP_ID = "xindi-aquatic";
+export const XINDI_AQUATIC_ENHANCED_LOOP_ID = "xindi-aquatic-enhanced";
+const XINDI_AQUATIC_ENHANCED_CRUISER = /xindi-aquatic enhanced cruiser/i;
+
+export function loopIdForSavedTarget(
+  loopId: string,
+  targetName: string,
+): string {
+  return loopId === XINDI_AQUATIC_LOOP_ID &&
+    XINDI_AQUATIC_ENHANCED_CRUISER.test(targetName)
+    ? XINDI_AQUATIC_ENHANCED_LOOP_ID
+    : loopId;
+}
+
 const ALL_GOALS: readonly LoopGoalId[] = [
   "one_round",
   "damage_dealt",
@@ -287,13 +301,28 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
       "https://startrekfleetcommand.com/news/a-new-threat-in-star-trek-fleet-command-the-gorn-hunter-hostiles/",
   },
   {
-    id: "xindi-aquatic",
+    id: XINDI_AQUATIC_LOOP_ID,
     name: "Xindi-Aquatic",
-    summary: "Delphic Expanse targets built around the NX-01.",
+    summary: "Regular cruisers and scouts for the NX-01.",
     progression: "NX-01 refinery, ship upgrades, and Ex-Borg extension rewards",
     engagement: "hostile",
     minOps: 40,
     hostilePatterns: [/xindi-aquatic/i],
+    excludePatterns: [XINDI_AQUATIC_ENHANCED_CRUISER],
+    shipPolicy: "required",
+    specialtyShipIds: ["enterprise_nx_01"],
+    specialtyShipLabel: "Enterprise NX-01",
+    goals: ALL_GOALS,
+    sourceUrl: "https://startrekfleetcommand.com/news/enterprise-nx-01/",
+  },
+  {
+    id: XINDI_AQUATIC_ENHANCED_LOOP_ID,
+    name: "Xindi-Aquatic Enhanced Cruisers",
+    summary: "Enhanced battleships for the NX-01.",
+    progression: "NX-01 refinery, ship upgrades, and Ex-Borg extension rewards",
+    engagement: "hostile",
+    minOps: 40,
+    hostilePatterns: [XINDI_AQUATIC_ENHANCED_CRUISER],
     shipPolicy: "required",
     specialtyShipIds: ["enterprise_nx_01"],
     specialtyShipLabel: "Enterprise NX-01",

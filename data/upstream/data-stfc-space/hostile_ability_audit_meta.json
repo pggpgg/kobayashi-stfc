@@ -106,13 +106,13 @@
       "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "49117123": {
-      "bucket": "apex_combat",
+      "bucket": "polaron_weaponry_review",
       "loca_id": 96502,
       "hostile_count": 324,
       "sample_hostile_id": "1001270436",
       "sample_level": 68,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "apex_barrier"
+      "effect_type": "combat_noop"
     },
     "56799195": {
       "bucket": "hyperthermic_decay_combat",
@@ -637,13 +637,13 @@
       "effect_type": "attack_multiplier"
     },
     "323291059": {
-      "bucket": "apex_combat",
+      "bucket": "polaron_weaponry_review",
       "loca_id": 96500,
       "hostile_count": 324,
       "sample_hostile_id": "1020392011",
       "sample_level": 75,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "apex_barrier"
+      "effect_type": "combat_noop"
     },
     "324656870": {
       "bucket": "armada_scope",
@@ -1800,13 +1800,13 @@
       "effect_type": "isolytic_damage"
     },
     "817894448": {
-      "bucket": "apex_combat",
+      "bucket": "polaron_weaponry_review",
       "loca_id": 96503,
       "hostile_count": 270,
       "sample_hostile_id": "1001051223",
       "sample_level": 52,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "apex_barrier"
+      "effect_type": "combat_noop"
     },
     "825965675": {
       "bucket": "pierce_combat",
@@ -3286,13 +3286,13 @@
       "effect_type": "combat_noop"
     },
     "1539285779": {
-      "bucket": "armada_scope",
+      "bucket": "isolytic_combat",
       "loca_id": 69067,
       "hostile_count": 30,
       "sample_hostile_id": "1105005893",
       "sample_level": 67,
       "text_snippet": "at the start of combat this armada increase its isolytic defense by 50%",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_defense"
     },
     "1550812445": {
       "bucket": "pierce_combat",
@@ -5936,13 +5936,13 @@
       "effect_type": "hostile_hyperthermic_decay"
     },
     "2794125774": {
-      "bucket": "armada_scope",
+      "bucket": "isolytic_combat",
       "loca_id": 69066,
       "hostile_count": 30,
       "sample_hostile_id": "1105005893",
       "sample_level": 67,
       "text_snippet": "at the start of combat this armada increases its isolytic damage by 150%",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_damage"
     },
     "2796606611": {
       "bucket": "isolytic_combat",
@@ -6179,7 +6179,7 @@
       "effect_type": "crit_damage"
     },
     "2920844674": {
-      "bucket": "isolytic_combat",
+      "bucket": "experimental_defense_array_partial",
       "loca_id": 96501,
       "hostile_count": 918,
       "sample_hostile_id": "1001051223",
@@ -7692,13 +7692,13 @@
       "effect_type": "attack_multiplier"
     },
     "3679636736": {
-      "bucket": "armada_scope",
+      "bucket": "isolytic_combat",
       "loca_id": 92210,
       "hostile_count": 3,
       "sample_hostile_id": "3507276863",
       "sample_level": 70,
       "text_snippet": "cascade nullification \nincreases isolytic defense by {0:#.#%} at the start of combat. \n\nthis armada's critical damage cannot drop below 300%.\n\nthis armada's battle have a maximum of 20 rounds.",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_defense"
     },
     "3684108364": {
       "bucket": "apex_combat",

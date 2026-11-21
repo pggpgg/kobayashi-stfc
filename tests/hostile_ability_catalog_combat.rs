@@ -178,3 +178,125 @@ fn real_hostile_apex_barrier_ability_builds_defender_crew_seat() {
         "expected ApexBarrierBonus seat from catalog"
     );
 }
+
+fn isolytic_boundary_combatant(id: &str) -> Combatant {
+    let mut ship = weak_attacker_no_shields();
+    ship.id = id.into();
+    ship.weapons[0].attack = 100.0;
+    ship.isolytic_damage = 1.0;
+    ship
+}
+
+#[test]
+fn romulan_sedes_virtutis_uses_both_combat_start_isolytic_bonuses() {
+    let rec = resolve_hostile("23791327").expect("Romulan Sedes Virtutis");
+    assert_eq!(rec.ship_type_for_combat(), ShipType::Armada);
+    let crew = hostile_abilities_to_defender_crew(
+        &rec.ability,
+        hostile_ability_catalog_for_default_path(),
+        rec.level,
+    );
+    let attacker = isolytic_boundary_combatant("player");
+    let defender = isolytic_boundary_combatant(&rec.id);
+    let simulate = |ship: &Combatant, abilities: &CrewConfiguration, trace_mode| {
+        simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            ship,
+            &SimulationConfig {
+                rounds: 2,
+                trace_mode,
+                ..pve_config(42)
+            },
+            &CrewConfiguration::default(),
+            OpponentFactionTag::Romulan,
+            rec.ship_type_for_combat(),
+            ShipType::Battleship,
+            true,
+            false,
+            abilities,
+        )
+    };
+    let mut expected = defender.clone();
+    expected.isolytic_damage += 1.5;
+    expected.isolytic_defense += 0.5;
+    let expected = simulate(&expected, &CrewConfiguration::default(), TraceMode::Off);
+    let observed = simulate(&defender, &crew, TraceMode::Off);
+    let traced = simulate(&defender, &crew, TraceMode::Events);
+    assert_eq!(observed.rounds_simulated, 2);
+    assert_eq!(
+        observed.attacker_hull_remaining,
+        expected.attacker_hull_remaining
+    );
+    assert_eq!(
+        observed.total_isolytic_damage,
+        expected.total_isolytic_damage
+    );
+    assert_eq!(
+        traced.attacker_hull_remaining,
+        observed.attacker_hull_remaining
+    );
+    assert_eq!(traced.total_isolytic_damage, observed.total_isolytic_damage);
+}
+
+#[test]
+fn hostile_combat_start_isolytic_defense_only_protects_the_hostile() {
+    let rec = resolve_hostile("26336879").expect("Venari Ral");
+    let mut crew = hostile_abilities_to_defender_crew(
+        &rec.ability,
+        hostile_ability_catalog_for_default_path(),
+        rec.level,
+    );
+    crew.seats.retain(|seat| {
+        seat.ability.name == "2936293636"
+            && matches!(seat.ability.effect, AbilityEffect::IsolyticDefenseBonus(_))
+    });
+    assert_eq!(crew.seats.len(), 1);
+    crew.seats[0].ability.condition = Some(
+        kobayashi::combat::AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+    );
+    let attacker = isolytic_boundary_combatant("player");
+    let defender = isolytic_boundary_combatant(&rec.id);
+    let simulate = |ship: &Combatant, abilities: &CrewConfiguration, attacker_type| {
+        simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            ship,
+            &pve_config(42),
+            &CrewConfiguration::default(),
+            OpponentFactionTag::Unknown,
+            rec.ship_type_for_combat(),
+            attacker_type,
+            true,
+            false,
+            abilities,
+        )
+    };
+    let baseline = simulate(
+        &defender,
+        &CrewConfiguration::default(),
+        ShipType::Battleship,
+    );
+    let active = simulate(&defender, &crew, ShipType::Battleship);
+    let mut expected = defender.clone();
+    expected.isolytic_defense = 10.0;
+    let expected = simulate(
+        &expected,
+        &CrewConfiguration::default(),
+        ShipType::Battleship,
+    );
+    assert_eq!(active.total_isolytic_damage, expected.total_isolytic_damage);
+    assert_eq!(
+        active.attacker_hull_remaining,
+        baseline.attacker_hull_remaining
+    );
+
+    let gated = simulate(&defender, &crew, ShipType::Explorer);
+    let gated_baseline = simulate(&defender, &CrewConfiguration::default(), ShipType::Explorer);
+    assert_eq!(
+        gated.total_isolytic_damage,
+        gated_baseline.total_isolytic_damage
+    );
+    assert_eq!(
+        gated.attacker_hull_remaining,
+        gated_baseline.attacker_hull_remaining
+    );
+}

@@ -13,12 +13,14 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::combat::{AttackerStats, DefenderStats, ShipType, WeaponStats};
+use crate::combat::{AttackerStats, DefenderStats, ShipType, WeaponFiringSchedule, WeaponStats};
 
 /// Per-weapon attack (and optional base shots) for sub-round resolution. When present on ShipRecord, used to build Combatant.weapons.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WeaponRecord {
     pub attack: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub firing_schedule: Option<WeaponFiringSchedule>,
     /// Base shots per weapon per round. When absent, 1. Effective shots = round_half_even(shots * (1 + B_shots)).
     #[serde(default)]
     pub shots: Option<u32>,
@@ -45,6 +47,20 @@ pub struct WeaponRecord {
     /// Weapon damage type slug (`"energy"` / `"kinetic"`), from upstream `weapon_type` (1 = Energy, 2 = Kinetic). Unset for legacy data.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub weapon_type: Option<String>,
+}
+
+/// Only opt reviewed native ship schedules into combat.
+pub fn has_reviewed_weapon_schedule(raw_ship: &Value) -> bool {
+    raw_ship.get("id").and_then(Value::as_u64) == Some(2_289_346_504)
+}
+
+pub fn weapon_schedule_from_upstream(data: &Value) -> Option<WeaponFiringSchedule> {
+    let first_round = u32::try_from(data.get("warm_up")?.as_u64()?).ok()?;
+    let interval_rounds = u32::try_from(data.get("cool_down")?.as_u64()?).ok()?;
+    (first_round > 0 && interval_rounds > 0).then_some(WeaponFiringSchedule {
+        first_round,
+        interval_rounds,
+    })
 }
 
 /// Maps the upstream numeric `weapon_type` (1 = Energy, 2 = Kinetic) to the slug stored on [`WeaponRecord`].
@@ -385,6 +401,14 @@ fn patched_components_for_ids(
 /// keeps cumulative offensive piercing/accuracy across tiers; component overrides apply a delta
 /// from this current-tier extraction onto the already-resolved base ship record.
 pub fn extract_component_tier_stats(components: &[Value], tier: u32) -> TierStats {
+    extract_component_tier_stats_with_schedule(components, tier, false)
+}
+
+fn extract_component_tier_stats_with_schedule(
+    components: &[Value],
+    tier: u32,
+    use_schedule: bool,
+) -> TierStats {
     let mut hull_health = 0.0;
     let mut shield_health = 0.0;
     let mut shield_mitigation = 0.8;
@@ -496,6 +520,9 @@ pub fn extract_component_tier_stats(components: &[Value], tier: u32) -> TierStat
 
         weapons.push(WeaponRecord {
             attack: avg_damage,
+            firing_schedule: use_schedule
+                .then(|| weapon_schedule_from_upstream(data))
+                .flatten(),
             shots: Some(shots),
             armor_piercing: Some(penetration),
             shield_piercing: Some(modulation),
@@ -614,7 +641,11 @@ pub fn apply_component_overrides_to_ship_record(
         patched_components_for_ids(&expected_components, raw_ship, component_ids)?;
 
     let expected = extract_component_tier_stats(&expected_components, tier);
-    let patched = extract_component_tier_stats(&patched_components, tier);
+    let patched = extract_component_tier_stats_with_schedule(
+        &patched_components,
+        tier,
+        has_reviewed_weapon_schedule(raw_ship),
+    );
 
     let summary = ComponentOverrideSummary {
         armor_piercing: finite_delta(expected.armor_piercing, patched.armor_piercing),
@@ -1023,6 +1054,7 @@ impl ShipRecord {
                     .map(|r| WeaponStats {
                         attack: r.attack,
                         component_base_attack: Some(r.attack),
+                        firing_schedule: r.firing_schedule,
                         shots: r.shots,
                         pierce: r.pierce,
                         crit_chance: r.crit_chance,

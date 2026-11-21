@@ -102,6 +102,14 @@ pub fn ship_ability_effect_from_catalog(
         "component_base_weapon_damage" if timing == TimingWindow::CombatBegin => {
             Some(AbilityEffect::ComponentBaseWeaponDamageBonus(value))
         }
+        "incoming_shot_deflection"
+            if timing == TimingWindow::CombatBegin
+                && value > 0.0
+                && value <= f64::from(u32::MAX)
+                && value.fract() == 0.0 =>
+        {
+            Some(AbilityEffect::IncomingShotDeflection(value as u32))
+        }
         // Catalogued for every hull; no combat seat until modeled explicitly.
         "combat_noop" | "unmodeled" | "not_applicable" => None,
         // Applied to the unbuffed HP base by ShipRecord::health_with_launch_bonuses.

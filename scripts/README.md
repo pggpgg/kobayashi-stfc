@@ -151,6 +151,10 @@ The extractor reads only the reviewed static buff rows, checks their upstream
 identity and tier unlocks, and retains native units. The CSV importer preserves
 these verified curves. Combat requires the equipped item and owned rank; a
 catalog summary value cannot replace missing equipment or rank context.
+Temporal Conduit's Apex Barrier and Hull Breach chance curves come from
+`data/upstream/data-stfc-space/forbidden_tech/258464522.json`. Use the native
+tier unlocks and values through the highest playable level. The CSV rows keep
+both reviewed curves through subsequent imports.
 
 Reviewed native hostile records use a separate source supplement. Run
 `node scripts/import_native_hostile_snapshot.mjs --cache <static-cache.bin> --write`

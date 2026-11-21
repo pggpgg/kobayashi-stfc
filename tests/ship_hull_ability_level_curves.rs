@@ -6,7 +6,12 @@
 //! non-overridden ability whose live entries vary, truncated to the ship's max level;
 //! `to_ship_record` resolves the curve to a concrete `value` at the requested level.
 
+use kobayashi::combat::{
+    simulate_combat, Ability, AbilityClass, AbilityEffect, Combatant, CrewConfiguration, CrewSeat,
+    CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
+};
 use kobayashi::data::loader::resolve_ship_with_tier_level;
+use kobayashi::data::ship_ability_resolve::ship_ability_to_crew_seat_context;
 use serde_json::Value;
 
 fn extended_ability(ship_file: &str, ability_id: &str) -> Value {
@@ -54,6 +59,95 @@ fn augur_ability_scales_with_level_matching_upstream_curve_ends() {
         .as_array()
         .expect("augur ability carries a level curve");
     assert_eq!(entries.len(), 45, "curve truncated to max level");
+}
+
+#[test]
+fn d4_relentless_hunting_uses_fractional_level_curve() {
+    let raw = std::fs::read_to_string("data/upstream/data-stfc-space/ships/957865248.json")
+        .expect("cached D4 ship detail");
+    let detail: Value = serde_json::from_str(&raw).expect("parse D4 ship detail");
+    let ability = detail["ability"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|a| a["id"] == 957865248_u64)
+        .expect("Relentless Hunting source");
+    let ranks = ability["values"].as_array().expect("rank values");
+    // The source translation's % format displays 0.01 as 1% and 0.25 as 25%.
+    assert_eq!(ranks[0]["value"], 0.01);
+    assert_eq!(ranks[44]["value"], 0.25);
+    for level in 1..=45 {
+        let expected = ranks[level as usize - 1]["value"].as_f64().unwrap();
+        let actual = resolved_ability_value("d4_class", 9, level, "957865248");
+        assert_eq!(actual, expected, "D4 at level {level}");
+    }
+}
+
+#[test]
+fn d4_relentless_hunting_contributes_each_round_during_hull_breach() {
+    let ship = resolve_ship_with_tier_level("d4_class", Some(9), Some(45)).expect("D4 ship");
+    let ability = ship
+        .abilities
+        .as_ref()
+        .unwrap()
+        .iter()
+        .find(|a| a.id == "957865248")
+        .unwrap();
+    let hull_seat = ship_ability_to_crew_seat_context(ability).expect("Relentless Hunting");
+    let breach_seat = CrewSeatContext::legacy(
+        CrewSeat::Bridge,
+        Ability {
+            name: "Synthetic Hull Breach".into(),
+            class: AbilityClass::BridgeAbility,
+            timing: TimingWindow::RoundStart,
+            boostable: false,
+            effect: AbilityEffect::HullBreach {
+                chance: 1.0,
+                duration_rounds: 2,
+                requires_critical: false,
+            },
+            condition: None,
+            weapon_scope: Default::default(),
+        },
+        false,
+    );
+    let attacker = Combatant {
+        id: ship.id,
+        attack: 100.0,
+        hull_health: 1_000.0,
+        crit_multiplier: 1.0,
+        ..Combatant::default()
+    };
+    let defender = Combatant {
+        hull_health: 1_000.0,
+        ..Combatant::default()
+    };
+    let config = SimulationConfig {
+        rounds: 2,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+        ..SimulationConfig::default()
+    };
+    for (seats, expected) in [
+        (vec![hull_seat.clone()], 200.0),
+        (vec![breach_seat.clone()], 200.0),
+        (vec![breach_seat, hull_seat], 275.0),
+    ] {
+        let crew = CrewConfiguration { seats };
+        let result = simulate_combat(&attacker, &defender, &config, &crew);
+        let traced = simulate_combat(
+            &attacker,
+            &defender,
+            &SimulationConfig {
+                trace_mode: TraceMode::Events,
+                ..config.clone()
+            },
+            &crew,
+        );
+        assert_eq!(result.rounds_simulated, 2);
+        assert_eq!(traced.total_damage, result.total_damage);
+        assert_eq!(result.total_damage, expected);
+    }
 }
 
 /// Levels past the ship's cap resolve to the max-level value (last-positive fallback over

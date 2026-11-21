@@ -661,7 +661,7 @@ fn captain_source_matches(a: &CanonicalAbility, source: &UpstreamCaptainAbility)
 fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64 {
     match modifier {
         "CritChance" | "CritDamage" => val,
-        "AllDamage" | "OfficerStatAttack" => {
+        "AllDamage" => {
             if op.eq_ignore_ascii_case("MultiplyAdd") {
                 1.0 + val
             } else {
@@ -675,7 +675,7 @@ fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64
                 val
             }
         }
-        "ShipArmor" | "OfficerStatDefense" => val,
+        "ShipArmor" | "OfficerStatAttack" | "OfficerStatDefense" => val,
         "OfficerStatAll" | "OfficerStatHealth" => {
             if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
@@ -756,6 +756,26 @@ fn effect_condition_from_canonical(
         canonical_conditions_to_lcars(&filtered, officer_name, ability_label)
             .into_iter()
             .collect();
+    if a.modifier.as_deref() == Some("ShotsPerAttack") && a.trigger.as_deref() == Some("RoundStart")
+    {
+        let duration = num_rounds_from_attributes(a.attributes.as_deref());
+        // Keep the existing launch window for rows without a declared duration,
+        // Miles O'Brien's "For 3 rounds" wording, and FCM Data's unverified seat mapping.
+        if duration.is_none()
+            || matches!(a.ability_id.as_deref(), Some("3396349483" | "1610205778"))
+        {
+            let mut window = lcars_cond_base("round_range");
+            window.min = Some(1);
+            window.max = Some(duration.unwrap_or(2));
+            conditions.push(window);
+        }
+    }
+    // These reviewed damage-taken abilities have a published Assault exclusion.
+    if stacks_on_damage_taken(a) && filtered.iter().any(|token| token == "TargetNotASB") {
+        let mut assaults = lcars_cond_base("engagement_includes");
+        assaults.enemy_type = Some("assaults".into());
+        conditions.push(lcars_not(assaults));
+    }
     // Limit the enabled effects to NPC ship fights outside Eclipse without
     // changing the source conditions recorded in the canonical catalog.
     if matches!(
@@ -1074,7 +1094,11 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
             } else {
                 Some(lcars_values.first().copied().unwrap_or(value_rank1))
             };
-            let duration = if stat == "shots_per_attack" {
+            let duration = if stat == "crit_damage_flat" && stacks_on_damage_taken(a) {
+                LcarsDuration::Rounds {
+                    rounds: num_rounds_from_attributes(a.attributes.as_deref())?,
+                }
+            } else if stat == "shots_per_attack" {
                 LcarsDuration::Rounds {
                     rounds: num_rounds_from_attributes(a.attributes.as_deref()).unwrap_or(2),
                 }
@@ -1341,6 +1365,15 @@ fn scaling_for_add_random_state(
 }
 
 /// Parse `num_rounds=N` from canonical ability `attributes` (comma-separated `key=value` pairs).
+fn stacks_on_damage_taken(a: &CanonicalAbility) -> bool {
+    a.trigger.as_deref() == Some("HitTaken")
+        && a.attributes.as_deref().is_some_and(|attributes| {
+            attributes
+                .split(',')
+                .any(|attribute| attribute.trim() == "stack_on_damage_taken=1")
+        })
+}
+
 fn num_rounds_from_attributes(raw: Option<&str>) -> Option<u32> {
     let raw = raw?;
     for part in raw.split(',') {
@@ -1417,6 +1450,18 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         && !crew_scaled
         && !a.chance_by_rank.is_empty()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_launch_attack = modifier == "OfficerStatAttack"
+        && a.slot == "officer"
+        && a.target.as_deref() == Some("SelfAll")
+        && a.trigger.as_deref() == Some("ShipLaunched")
+        && op.eq_ignore_ascii_case("MultiplyAdd")
+        && a.conditions.is_empty()
+        && a.attributes
+            .as_deref()
+            .is_none_or(|attrs| attrs.trim().is_empty())
+        && !a.value_by_rank.is_empty()
+        && a.chance_by_rank.len() == a.value_by_rank.len()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
     let supported_computer_precision = modifier == "OfficerStatDefense"
         && a.ability_id.as_deref() == Some(COMPUTER_PRECISION)
         && a.target.as_deref() == Some("SelfAll")
@@ -1438,7 +1483,19 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .and_then(percentage_from_canonical_attributes)
             .is_some()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
-    let unsupported_source_pattern = modifier == "OfficerStatAttack"
+    // The generic crit modifiers run before the roll. They cannot grant a
+    // stack after a qualifying critical weapon, or reduce an opponent's
+    // crit damage outside the verified damage-taken stack path.
+    let unsupported_critical_shot_modifier = matches!(modifier, "CritChance" | "CritDamage")
+        && a.trigger.as_deref() == Some("CriticalShotFired");
+    let unsupported_enemy_crit_damage = modifier == "CritDamage"
+        && a.target
+            .as_deref()
+            .is_some_and(|target| target.starts_with("Enemy"))
+        && !(stacks_on_damage_taken(a) && op == "Sub");
+    let unsupported_source_pattern = (modifier == "OfficerStatAttack" && !supported_launch_attack)
+        || unsupported_critical_shot_modifier
+        || unsupported_enemy_crit_damage
         || (modifier == "OfficerStatDefense" && !supported_computer_precision)
         || (modifier == "AllPiercing" && !supported_enemy_piercing_reduction)
         || (modifier == "AllDefenses" && !supported_ortegas_defense)
@@ -1514,14 +1571,22 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "CritChance" => MappedEffect::StatModify("crit_chance".into(), "add".into(), val),
         // Native critical damage is an additive bonus over a noncritical hit. Keep this
         // contribution in the flat-addition pool; `crit_damage` is a multiplier key.
-        "CritDamage" => MappedEffect::StatModify("crit_damage_flat".into(), "add".into(), val),
-        "AllDamage" | "OfficerStatAttack" => {
+        "CritDamage" => {
+            let operation = if stacks_on_damage_taken(a) && op == "Sub" { "sub" } else { "add" };
+            MappedEffect::StatModify("crit_damage_flat".into(), operation.into(), val)
+        }
+        "AllDamage" => {
             let (op_str, v) = if op.eq_ignore_ascii_case("MultiplyAdd") {
                 ("multiply", 1.0 + val)
             } else {
                 ("add", val)
             };
             MappedEffect::StatModify("weapon_damage".into(), op_str.into(), v)
+        }
+        "OfficerStatAttack" if supported_launch_attack => {
+            // Crew Attack is a rating input for ship breakpoints. Each rank
+            // contributes its fraction to the pool for every occupied seat.
+            MappedEffect::StatModify("officer_attack".into(), "add".into(), val)
         }
         "Accuracy" => {
             let attrs = a.attributes.as_deref().unwrap_or("").trim();

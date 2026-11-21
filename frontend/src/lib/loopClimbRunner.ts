@@ -1,5 +1,6 @@
 import {
   cancelOptimizeJob,
+  formatApiError,
   getOptimizeStatus,
   type OptimizerStrategyType,
   optimizeStart,
@@ -9,6 +10,7 @@ import type { LoopGoalId } from "./loopsCatalog";
 import { loopGoal } from "./loopsCatalog";
 import {
   getLoopBestRecord,
+  getLoopLadderRevision,
   type LoopBestRecord,
   type LoopRunContext,
   saveLoopOptimizationResult,
@@ -79,6 +81,7 @@ export interface LoopClimbPlan {
   version: number;
   profileId: string | null;
   loopId: string;
+  ladderRevision?: number;
   loopName: string;
   goalId: LoopGoalId;
   shipId: string;
@@ -223,6 +226,10 @@ export async function runLoopClimb(
   deps: RunnerDeps = defaultDeps,
 ): Promise<LoopClimbPlan> {
   let plan = initial;
+  const shouldStop = () =>
+    isCancelled() ||
+    getLoopLadderRevision(initial.profileId, initial.loopId) !==
+      (initial.ladderRevision ?? 0);
 
   const publish = () => {
     if (callbacks.shouldPersist?.() !== false) saveLoopClimbPlan(plan);
@@ -230,7 +237,7 @@ export async function runLoopClimb(
   };
 
   while (plan.status === "running" && plan.cursor < plan.rungs.length) {
-    if (isCancelled()) {
+    if (shouldStop()) {
       plan = { ...plan, status: "cancelled", activeJobId: null };
       publish();
       return plan;
@@ -304,7 +311,7 @@ export async function runLoopClimb(
             targetLevel: rung.targetLevel,
             outcome: "error",
             record: null,
-            error: cause instanceof Error ? cause.message : String(cause),
+            error: formatApiError(cause),
           },
         ],
       };
@@ -320,12 +327,12 @@ export async function runLoopClimb(
       jobId,
       rung,
       callbacks,
-      isCancelled,
+      shouldStop,
       deps,
     );
     plan = { ...plan, activeJobId: null, results: [...plan.results, result] };
 
-    if (result.outcome === "interrupted" && isCancelled()) {
+    if (result.outcome === "interrupted" && shouldStop()) {
       plan = { ...plan, status: "cancelled" };
       publish();
       return plan;
@@ -392,7 +399,7 @@ async function awaitRung(
         ...base,
         outcome: "interrupted",
         record: null,
-        error: cause instanceof Error ? cause.message : String(cause),
+        error: formatApiError(cause),
       };
     }
 
@@ -421,8 +428,20 @@ async function awaitRung(
       };
     }
 
+    const recommendations = status.result.recommendations ?? [];
+    if (recommendations.length === 0) {
+      return {
+        ...base,
+        outcome: "error",
+        record: null,
+        error:
+          "The optimizer found no eligible crews. Check the selected profile’s roster.",
+      };
+    }
+
     const context: LoopRunContext = {
       loopId: plan.loopId,
+      ladderRevision: plan.ladderRevision,
       loopName: plan.loopName,
       targetId: rung.targetId,
       targetName: rung.targetName,
@@ -438,11 +457,24 @@ async function awaitRung(
       shipId: plan.shipId,
       shipTier: plan.shipTier,
       shipLevel: plan.shipLevel,
-      recommendations: status.result.recommendations ?? [],
+      recommendations,
       simsPerCrew: plan.settings.simsPerCrew,
       strategy: plan.settings.strategy,
       maxCandidates: plan.settings.maxCandidates,
     });
+
+    if (saved.reason === "target_moved") {
+      return {
+        ...base,
+        outcome: "interrupted",
+        record: null,
+        error:
+          "This target moved to the Enhanced Cruiser ladder. Start a new climb from that loop.",
+      };
+    }
+    if (saved.reason === "ladder_reset") {
+      return { ...base, outcome: "interrupted", record: null };
+    }
 
     // Judge the rung on whatever now stands as its best — a run that failed to
     // improve on an already-cleared rung is still a cleared rung.
@@ -483,6 +515,7 @@ export function createLoopClimbPlan(args: {
     version: PLAN_VERSION,
     profileId: args.profileId,
     loopId: args.loopId,
+    ladderRevision: getLoopLadderRevision(args.profileId, args.loopId),
     loopName: args.loopName,
     goalId: args.goalId,
     shipId: args.shipId,
