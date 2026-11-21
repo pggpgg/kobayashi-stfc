@@ -122,7 +122,9 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   fights do not exercise profile file discovery or scenario routing.
 /// * 25 → 26 (2026-11): D4 Relentless Hunting retains the source's decimal
 ///   fractions. Canary v covers combat application but does not load the curve.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 26;
+/// * 26 → 27 (2026-11): canonical opponent weapon damage reductions no longer
+///   compile as friendly attack bonuses. The canaries use pre-resolved seats.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 27;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
