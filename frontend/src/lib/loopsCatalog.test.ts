@@ -154,7 +154,7 @@ describe("loops catalog liveness against the installed hostile catalog", () => {
    */
   it.each(
     LOOP_CATALOG.flatMap((loop) =>
-      loop.hostilePatterns
+      (loop.hostilePatterns ?? [])
         .map((pattern, index) => ({ loop, pattern, index }))
         .filter(
           ({ index }) =>
@@ -174,6 +174,29 @@ describe("loops catalog liveness against the installed hostile catalog", () => {
         ),
     );
     expect(matched).toBe(true);
+  });
+
+  it("resolves only the twelve requested Mirror Universe targets", () => {
+    const loop = findLoop("mu-rep-grind");
+    const ladder = resolveLoopHostiles(installedHostiles, loop);
+
+    expect(ladder.map((row) => row.level)).toEqual([
+      70, 68, 65, 61, 60, 58, 55, 51, 50, 48, 45, 40,
+    ]);
+    expect(ladder.map((row) => row.id)).toEqual([
+      "383046647",
+      "2376900965",
+      "1381341814",
+      "3162073836",
+      "2578891593",
+      "1267206309",
+      "3496577958",
+      "607623533",
+      "4152973142",
+      "2864818937",
+      "2013385428",
+      "2016644127",
+    ]);
   });
 
   it("resolves the Frontier Raider ladder that shipped dead as 'Apex Raider'", () => {

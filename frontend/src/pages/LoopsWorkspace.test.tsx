@@ -27,10 +27,21 @@ vi.mock("../lib/api", async (importOriginal) => {
         level: 49,
         ship_class: "interceptor",
       },
+      {
+        id: "607623533",
+        hostile_name: "Imperial Starfleet Planet Harvester",
+        level: 51,
+        ship_class: "survey",
+      },
     ]),
     fetchShips: vi.fn().mockResolvedValue([
       { id: "mantis", ship_name: "MANTIS", ship_class: "battleship" },
       { id: "saladin", ship_name: "SALADIN", ship_class: "interceptor" },
+      {
+        id: "uss_dauntless",
+        ship_name: "USS Dauntless",
+        ship_class: "interceptor",
+      },
     ]),
     // Never settles, so a started climb stays in flight for assertions about the
     // in-flight UI. Without this the real call fails immediately against no server
@@ -44,10 +55,10 @@ vi.mock("../lib/api", async (importOriginal) => {
 function WorkspaceStateProbe() {
   const location = useLocation();
   const state = location.state as {
-    loopRun?: { loopId: string; targetId: string };
+    loopRun?: { loopId: string; targetId: string; shipId: string };
   } | null;
   return (
-    <div>
+    <div data-ship={state?.loopRun?.shipId}>
       handoff:{state?.loopRun?.loopId}:{state?.loopRun?.targetId}
     </div>
   );
@@ -106,6 +117,34 @@ describe("LoopsWorkspace", () => {
     expect(screen.getAllByText("🔒 locked")).toHaveLength(1);
     expect(screen.getByLabelText("Next rung to attack")).toBeTruthy();
     expect(screen.getByText(/0 cleared/)).toBeTruthy();
+  });
+
+  it("locks MU Rep Grind to the Dauntless and links each target's system", async () => {
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/loops" element={<LoopsWorkspace />} />
+            <Route path="/" element={<WorkspaceStateProbe />} />
+          </Routes>
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "MU Rep Grind" }));
+    const system = await screen.findByRole("link", {
+      name: "Mirror P'Jem [Extract]",
+    });
+    expect(system.getAttribute("href")).toBe(
+      "https://stfc.space/systems/538197195",
+    );
+    const ship = screen.getByLabelText<HTMLSelectElement>("Ship to test");
+    expect(ship.disabled).toBe(true);
+    expect(ship.value).toBe("uss_dauntless");
+
+    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    const handoff = await screen.findByText("handoff:mu-rep-grind:607623533");
+    expect(handoff.getAttribute("data-ship")).toBe("uss_dauntless");
   });
 
   it("asks before resetting the selected ladder and returns it to the first rung", async () => {
