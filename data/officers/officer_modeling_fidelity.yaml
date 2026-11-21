@@ -20,6 +20,8 @@ laliari-87e81a: "Omega-13 cooldown reduction on ship active ability — not mode
 lursa-57a544: "Cloaking cooldown on ship active ability — not modeled in combat sim (:non_combat)."
 phlox-72c07b: "On the attacking crew, bridge reduces enemy critical chance at combat start for eight rounds, excluding armadas and stations. The defender-side PvP path remains unsupported. Below-deck Cutting Beam ability cost is non-combat."
 b-elanna-torres-75cf02: "Bridge crew-Attack-based cumulative piercing after being hit is unsupported and diagnosed; below-deck hull breach has source-declared one-round state duration."
+beckett-mariner-d93865: "Get It Together! adds 5–30% to every crewed officer's Attack pool before ship breakpoints. The below-deck ability separately increases weapon damage."
+eight-of-eleven-cb5f3c: "Cybernetic Enhancements adds 45–85% to every crewed officer's Attack pool before ship breakpoints."
 gowron-27ac30: "Bridge crew-Health-based Shield Deflection is unsupported and diagnosed, rather than modeled as shield regeneration."
 vemet-00a218: "Captain post-defeat ship survival and bridge crew-Health-scaled enemy shield drain are unsupported and diagnosed."
 718-0-2509d7: "Computer Precision adds 5–15% to the Defense pool of every crewed officer in non-Eclipse hostile ship fights. Station Knowledge requires a station-defense scenario."

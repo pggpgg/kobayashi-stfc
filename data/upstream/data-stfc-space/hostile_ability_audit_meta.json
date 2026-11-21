@@ -106,13 +106,13 @@
       "effect_type": "defender_on_hit_shield_mitigation_reduction"
     },
     "49117123": {
-      "bucket": "apex_combat",
+      "bucket": "polaron_weaponry_review",
       "loca_id": 96502,
       "hostile_count": 324,
       "sample_hostile_id": "1001270436",
       "sample_level": 68,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "apex_barrier"
+      "effect_type": "combat_noop"
     },
     "56799195": {
       "bucket": "hyperthermic_decay_combat",
@@ -637,13 +637,13 @@
       "effect_type": "attack_multiplier"
     },
     "323291059": {
-      "bucket": "apex_combat",
+      "bucket": "polaron_weaponry_review",
       "loca_id": 96500,
       "hostile_count": 324,
       "sample_hostile_id": "1020392011",
       "sample_level": 75,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "apex_barrier"
+      "effect_type": "combat_noop"
     },
     "324656870": {
       "bucket": "armada_scope",
@@ -1800,13 +1800,13 @@
       "effect_type": "isolytic_damage"
     },
     "817894448": {
-      "bucket": "apex_combat",
+      "bucket": "polaron_weaponry_review",
       "loca_id": 96503,
       "hostile_count": 270,
       "sample_hostile_id": "1001051223",
       "sample_level": 52,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "apex_barrier"
+      "effect_type": "combat_noop"
     },
     "825965675": {
       "bucket": "pierce_combat",
@@ -6179,7 +6179,7 @@
       "effect_type": "crit_damage"
     },
     "2920844674": {
-      "bucket": "isolytic_combat",
+      "bucket": "experimental_defense_array_partial",
       "loca_id": 96501,
       "hostile_count": 918,
       "sample_hostile_id": "1001051223",

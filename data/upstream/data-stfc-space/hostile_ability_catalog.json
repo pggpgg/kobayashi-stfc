@@ -103,9 +103,10 @@
     },
     "49117123": {
       "timing": "combat_begin",
-      "effect_type": "apex_barrier",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "56799195": {
       "timing": "round_start",
@@ -542,9 +543,10 @@
     },
     "323291059": {
       "timing": "combat_begin",
-      "effect_type": "apex_barrier",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "324656870": {
       "timing": "combat_begin",
@@ -1562,9 +1564,10 @@
     },
     "817894448": {
       "timing": "combat_begin",
-      "effect_type": "apex_barrier",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "825965675": {
       "timing": "combat_begin",
@@ -1791,7 +1794,16 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "ignore_upstream_value_is_percentage": false,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_engagement_round_limit",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 30
+        }
+      ]
     },
     "977137700": {
       "timing": "combat_begin",
@@ -5102,7 +5114,16 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "ignore_upstream_value_is_percentage": false,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_engagement_round_limit",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 50
+        }
+      ]
     },
     "2689650622": {
       "timing": "combat_begin",
@@ -5463,8 +5484,9 @@
     "2920844674": {
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 50.0
     },
     "2922610677": {
       "timing": "round_end",

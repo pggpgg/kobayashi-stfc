@@ -664,10 +664,24 @@ pub fn merge_building_bonuses_with_native_snapshot(
     context: &BuildingBonusContext,
     native_bonuses: Option<&HashMap<String, f64>>,
 ) {
-    if imported_buildings.is_empty() || bid_to_id.is_empty() {
-        return;
-    }
+    merge_building_bonuses_from_sources(
+        profile,
+        imported_buildings,
+        bid_to_id,
+        data_dir,
+        context,
+        native_bonuses,
+    );
+}
 
+pub(crate) fn merge_building_bonuses_from_sources(
+    profile: &mut PlayerProfile,
+    imported_buildings: &[BuildingEntry],
+    bid_to_id: &HashMap<i64, String>,
+    data_dir: &Path,
+    context: &BuildingBonusContext,
+    native_bonuses: Option<&HashMap<String, f64>>,
+) {
     let mut levels_by_id: HashMap<String, u32> = HashMap::new();
     for entry in imported_buildings {
         let Some(id) = bid_to_id.get(&entry.bid) else {
@@ -680,19 +694,10 @@ pub fn merge_building_bonuses_with_native_snapshot(
         };
         levels_by_id.insert(id.clone(), level);
     }
-    if levels_by_id.is_empty() {
-        return;
-    }
-
-    let mut records: Vec<building::BuildingRecord> = Vec::new();
-    for id in levels_by_id.keys() {
-        if let Some(rec) = building::load_building_record(data_dir, id) {
-            records.push(rec);
-        }
-    }
-    if records.is_empty() {
-        return;
-    }
+    let records: Vec<_> = levels_by_id
+        .keys()
+        .filter_map(|id| building::load_building_record(data_dir, id))
+        .collect();
 
     let context = BuildingBonusContext {
         syndicate_level: profile.syndicate_level,
