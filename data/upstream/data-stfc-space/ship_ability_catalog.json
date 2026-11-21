@@ -475,9 +475,10 @@
     },
     "1773930736": {
       "timing": "combat_begin",
-      "effect_type": "apex_shred",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "1781715001": {
       "timing": "combat_begin",
@@ -615,7 +616,8 @@
       "timing": "combat_begin",
       "effect_type": "attack_multiplier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true
     },
     "2195955652": {
       "timing": "attack_phase",

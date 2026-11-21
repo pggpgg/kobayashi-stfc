@@ -10,6 +10,7 @@ After classification, merges data/upstream/data-stfc-space/ship_ability_catalog_
 
 Optional catalog fields (omit when false):
   condition_morale, condition_defender_burning, condition_defender_hull_breach,
+  condition_defender_is_npc_hostile,
   condition_opponent_faction (slug matching OpponentFactionTag serde names, e.g. klingon),
   condition_opponent_ship_class (battleship | explorer | interceptor; defender hull class in PvE)
 
@@ -82,6 +83,7 @@ def modeled(
     condition_morale: bool = False,
     condition_defender_burning: bool = False,
     condition_defender_hull_breach: bool = False,
+    condition_defender_is_npc_hostile: bool = False,
     condition_opponent_faction: str | None = None,
     condition_opponent_ship_class: str | None = None,
     condition_opponent_hostile_tags: list[str] | None = None,
@@ -102,6 +104,8 @@ def modeled(
         d["condition_defender_burning"] = True
     if condition_defender_hull_breach:
         d["condition_defender_hull_breach"] = True
+    if condition_defender_is_npc_hostile:
+        d["condition_defender_is_npc_hostile"] = True
     if condition_opponent_faction:
         d["condition_opponent_faction"] = condition_opponent_faction
     if condition_opponent_ship_class:
@@ -180,6 +184,10 @@ def opponent_faction_slug_from_against_clause(p: str) -> str | None:
 def classify_single_ability(_loca: int, text: str) -> dict:
     p = plain(text)
     if not p.strip():
+        return dict(NOOP)
+
+    # The current engagement tags cannot distinguish Solo Wave Defense.
+    if "solo wave defense" in p:
         return dict(NOOP)
 
     rc = first_n_rounds_cap(p)
@@ -578,6 +586,7 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             "attack_multiplier",
             value_is_percentage=False,
             ignore_upstream_value_is_percentage=True,
+            condition_defender_is_npc_hostile=True,
         )
 
     if "when fighting hostile" in p and "weapon damage" in p and "increas" in p:
@@ -588,6 +597,7 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             "attack_multiplier",
             value_is_percentage=False,
             ignore_upstream_value_is_percentage=True,
+            condition_defender_is_npc_hostile=True,
         )
 
     # Combat start — pierce, shield bypass, weapon damage, or accuracy (folded in scenario, not a crew seat).
