@@ -12,6 +12,9 @@ use serde_json::Value;
 struct AbilityCatalogEntry {
     timing: String,
     effect_type: String,
+    /// Explanation to report when a catalogued ability has no supported combat mapping.
+    #[serde(default)]
+    unsupported_reason: Option<String>,
     #[serde(default)]
     value_is_percentage: bool,
     /// When true, use only catalog `value_is_percentage` (ignore upstream `value_is_percentage`).
@@ -52,13 +55,17 @@ struct AbilityCatalogEntry {
     /// Multiply normalized numeric `value` / curve entries after the usual `value_is_percentage` scaling.
     #[serde(default)]
     post_scale: Option<f64>,
+    /// Documented effects of the same hull that have no separate upstream ability row.
+    #[serde(default)]
+    additional_effects: Vec<ShipAbility>,
 }
 
 use kobayashi::data::registry::merge_registry_entry;
 use kobayashi::data::ship::{
-    weapon_type_slug_from_upstream, CrewSlotUnlock, ExtendedShipRecord, LevelBonus,
-    OfficerBonusBreakpoint, OfficerBonusTable, ShipAbility, ShipIdRegistry, ShipIdRegistryEntry,
-    TierStats, WeaponRecord, DEFAULT_SHIP_ID_REGISTRY_PATH,
+    has_reviewed_weapon_schedule, weapon_schedule_from_upstream, weapon_type_slug_from_upstream,
+    CrewSlotUnlock, ExtendedShipRecord, LevelBonus, OfficerBonusBreakpoint, OfficerBonusTable,
+    ShipAbility, ShipIdRegistry, ShipIdRegistryEntry, TierStats, WeaponRecord,
+    DEFAULT_SHIP_ID_REGISTRY_PATH,
 };
 
 const SHIP_ABILITY_CATALOG_PATH: &str = "data/upstream/data-stfc-space/ship_ability_catalog.json";
@@ -271,7 +278,7 @@ fn raw_to_extended(
             shield_deflection,
             dodge,
             weapons,
-        ) = extract_tier_combat(components)?;
+        ) = extract_tier_combat(components, has_reviewed_weapon_schedule(raw))?;
         parsed_tiers.push(TierStats {
             tier: tier_num,
             armor_piercing,
@@ -347,6 +354,9 @@ fn raw_to_extended(
             let Some(entry) = catalog.get(&id_str) else {
                 continue;
             };
+            if let Some(reason) = &entry.unsupported_reason {
+                eprintln!("warning: ship ability {id_str} is unsupported: {reason}");
+            }
             let value_is_percentage = if entry.ignore_upstream_value_is_percentage {
                 entry.value_is_percentage
             } else {
@@ -448,6 +458,7 @@ fn raw_to_extended(
                 round_cap: entry.round_cap,
                 level_scaled_values,
             });
+            out.extend(entry.additional_effects.iter().cloned());
         }
         if out.is_empty() {
             None
@@ -509,6 +520,7 @@ const WEAPON_ORDER_LAST: i64 = 999;
 #[allow(clippy::type_complexity)]
 fn extract_tier_combat(
     components: &[Value],
+    use_schedule: bool,
 ) -> Result<
     (
         f64,
@@ -656,6 +668,9 @@ fn extract_tier_combat(
         }
 
         weapons_out.push(WeaponRecord {
+            firing_schedule: use_schedule
+                .then(|| weapon_schedule_from_upstream(data))
+                .flatten(),
             attack: avg_damage,
             shots: Some(shots),
             armor_piercing: Some(penetration),

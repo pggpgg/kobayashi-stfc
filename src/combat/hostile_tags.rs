@@ -15,11 +15,14 @@ pub const HOSTILE_TAG_MASK_GORN_HUNTER: u32 = 1 << 4;
 pub const HOSTILE_TAG_MASK_BREEN_WARSHIP: u32 = 1 << 5;
 /// Texas-class NPCs. Native Monaveen buff 49906243 gates on hull faction 2796195869.
 pub const HOSTILE_TAG_MASK_TEXAS_CLASS: u32 = 1 << 6;
+/// Xindi-Aquatic hostile faction. Reptilians and other Xindi use different native ids.
+pub const HOSTILE_TAG_MASK_XINDI_AQUATIC: u32 = 1 << 7;
 
 /// Native faction ids are a stable gate even when a legacy normalized row has no tags.
 pub fn mask_from_native_faction(faction_id: i64) -> u32 {
     match faction_id {
         2_796_195_869 => HOSTILE_TAG_MASK_TEXAS_CLASS,
+        2_745_774_076 => HOSTILE_TAG_MASK_XINDI_AQUATIC,
         _ => 0,
     }
 }
@@ -35,6 +38,7 @@ pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
         "gorn_hunter" => Some(HOSTILE_TAG_MASK_GORN_HUNTER),
         "breen_warship" => Some(HOSTILE_TAG_MASK_BREEN_WARSHIP),
         "texas_class" => Some(HOSTILE_TAG_MASK_TEXAS_CLASS),
+        "xindi_aquatic" => Some(HOSTILE_TAG_MASK_XINDI_AQUATIC),
         _ => None,
     }
 }

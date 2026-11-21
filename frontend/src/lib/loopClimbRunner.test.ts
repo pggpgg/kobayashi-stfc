@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LoopClimbPlan } from "./loopClimbRunner";
+import { listLoopRecords, resetLoopLadder } from "./loopsWorkspaceStorage";
 
 const optimizeStart = vi.fn();
 const getOptimizeStatus = vi.fn();
@@ -164,6 +165,26 @@ describe("runLoopClimb", () => {
     ]);
   });
 
+  it("discards a result that arrives after the ladder was reset", async () => {
+    optimizeStart.mockResolvedValue({ job_id: "job-1" });
+    getOptimizeStatus.mockImplementation(async () => {
+      resetLoopLadder("p1", "actian");
+      return doneStatus();
+    });
+
+    const result = await runLoopClimb(
+      plan(),
+      { onPlan: () => {} },
+      () => false,
+      deps,
+    );
+
+    expect(result.status).toBe("cancelled");
+    expect(result.results[0]?.outcome).toBe("interrupted");
+    expect(optimizeStart).toHaveBeenCalledTimes(1);
+    expect(listLoopRecords("p1")).toEqual([]);
+  });
+
   it("warm-starts each rung from the rung below's saved crew", async () => {
     optimizeStart.mockResolvedValue({ job_id: "job" });
     getOptimizeStatus.mockResolvedValue(doneStatus());
@@ -219,6 +240,31 @@ describe("runLoopClimb", () => {
       "contested",
     ]);
     expect(final.status).toBe("done");
+  });
+
+  it("reports an empty optimizer result as a profile roster error", async () => {
+    optimizeStart.mockResolvedValue({ job_id: "job" });
+    getOptimizeStatus.mockResolvedValue(
+      doneStatus({ result: { recommendations: [] } }),
+    );
+    const base = plan();
+    const final = await runLoopClimb(
+      {
+        ...base,
+        settings: {
+          ...base.settings,
+          stopCondition: { type: "first_failure" },
+        },
+      },
+      { onPlan: () => {} },
+      () => false,
+      deps,
+    );
+    expect(final.results).toHaveLength(1);
+    expect(final.results[0]).toMatchObject({
+      outcome: "error",
+      error: expect.stringContaining("no eligible crews"),
+    });
   });
 
   it("continues past a contested rung under full_ladder", async () => {

@@ -68,6 +68,7 @@ fn first_attack(
         weapons: vec![WeaponStats {
             attack: 2000.0,
             component_base_attack: component,
+            firing_schedule: None,
             shots: Some(1),
             crit_chance: Some(0.0),
             ..Default::default()

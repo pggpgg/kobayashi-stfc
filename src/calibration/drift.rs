@@ -448,6 +448,7 @@ impl FixtureCombatant {
             .map(|w| WeaponStats {
                 attack: w.attack,
                 component_base_attack: None,
+                firing_schedule: None,
                 shots: w.shots,
                 pierce: w.pierce,
                 crit_chance: w.crit_chance,

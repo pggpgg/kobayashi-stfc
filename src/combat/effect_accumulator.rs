@@ -1107,6 +1107,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1119,6 +1120,7 @@ impl EffectAccumulator {
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1326,6 +1328,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1338,6 +1341,7 @@ impl EffectAccumulator {
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1507,6 +1511,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1519,6 +1524,7 @@ impl EffectAccumulator {
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1683,6 +1689,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1695,6 +1702,7 @@ impl EffectAccumulator {
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
@@ -1879,6 +1887,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -1891,6 +1900,7 @@ impl EffectAccumulator {
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -2104,6 +2114,7 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
                 | AbilityEffect::ConquerorBorgBeamSuppression
                 | AbilityEffect::DefenderFireDelay { .. }
+                | AbilityEffect::IncomingShotDeflection(_)
                 | AbilityEffect::RandomDefenderState { .. }
                 | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
                 | AbilityEffect::CaptainManeuverMultiplier(_)
@@ -2116,6 +2127,7 @@ impl EffectAccumulator {
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -2178,7 +2190,10 @@ pub(crate) fn record_ability_activations(
     }
     for effect in effects {
         // Post-hit grants are logged only when the granting volley actually fired.
-        if phase != "after_hit" && matches!(effect.effect, AbilityEffect::OnHitTimedBonus { .. }) {
+        if (phase != "after_hit" && matches!(effect.effect, AbilityEffect::OnHitTimedBonus { .. }))
+            || (phase != "after_damage_taken"
+                && matches!(effect.effect, AbilityEffect::DamageTakenCritStack { .. }))
+        {
             continue;
         }
         let effectiveness_multiplier =
@@ -2392,6 +2407,15 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             coefficient: coefficient * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             chance: chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         },
+        AbilityEffect::DamageTakenCritStack {
+            amount,
+            duration_rounds,
+            reduce_opponent,
+        } => AbilityEffect::DamageTakenCritStack {
+            amount: amount * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+            reduce_opponent,
+        },
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
@@ -2472,7 +2496,7 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         | AbilityEffect::CaptainManeuverMultiplier(_) => effect,
         AbilityEffect::BridgeAbilityEffectivenessBonus(_) => effect,
         AbilityEffect::AccuracyBonus(_) => effect,
-        AbilityEffect::DodgeBonus(_) => effect,
+        AbilityEffect::DodgeBonus(_) | AbilityEffect::IncomingShotDeflection(_) => effect,
     }
 }
 

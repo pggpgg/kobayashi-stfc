@@ -162,6 +162,11 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         bucket = kwargs.pop("_bucket", "modeled_combat")
         return modeled(timing, effect_type, **kwargs), bucket
 
+    # Polaron weapons need their own damage channel. The Apex Barrier text
+    # describes a layer they bypass, and the raw 0.25 matches Known Weakness.
+    if "polaron weaponry" in p and "polaron mitigation" in p:
+        return dict(NOOP), "polaron_weaponry_review"
+
     # Temporal Dreadnought phase alignment. Charged variants fully restore shields + hull each
     # round; Static variants fully restore shields while retaining their existing isolytic-damage
     # seat. Both mechanics are disabled by the U.S.S. Relativity's always-active anti-shift hull
@@ -315,6 +320,45 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     # Outpost / station scope (not ship-vs-hostile PvE)
     if "outpost abilities" in p or "outpost ability" in p:
         return dict(NOOP), "outpost_scope"
+
+    # The FKR Armada pair is a passive launch bonus on the target itself.
+    # It applies in the existing single-ship combat path.
+    armada_isolytic = re.fullmatch(
+        r"at the start of combat this armada increases? its isolytic (damage|defen[cs]e) by (\d+(?:\.\d+)?)%\.?",
+        p,
+    )
+    if armada_isolytic:
+        stat, percent = armada_isolytic.groups()
+        effect = "isolytic_damage" if stat == "damage" else "isolytic_defense"
+        return m(
+            "combat_begin",
+            effect,
+            value_override=float(percent) / 100.0,
+            _bucket="isolytic_combat",
+        )
+
+    # Cascade Nullification uses a per-level defense fraction and two fixed text values.
+    cascade_nullification = re.fullmatch(
+        r"cascade nullification increases isolytic defense by \{0[^}]*%\} at the start of combat\. "
+        r"this armada's critical damage cannot drop below (\d+(?:\.\d+)?)%\. "
+        r"this armada's battle (?:have|has) a maximum of ([1-9]\d*) rounds\.",
+        " ".join(p.split()),
+    )
+    if cascade_nullification:
+        crit_floor, round_limit = cascade_nullification.groups()
+        return m(
+            "combat_begin",
+            "isolytic_defense",
+            extra_seats=[
+                modeled(
+                    "combat_begin", "hostile_crit_damage_floor", value_override=float(crit_floor) / 100.0
+                ),
+                modeled(
+                    "combat_begin", "hostile_engagement_round_limit", value_override=int(round_limit)
+                ),
+            ],
+            _bucket="isolytic_combat",
+        )
 
     # Armada / wave defense
     if "armada" in p or "wave defense" in p:
@@ -600,9 +644,11 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         # reading it from `value` would apply the apex magnitude as an isolytic multiplier.
         if re.search(r"increases its apex barrier and its isolytic damage", p):
             return m("combat_begin", "apex_barrier", _bucket="isolytic_combat")
-        # Isolytic Dampeners bundles (ACAD wave-defense drones / Programmable Matter):
-        # hardcoded "increases its Isolytic Defense by 1000%" + per-variant extras.
-        damp_m = re.search(r"increases its isolytic defen[cs]e by (\d+(?:\.\d+)?)%", p)
+        # The translated Isolytic Dampeners percentage is fixed across levels.
+        damp_m = re.search(
+            r"increases (?:this standard hostile's base|its) isolytic defen[cs]e by (\d+(?:\.\d+)?)%",
+            p,
+        )
         if damp_m:
             extras = []
             if "can only be damaged by isolytic damage" in p:
@@ -623,15 +669,17 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                     )
                 )
             hyper_m = re.search(
-                r"applies (\d+(?:\.\d+)?)% hyperthermic decay to the player'?s hull", p
+                r"applies (\d+(?:\.\d+)?)% hyperthermic decay to the player'?s hull"
+                r"(?: on combat start)? (on the first round|for 1 round|every round)\b",
+                p,
             )
-            if hyper_m and ("first round" in p or "for 1 round" in p):
+            if hyper_m:
                 extras.append(
                     modeled(
                         "round_start",
                         "hostile_hyperthermic_decay",
                         value_override=float(hyper_m.group(1)) / 100.0,
-                        round_cap=1,
+                        round_cap=None if hyper_m.group(2) == "every round" else 1,
                     )
                 )
             return m(
@@ -639,7 +687,7 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 "isolytic_defense",
                 value_override=float(damp_m.group(1)) / 100.0,
                 extra_seats=extras or None,
-                _bucket="isolytic_combat",
+                _bucket="experimental_defense_array_partial" if "experimental defense array" in p else "isolytic_combat",
             )
         # Conditional self-debuffs: "this hostile's Isolytic Defense is reduced/lowered by X"
         # when fighting a specific player hull class (Mutually Assured Destruction, Burned in a
@@ -734,11 +782,23 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
         # Covers Black Market Armaments / Krenim Temporal Core / Static Displacer-style
         # multi-stat texts whose per-stat values cannot be read off the text; unvalidated.
         if "defense" in p or "defence" in p:
+            # The Warship variants state an explicit fight limit in a separate sentence.
+            # Dreadnought cores omit that sentence and keep the normal round budget.
+            limit = re.search(
+                r"battles vs (?:charged|static) krenim invading entities only last ([1-9]\d*) rounds\b",
+                p,
+            )
+            extras = []
+            if limit:
+                extras.append(
+                    modeled("combat_begin", "hostile_engagement_round_limit", value_override=int(limit[1]))
+                )
             return m(
                 "combat_begin",
                 "isolytic_defense",
                 value_is_percentage=True,
                 ignore_upstream_value_is_percentage=False,
+                extra_seats=extras,
                 _bucket="isolytic_combat",
             )
         return m(

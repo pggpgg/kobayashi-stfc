@@ -3,11 +3,16 @@ import type { CrewRecommendation } from "./api";
 import type { LoopGoalId } from "./loopsCatalog";
 import {
   getLoopBestRecord,
+  getLoopLadderRevision,
   isGenuineImprovement,
   type LoopBestRecord,
   type LoopRunContext,
+  listLoopRecords,
+  loadPendingLoopRun,
   primaryMetricForGoal,
+  resetLoopLadder,
   saveLoopOptimizationResult,
+  savePendingLoopRun,
 } from "./loopsWorkspaceStorage";
 
 const context: LoopRunContext = {
@@ -103,6 +108,52 @@ describe("loops workspace persistence", () => {
     ).toBeNull();
   });
 
+  it("clears every goal for one loop and rejects results from before the reset", () => {
+    const result = {
+      profileId: "p1",
+      context,
+      shipId: "mantis",
+      shipTier: 5,
+      shipLevel: 25,
+      recommendations: [recommendation({})],
+    };
+    saveLoopOptimizationResult(result);
+    saveLoopOptimizationResult({
+      ...result,
+      recommendations: [recommendation({ captain: "Khan", r1_kill_rate: 0.8 })],
+    });
+    saveLoopOptimizationResult({
+      ...result,
+      context: { ...context, goalId: "no_hits" },
+    });
+    const otherLoop = saveLoopOptimizationResult({
+      ...result,
+      context: { ...context, loopId: "actian-variant" },
+    }).record;
+    const otherProfile = saveLoopOptimizationResult({
+      ...result,
+      profileId: "p2",
+    }).record;
+    savePendingLoopRun("p1", context);
+
+    resetLoopLadder("p1", "actian");
+
+    expect(listLoopRecords("p1")).toEqual([otherLoop]);
+    expect(listLoopRecords("p2")).toEqual([otherProfile]);
+    expect(loadPendingLoopRun("p1")).toBeNull();
+    expect(saveLoopOptimizationResult(result)).toMatchObject({
+      saved: false,
+      reason: "ladder_reset",
+    });
+    const ladderRevision = getLoopLadderRevision("p1", "actian");
+    expect(
+      saveLoopOptimizationResult({
+        ...result,
+        context: { ...context, ladderRevision },
+      }).saved,
+    ).toBe(true);
+  });
+
   it("does not record a best set on a ship the loop requires you not to use", () => {
     const outcome = saveLoopOptimizationResult({
       profileId: "p1",
@@ -118,6 +169,28 @@ describe("loops workspace persistence", () => {
     expect(
       getLoopBestRecord("p1", "actian", "apex-49", "one_round"),
     ).toBeNull();
+  });
+
+  it("discards a pending Enhanced Cruiser run from the old mixed ladder", () => {
+    const legacyContext = {
+      ...context,
+      loopId: "xindi-aquatic",
+      targetName: "Xindi-Aquatic Enhanced Cruiser",
+    };
+    savePendingLoopRun("p1", legacyContext);
+
+    expect(loadPendingLoopRun("p1")).toBeNull();
+    expect(
+      saveLoopOptimizationResult({
+        profileId: "p1",
+        context: legacyContext,
+        shipId: "mantis",
+        shipTier: 5,
+        shipLevel: 25,
+        recommendations: [recommendation({})],
+      }),
+    ).toMatchObject({ saved: false, reason: "target_moved" });
+    expect(listLoopRecords("p1")).toEqual([]);
   });
 
   it("reports a persistence failure as an improvement that could not be stored", () => {
@@ -365,6 +438,78 @@ describe("schema migration", () => {
     writeV1();
     getLoopBestRecord("p1", "actian", "apex-49", "one_round");
     expect(JSON.parse(localStorage.getItem(KEY) ?? "{}").version).toBe(2);
+  });
+
+  it("moves saved Enhanced Cruiser results and resets each ladder independently", () => {
+    const regular = record({
+      id: "regular",
+      loopId: "xindi-aquatic",
+      targetId: "cruiser",
+      targetName: "Xindi-Aquatic Cruiser",
+    });
+    const enhanced = record({
+      ...regular,
+      id: "enhanced",
+      targetId: "enhanced",
+      targetName: "Xindi-Aquatic Enhanced Cruiser",
+    });
+    const alternate = record({
+      ...enhanced,
+      id: "alternate",
+      roundOneKillRate: 0.2,
+    });
+    const grind = record({
+      ...enhanced,
+      id: "grind",
+      goalId: "kills_per_hull",
+    });
+    const enhancedLoopId = "xindi-aquatic-enhanced";
+    const newResult = record({
+      ...enhanced,
+      loopId: enhancedLoopId,
+      id: "new-result",
+    });
+    const unrelated = record();
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        version: 2,
+        records: {
+          "xindi-aquatic|cruiser|one_round": [regular],
+          "xindi-aquatic|enhanced|one_round": [enhanced, alternate],
+          "xindi-aquatic|enhanced|kills_per_hull": [grind],
+          "xindi-aquatic-enhanced|enhanced|one_round": [newResult],
+          "actian|apex-49|one_round": [unrelated],
+        },
+      }),
+    );
+
+    const moved = [enhanced, alternate, grind].map((saved) => ({
+      ...saved,
+      loopId: enhancedLoopId,
+    }));
+    expect(listLoopRecords("p1")).toHaveLength(6);
+    expect(listLoopRecords("p1")).toEqual(
+      expect.arrayContaining([...moved, newResult, regular, unrelated]),
+    );
+    expect(
+      getLoopBestRecord("p1", "xindi-aquatic", "enhanced", "one_round"),
+    ).toBeNull();
+    expect(
+      getLoopBestRecord("p1", enhancedLoopId, "enhanced", "kills_per_hull"),
+    ).toEqual(moved[2]);
+
+    const migrated = localStorage.getItem(KEY);
+    resetLoopLadder("p1", "xindi-aquatic");
+    expect(
+      getLoopBestRecord("p1", enhancedLoopId, "enhanced", "kills_per_hull"),
+    ).toEqual(moved[2]);
+    expect(getLoopLadderRevision("p1", enhancedLoopId)).toBe(0);
+
+    localStorage.setItem(KEY, migrated ?? "");
+    resetLoopLadder("p1", enhancedLoopId);
+    expect(listLoopRecords("p1")).toEqual([regular, unrelated]);
+    expect(getLoopLadderRevision("p1", "xindi-aquatic")).toBe(0);
   });
 
   it("falls back to empty for an unrecognised schema rather than guessing", () => {
